@@ -22,3 +22,6 @@ CI は Rust/Lean/Wasm CLI と JS/Chromium の2ジョブを実行し、失敗入�
 元ソースの型・effect・所有権検査、必要な Lean 検査が先に走る。IR/analysis は元ソースを保持する。
 `compile_with_options(..., CompileOptions { optimize: false })` が比較基準となる。
 このパスと到達性除去は compiler TCB であり、Lean による意味保存の証明ではない。
+
+到達しない suspend を除去しても、公開関数の async ABI は元の解析結果を維持する。
+不要になった host import は除去し、JS の Promise 契約を変更しない。

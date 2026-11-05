@@ -49,3 +49,17 @@ fn unused_payload_traps_are_preserved_and_raw_wat_is_unchanged() {
     let wat = "(module (func (export \"main\") (result i32) i32.const 42))";
     assert_eq!(wlt::compile(wat).unwrap().wat, wat);
 }
+
+#[test]
+fn removing_an_unreachable_suspend_preserves_the_public_async_contract() {
+    let source = include_str!("component-fixtures/async-abi.wlt");
+    let core = wlt::component::core_js::compile(source).unwrap();
+    assert!(core.bindings.contains("asyncExports.push(\"main\")"));
+    assert!(core.manifest["imports"].as_array().unwrap().is_empty());
+    let component = wlt::component::compile(source).unwrap();
+    assert_eq!(
+        component.manifest["asyncExports"],
+        serde_json::json!(["main"])
+    );
+    assert!(component.manifest["imports"].as_array().unwrap().is_empty());
+}

@@ -40,7 +40,7 @@ pub fn compile_with_policy(
     let module = checked_module_with_policy(source, policy)?;
     let adapter = Adapter::new(&module);
     let core = crate::emit::emit_component(&module, &adapter);
-    let effects = crate::effects::infer(&module);
+    let effects = crate::effects::boundary(&module);
     assemble(&module, &adapter, core, effects)
 }
 
@@ -52,7 +52,7 @@ fn checked_module_with_policy(
     source: &str,
     policy: &crate::bindings::BindingPolicy,
 ) -> Result<Module, Error> {
-    let module = crate::check_with_policy(source, policy)?;
+    let mut module = crate::check_with_policy(source, policy)?;
     for f in &module.functions {
         if matches!(f.kind, FunctionKind::Import { .. }) && crate::bindings::lookup(f).is_none() {
             return Err(Error::message(
@@ -62,6 +62,12 @@ fn checked_module_with_policy(
     }
     crate::wit::emit(&module)?;
     crate::verified::verify_component(source, &module)?;
+    module.abi_suspends = module
+        .functions
+        .iter()
+        .zip(crate::effects::infer(&module))
+        .map(|(f, e)| (f.name.clone(), e.suspends))
+        .collect();
     Ok(crate::link::project(&crate::optimize::simplify(&module)))
 }
 

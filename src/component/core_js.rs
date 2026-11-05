@@ -92,7 +92,7 @@ fn quoted(s: &str) -> String {
 }
 
 fn bindings(adapter: &Adapter<'_>) -> String {
-    let effects = crate::effects::infer(adapter.module);
+    let effects = crate::effects::boundary(adapter.module);
     let mut out = String::from(
         "// Generated typed boundary functions; GC references stay inside Wasm.\nexport function bind(c) {\n",
     );

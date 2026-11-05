@@ -858,6 +858,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
         bodies.push(items.last());
     }
     let mut module = Module {
+        abi_suspends: Default::default(),
         types,
         functions,
         tests,

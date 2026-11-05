@@ -9,7 +9,7 @@ for (const [backend, compile] of [
   ["core", buildCore],
 ])
   for (const [fixture, source] of [
-    ...["values", "event-loop", "buffers", "text-library", "module-imports", "json-value"].map((name) => [
+    ...["values", "event-loop", "buffers", "text-library", "module-imports", "json-value", "async-abi"].map((name) => [
       name,
       `tests/component-fixtures/${name}.wlt`,
     ]),

@@ -380,3 +380,14 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
     }
     Ok(())
 }
+
+/// Lowering can discard unreachable suspension sites without changing the ABI.
+pub(crate) fn boundary(module: &Module) -> Vec<EffectSet> {
+    let mut effects = infer(module);
+    for (f, e) in module.functions.iter().zip(&mut effects) {
+        if let Some(suspends) = module.abi_suspends.get(&f.name) {
+            e.suspends = *suspends;
+        }
+    }
+    effects
+}

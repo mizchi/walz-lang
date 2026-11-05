@@ -391,6 +391,9 @@ pub struct TagDecl {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Module {
+    /// Public ABI suspension before rewrites; absent on the source inspection IR.
+    #[serde(skip)]
+    pub(crate) abi_suspends: std::collections::BTreeMap<String, bool>,
     pub types: Vec<TypeDecl>,
     pub functions: Vec<Function>,
     pub tests: Vec<TestDecl>,
