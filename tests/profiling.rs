@@ -3,8 +3,8 @@ use std::process::Command;
 #[test]
 fn native_guest_profile_driver_runs_the_actual_text_guest_and_checks_cleanup() {
     let dir = tempfile::tempdir().unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["profile-text", "examples/io/text-filter.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["profile-text", "examples/io/text-filter.wlt"])
         .arg(dir.path())
         .output()
         .unwrap();

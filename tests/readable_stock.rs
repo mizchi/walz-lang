@@ -1,8 +1,8 @@
 #[test]
 fn counted_ledger_compiles_without_repeated_state_types() {
-    let path = "examples/apps/stock-ledger/main-counted.gwat";
-    let source = gcwat::source::load(path).unwrap();
-    let compiled = gcwat::compile(source.text()).unwrap();
+    let path = "examples/apps/stock-ledger/main-counted.wlt";
+    let source = wlt::source::load(path).unwrap();
+    let compiled = wlt::compile(source.text()).unwrap();
     let module = compiled.ir.unwrap();
     let main = module.functions.iter().find(|f| f.name == "$main").unwrap();
     assert_eq!(module.type_name(&main.result), "(result i32 i32)");

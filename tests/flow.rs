@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 fn facts(source: &str, name: &str) -> Vec<Value> {
-    let module = gcwat::check(source).unwrap();
-    let report = serde_json::to_value(gcwat::analysis::analyze(&module)).unwrap();
+    let module = wlt::check(source).unwrap();
+    let report = serde_json::to_value(wlt::analysis::analyze(&module)).unwrap();
     report["functions"]
         .as_array()
         .unwrap()
@@ -109,7 +109,7 @@ fn loop_carried_values_are_widened_and_only_normal_paths_refine_continuations() 
 
 #[test]
 fn allocation_length_snapshots_prove_map_output_bounds_without_aliasing_the_arrays() {
-    let source = include_str!("../examples/higher-order.gwat");
+    let source = include_str!("../examples/higher-order.wlt");
     let f = facts(source, "$map");
     assert!(
         f.iter()
@@ -131,8 +131,8 @@ fn inferred_ranges_contain_concrete_wrapping_results_at_boundary_constants() {
         }
     }
     source.push(')');
-    let module = gcwat::check(&source).unwrap();
-    let report = serde_json::to_value(gcwat::analysis::analyze(&module)).unwrap();
+    let module = wlt::check(&source).unwrap();
+    let report = serde_json::to_value(wlt::analysis::analyze(&module)).unwrap();
     for (op_index, op) in operations.iter().enumerate() {
         for (c_index, &c) in constants.iter().enumerate() {
             let f = &report["functions"][op_index * constants.len() + c_index];
@@ -174,7 +174,7 @@ fn signed_negative_index_counterexample_is_a_real_wasm_trap() {
         (let $a (array.new_fixed $A 3 (i32.const 1) (i32.const 2) (i32.const 3))
           (if (result i32) (i32.lt_s (i32.const -1) (array.len (local.get $a)))
             (then (array.get $A (local.get $a) (i32.const -1))) (else (i32.const 0))))))"#;
-    let compiled = gcwat::compile(source).unwrap();
+    let compiled = wlt::compile(source).unwrap();
     let report = serde_json::to_value(&compiled.analysis).unwrap();
     let access = report["functions"][0]["facts"]
         .as_array()

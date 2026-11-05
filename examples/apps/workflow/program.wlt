@@ -1,0 +1,53 @@
+(module
+  (include "../../../stdlib/text.wlt")
+  (include "compute.wlt")
+  (include "report.wlt")
+  (import "wlt:host/text-io@0.1.0" "read-lines"
+    (func $read-lines (result (stream (result text i32))))
+  )
+  (namespace $app
+    (public (type $State) (func $advance))
+    (type.alias $State (pair (ref $graph.Graph) i32))
+    (func $mutation (param $n i32) (param $result (result unit (ref $domain.Error)))
+      (result (result unit i32)) (effects reads writes allocates host suspends)
+      (match (local.get $result)
+        (case ok () (result.ok))
+        (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+    )
+
+    (func $process (param $g (ref $graph.Graph)) (param $n i32) (param $line text)
+      (result (result unit i32)) (effects reads writes allocates host suspends)
+      (match (call $parse.command (local.get $line))
+        (case skip () (result.ok))
+        (case invalid ()
+          (call $report.failure
+            (local.get $n)
+            (variant.new $domain.Error invalid (text.lit "format"))))
+        (case task ($id $duration)
+          (call $mutation
+            (local.get $n)
+            (call $graph.add (local.get $g) (local.get $id) (local.get $duration))))
+        (case after ($id $dependency)
+          (call $mutation
+            (local.get $n)
+            (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))))
+        (case plan ($workers)
+          (match (call $planner.run (local.get $g) (local.get $workers))
+            (case ok ($run)
+              (call $report.plan
+                (local.get $n)
+                (local.get $g)
+                (local.get $run)
+                (local.get $workers)))
+            (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+        )))
+
+    (func $advance (param $state $State) (param $line text) (result (result $State i32))
+      (effects reads writes allocates host suspends)
+      (let ($g $previous) (local.get $state)
+        (let $n (i32.add (local.get $previous) (i32.const 1))
+          (result.let ()
+            (call $process (local.get $g) (local.get $n) (local.get $line))
+            (result.ok (pair.new (local.get $g) (local.get $n))))
+        ))))
+)

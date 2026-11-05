@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 const { build } = await import(
-  process.env.GCWAT_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
+  process.env.WLT_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
 );
 import { createEventLoop } from "./host.mjs";
 
@@ -17,9 +17,9 @@ function barrier() {
   return { promise, resolve };
 }
 async function fixture(name, fn) {
-  const dir = await mkdtemp(join(tmpdir(), "gcwat-cancel-"));
+  const dir = await mkdtemp(join(tmpdir(), "wlt-cancel-"));
   try {
-    await build(`tests/component-fixtures/${name}.gwat`, dir);
+    await build(`tests/component-fixtures/${name}.wlt`, dir);
     await fn(await import(pathToFileURL(join(dir, "index.js"))));
   } finally {
     await rm(dir, { recursive: true, force: true });

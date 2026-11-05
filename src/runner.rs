@@ -96,7 +96,7 @@ fn discover(path: &Path, files: &mut BTreeSet<PathBuf>, report: &mut RunReport) 
                 // second copy through one; explicitly supplied paths are allowed.
                 if kind.is_dir()
                     || (kind.is_file()
-                        && entry.file_name().to_string_lossy().ends_with(".test.gwat"))
+                        && entry.file_name().to_string_lossy().ends_with(".test.wlt"))
                 {
                     discover(&entry.path(), files, report);
                 }
@@ -175,7 +175,7 @@ fn invoke(path: &Path, export: &str, timeout: Duration) -> Result<TestOutcome, S
     }
 }
 
-/// Recursively discover `*.test.gwat` in directories; explicit files may have
+/// Recursively discover `*.test.wlt` in directories; explicit files may have
 /// any name. Files are deduplicated and sorted by canonical path. Empty paths
 /// select `tests/` relative to the current directory. Each test runs in a fresh
 /// Wasmtime process/instance. Compile errors and test failures do not stop peers.

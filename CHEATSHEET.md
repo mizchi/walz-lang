@@ -1,4 +1,4 @@
-# gcwat 文法チートシート
+# wlt 文法チートシート
 
 標準 WAT を基底に、型付きの式・GC データ・所有値・固定マクロを追加した言語。
 ここでは拡張を使う型付きコアを扱う。標準 WAT 単体は Wasm validator に通るものを受理するが、任意の WAT 命令と拡張の混在はまだできない。
@@ -269,7 +269,7 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 ## モジュール・不透明な公開型
 
 ```text
-(include "relative.gwat")
+(include "relative.wlt")
 (namespace $stock
   (public (opaque $State) (func $new) (func $get))
   (type $State (struct ...))
@@ -298,23 +298,23 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
 | `$string.u64(i64)` / `$string.s64(i64)` | ビットパターンの符号なし／符号付き十進数化 |
 | `$string.json(text)` | 引用符込みの JSON string |
 
-ライブラリはルート宣言位置で、呼出し元からの相対パスで `stdlib/text.gwat` を include する。
+ライブラリはルート宣言位置で、呼出し元からの相対パスで `stdlib/text.wlt` を include する。
 関数の使用は通常の `(call $string.json ...)`。内部の作業配列を扱う関数は reads/writes/allocates を持つ。
 
 ## 確認コマンド
 
-`examples/gcwat` を作業ディレクトリにする。実行には Wasm GC 対応 Wasmtime、JSPI の実行には Node 24以降を使う。
+`wlt-lang` を作業ディレクトリにする。実行には Wasm GC 対応 Wasmtime、JSPI の実行には Node 24以降を使う。
 
 ```sh
-cargo run --locked -- check path/to/program.gwat
-cargo run --locked -- types path/to/program.gwat
-cargo run --locked -- expand path/to/program.gwat
-cargo run --locked -- fmt path/to/program.gwat
-cargo run --locked -- fmt-check path/to/program.gwat
-cargo run --locked -- test path/to/tests.test.gwat
+cargo run --locked -- check path/to/program.wlt
+cargo run --locked -- types path/to/program.wlt
+cargo run --locked -- expand path/to/program.wlt
+cargo run --locked -- fmt path/to/program.wlt
+cargo run --locked -- fmt-check path/to/program.wlt
+cargo run --locked -- test path/to/tests.test.wlt
 just build-stock-ledger
 just stock-ledger
-node runtime/build-core.mjs path/to/program.gwat target/my-program
+node runtime/build-core.mjs path/to/program.wlt target/my-program
 node runtime/text-cli.mjs target/my-program --input path/to/input.tsv
 ```
 

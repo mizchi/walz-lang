@@ -28,10 +28,10 @@ async function sourceHashes(directory) {
     };
   return {
     candidateSha256: sha256(
-      await readFile(join(directory, "writer/candidate.gwat")),
+      await readFile(join(directory, "writer/candidate.wlt")),
     ),
     sampleSha256: sha256(
-      await readFile(join(directory, "reader/counted.gwat")),
+      await readFile(join(directory, "reader/counted.wlt")),
     ),
   };
 }
@@ -80,8 +80,8 @@ async function worker(directory) {
     const implementation = await implementationFingerprint();
     const subjects = {};
     for (const [name, path] of [
-      ["sample", "reader/counted.gwat"],
-      ["candidate", "writer/candidate.gwat"],
+      ["sample", "reader/counted.wlt"],
+      ["candidate", "writer/candidate.wlt"],
     ]) {
       const source = join(directory, path);
       assertSnapshotIncludes(await readFile(source, "utf8"));
@@ -97,7 +97,7 @@ async function worker(directory) {
       throw new Error("evaluation source changed during execution");
     await checkInputs(directory);
     await save(destination, {
-      schema: "gcwat-eval-verification-v1",
+      schema: "wlt-eval-verification-v1",
       passed: Object.values(subjects).every((s) => s.passed),
       inputsFingerprint,
       ...hashes,

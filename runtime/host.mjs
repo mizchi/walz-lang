@@ -155,7 +155,7 @@ function prefix(items, tail) {
 
 // Only explicitly supplied host objects grant I/O authority to a guest.
 export function createHostImports(options, tasks, bindings = []) {
-  const eventLoop = "gcwat:host/event-loop@0.1.0";
+  const eventLoop = "wlt:host/event-loop@0.1.0";
   const hosts = Object.assign(Object.create(null), options.imports);
   hosts[eventLoop] = tasks.host(
     hosts[eventLoop] ?? options.eventLoop ?? createEventLoop(),

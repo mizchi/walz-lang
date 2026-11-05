@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
-    let loaded = gcwat::source::load("examples/apps/workflow/main.gwat").unwrap();
-    let module = gcwat::compile(loaded.text()).unwrap();
+    let loaded = wlt::source::load("examples/apps/workflow/main.wlt").unwrap();
+    let module = wlt::compile(loaded.text()).unwrap();
     assert!(!module.analysis.opaque);
     for (name, host, suspends) in [
         ("$parse.command", false, false),
@@ -27,8 +27,8 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
             "{name}"
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["test", "examples/apps/workflow/model.test.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "examples/apps/workflow/model.test.wlt"])
         .output()
         .unwrap();
     assert!(
@@ -43,7 +43,7 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
         "{prefix} (func $forge (param $g (ref $graph.Graph)) (result i32) (struct.get $graph.Graph $size (local.get $g))))"
     );
     assert!(
-        gcwat::check(&probe)
+        wlt::check(&probe)
             .unwrap_err()
             .to_string()
             .contains("opaque")
@@ -52,7 +52,7 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
         "{prefix} (func $impure (param $g (ref $graph.Graph)) (result (result (ref $planner.Run) (ref $domain.Error))) (effects pure) (call $planner.run (local.get $g) (i32.const 2))))"
     );
     assert!(
-        gcwat::check(&probe)
+        wlt::check(&probe)
             .unwrap_err()
             .to_string()
             .contains("effect contract")
@@ -61,8 +61,8 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
 
 #[test]
 fn workflow_stress_workloads_run_natively_and_keep_wide_timestamps() {
-    let loaded = gcwat::source::load("examples/apps/workflow/benchmark.gwat").unwrap();
-    let compiled = gcwat::compile(loaded.text()).unwrap();
+    let loaded = wlt::source::load("examples/apps/workflow/benchmark.wlt").unwrap();
+    let compiled = wlt::compile(loaded.text()).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("compute.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();
@@ -94,8 +94,8 @@ fn workflow_stress_workloads_run_natively_and_keep_wide_timestamps() {
 
 #[test]
 fn workflow_ready_queue_handles_ordering_and_interleaved_updates() {
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["test", "examples/apps/workflow/queue.test.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "examples/apps/workflow/queue.test.wlt"])
         .output()
         .unwrap();
     assert!(

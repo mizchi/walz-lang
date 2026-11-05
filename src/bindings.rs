@@ -2,8 +2,8 @@
 use crate::ir::*;
 use crate::{Error, effects::EffectSet};
 
-pub const EVENT_LOOP: &str = "gcwat:host/event-loop@0.1.0";
-pub const TEXT_IO: &str = "gcwat:host/text-io@0.1.0";
+pub const EVENT_LOOP: &str = "wlt:host/event-loop@0.1.0";
+pub const TEXT_IO: &str = "wlt:host/text-io@0.1.0";
 
 pub struct Binding {
     pub params: &'static [&'static str],

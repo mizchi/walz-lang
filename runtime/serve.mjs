@@ -11,12 +11,12 @@ for (const [backend, compile] of [
   for (const [fixture, source] of [
     ...["values", "event-loop", "buffers", "text-library"].map((name) => [
       name,
-      `tests/component-fixtures/${name}.gwat`,
+      `tests/component-fixtures/${name}.wlt`,
     ]),
-    ["text-io", "examples/io/text-filter.gwat"],
-    ["log-stats", "examples/apps/log-stats/main.gwat"],
-    ["stock-ledger", "examples/apps/stock-ledger/main.gwat"],
-    ["workflow", "examples/apps/workflow/main.gwat"],
+    ["text-io", "examples/io/text-filter.wlt"],
+    ["log-stats", "examples/apps/log-stats/main.wlt"],
+    ["stock-ledger", "examples/apps/stock-ledger/main.wlt"],
+    ["workflow", "examples/apps/workflow/main.wlt"],
   ])
     await compile(source, join(directory, backend, fixture));
 await copyFile(
@@ -27,7 +27,7 @@ createServer(async (request, response) => {
   const pathname = new URL(request.url, "http://127.0.0.1").pathname;
   if (["/", "/component/", "/core/"].includes(pathname)) {
     response.writeHead(200, { "content-type": "text/html" });
-    response.end("<!doctype html><title>gcwat JSPI integration</title>");
+    response.end("<!doctype html><title>wlt JSPI integration</title>");
     return;
   }
   const file = resolve(directory, `.${decodeURIComponent(pathname)}`);

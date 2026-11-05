@@ -44,7 +44,7 @@ async function capture(directory) {
       ["compute", "benchmark"],
     ])
       await build(
-        join(root, `examples/apps/workflow/${source}.gwat`),
+        join(root, `examples/apps/workflow/${source}.wlt`),
         join(directory, `${backend}-${kind}`),
       );
   }
@@ -56,7 +56,7 @@ async function capture(directory) {
       "--quiet",
       "--",
       "build",
-      "examples/apps/workflow/benchmark.gwat",
+      "examples/apps/workflow/benchmark.wlt",
       join(directory, "compute.wasm"),
     ],
     { cwd: root },
@@ -65,7 +65,7 @@ async function capture(directory) {
     await copyFile(join(root, "runtime", name), join(directory, name));
   for (const folder of ["examples/apps/workflow", "stdlib"]) {
     for (const name of await readdir(join(root, folder))) {
-      if (!name.endsWith(".gwat")) continue;
+      if (!name.endsWith(".wlt")) continue;
       const target = join(directory, "source", folder, name);
       await mkdir(resolve(target, ".."), { recursive: true });
       await copyFile(join(root, folder, name), target);

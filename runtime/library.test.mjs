@@ -6,12 +6,12 @@ import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 for (const backend of ["core", "component"])
   test(`${backend}: text library agrees with JSON and BigInt, preserving Unicode and every control byte`, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "gcwat-library-"));
+    const dir = await mkdtemp(join(tmpdir(), "wlt-library-"));
     try {
       const { build } = await import(
         backend === "core" ? "./build-core.mjs" : "./build.mjs"
       );
-      await build("tests/component-fixtures/text-library.gwat", dir);
+      await build("tests/component-fixtures/text-library.wlt", dir);
       const { instantiate } = await import(
         pathToFileURL(join(dir, "index.js"))
       );

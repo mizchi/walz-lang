@@ -1,14 +1,14 @@
 {
   "id": "stock-ledger",
-  "version": 1,
+  "version": 2,
   "cheatsheet": "CHEATSHEET.md",
-  "main": "examples/apps/stock-ledger/main.gwat",
-  "counted": "examples/apps/stock-ledger/main-counted.gwat",
+  "main": "examples/apps/stock-ledger/main.wlt",
+  "counted": "examples/apps/stock-ledger/main-counted.wlt",
   "support": [
-    "examples/apps/stock-ledger/program.gwat",
-    "examples/apps/stock-ledger/parse.gwat",
-    "examples/apps/stock-ledger/stock.gwat",
-    "examples/apps/stock-ledger/report.gwat",
+    "examples/apps/stock-ledger/program.wlt",
+    "examples/apps/stock-ledger/parse.wlt",
+    "examples/apps/stock-ledger/stock.wlt",
+    "examples/apps/stock-ledger/report.wlt",
     "stdlib"
   ],
   "axes": ["flow", "types", "scope", "layout", "changes"],

@@ -1,5 +1,5 @@
 fn rejects(source: &str, message: &str) {
-    let error = gcwat::check(source).unwrap_err().to_string();
+    let error = wlt::check(source).unwrap_err().to_string();
     assert!(error.contains(message), "{source}\n{error}");
 }
 
@@ -15,7 +15,7 @@ fn aliases_are_transparent_and_forward_references_share_value_types() {
             (i32.add (struct.get $Cell 0 (local.get $state)) (local.get $n)))))
       (func $main (result i32)
         (call $read (pair.new $State i32 (struct.new $Cell (i32.const 40)) (i32.const 2)))))"#;
-    let module = gcwat::check(source).unwrap();
+    let module = wlt::check(source).unwrap();
     assert_eq!(
         module.type_name(&module.functions[0].locals[0].ty),
         "(pair (ref $Cell) i32)"
@@ -26,12 +26,12 @@ fn aliases_are_transparent_and_forward_references_share_value_types() {
             .iter()
             .all(|ty| ty.name != "$Scan" && ty.name != "$State")
     );
-    gcwat::compile(source).unwrap();
+    wlt::compile(source).unwrap();
 }
 
 #[test]
 fn aliases_cover_storage_signatures_captures_and_tag_payloads() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type.alias $Value (option i32))
       (type $Box (struct (field $value (mut $Value))))
@@ -50,7 +50,7 @@ fn aliases_cover_storage_signatures_captures_and_tag_payloads() {
 
 #[test]
 fn aliases_cover_loop_bindings_results_and_value_constructor_arguments() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type.alias $N i32)
       (type.alias $O (option $N))
@@ -73,7 +73,7 @@ fn aliases_cover_loop_bindings_results_and_value_constructor_arguments() {
 
 #[test]
 fn aliases_work_in_explicit_scoped_forms_and_inferred_constructors() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type.alias $N i64)
       (type.alias $E i32)
@@ -95,8 +95,8 @@ fn aliases_work_in_explicit_scoped_forms_and_inferred_constructors() {
 
 #[test]
 fn unused_aliases_are_checked_without_changing_executable_types() {
-    let plain = gcwat::compile("(module (func $f (result i32) (i32.const 42)))").unwrap();
-    let aliased = gcwat::compile(
+    let plain = wlt::compile("(module (func $f (result i32) (i32.const 42)))").unwrap();
+    let aliased = wlt::compile(
         "(module (type.alias $Unused (option i64)) (func $f (result i32) (i32.const 42)))",
     )
     .unwrap();
@@ -119,15 +119,15 @@ fn aliases_do_not_rewrite_names_in_other_namespaces() {
         (let $Value $Value (local.get $Value) (local.get $Value)))
       (type $Choice (variant (Value $Value)))
       (func $f (result $Value) (call $Value (option.none i32))))"#;
-    let module = gcwat::check(source).unwrap();
+    let module = wlt::check(source).unwrap();
     assert_eq!(module.functions[0].name, "$Value");
     assert_eq!(module.functions[0].locals[0].name, "$Value");
-    gcwat::compile(source).unwrap();
+    wlt::compile(source).unwrap();
 }
 
 #[test]
 fn aliases_preserve_ownership_rules() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type.alias $Owner (own i64))
       (type.alias $Wrapped (option $Owner))
@@ -151,7 +151,7 @@ fn aliases_preserve_ownership_rules() {
 
 #[test]
 fn unit_aliases_are_only_accepted_as_constructed_payloads() {
-    gcwat::compile("(module (type.alias $Nothing unit) (func $f (result (result $Nothing i32)) (result.ok $Nothing i32)))").unwrap();
+    wlt::compile("(module (type.alias $Nothing unit) (func $f (result (result $Nothing i32)) (result.ok $Nothing i32)))").unwrap();
     rejects(
         "(module (type.alias $Nothing unit) (func $f (result $Nothing) (nop)))",
         "expected numeric type",
@@ -160,7 +160,7 @@ fn unit_aliases_are_only_accepted_as_constructed_payloads() {
 
 #[test]
 fn aliases_follow_namespace_visibility_and_use_renaming() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (use $lib (type $Scan $Imported))
       (namespace $lib
@@ -187,7 +187,7 @@ fn aliases_cannot_expose_opaque_representation() {
       (type $State (struct (field i32)))
       (type.alias $Reference (ref $State))
       (func $new (result $Reference) (struct.new $State (i32.const 42))))"#;
-    gcwat::compile(&format!(
+    wlt::compile(&format!(
         "(module {declarations} (func $f (result $lib.Reference) (call $lib.new)))"
     ))
     .unwrap();
@@ -222,7 +222,7 @@ fn malformed_cyclic_duplicate_and_heap_aliases_are_rejected() {
         "(module (type.alias $A (option i32)) (func $f (param $x (ref $A)) (nop)))",
         "(module (type.alias $A (ref $B)) (type $B (struct)) (func $f (result i32) (struct.get $A 0 (struct.new $B))))",
     ] {
-        assert!(gcwat::check(source).is_err(), "{source}");
+        assert!(wlt::check(source).is_err(), "{source}");
     }
 }
 

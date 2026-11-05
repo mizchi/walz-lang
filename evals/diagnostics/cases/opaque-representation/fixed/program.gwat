@@ -1,4 +1,0 @@
-(module
-  (include "lib.gwat")
-  (func $read (param $state (ref $lib.State)) (result i32)
-    (call $lib.get (local.get $state))))

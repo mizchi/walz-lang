@@ -68,7 +68,7 @@ fn assemble(
     }
     for (group, (namespace, functions)) in groups.iter().enumerate() {
         let scope = format!("$host{group}_");
-        let mut exports = format!("(export \"gcwat-unit\" (type {scope}unit (eq $unit)))\n");
+        let mut exports = format!("(export \"wlt-unit\" (type {scope}unit (eq $unit)))\n");
         for ty in &adapter.types {
             if let Type::Value(id) = ty {
                 exports.push_str(&format!(
@@ -152,7 +152,7 @@ fn assemble(
     };
     let mut api_types = format!(
         "(export $api_unit \"{}\" (type $unit))\n",
-        type_name("gcwat-unit".into())
+        type_name("wlt-unit".into())
     );
     for ty in &adapter.types {
         if let Type::Value(id) = ty {
@@ -202,11 +202,11 @@ fn assemble(
         })
         .collect::<String>();
     text.push_str(&format!(
-        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"gcwat-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n(export \"gcwat:generated/api@0.1.0\" (instance $api)))\n",
+        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n(export \"wlt:generated/api@0.1.0\" (instance $api)))\n",
         adapter.declarations()
     ));
     let text = format!(
-        "(component\n(import \"gcwat:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n(alias export $delivery \"gcwat-unit\" (type $unit))\n{aliases}{text}",
+        "(component\n(import \"wlt:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{text}",
         adapter.declarations()
     );
     let wasm = wat::parse_str(&text).map_err(|e| Error::message(format!("component WAT: {e}")))?;

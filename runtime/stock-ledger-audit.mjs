@@ -32,7 +32,7 @@ const metrics = (source) => {
 };
 const variants = [];
 for (const name of ["main-explicit", "main"]) {
-  const file = join(source, name + ".gwat"),
+  const file = join(source, name + ".wlt"),
     directory = join(root, name);
   await build(file, directory);
   const { stdout } = await exec("cargo", [

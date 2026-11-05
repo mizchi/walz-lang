@@ -1,4 +1,4 @@
-# gcwat v0 — WAT の基底と型付き拡張
+# wlt v0 — WAT の基底と型付き拡張
 
 ## 標準 WAT との互換性
 
@@ -9,9 +9,9 @@
 標準 WAT として受理できない追加構文は、以下の型付きコアで名前・型・束縛・網羅性を検査し、標準 WAT へ展開します。
 拡張を含むモジュールの本体は、現在このコアの folded expression 規約に従います。標準 WAT の任意の命令と拡張を混在させるための部分ごとの型推論は未実装です。
 構文ごとの展開は固定し、利用者が eval や任意の処理を実行するマクロシステムは設けません。
-`expand`/`wat` コマンドと `gcwat::expand` で展開結果を確認できます。
+`expand`/`wat` コマンドと `wlt::expand` で展開結果を確認できます。
 
-`gcwat::validate` と CLI の `check` は両経路に対応します。`gcwat::check` は詳細な型を得るための型付きコア API です。
+`wlt::validate` と CLI の `check` は両経路に対応します。`wlt::check` は詳細な型を得るための型付きコア API です。
 `compile` の `ir` は `Option<Module>` とし、標準 WAT がコアの外にある場合は `None` です。
 その場合も Wasm の静的検証を行い、`native::types` と `types` コマンドで関数の引数・複数の戻り値・export を取得できます。式ごとの位置情報は提供しません。
 詳細な解析ができない入力は `analysis.opaque=true` と `module_effects` の全項目 true を返します。空の関数一覧を「作用なし」と解釈してはいけません。
@@ -32,7 +32,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 整数の除算・剰余は Wasm の条件で trap します。浮動小数点も Wasm の意味に従います。
 型付きコアで扱う数値命令の一覧と型制約は `src/ir.rs` の `numeric_ops!` が定義します。標準 WAT 経路の命令集合はこの表に限定しません。
 
-名前解決・静的型検査・effect 契約・所有権の検査は `gcwat::check(&str)` で独立して実行でき、検査済みの型付き IR を返します。law の証明はこの API では実行しません。
+名前解決・静的型検査・effect 契約・所有権の検査は `wlt::check(&str)` で独立して実行でき、検査済みの型付き IR を返します。law の証明はこの API では実行しません。
 関数の引数・戻り値、呼び出し、数値命令、GC データの読み書き・構築、enum の分解、クロージャの捕捉、ループの状態更新をこの段階で検査します。
 型推論は宣言済みの型に基づく単相の推論です。組込みの値型構築子は型引数ごとに具体化します。関数シグネチャの推論、暗黙の数値型変換、利用者定義の汎用関数・汎用型は未実装です。
 戻り値注釈を省略した関数や result を省略した block/if/match の型は unit であり、本体から戻り値型を推論する指定ではありません。
@@ -326,8 +326,8 @@ normal_return_possible=false は正常な継続がないと確認した場合で
 
 ## WIT interface の生成
 
-`gcwat wit file.gwat` と `wit::emit(&module)` は型付きコアの公開関数から WIT を生成します。
-固定の package `gcwat:generated@0.1.0`、interface api、world program を使う型の契約です。この `wit` コマンド自体は実行形式を生成しません。実行用の Component は別の `component` コマンドで生成します。
+`wlt wit file.wlt` と `wit::emit(&module)` は型付きコアの公開関数から WIT を生成します。
+固定の package `wlt:generated@0.1.0`、interface api、world program を使う型の契約です。この `wit` コマンド自体は実行形式を生成しません。実行用の Component は別の `component` コマンドで生成します。
 内部関数とテスト関数は公開せず、引数名は p0/p1/...、export 名は元の lowercase kebab-case を保ちます。WIT のキーワードは escape し、無効な export 名は拒否します。
 
 i32/i64 は既定の境界規約として s32/s64、f32/f64 は同名の WIT 型へ変換します。符号なし整数の意味型はまだありません。
@@ -399,7 +399,7 @@ await/next には、中断境界として suspends を常に付けます。通�
 構築と close 自体は host/suspends を追加しません。物理的な GC 割当て・検査付き cast の trap は従来の低水準の解析に残します。
 ローカル端点の close は消費だけです。Component の外部端点なら drop-readable へ変換し、ホストの dispose/iterator.return を促します。OS I/O、進行中の読み書き、producer task 全体の取消しは保証しません。
 
-`examples/ready-delivery.gwat` は、pair<stream<i64>,future<result<unit,i32>>> を作り、40と2を読み、終端を close し、completion を確認して42を返します。
+`examples/ready-delivery.wlt` は、pair<stream<i64>,future<result<unit,i32>>> を作り、40と2を読み、終端を close し、completion を確認して42を返します。
 同じ所有権の契約を run-verified と Component 生成で検査できます。Component 境界では次節の Canonical ABI adapter を使います。
 所有端点を raw Wasm export に渡すことは引き続き契約付き実行で拒否します。
 
@@ -528,8 +528,8 @@ WASI package は `@0.3.0` を固定し、Component Model/生成ツール/runtime
 
 ### 実装した Component と JSPI の契約
 
-`component source.gwat output.wasm` は型付きコアだけを受け付けます。公開関数の effect 上限、固定した import の名前・シグネチャ、所有権、law を検査し、Lean を通した同じ IR から Component を生成します。
-公開 API は `gcwat:generated/api@0.1.0`。数値、Option/Result、pair、Future/Stream を再帰的に変換します。GC 参照と own box の公開、未知の import、未処理例外は拒否します。内部では GC の循環グラフやクロージャを使えます。
+`component source.wlt output.wasm` は型付きコアだけを受け付けます。公開関数の effect 上限、固定した import の名前・シグネチャ、所有権、law を検査し、Lean を通した同じ IR から Component を生成します。
+公開 API は `wlt:generated/api@0.1.0`。数値、Option/Result、pair、Future/Stream を再帰的に変換します。GC 参照と own box の公開、未知の import、未処理例外は拒否します。内部では GC の循環グラフやクロージャを使えます。
 
 内部の共有値は GC の値表現、外部の Future/Stream は readable handle を持つ非公開の GC subtype です。await/next は対象式を一度だけ評価し、端点を消費します。
 外部 await は `canon future.read`、next は `canon stream.read` へ変換します。同期 Canonical ABI の read が終わるまで JSPI のスタックを中断します。Wasm の GC 参照はこのスタック上で到達可能なまま保持します。
@@ -539,12 +539,12 @@ Stream の read 結果の個数と状態を別々に解釈し、DROPPED と同�
 間接引数は GC 値へ変換してから元の領域を解放します。複合戻り値は呼び出し固有の領域を返し、post-return で解放します。進行中の read 用領域は読み取り完了と lifting の後に解放します。
 trap 後はインスタンス全体を破棄する前提です。破棄後のバッファ再利用や、trap 時の外部操作すべての自動取消しは保証しません。
 
-配送済み Future と有限 Stream の前置要素は、生成した `gcwat:runtime/delivery@0.1.0` の factory に渡します。factory は Promise または pull 型の AsyncIterable を返します。
+配送済み Future と有限 Stream の前置要素は、生成した `wlt:runtime/delivery@0.1.0` の factory に渡します。factory は Promise または pull 型の AsyncIterable を返します。
 producer をゲスト内で走らせないため、戻り値の消費を待ってゲスト呼び出し自体が戻れなくなる循環を作りません。Stream の外部 tail を前置要素に接続でき、close はまだ読んでいない tail にも伝播します。
-unit は future/stream では payload なし、Result では省略 payload、Option/pair の要素では1ケースの `gcwat-unit` enum に変換します。none と some(unit)、unit 要素と EOF を区別します。
+unit は future/stream では payload なし、Result では省略 payload、Option/pair の要素では1ケースの `wlt-unit` enum に変換します。none と some(unit)、unit 要素と EOF を区別します。
 `.wasm.json` は factory と async export の対応を記録する version=2 の manifest で、Component と対にして配布します。
 
-信頼する event-loop import は `gcwat:host/event-loop@0.1.0` の sleep/yield/defer-i64/ticks/fallible-i64 だけです。名前だけでなく型も一致する必要があります。全て host を持ち、sleep/yield は suspends も持ちます。
+信頼する event-loop import は `wlt:host/event-loop@0.1.0` の sleep/yield/defer-i64/ticks/fallible-i64 だけです。名前だけでなく型も一致する必要があります。全て host を持ち、sleep/yield は suspends も持ちます。
 Future を返すだけの defer は suspends を持ちませんが、タイマーの開始という host 作用は保持します。任意の import の effect を利用者が狭める仕組みは追加していません。
 端点の読み取り・close の所有契約は生成先でも維持します。現在の大域的な effect 集合には端点ごとの protocol state は含まれず、pure だけを根拠に所有操作を消去する最適化規則はありません。
 `analysis` の低水準の割当て・trap 情報は既存の core lowering についての要約で、生成した ABI glue とホストの全操作の解析ではありません。
@@ -555,11 +555,11 @@ Lean の Delivery モデルは ready-only のままです。pending 状態、ABI
 
 ### Core＋JSPI の JS 専用 ABI
 
-`core-js source.gwat output-directory` は、上の Component 出力と同じ型・effect・所有権・law の検査を行い、同じ IR から `core.wasm`、`memory.wasm`、`bindings.mjs`、`manifest.json` を生成します。
+`core-js source.wlt output-directory` は、上の Component 出力と同じ型・effect・所有権・law の検査を行い、同じ IR から `core.wasm`、`memory.wasm`、`bindings.mjs`、`manifest.json` を生成します。
 `runtime/build-core.mjs` は、これに共通の `core.mjs` / `host.mjs` / `tasks.mjs` と `index.js` を加えます。JS のビルド・実行に jco をロードしません。
 公開できる型、信頼する import、未処理例外と配送 payload の制約は Component 出力と共通です。GC 参照や own box の公開、所有 payload・入れ子 Future の配送は引き続き拒否します。
 
-manifest の `abi` は `gcwat-core-js-v2`。Core の loader はこの値を検査し、v1 の数値 binding も受け付けます。生成 Wasm・bindings・共通ホストは同じ ABI の組として配布します。
+manifest の `abi` は `wlt-core-js-v2`。Core の loader はこの値を検査し、v1 の数値 binding も受け付けます。生成 Wasm・bindings・共通ホストは同じ ABI の組として配布します。
 これは JS 向けの private ABI であり、標準 Component の Canonical async ABI / WASI future・stream handle の実装ではありません。
 数値・variant・pair・bytes/text のメモリレイアウトとアリーナは既存の adapter を共有します。引数は常に間接渡しで、引数があれば packed tuple のポインタ1つを渡し、全て GC 値へ lifting した後に元の領域を解放します。
 unit 以外の戻り値もポインタを返し、生成した JS が値をコピー・端点を移譲した後、finally 内の post-return で領域を解放します。unit 戻り値は値を渡しません。
@@ -599,7 +599,7 @@ Canonical read の完了またはキャンセルの通知を受けるまでは�
 同期の直接 API は同期値を返し、他タスクの実行・解放中の呼び出しは busy で拒否します。start を使えば同期関数もキューへ追加できます。async API の直接呼び出しは従来どおりキューで直列化します。
 
 取消しは CPU 処理を強制停止せず、既に行った副作用を巻き戻しません。ホストの操作や dispose が終了しない場合には、終了確認も完了しないことがあります。
-現行の [Component Model の取消し規約](https://github.com/WebAssembly/component-model/blob/main/design/mvp/Concurrency.md#cancellation) は、callback ABI のタスクへ要求と確認を配送します。この実装は同期 ABI/JSPI 用の gcwat の制御層であり、native `subtask.cancel` / `task.cancel` を直接使う実装ではありません。writer、言語側の producer task、ゲストから他タスクを取り消す構文は追加していません。
+現行の [Component Model の取消し規約](https://github.com/WebAssembly/component-model/blob/main/design/mvp/Concurrency.md#cancellation) は、callback ABI のタスクへ要求と確認を配送します。この実装は同期 ABI/JSPI 用の wlt の制御層であり、native `subtask.cancel` / `task.cancel` を直接使う実装ではありません。writer、言語側の producer task、ゲストから他タスクを取り消す構文は追加していません。
 jco の補正には pending-copy のキャンセル接続、取消し完了後にホストの iterator.next を待ち続けない処理、ホスト解放の終了確認を含めます。これらも runtime の TCB です。
 
 `proof/Tasks.lean` は、要求が解放を完了させるわけではないこと、read 終了前のバッファ解放拒否、全資源・ホスト解放の終了前の acknowledgment 拒否、返却後の取消しが無効であることを状態モデル上で検証します。
@@ -668,7 +668,7 @@ JS では bytes は Uint8Array、text は string です。文字列の lowering 
 Wasm/Component 向けの `(export "name")` はルートの定義関数に限ります。ライブラリからの公開と ABI export は別の指定です。
 `public (type $T)` はフィールドを含む定義を公開します。`public (opaque $T)` は型だけを公開し、表現への操作を宣言 namespace 内に制限します。フィールド単位の private は未実装です。詳細は末尾の opaque 型の節を参照してください。
 
-ファイル分割は宣言位置の `(include "relative.gwat")` で行います。ファイルは `(module declarations...)` を含み、その宣言を展開します。
+ファイル分割は宣言位置の `(include "relative.wlt")` で行います。ファイルは `(module declarations...)` を含み、その宣言を展開します。
 include 自体はスコープを作りません。ライブラリ側で namespace を宣言するか、呼び出し側の namespace の中に include します。
 パスは include を書いたファイルからの相対位置で解決します。絶対パス、循環、深さ64以上、展開後16 MiBを超える入力は拒否します。
 同一ファイルを自動で一度だけにする処理はなく、重複する宣言はエラーです。
@@ -681,7 +681,7 @@ IR の Span は展開後の text に対する範囲です。診断は `loaded.di
 
 ## 値だけを渡す text I/O capability
 
-`gcwat:host/text-io@0.1.0` は固定した信頼境界です。`read-lines` は `stream<result<text,i32>>`、`write-line(text)` は `future<result<unit,i32>>` を返します。
+`wlt:host/text-io@0.1.0` は固定した信頼境界です。`read-lines` は `stream<result<text,i32>>`、`write-line(text)` は `future<result<unit,i32>>` を返します。
 通常の I/O 失敗は Result、ホストの契約違反や cleanup の失敗は実行の失敗として区別します。両関数の作用は host であり、端点を返す呼び出し自体は中断せず、await/next が suspends を持ちます。
 名前と型は `bindings::validate` で検査し、公開関数の effect 上限と所有権・law は既存の検査を通します。言語の構文や所有権規則は追加しません。
 
@@ -710,12 +710,12 @@ read の失敗では source を閉じて Result.err を一度配送し、その�
 ### Node CLI
 
 `text-cli.mjs output-directory [--input file] [--output file]` は main を引数なしで呼び、`result<i32,i32>` を受け取ります。既定の接続先は stdin/stdout、ファイルは host 側で遅延して開きます。
-`examples/io/text-filter.gwat` は空行を除いて出力し、成功時は行数を返します。stdout に行数や manifest を混ぜません。
+`examples/io/text-filter.wlt` は空行を除いて出力し、成功時は行数を返します。stdout に行数や manifest を混ぜません。
 終了コードは成功0、Result.err または実行失敗1、SIGINT による TaskCancelledError は130です。SIGINT 後も cleanup の終了を待ち、読み書き途中のファイルを閉じます。
 同じ path または同じファイルを指す入力・出力は、書き込み前に拒否します。出力ファイルは明示的に選んだものを作成・上書きし、空の出力でも空ファイルにします。
 Node の handle 管理は runtime/node-io.mjs に分離します。通常完了で借用した stdout を閉じることはせず、factory で開いたファイルは end/close まで待ちます。Node 版の取消しでは入出力の stream を閉じるため、一回の実行スコープへ接続します。
 
-この WIT と接続コードは gcwat 固有であり、wasi:* package の実装や汎用の WIT import generator ではありません。既存の Lean モデルを拡張した意味保存の証明は追加しておらず、Rust/Node/Chromium の実行検査で接続を照合します。
+この WIT と接続コードは wlt 固有であり、wasi:* package の実装や汎用の WIT import generator ではありません。既存の Lean モデルを拡張した意味保存の証明は追加しておらず、Rust/Node/Chromium の実行検査で接続を照合します。
 
 ## 文字列ライブラリと配列のコピー
 
@@ -724,11 +724,11 @@ Node の handle 管理は runtime/node-io.mjs に分離します。通常完了�
 可変配列を読む場合は reads を持ち、memory 解析にも対象の要素読み取りを残す。返す値から元配列への参照はない。
 新しい bytes 自身に観測可能な identity はないので、格納用の物理的な割当てと semantic allocates は区別する。
 
-ルートの宣言位置で `(include "stdlib/text.gwat")` を使う。include のパスは呼出し元からの相対位置に合わせる。
+ルートの宣言位置で `(include "stdlib/text.wlt")` を使う。include のパスは呼出し元からの相対位置に合わせる。
 `$buffer.concat(bytes,bytes)`、`$string.concat(text,text)`、`$string.u64(i64)`、`$string.s64(i64)`、`$string.json(text)` を提供する。
 u64 は64 bitのビットパターンを符号なし十進数へ、s64 は符号付き十進数へ変換する。
 json は引用符を含む JSON string を返し、quote/backslash/制御文字をエスケープする。
-これらは通常の gcwat の関数で、ローカルな GC 配列の構築・変更を含むため reads/writes/allocates の上限を持つ。
+これらは通常の wlt の関数で、ローカルな GC 配列の構築・変更を含むため reads/writes/allocates の上限を持つ。
 可変な作業配列と、公開する不変の bytes/text はコピーで分離する。concat の計算量は入力長の合計に比例する。
 
 ## Result と Stream の限定マクロ
@@ -772,7 +772,7 @@ result.let の err 経路に別の所有値が残る場合も拒否する。
 
 ## ソースの整形と CLI の診断
 
-`gcwat fmt file.gwat` はそのファイルだけを整形し、`fmt-check` は未整形なら終了コード1を返す。include の参照先へ自動的に書き込まない。
+`wlt fmt file.wlt` はそのファイルだけを整形し、`fmt-check` は未整形なら終了コード1を返す。include の参照先へ自動的に書き込まない。
 文字列のエスケープ、行コメント、入れ子のブロックコメントを保持し、トークン間の空白だけを変更する。
 括弧・文字列・コメントが閉じていなければ書き込まない。閉じていない括弧は開始位置を報告する。
 formatter は型検査の代わりではなく、標準 WAT のスタック構文にも使える。

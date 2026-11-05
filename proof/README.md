@@ -5,11 +5,11 @@
 
 ```sh
 just proof-check
-just verify examples/verified-laws.gwat
-just run-verified examples/ownership.gwat
-just run-verified examples/ready-delivery.gwat
-just contracts examples/ownership.gwat
-just proof examples/verified-laws.gwat
+just verify examples/verified-laws.wlt
+just run-verified examples/ownership.wlt
+just run-verified examples/ready-delivery.wlt
+just contracts examples/ownership.wlt
+just proof examples/verified-laws.wlt
 ```
 
 Lean は `leanprover/lean4:v4.34.1` に固定します。Rust の verified 経路は、コンパイル時に埋め込んだ Ownership.lean と型付き IR から証明用ソースを生成します。
@@ -23,7 +23,7 @@ Lean がない場合も、証明が失敗した場合も、Wasm を出力・実�
 loop は再帰的に実行しません。入口の状態と、again の戻す状態の一致を検査します。停止性や、いつか close に到達することは保証しません。
 
 正常系の証人として、同じ所有値をそれぞれの分岐で1回ずつ消費する契約を受理します。破れた証人として、二重消費、片方だけ消費する分岐、外側の所有値を失うループ、消費せず抜けるスコープを拒否します。
-Lean ファイル内の example と `tests/verified.rs` が独立した検査器でこれらを確認し、`tests/ownership.rs` は対応する gcwat の実コードが拒否されることも検査します。
+Lean ファイル内の example と `tests/verified.rs` が独立した検査器でこれらを確認し、`tests/ownership.rs` は対応する wlt の実コードが拒否されることも検査します。
 `sorry` や独自の公理は使いません。Lean の標準論理とカーネルを信頼します。
 
 ## アプリケーションの law
@@ -40,7 +40,7 @@ Delivery.lean は、ready または closed の Future と、有限列を持つ o
 await の後に同じ Future を読めないこと、closed Stream を読めないこと、終端でも open の端点が返ること、next の反復が元の列の take/drop に一致することを証明します。
 Stream の EOF は別の completion Future の Result に影響しません。
 このモデルも契約付き実行時の Lean ソースへ含めます。読み取りと close の利用回数は既存の所有権の契約で検査します。
-`tests/delivery.rs` と `tests/programs/delivery.test.gwat` は、対応する実コードを Wasm GC で実行し、順序・再読・unit・GC 参照・評価回数・終了を照合します。
+`tests/delivery.rs` と `tests/programs/delivery.test.wlt` は、対応する実コードを Wasm GC で実行し、順序・再読・unit・GC 参照・評価回数・終了を照合します。
 WIT の future/stream への変換は `tests/wit.rs` で実際に encode/validate します。
 モデルは ready-only です。pending、writer、backpressure、外部 I/O、producer task の取消しを証明したものではありません。
 

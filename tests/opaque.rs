@@ -7,7 +7,7 @@ fn opaque_types_hide_representation_through_aliases_and_inferred_references() {
     let valid = format!(
         "(module {declarations} (func $main (result i32) (call $lib.get (call $lib.new))))"
     );
-    gcwat::compile(&valid).unwrap();
+    wlt::compile(&valid).unwrap();
     for body in [
         "(struct.new $S (i32.const 0))",
         "(struct.get $S $n (call $lib.new))",
@@ -22,7 +22,7 @@ fn opaque_types_hide_representation_through_aliases_and_inferred_references() {
             "(struct.set $S $n (call $lib.new) (i32.const 0))",
         );
         assert!(
-            gcwat::check(&source)
+            wlt::check(&source)
                 .unwrap_err()
                 .to_string()
                 .contains("opaque"),
@@ -33,7 +33,7 @@ fn opaque_types_hide_representation_through_aliases_and_inferred_references() {
       (func $new (result (ref $A)) (array.new $A (i32.const 0) (i32.const 2))))
       (func $bad (result i32) (array.len (call $a.new))))"#;
     assert!(
-        gcwat::check(source)
+        wlt::check(source)
             .unwrap_err()
             .to_string()
             .contains("opaque")

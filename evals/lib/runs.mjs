@@ -128,24 +128,24 @@ export async function prepareRun(
       );
       await copyFile(
         join(root, suite.main),
-        join(directory, role, "main.gwat"),
+        join(directory, role, "main.wlt"),
       );
       await copyFile(
         join(evalRoot, "stock-ledger/contract.md"),
         join(directory, role, "contract.md"),
       );
       await writeFile(
-        join(directory, role, "program.gwat"),
-        '(module (include "../support/examples/apps/stock-ledger/program.gwat"))\n',
+        join(directory, role, "program.wlt"),
+        '(module (include "../support/examples/apps/stock-ledger/program.wlt"))\n',
       );
     }
     await copyFile(
       join(root, suite.counted),
-      join(directory, "reader/counted.gwat"),
+      join(directory, "reader/counted.wlt"),
     );
     await copyFile(
       join(root, suite.main),
-      join(directory, "writer/candidate.gwat"),
+      join(directory, "writer/candidate.wlt"),
     );
     await copyFile(
       join(evalRoot, "stock-ledger/rubric.md"),
@@ -157,15 +157,15 @@ export async function prepareRun(
     );
     await save(join(directory, "metrics.json"), {
       main: metrics(
-        await readFile(join(directory, "reader/main.gwat"), "utf8"),
+        await readFile(join(directory, "reader/main.wlt"), "utf8"),
       ),
       counted: metrics(
-        await readFile(join(directory, "reader/counted.gwat"), "utf8"),
+        await readFile(join(directory, "reader/counted.wlt"), "utf8"),
       ),
     });
     const values = {
       READER_OUTPUT: join(directory, "reader.json"),
-      CANDIDATE: join(directory, "writer/candidate.gwat"),
+      CANDIDATE: join(directory, "writer/candidate.wlt"),
       WRITER_OUTPUT: join(directory, "writer/report.json"),
       PROJECT_ROOT: root,
       CHECK_COMMAND: command([
@@ -175,7 +175,7 @@ export async function prepareRun(
         "--quiet",
         "--",
         "check",
-        join(directory, "writer/candidate.gwat"),
+        join(directory, "writer/candidate.wlt"),
       ]),
       REVIEW_COMMAND: command([
         "node",
@@ -222,19 +222,19 @@ export async function prepareRun(
         "reader/cheatsheet.md",
         "reader/contract.md",
         "reader/rubric.md",
-        "reader/main.gwat",
-        "reader/counted.gwat",
+        "reader/main.wlt",
+        "reader/counted.wlt",
       ],
       writer: [
         "writer/task.md",
         "writer/cheatsheet.md",
         "writer/contract.md",
-        "writer/main.gwat",
-        "writer/candidate.gwat",
+        "writer/main.wlt",
+        "writer/candidate.wlt",
       ],
     };
     await save(join(directory, "manifest.json"), {
-      schema: "gcwat-eval-v1",
+      schema: "wlt-eval-v1",
       id,
       suite,
       preparedAt: new Date().toISOString(),
@@ -250,7 +250,7 @@ export async function prepareRun(
     const hashes = {};
     for (const file of await files(directory)) {
       const name = relative(directory, file);
-      if (name !== "writer/candidate.gwat")
+      if (name !== "writer/candidate.wlt")
         hashes[name] = sha256(await readFile(file));
     }
     await save(join(directory, "inputs.json"), hashes);
@@ -383,9 +383,9 @@ export async function scoreRun(directory) {
       execution.node === process.version &&
       execution.inputsFingerprint === inputsFingerprint &&
       execution.candidateSha256 ===
-        sha256(await readFile(join(directory, "writer/candidate.gwat"))) &&
+        sha256(await readFile(join(directory, "writer/candidate.wlt"))) &&
       execution.sampleSha256 ===
-        sha256(await readFile(join(directory, "reader/counted.gwat")))
+        sha256(await readFile(join(directory, "reader/counted.wlt")))
     );
     const executionPassed = !!(
       currentExecution &&
@@ -413,7 +413,7 @@ export async function scoreRun(directory) {
       executionPassed &&
       writerPassed;
     result = {
-      schema: "gcwat-eval-summary-v1",
+      schema: "wlt-eval-summary-v1",
       id: manifest.id,
       status: incomplete ? "incomplete" : passed ? "pass" : "fail",
       passed,
@@ -442,7 +442,7 @@ export async function scoreRun(directory) {
     };
   } catch (e) {
     result = {
-      schema: "gcwat-eval-summary-v1",
+      schema: "wlt-eval-summary-v1",
       status: "invalid",
       passed: false,
       error: e.message,

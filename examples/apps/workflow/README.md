@@ -1,6 +1,6 @@
 # 依存グラフのワークフロープランナー
 
-gcwat だけで入力の解析・グラフ管理・実行順の計算・JSON Lines の組み立てを行う。
+wlt だけで入力の解析・グラフ管理・実行順の計算・JSON Lines の組み立てを行う。
 仮想時刻上のスケジューラーであり、実際の外部ジョブを起動する機能ではない。
 言語仕様・コンパイラ・ランタイムに新機能を追加せず、既存の GC、enum、Result、opaque、loop、text I/O を組み合わせた。
 
@@ -12,7 +12,7 @@ just test-workflow
 just test-workflow-stress      # 65,795行を含む I/O 負荷も両バックエンドで検証
 ```
 
-`examples/gcwat` を作業ディレクトリにする。Node 24以降、pnpm の依存関係、Wasm GC 対応 Wasmtime が必要。
+`wlt-lang` を作業ディレクトリにする。Node 24以降、pnpm の依存関係、Wasm GC 対応 Wasmtime が必要。
 通常の CLI は軽い Core＋JSPI 出力を使う。テストでは Core＋JSPI と Component の両方を検証する。
 
 ## 入出力
@@ -69,17 +69,17 @@ flowchart LR
 
 | ファイル | 担当 |
 |---|---|
-| [domain.gwat](domain.gwat) | Command と Error の enum |
-| [parse.gwat](parse.gwat) | bytes/text からの厳密な入力解析 |
-| [graph.gwat](graph.gwat) | opaque な Graph / Job / Link、拡張する配列とハッシュ索引、共有 GC の依存リスト |
-| [queue.gwat](queue.gwat) | 宣言順の最小ジョブ番号を選ぶ、容量固定の min-heap |
-| [planner.gwat](planner.gwat) | 入次数・逆向きの依存配列、状態遷移、仮想イベントループ、循環による停止検出 |
-| [report.gwat](report.gwat) | JSON の構築と非同期書き出し |
-| [program.gwat](program.gwat) | 業務エラーと I/O エラーの区別、行番号の状態 |
-| [main.gwat](main.gwat) | Stream の fold と終了処理 |
-| [model.test.gwat](model.test.gwat) | Wasmtime で動く12件のモデルテスト |
-| [queue.test.gwat](queue.test.gwat) | 空・単一要素・逆順挿入・途中挿入を含む3件のヒープテスト |
-| [benchmark.gwat](benchmark.gwat) | I/O を経由しない大きいグラフの検証・計測 |
+| [domain.wlt](domain.wlt) | Command と Error の enum |
+| [parse.wlt](parse.wlt) | bytes/text からの厳密な入力解析 |
+| [graph.wlt](graph.wlt) | opaque な Graph / Job / Link、拡張する配列とハッシュ索引、共有 GC の依存リスト |
+| [queue.wlt](queue.wlt) | 宣言順の最小ジョブ番号を選ぶ、容量固定の min-heap |
+| [planner.wlt](planner.wlt) | 入次数・逆向きの依存配列、状態遷移、仮想イベントループ、循環による停止検出 |
+| [report.wlt](report.wlt) | JSON の構築と非同期書き出し |
+| [program.wlt](program.wlt) | 業務エラーと I/O エラーの区別、行番号の状態 |
+| [main.wlt](main.wlt) | Stream の fold と終了処理 |
+| [model.test.wlt](model.test.wlt) | Wasmtime で動く12件のモデルテスト |
+| [queue.test.wlt](queue.test.wlt) | 空・単一要素・逆順挿入・途中挿入を含む3件のヒープテスト |
+| [benchmark.wlt](benchmark.wlt) | I/O を経由しない大きいグラフの検証・計測 |
 
 グラフと実行状態は別の opaque 型にした。可変フィールドは API の背後に置き、計画アルゴリズムから表現へ直接アクセスしない。
 同じ GC グラフに対して複数の計画を作れる。計画用の入次数・逆向き辺・ヒープは結果の Run から参照せず、計算後は回収可能になる。

@@ -49,7 +49,7 @@ for (const backend of ["core", "component"])
     `${backend}: inventory operations agree with a Map oracle, scoped cleanup and the explicit control-flow version`,
     { timeout: 180000 },
     async () => {
-      const root = await mkdtemp(join(tmpdir(), "gcwat-stock-"));
+      const root = await mkdtemp(join(tmpdir(), "wlt-stock-"));
       try {
         const { build } = await import(
           backend === "core" ? "./build-core.mjs" : "./build.mjs"
@@ -57,7 +57,7 @@ for (const backend of ["core", "component"])
         const runtimes = [];
         for (const name of ["main", "main-explicit", "main-counted"]) {
           const output = join(root, name);
-          await build(`${directory}/${name}.gwat`, output);
+          await build(`${directory}/${name}.wlt`, output);
           await instrument(output, backend);
           runtimes.push({
             ...(await import(pathToFileURL(join(output, "index.js")))),
@@ -244,7 +244,7 @@ for (const backend of ["core", "component"])
           }
         const errors = join(root, "errors");
         await build(
-          "tests/component-fixtures/stock-ledger-errors.gwat",
+          "tests/component-fixtures/stock-ledger-errors.wlt",
           errors,
         );
         await instrument(errors, backend);

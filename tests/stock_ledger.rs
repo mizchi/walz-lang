@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn stock_ledger_models_and_effect_boundaries_are_checked() {
-    let loaded = gcwat::source::load("examples/apps/stock-ledger/main.gwat").unwrap();
-    let compiled = gcwat::compile(loaded.text()).unwrap();
+    let loaded = wlt::source::load("examples/apps/stock-ledger/main.wlt").unwrap();
+    let compiled = wlt::compile(loaded.text()).unwrap();
     for (name, host, suspends) in [
         ("$stock.add", false, false),
         ("$stock.take", false, false),
@@ -24,8 +24,8 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
             (host, suspends)
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["test", "examples/apps/stock-ledger/model.test.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "examples/apps/stock-ledger/model.test.wlt"])
         .output()
         .unwrap();
     assert!(
@@ -40,7 +40,7 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
     let probe = probe.trim_end().strip_suffix(')').unwrap().to_owned()
         + " (func $forge (param $s (ref $stock.State)) (struct.set $stock.State $size (local.get $s) (i32.const 0))))";
     assert!(
-        gcwat::check(&probe)
+        wlt::check(&probe)
             .unwrap_err()
             .to_string()
             .contains("opaque")
@@ -55,7 +55,7 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
       (func $bad-pure (param $s (ref $stock.State)) (result (result i64 (ref $stock.Error))) (effects pure)
         (call $stock.add (local.get $s) (text.lit "a") (i64.const 1))))"#;
     assert!(
-        gcwat::check(&pure)
+        wlt::check(&pure)
             .unwrap_err()
             .to_string()
             .contains("effect contract")

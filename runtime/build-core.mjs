@@ -17,7 +17,7 @@ export async function build(source, directory) {
   const manifest = JSON.parse(
     await readFile(join(output, "manifest.json"), "utf8"),
   );
-  if (manifest.abi !== "gcwat-core-js-v2")
+  if (manifest.abi !== "wlt-core-js-v2")
     throw new Error("unsupported Core JS ABI");
   for (const name of ["core.mjs", "host.mjs", "tasks.mjs"])
     await copyFile(new URL(name, import.meta.url), join(output, name));
@@ -42,7 +42,7 @@ if (
   const [source, output] = process.argv.slice(2);
   if (!source || !output)
     throw new Error(
-      "usage: node runtime/build-core.mjs source.gwat output-directory",
+      "usage: node runtime/build-core.mjs source.wlt output-directory",
     );
   await build(source, output);
 }

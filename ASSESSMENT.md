@@ -38,36 +38,36 @@ just test      # 型検査、Wasm 検証、境界入力、実行時失敗も確�
 
 | サンプル | 内容・結果 | 確認した性質 |
 |---|---|---|
-| [closure](examples/closure.gwat) | 生成したクロージャを返して呼ぶ → 42 | 捕捉値の寿命が呼び出し元より長い |
-| [counter](examples/counter.gwat) | 捕捉した Cell を2回更新 → 42 | 参照の共有と明示的な変更 |
-| [collections](examples/collections.gwat) | 配列の更新と総和 → 42 | 配列、添字、状態引数付きループ |
-| [list](examples/list.gwat) | 再帰リストの総和 → 42 | 再帰型、nullable 参照 |
-| [factorial](examples/factorial.gwat) | 10! → 3628800 | 0!、5! も確認。ループはスタックを増やさない |
-| [mutual-recursion](examples/mutual-recursion.gwat) | 偶奇判定 → 1 | 前方参照、相互再帰、0 と奇数も確認 |
-| [ast-interpreter](examples/ast-interpreter.gwat) | `(20 * 2) + 2` の AST 評価 → 42 | 再帰 enum、non-null な子、網羅的な分岐 |
-| [variants](examples/variants.gwat) | Option の some → 42 | payload のない none → 0 も確認 |
-| [graph-cycle](examples/graph-cycle.gwat) | 2ノードの循環を構築・走査 → 42 | 循環参照、参照同一性、参照型のループ状態 |
-| [sorting](examples/sorting.gwat) | 挿入ソート → 12345 | 空配列、負数、重複要素も確認 |
-| [binary-search](examples/binary-search.gwat) | 7 の位置 → 3 | 未発見 -1、先頭 0、末尾 4、ループの途中終了 |
-| [matrix](examples/matrix.gwat) | 2×2 行列積の総和 → 134 | 3重ループ。結果の全要素 19/22/43/50 も確認 |
-| [higher-order](examples/higher-order.gwat) | map と fold → 42 | 具体的なクロージャ型を引数で受け取る |
-| [closure-compose](examples/closure-compose.gwat) | 2つのクロージャを合成 → 42 | 環境に別のクロージャを捕捉する |
-| [result](examples/result.gwat) | 検査付き除算 → 42 | ゼロ除算と MIN/-1 を値として返す |
-| [value-types](examples/value-types.gwat) | Option<Result<i64,i32>> の取り出し → 42 | 入れ子の値型、pure 契約、WIT への変換 |
-| [ownership](examples/ownership.gwat) | 所有値の組とクロージャ → 42 | 明示 move、once-call、明示 close、Lean での再検査 |
-| [verified-laws](examples/verified-laws.gwat) | law の証明後に加算 → 42 | 全 i32 入力の加算の性質、変更で law が破れると実行を拒否 |
-| [ready-delivery](examples/ready-delivery.gwat) | Stream の総和と completion の確認 → 42 | 端点の move と close、終端と Result の区別、suspends、Lean の再検査 |
-| [state-machine](examples/state-machine.gwat) | 状態2、イベント4回 → 204 | 可変 struct、明示的な遷移 |
-| [text-parser](examples/text-parser.gwat) | ASCII の `12+30` → 42 | 空入力、不正文字、右辺欠落、末尾の余分な文字、0+0 |
-| [hash-map](examples/hash-map.gwat) | 衝突・更新後の値の合計 → 42 | キー1/9の衝突、既存キーの更新、未発見 |
-| [numeric](examples/numeric.gwat) | Newton 反復で √1764 → 42 | f64、0 と √81。標準 sqrt の全入力に対応する実装ではない |
-| [host-import](examples/host-import.gwat) | コンパイル可、実行は未解決 import で失敗 | ホストとの接続が必要な境界 |
-| [tagged-invalid](examples/tagged-invalid.gwat) | コンパイル可、実行は null trap | 手動のタグとフィールドの整合性は保証されない |
-| [numeric-conversion](examples/numeric-conversion.gwat) | 標準 WAT の整数→浮動小数点変換 → 42 | 元の WAT を維持して受理 |
-| [math-intrinsic](examples/math-intrinsic.gwat) | 標準 WAT の sqrt → 42 | フロントエンドの命令表に限定しない |
-| [tail-call](examples/tail-call.gwat) | return_call で100000回反復 → 42 | 標準 Wasm の末尾呼び出しを受理 |
-| [for-loop](examples/for-loop.gwat) | for の総和 + 36 → 42 | 明示的な状態と while/step、loop/br への展開 |
-| [exceptions](examples/exceptions.gwat) | 除算 → 42、ゼロ除算の明示 throw → -1 | tag/throw/try_table、通常値と handler の結果 |
+| [closure](examples/closure.wlt) | 生成したクロージャを返して呼ぶ → 42 | 捕捉値の寿命が呼び出し元より長い |
+| [counter](examples/counter.wlt) | 捕捉した Cell を2回更新 → 42 | 参照の共有と明示的な変更 |
+| [collections](examples/collections.wlt) | 配列の更新と総和 → 42 | 配列、添字、状態引数付きループ |
+| [list](examples/list.wlt) | 再帰リストの総和 → 42 | 再帰型、nullable 参照 |
+| [factorial](examples/factorial.wlt) | 10! → 3628800 | 0!、5! も確認。ループはスタックを増やさない |
+| [mutual-recursion](examples/mutual-recursion.wlt) | 偶奇判定 → 1 | 前方参照、相互再帰、0 と奇数も確認 |
+| [ast-interpreter](examples/ast-interpreter.wlt) | `(20 * 2) + 2` の AST 評価 → 42 | 再帰 enum、non-null な子、網羅的な分岐 |
+| [variants](examples/variants.wlt) | Option の some → 42 | payload のない none → 0 も確認 |
+| [graph-cycle](examples/graph-cycle.wlt) | 2ノードの循環を構築・走査 → 42 | 循環参照、参照同一性、参照型のループ状態 |
+| [sorting](examples/sorting.wlt) | 挿入ソート → 12345 | 空配列、負数、重複要素も確認 |
+| [binary-search](examples/binary-search.wlt) | 7 の位置 → 3 | 未発見 -1、先頭 0、末尾 4、ループの途中終了 |
+| [matrix](examples/matrix.wlt) | 2×2 行列積の総和 → 134 | 3重ループ。結果の全要素 19/22/43/50 も確認 |
+| [higher-order](examples/higher-order.wlt) | map と fold → 42 | 具体的なクロージャ型を引数で受け取る |
+| [closure-compose](examples/closure-compose.wlt) | 2つのクロージャを合成 → 42 | 環境に別のクロージャを捕捉する |
+| [result](examples/result.wlt) | 検査付き除算 → 42 | ゼロ除算と MIN/-1 を値として返す |
+| [value-types](examples/value-types.wlt) | Option<Result<i64,i32>> の取り出し → 42 | 入れ子の値型、pure 契約、WIT への変換 |
+| [ownership](examples/ownership.wlt) | 所有値の組とクロージャ → 42 | 明示 move、once-call、明示 close、Lean での再検査 |
+| [verified-laws](examples/verified-laws.wlt) | law の証明後に加算 → 42 | 全 i32 入力の加算の性質、変更で law が破れると実行を拒否 |
+| [ready-delivery](examples/ready-delivery.wlt) | Stream の総和と completion の確認 → 42 | 端点の move と close、終端と Result の区別、suspends、Lean の再検査 |
+| [state-machine](examples/state-machine.wlt) | 状態2、イベント4回 → 204 | 可変 struct、明示的な遷移 |
+| [text-parser](examples/text-parser.wlt) | ASCII の `12+30` → 42 | 空入力、不正文字、右辺欠落、末尾の余分な文字、0+0 |
+| [hash-map](examples/hash-map.wlt) | 衝突・更新後の値の合計 → 42 | キー1/9の衝突、既存キーの更新、未発見 |
+| [numeric](examples/numeric.wlt) | Newton 反復で √1764 → 42 | f64、0 と √81。標準 sqrt の全入力に対応する実装ではない |
+| [host-import](examples/host-import.wlt) | コンパイル可、実行は未解決 import で失敗 | ホストとの接続が必要な境界 |
+| [tagged-invalid](examples/tagged-invalid.wlt) | コンパイル可、実行は null trap | 手動のタグとフィールドの整合性は保証されない |
+| [numeric-conversion](examples/numeric-conversion.wlt) | 標準 WAT の整数→浮動小数点変換 → 42 | 元の WAT を維持して受理 |
+| [math-intrinsic](examples/math-intrinsic.wlt) | 標準 WAT の sqrt → 42 | フロントエンドの命令表に限定しない |
+| [tail-call](examples/tail-call.wlt) | return_call で100000回反復 → 42 | 標準 Wasm の末尾呼び出しを受理 |
+| [for-loop](examples/for-loop.wlt) | for の総和 + 36 → 42 | 明示的な状態と while/step、loop/br への展開 |
+| [exceptions](examples/exceptions.wlt) | 除算 → 42、ゼロ除算の明示 throw → -1 | tag/throw/try_table、通常値と handler の結果 |
 
 各例は小さな実装であり、汎用ライブラリとしての完全性を示すものではない。
 例えば行列関数は入力配列のサイズを呼び出し側が満たす前提、ハッシュマップは8バケット固定、テキスト解析は `DIGIT+ "+" DIGIT+` に限定している。
@@ -77,9 +77,9 @@ just test      # 型検査、Wasm 検証、境界入力、実行時失敗も確�
 
 | 不足 | 根拠 | 現状の対処 | 追加するなら主にどの層か |
 |---|---|---|---|
-| 共通の callable 型・型による汎用化 | [heterogeneous-closures](examples/probes/heterogeneous-closures.gwat) は同じシグネチャでも型不一致 | callback 型ごとの関数、または分岐する1つのラッパー型を書く | フロントエンドで単相化。動的ディスパッチは別途検討 |
-| 外側ループへの直接の再反復 | [outer-recur](examples/probes/outer-recur.gwat) を拒否 | 内側の結果を外側へ返す、関数を分ける | 制御構文の糖衣。現時点の優先度は低い |
-| 読み取り専用ビュー・freeze | [readonly-array-view](examples/probes/readonly-array-view.gwat) は型不一致 | 可変配列を返すか、不変リストなどを使う | まず opaque なコンテナ API。必要なら参照の権限・所有権 |
+| 共通の callable 型・型による汎用化 | [heterogeneous-closures](examples/probes/heterogeneous-closures.wlt) は同じシグネチャでも型不一致 | callback 型ごとの関数、または分岐する1つのラッパー型を書く | フロントエンドで単相化。動的ディスパッチは別途検討 |
+| 外側ループへの直接の再反復 | [outer-recur](examples/probes/outer-recur.wlt) を拒否 | 内側の結果を外側へ返す、関数を分ける | 制御構文の糖衣。現時点の優先度は低い |
+| 読み取り専用ビュー・freeze | [readonly-array-view](examples/probes/readonly-array-view.wlt) は型不一致 | 可変配列を返すか、不変リストなどを使う | まず opaque なコンテナ API。必要なら参照の権限・所有権 |
 
 数値変換・sqrt・末尾呼び出しは標準 WAT 経路で受理できるようになり、probe から実行サンプルへ移した。
 現在の拡張構文との混在は型付きコアの対応命令に限るため、これらを使う関数と拡張を同じモジュール内で自由に組み合わせることは次の課題である。
@@ -92,14 +92,14 @@ just test      # 型検査、Wasm 検証、境界入力、実行時失敗も確�
 loop/recur は定数スタックで実装できているが、一般の関数呼び出しにはまだその保証がない。
 
 ```sh
-just build examples/mutual-recursion.gwat target/mutual-recursion.wasm
+just build examples/mutual-recursion.wlt target/mutual-recursion.wasm
 wasmtime run -W max-wasm-stack=32768 --invoke even target/mutual-recursion.wasm 100000
-wasmtime run -W tail-call=y,max-wasm-stack=32768 --invoke main examples/tail-call.gwat
+wasmtime run -W tail-call=y,max-wasm-stack=32768 --invoke main examples/tail-call.wlt
 ```
 
 ### 手動のタグはデータ不変条件を保証しない
 
-`tagged-invalid.gwat` は「加算ノード」を表すタグ1と null の子を同時に持つ struct を作る。
+`tagged-invalid.wlt` は「加算ノード」を表すタグ1と null の子を同時に持つ struct を作る。
 すべてのフィールド型は正しいのでコンパイルできるが、子を使う位置で trap する。
 GC によるメモリ安全性と、アプリケーションのデータ不変条件を静的に保証することは別の課題である。
 この例は通常の struct を使う比較例として残す。variant を使う AST では、加算ノードの子は non-null 参照なので同じ不正状態を構築すると型エラーになる。
@@ -109,7 +109,7 @@ case の不足・重複、payload の型・個数の誤りも拒否する。
 
 ### 不変の配列をどう作るか
 
-`higher-order.gwat` の map は、動的な長さの出力を作るため、可変配列を割り当てて順番に埋める。
+`higher-order.wlt` の map は、動的な長さの出力を作るため、可変配列を割り当てて順番に埋める。
 完成した配列を「以後は読み取り専用」として公開する仕組みは現在ない。別の不変配列型を宣言しても、参照をその型へ返すだけでは変換できない。
 GC は寿命を管理するが、別名参照を通じた変更の禁止までは保証しない。
 仕様を小さく保つなら、まずモジュールの可視性と opaque なコンテナ API で可変の内部表現を隠す方法を検討したい。
@@ -131,7 +131,7 @@ GC は寿命を管理するが、別名参照を通じた変更の禁止まで�
 | ホストの print | 全副作用が true に伝播する | ホスト実装と対応した、処理系側の信頼できる契約 |
 
 クロージャの捕捉が明示的で、呼び出し先が閉じていることは解析の土台として機能している。
-`closure-compose.gwat` の `$Compose` は `$Scale` と `$Add` への呼び出しを含め、全副作用が false になる。
+`closure-compose.wlt` の `$Compose` は `$Scale` と `$Add` への呼び出しを含め、全副作用が false になる。
 一方、Boolean の作用だけでは「純粋な変換のための内部更新」と「外部状態の変更」を十分に分けられない。
 追加した memory は、その対象を引数・捕捉・割当て・不明に分ける。参照の格納と返却、closure/値コンテナ、循環、loop/recur と関数間の伝播から escape を求める。
 再帰のパスは深さ3で不明へ広げ、更新は古い候補を残す。型の上限へ広げたループ状態へ、初期値の範囲をそのまま流用しない。

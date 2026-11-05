@@ -1,9 +1,12 @@
 [package]
-name = "gcwat"
+name = "wlt"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.97"
 publish = false
+description = "A small typed language extending WAT for Wasm GC"
+repository = "https://github.com/mizchi/wlt-lang"
+readme = "README.md"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace]

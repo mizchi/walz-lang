@@ -2,23 +2,23 @@
 // yield a real task turn before another tick, but does not need a clamped timer.
 // Keep idle polling and one-thread-per-tick semantics unchanged.
 const taskTurn = `
-let gcwatTurnChannel;
-const gcwatTurnQueue = [];
-function gcwatSchedulerTurn() {
+let wltTurnChannel;
+const wltTurnQueue = [];
+function wltSchedulerTurn() {
   if (typeof setImmediate === 'function') {
     return new Promise(resolve => setImmediate(resolve));
   }
   if (typeof MessageChannel === 'function') {
     return new Promise(resolve => {
-      if (!gcwatTurnChannel) {
-        gcwatTurnChannel = new MessageChannel();
-        gcwatTurnChannel.port1.onmessage = () => {
-          const pending = gcwatTurnQueue.splice(0);
+      if (!wltTurnChannel) {
+        wltTurnChannel = new MessageChannel();
+        wltTurnChannel.port1.onmessage = () => {
+          const pending = wltTurnQueue.splice(0);
           for (const resume of pending) resume();
         };
       }
-      gcwatTurnQueue.push(resolve);
-      if (gcwatTurnQueue.length === 1) gcwatTurnChannel.port2.postMessage(0);
+      wltTurnQueue.push(resolve);
+      if (wltTurnQueue.length === 1) wltTurnChannel.port2.postMessage(0);
     });
   }
   return new Promise(resolve => setTimeout(resolve, 0));
@@ -39,7 +39,7 @@ export function tuneScheduler(source) {
   source = source.replace(
     pattern,
     `if (result === ComponentAsyncState.TickResult.RESUMED) {
-              await gcwatSchedulerTurn();
+              await wltSchedulerTurn();
             } else {
               await new Promise(resolve => setTimeout(resolve, 10));
             }`,

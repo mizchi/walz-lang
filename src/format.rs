@@ -1,4 +1,4 @@
-//! Token-preserving formatter for both native WAT and gcwat. String escapes and
+//! Token-preserving formatter for both native WAT and wlt. String escapes and
 //! nested comments stay verbatim; only whitespace between tokens is rewritten.
 use crate::{Error, ir::Span};
 

@@ -1,4 +1,7 @@
-# gcwat
+# WLT
+
+[mizchi/wlt-lang](https://github.com/mizchi/wlt-lang) は Wasmtime の作業ディレクトリ内の試作から独立した言語リポジトリです。
+旧名 gcwat からの変更点と過去の評価記録の扱いは [MIGRATION.md](MIGRATION.md) にまとめています。
 
 Wasm GC と静的解析を前提に、標準 WAT を基底として型付きマクロを追加する小さな言語の試作です。
 標準 WAT は書き換えず受け付け、拡張側には不変の `let`、loop/for、明示 capture、enum/match、Wasm 例外の try/catch を用意します。`if` の結果値は標準 Wasm の意味を使います。
@@ -10,35 +13,36 @@ namespace/public/use による静的モジュールと、相対 include によ�
 [初見評価の記録](docs/grammar-eval/REPORT.md) は、在庫台帳の読解と変更を固定ルーブリックで確かめたものです。
 [可読性の評価と改善](docs/readability/REPORT.md) では、型の反復・入れ子・配置・変更の追いやすさを別に評価しています。
 [evals/](evals/README.md) に評価を繰り返す課題・基準・スナップショット作成・実行検証をまとめています。`just eval-prepare ID` で新しい評価回を作れます。
-型 alias、期待型による型引数の省略、pair の分解 let を使う [行数付き在庫台帳](examples/apps/stock-ledger/main-counted.gwat) もあります。
-[仕様と構文](SPEC.md#bytes--text-と-abi)、[bytes/text の例](examples/bytes-text.gwat)、[モジュールの例](examples/modules.gwat) を参照してください。
+型 alias、期待型による型引数の省略、pair の分解 let を使う [行数付き在庫台帳](examples/apps/stock-ledger/main-counted.wlt) もあります。
+[仕様と構文](SPEC.md#bytes--text-と-abi)、[bytes/text の例](examples/bytes-text.wlt)、[モジュールの例](examples/modules.wlt) を参照してください。
 
 ```sh
-cd examples/gcwat
+git clone https://github.com/mizchi/wlt-lang.git
+cd wlt-lang
 just                         # クロージャの例 → 42
-just run examples/counter.gwat
-just run examples/collections.gwat
-just run examples/list.gwat
-just run examples/variants.gwat
-just run examples/ast-interpreter.gwat
-just run examples/bytes-text.gwat
-just run examples/modules.gwat
+just run examples/counter.wlt
+just run examples/collections.wlt
+just run examples/list.wlt
+just run examples/variants.wlt
+just run examples/ast-interpreter.wlt
+just run examples/bytes-text.wlt
+just run examples/modules.wlt
 just wat                     # 通常の .wat へ変換
-just expand examples/exceptions.gwat  # try/catch などの展開を確認
+just expand examples/exceptions.wlt  # try/catch などの展開を確認
 just build                   # target/program.wasm を生成
 just analyze                 # 呼び出しグラフと副作用を JSON で表示
 just ir                      # 名前解決・型検査済み IR を JSON で表示
-just validate examples/result.gwat  # ソースの静的型検査
-just types examples/result.gwat     # 式と束縛の型を JSON で表示
-just wit examples/value-types.gwat  # 公開関数の WIT interface を生成
+just validate examples/result.wlt  # ソースの静的型検査
+just types examples/result.wlt     # 式と束縛の型を JSON で表示
+just wit examples/value-types.wlt  # 公開関数の WIT interface を生成
 just run-verified              # 所有権と law の証明を通して → 42
-just run-verified examples/ready-delivery.gwat # Future/Stream の配送済みデータ → 42
+just run-verified examples/ready-delivery.wlt # Future/Stream の配送済みデータ → 42
 just verify                   # 契約検査のみ。実行しない
 just contracts                # 所有権の義務を JSON で表示
 just proof                    # 型付き IR から生成した Lean ソース
 just proof-check              # 所有権モデルの定理と反例を検証
 just test
-just test-language            # gcwat で書いたテストを実行
+just test-language            # wlt で書いたテストを実行
 just list-tests               # テスト一覧。実行はしない
 just wit-check                # async 型の WIT 契約を往復検証
 just check
@@ -48,7 +52,7 @@ just probes                  # 未対応機能を再現する検査
 
 Rust 1.97 以降と just を使用します。実行と実行テストには Wasm GC 対応の `wasmtime`、WIT のテストには `wasm-tools` が PATH 上に必要です。
 契約付き実行・law を含むモジュール・Rust の検証テストには、elan 経由の `lean +v4.34.1` も必要です。
-`check`・`wat`・`build`・静的解析には Wasmtime は不要です。law を含まない通常のコンパイルでは Lean も不要です。just を使わず `cargo run --locked -- run examples/closure.gwat` としても実行できます。
+`check`・`wat`・`build`・静的解析には Wasmtime は不要です。law を含まない通常のコンパイルでは Lean も不要です。just を使わず `cargo run --locked -- run examples/closure.wlt` としても実行できます。
 生成した Wasm は `wasmtime run -W gc=y,function-references=y,exceptions=y --invoke main target/program.wasm` で実行できます。
 ランチャーでは GC・function references・exceptions を明示的に有効にします。
 
@@ -73,7 +77,7 @@ Rust 1.97 以降と just を使用します。実行と実行テストには Was
 
 クロージャは宣言ごとの固有型を持ちます。捕捉値を引数で渡して構築し、呼び出し先は型から静的に決まります。
 例えば `$Adder` は、捕捉値を保持する GC struct と、環境を第1引数に取る通常の Wasm 関数へ変換されます。
-可変状態を捕捉する場合は `counter.gwat` のように、`mut` フィールドを持つオブジェクトへの参照を渡します。
+可変状態を捕捉する場合は `counter.wlt` のように、`mut` フィールドを持つオブジェクトへの参照を渡します。
 
 enum は `(type $Result (variant (ok i64) (error i32)))` と宣言し、`(variant.new $Result ok (i64.const 42))` で構築します。
 
@@ -84,7 +88,7 @@ enum は `(type $Result (variant (ok i64) (error i32)))` と宣言し、`(varian
 ```
 
 payload の型と個数、case の網羅性と重複をコンパイル時に検査します。再帰 enum と、case 内の明示 capture・末尾 `recur` も使えます。
-`examples/ast-interpreter.gwat` はこの形式で実装しています。`examples/result.gwat` は組込みの Result 値型を使います。
+`examples/ast-interpreter.wlt` はこの形式で実装しています。`examples/result.wlt` は組込みの Result 値型を使います。
 
 ```wat
 (func $answer (result (option i64)) (effects pure)
@@ -109,7 +113,7 @@ pure な関数でも値のための物理的な割当てや trap はあり得る
 `(own T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
 Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(own.close (move $ticket))` で明示的に消費します。
 内容を match で取り出すことも消費です。own は payload の GC 参照を排他的にする型ではなく、own.close は外部リソースの終了処理をまだ実装していません。
-borrow/lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。[ownership.gwat](examples/ownership.gwat) に組と once-call クロージャの例があります。
+borrow/lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。[ownership.wlt](examples/ownership.wlt) に組と once-call クロージャの例があります。
 
 ```wat
 (law "adding zero preserves the value" (param $x i32)
@@ -119,7 +123,7 @@ borrow/lifetime は設けず、操作に渡した所有値は戻り値の一部�
 law は i32/i64 の全入力で条件が非0になることを要求し、実際の関数本体から生成した BitVec の証明を Lean で検査します。
 整数の折り返し・符号・Wasm のシフト量のマスクを含めます。初版の law は純粋な整数式と非再帰の直接呼び出しに限定します。
 関数本体を変更して law が壊れると、通常の run/build も拒否します。検証器の不在や、未対応の意味論もエラーになります。
-[verified-laws.gwat](examples/verified-laws.gwat) は加算の law と所有値を組み合わせた実行例です。
+[verified-laws.wlt](examples/verified-laws.wlt) は加算の law と所有値を組み合わせた実行例です。
 
 `run-verified` は所有権の契約も独立した Lean の検査器へ渡し、通った同じ IR から Wasm を生成します。
 このモードでは未解析の WAT、import、所有値を渡す raw export、effect 上限のない公開関数を拒否します。通常の WAT の受付は維持します。
@@ -138,7 +142,7 @@ next は `(pair (stream T) (option T))` を返すので、次回は返された 
 payload は共有できるデータに限定し、unit、Result、GC 参照も扱えます。Future/Stream 自体や own 値を payload にすることは初版では拒否します。
 await/next は suspends を持ち、呼び出し元へ伝播します。WIT の future/stream 型と読み取り関数の async にも対応します。
 
-[ready-delivery.gwat](examples/ready-delivery.gwat) は stream の40と2を合計し、別の completion Future の Result も確認して42を返します。
+[ready-delivery.wlt](examples/ready-delivery.wlt) は stream の40と2を合計し、別の completion Future の Result も確認して42を返します。
 通常の core Wasm 出力では配送済みデータを GC に保持し、読み取りは即時に返ります。
 Component 出力では外部の readable handle も保持でき、await/next は JSPI を通じて Promise/AsyncIterable の配送を待ちます。
 close は端点を消費し、外部端点なら Canonical ABI の drop-readable を実行します。固定したホスト実装では不要になったタイマーを解放します。
@@ -161,8 +165,8 @@ Rust/Lean に加え Node.js 24 以降と pnpm を使います。Node 24.21.0、p
 実行環境には Wasm GC、例外機構（try_table）、[JSPI](https://v8.dev/blog/jspi) の `WebAssembly.Suspending` / `WebAssembly.promising` が必要です。
 [jco](https://bytecodealliance.github.io/jco/transpiling.html) が Canonical ABI と JSPI の橋渡しを行い、待機中も JavaScript のタイマーが進みます。同じ Component インスタンスへの呼び出しは順番に実行します。
 
-[event-loop.gwat](tests/component-fixtures/event-loop.gwat) は、GC 参照を待機中も保持する main、非同期 Stream の総和、completion Result の分岐、pending Future の close を実装しています。
-ホストの固定契約は `gcwat:host/event-loop@0.1.0` です。
+[event-loop.wlt](tests/component-fixtures/event-loop.wlt) は、GC 参照を待機中も保持する main、非同期 Stream の総和、completion Result の分岐、pending Future の close を実装しています。
+ホストの固定契約は `wlt:host/event-loop@0.1.0` です。
 
 | import | 型 | 作用 |
 |---|---|---|
@@ -177,8 +181,8 @@ Rust/Lean に加え Node.js 24 以降と pnpm を使います。Node 24.21.0、p
 
 内部値と ABI バッファを分離し、数値、Option、Result、pair、Future、Stream を変換します。Future/Stream は Component Model 自体の型と readable handle です。
 バッファは呼び出しごとに確保し、戻り値は post-return、引数や read は変換終了後に解放します。アリーナ上限は16 MiBです。
-`gcwat:runtime/delivery@0.1.0` は ready 値や Stream の前置要素を JS の配送端点へ移すための内部 import です。型と factory 名はモジュールごとに生成するため、`.wasm.json` と対応する JS ホストを同時に配布します。
-`gcwat wit` は公開 API の論理的な形状を出力し、`wasm-tools component wit target/component.wasm` は内部 import を含む実際の Component 契約を出力します。
+`wlt:runtime/delivery@0.1.0` は ready 値や Stream の前置要素を JS の配送端点へ移すための内部 import です。型と factory 名はモジュールごとに生成するため、`.wasm.json` と対応する JS ホストを同時に配布します。
+`wlt wit` は公開 API の論理的な形状を出力し、`wasm-tools component wit target/component.wasm` は内部 import を含む実際の Component 契約を出力します。
 
 生成する JS には、固定した jco バージョンの unit/option.none の配送と、失敗した import の Promise が確定しない問題への局所的な補正を適用します。内容は [jco-compat.mjs](runtime/jco-compat.mjs) に集約し、実行テストで両方向の配送と失敗を確認します。
 アプリケーションの失敗は Result で返します。不正なタイマー引数は trap となり、そのインスタンスは再利用できません。
@@ -198,7 +202,7 @@ JS 向けには、[taraba](https://github.com/mizchi/taraba) の構成を参考�
 `instantiate()` の `api` / `start` と event-loop binding は上の経路と共通です。同期関数の同期性、Future/Stream の所有権、取消しの終了確認も維持します。
 GC 値と停止中のスタックは Wasm エンジンが管理し、ホストが手動管理する対象は一時バッファと外部端点に限定します。
 
-この経路の ABI は `gcwat-core-js-v2` です。標準 Component との相互運用には `just component` / `just build-js` を使います。
+この経路の ABI は `wlt-core-js-v2` です。標準 Component との相互運用には `just component` / `just build-js` を使います。
 公開 API と配送 payload の具体的な型から codec を生成し、実行時に型スキーマを解釈する処理は持ちません。
 API の制約・内部 ABI は [SPEC.md](SPEC.md#corejspi-の-js-専用-abi)、サイズ・メモリの比較は [MEMORY.md](MEMORY.md) を参照してください。
 
@@ -225,11 +229,11 @@ just text-file input.txt output.txt
 just test-io
 ```
 
-[行フィルタ](examples/io/text-filter.gwat) は、空行を除いて入力を出力し、出力した行数を `result<i32,i32>` で返します。
+[行フィルタ](examples/io/text-filter.wlt) は、空行を除いて入力を出力し、出力した行数を `result<i32,i32>` で返します。
 入力は LF / CRLF 区切りで、末尾の改行なし、チャンク途中で分割された UTF-8 に対応します。出力は各行に LF を付けます。
 CLI の stdout は処理したデータだけで、終了コードは成功0、I/O の失敗1、SIGINT による取消し130です。同じファイルを入力と出力へ指定することは拒否します。
 
-固定の契約は [text-io.wit](interfaces/text-io.wit) の `gcwat:host/text-io@0.1.0` です。
+固定の契約は [text-io.wit](interfaces/text-io.wit) の `wlt:host/text-io@0.1.0` です。
 
 | import | 型 | 必須 capability |
 |---|---|---|
@@ -238,7 +242,7 @@ CLI の stdout は処理したデータだけで、終了コードは成功0、I
 
 両方とも host 作用を持ちます。呼び出しは端点を返すだけで、読み取り・完了待ちが suspends を持ちます。
 コンパイラは import の名前・シグネチャ・effect を検査し、manifest の `imports` に必須 capability と型を記録します。
-埋め込みでは `instantiate({imports: {'gcwat:host/text-io@0.1.0': io}})` で明示的に host を渡します。必要な関数がない場合はインスタンスの生成を拒否します。
+埋め込みでは `instantiate({imports: {'wlt:host/text-io@0.1.0': io}})` で明示的に host を渡します。必要な関数がない場合はインスタンスの生成を拒否します。
 `runtime/text-io.mjs` の `createTextIO({input,write})` は、byte iterable と `write(bytes,AbortSignal)` を既存の値型に接続します。
 `runtime/node-io.mjs` は Node のストリームとファイルの開閉、`runtime/text-cli.mjs` は CLI を担当します。
 これらの I/O 実装は通常の Core 出力へ自動では組み込みません。ファイルパスや標準入出力を選ぶ権限は host 側にあります。
@@ -290,7 +294,7 @@ Lean のモデルでは一度限りの受け取り、配送順序、終端・clo
 ```
 
 try/catch は `try_table` へ展開し、trap は捕捉しません。for は bind/while/step を持ち、loop/if/br へ展開します。
-[exceptions.gwat](examples/exceptions.gwat) と [for-loop.gwat](examples/for-loop.gwat) に実行例があります。
+[exceptions.wlt](examples/exceptions.wlt) と [for-loop.wlt](examples/for-loop.wlt) に実行例があります。
 
 ## 型検査と型の取得
 
@@ -304,19 +308,19 @@ GC グラフ・状態 enum・複数ワーカーへの割当て・循環検出・
 Rust API の `Error::diagnostic()` では分類・主範囲・関連位置・補足・修正方針を取得できます。[診断のデータ契約](docs/diagnostics.md)を参照してください。
 
 ```sh
-cargo run --locked -- check examples/ast-interpreter.gwat
-cargo run --locked -- types examples/ast-interpreter.gwat
+cargo run --locked -- check examples/ast-interpreter.wlt
+cargo run --locked -- types examples/ast-interpreter.wlt
 ```
 
 型付きコアの `types`・`ir`・`analyze` は名前解決済みの IR を使います。CLI の `check` は標準 WAT も検証します。
 `types` は関数の戻り値型、params/captures のローカル ID、全束縛の型と宣言位置、全式の型とソース範囲を返します。
 ローカル ID により同名の束縛を区別します。ソース範囲は UTF-8 byte offset の半開区間です。
 
-Rust API では `gcwat::check(source)` が型付き IR を返し、`gcwat::typing::report(&module)` で型の一覧を取得できます。
-`gcwat::typing::type_at(&module, offset)` は束縛宣言または最も内側の式の型を返します。
+Rust API では `wlt::check(source)` が型付き IR を返し、`wlt::typing::report(&module)` で型の一覧を取得できます。
+`wlt::typing::type_at(&module, offset)` は束縛宣言または最も内側の式の型を返します。
 取得した型は `module.type_name(ty)` で `(ref $Expr)` などの表記にできます。
 関数シグネチャは明示したままで、省略した result は unit です。全プログラムの型注釈を省略する推論は行いません。
-`gcwat::validate(source)` は標準 WAT と拡張の両方に対応します。標準 WAT がコアの外にある場合、`types` は検証済み Wasm の関数シグネチャを表示し、式ごとの型は取得できません。
+`wlt::validate(source)` は標準 WAT と拡張の両方に対応します。標準 WAT がコアの外にある場合、`types` は検証済み Wasm の関数シグネチャを表示し、式ごとの型は取得できません。
 この場合 `Compilation.ir` は None、解析は `opaque=true` でモジュールの全作用を保守的に true とします。
 
 ## 言語内のテスト
@@ -337,10 +341,10 @@ just test-language
 just test-language tests/programs GC
 just list-tests tests/programs
 cargo run --locked -- test tests/programs --filter closure
-cargo run --locked -- test tests/programs/core.test.gwat --timeout-ms 1000
+cargo run --locked -- test tests/programs/core.test.wlt --timeout-ms 1000
 ```
 
-`gcwat test` は既定で `tests/` 配下の `*.test.gwat` を再帰探索します。ファイルを明示した場合は名前を問いません。
+`wlt test` は既定で `tests/` 配下の `*.test.wlt` を再帰探索します。ファイルを明示した場合は名前を問いません。
 複数のパスを渡せ、同じファイルは1回だけ実行します。ディレクトリ探索ではシンボリックリンクをたどりません。
 `--filter` はテスト名の部分一致、`--list` は型検査と一覧表示のみです。絞り込み前にモジュール全体を型検査します。
 失敗、trap、コンパイルエラーがあっても他のテスト・ファイルを続けます。0件の場合も成功扱いにしません。
@@ -352,8 +356,8 @@ cargo run --locked -- test tests/programs/core.test.gwat --timeout-ms 1000
 
 テスト本体も通常の型付き IR へ変換し、Wasm GC 上で実行します。暗黙の capture・共有可変状態・動的な関数レジストリは追加しません。
 GC の割当て、参照同一性、明示した変更、trap、評価順序は通常のコードと同じです。型・副作用の検査と定義域は [SPEC.md](SPEC.md) を参照してください。
-[core.test.gwat](tests/programs/core.test.gwat)・[gc.test.gwat](tests/programs/gc.test.gwat)・[macros.test.gwat](tests/programs/macros.test.gwat)・[values.test.gwat](tests/programs/values.test.gwat)・[ownership.test.gwat](tests/programs/ownership.test.gwat)・[delivery.test.gwat](tests/programs/delivery.test.gwat) の計21本は、`just test` からも検証します。
-Rust API は `gcwat::runner::run(paths, options)` で、各テストの結果・ファイル単位のエラーを構造化して取得できます。
+[core.test.wlt](tests/programs/core.test.wlt)・[gc.test.wlt](tests/programs/gc.test.wlt)・[macros.test.wlt](tests/programs/macros.test.wlt)・[values.test.wlt](tests/programs/values.test.wlt)・[ownership.test.wlt](tests/programs/ownership.test.wlt)・[delivery.test.wlt](tests/programs/delivery.test.wlt) の計21本は、`just test` からも検証します。
+Rust API は `wlt::runner::run(paths, options)` で、各テストの結果・ファイル単位のエラーを構造化して取得できます。
 
 ## 静的解析
 
@@ -381,7 +385,7 @@ CLI の `run` は import のない `main` を実行する最小ランチャー�
 
 ### 読み書きの対象と、分岐から得られる事実
 
-`just analyze examples/higher-order.gwat` は、従来の副作用フラグに加えて、各関数の memory と facts を出力します。
+`just analyze examples/higher-order.wlt` は、従来の副作用フラグに加えて、各関数の memory と facts を出力します。
 map では memory.reads が入力の parameter[0]、memory.writes が map 内の allocation を指します。
 出力配列の長さが入力と等しいことも保持し、読み取りと書き込みの両方を bounds_proven=true と確認できます。
 
@@ -461,7 +465,7 @@ Option/Result は値、Future/Stream は所有する配送ハンドル、suspend
 ### bytes/text とモジュールを JS から使う
 
 ```sh
-just build-js tests/component-fixtures/buffers.gwat target/buffers
+just build-js tests/component-fixtures/buffers.wlt target/buffers
 ```
 
 ```js
@@ -473,13 +477,13 @@ api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 ```
 
 Component fixture では namespace 内の関数を use で取り込み、ABI export から呼んでいます。
-ファイルを分割する場合は、`(module (include "lib.gwat") ...)` と書けます。
+ファイルを分割する場合は、`(module (include "lib.wlt") ...)` と書けます。
 include はコンパイル時に展開されます。実行時のファイル I/O capability は増えません。
 
 
 メモリの管理境界・修正した保持経路・実測は [MEMORY.md](MEMORY.md) を参照してください。`just memory-check` で管理表、GC 到達性、断片化と反復時の保持量を再検査できます。
 
-`stdlib/text.gwat` に連結、u64/s64 の十進数変換と JSON string の生成があります。
+`stdlib/text.wlt` に連結、u64/s64 の十進数変換と JSON string の生成があります。
 新しい構文と契約は [SPEC.md](SPEC.md#文字列ライブラリと配列のコピー) を参照してください。
-`just fmt-gwat file.gwat` でコメントを保持して整形し、`just check-gwat-format file.gwat` で検査できます。
+`just fmt-wlt file.wlt` でコメントを保持して整形し、`just check-wlt-format file.wlt` で検査できます。
 ログ集計の変更前後は `just compare-log-stats before-directory after-directory` で条件を変えて交互に測定できます。

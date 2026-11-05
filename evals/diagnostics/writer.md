@@ -13,5 +13,5 @@ cwd: {{PROJECT_ROOT}}
 report.json形式:
 {"completed":false,"checks":[{"case":"...","command":"...","exitCode":1,"diagnostic":"..."}],"repairs":[{"case":"...","changes":"...","attempts":1}],"ambiguities":[],"assumptions":[],"extraDocumentsRead":[]}
 
-チェック例: cargo run --locked --quiet -- check <caseのprogram.gwat>
+チェック例: cargo run --locked --quiet -- check <caseのprogram.wlt>
 自己申告だけで修正成功とは判定しない。

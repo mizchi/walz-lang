@@ -1,6 +1,6 @@
 # 診断のデータ契約
 
-`gcwat::Error::diagnostic()` は `&gcwat::diagnostic::Diagnostic` を返す。
+`wlt::Error::diagnostic()` は `&wlt::diagnostic::Diagnostic` を返す。
 診断データとテキスト描画を分離し、呼び出し側で表示文を解析せずに位置や分類を取得できる。
 `serde_json::to_value(error.diagnostic())` で JSON にもできる。
 

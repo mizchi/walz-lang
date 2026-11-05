@@ -22,14 +22,14 @@ const reader = (score = 3) => ({
   scores: Object.fromEntries(
     ["flow", "types", "scope", "layout", "changes"].map((k) => [
       k,
-      { score, evidence: "counted.gwat:5 の契約と7行目の束縛を対応させた" },
+      { score, evidence: "counted.wlt:5 の契約と7行目の束縛を対応させた" },
     ]),
   ),
   issues: [],
   limitations: [],
 });
 const temporary = async (run) => {
-  const parent = await mkdtemp(join(tmpdir(), "gcwat-eval-"));
+  const parent = await mkdtemp(join(tmpdir(), "wlt-eval-"));
   try {
     await run(parent);
   } finally {
@@ -62,10 +62,10 @@ async function fakeVerification(directory) {
       node: process.version,
       inputsFingerprint: sha256(JSON.stringify(hashes)),
       candidateSha256: sha256(
-        await readFile(join(directory, "writer/candidate.gwat")),
+        await readFile(join(directory, "writer/candidate.wlt")),
       ),
       sampleSha256: sha256(
-        await readFile(join(directory, "reader/counted.gwat")),
+        await readFile(join(directory, "reader/counted.wlt")),
       ),
       subjects: Object.fromEntries(
         ["sample", "candidate"].map((k) => [
@@ -91,16 +91,16 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
       await readFile(join(directory, "manifest.json"), "utf8"),
     );
     assert.equal(manifest.id, "round-99");
-    assert.ok(manifest.roles.reader.includes("reader/counted.gwat"));
+    assert.ok(manifest.roles.reader.includes("reader/counted.wlt"));
     assert.ok(!manifest.roles.writer.some((p) => p.includes("counted")));
-    await assert.rejects(access(join(directory, "writer/counted.gwat")));
+    await assert.rejects(access(join(directory, "writer/counted.wlt")));
     const bridge = await readFile(
-      join(directory, "writer/program.gwat"),
+      join(directory, "writer/program.wlt"),
       "utf8",
     );
     assert.equal(
       bridge,
-      '(module (include "../support/examples/apps/stock-ledger/program.gwat"))\n',
+      '(module (include "../support/examples/apps/stock-ledger/program.wlt"))\n',
     );
     await checkInputs(directory);
     await writeFile(join(directory, "reader.json"), "keep");
@@ -109,8 +109,8 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
       await readFile(join(directory, "reader.json"), "utf8"),
       "keep",
     );
-    await writeFile(join(directory, "support/stdlib/text.gwat"), "changed");
-    await assert.rejects(checkInputs(directory), /text.gwat/);
+    await writeFile(join(directory, "support/stdlib/text.wlt"), "changed");
+    await assert.rejects(checkInputs(directory), /text.wlt/);
   }));
 
 test("score needs audited answers and both executions; it rejects stale review and stale candidate results", () =>
@@ -144,7 +144,7 @@ test("score needs audited answers and both executions; it rejects stale review a
       correct: true,
       reason: "更新した回答も再照合した",
     });
-    await writeFile(join(directory, "writer/candidate.gwat"), "changed");
+    await writeFile(join(directory, "writer/candidate.wlt"), "changed");
     assert.equal((await scoreRun(directory)).status, "incomplete");
   }));
 

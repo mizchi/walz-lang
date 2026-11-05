@@ -1,7 +1,7 @@
 use std::process::Command;
 
 fn run(source: &str) -> String {
-    let compilation = gcwat::compile(source).unwrap();
+    let compilation = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("delivery.wasm");
     std::fs::write(&path, compilation.wasm).unwrap();
@@ -25,7 +25,7 @@ fn run(source: &str) -> String {
 }
 
 fn rejects(source: &str, message: &str) {
-    let error = gcwat::check(source).unwrap_err().to_string();
+    let error = wlt::check(source).unwrap_err().to_string();
     assert!(error.contains(message), "{source}\n{error}");
 }
 
@@ -164,7 +164,7 @@ fn suspension_is_checked_and_propagates_without_hiding_payload_effects() {
     let source = r#"(module
       (func $read (result i64) (effects suspends) (future.await i64 (future.ready i64 (i64.const 42))))
       (func $call (result i64) (effects suspends) (call $read)))"#;
-    let info = gcwat::compile(source).unwrap();
+    let info = wlt::compile(source).unwrap();
     for function in &info.analysis.functions {
         assert!(function.effects.may_suspend);
         assert!(function.semantic_effects.suspends);

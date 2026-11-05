@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn standard_library_has_executable_language_tests() {
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["test", "tests/library.test.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "tests/library.test.wlt"])
         .output()
         .unwrap();
     assert!(
@@ -27,7 +27,7 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
               (i32.add (bytes.get (local.get $b) (i32.const 0)) (bytes.get (local.get $b) (i32.const 1)))))))
       (func $bad (export "bad") (result bytes)
         (bytes.from-array $A (array.new_fixed $A 1 (i32.const 256)))))"#;
-    let compiled = gcwat::compile(source).unwrap();
+    let compiled = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("program.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();
@@ -61,23 +61,23 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
         let source = format!(
             "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result bytes) (effects {effect}) (bytes.from-array $A (local.get $a))))"
         );
-        assert_eq!(gcwat::check(&source).is_ok(), ok, "{source}");
+        assert_eq!(wlt::check(&source).is_ok(), ok, "{source}");
     }
     let source = "(module (type $A (array (mut i32))) (func $copy (param $a (ref $A)) (result bytes) (bytes.from-array $A (local.get $a))))";
-    let module = gcwat::check(source).unwrap();
-    let analysis = gcwat::analysis::analyze(&module);
+    let module = wlt::check(source).unwrap();
+    let analysis = wlt::analysis::analyze(&module);
     let memory = &analysis.functions[0].memory;
     assert!(
         memory
             .reads
             .iter()
-            .any(|l| matches!(l.object.root, gcwat::regions::Root::Parameter { index: 0 }))
+            .any(|l| matches!(l.object.root, wlt::regions::Root::Parameter { index: 0 }))
     );
     assert!(
         memory
             .returns
             .iter()
-            .all(|p| matches!(p.root, gcwat::regions::Root::Allocation { .. }))
+            .all(|p| matches!(p.root, wlt::regions::Root::Allocation { .. }))
     );
-    gcwat::compile("(module (type $A (array i32)) (func $f (result bytes) (bytes.from-array $A (unreachable))))").unwrap();
+    wlt::compile("(module (type $A (array i32)) (func $f (result bytes) (bytes.from-array $A (unreachable))))").unwrap();
 }

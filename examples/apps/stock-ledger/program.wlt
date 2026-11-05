@@ -1,0 +1,80 @@
+(module
+  (include "../../../stdlib/text.wlt")
+  (include "parse.wlt")
+  (include "stock.wlt")
+  (include "report.wlt")
+  (import "wlt:host/text-io@0.1.0" "read-lines"
+    (func $read-lines (result (stream (result text i32))))
+  )
+  (namespace $app
+    (public (func $process))
+    (func $process
+      (param $s (ref $stock.State))
+      (param $line text)
+      (result (result unit i32))
+      (effects reads writes allocates host suspends)
+      (match $parse.Command
+        (result (result unit i32))
+        (call $parse.command (local.get $line))
+        (case skip () (result.ok unit i32))
+        (case invalid () (call $report.invalid))
+        (case add
+          ($key $n)
+          (match
+            (result i64 (ref $stock.Error))
+            (result (result unit i32))
+            (call $stock.add (local.get $s) (local.get $key) (local.get $n))
+            (case ok
+              ($quantity)
+              (call $report.success
+                (text.lit "ADD")
+                (local.get $key)
+                (local.get $quantity)
+              )
+            )
+            (case err
+              ($error)
+              (call $report.failure
+                (text.lit "ADD")
+                (local.get $key)
+                (local.get $error)
+              )
+            )
+          )
+        )
+        (case take
+          ($key $n)
+          (match
+            (result i64 (ref $stock.Error))
+            (result (result unit i32))
+            (call $stock.take (local.get $s) (local.get $key) (local.get $n))
+            (case ok
+              ($quantity)
+              (call $report.success
+                (text.lit "TAKE")
+                (local.get $key)
+                (local.get $quantity)
+              )
+            )
+            (case err
+              ($error)
+              (call $report.failure
+                (text.lit "TAKE")
+                (local.get $key)
+                (local.get $error)
+              )
+            )
+          )
+        )
+        (case show
+          ($key)
+          (call $report.success
+            (text.lit "SHOW")
+            (local.get $key)
+            (call $stock.get (local.get $s) (local.get $key))
+          )
+        )
+      )
+    )
+  )
+)

@@ -1,6 +1,0 @@
-(module
-  (include "domain.gwat")
-  (include "parse.gwat")
-  (include "graph.gwat")
-  (include "queue.gwat")
-  (include "planner.gwat"))

@@ -5,14 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 const { build } = await import(
-  process.env.GCWAT_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
+  process.env.WLT_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
 );
 import { createEventLoop } from "./host.mjs";
 
 async function fixture(name, fn) {
-  const dir = await mkdtemp(join(tmpdir(), "gcwat-component-"));
+  const dir = await mkdtemp(join(tmpdir(), "wlt-component-"));
   try {
-    await build(`tests/component-fixtures/${name}.gwat`, dir);
+    await build(`tests/component-fixtures/${name}.wlt`, dir);
     const runtime = await import(pathToFileURL(join(dir, "index.js")));
     await fn(runtime, dir);
   } finally {
@@ -315,9 +315,9 @@ test(
         fs.readFile(
           join(
             dir,
-            process.env.GCWAT_BACKEND === "core"
+            process.env.WLT_BACKEND === "core"
               ? "bindings.mjs"
-              : "interfaces/gcwat-runtime-delivery.d.ts",
+              : "interfaces/wlt-runtime-delivery.d.ts",
           ),
           "utf8",
         ),

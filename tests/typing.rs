@@ -1,5 +1,5 @@
-use gcwat::ir::{BindingKind, Type};
-use gcwat::{check, typing};
+use wlt::ir::{BindingKind, Type};
+use wlt::{check, typing};
 
 const SOURCE: &str = r#"(module
   (type $Option (variant (none) (some i64)))
@@ -130,7 +130,7 @@ fn optional_let_annotations_are_checked_and_preserved() {
         );
     }
     // The declared storage type must also lower to valid Wasm.
-    gcwat::compile(source).unwrap();
+    wlt::compile(source).unwrap();
     let error = check("(module (func $f (result i64) (let $x i64 (i32.const 1) (local.get $x))))")
         .unwrap_err()
         .to_string();
@@ -213,7 +213,7 @@ fn suspension_is_conservative_at_unknown_imports_and_propagates() {
       (func $forward (result i64) (call $call)))"#,
     )
     .unwrap();
-    let analysis = gcwat::analysis::analyze(&module);
+    let analysis = wlt::analysis::analyze(&module);
     assert!(!analysis.functions[1].effects.may_suspend);
     for index in [0, 2, 3] {
         assert!(analysis.functions[index].effects.may_suspend);

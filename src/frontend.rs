@@ -760,7 +760,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
     let mut tests = Vec::new();
     for (index, node) in test_nodes.into_iter().enumerate() {
         let items = tables.list(node)?;
-        let base = format!("__gcwat_test_{index}");
+        let base = format!("__wlt_test_{index}");
         let mut export = base.clone();
         let mut suffix = 0;
         while !exported_names.insert(export.clone()) {

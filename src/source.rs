@@ -154,7 +154,7 @@ fn expand(
             .filter(|_| parts.len() == 2)
         else {
             return Err(
-                Error::at(&original, node.span, "expected (include \"relative.gwat\")")
+                Error::at(&original, node.span, "expected (include \"relative.wlt\")")
                     .with_path(&canonical),
             );
         };

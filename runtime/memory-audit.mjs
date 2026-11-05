@@ -5,7 +5,7 @@ import { mkdir, writeFile, readdir, readFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { gzipSync, brotliCompressSync } from "node:zlib";
-const backend = process.env.GCWAT_BACKEND === "core" ? "core" : "component";
+const backend = process.env.WLT_BACKEND === "core" ? "core" : "component";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -34,7 +34,7 @@ const report = {
 };
 for (const fixture of ["buffers", "values", "event-loop"]) {
   const output = join(directory, "checked-" + fixture);
-  await build(`tests/component-fixtures/${fixture}.gwat`, output);
+  await build(`tests/component-fixtures/${fixture}.wlt`, output);
   const files = (await readdir(output)).filter((name) =>
     /\.(?:m?js)$/.test(name),
   );

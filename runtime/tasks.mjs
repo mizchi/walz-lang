@@ -83,7 +83,7 @@ export class Tasks {
     return {
       ...component,
       api,
-      "gcwat:generated/api@0.1.0": api,
+      "wlt:generated/api@0.1.0": api,
       start: this.start.bind(this),
     };
   }

@@ -1,7 +1,7 @@
 use std::process::{Command, Output};
 
 fn invoke(source: &str) -> Output {
-    let compilation = gcwat::compile(source).unwrap();
+    let compilation = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("macros.wasm");
     std::fs::write(&path, compilation.wasm).unwrap();
@@ -35,11 +35,11 @@ fn standard_wat_remains_unchanged_including_stack_syntax_and_data_bytes() {
       (func (export "main") (result i32) (local i32)
         i32.const 40 local.set 0 local.get 0 i32.const 2 i32.add))"#;
     assert_eq!(run(source), "42");
-    assert_eq!(gcwat::compile(source).unwrap().wat, source);
+    assert_eq!(wlt::compile(source).unwrap().wat, source);
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("native.wat");
     std::fs::write(&path, source).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("check")
         .arg(path)
         .output()
@@ -76,7 +76,7 @@ fn for_is_a_macro_with_simultaneous_steps_and_an_immutable_induction_binding() {
                 (i64.add (struct.get $Cell $n (local.get $cell)) (local.get $j))))
             (i64.add (struct.get $Cell $n (local.get $cell)) (i64.const 40))))))"#;
     assert_eq!(run(source), "42");
-    let wat = gcwat::compile(source).unwrap().wat;
+    let wat = wlt::compile(source).unwrap().wat;
     assert!(!wat.contains("(for "));
     assert!(wat.contains("(loop ") && wat.contains("(br "));
 }
@@ -94,7 +94,7 @@ fn try_catch_uses_native_tags_and_supports_multiple_and_gc_payloads() {
           (catch $Error ($code $box)
             (i64.add (i64.extend_i32_s (local.get $code)) (struct.get $Box $n (local.get $box)))))))"#;
     assert_eq!(run(source), "42");
-    let wat = gcwat::compile(source).unwrap().wat;
+    let wat = wlt::compile(source).unwrap().wat;
     assert!(wat.contains("try_table") && wat.contains("throw $Error"));
     assert!(!wat.contains("(try "));
 }
@@ -189,7 +189,7 @@ fn malformed_macros_and_payload_types_are_rejected() {
             "expected unit, got i64",
         ),
     ] {
-        let error = gcwat::check(source).unwrap_err().to_string();
+        let error = wlt::check(source).unwrap_err().to_string();
         assert!(error.contains(message), "{source}\n{error}");
     }
 }
@@ -199,7 +199,7 @@ fn opaque_native_wat_is_validated_but_never_assumed_pure() {
     let source = r#"(module
       (import "host" "f" (func (param i64) (result i32)))
       (func (export "pair") (param i32) (result i64 i32) i64.const 42 local.get 0))"#;
-    let compilation = gcwat::compile(source).unwrap();
+    let compilation = wlt::compile(source).unwrap();
     assert!(compilation.ir.is_none() && compilation.analysis.opaque);
     let effects = serde_json::to_value(compilation.analysis.module_effects).unwrap();
     assert!(
@@ -209,7 +209,7 @@ fn opaque_native_wat_is_validated_but_never_assumed_pure() {
             .values()
             .all(|value| value == true)
     );
-    let types = gcwat::native::types(&compilation.wasm).unwrap();
+    let types = wlt::native::types(&compilation.wasm).unwrap();
     assert_eq!(types.functions[0].params, ["i64"]);
     assert_eq!(types.functions[0].results, ["i32"]);
     assert_eq!(types.functions[1].params, ["i32"]);
@@ -219,7 +219,7 @@ fn opaque_native_wat_is_validated_but_never_assumed_pure() {
     let path = directory.path().join("native.wat");
     std::fs::write(&path, source).unwrap();
     for command in ["types", "analyze", "ir", "expand"] {
-        let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+        let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
             .arg(command)
             .arg(&path)
             .env("PATH", "")
@@ -241,19 +241,19 @@ fn native_wat_can_use_standard_names_and_structural_types() {
         (drop (block (result (ref $A)) (struct.new $B)))
         (i32.const 42)))"#;
     assert_eq!(run(source), "42");
-    assert_eq!(gcwat::expand(source).unwrap(), source);
+    assert_eq!(wlt::expand(source).unwrap(), source);
 }
 
 #[test]
 fn exception_effects_are_distinct_from_traps_and_propagate_through_calls() {
-    let module = gcwat::check(
+    let module = wlt::check(
         r#"(module (tag $E)
       (func $trap (result i64) (i64.div_s (i64.const 1) (i64.const 0)))
       (func $raise (throw $E))
       (func $caught (try (do (call $raise)) (catch_all (nop)))))"#,
     )
     .unwrap();
-    let analysis = gcwat::analysis::analyze(&module);
+    let analysis = wlt::analysis::analyze(&module);
     assert!(analysis.functions[0].effects.may_trap);
     assert!(!analysis.functions[0].effects.may_throw);
     assert!(analysis.functions[1].effects.may_throw);

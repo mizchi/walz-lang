@@ -1,5 +1,5 @@
 {
-  "name": "gcwat-runtime",
+  "name": "@mizchi/wlt-runtime",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.11.2",

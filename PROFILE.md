@@ -1,6 +1,6 @@
 # Guest profiler と実行メトリクス
 
-`examples/io/text-filter.gwat` を対象に、Wasmtime の guest profiler で処理の偏りを調べ、実際の Core＋JSPI 出力で変更前後を比較する。
+`examples/io/text-filter.wlt` を対象に、Wasmtime の guest profiler で処理の偏りを調べ、実際の Core＋JSPI 出力で変更前後を比較する。
 言語仕様と ABI は変更せず、境界変換と UTF-8 検証をチューニングした。
 
 ## 再計測
@@ -27,9 +27,9 @@ just profile-compare before after
 | `comparison.json` | `profile-compare` による再測定。各9回の生の時間と中央値を含む |
 | `core.wasm`, `memory.wasm`, JS 一式 | その時点の実行用成果物 |
 | `env.wat`, `driver.wat` と対応する Wasm | native 計測用ホストと検証ドライバ |
-| `source.gwat` | 計測したソース |
+| `source.wlt` | 計測したソース |
 
-`cargo run --locked -- profile-text <source.gwat> <output-dir>` は native fixture の生成コマンド。
+`cargo run --locked -- profile-text <source.wlt> <output-dir>` は native fixture の生成コマンド。
 対象は text I/O の read-lines/write-line を持ち、`main() -> result<i32,i32>` で処理行数を返す行フィルタに限定する。
 ready/prepend など fixture が実装しない操作を行うと trap する。汎用の WASI ホストではない。
 

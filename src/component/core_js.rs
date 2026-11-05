@@ -46,7 +46,7 @@ pub fn compile(source: &str) -> Result<CoreJs, Error> {
         wasm,
         memory,
         bindings,
-        manifest: serde_json::json!({"abi":"gcwat-core-js-v2","imports":crate::bindings::manifest(&module)}),
+        manifest: serde_json::json!({"abi":"wlt-core-js-v2","imports":crate::bindings::manifest(&module)}),
     })
 }
 

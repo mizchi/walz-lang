@@ -1,0 +1,240 @@
+(module
+  (include "bytes.wlt")
+  (namespace $string
+    (public (func $concat) (func $u64) (func $s64) (func $json))
+    (type $Array (array (mut i32)))
+    (func $valid
+      (param $b bytes)
+      (result text)
+      (effects pure)
+      (match
+        (option text)
+        (result text)
+        (text.from-bytes (local.get $b))
+        (case none () (unreachable))
+        (case some ($s) (local.get $s))
+      )
+    )
+    (func $concat
+      (param $a text)
+      (param $b text)
+      (result text)
+      (effects reads writes allocates)
+      (call $valid
+        (call $buffer.concat (text.bytes (local.get $a)) (text.bytes (local.get $b)))
+      )
+    )
+    (func $u64
+      (param $n i64)
+      (result text)
+      (effects reads writes allocates)
+      (let $out
+        (array.new $Array (i32.const 48) (i32.const 20))
+        (loop $digits
+          (bind $n i64 (local.get $n))
+          (bind $i i32 (i32.const 19))
+          (result text)
+          (block
+            (result text)
+            (array.set $Array
+              (local.get $out)
+              (local.get $i)
+              (i32.add
+                (i32.const 48)
+                (i32.wrap_i64 (i64.rem_u (local.get $n) (i64.const 10)))
+              )
+            )
+            (if
+              (result text)
+              (i64.lt_u (local.get $n) (i64.const 10))
+              (then
+                (call $valid
+                  (bytes.slice
+                    (bytes.from-array $Array (local.get $out))
+                    (local.get $i)
+                    (i32.sub (i32.const 20) (local.get $i))
+                  )
+                )
+              )
+              (else
+                (recur $digits
+                  (i64.div_u (local.get $n) (i64.const 10))
+                  (i32.sub (local.get $i) (i32.const 1))
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    (func $s64
+      (param $n i64)
+      (result text)
+      (effects reads writes allocates)
+      (if
+        (result text)
+        (i64.lt_s (local.get $n) (i64.const 0))
+        (then
+          (call $concat
+            (text.lit "-")
+            (call $u64 (i64.sub (i64.const 0) (local.get $n)))
+          )
+        )
+        (else (call $u64 (local.get $n)))
+      )
+    )
+    (func $width
+      (param $b i32)
+      (result i32)
+      (effects pure)
+      (if
+        (result i32)
+        (i32.lt_u (local.get $b) (i32.const 32))
+        (then (i32.const 6))
+        (else
+          (if
+            (result i32)
+            (i32.or
+              (i32.eq (local.get $b) (i32.const 34))
+              (i32.eq (local.get $b) (i32.const 92))
+            )
+            (then (i32.const 2))
+            (else (i32.const 1))
+          )
+        )
+      )
+    )
+    (func $hex
+      (param $n i32)
+      (result i32)
+      (effects pure)
+      (if
+        (result i32)
+        (i32.lt_u (local.get $n) (i32.const 10))
+        (then (i32.add (local.get $n) (i32.const 48)))
+        (else (i32.add (local.get $n) (i32.const 87)))
+      )
+    )
+    (func $put
+      (param $out (ref $Array))
+      (param $i i32)
+      (param $b i32)
+      (result i32)
+      (effects writes)
+      (let $w
+        (call $width (local.get $b))
+        (block
+          (result i32)
+          (if
+            (i32.eq (local.get $w) (i32.const 1))
+            (then (array.set $Array (local.get $out) (local.get $i) (local.get $b)))
+            (else
+              (block
+                (array.set $Array (local.get $out) (local.get $i) (i32.const 92))
+                (if
+                  (i32.eq (local.get $w) (i32.const 2))
+                  (then
+                    (array.set $Array
+                      (local.get $out)
+                      (i32.add (local.get $i) (i32.const 1))
+                      (local.get $b)
+                    )
+                  )
+                  (else
+                    (block
+                      (array.set $Array
+                        (local.get $out)
+                        (i32.add (local.get $i) (i32.const 1))
+                        (i32.const 117)
+                      )
+                      (array.set $Array
+                        (local.get $out)
+                        (i32.add (local.get $i) (i32.const 2))
+                        (i32.const 48)
+                      )
+                      (array.set $Array
+                        (local.get $out)
+                        (i32.add (local.get $i) (i32.const 3))
+                        (i32.const 48)
+                      )
+                      (array.set $Array
+                        (local.get $out)
+                        (i32.add (local.get $i) (i32.const 4))
+                        (call $hex (i32.shr_u (local.get $b) (i32.const 4)))
+                      )
+                      (array.set $Array
+                        (local.get $out)
+                        (i32.add (local.get $i) (i32.const 5))
+                        (call $hex (i32.and (local.get $b) (i32.const 15)))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (i32.add (local.get $i) (local.get $w))
+        )
+      )
+    )
+    (func $json
+      (param $s text)
+      (result text)
+      (effects reads writes allocates)
+      (let $b
+        (text.bytes (local.get $s))
+        (let $size
+          (loop $size
+            (bind $i i32 (i32.const 0))
+            (bind $n i32 (i32.const 2))
+            (result i32)
+            (if
+              (result i32)
+              (i32.eq (local.get $i) (bytes.len (local.get $b)))
+              (then (local.get $n))
+              (else
+                (let $w
+                  (call $width (bytes.get (local.get $b) (local.get $i)))
+                  (if
+                    (result i32)
+                    (i32.gt_u (local.get $n) (i32.sub (i32.const -1) (local.get $w)))
+                    (then (unreachable))
+                    (else
+                      (recur $size
+                        (i32.add (local.get $i) (i32.const 1))
+                        (i32.add (local.get $n) (local.get $w))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (let $out
+            (array.new $Array (i32.const 34) (local.get $size))
+            (loop $copy
+              (bind $i i32 (i32.const 0))
+              (bind $p i32 (i32.const 1))
+              (result text)
+              (if
+                (result text)
+                (i32.eq (local.get $i) (bytes.len (local.get $b)))
+                (then (call $valid (bytes.from-array $Array (local.get $out))))
+                (else
+                  (recur $copy
+                    (i32.add (local.get $i) (i32.const 1))
+                    (call $put
+                      (local.get $out)
+                      (local.get $p)
+                      (bytes.get (local.get $b) (local.get $i))
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)

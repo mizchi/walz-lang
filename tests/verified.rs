@@ -2,9 +2,9 @@ use std::process::Command;
 
 fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output {
     let directory = tempfile::tempdir().unwrap();
-    let input = directory.path().join("source.gwat");
+    let input = directory.path().join("source.wlt");
     std::fs::write(&input, source).unwrap();
-    let mut command = Command::new(env!("CARGO_BIN_EXE_gcwat"));
+    let mut command = Command::new(env!("CARGO_BIN_EXE_wlt"));
     command.args([mode]).arg(input);
     if let Some(path) = path {
         command.env("PATH", path);
@@ -105,9 +105,9 @@ fn independent_kernel_rejects_double_use_branch_mismatch_and_lost_loop_owners() 
         .unwrap();
         let output = Command::new("lean")
             .args([
-                gcwat::verified::LEAN_VERSION,
+                wlt::verified::LEAN_VERSION,
                 "--run",
-                gcwat::verified::KERNEL_PATH,
+                wlt::verified::KERNEL_PATH,
             ])
             .arg(path)
             .output()
@@ -124,7 +124,7 @@ fn independent_kernel_rejects_double_use_branch_mismatch_and_lost_loop_owners() 
 
 #[test]
 fn ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_protected() {
-    let source = std::fs::read_to_string("examples/ready-delivery.gwat").unwrap();
+    let source = std::fs::read_to_string("examples/ready-delivery.wlt").unwrap();
     let output = command("run-verified", &source, None);
     assert!(
         output.status.success(),

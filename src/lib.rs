@@ -91,7 +91,7 @@ pub fn check(source: &str) -> Result<ir::Module, Error> {
     Ok(module)
 }
 
-/// Resolve and check gcwat, infer effects, and emit a validated Wasm GC module.
+/// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
 pub fn compile(source: &str) -> Result<Compilation, Error> {
     // Native WAT takes precedence: do not reinterpret or rewrite valid WAT.
     // The dedicated reader does not decide acceptance here (data strings,

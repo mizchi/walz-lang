@@ -14,19 +14,19 @@ compiler の[診断データ契約](../../docs/diagnostics.md)は表示から独
 | match-exhaustiveness | 足りないcaseと対象の型 |
 | alias-cycle | 循環するaliasと定義位置 |
 | effect-contract | 宣言した作用と必要な作用の違い |
-| include-location | include元ではなく実際のmath.gwatの問題位置 |
+| include-location | include元ではなく実際のmath.wltの問題位置 |
 | unclosed-delimiter | 閉じられていない括弧と開始位置 |
 | opaque-representation | 公開APIと非公開の表現操作の区別 |
 
 ## 準備・評価・修正
 
-`examples/gcwat` で実行する。Node 24以降、Cargo、Wasm GC対応Wasmtimeが必要。
-Cargoが報告する実際のgcwat実行ファイルを使用するため、CARGO_TARGET_DIRや作業ディレクトリの深さに依存しない。
+`wlt-lang` で実行する。Node 24以降、Cargo、Wasm GC対応Wasmtimeが必要。
+Cargoが報告する実際のwlt実行ファイルを使用するため、CARGO_TARGET_DIRや作業ディレクトリの深さに依存しない。
 
 ```sh
 just eval-diagnostics-prepare errors-01
 # または任意の場所へ
-node evals/run.mjs prepare errors-02 --suite diagnostics --output /tmp/gcwat-errors-02
+node evals/run.mjs prepare errors-02 --suite diagnostics --output /tmp/wlt-errors-02
 ```
 
 prepareはcompilerをビルドし、各badソースにcheckを実行する。診断のstdout/stderr、終了状態、ソースと基準を評価回へ保存し、SHA-256で固定する。

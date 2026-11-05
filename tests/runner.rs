@@ -2,7 +2,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 fn cli(directory: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    Command::new(env!("CARGO_BIN_EXE_wlt"))
         .current_dir(directory)
         .args(args)
         .output()
@@ -19,7 +19,7 @@ fn discovers_nested_test_files_deduplicates_and_accepts_nonzero_results() {
     let tests = directory.path().join("tests/nested");
     std::fs::create_dir_all(&tests).unwrap();
     std::fs::write(
-        tests.join("core.test.gwat"),
+        tests.join("core.test.wlt"),
         r#"(module
       (type $Option (variant (none) (some i64)))
       (func $double (param $n i64) (result i64) (i64.mul (local.get $n) (i64.const 2)))
@@ -30,10 +30,10 @@ fn discovers_nested_test_files_deduplicates_and_accepts_nonzero_results() {
     )
     .unwrap();
     // Directory discovery must not treat ordinary modules as test files.
-    std::fs::write(tests.join("ignored.gwat"), "invalid source").unwrap();
+    std::fs::write(tests.join("ignored.wlt"), "invalid source").unwrap();
     let output = cli(
         directory.path(),
-        &["test", "tests", "tests/nested/core.test.gwat"],
+        &["test", "tests", "tests/nested/core.test.wlt"],
     );
     assert!(
         output.status.success(),
@@ -50,7 +50,7 @@ fn discovers_nested_test_files_deduplicates_and_accepts_nonzero_results() {
 fn failures_traps_and_compile_errors_do_not_hide_later_tests() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("a.test.gwat"),
+        directory.path().join("a.test.wlt"),
         r#"(module
       (test "false" (i32.const 0))
       (test "trap" (unreachable))
@@ -58,12 +58,12 @@ fn failures_traps_and_compile_errors_do_not_hide_later_tests() {
     )
     .unwrap();
     std::fs::write(
-        directory.path().join("b.test.gwat"),
+        directory.path().join("b.test.wlt"),
         "(module (test \"wrong type\" (i64.const 1)))",
     )
     .unwrap();
     std::fs::write(
-        directory.path().join("c.test.gwat"),
+        directory.path().join("c.test.wlt"),
         "(module (test \"after compile error\" (i32.const 1)))",
     )
     .unwrap();
@@ -86,7 +86,7 @@ fn failures_traps_and_compile_errors_do_not_hide_later_tests() {
 fn list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("suite.gwat"),
+        directory.path().join("suite.wlt"),
         r#"(module
       (import "host" "read" (func $read (result i32)))
       (test "enum one" (call $read))
@@ -94,9 +94,9 @@ fn list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error() {
       (test "enum two" (i32.const 1)))"#,
     )
     .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .current_dir(directory.path())
-        .args(["test", "suite.gwat", "--filter", "enum", "--list"])
+        .args(["test", "suite.wlt", "--filter", "enum", "--list"])
         .env("PATH", "")
         .output()
         .unwrap();
@@ -109,7 +109,7 @@ fn list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error() {
     assert!(text.contains("2 tests; 1 filtered out"), "{text}");
     let output = cli(
         directory.path(),
-        &["test", "suite.gwat", "--filter", "missing"],
+        &["test", "suite.wlt", "--filter", "missing"],
     );
     assert_eq!(output.status.code(), Some(1));
     assert!(
@@ -123,7 +123,7 @@ fn list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error() {
 fn infinite_tests_time_out_and_the_runner_continues() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("suite.gwat"),
+        directory.path().join("suite.wlt"),
         r#"(module
       (test "infinite" (loop $forever (result i32) (recur $forever)))
       (test "after timeout" (i32.const 1)))"#,
@@ -131,7 +131,7 @@ fn infinite_tests_time_out_and_the_runner_continues() {
     .unwrap();
     let output = cli(
         directory.path(),
-        &["test", "suite.gwat", "--timeout-ms", "500"],
+        &["test", "suite.wlt", "--timeout-ms", "500"],
     );
     assert_eq!(output.status.code(), Some(1));
     let text = stdout(&output);
@@ -172,26 +172,26 @@ fn test_names_and_bodies_are_checked_without_exposing_generated_functions() {
             "unknown function",
         ),
     ] {
-        let error = gcwat::check(source).unwrap_err().to_string();
+        let error = wlt::check(source).unwrap_err().to_string();
         assert!(error.contains(expected), "{source}\n{error}");
     }
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("collision.gwat"),
+        directory.path().join("collision.wlt"),
         r#"(module
-      (func $user (export "__gcwat_test_0") (result i32) (i32.const 0))
+      (func $user (export "__wlt_test_0") (result i32) (i32.const 0))
       (test "generated export" (i32.const 1)))"#,
     )
     .unwrap();
-    let output = cli(directory.path(), &["test", "collision.gwat"]);
+    let output = cli(directory.path(), &["test", "collision.wlt"]);
     assert!(output.status.success(), "{}", stdout(&output));
 }
 
 #[test]
 fn reports_empty_suites_missing_runtime_and_invalid_arguments() {
     let directory = tempfile::tempdir().unwrap();
-    std::fs::write(directory.path().join("empty.gwat"), "(module)").unwrap();
-    let output = cli(directory.path(), &["test", "empty.gwat"]);
+    std::fs::write(directory.path().join("empty.wlt"), "(module)").unwrap();
+    let output = cli(directory.path(), &["test", "empty.wlt"]);
     assert_eq!(output.status.code(), Some(1));
     assert!(stdout(&output).contains("no tests matched"));
     for args in [
@@ -202,13 +202,13 @@ fn reports_empty_suites_missing_runtime_and_invalid_arguments() {
         assert_eq!(cli(directory.path(), &args).status.code(), Some(2));
     }
     std::fs::write(
-        directory.path().join("one.gwat"),
+        directory.path().join("one.wlt"),
         "(module (test \"one\" (i32.const 1)))",
     )
     .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .current_dir(directory.path())
-        .args(["test", "one.gwat"])
+        .args(["test", "one.wlt"])
         .env("PATH", "")
         .output()
         .unwrap();
@@ -230,8 +230,8 @@ fn tests_keep_explicit_gc_effects_and_a_closed_call_graph() {
           (block (result i32)
             (struct.set $Cell $value (local.get $cell) (i64.const 42))
             (i64.eq (struct.get $Cell $value (local.get $cell)) (i64.const 42))))))"#;
-    let module = gcwat::check(source).unwrap();
-    let analysis = gcwat::analysis::analyze(&module);
+    let module = wlt::check(source).unwrap();
+    let analysis = wlt::analysis::analyze(&module);
     let capture = &analysis.functions[module.tests[0].function.0];
     assert_eq!(capture.calls, ["$Add"]);
     assert!(!capture.effects.host && !capture.effects.writes && !capture.effects.reads);

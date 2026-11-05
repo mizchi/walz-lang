@@ -1,4 +1,4 @@
-# gcwat の評価を繰り返す
+# wlt の評価を繰り返す
 
 在庫台帳を課題に、初見の読解・コードの可読性・コード変更の正しさを確認する。
 使い回す課題、ルーブリック、外部契約、検証器をここへ分離した。過去の点数や回答を新しい評価役に渡さない。
@@ -7,17 +7,17 @@ suite は [stock-ledger v1](stock-ledger/suite.json) と [diagnostics v1](diagno
 
 ## 1. 新しい評価回を作る
 
-`examples/gcwat` で、Node 24以降と既存の開発依存を使用する。実行検証には Cargo、Lean（検証付きexport）、Wasm GC/JSPI が必要。
+`wlt-lang` で、Node 24以降と既存の開発依存を使用する。実行検証には Cargo、Lean（検証付きexport）、Wasm GC/JSPI が必要。
 
 ```sh
 just eval-prepare trial-01
 # 任意の場所にも作成できる。固定の階層深さや個人のパスに依存しない。
-node evals/run.mjs prepare trial-02 --output /tmp/gcwat-eval-trial-02
+node evals/run.mjs prepare trial-02 --output /tmp/wlt-eval-trial-02
 ```
 
 既存の評価回は上書きしない。ID に回数上限はなく、`evals/runs/` は Git 管理対象外。
-現在の CHEATSHEET、main、行数付き版、契約、基準、課題に加えて依存する .gwat を support へコピーする。
-main の include はコピー先の program.gwat から support を参照するため、後のライブラリ変更で評価コードが変わらない。
+現在の CHEATSHEET、main、行数付き版、契約、基準、課題に加えて依存する .wlt を support へコピーする。
+main の include はコピー先の program.wlt から support を参照するため、後のライブラリ変更で評価コードが変わらない。
 依存ファイルを増やしたら suite.json の support も更新する。
 
 主な生成物:
@@ -28,7 +28,7 @@ evals/runs/trial-01/
   manifest.json         # suite、環境、実装fingerprint、役ごとの読取り範囲
   inputs.json           # 変更しない配布物・依存ソースのSHA-256
   reader/              # task、cheatsheet、契約、基準、main、counted
-  writer/              # task、cheatsheet、契約、main、candidate.gwat、program.gwat
+  writer/              # task、cheatsheet、契約、main、candidate.wlt、program.wlt
   support/             # 静的includeの依存ソース
   reviewer-task.md      # 親による回答監査の手順
 ```
@@ -39,7 +39,7 @@ dispatch.md の2つの指示を、会話履歴を持たない別コンテキス�
 読み書きの制限は評価指示であり、OS の sandbox ではない。
 
 - **読解役**は reader 内の配布物だけを読み、reader.json へ回答と5軸の点数・根拠を書く。コンパイラは実行しない。
-- **変更役**は writer 内の main をもとに candidate.gwat を編集し、成功値を配送行数へ変える。CLI の check/types/fmt は使用可。結果を writer/report.json へ記録する。
+- **変更役**は writer 内の main をもとに candidate.wlt を編集し、成功値を配送行数へ変える。CLI の check/types/fmt は使用可。結果を writer/report.json へ記録する。
 
 変更役へ counted の完成例、読解役の資料、依存実装、過去の結果を渡さない。通常の補助関数は許可するが、状態を pair に持つ条件は維持する。
 candidate は最初は成功値0の main であり、未変更なら実行検証に失敗する。雛形をコピーしただけで合格にならない。

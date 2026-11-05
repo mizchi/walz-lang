@@ -11,9 +11,9 @@ const execFile = promisify(execFileCallback);
 const cli = resolve("runtime/text-cli.mjs");
 
 test("text CLI preserves application error codes without labelling them as I/O failures", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "gcwat-app-error-"));
+  const dir = await mkdtemp(join(tmpdir(), "wlt-app-error-"));
   try {
-    const source = join(dir, "error.gwat");
+    const source = join(dir, "error.wlt");
     await writeFile(
       source,
       '(module (func $main (export "main") (result (result i32 i32)) (effects pure) (result.err i32 i32 (i32.const 1001))))',
@@ -33,10 +33,10 @@ test(
   "text CLI filters UTF-8 from pipes and files, reports I/O errors and acknowledges SIGINT",
   { timeout: 60000 },
   async () => {
-    const dir = await mkdtemp(join(tmpdir(), "gcwat-cli-"));
+    const dir = await mkdtemp(join(tmpdir(), "wlt-cli-"));
     try {
       const app = join(dir, "app");
-      await build("examples/io/text-filter.gwat", app);
+      await build("examples/io/text-filter.wlt", app);
       const input = join(dir, "input.txt"),
         output = join(dir, "output.txt");
       await writeFile(input, "日本語🦀\r\n\nend");

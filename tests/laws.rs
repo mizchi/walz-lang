@@ -2,9 +2,9 @@ use std::process::Command;
 
 fn command(mode: &str, source: &str) -> std::process::Output {
     let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("law.gwat");
+    let path = directory.path().join("law.wlt");
     std::fs::write(&path, source).unwrap();
-    Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg(mode)
         .arg(path)
         .output()

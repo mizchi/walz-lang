@@ -1,7 +1,7 @@
 use std::process::Command;
 
 fn run(source: &str) -> String {
-    let compilation = gcwat::compile(source).unwrap();
+    let compilation = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("values.wasm");
     std::fs::write(&path, compilation.wasm).unwrap();
@@ -84,11 +84,10 @@ fn value_storage_identity_is_hidden_but_payload_null_is_preserved() {
           (case none () (i32.const 0))
           (case some ($reference) (ref.is_null (local.get $reference))))))"#;
     assert_eq!(run(source), "1");
-    let error = gcwat::check(
-        "(module (func $f (result i32) (ref.eq (option.none i64) (option.none i64))))",
-    )
-    .unwrap_err()
-    .to_string();
+    let error =
+        wlt::check("(module (func $f (result i32) (ref.eq (option.none i64) (option.none i64))))")
+            .unwrap_err()
+            .to_string();
     assert!(error.contains("ref.eq needs references"), "{error}");
 }
 
@@ -96,12 +95,12 @@ fn value_storage_identity_is_hidden_but_payload_null_is_preserved() {
 fn value_types_and_contracts_are_visible_in_type_and_effect_reports() {
     let source =
         "(module (func $f (result (option i64)) (effects pure) (option.some i64 (i64.const 42))))";
-    let module = gcwat::check(source).unwrap();
+    let module = wlt::check(source).unwrap();
     assert_eq!(
         module.type_name(&module.functions[0].result),
         "(option i64)"
     );
-    let info = gcwat::compile(source).unwrap();
+    let info = wlt::compile(source).unwrap();
     let report = serde_json::to_value(info.analysis).unwrap();
     assert_eq!(
         report["functions"][0]["semantic_effects"]["allocates"],
@@ -143,7 +142,7 @@ fn wrong_payloads_and_incomplete_matches_are_rejected() {
             "expected numeric type",
         ),
     ] {
-        let error = gcwat::check(source).unwrap_err().to_string();
+        let error = wlt::check(source).unwrap_err().to_string();
         assert!(error.contains(message), "{source}\n{error}");
     }
 }

@@ -9,12 +9,12 @@ import { assertSnapshotIncludes, metrics } from "./lib/source.mjs";
 
 test("source inspection ignores strings/nested comments but rejects live includes", () => {
   assertSnapshotIncludes(String.raw`(module ;; (include "bad")
-    (include "program.gwat") (func $f (text.lit "(include \"bad\")")))`);
+    (include "program.wlt") (func $f (text.lit "(include \"bad\")")))`);
   assertSnapshotIncludes(
-    '(module (; outer (; (include "bad") ;) ;) (include "program.gwat"))',
+    '(module (; outer (; (include "bad") ;) ;) (include "program.wlt"))',
   );
   assert.throws(
-    () => assertSnapshotIncludes('(module (include "../live.gwat"))'),
+    () => assertSnapshotIncludes('(module (include "../live.wlt"))'),
     /frozen/,
   );
   assert.throws(() => assertSnapshotIncludes("(module)"), /exactly one/);
@@ -28,7 +28,7 @@ test(
   "frozen sources execute outside checkout; seed is a negative control and completed candidate passes",
   { timeout: 60000 },
   async () => {
-    const parent = await mkdtemp(join(tmpdir(), "gcwat-eval-exec-"));
+    const parent = await mkdtemp(join(tmpdir(), "wlt-eval-exec-"));
     try {
       const directory = join(parent, "path with spaces's", "run");
       await prepareRun("integration-99", { directory });
@@ -46,17 +46,17 @@ test(
       );
       // Parent-only oracle control; writer is never given this source.
       await copyFile(
-        join(directory, "reader/counted.gwat"),
-        join(directory, "writer/candidate.gwat"),
+        join(directory, "reader/counted.wlt"),
+        join(directory, "writer/candidate.wlt"),
       );
       const positive = await verifyRun(directory);
       assert.equal(positive.passed, true, JSON.stringify(positive));
       for (const subject of Object.values(positive.subjects))
         assert.equal(subject.checks.length, 14);
-      await writeFile(join(directory, "support/stdlib/text.gwat"), "changed");
+      await writeFile(join(directory, "support/stdlib/text.wlt"), "changed");
       const tampered = await verifyRun(directory);
       assert.equal(tampered.passed, false);
-      assert.match(tampered.fatal, /text.gwat/);
+      assert.match(tampered.fatal, /text.wlt/);
     } finally {
       await rm(parent, { recursive: true, force: true });
     }
@@ -67,14 +67,14 @@ test(
   "a synchronous Wasm loop is killed and cannot retain a successful verification",
   { timeout: 20000 },
   async () => {
-    const parent = await mkdtemp(join(tmpdir(), "gcwat-eval-timeout-"));
+    const parent = await mkdtemp(join(tmpdir(), "wlt-eval-timeout-"));
     try {
       const directory = join(parent, "run");
       await prepareRun("timeout", { directory });
       await writeFile(join(directory, "verification.json"), '{"passed":true}');
       await writeFile(
-        join(directory, "writer/candidate.gwat"),
-        '(module (include "program.gwat") (func $main (export "main") (result (result i32 i32)) (effects pure) (loop $spin (result (result i32 i32)) (recur $spin))))',
+        join(directory, "writer/candidate.wlt"),
+        '(module (include "program.wlt") (func $main (export "main") (result (result i32 i32)) (effects pure) (loop $spin (result (result i32 i32)) (recur $spin))))',
       );
       const result = await verifyRun(directory, { timeoutMs: 5000 });
       assert.equal(result.passed, false);

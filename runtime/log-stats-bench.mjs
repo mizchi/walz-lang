@@ -14,7 +14,7 @@ const exec = promisify(rawExec);
 const directories = process.argv.slice(2).map((x) => resolve(x));
 if (directories.length < 2 || directories.length > 3)
   throw new Error("usage: log-stats-bench.mjs before after [candidate]");
-const temporary = await mkdtemp(join(tmpdir(), "gcwat-arena-probe-"));
+const temporary = await mkdtemp(join(tmpdir(), "wlt-arena-probe-"));
 try {
   const arena = await readFile(
     new URL("../src/component-memory.wat", import.meta.url),

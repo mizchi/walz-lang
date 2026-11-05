@@ -59,17 +59,17 @@ export function adaptJspiGlue(source) {
   ]) {
     const declaration = `function ${kind}Read(`;
     if (!source.includes(declaration)) continue;
-    source = source.replace(declaration, `function gcwatRaw${kind}Read(`);
+    source = source.replace(declaration, `function wltRaw${kind}Read(`);
     source += `\n`; // Insert inside instantiate, where tables and options live.
     const wrapper = `function ${kind}Read(ctx,handle,...args){
-      const run=()=>gcwatRaw${kind}Read(ctx,handle,...args);
-      if(!options?.gcwat?.read)return run();
+      const run=()=>wltRaw${kind}Read(ctx,handle,...args);
+      if(!options?.wlt?.read)return run();
       const end=get${kind[0].toUpperCase() + kind.slice(1)}End({tableIdx:ctx.${table},${handle}:handle});
-      return options.gcwat.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__gcwatCancellingRead=true;end.cancel();}},run);
+      return options.wlt.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__wltCancellingRead=true;end.cancel();}},run);
     }\n`;
     source = source.replace(
-      `function gcwatRaw${kind}Read(`,
-      `${wrapper}function gcwatRaw${kind}Read(`,
+      `function wltRaw${kind}Read(`,
+      `${wrapper}function wltRaw${kind}Read(`,
     );
   }
   const marker =
@@ -77,14 +77,14 @@ export function adaptJspiGlue(source) {
   if (source.includes(marker))
     source = source.replace(
       marker,
-      `if(options?.gcwat?.disposal){options.gcwat.disposal(()=>disposeFn.call(value));return;}\n${marker}`,
+      `if(options?.wlt?.disposal){options.wlt.disposal(()=>disposeFn.call(value));return;}\n${marker}`,
     );
   // A cancelled copy has detached its guest buffer. Waiting for iterator.next()
   // here deadlocks a cancelled task whose producer waits for iterator.return().
   source = source.replaceAll(
     "if (deferSyncFinish) { await Promise.resolve(); }",
     `if (deferSyncFinish) { await Promise.resolve(); }
-          if(this.__gcwatCancellingRead && injectedWritePromise){
+          if(this.__wltCancellingRead && injectedWritePromise){
             injectedWritePromise.then(cleanup=>cleanup(),()=>{});
             return finishCopy();
           }`,

@@ -78,7 +78,7 @@ fn every_catalog_example_is_checked_and_produces_valid_wasm() {
             example.path
         );
         let source = std::fs::read_to_string(root().join(&example.path)).unwrap();
-        let compiled = gcwat::compile(&source)
+        let compiled = wlt::compile(&source)
             .unwrap_or_else(|error| panic!("{} ({}): {error}", example.path, example.pattern));
         wasmparser::Validator::new()
             .validate_all(&compiled.wasm)
@@ -89,7 +89,7 @@ fn every_catalog_example_is_checked_and_produces_valid_wasm() {
         } else {
             assert!(compiled.analysis.opaque);
             assert!(
-                !gcwat::native::types(&compiled.wasm)
+                !wlt::native::types(&compiled.wasm)
                     .unwrap()
                     .functions
                     .is_empty()
@@ -112,10 +112,7 @@ fn every_catalog_example_is_checked_and_produces_valid_wasm() {
     for directory in ["examples", "examples/probes"] {
         for entry in std::fs::read_dir(root().join(directory)).unwrap() {
             let path = entry.unwrap().path();
-            if path
-                .extension()
-                .is_some_and(|extension| extension == "gwat")
-            {
+            if path.extension().is_some_and(|extension| extension == "wlt") {
                 let relative = format!(
                     "{directory}/{}",
                     path.file_name().unwrap().to_str().unwrap()
@@ -136,7 +133,7 @@ fn additional_inputs_exercise_boundary_and_failure_results() {
             continue;
         }
         let source = std::fs::read_to_string(root().join(&example.path)).unwrap();
-        let compiled = gcwat::compile(&source).unwrap();
+        let compiled = wlt::compile(&source).unwrap();
         let directory = tempfile::tempdir().unwrap();
         let path = directory.path().join("program.wasm");
         std::fs::write(&path, compiled.wasm).unwrap();
@@ -197,7 +194,7 @@ fn capability_probes_record_reproducible_language_limits() {
                 probe.path
             );
         }
-        let error = match gcwat::compile(&source) {
+        let error = match wlt::compile(&source) {
             Ok(_) => panic!(
                 "{} is now supported; update the assessment and catalog",
                 probe.path
@@ -220,8 +217,8 @@ fn representative_program_effects_remain_visible() {
         ("numeric", "$sqrt", "may_diverge"),
         ("host-import", "$main", "host"),
     ] {
-        let source = std::fs::read_to_string(root().join(format!("examples/{path}.gwat"))).unwrap();
-        let compiled = gcwat::compile(&source).unwrap();
+        let source = std::fs::read_to_string(root().join(format!("examples/{path}.wlt"))).unwrap();
+        let compiled = wlt::compile(&source).unwrap();
         let function = compiled
             .analysis
             .functions

@@ -5,7 +5,7 @@ The executable ownership contract kernel. This models availability of owned
 slots, not the Wasm heap, parser, extraction, lowering, or resource protocols.
 The checker is total; only the untrusted JSON reader below is partial.
 -/
-namespace Gcwat
+namespace Wlt
 
 abbrev Context := List Nat
 abbrev Loops := List Context
@@ -234,11 +234,11 @@ def verifyJson (json : Json) : Except String Nat := do
     | _ => throw s!"ownership contract rejected: {name}"
   return functions.size
 
-end Gcwat
+end Wlt
 
 def main (args : List String) : IO UInt32 := do
   let [path] := args | IO.eprintln "usage: Ownership.lean contract.json"; return 2
   let contents ← IO.FS.readFile path
-  match Lean.Json.parse contents >>= Gcwat.verifyJson with
+  match Lean.Json.parse contents >>= Wlt.verifyJson with
   | .ok count => IO.println s!"ownership contracts verified: {count}"; return 0
   | .error message => IO.eprintln message; return 1

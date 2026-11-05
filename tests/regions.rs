@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 fn memory(source: &str, name: &str) -> Value {
-    let module = gcwat::check(source).unwrap();
-    let report = serde_json::to_value(gcwat::analysis::analyze(&module)).unwrap();
+    let module = wlt::check(source).unwrap();
+    let report = serde_json::to_value(wlt::analysis::analyze(&module)).unwrap();
     report["functions"]
         .as_array()
         .unwrap()
@@ -176,7 +176,7 @@ fn suspension_invalidates_mutable_reference_contents_across_calls() {
     let source = r#"(module
       (type $C (struct (field (mut i32))))
       (type $Box (struct (field (mut (ref null $C)))))
-      (import "gcwat:host/event-loop@0.1.0" "yield" (func $yield))
+      (import "wlt:host/event-loop@0.1.0" "yield" (func $yield))
       (func $after (param $box (ref $Box))
         (block
           (struct.set $Box 0 (local.get $box) (struct.new $C (i32.const 0)))

@@ -33,7 +33,7 @@ export function releaseEndpoints(source) {
     if (!source.includes(`class ${kind}End`)) continue;
     const lower = kind.toLowerCase(),
       globals = kind === "Future" ? "FUTURES" : "STREAMS";
-    helpers += `function gcwatRetire${kind}End(end){
+    helpers += `function wltRetire${kind}End(end){
       const detach = e=>{
         const meta=${kind.toUpperCase()}_TABLES[e.${lower}TableIdx()];
         const state=getOrCreateAsyncState(meta.componentIdx);
@@ -54,7 +54,7 @@ export function releaseEndpoints(source) {
       source = replaceOnce(
         source,
         "this.#dropped = true;\n    this.#notifyPeerDroppedFn();\n    this.#waitable.drop();",
-        "this.#dropped = true;\n    this.#notifyPeerDroppedFn();\n    this.#waitable.drop();\n    gcwatRetireFutureEnd(this);",
+        "this.#dropped = true;\n    this.#notifyPeerDroppedFn();\n    this.#waitable.drop();\n    wltRetireFutureEnd(this);",
       );
       source = replaceOnce(
         source,
@@ -73,7 +73,7 @@ export function releaseEndpoints(source) {
       source = replaceOnce(
         source,
         "        w.drop();\n      }\n    }\n  }\n}\n\nfunction getStreamEnd",
-        "        w.drop();\n      }\n    }\n    gcwatRetireStreamEnd(this);\n  }\n}\n\nfunction getStreamEnd",
+        "        w.drop();\n      }\n    }\n    wltRetireStreamEnd(this);\n  }\n}\n\nfunction getStreamEnd",
       );
       source = replaceOnce(
         source,
@@ -83,12 +83,12 @@ export function releaseEndpoints(source) {
       source = replaceOnce(
         source,
         "  #globalRep = null;",
-        "  #globalRep = null;\n  #gcwatClosed = false;",
+        "  #globalRep = null;\n  #wltClosed = false;",
       );
       source = replaceOnce(
         source,
         "    return this.#readFn(readOpts);",
-        `    if(this.#gcwatClosed)return {done:true};
+        `    if(this.#wltClosed)return {done:true};
     const result=await this.#readFn(readOpts);
     if(result.done)this[symbolDispose]();
     return result;`,
@@ -96,8 +96,8 @@ export function releaseEndpoints(source) {
       source = replaceOnce(
         source,
         "    this.#dropFn?.();",
-        `    if(this.#gcwatClosed)return;
-    this.#gcwatClosed=true;
+        `    if(this.#wltClosed)return;
+    this.#wltClosed=true;
     this.#dropFn?.();
     this.#dropFn=null;this.#readFn=null;this.#writeFn=null;`,
       );

@@ -1,4 +1,4 @@
-// Lexical measurements and include inspection, not a gcwat type checker.
+// Lexical measurements and include inspection, not a wlt type checker.
 function tokens(source) {
   const out = [];
   let i = 0;
@@ -85,16 +85,16 @@ export function assertSnapshotIncludes(source) {
   const walk = (node) => {
     if (!Array.isArray(node)) return;
     if (node[0] === "include") {
-      if (node.length !== 2 || node[1]?.text !== '"program.gwat"')
+      if (node.length !== 2 || node[1]?.text !== '"program.wlt"')
         throw new Error(
-          'candidate may only include "program.gwat" from the frozen support',
+          'candidate may only include "program.wlt" from the frozen support',
         );
       count++;
     } else if (node[0] === "module" || node[0] === "namespace")
       node.slice(1).forEach(walk);
   };
   walk(root);
-  if (count !== 1) throw new Error('keep exactly one (include "program.gwat")');
+  if (count !== 1) throw new Error('keep exactly one (include "program.wlt")');
 }
 export function metrics(source) {
   const items = tokens(source),

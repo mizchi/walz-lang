@@ -15,9 +15,9 @@ import { build } from "./build-core.mjs";
 import { collect, tick } from "./testing/memory.mjs";
 
 async function fixture(source, run) {
-  const directory = await mkdtemp(join(tmpdir(), "gcwat-core-"));
+  const directory = await mkdtemp(join(tmpdir(), "wlt-core-"));
   try {
-    const input = join(directory, "input.gwat");
+    const input = join(directory, "input.wlt");
     await writeFile(input, source);
     await build(input, directory);
     await run(
@@ -99,9 +99,9 @@ test(
   "exported ends and cancelled late producers do not retain Core instances",
   { skip: typeof global.gc !== "function" },
   async () => {
-    const directory = await mkdtemp(join(tmpdir(), "gcwat-core-gc-"));
+    const directory = await mkdtemp(join(tmpdir(), "wlt-core-gc-"));
     try {
-      await build("tests/component-fixtures/values.gwat", directory);
+      await build("tests/component-fixtures/values.wlt", directory);
       const runtime = await import(pathToFileURL(join(directory, "index.js")));
       const create = async (cancel) => {
         let memory, notify, complete;
@@ -230,7 +230,7 @@ test(
 test("host failures stay fatal through catch_all and falsy rejection reasons", async () => {
   await fixture(
     `(module
-    (import "gcwat:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
+    (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
     (func $direct (export "direct") (effects host suspends) (call $sleep (i32.const 0)))
     (func $caught (export "caught") (result i64) (effects host suspends)
       (try (result i64) (do (block (result i64) (call $sleep (i32.const 0)) (i64.const 42)))

@@ -234,7 +234,7 @@ impl<'a> Adapter<'a> {
     }
     pub(super) fn declarations(&self) -> String {
         let mut out = String::from(
-            "(type $unit_raw (enum \"value\"))\n(export \"gcwat-unit\" (type $unit (eq $unit_raw)))\n",
+            "(type $unit_raw (enum \"value\"))\n(export \"wlt-unit\" (type $unit (eq $unit_raw)))\n",
         );
         for ty in &self.types {
             let Type::Value(id) = ty else { continue };

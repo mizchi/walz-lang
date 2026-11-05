@@ -1,5 +1,5 @@
-use gcwat::compile;
 use std::process::Command;
+use wlt::compile;
 
 fn run(source: &str) -> String {
     let compiled = compile(source).unwrap();
@@ -121,7 +121,7 @@ fn closures_have_explicit_captures_and_can_escape_their_creator() {
         .find(|f| f.name == "$Adder")
         .unwrap();
     assert_eq!(summary.captures, ["$base"]);
-    assert_eq!(summary.effects, gcwat::Effects::default());
+    assert_eq!(summary.effects, wlt::Effects::default());
 }
 
 #[test]
@@ -167,7 +167,7 @@ fn effects_propagate_through_calls_and_recursion() {
             .unwrap()
             .effects
     };
-    assert_eq!(effects("$pure"), gcwat::Effects::default());
+    assert_eq!(effects("$pure"), wlt::Effects::default());
     assert!(effects("$recursive").may_diverge);
     assert!(effects("$caller").may_diverge);
     assert!(effects("$host_caller").host);
@@ -239,7 +239,7 @@ fn rejects_programs_outside_the_analyzable_core() {
         ("(module (type $T (array (ref $Missing))))", "unknown type"),
         ("(module (func $__reserved (nop)))", "reserved"),
     ] {
-        let error = match gcwat::check(source) {
+        let error = match wlt::check(source) {
             Ok(_) => panic!("unexpectedly accepted: {source}"),
             Err(error) => error.to_string(),
         };
@@ -282,8 +282,8 @@ fn effect_facts_distinguish_mutation_nullability_and_allocation() {
             .unwrap()
             .effects
     };
-    assert_eq!(effects("$value"), gcwat::Effects::default());
-    assert_eq!(effects("$length"), gcwat::Effects::default());
+    assert_eq!(effects("$value"), wlt::Effects::default());
+    assert_eq!(effects("$length"), wlt::Effects::default());
     assert!(effects("$nullable").may_trap);
     assert!(!effects("$nullable").reads);
     assert!(effects("$read").reads);
@@ -401,7 +401,7 @@ fn malformed_input_has_diagnostics_instead_of_panics() {
         "(module (; comment",
         "(module (import \"unterminated)",
     ] {
-        assert!(gcwat::check(source).is_err(), "accepted {source:?}");
+        assert!(wlt::check(source).is_err(), "accepted {source:?}");
     }
     let deep = format!("{}0{}", "(".repeat(300), ")".repeat(300));
     assert!(

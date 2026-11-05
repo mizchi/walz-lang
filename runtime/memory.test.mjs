@@ -22,9 +22,9 @@ test(
   "finished, closed and transferred endpoints leave no live jco ownership entries",
   { timeout: 60000 },
   async () => {
-    const dir = await mkdtemp(join(tmpdir(), "gcwat-memory-"));
+    const dir = await mkdtemp(join(tmpdir(), "wlt-memory-"));
     try {
-      await build("tests/component-fixtures/values.gwat", dir);
+      await build("tests/component-fixtures/values.wlt", dir);
       await instrument(dir);
       const runtime = await import(pathToFileURL(join(dir, "index.js")));
       const instance = await runtime.instantiate();
@@ -144,9 +144,9 @@ test(
   "varying bytes sizes reuse freed linear storage",
   { timeout: 60000 },
   async () => {
-    const dir = await mkdtemp(join(tmpdir(), "gcwat-memory-sizes-"));
+    const dir = await mkdtemp(join(tmpdir(), "wlt-memory-sizes-"));
     try {
-      await build("tests/component-fixtures/buffers.gwat", dir);
+      await build("tests/component-fixtures/buffers.wlt", dir);
       let allocator;
       const { instantiate } = await import(
         pathToFileURL(join(dir, "index.js"))

@@ -9,7 +9,7 @@ import { build } from "./build-core.mjs";
 import { summarize } from "./profile-summary.mjs";
 const exec = promisify(rawExec);
 const root = fileURLToPath(new URL("..", import.meta.url));
-const source = join(root, "examples/io/text-filter.gwat");
+const source = join(root, "examples/io/text-filter.wlt");
 const productionFiles = [
   "core.wasm",
   "memory.wasm",
@@ -43,7 +43,7 @@ export async function capture(directory, rounds = 40) {
     ["run", "--locked", "--quiet", "--", "profile-text", source, output],
     { cwd: root },
   );
-  await copyFile(source, join(output, "source.gwat"));
+  await copyFile(source, join(output, "source.wlt"));
   const args = [
     "run",
     "-W",

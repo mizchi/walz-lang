@@ -1,12 +1,12 @@
 use std::process::Command;
 
 fn rejects(source: &str, expected: &str) {
-    let error = gcwat::check(source).unwrap_err().to_string();
+    let error = wlt::check(source).unwrap_err().to_string();
     assert!(error.contains(expected), "{source}\n{error}");
 }
 
 fn run(source: &str) -> String {
-    let compilation = gcwat::compile(source).unwrap();
+    let compilation = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("owned.wasm");
     std::fs::write(&path, compilation.wasm).unwrap();

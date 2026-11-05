@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests() {
-    let loaded = gcwat::source::load("examples/apps/log-stats/main.gwat").unwrap();
-    let compiled = gcwat::compile(loaded.text()).unwrap();
+    let loaded = wlt::source::load("examples/apps/log-stats/main.wlt").unwrap();
+    let compiled = wlt::compile(loaded.text()).unwrap();
     assert!(!compiled.analysis.opaque);
     for (name, reads, writes, host, suspends) in [
         ("$parse.line", false, false, false, false),
@@ -28,8 +28,8 @@ fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests(
             "{name}"
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
-        .args(["test", "examples/apps/log-stats/model.test.gwat"])
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "examples/apps/log-stats/model.test.wlt"])
         .output()
         .unwrap();
     assert!(
@@ -43,8 +43,8 @@ fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests(
 
 #[test]
 fn native_log_workload_checks_all_rows_and_resets_state_between_rounds() {
-    let loaded = gcwat::source::load("examples/apps/log-stats/benchmark.gwat").unwrap();
-    let compiled = gcwat::compile(loaded.text()).unwrap();
+    let loaded = wlt::source::load("examples/apps/log-stats/benchmark.wlt").unwrap();
+    let compiled = wlt::compile(loaded.text()).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("compute.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();

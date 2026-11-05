@@ -3,7 +3,7 @@ import Lean
 /- Cooperative request/acknowledgment model. Counts describe resources still
 owned by a task; transferred results belong to its caller. No liveness or
 compiler/runtime refinement theorem is assumed. -/
-namespace GcwatTasks
+namespace WltTasks
 
 inductive Phase where
   | queued | running | cancelling | returned | cancelled | failed
@@ -82,4 +82,4 @@ example : acknowledge ⟨.cancelling, true, 0, 0, 0, 1⟩ = none := by decide
 example : acknowledge ⟨.cancelling, true, 0, 0, 0, 0⟩ =
     some ⟨.cancelled, true, 0, 0, 0, 0⟩ := by decide
 
-end GcwatTasks
+end WltTasks

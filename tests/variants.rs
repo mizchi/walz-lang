@@ -1,5 +1,5 @@
-use gcwat::compile;
 use std::process::{Command, Output};
+use wlt::compile;
 
 fn invoke(wasm: &[u8]) -> Output {
     let directory = tempfile::tempdir().unwrap();
@@ -317,7 +317,7 @@ fn analysis_visits_subject_and_all_arms() {
     assert_eq!(choose.calls, ["$left", "$right", "$subject"]);
     assert_eq!(
         choose.effects,
-        gcwat::Effects {
+        wlt::Effects {
             may_trap: true,
             ..Default::default()
         }

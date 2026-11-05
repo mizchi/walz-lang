@@ -18,7 +18,7 @@ import { candidateHashes } from "./diagnostics/runs.mjs";
 
 const json = async (p) => JSON.parse(await readFile(p, "utf8"));
 const temp = async (run) => {
-  const p = await mkdtemp(join(tmpdir(), "gcwat-diagnostic-eval-"));
+  const p = await mkdtemp(join(tmpdir(), "wlt-diagnostic-eval-"));
   try {
     await run(p);
   } finally {
@@ -37,7 +37,7 @@ function answer(manifest, score = 3) {
           scores: Object.fromEntries(
             manifest.suite.axes.map((a) => [
               a,
-              { score, evidence: "program.gwat の対象行と診断文を照合した" },
+              { score, evidence: "program.wlt の対象行と診断文を照合した" },
             ]),
           ),
         },
@@ -108,7 +108,7 @@ test(
         join(p, "reader/cases/case-08/diagnostic.json"),
       );
       assert.equal(packet.exitCode, 1);
-      assert.match(packet.stderr, /math.gwat:\d+:\d+:/);
+      assert.match(packet.stderr, /math.wlt:\d+:\d+:/);
       const initial = await verifyRun(p, { timeoutMs: 60000 });
       assert.equal(initial.passed, false);
       assert.equal(initial.cases["case-08"].original.locationPassed, true);
@@ -128,7 +128,7 @@ test(
       for (const c of Object.values(repaired.cases))
         assert.equal(c.repair.passed, true, JSON.stringify(c));
       await writeFile(
-        join(p, "writer/cases/case-04/program.gwat"),
+        join(p, "writer/cases/case-04/program.wlt"),
         "(module (func $identity (param $value i32) (result i32) (local.get $value)))",
       );
       const erased = await verifyRun(p, { timeoutMs: 60000 });
@@ -177,7 +177,7 @@ test(
       );
       assert.equal((await scoreRun(p)).status, "incomplete");
       await fakeVerification(p);
-      await writeFile(join(p, "writer/cases/case-01/program.gwat"), "changed");
+      await writeFile(join(p, "writer/cases/case-01/program.wlt"), "changed");
       assert.equal((await scoreRun(p)).status, "incomplete");
     }),
 );

@@ -95,11 +95,11 @@ pub fn emit(module: &Module) -> Result<String, Error> {
         .iter()
         .flat_map(|(_, f)| f.exports.iter())
         .collect::<BTreeSet<_>>();
-    let mut unit_name = String::from("gcwat-unit");
+    let mut unit_name = String::from("wlt-unit");
     let mut suffix = 0;
     while names.contains(&unit_name) {
         suffix += 1;
-        unit_name = format!("gcwat-unit-a{suffix}");
+        unit_name = format!("wlt-unit-a{suffix}");
     }
     let mut types = Types {
         module,
@@ -164,6 +164,6 @@ pub fn emit(module: &Module) -> Result<String, Error> {
         String::new()
     };
     Ok(format!(
-        "package gcwat:generated@0.1.0;\n\ninterface api {{\n{unit}{declarations}}}\n\nworld program {{\n  export api;\n}}\n"
+        "package wlt:generated@0.1.0;\n\ninterface api {{\n{unit}{declarations}}}\n\nworld program {{\n  export api;\n}}\n"
     ))
 }

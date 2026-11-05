@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
-const USAGE: &str = "Usage: gcwat <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.gwat>\n       gcwat <build|component> <file.gwat> <output.wasm>\n       gcwat <core-js|profile-text> <file.gwat> <output-directory>\n       gcwat test [paths...] [--filter text] [--list] [--timeout-ms N]";
+const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]";
 
-fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, gcwat::runner::RunOptions), String> {
+fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
     let mut paths = Vec::new();
-    let mut options = gcwat::runner::RunOptions::default();
+    let mut options = wlt::runner::RunOptions::default();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         match arg.to_str() {
@@ -44,7 +44,7 @@ fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, gcwat::runner::Run
 }
 
 fn test_command(args: &[OsString]) -> ExitCode {
-    use gcwat::runner::TestOutcome;
+    use wlt::runner::TestOutcome;
     let (paths, options) = match test_arguments(args) {
         Ok(args) => args,
         Err(error) => {
@@ -52,7 +52,7 @@ fn test_command(args: &[OsString]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    let report = gcwat::runner::run(&paths, &options);
+    let report = wlt::runner::run(&paths, &options);
     for test in &report.tests {
         let path = test.path.display();
         match &test.outcome {
@@ -107,7 +107,7 @@ fn execute(
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
         let formatted =
-            gcwat::format::source(&original).map_err(|e| format!("{}:{e}", path.display()))?;
+            wlt::format::source(&original).map_err(|e| format!("{}:{e}", path.display()))?;
         if command == "fmt" {
             if original != formatted {
                 std::fs::write(path, formatted)?;
@@ -120,9 +120,9 @@ fn execute(
         }
         return Ok(true);
     }
-    let loaded = gcwat::source::load(path)?;
+    let loaded = wlt::source::load(path)?;
     execute_source(command, path, output, loaded.text()).map_err(|error| {
-        match error.downcast::<gcwat::Error>() {
+        match error.downcast::<wlt::Error>() {
             Ok(error) => loaded.diagnostic(*error).into(),
             Err(error) => error,
         }
@@ -136,9 +136,9 @@ fn execute_source(
     source: &str,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "core-js" | "profile-text") {
-        let built = gcwat::component::core_js::compile(source)?;
+        let built = wlt::component::core_js::compile(source)?;
         let profile = if command == "profile-text" {
-            Some(gcwat::component::profiling::compile(source)?)
+            Some(wlt::component::profiling::compile(source)?)
         } else {
             None
         };
@@ -171,7 +171,7 @@ fn execute_source(
         return Ok(true);
     }
     if matches!(command, "component" | "component-wat") {
-        let built = gcwat::component::compile(source)?;
+        let built = wlt::component::compile(source)?;
         if command == "component-wat" {
             print!("{}", built.wat);
         } else {
@@ -191,37 +191,37 @@ fn execute_source(
         return Ok(true);
     }
     if command == "proof" {
-        print!("{}", gcwat::proof::emit(&gcwat::check(source)?)?);
+        print!("{}", wlt::proof::emit(&wlt::check(source)?)?);
         return Ok(true);
     }
     if command == "contracts" {
-        let module = gcwat::check(source)?;
+        let module = wlt::check(source)?;
         println!(
             "{}",
-            serde_json::to_string_pretty(&gcwat::ownership::validate(source, &module)?)?
+            serde_json::to_string_pretty(&wlt::ownership::validate(source, &module)?)?
         );
         return Ok(true);
     }
     if command == "wit" {
-        let module = gcwat::check(source)?;
-        print!("{}", gcwat::wit::emit(&module)?);
+        let module = wlt::check(source)?;
+        print!("{}", wlt::wit::emit(&module)?);
         return Ok(true);
     }
     if command == "check" {
-        gcwat::validate(source)?;
+        wlt::validate(source)?;
         println!("ok");
         return Ok(true);
     }
     // Source inspection depends only on the front end, not on Wasm emission.
     if matches!(command, "check" | "types" | "ir" | "analyze") {
-        let module = match gcwat::check(source) {
+        let module = match wlt::check(source) {
             Ok(module) => module,
             Err(_) => {
-                let compilation = gcwat::compile(source)?;
+                let compilation = wlt::compile(source)?;
                 match command {
                     "types" => println!(
                         "{}",
-                        serde_json::to_string_pretty(&gcwat::native::types(&compilation.wasm)?)?
+                        serde_json::to_string_pretty(&wlt::native::types(&compilation.wasm)?)?
                     ),
                     "ir" => println!(
                         "{}",
@@ -241,21 +241,21 @@ fn execute_source(
             "check" => println!("ok"),
             "types" => println!(
                 "{}",
-                serde_json::to_string_pretty(&gcwat::typing::report(&module))?
+                serde_json::to_string_pretty(&wlt::typing::report(&module))?
             ),
             "ir" => println!("{}", serde_json::to_string_pretty(&module)?),
             "analyze" => println!(
                 "{}",
-                serde_json::to_string_pretty(&gcwat::analysis::analyze(&module))?
+                serde_json::to_string_pretty(&wlt::analysis::analyze(&module))?
             ),
             _ => unreachable!(),
         }
         return Ok(true);
     }
     let compiled = if matches!(command, "verify" | "run-verified") {
-        gcwat::verified::compile(source)?
+        wlt::verified::compile(source)?
     } else {
-        gcwat::compile(source)?
+        wlt::compile(source)?
     };
     match command {
         "wat" | "expand" => print!("{}", compiled.wat),

@@ -1,10 +1,10 @@
 # ストリーミングログ集計
 
 ファイルまたは標準入力からログを読み、レベルごとの件数・合計時間・最大時間を JSON に出力する。
-パース・集計・整数の文字列化・JSON の組立てはすべて gcwat で実装した。ホストは既存の text I/O capability を接続するだけで、集計処理を持たない。
+パース・集計・整数の文字列化・JSON の組立てはすべて wlt で実装した。ホストは既存の text I/O capability を接続するだけで、集計処理を持たない。
 bytes.from-array、Result/Stream の限定マクロと opaque な型を使用する。ABI とタスクランタイムは既存のものを使う。
 
-`examples/gcwat` を作業ディレクトリとして実行する。
+`wlt-lang` を作業ディレクトリとして実行する。
 
 ```sh
 just build-log-stats
@@ -13,7 +13,7 @@ just log-stats /path/to/input.tsv
 node runtime/text-cli.mjs target/log-stats < input.tsv > report.json
 node runtime/text-cli.mjs target/log-stats --input input.tsv --output report.json
 just test-log-stats
-just analyze examples/apps/log-stats/main.gwat
+just analyze examples/apps/log-stats/main.wlt
 just profile-log-stats
 ```
 
@@ -42,12 +42,12 @@ UTF-8 不正・I/O エラーは既存の Result エラーで終了する。正�
 
 | ファイル | 責務 | effect 上限 |
 |---|---|---|
-| [parse.gwat](parse.gwat) | TSV と u32 をパースし、skip / invalid / info / warn / error を返す | allocates |
-| [stats.gwat](stats.gwat) / [stats-impl.gwat](stats-impl.gwat) | opaque な状態、件数・合計・最大と桁あふれ検査 | 初期化は allocates、更新は reads / writes |
-| [decimal.gwat](decimal.gwat) | 共通の u64 変換への接続 | reads / writes / allocates |
-| [report.gwat](report.gwat) | JSON の組立てと1回の非同期書込み | reads / writes / allocates / host / suspends |
-| [main.gwat](main.gwat) | fold-result と result.let による反復とエラー伝播 | reads / writes / allocates / host / suspends |
-| [stdlib/text.gwat](../../../stdlib/text.gwat) | 連結・符号付き／符号なし整数・JSON string | reads / writes / allocates |
+| [parse.wlt](parse.wlt) | TSV と u32 をパースし、skip / invalid / info / warn / error を返す | allocates |
+| [stats.wlt](stats.wlt) / [stats-impl.wlt](stats-impl.wlt) | opaque な状態、件数・合計・最大と桁あふれ検査 | 初期化は allocates、更新は reads / writes |
+| [decimal.wlt](decimal.wlt) | 共通の u64 変換への接続 | reads / writes / allocates |
+| [report.wlt](report.wlt) | JSON の組立てと1回の非同期書込み | reads / writes / allocates / host / suspends |
+| [main.wlt](main.wlt) | fold-result と result.let による反復とエラー伝播 | reads / writes / allocates / host / suspends |
+| [stdlib/text.wlt](../../../stdlib/text.wlt) | 連結・符号付き／符号なし整数・JSON string | reads / writes / allocates |
 
 文字列操作の writes は、関数内で新規作成する作業配列の変更を含む保守的な上限で、入力 text/bytes は不変。
 集計状態のフィールド操作は、その型を宣言した namespace の中だけで認める。
@@ -61,15 +61,15 @@ JSON 全体の書込みを await し、取消し時は既存の task scope が�
 
 ## 検査と計測
 
-[model.test.gwat](model.test.gwat) の7検査で、レベル、空行、欠落フィールド、整数境界、独立したバケット、集計の桁あふれと更新の原子性、u64 最大値の十進数化を確認する。
+[model.test.wlt](model.test.wlt) の7検査で、レベル、空行、欠落フィールド、整数境界、独立したバケット、集計の桁あふれと更新の原子性、u64 最大値の十進数化を確認する。
 Rust の検査はこれらを実行し、パーサ・集計・I/O の effect 境界も検査する。
 Node は両バックエンドで、1 byteごとの UTF-8 入力、25,000行の集計、空入力、入出力エラー、待機中の取消しと非同期解放を検査する。
 終了後の端点登録・ABI バッファは0、これらの負荷で線形メモリは64 KiB。Chromium でも両バックエンドを実行する。
 
 `just profile-log-stats [出力先] [行数] [native反復数]` は次を分けて測定する。
 
-- [benchmark.gwat](benchmark.gwat) は同じパーサと集計モジュールを、6種類の入力から呼ぶ。結果の checksum を検査し、Wasmtime の `--profile=guest,...,1ms` でサンプルを取得する。I/O adapter と実際の CLI を含まない、別の Wasm バイナリである。
-- 実際の `main.gwat` を Core＋JSPI へコンパイルし、同じ行データを4 KiBごとに配送する。3回 warmup 後の7回で、main の完了までを測る。コンパイルとインスタンス化は含めず、出力 JSON 全体を独立した期待値と照合する。read カウンタは時間測定の後に別途取る。
+- [benchmark.wlt](benchmark.wlt) は同じパーサと集計モジュールを、6種類の入力から呼ぶ。結果の checksum を検査し、Wasmtime の `--profile=guest,...,1ms` でサンプルを取得する。I/O adapter と実際の CLI を含まない、別の Wasm バイナリである。
+- 実際の `main.wlt` を Core＋JSPI へコンパイルし、同じ行データを4 KiBごとに配送する。3回 warmup 後の7回で、main の完了までを測る。コンパイルとインスタンス化は含めず、出力 JSON 全体を独立した期待値と照合する。read カウンタは時間測定の後に別途取る。
 
 2026-11-04、Apple M5 / macOS arm64、Node v24.21.0、Wasmtime 42.0.1。
 最終版の30,000行・560,000 byte の Core＋JSPI 実行は中央値25.58 ms、JSPI read は30,002回、出力は1回だった。

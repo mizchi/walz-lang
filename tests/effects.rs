@@ -1,4 +1,4 @@
-use gcwat::check;
+use wlt::check;
 
 #[test]
 fn contracts_check_transitive_mutation_and_do_not_trust_import_annotations() {

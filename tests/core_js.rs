@@ -3,7 +3,7 @@ use std::process::Command;
 #[test]
 fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     let dir = tempfile::tempdir().unwrap();
-    let source = dir.path().join("input.gwat");
+    let source = dir.path().join("input.wlt");
     let output = dir.path().join("output");
     std::fs::write(
         &source,
@@ -12,7 +12,7 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
           (effects pure) (local.get $x)))"#,
     )
     .unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("core-js")
         .arg(&source)
         .arg(&output)
@@ -32,7 +32,7 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     }
     let manifest: serde_json::Value =
         serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
-    assert_eq!(manifest["abi"], "gcwat-core-js-v2");
+    assert_eq!(manifest["abi"], "wlt-core-js-v2");
     let bindings = std::fs::read_to_string(output.join("bindings.mjs")).unwrap();
     assert!(bindings.contains("BigInt64"));
     assert!(!bindings.contains("Float64") && !bindings.contains("TextEncoder"));
@@ -44,7 +44,7 @@ fn core_js_does_not_overwrite_its_source_with_an_artifact() {
     let source = dir.path().join("core.wasm");
     let text = "(module (func $f (export \"main\") (effects pure) (nop)))";
     std::fs::write(&source, text).unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("core-js")
         .arg(&source)
         .arg(dir.path())
@@ -70,9 +70,9 @@ fn core_js_preserves_trusted_import_and_portable_export_checks() {
         ),
     ] {
         let dir = tempfile::tempdir().unwrap();
-        let input = dir.path().join("input.gwat");
+        let input = dir.path().join("input.wlt");
         std::fs::write(&input, source).unwrap();
-        let result = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+        let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
             .arg("core-js")
             .arg(input)
             .arg(dir.path().join("output"))

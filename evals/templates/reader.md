@@ -1,6 +1,6 @@
 # 初見の読解・可読性評価
 
-読むものは、この task.md と同じディレクトリの cheatsheet.md、contract.md、rubric.md、main.gwat、counted.gwat のみ。
+読むものは、この task.md と同じディレクトリの cheatsheet.md、contract.md、rubric.md、main.wlt、counted.wlt のみ。
 リンク先、依存実装、他の役、過去の評価、会話履歴は参照しない。コンパイラや実行ツールは起動しない。
 書込先は {{READER_OUTPUT}} のみ。他のファイルを変更しない。
 

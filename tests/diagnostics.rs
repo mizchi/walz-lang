@@ -1,4 +1,4 @@
-use gcwat::{Error, check};
+use wlt::{Error, check};
 
 fn rejects(source: &str, code: &str) -> Error {
     let error = check(source).unwrap_err();
@@ -147,19 +147,19 @@ fn opaque_diagnostic_identifies_type_owner_and_declaration() {
 fn included_primary_and_related_spans_map_independently_with_unicode_columns() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("lib.gwat"),
+        directory.path().join("lib.wlt"),
         "(module\n (func $f (param $value i64) (result i64) (local.get $value)))",
     )
     .unwrap();
-    let program = directory.path().join("main.gwat");
-    std::fs::write(&program, "(module\n (include \"lib.gwat\")\n (func $main (result i64) (; 日本語 ;) (call $f (i32.const 1))))").unwrap();
-    let source = gcwat::source::load(&program).unwrap();
+    let program = directory.path().join("main.wlt");
+    std::fs::write(&program, "(module\n (include \"lib.wlt\")\n (func $main (result i64) (; 日本語 ;) (call $f (i32.const 1))))").unwrap();
+    let source = wlt::source::load(&program).unwrap();
     let error = source.diagnostic(check(source.text()).unwrap_err());
     let diagnostic = error.diagnostic();
     let primary = diagnostic.primary.as_ref().unwrap();
     assert_eq!(
         primary.location.path.as_ref().unwrap().file_name().unwrap(),
-        "main.gwat"
+        "main.wlt"
     );
     assert_eq!(primary.location.line, 3);
     assert_eq!(primary.location.column, 46);
@@ -176,12 +176,12 @@ fn included_primary_and_related_spans_map_independently_with_unicode_columns() {
             .unwrap()
             .file_name()
             .unwrap(),
-        "lib.gwat"
+        "lib.wlt"
     );
     assert_eq!(declaration.location.line, 2);
     let json = serde_json::to_value(diagnostic).unwrap();
     assert_eq!(json["code"], "E_TYPE_MISMATCH");
-    assert!(error.to_string().contains("lib.gwat:2:"));
+    assert!(error.to_string().contains("lib.wlt:2:"));
 }
 
 #[test]
@@ -251,8 +251,8 @@ fn effect_provenance_handles_recursive_calls_and_unknown_imports() {
 #[test]
 fn included_cli_errors_keep_related_locations_and_do_not_panic_at_eof() {
     let directory = tempfile::tempdir().unwrap();
-    let library = directory.path().join("lib.gwat");
-    let program = directory.path().join("main.gwat");
+    let library = directory.path().join("lib.wlt");
+    let program = directory.path().join("main.wlt");
     std::fs::write(
         &library,
         "(module\n (func $f (param $value i64) (result i64) (local.get $value)))",
@@ -260,24 +260,24 @@ fn included_cli_errors_keep_related_locations_and_do_not_panic_at_eof() {
     .unwrap();
     std::fs::write(
         &program,
-        "(module\n (include \"lib.gwat\")\n (func $main (result i64) (call $f (i32.const 1))))",
+        "(module\n (include \"lib.wlt\")\n (func $main (result i64) (call $f (i32.const 1))))",
     )
     .unwrap();
-    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("check")
         .arg(&program)
         .output()
         .unwrap();
     assert!(!output.status.success());
     let stderr = String::from_utf8(output.stderr).unwrap();
-    assert!(stderr.contains("main.gwat:3:"), "{stderr}");
-    assert!(stderr.contains("lib.gwat:2:"), "{stderr}");
+    assert!(stderr.contains("main.wlt:3:"), "{stderr}");
+    assert!(stderr.contains("lib.wlt:2:"), "{stderr}");
     std::fs::write(&library, "(module (;").unwrap();
-    let error = match gcwat::source::load(&program) {
+    let error = match wlt::source::load(&program) {
         Ok(_) => panic!("accepted unclosed comment"),
         Err(error) => error,
     };
-    assert!(error.to_string().contains("lib.gwat:1:11:"), "{error}");
+    assert!(error.to_string().contains("lib.wlt:1:11:"), "{error}");
     assert!(
         error
             .diagnostic()
@@ -370,25 +370,25 @@ fn distant_unknown_names_list_visible_bindings_without_guessing_a_replacement() 
 #[test]
 fn alias_cycle_edges_keep_their_individual_include_locations() {
     let directory = tempfile::tempdir().unwrap();
-    let library = directory.path().join("types.gwat");
-    let program = directory.path().join("main.gwat");
+    let library = directory.path().join("types.wlt");
+    let program = directory.path().join("main.wlt");
     std::fs::write(&library, "(module\n (type.alias $Input $Output))").unwrap();
     std::fs::write(
         &program,
-        "(module\n (include \"types.gwat\")\n (type.alias $Output $Input))",
+        "(module\n (include \"types.wlt\")\n (type.alias $Output $Input))",
     )
     .unwrap();
-    let loaded = gcwat::source::load(&program).unwrap();
+    let loaded = wlt::source::load(&program).unwrap();
     let error = loaded.diagnostic(check(loaded.text()).unwrap_err());
     assert_eq!(error.diagnostic().code, "E_ALIAS_CYCLE");
     let primary = error.diagnostic().primary.as_ref().unwrap();
     assert_eq!(
         primary.location.path.as_ref().unwrap().file_name().unwrap(),
-        "main.gwat"
+        "main.wlt"
     );
     assert_eq!(primary.location.line, 3);
     assert!(error.diagnostic().related.iter().any(|label| {
-        label.location.path.as_ref().unwrap().file_name().unwrap() == "types.gwat"
+        label.location.path.as_ref().unwrap().file_name().unwrap() == "types.wlt"
             && label.location.line == 2
     }));
 }

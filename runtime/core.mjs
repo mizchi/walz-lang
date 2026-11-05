@@ -171,7 +171,7 @@ class Boundary {
     name,
     suspends,
     convert,
-    namespace = "gcwat:host/event-loop@0.1.0",
+    namespace = "wlt:host/event-loop@0.1.0",
     decode = (args) => args,
   ) {
     const host = this.hosts[namespace];
@@ -253,7 +253,7 @@ export async function instantiate(
   options = {},
   bindings = [],
 ) {
-  if (!["gcwat-core-js-v1", "gcwat-core-js-v2"].includes(abi))
+  if (!["wlt-core-js-v1", "wlt-core-js-v2"].includes(abi))
     throw new Error("unsupported Core JS ABI");
   const load =
     options.getCoreModule ??

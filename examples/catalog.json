@@ -1,27 +1,27 @@
 {
   "examples": [
     {
-      "path": "examples/closure.gwat",
+      "path": "examples/closure.wlt",
       "pattern": "escaping closure",
       "expected": "42"
     },
     {
-      "path": "examples/counter.gwat",
+      "path": "examples/counter.wlt",
       "pattern": "captured mutable state",
       "expected": "42"
     },
     {
-      "path": "examples/collections.gwat",
+      "path": "examples/collections.wlt",
       "pattern": "array traversal",
       "expected": "42"
     },
     {
-      "path": "examples/list.gwat",
+      "path": "examples/list.wlt",
       "pattern": "recursive nullable list",
       "expected": "42"
     },
     {
-      "path": "examples/factorial.gwat",
+      "path": "examples/factorial.wlt",
       "pattern": "numeric loop",
       "expected": "3628800",
       "checks": [
@@ -42,7 +42,7 @@
       ]
     },
     {
-      "path": "examples/mutual-recursion.gwat",
+      "path": "examples/mutual-recursion.wlt",
       "pattern": "mutually recursive functions",
       "expected": "1",
       "checks": [
@@ -63,12 +63,12 @@
       ]
     },
     {
-      "path": "examples/ast-interpreter.gwat",
+      "path": "examples/ast-interpreter.wlt",
       "pattern": "recursive variant AST with exhaustive match",
       "expected": "42"
     },
     {
-      "path": "examples/variants.gwat",
+      "path": "examples/variants.wlt",
       "pattern": "Option with nullary and unary cases",
       "expected": "42",
       "checks": [
@@ -96,12 +96,12 @@
       ]
     },
     {
-      "path": "examples/graph-cycle.gwat",
+      "path": "examples/graph-cycle.wlt",
       "pattern": "cyclic mutable graph",
       "expected": "42"
     },
     {
-      "path": "examples/sorting.gwat",
+      "path": "examples/sorting.wlt",
       "pattern": "insertion sort",
       "expected": "12345",
       "checks": [
@@ -118,7 +118,7 @@
       ]
     },
     {
-      "path": "examples/binary-search.gwat",
+      "path": "examples/binary-search.wlt",
       "pattern": "early loop exit",
       "expected": "3",
       "checks": [
@@ -146,7 +146,7 @@
       ]
     },
     {
-      "path": "examples/matrix.gwat",
+      "path": "examples/matrix.wlt",
       "pattern": "nested loops and matrix product",
       "expected": "134",
       "checks": [
@@ -185,17 +185,17 @@
       ]
     },
     {
-      "path": "examples/higher-order.gwat",
+      "path": "examples/higher-order.wlt",
       "pattern": "map and fold with a concrete closure type",
       "expected": "42"
     },
     {
-      "path": "examples/closure-compose.gwat",
+      "path": "examples/closure-compose.wlt",
       "pattern": "closure capturing other closures",
       "expected": "42"
     },
     {
-      "path": "examples/result.gwat",
+      "path": "examples/result.wlt",
       "pattern": "explicit checked errors",
       "expected": "42",
       "checks": [
@@ -226,12 +226,12 @@
       ]
     },
     {
-      "path": "examples/state-machine.gwat",
+      "path": "examples/state-machine.wlt",
       "pattern": "mutable state machine",
       "expected": "204"
     },
     {
-      "path": "examples/text-parser.gwat",
+      "path": "examples/text-parser.wlt",
       "pattern": "ASCII number and expression parser",
       "expected": "42",
       "checks": [
@@ -263,7 +263,7 @@
       ]
     },
     {
-      "path": "examples/hash-map.gwat",
+      "path": "examples/hash-map.wlt",
       "pattern": "hash table with collision chains",
       "expected": "42",
       "checks": [
@@ -291,7 +291,7 @@
       ]
     },
     {
-      "path": "examples/numeric.gwat",
+      "path": "examples/numeric.wlt",
       "pattern": "floating point iterative algorithm",
       "expected": "42",
       "checks": [
@@ -312,37 +312,37 @@
       ]
     },
     {
-      "path": "examples/host-import.gwat",
+      "path": "examples/host-import.wlt",
       "pattern": "external I/O boundary",
       "runtime_error": "unknown import"
     },
     {
-      "path": "examples/tagged-invalid.gwat",
+      "path": "examples/tagged-invalid.wlt",
       "pattern": "manual variant invariant is not statically enforced",
       "runtime_error": "null reference"
     },
     {
-      "path": "examples/numeric-conversion.gwat",
+      "path": "examples/numeric-conversion.wlt",
       "pattern": "standard Wasm numeric conversion",
       "expected": "42"
     },
     {
-      "path": "examples/math-intrinsic.gwat",
+      "path": "examples/math-intrinsic.wlt",
       "pattern": "standard Wasm sqrt",
       "expected": "42"
     },
     {
-      "path": "examples/tail-call.gwat",
+      "path": "examples/tail-call.wlt",
       "pattern": "standard Wasm tail call",
       "expected": "42"
     },
     {
-      "path": "examples/for-loop.gwat",
+      "path": "examples/for-loop.wlt",
       "pattern": "for macro with explicit induction state",
       "expected": "42"
     },
     {
-      "path": "examples/exceptions.gwat",
+      "path": "examples/exceptions.wlt",
       "pattern": "native Wasm exceptions with lexical catch bindings",
       "expected": "42",
       "checks": [
@@ -365,49 +365,49 @@
       ]
     },
     {
-      "path": "examples/value-types.gwat",
+      "path": "examples/value-types.wlt",
       "pattern": "semantic Option/Result values and checked pure effects",
       "expected": "42"
     },
     {
-      "path": "examples/ownership.gwat",
+      "path": "examples/ownership.wlt",
       "pattern": "explicit move, owned pair and once-call closure",
       "expected": "42"
     },
     {
-      "path": "examples/verified-laws.gwat",
+      "path": "examples/verified-laws.wlt",
       "pattern": "universal bitvector laws gate owned execution",
       "expected": "42"
     },
     {
-      "path": "examples/ready-delivery.gwat",
+      "path": "examples/ready-delivery.wlt",
       "pattern": "owned ready future, finite stream and independent completion",
       "expected": "42"
     },
     {
-      "path": "examples/modules.gwat",
+      "path": "examples/modules.wlt",
       "pattern": "static namespaces, private helpers and import aliases",
       "expected": "42"
     },
     {
-      "path": "examples/bytes-text.gwat",
+      "path": "examples/bytes-text.wlt",
       "pattern": "immutable bytes, UTF-8 validation and slicing",
       "expected": "42"
     }
   ],
   "probes": [
     {
-      "path": "examples/probes/heterogeneous-closures.gwat",
+      "path": "examples/probes/heterogeneous-closures.wlt",
       "diagnostic": "type mismatch",
       "limitation": "no common callable interface"
     },
     {
-      "path": "examples/probes/outer-recur.gwat",
+      "path": "examples/probes/outer-recur.wlt",
       "diagnostic": "innermost loop",
       "limitation": "no nonlocal loop transfer"
     },
     {
-      "path": "examples/probes/readonly-array-view.gwat",
+      "path": "examples/probes/readonly-array-view.wlt",
       "diagnostic": "type mismatch",
       "limitation": "no read-only view or ownership freeze"
     }

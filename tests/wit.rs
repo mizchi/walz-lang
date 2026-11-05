@@ -2,9 +2,9 @@ use std::process::Command;
 
 fn validate_wit(source: &str) -> String {
     let directory = tempfile::tempdir().unwrap();
-    let input = directory.path().join("source.gwat");
+    let input = directory.path().join("source.wlt");
     std::fs::write(&input, source).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("wit")
         .arg(input)
         .output()
@@ -43,22 +43,22 @@ fn emits_wit_for_nested_options_results_and_unit_payloads() {
         (effects pure) (option.some (result i64 i32) (result.ok i64 i32 (local.get $key))))
       (func $done (export "done") (result (result unit i32)) (effects pure) (result.ok unit i32))
       (func $empty (export "type") (result (result i64 unit)) (effects pure) (result.err i64 unit))
-      (func $both (export "gcwat-unit") (result (result unit unit)) (effects pure) (result.ok unit unit))
+      (func $both (export "wlt-unit") (result (result unit unit)) (effects pure) (result.ok unit unit))
       (func $event (export "event") (result (option unit)) (effects pure) (option.some unit))
       (func $pair (export "pair") (result (pair unit i64)) (effects pure) (pair.new unit i64 (i64.const 42))))"#,
     );
     assert!(wit.contains("option<result<s64, s32>>"), "{wit}");
     assert!(wit.contains("result<_, s32>"), "{wit}");
     assert!(
-        wit.contains("enum") && wit.contains("option<%gcwat-unit-a1>"),
+        wit.contains("enum") && wit.contains("option<%wlt-unit-a1>"),
         "{wit}"
     );
     assert!(
         wit.contains("%type: func() -> result<s64>;")
-            && wit.contains("%gcwat-unit: func() -> result;"),
+            && wit.contains("%wlt-unit: func() -> result;"),
         "{wit}"
     );
-    assert!(wit.contains("tuple<%gcwat-unit-a1, s64>"), "{wit}");
+    assert!(wit.contains("tuple<%wlt-unit-a1, s64>"), "{wit}");
 }
 
 #[test]
@@ -127,9 +127,9 @@ fn rejects_nonportable_types_and_escaping_exceptions() {
         ("(module (func $f (nop)))", "no exported functions"),
     ] {
         let directory = tempfile::tempdir().unwrap();
-        let input = directory.path().join("bad.gwat");
+        let input = directory.path().join("bad.wlt");
         std::fs::write(&input, source).unwrap();
-        let output = Command::new(env!("CARGO_BIN_EXE_gcwat"))
+        let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
             .arg("wit")
             .arg(input)
             .output()

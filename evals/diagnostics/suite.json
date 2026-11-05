@@ -1,6 +1,6 @@
 {
   "id": "diagnostics",
-  "version": 1,
+  "version": 2,
   "axes": [
     "location",
     "cause",
@@ -14,12 +14,12 @@
       "id": "case-01",
       "intent": "inc(value:i32)->i32 は i32 の折り返し加算で value+1 を返す。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "i64.add"
         }
       ],
@@ -35,12 +35,12 @@
       "id": "case-02",
       "intent": "inc(value:i32)->i32 は value+1 を返す。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "$vale"
         }
       ],
@@ -55,12 +55,12 @@
       "id": "case-03",
       "intent": "sum(value:i32)->i32 は value+2 を返す。add(a,b) の宣言は維持する。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "(call $add"
         }
       ],
@@ -76,12 +76,12 @@
       "id": "case-04",
       "intent": "identity(value:i32)->i32 は value を返す。identity 内の own.new 1回と、対応する消費1回を保つ。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "(own.close (move $owner))\n        (local.get"
         }
       ],
@@ -102,12 +102,12 @@
       "id": "case-05",
       "intent": "Choice は none/some(i32)。read は none なら0、some(value)ならvalue。型と match を保つ。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "(match $Choice"
         }
       ],
@@ -122,18 +122,18 @@
     },
     {
       "id": "case-06",
-      "intent": "Input/Output は i32 の透明な型 alias。両名と identity(value:Input)->Output を保ち、値をそのまま返す。 program.gwat は変更不可、aliases.gwat のみ修正する。",
+      "intent": "Input/Output は i32 の透明な型 alias。両名と identity(value:Input)->Output を保ち、値をそのまま返す。 program.wlt は変更不可、aliases.wlt のみ修正する。",
       "editable": [
-        "aliases.gwat"
+        "aliases.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "aliases.gwat",
+          "file": "aliases.wlt",
           "marker": "(type.alias $Input"
         },
         {
-          "file": "aliases.gwat",
+          "file": "aliases.wlt",
           "marker": "(type.alias $Output"
         }
       ],
@@ -145,7 +145,7 @@
           "type.alias": 2
         }
       },
-      "guardFile": "aliases.gwat",
+      "guardFile": "aliases.wlt",
       "fixture": "alias-cycle",
       "category": "alias-cycle"
     },
@@ -153,12 +153,12 @@
       "id": "case-07",
       "intent": "可変 Cell の現在値を read が返す。可変フィールドと読み取りを維持し、effect 契約を満たす。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "(effects pure)"
         }
       ],
@@ -175,14 +175,14 @@
     },
     {
       "id": "case-08",
-      "intent": "math.gwat の inc(value:i32)->i32 は value+1。編集できるのは math.gwat のみ。",
+      "intent": "math.wlt の inc(value:i32)->i32 は value+1。編集できるのは math.wlt のみ。",
       "editable": [
-        "math.gwat"
+        "math.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "math.gwat",
+          "file": "math.wlt",
           "marker": "$missing"
         }
       ],
@@ -197,12 +197,12 @@
       "id": "case-09",
       "intent": "inc(value:i32)->i32 は value+1 を返す。module と関数の構造を保つ。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "(module"
         }
       ],
@@ -215,14 +215,14 @@
     },
     {
       "id": "case-10",
-      "intent": "read(state:ref lib.State)->i32 は lib の公開APIから値を返す。lib.gwat は変更不可。",
+      "intent": "read(state:ref lib.State)->i32 は lib の公開APIから値を返す。lib.wlt は変更不可。",
       "editable": [
-        "program.gwat"
+        "program.wlt"
       ],
       "tests": 3,
       "locations": [
         {
-          "file": "program.gwat",
+          "file": "program.wlt",
           "marker": "struct.get $lib.State"
         }
       ],

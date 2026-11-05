@@ -9,7 +9,7 @@ import { promisify } from "node:util";
 import { TEXT_IO, createTextIO, IOError } from "./text-io.mjs";
 import { instrument } from "./testing/memory.mjs";
 const exec = promisify(rawExec);
-const source = "examples/apps/log-stats/main.gwat";
+const source = "examples/apps/log-stats/main.wlt";
 const encode = (s) => new TextEncoder().encode(s);
 
 for (const backend of ["core", "component"])
@@ -17,7 +17,7 @@ for (const backend of ["core", "component"])
     `${backend}: streaming log statistics run in the guest, close I/O and retain no ABI buffers`,
     { timeout: 120000 },
     async () => {
-      const dir = await mkdtemp(join(tmpdir(), "gcwat-log-stats-"));
+      const dir = await mkdtemp(join(tmpdir(), "wlt-log-stats-"));
       try {
         const { build } = await import(
           backend === "core" ? "./build-core.mjs" : "./build.mjs"

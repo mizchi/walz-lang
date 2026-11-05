@@ -1,24 +1,24 @@
 default: run
 
-run file="examples/closure.gwat":
+run file="examples/closure.wlt":
     cargo run --locked --quiet -- run {{quote(file)}}
 
-wat file="examples/closure.gwat":
+wat file="examples/closure.wlt":
     cargo run --locked --quiet -- wat {{quote(file)}}
 
-expand file="examples/exceptions.gwat":
+expand file="examples/exceptions.wlt":
     cargo run --locked --quiet -- expand {{quote(file)}}
 
-analyze file="examples/closure.gwat":
+analyze file="examples/closure.wlt":
     cargo run --locked --quiet -- analyze {{quote(file)}}
 
-ir file="examples/closure.gwat":
+ir file="examples/closure.wlt":
     cargo run --locked --quiet -- ir {{quote(file)}}
 
-contracts file="examples/ownership.gwat":
+contracts file="examples/ownership.wlt":
     cargo run --locked --quiet -- contracts {{quote(file)}}
 
-proof file="examples/verified-laws.gwat":
+proof file="examples/verified-laws.wlt":
     cargo run --locked --quiet -- proof {{quote(file)}}
 
 proof-check:
@@ -27,39 +27,39 @@ proof-check:
     lean +v4.34.1 proof/Tasks.lean
     lean +v4.34.1 proof/Flow.lean
 
-verify file="examples/verified-laws.gwat":
+verify file="examples/verified-laws.wlt":
     cargo run --locked --quiet -- verify {{quote(file)}}
 
-run-verified file="examples/verified-laws.gwat":
+run-verified file="examples/verified-laws.wlt":
     cargo run --locked --quiet -- run-verified {{quote(file)}}
 
-types file="examples/variants.gwat":
+types file="examples/variants.wlt":
     cargo run --locked --quiet -- types {{quote(file)}}
 
-wit file="examples/value-types.gwat":
+wit file="examples/value-types.wlt":
     cargo run --locked --quiet -- wit {{quote(file)}}
 
-validate file="examples/closure.gwat":
+validate file="examples/closure.wlt":
     cargo run --locked --quiet -- check {{quote(file)}}
 
-build file="examples/closure.gwat" output="target/program.wasm":
+build file="examples/closure.wlt" output="target/program.wasm":
     cargo run --locked --quiet -- build {{quote(file)}} {{quote(output)}}
 
-component file="tests/component-fixtures/event-loop.gwat" output="target/component.wasm":
+component file="tests/component-fixtures/event-loop.wlt" output="target/component.wasm":
     mkdir -p target
     cargo run --locked --quiet -- component {{quote(file)}} {{quote(output)}}
 
-component-wat file="tests/component-fixtures/event-loop.gwat":
+component-wat file="tests/component-fixtures/event-loop.wlt":
     cargo run --locked --quiet -- component-wat {{quote(file)}}
 
-build-js file="tests/component-fixtures/event-loop.gwat" output="target/event-loop":
+build-js file="tests/component-fixtures/event-loop.wlt" output="target/event-loop":
     node runtime/build.mjs {{quote(file)}} {{quote(output)}}
 
-build-core-js file="tests/component-fixtures/event-loop.gwat" output="target/core-event-loop":
+build-core-js file="tests/component-fixtures/event-loop.wlt" output="target/core-event-loop":
     node runtime/build-core.mjs {{quote(file)}} {{quote(output)}}
 
 build-text output="target/text-filter":
-    node runtime/build-core.mjs examples/io/text-filter.gwat {{quote(output)}}
+    node runtime/build-core.mjs examples/io/text-filter.wlt {{quote(output)}}
 
 text-filter program="target/text-filter":
     @node runtime/text-cli.mjs {{quote(program)}}
@@ -68,7 +68,7 @@ text-file input output program="target/text-filter":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}} --output {{quote(output)}}
 
 build-log-stats output="target/log-stats":
-    node runtime/build-core.mjs examples/apps/log-stats/main.gwat {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/log-stats/main.wlt {{quote(output)}}
 
 log-stats input="examples/apps/log-stats/sample.tsv" program="target/log-stats":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -84,7 +84,7 @@ compare-log-stats before="target/profile/log-stats-before-12346" after="target/p
     node runtime/log-stats-bench.mjs {{quote(before)}} {{quote(after)}}
 
 build-stock-ledger output="target/stock-ledger":
-    node runtime/build-core.mjs examples/apps/stock-ledger/main.gwat {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/stock-ledger/main.wlt {{quote(output)}}
 
 stock-ledger input="examples/apps/stock-ledger/sample.tsv" program="target/stock-ledger":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -94,7 +94,7 @@ test-stock-ledger:
     node --test runtime/stock-ledger.test.mjs
 
 build-workflow output="target/workflow":
-    node runtime/build-core.mjs examples/apps/workflow/main.gwat {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/workflow/main.wlt {{quote(output)}}
 
 workflow input="examples/apps/workflow/sample.tsv" program="target/workflow":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -106,7 +106,7 @@ test-workflow:
 
 # Also send the full 65,795-line workload through both host stream adapters.
 test-workflow-stress:
-    GCWAT_WORKFLOW_STRESS=1 node --expose-gc --test runtime/workflow.test.mjs
+    WLT_WORKFLOW_STRESS=1 node --expose-gc --test runtime/workflow.test.mjs
 
 # Save production artifacts before changing sources; compare in alternating order.
 workflow-capture output="target/workflow-tune/current":
@@ -165,11 +165,11 @@ profile-compare before="before" after="after":
     node runtime/profile.mjs compare {{quote("target/profile/" + before)}} {{quote("target/profile/" + after)}}
 
 test-core-js:
-    GCWAT_BACKEND=core node --test runtime/runtime.test.mjs runtime/tasks.test.mjs runtime/core.test.mjs
+    WLT_BACKEND=core node --test runtime/runtime.test.mjs runtime/tasks.test.mjs runtime/core.test.mjs
 
 memory-core-js:
     node --expose-gc --test runtime/core.test.mjs
-    GCWAT_BACKEND=core node --expose-gc runtime/memory-audit.mjs
+    WLT_BACKEND=core node --expose-gc runtime/memory-audit.mjs
 
 run-js output="target/event-loop" export="main" arg="1":
     node runtime/run.mjs {{quote(output)}} {{quote(export)}} {{quote(arg)}}
@@ -210,10 +210,10 @@ check:
 fmt:
     cargo fmt
 
-fmt-gwat file="examples/apps/log-stats/main.gwat":
+fmt-wlt file="examples/apps/log-stats/main.wlt":
     cargo run --locked --quiet -- fmt {{quote(file)}}
 
-check-gwat-format file="examples/apps/log-stats/main.gwat":
+check-wlt-format file="examples/apps/log-stats/main.wlt":
     cargo run --locked --quiet -- fmt-check {{quote(file)}}
 
 # Check exact ownership entries and GC reachability; then sample retained memory.

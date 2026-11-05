@@ -1,7 +1,7 @@
 fn same_wasm(short: &str, explicit: &str) {
     assert_eq!(
-        gcwat::compile(short).unwrap().wasm,
-        gcwat::compile(explicit).unwrap().wasm
+        wlt::compile(short).unwrap().wasm,
+        wlt::compile(explicit).unwrap().wasm
     );
 }
 
@@ -20,13 +20,13 @@ fn constructors_use_their_expected_value_type() {
         ("(result i64 i32)", "(result.err (i32.const 1))"),
         ("(own i64)", "(own.new (i64.const 42))"),
     ] {
-        gcwat::compile(&format!("(module (func $f (result {ty}) {expression}))")).unwrap();
+        wlt::compile(&format!("(module (func $f (result {ty}) {expression}))")).unwrap();
     }
 }
 
 #[test]
 fn expected_types_reach_arguments_fields_and_annotated_bindings() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type $Box (struct (field (option i64))))
       (func $take (param $v (option i64)) (drop (local.get $v)))
@@ -46,15 +46,14 @@ fn missing_or_wrong_constructor_context_is_rejected() {
         "(let $v (pair.new (i64.const 1) (i32.const 2)) (nop))",
         "(let $v (own.new (i64.const 1)) (own.close (move $v)))",
     ] {
-        let error = gcwat::check(&format!("(module (func $f {expression}))"))
+        let error = wlt::check(&format!("(module (func $f {expression}))"))
             .unwrap_err()
             .to_string();
         assert!(error.contains("annotation"), "{error}");
     }
-    let error =
-        gcwat::check("(module (func $f (result (option i64)) (option.some (i32.const 1))))")
-            .unwrap_err()
-            .to_string();
+    let error = wlt::check("(module (func $f (result (option i64)) (option.some (i32.const 1))))")
+        .unwrap_err()
+        .to_string();
     assert!(error.contains("type mismatch"), "{error}");
 }
 
@@ -67,7 +66,7 @@ fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
           (match (pair i64 i32) (result i64) (local.get $p)
             (case pair ($a $b) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b)))))))"#,
     );
-    gcwat::compile(
+    wlt::compile(
         r#"(module (func $f (param $p (pair unit (own i64)))
       (let ($value) (move $p) (own.close (move $value)))))"#,
     )
@@ -77,13 +76,13 @@ fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
         "(let ($a) (local.get $p) (nop))",
     ] {
         assert!(
-            gcwat::check(&format!(
+            wlt::check(&format!(
                 "(module (func $f (param $p (pair i64 i32)) {body}))"
             ))
             .is_err()
         );
     }
-    let error = gcwat::check(
+    let error = wlt::check(
         r#"(module (func $f (param $p (pair (own i64) i32))
       (let ($a $b) (local.get $p) (own.close (move $a)))))"#,
     )
@@ -94,7 +93,7 @@ fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
 
 #[test]
 fn short_result_let_uses_subject_error_and_expected_or_body_success() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (func $f (param $r (result i64 i32)) (result (result i32 i32))
         (result.let ($v) (local.get $r) (result.ok (i32.wrap_i64 (local.get $v)))))
@@ -103,12 +102,12 @@ fn short_result_let_uses_subject_error_and_expected_or_body_success() {
           (drop (local.get $mapped)))))"#,
     )
     .unwrap();
-    gcwat::compile(
+    wlt::compile(
         r#"(module (func $f (param $r (result unit unit)) (result (result unit unit))
       (result.let () (local.get $r) (result.ok))))"#,
     )
     .unwrap();
-    let error = gcwat::check(
+    let error = wlt::check(
         r#"(module (func $f (param $r (result i64 i32))
       (let $v (result.let ($v) (local.get $r) (result.err (i32.const 1))) (nop))))"#,
     )
@@ -119,7 +118,7 @@ fn short_result_let_uses_subject_error_and_expected_or_body_success() {
 
 #[test]
 fn short_fold_infers_state_and_result_without_leaking_probe_locals() {
-    let module = gcwat::check(
+    let module = wlt::check(
         r#"(module (func $f (result (result (pair i64 i32) i32))
       (stream.fold-result
         (let $source (stream.empty (result i64 i32)) (move $source))
@@ -155,9 +154,9 @@ fn short_fold_infers_state_and_result_without_leaking_probe_locals() {
         .unwrap();
     assert!(matches!(
         temporary.kind,
-        gcwat::ir::BindingKind::Loop(gcwat::ir::LoopId(1))
+        wlt::ir::BindingKind::Loop(wlt::ir::LoopId(1))
     ));
-    gcwat::compile(
+    wlt::compile(
         r#"(module (func $f
       (let $r (stream.fold-result (stream.empty (result i64 i32)) (i64.const 0)
         ($sum $item) (result.ok (i64.add (local.get $sum) (local.get $item))))
@@ -175,14 +174,14 @@ fn short_match_uses_subject_and_expected_output_types() {
           (match (option i64) (result i64) (local.get $v)
             (case none () (i64.const 0)) (case some ($n) (local.get $n)))))"#,
     );
-    gcwat::compile(
+    wlt::compile(
         r#"(module (type $V (variant (no) (yes i64)))
       (func $f (param $v (ref $V)) (result (option i64))
         (match (local.get $v) (case no () (option.none))
           (case yes ($n) (option.some (local.get $n))))))"#,
     )
     .unwrap();
-    let error = gcwat::check(
+    let error = wlt::check(
         r#"(module (func $f (param $v (option i64))
       (let $n (match (local.get $v) (case none () (i64.const 0))
         (case some ($n) (local.get $n))) (nop))))"#,
@@ -194,7 +193,7 @@ fn short_match_uses_subject_and_expected_output_types() {
 
 #[test]
 fn expected_types_reach_storage_exception_and_loop_operands() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (type $Box (struct (field (mut (option i64)))))
       (type $Array (array (mut (option i64))))
@@ -217,13 +216,13 @@ fn expected_types_reach_storage_exception_and_loop_operands() {
         "(module (func $f (result (option i64)) (block (option.none))))",
         "(module (func $f (result (option i64)) (if (i32.const 1) (then (option.none)) (else (option.none)))))",
     ] {
-        assert!(gcwat::check(source).is_err(), "{source}");
+        assert!(wlt::check(source).is_err(), "{source}");
     }
 }
 
 #[test]
 fn short_macros_preserve_cleanup_and_error_execution() {
-    let explicit = include_str!("scoped-macros.test.gwat");
+    let explicit = include_str!("scoped-macros.test.wlt");
     let short = explicit
         .replace("stream.fold-result i64 i64 i32", "stream.fold-result")
         .replace("stream.fold-result unit i64 unit", "stream.fold-result")
@@ -233,9 +232,9 @@ fn short_macros_preserve_cleanup_and_error_execution() {
         .replace("(result.ok i64 i32 (i64.add", "(result.ok (i64.add");
     same_wasm(&short, explicit);
     let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("readable.test.gwat");
+    let path = directory.path().join("readable.test.wlt");
     std::fs::write(&path, short).unwrap();
-    let output = std::process::Command::new(env!("CARGO_BIN_EXE_gcwat"))
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("test")
         .arg(path)
         .output()
@@ -265,9 +264,9 @@ fn short_macros_preserve_ownership_and_effect_boundaries() {
           (stream.fold-result (stream.empty (result i64 i32)) (own.new i64 (i64.const 0)) ($s $i)
             (result.ok (move $s)))))"#,
     ] {
-        assert!(gcwat::check(source).is_err(), "{source}");
+        assert!(wlt::check(source).is_err(), "{source}");
     }
-    gcwat::compile(
+    wlt::compile(
         r#"(module (func $f (param $r (result (own i64) i32)) (result (result (own i64) i32))
       (result.let ($v) (move $r) (result.ok (move $v)))))"#,
     )
@@ -285,14 +284,14 @@ fn result_propagation_keeps_the_exact_error_type() {
           (func $f (param $r (result i64 {input})) (result (result i64 {output}))
             (result.let ($v) (local.get $r) (result.ok (local.get $v)))))"#
         );
-        let error = gcwat::check(&source).unwrap_err().to_string();
+        let error = wlt::check(&source).unwrap_err().to_string();
         assert!(error.contains("type mismatch"), "{error}");
     }
 }
 
 #[test]
 fn inferred_composite_types_survive_checking_and_emission() {
-    gcwat::compile(
+    wlt::compile(
         r#"(module
       (func $fold
         (let $r (stream.fold-result (stream.empty (result i64 i32))
@@ -304,7 +303,7 @@ fn inferred_composite_types_survive_checking_and_emission() {
             (case err ($error) (local.get $error))))))"#,
     )
     .unwrap();
-    let error = gcwat::check(
+    let error = wlt::check(
         r#"(module (func $f (param $input (result i64 i32))
       (let $owner (own.new i64 (i64.const 0))
         (block (result.let ($v) (local.get $input) (result.ok (move $owner))) (nop)))))"#,
@@ -342,7 +341,7 @@ fn fold_evaluates_source_then_initial_once() {
     same_wasm(short, &explicit);
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("order.wasm");
-    std::fs::write(&path, gcwat::compile(short).unwrap().wasm).unwrap();
+    std::fs::write(&path, wlt::compile(short).unwrap().wasm).unwrap();
     let output = std::process::Command::new("wasmtime")
         .args([
             "run",

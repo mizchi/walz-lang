@@ -6,7 +6,7 @@ fn cheatsheet_complete_modules_compile_and_their_tests_execute() {
     let mut examples = 0;
     for block in guide.split("```wat\n").skip(1) {
         let source = block.split("```").next().unwrap();
-        let compiled = gcwat::compile(source)
+        let compiled = wlt::compile(source)
             .unwrap_or_else(|e| panic!("cheatsheet example {}: {e}", examples + 1));
         let directory = tempfile::tempdir().unwrap();
         let path = directory.path().join("example.wasm");

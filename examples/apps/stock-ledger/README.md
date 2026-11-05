@@ -1,14 +1,14 @@
 # 在庫台帳での改善確認
 
 既存のログ集計と違う処理を、新しいライブラリ・マクロ・opaque 型を使って実装した。
-Unicode のキーを持つ在庫を更新し、操作結果を JSON Lines へ逐次出力する。パース・ハッシュ表・検査・JSON の組立ては gcwat で実行する。
+Unicode のキーを持つ在庫を更新し、操作結果を JSON Lines へ逐次出力する。パース・ハッシュ表・検査・JSON の組立ては wlt で実行する。
 初回実装では新しい言語構文、コンパイラ命令、ランタイム API を追加しなかった。
-現在の main は型引数の省略形を使う。[行数を返す版](main-counted.gwat) は型 alias と pair の分解 let も使い、行処理を `$advance` に分けている。
+現在の main は型引数の省略形を使う。[行数を返す版](main-counted.wlt) は型 alias と pair の分解 let も使い、行処理を `$advance` に分けている。
 [文法改良後の評価](../../../docs/readability/implemented/REPORT.md) に変更と検証をまとめた。
 
 ## 実行
 
-`examples/gcwat` を作業ディレクトリにする。
+`wlt-lang` を作業ディレクトリにする。
 
 ```sh
 just build-stock-ledger
@@ -49,21 +49,21 @@ GC に保持する状態は品目数に比例する。JSON の u64 数値を Jav
 
 ## 同じ処理を2通りに記述
 
-- [main.gwat](main.gwat)：result.let と stream.fold-result を使う。
-- [main-explicit.gwat](main-explicit.gwat)：同じ処理を loop / match / close で書く。
-- [main-counted.gwat](main-counted.gwat)：出力は同じで、成功値を配送行数に変える。空行・コメント・I/O が成功した業務エラー行も数える。
+- [main.wlt](main.wlt)：result.let と stream.fold-result を使う。
+- [main-explicit.wlt](main-explicit.wlt)：同じ処理を loop / match / close で書く。
+- [main-counted.wlt](main-counted.wlt)：出力は同じで、成功値を配送行数に変える。空行・コメント・I/O が成功した業務エラー行も数える。
 
-行数版は `just build-core-js examples/apps/stock-ledger/main-counted.gwat target/counted-ledger` でビルドできる。
+行数版は `just build-core-js examples/apps/stock-ledger/main-counted.wlt target/counted-ledger` でビルドできる。
 text-cli は成功 payload を表示しない。数値の確認方法は [チートシート](../../../CHEATSHEET.md#確認コマンド) の runTextProgram の例を使う。
 
 両版は以下を共有し、比較対象を main の制御フローに絞った。
 
 | ファイル | 責務 |
 |---|---|
-| [parse.gwat](parse.gwat) | TSV、コマンド enum、数量とキーの検査 |
-| [stock.gwat](stock.gwat) | opaque State、GC の連鎖ハッシュ表、数量変更と業務エラー |
-| [report.gwat](report.gwat) | 入力から得た文字列を JSON エスケープし、結果を出力 |
-| [program.gwat](program.gwat) | 業務 Result と I/O Result の接続、共有ライブラリの読込み |
+| [parse.wlt](parse.wlt) | TSV、コマンド enum、数量とキーの検査 |
+| [stock.wlt](stock.wlt) | opaque State、GC の連鎖ハッシュ表、数量変更と業務エラー |
+| [report.wlt](report.wlt) | 入力から得た文字列を JSON エスケープし、結果を出力 |
+| [program.wlt](program.wlt) | 業務 Result と I/O Result の接続、共有ライブラリの読込み |
 
 `Aa` と `BB` は実際に同じハッシュ値になるため、衝突時も別々の在庫を保持できることを検査する。
 再利用した `$string.json`・`$string.concat`・`$string.u64` により、可変長の入力キーと数量を手動のバイト列生成なしで出力できた。
