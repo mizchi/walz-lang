@@ -76,6 +76,17 @@ pub struct Compilation {
     pub ir: Option<ir::Module>,
 }
 
+/// Optimization switches for differential testing; source validation is unchanged.
+#[derive(Clone, Copy, Debug)]
+pub struct CompileOptions {
+    pub optimize: bool,
+}
+impl Default for CompileOptions {
+    fn default() -> Self {
+        Self { optimize: true }
+    }
+}
+
 /// Resolve names and check types and effect contracts, returning typed IR.
 /// Does not lower the checked IR or invoke a Wasm runtime.
 pub fn check(source: &str) -> Result<ir::Module, Error> {
@@ -94,6 +105,10 @@ pub fn check(source: &str) -> Result<ir::Module, Error> {
 
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
 pub fn compile(source: &str) -> Result<Compilation, Error> {
+    compile_with_options(source, CompileOptions::default())
+}
+
+pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Compilation, Error> {
     // Native WAT takes precedence: do not reinterpret or rewrite valid WAT.
     // The dedicated reader does not decide acceptance here (data strings,
     // stack syntax, numeric indices, and all standard instructions remain valid).
@@ -117,7 +132,14 @@ pub fn compile(source: &str) -> Result<Compilation, Error> {
             ir,
         });
     }
-    compile_checked(source, check(source)?)
+    let module = check(source)?;
+    if !options.optimize {
+        if !module.laws.is_empty() {
+            verified::verify(source, &module)?;
+        }
+        return emit_module(module, false);
+    }
+    compile_checked(source, module)
 }
 
 /// Validate either native WAT or the typed extension syntax.
@@ -144,8 +166,16 @@ pub(crate) fn compile_checked(source: &str, ir: ir::Module) -> Result<Compilatio
 }
 
 pub(crate) fn emit_checked(ir: ir::Module) -> Result<Compilation, Error> {
+    emit_module(ir, true)
+}
+
+fn emit_module(ir: ir::Module, optimize: bool) -> Result<Compilation, Error> {
     let analysis = analysis::analyze(&ir);
-    let linked = link::project(&ir);
+    let linked = if optimize {
+        link::project(&ir)
+    } else {
+        ir.clone()
+    };
     let wat = emit::emit(&linked);
     let wasm =
         wat::parse_str(&wat).map_err(|error| Error::message(format!("generated WAT: {error}")))?;

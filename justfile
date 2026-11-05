@@ -164,6 +164,15 @@ test-modules:
     cargo test --locked --test modules --test static_imports --test dce
     node --test runtime/modules.test.mjs
 
+fuzz seed="42" cases="64":
+    WLT_FUZZ_SEED={{quote(seed)}} WLT_FUZZ_CASES={{quote(cases)}} cargo test --locked --test differential
+
+fuzz-replay file:
+    WLT_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test differential seeded_programs
+
+fuzz-cancel seed="42":
+    WLT_FUZZ_SEED={{quote(seed)}} node --expose-gc --test runtime/fuzz.test.mjs
+
 stdlib-capture output="target/stdlib/before":
     node runtime/stdlib-bench.mjs capture {{quote(output)}}
 
