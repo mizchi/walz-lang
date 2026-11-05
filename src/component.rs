@@ -62,7 +62,7 @@ fn checked_module_with_policy(
     }
     crate::wit::emit(&module)?;
     crate::verified::verify_component(source, &module)?;
-    Ok(crate::link::project(&module))
+    Ok(crate::link::project(&crate::optimize::simplify(&module)))
 }
 
 fn assemble(

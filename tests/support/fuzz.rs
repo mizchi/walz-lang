@@ -9,6 +9,7 @@ pub enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Pair(Box<Expr>, Box<Expr>),
+    Result(Box<Expr>, bool),
     Choose(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 impl Expr {
@@ -20,6 +21,7 @@ impl Expr {
             Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) => {
                 vec![(**a).clone(), (**b).clone()]
             }
+            Self::Result(a, _) => vec![(**a).clone()],
             Self::Choose(a, b, c) => vec![(**a).clone(), (**b).clone(), (**c).clone()],
             _ => vec![],
         }
@@ -34,6 +36,7 @@ impl Expr {
             Self::Add(a, b) => a.eval(trace).wrapping_add(b.eval(trace)),
             Self::Mul(a, b) => a.eval(trace).wrapping_mul(b.eval(trace)),
             Self::Pair(a, b) => a.eval(trace).wrapping_sub(b.eval(trace)),
+            Self::Result(a, _) => a.eval(trace),
             Self::Choose(a, b, c) => {
                 if a.eval(trace) & 1 == 0 {
                     b.eval(trace)
@@ -72,6 +75,15 @@ impl Expr {
                     )
                 }
             }
+            Self::Result(a, ok) => {
+                let id = *next;
+                *next += 1;
+                format!(
+                    "(match (result i32 i32) (result i32) (result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
+                    if *ok { "ok" } else { "err" },
+                    a.render(short, next)
+                )
+            }
             Self::Choose(a, b, c) => format!(
                 "(if (result i32) (i32.eqz (i32.and {} (i32.const 1))) (then {}) (else {}))",
                 a.render(short, next),
@@ -101,7 +113,7 @@ fn random(state: &mut u64) -> u32 {
     (*state >> 32) as u32
 }
 fn generate(state: &mut u64, depth: u32) -> Expr {
-    let choice = random(state) % 6;
+    let choice = random(state) % 7;
     if depth == 0 || choice < 2 {
         return if choice == 1 {
             Expr::Trace(random(state) as i32)
@@ -115,7 +127,8 @@ fn generate(state: &mut u64, depth: u32) -> Expr {
         2 => Expr::Add(a, b),
         3 => Expr::Mul(a, b),
         4 => Expr::Pair(a, b),
-        _ => Expr::Choose(a, b, Box::new(generate(state, depth - 1))),
+        5 => Expr::Choose(a, b, Box::new(generate(state, depth - 1))),
+        _ => Expr::Result(a, random(state) % 2 == 0),
     }
 }
 pub fn reduce(mut input: Expr, mut fails: impl FnMut(&Expr) -> bool) -> Expr {

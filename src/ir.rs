@@ -653,4 +653,58 @@ impl Expr {
             Data(_) | Const { .. } | Local(_) | Move(_) | Null(_) | Nop | Unreachable => vec![],
         }
     }
+    pub fn children_mut(&mut self) -> Vec<&mut Expr> {
+        use ExprKind::*;
+        match &mut self.kind {
+            Buffer { args, .. }
+            | Numeric { args, .. }
+            | Call { args, .. }
+            | Delivery { args, .. } => args.iter_mut().collect(),
+            StructNew { values, .. }
+            | VariantNew { values, .. }
+            | Throw { values, .. }
+            | ArrayFixed { values, .. }
+            | Block(values) => values.iter_mut().collect(),
+            Match { subject, arms, .. } => std::iter::once(subject.as_mut())
+                .chain(arms.iter_mut().map(|arm| &mut arm.body))
+                .collect(),
+            Try { body, handlers } => std::iter::once(body.as_mut())
+                .chain(handlers.iter_mut().map(|handler| &mut handler.body))
+                .collect(),
+            Let { value, body, .. } | Using { value, body, .. } => vec![value, body],
+            If {
+                condition,
+                then_body,
+                else_body,
+            } => vec![condition, then_body, else_body],
+            Loop { bindings, body, .. } => bindings
+                .iter_mut()
+                .map(|(_, e)| e)
+                .chain([body.as_mut()])
+                .collect(),
+            Recur { assignments, .. } => assignments.iter_mut().map(|(_, e)| e).collect(),
+            StructGet { object, .. }
+            | ResourceNew { handle: object, .. }
+            | ResourceHandle(object)
+            | ResourceClose(object)
+            | ArrayLen(object)
+            | IsNull(object)
+            | AsNonNull(object)
+            | Close(object)
+            | Drop(object) => vec![object],
+            StructSet { object, value, .. } => vec![object, value],
+            ArrayNew {
+                initial, length, ..
+            } => vec![initial, length],
+            ArrayGet { object, index, .. } => vec![object, index],
+            ArraySet {
+                object,
+                index,
+                value,
+                ..
+            } => vec![object, index, value],
+            RefEq(a, b) => vec![a, b],
+            Data(_) | Const { .. } | Local(_) | Move(_) | Null(_) | Nop | Unreachable => vec![],
+        }
+    }
 }

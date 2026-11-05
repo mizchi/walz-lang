@@ -11,7 +11,7 @@
 2. [x] マクロ版と明示版、Wasmtime と Node の差分検査を増やす。不正ソースと取消しのタイミングを fuzz し、失敗入力の縮小と回帰 corpus の保存まで行う。
 3. [x] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
 4. [x] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
-5. [ ] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
+5. [x] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
 
 1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
 JSON builder は object・string・整数・boolean の初版。配列・浮動小数点・null の値 API は後続。
@@ -115,4 +115,4 @@ UTF-8 validator、ファイル展開、名前解決と adapter は TCB に含み
 - [x] 手書き版とマクロ版の結果・I/O 失敗・取消し後の解放の照合、Core / Component / Chromium での実行。
 - [x] main の記述量、展開後 IR、生成サイズ、交互実行時間の記録。
 - [x] bytes/text の検索・分割・整数解析のライブラリ化。
-- [ ] 直後に match する一時 Result の簡約。意味保存の検査を伴う6.6の課題として扱う。
+- [x] 直後に match する共有 Result/Pair の簡約。意味保存の検査を伴う6.6の課題として扱う。

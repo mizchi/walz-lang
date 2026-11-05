@@ -14,6 +14,7 @@ pub mod ir;
 mod link;
 mod modules;
 pub mod native;
+mod optimize;
 pub mod ownership;
 pub mod proof;
 pub mod regions;
@@ -193,7 +194,7 @@ pub(crate) fn emit_checked(ir: ir::Module) -> Result<Compilation, Error> {
 fn emit_module(ir: ir::Module, optimize: bool) -> Result<Compilation, Error> {
     let analysis = analysis::analyze(&ir);
     let linked = if optimize {
-        link::project(&ir)
+        link::project(&optimize::simplify(&ir))
     } else {
         ir.clone()
     };
