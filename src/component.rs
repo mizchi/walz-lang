@@ -47,7 +47,7 @@ fn checked_module(source: &str) -> Result<Module, Error> {
     }
     crate::wit::emit(&module)?;
     crate::verified::verify_component(source, &module)?;
-    Ok(module)
+    Ok(crate::link::project(&module))
 }
 
 fn assemble(

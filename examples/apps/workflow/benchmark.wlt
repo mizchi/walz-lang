@@ -1,5 +1,5 @@
 (module
-  (include "../../../stdlib/text.wlt")
+  (import "../../../stdlib/text.wlt" (func $string.u64))
   (include "compute.wlt")
   (func $must (param $result (result unit (ref $domain.Error)))
     (match (local.get $result)

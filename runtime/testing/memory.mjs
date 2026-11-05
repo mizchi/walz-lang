@@ -27,24 +27,29 @@ export async function instrument(
   const marker = /^\s*return \{ api:.*$/m;
   if ([...source.matchAll(new RegExp(marker, "gm"))].length !== 1)
     throw new Error("jco memory inspection anchor changed");
-  if (source.split("class BufferManager {").length !== 2)
-    throw new Error("jco buffer inspection anchor changed");
-  source = source.replace(
-    "class BufferManager {",
-    "class BufferManager {\n  __wltSize(){return Array.from(this.#buffers.values()).reduce((n,b)=>n+b.size,0);}",
-  );
+  // The pinned generator omits registries when their types are not reachable.
+  if (source.includes("BUFFER_MGR")) {
+    if (source.split("class BufferManager {").length !== 2)
+      throw new Error("jco buffer inspection anchor changed");
+    source = source.replace(
+      "class BufferManager {",
+      "class BufferManager {\n  __wltSize(){return Array.from(this.#buffers.values()).reduce((n,b)=>n+b.size,0);}",
+    );
+  }
   source = source.replace(marker, (match) =>
     match.replace(
       "return { api:",
       `return { __memory:()=>({
-    scopes:RESOURCE_SCOPE_TASKS.size,bufferRegistry:BUFFER_MGR.__wltSize(),
-    tasks:Array.from(ASYNC_TASKS_BY_COMPONENT_IDX.values()).reduce((n,t)=>n+t.length,0),
-    futures:FUTURES.size(),streams:STREAMS.size(),
-    futureEnds:Object.values(FUTURE_TABLES).reduce((n,x)=>n+x.table.size(),0),
-    streamEnds:Object.values(STREAM_TABLES).reduce((n,x)=>n+x.table.size(),0),
-    handles:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.handles.size(),0),
-    threads:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.threads.size(),0),
-    subtasks:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.subtasks.size(),0),
+    scopes:typeof RESOURCE_SCOPE_TASKS==='undefined'?0:RESOURCE_SCOPE_TASKS.size,
+    bufferRegistry:typeof BUFFER_MGR==='undefined'?0:BUFFER_MGR.__wltSize(),
+    tasks:typeof ASYNC_TASKS_BY_COMPONENT_IDX==='undefined'?0:Array.from(ASYNC_TASKS_BY_COMPONENT_IDX.values()).reduce((n,t)=>n+t.length,0),
+    futures:typeof FUTURES==='undefined'?0:FUTURES.size(),
+    streams:typeof STREAMS==='undefined'?0:STREAMS.size(),
+    futureEnds:typeof FUTURE_TABLES==='undefined'?0:Object.values(FUTURE_TABLES).reduce((n,x)=>n+x.table.size(),0),
+    streamEnds:typeof STREAM_TABLES==='undefined'?0:Object.values(STREAM_TABLES).reduce((n,x)=>n+x.table.size(),0),
+    handles:typeof ASYNC_STATE==='undefined'?0:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.handles.size(),0),
+    threads:typeof ASYNC_STATE==='undefined'?0:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.threads.size(),0),
+    subtasks:typeof ASYNC_STATE==='undefined'?0:Array.from(ASYNC_STATE.values()).reduce((n,s)=>n+s.subtasks.size(),0),
   }), api:`,
     ),
   );

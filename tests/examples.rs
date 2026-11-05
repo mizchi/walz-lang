@@ -77,8 +77,8 @@ fn every_catalog_example_is_checked_and_produces_valid_wasm() {
             "{} needs one execution expectation",
             example.path
         );
-        let source = std::fs::read_to_string(root().join(&example.path)).unwrap();
-        let compiled = wlt::compile(&source)
+        let source = wlt::source::load(root().join(&example.path)).unwrap();
+        let compiled = wlt::compile(source.text())
             .unwrap_or_else(|error| panic!("{} ({}): {error}", example.path, example.pattern));
         wasmparser::Validator::new()
             .validate_all(&compiled.wasm)

@@ -12,6 +12,7 @@ struct Chunk {
     offset: usize,
     path: PathBuf,
     original: Arc<str>,
+    generated: bool,
 }
 pub struct Source {
     text: String,
@@ -78,12 +79,26 @@ impl Source {
             offset,
             path: path.into(),
             original: original.clone(),
+            generated: false,
         });
         Ok(())
     }
 }
+fn file_import(node: &Sexp) -> bool {
+    node.head() == Some("import")
+        && node
+            .list()
+            .and_then(|p| p.get(1))
+            .and_then(Sexp::text)
+            .is_some()
+        && node
+            .list()
+            .and_then(|p| p.get(2))
+            .and_then(Sexp::text)
+            .is_none()
+}
 fn includes<'a>(node: &'a Sexp, output: &mut Vec<&'a Sexp>) {
-    if node.head() == Some("include") {
+    if node.head() == Some("include") || file_import(node) {
         output.push(node);
     } else if matches!(node.head(), Some("module" | "namespace")) {
         for child in node.list().unwrap() {
@@ -91,11 +106,18 @@ fn includes<'a>(node: &'a Sexp, output: &mut Vec<&'a Sexp>) {
         }
     }
 }
+#[derive(Default)]
+struct Modules {
+    names: std::collections::BTreeMap<PathBuf, String>,
+    units: Vec<(String, Source)>,
+    size: usize,
+}
 fn expand(
     path: &Path,
     body: bool,
     stack: &mut Vec<PathBuf>,
     output: &mut Source,
+    modules: &mut Modules,
 ) -> Result<(), Error> {
     let canonical = path
         .canonicalize()
@@ -148,19 +170,28 @@ fn expand(
     stack.push(canonical.clone());
     for node in nodes {
         let parts = node.list().unwrap();
-        let Some(relative) = parts
-            .get(1)
-            .and_then(Sexp::text)
-            .filter(|_| parts.len() == 2)
-        else {
-            return Err(
-                Error::at(&original, node.span, "expected (include \"relative.wlt\")")
-                    .with_path(&canonical),
-            );
+        let import = file_import(node);
+        let Some(relative) = parts.get(1).and_then(Sexp::text).filter(|_| {
+            if import {
+                parts.len() >= 3
+            } else {
+                parts.len() == 2
+            }
+        }) else {
+            return Err(Error::at(
+                &original,
+                node.span,
+                if import {
+                    "expected (import \"relative.wlt\" (func/type/tag $member [$alias])...)"
+                } else {
+                    "expected (include \"relative.wlt\")"
+                },
+            )
+            .with_path(&canonical));
         };
         if Path::new(relative).is_absolute() {
             return Err(
-                Error::at(&original, node.span, "include path must be relative")
+                Error::at(&original, node.span, "include/import path must be relative")
                     .with_path(&canonical),
             );
         }
@@ -172,12 +203,53 @@ fn expand(
         )?;
         // Whitespace prevents tokens/comments on either side from merging.
         output.append("\n", node.span.start, &canonical, &original)?;
-        expand(
-            &canonical.parent().unwrap().join(relative),
-            true,
-            stack,
-            output,
-        )?;
+        let target = canonical.parent().unwrap().join(relative);
+        if import {
+            let target = target.canonicalize().map_err(|e| {
+                Error::at(&original, node.span, format!("{}: {e}", target.display()))
+                    .with_path(&canonical)
+            })?;
+            if stack.contains(&target) {
+                return Err(
+                    Error::at(&original, node.span, "include/import cycle").with_path(&canonical)
+                );
+            }
+            let name = if let Some(name) = modules.names.get(&target) {
+                name.clone()
+            } else {
+                let name = format!("$__file{}", modules.names.len());
+                modules.names.insert(target.clone(), name.clone());
+                let mut unit = Source {
+                    text: String::new(),
+                    path: target.clone(),
+                    chunks: vec![],
+                };
+                expand(&target, true, stack, &mut unit, modules)?;
+                modules.size += unit.text.len() + 64;
+                if modules.size > MAX_SOURCE {
+                    return Err(Error::message("expanded source exceeds 16 MiB".into()));
+                }
+                modules.units.push((name.clone(), unit));
+                name
+            };
+            output.append(
+                &format!("(use {name} "),
+                node.span.start,
+                &canonical,
+                &original,
+            )?;
+            output.chunks.last_mut().unwrap().generated = true;
+            let bindings = parts[2].span.start..parts.last().unwrap().span.end;
+            output.append(
+                &original[bindings.clone()],
+                bindings.start,
+                &canonical,
+                &original,
+            )?;
+            output.append(")", node.span.end - 1, &canonical, &original)?;
+        } else {
+            expand(&target, true, stack, output, modules)?;
+        }
         output.append("\n", node.span.start, &canonical, &original)?;
         cursor = node.span.end;
     }
@@ -193,6 +265,118 @@ pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
         path: path.into(),
         chunks: Vec::new(),
     };
-    expand(path, false, &mut Vec::new(), &mut source)?;
-    Ok(source)
+    let mut modules = Modules::default();
+    expand(path, false, &mut Vec::new(), &mut source, &mut modules)?;
+    if modules.units.is_empty() {
+        return Ok(source);
+    }
+    // Reserve fresh, ordinary identifiers across every original file. Rewrite
+    // only generated chunks, never strings, comments, or user identifiers.
+    let mut atoms = std::collections::BTreeSet::new();
+    let mut seen = std::collections::BTreeSet::new();
+    for unit in std::iter::once(&source).chain(modules.units.iter().map(|(_, s)| s)) {
+        for chunk in &unit.chunks {
+            if !seen.insert(chunk.path.clone()) {
+                continue;
+            }
+            let syntax = crate::sexpr::parse(&chunk.original)?;
+            let mut pending = vec![&syntax];
+            while let Some(node) = pending.pop() {
+                if let Some(atom) = node.atom() {
+                    atoms.insert(atom.to_owned());
+                }
+                if let Some(items) = node.list() {
+                    pending.extend(items);
+                }
+            }
+        }
+    }
+    let mut renames = Vec::new();
+    let mut next = 0;
+    for (name, _) in &mut modules.units {
+        let fresh = loop {
+            let name = format!("$wlt-file-{next}");
+            next += 1;
+            if !atoms
+                .iter()
+                .any(|atom| atom == &name || atom.starts_with(&format!("{name}.")))
+            {
+                break name;
+            }
+        };
+        renames.push((name.clone(), fresh.clone()));
+        *name = fresh;
+    }
+    renames.sort_by_key(|(old, _)| std::cmp::Reverse(old.len()));
+    rename_generated(&mut source, &renames)?;
+    for (_, unit) in &mut modules.units {
+        rename_generated(unit, &renames)?;
+    }
+    let syntax = crate::sexpr::parse(&source.text)?;
+    let end = syntax.span.end - 1;
+    let mut linked = Source {
+        text: String::new(),
+        path: source.path.clone(),
+        chunks: vec![],
+    };
+    append_range(&mut linked, &source, 0..end)?;
+    for (name, unit) in modules.units {
+        let original = unit
+            .chunks
+            .first()
+            .expect("module body source")
+            .original
+            .clone();
+        linked.append(
+            &format!("\n(file.namespace {name}\n"),
+            0,
+            &unit.path,
+            &original,
+        )?;
+        append_range(&mut linked, &unit, 0..unit.text.len())?;
+        linked.append("\n)\n", 0, &unit.path, &original)?;
+    }
+    append_range(&mut linked, &source, end..source.text.len())?;
+    Ok(linked)
+}
+
+fn append_range(
+    output: &mut Source,
+    input: &Source,
+    range: std::ops::Range<usize>,
+) -> Result<(), Error> {
+    for chunk in &input.chunks {
+        let start = chunk.start.max(range.start);
+        let end = chunk.end.min(range.end);
+        if start < end {
+            output.append(
+                &input.text[start..end],
+                chunk.offset + start - chunk.start,
+                &chunk.path,
+                &chunk.original,
+            )?;
+            output.chunks.last_mut().unwrap().generated = chunk.generated;
+        }
+    }
+    Ok(())
+}
+
+fn rename_generated(source: &mut Source, renames: &[(String, String)]) -> Result<(), Error> {
+    let mut output = Source {
+        text: String::new(),
+        path: source.path.clone(),
+        chunks: vec![],
+    };
+    for chunk in &source.chunks {
+        let mut text = source.text[chunk.start..chunk.end].to_owned();
+        if chunk.generated {
+            for (old, new) in renames {
+                text = text.replace(old, new);
+            }
+        }
+        output.append(&text, chunk.offset, &chunk.path, &chunk.original)?;
+        output.chunks.last_mut().unwrap().generated = chunk.generated;
+    }
+    *source = output;
+    Ok(())
 }

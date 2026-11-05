@@ -5,13 +5,16 @@
 
 ## 直近の優先順位
 
-複雑なアプリケーションで確認した不足を、次の順に進める。以下は未実装の計画。
+複雑なアプリケーションで確認した不足を、次の順に進める。
 
-1. [ ] bytes/text の検索・分割・検査付き整数解析と text/JSON builder を標準ライブラリにまとめる。ログ集計・在庫台帳・workflow で再利用し、出力と計測値を照合する。
+1. [x] bytes/text の検索・分割・検査付き整数解析と text/JSON builder を標準ライブラリにまとめる。ログ集計・在庫台帳・workflow で再利用し、出力と計測値を照合する。
 2. [ ] マクロ版と明示版、Wasmtime と Node の差分検査を増やす。不正ソースと取消しのタイミングを fuzz し、失敗入力の縮小と回帰 corpus の保存まで行う。
 3. [ ] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
 4. [ ] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
 5. [ ] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
+
+1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
+JSON builder は object・string・整数・boolean の初版。配列・浮動小数点・null の値 API は後続。
 
 ## リポジトリの独立
 
@@ -24,7 +27,8 @@
 - [ ] 汎用 list<T> の値型と ABI adapter。
 - [x] UTF-8 の厳密な検証、バイト長・符号なし添字・開始位置と長さによるスライス。
 - [x] 検査付き bytes.from-array と、連結・整数変換・JSON string の標準ライブラリ初版。
-- [ ] 汎用の builder・検索・分割・Unicode 操作のライブラリ。
+- [x] bytes/text の検索・最初の区切りでの分割と、断片をためる text/JSON object builder。
+- [ ] Unicode の文字数・書記素・正規化などの操作。
 
 ## 2. 汎用 WIT binding と実用 I/O
 
@@ -47,6 +51,7 @@
 - [x] namespace/public/use と名前空間、相対 include、循環検出、単一 Wasm への静的リンク。
 - [x] 非公開関数・型・tag と、公開する名前の検査。
 - [x] 公開する型の opaque 宣言。別名と推論された参照にも適用。
+- [x] ファイル単位の named import/export と再公開。同じ canonical path の定義・型を共有し、選んだ名前だけを束縛する。
 - [ ] フィールド単位の可視性。
 - [x] bytes/text の標準ライブラリと、ログ集計の可変な内部表現の隠蔽。
 
@@ -64,6 +69,7 @@
 - [ ] 6.4 明示的なループ不変条件・減少量と、入口／反復での証明義務。
 - [ ] 6.5 GC・配列・再帰を含む事前条件／事後条件と law の拡張。
 - [ ] 6.6 解析の根拠を使う最適化パスと意味保存の検査。
+- [x] 到達しない関数・型・tag・ホスト import の除去。型・effect・所有権の全ソース検査を維持し、Core / Component / profiler の ID と ABI をそろえる。
 - [x] Wasmtime guest profiler と Core＋JSPI の再現可能な比較計測、ABI 割当てと UTF-8 検証のチューニング。
 
 既存の effect 上限・所有権検査は維持する。may 情報を must な非別名性や純粋性へ読み替えない。
@@ -108,5 +114,5 @@ UTF-8 validator、ファイル展開、名前解決と adapter は TCB に含み
 - [x] Unicode の品目名を扱う在庫台帳。具体的な GC ハッシュ表と動的 JSON Lines。
 - [x] 手書き版とマクロ版の結果・I/O 失敗・取消し後の解放の照合、Core / Component / Chromium での実行。
 - [x] main の記述量、展開後 IR、生成サイズ、交互実行時間の記録。
-- [ ] bytes/text の検索・分割・整数解析のライブラリ化。
+- [x] bytes/text の検索・分割・整数解析のライブラリ化。
 - [ ] 直後に match する一時 Result の簡約。意味保存の検査を伴う6.6の課題として扱う。

@@ -33,7 +33,7 @@ fn foreign_base_values_and_inconsistent_tags_trap() {
     let compiled = compile(
         r#"(module
       (type $T (variant (empty) (value i64)))
-      (func $read (param $x (ref $T)) (result i64)
+      (func $read (export "read") (param $x (ref $T)) (result i64)
         (match $T (result i64) (local.get $x)
           (case empty () (i64.const 0))
           (case value ($n) (local.get $n)))))"#,

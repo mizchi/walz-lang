@@ -21,7 +21,7 @@
 
 ## 表現と型
 
-プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `closure`・`test`・`law`・`namespace`・`public`・`use` です。ファイルの宣言位置では include も使えます。
+プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `closure`・`test`・`law`・`namespace` および静的な named `import` / `export` です。ファイルの宣言位置では include も使えます。
 型は `i32`・`i64`・`f32`・`f64`・`(ref $T)`・`(ref null $T)`・`(option T)`・`(result T E)`・`(pair T U)`・`(own T)`・`(future T)`・`(stream T)`・`bytes`・`text`。戻り値を宣言しない式・関数は unit です。
 関数の引数・戻り値、構造体のフィールド、配列の要素、クロージャの捕捉値には型が必要です。
 `let` の束縛型は注釈がなければ初期値から一意に決まり、`case` の束縛型は payload の宣言から決まります。
@@ -656,16 +656,16 @@ JS では bytes は Uint8Array、text は string です。文字列の lowering 
 ```
 
 `namespace` は名前の静的なスコープを作り、宣言の既定は非公開です。
-`public` は、そのスコープで定義した func/type/tag だけを公開します。closure は func と type を別々に公開できます。
-`use $path (func/type/tag $member [$alias])...` は公開する宣言への静的な別名です。
+`(export (func $f) (type $T) (tag $Error))` は、そのスコープの func/type/tag を静的リンク向けに公開します。`public` は互換の綴りです。closure は func と type を別々に公開できます。
+`import $path (func/type/tag $member [$alias])...` は公開する宣言への静的な別名です。`use` も互換の綴りとして受理します。
 名前空間をまたぐ完全修飾名 `$math.add` も公開検査を受けます。パスはルートからの絶対名です。
 同一スコープの宣言と use 別名の衝突、未定義名、非公開名へのアクセスは拒否します。
 名前空間は入れ子にでき、宣言と use の順序には依存しません。親スコープの名前は暗黙には取り込みません。
-再 export、wildcard、動的ロード、初期化時コードはありません。テスト名と law 名はコンパイル単位で一意にします。
+import した別名を export する再公開もできます。wildcard、default export、動的ロード、初期化時コードはありません。テスト名と law 名はコンパイル単位で一意にします。
 
 型・関数・tag を完全修飾名へ解決し、通常の宣言に展開した後に型・effect・所有権を検査します。
 ローカル名・捕捉名・フィールド名は書き換えません。IR と Wasm は従来と同じ単一モジュールで、実行時の namespace オブジェクトはありません。
-Wasm/Component 向けの `(export "name")` はルートの定義関数に限ります。ライブラリからの公開と ABI export は別の指定です。
+Wasm/Component 向けの `(export "name")` は関数内の ABI export です。ルートの `(export "name" (func $local))` でも定義関数・静的 import の関数をラッパーなしに公開できます。文字列のない静的 export とは区別します。
 `public (type $T)` はフィールドを含む定義を公開します。`public (opaque $T)` は型だけを公開し、表現への操作を宣言 namespace 内に制限します。フィールド単位の private は未実装です。詳細は末尾の opaque 型の節を参照してください。
 
 ファイル分割は宣言位置の `(include "relative.wlt")` で行います。ファイルは `(module declarations...)` を含み、その宣言を展開します。
@@ -675,6 +675,13 @@ include 自体はスコープを作りません。ライブラリ側で namespac
 CLI とテストランナーは include を展開し、通常の型エラーは元ファイルの位置へ戻します。
 ライブラリ API は `source::load(path)` と `check(loaded.text())` / `compile(loaded.text())` を分け、文字列を受け取る check/compile 自体はファイルを読みません。
 IR の Span は展開後の text に対する範囲です。診断は `loaded.diagnostic(error)` で元の位置へ変換できます。
+
+ファイルからの `(import "relative.wlt" (func $f $alias) (type $T) (tag $E))` は選んだ公開名だけを束縛します。
+各ファイルは独立したスコープを持ち、canonical path ごとに一度だけ読み込み、型と定義を共有します。
+ファイル内 namespace の公開パス（例 `$string.u64`）も指定できます。親や依存ファイルの名前は暗黙に取り込みません。
+全ソースの検査後、ABI export・test・law から到達する関数・型・tag だけを生成します。未使用のホスト import と capability も除去します。
+IR と解析 API は削除前の全ソースを保持します。生成 helper の依存とプロファイラの ABI も同じ到達性投影を使います。
+標準 WAT は書き換えず、この除去は型付きのリンク経路に限ります。詳細は [モジュールと DCE](docs/static-modules.md) を参照してください。
 
 
 メモリ管理は Wasm GC の回収と ABI/外部端点の明示的な寿命を分けます。境界の規約・再現した保持と検査範囲は [MEMORY.md](MEMORY.md) を参照してください。JS 側の Stream の EOF は、そのホスト reader を閉じる契機とします。ソース上の Stream の EOF 後に close が必要な規則は維持します。
@@ -730,6 +737,13 @@ u64 は64 bitのビットパターンを符号なし十進数へ、s64 は符号
 json は引用符を含む JSON string を返し、quote/backslash/制御文字をエスケープする。
 これらは通常の wlt の関数で、ローカルな GC 配列の構築・変更を含むため reads/writes/allocates の上限を持つ。
 可変な作業配列と、公開する不変の bytes/text はコピーで分離する。concat の計算量は入力長の合計に比例する。
+
+検索・分割・上限付き整数解析と text/JSON builder の API は [stdlib/README.md](stdlib/README.md) に定義する。
+検索位置は符号なしの UTF-8 byte 単位であり、text の検索開始位置が文字の途中なら none を返す。
+整数解析は乗算前の上限検査を行い、空・不正範囲・桁あふれを option.none として扱う。
+builder は通常の不透明な可変 GC 型で、finish が断片への参照を外して再利用可能な空の状態に戻す。
+JSON object builder はフィールド名・値のエスケープと区切りを管理し、入れ子の child は finish して取り込む。
+これらは言語の組込み型や構文を増やさず、既存の型・effect・opaque 検査に従う。Lean による意味保存の証明は追加していない。
 
 ## Result と Stream の限定マクロ
 

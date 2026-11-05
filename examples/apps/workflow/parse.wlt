@@ -1,46 +1,15 @@
 (module
   (namespace $lex
+    (import "../../../stdlib/bytes.wlt"
+      (func $buffer.equal)
+      (func $buffer.find-byte)
+      (func $buffer.parse-u64))
     (public (func $equal) (func $tab) (func $key) (func $number))
     (func $equal (param $a bytes) (param $b bytes) (result i32) (effects pure)
-      (if
-        (result i32)
-        (i32.ne (bytes.len (local.get $a)) (bytes.len (local.get $b)))
-        (then (i32.const 0))
-        (else
-          (loop $compare
-            (bind $i i32 (i32.const 0))
-            (result i32)
-            (if
-              (result i32)
-              (i32.eq (local.get $i) (bytes.len (local.get $a)))
-              (then (i32.const 1))
-              (else
-                (if
-                  (result i32)
-                  (i32.ne
-                    (bytes.get (local.get $a) (local.get $i))
-                    (bytes.get (local.get $b) (local.get $i)))
-                  (then (i32.const 0))
-                  (else (recur $compare (i32.add (local.get $i) (i32.const 1))))
-                ))))
-        )))
+      (call $buffer.equal (local.get $a) (local.get $b)))
 
     (func $tab (param $b bytes) (param $start i32) (result i32) (effects pure)
-      (loop $scan
-        (bind $i i32 (local.get $start))
-        (result i32)
-        (if
-          (result i32)
-          (i32.ge_u (local.get $i) (bytes.len (local.get $b)))
-          (then (bytes.len (local.get $b)))
-          (else
-            (if
-              (result i32)
-              (i32.eq (bytes.get (local.get $b) (local.get $i)) (i32.const 9))
-              (then (local.get $i))
-              (else (recur $scan (i32.add (local.get $i) (i32.const 1))))
-            ))))
-    )
+      (call $buffer.find-byte (local.get $b) (local.get $start) (i32.const 9)))
 
     (func $key (param $b bytes) (param $start i32) (param $end i32)
       (result (option text)) (effects pure)
@@ -56,37 +25,11 @@
 
     (func $number (param $b bytes) (param $start i32) (result (option i64))
       (effects pure)
-      (if
-        (result (option i64))
-        (i32.ge_u (local.get $start) (bytes.len (local.get $b)))
-        (then (option.none))
-        (else
-          (loop $digits
-            (bind $i i32 (local.get $start))
-            (bind $n i64 (i64.const 0))
-            (result (option i64))
-            (if
-              (result (option i64))
-              (i32.eq (local.get $i) (bytes.len (local.get $b)))
-              (then (option.some (local.get $n)))
-              (else
-                (let $d
-                  (i32.sub (bytes.get (local.get $b) (local.get $i)) (i32.const 48))
-                  (let $next
-                    (i64.add (i64.mul (local.get $n) (i64.const 10)) (i64.extend_i32_u (local.get $d)))
-                    (if
-                      (result (option i64))
-                      (i32.or
-                        (i32.gt_u (local.get $d) (i32.const 9))
-                        (i64.gt_u (local.get $next) (i64.const 1000000)))
-                      (then (option.none))
-                      (else
-                        (recur $digits
-                          (i32.add (local.get $i) (i32.const 1))
-                          (local.get $next))))
-                  ))))
-          ))))
-  )
+      (call $buffer.parse-u64
+        (local.get $b)
+        (local.get $start)
+        (i32.sub (bytes.len (local.get $b)) (local.get $start))
+        (i64.const 1000000))))
   (namespace $parse
     (public (func $command))
     (func $fields (param $b bytes) (result (ref $domain.Command)) (effects allocates)

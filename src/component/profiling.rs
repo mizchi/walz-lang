@@ -11,7 +11,8 @@ pub struct Profile {
 }
 
 pub fn compile(source: &str) -> Result<Profile, Error> {
-    let module = crate::check(source)?;
+    // Share the guest's declaration projection and remapped ABI indices.
+    let module = super::checked_module(source)?;
     let mut read = None;
     let mut write = None;
     let mut main = None;

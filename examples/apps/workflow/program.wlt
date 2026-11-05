@@ -1,5 +1,4 @@
 (module
-  (include "../../../stdlib/text.wlt")
   (include "compute.wlt")
   (include "report.wlt")
   (import "wlt:host/text-io@0.1.0" "read-lines"

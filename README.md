@@ -8,7 +8,7 @@ Wasm GC と静的解析を前提に、標準 WAT を基底として型付きマ�
 構造体・配列・クロージャ環境は Wasm GC のオブジェクトです。Component 境界の変換用バッファだけを、専用の線形メモリアロケータで管理します。
 
 `bytes` / `text` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
-namespace/public/use による静的モジュールと、相対 include によるファイル分割も使えます。
+相対パスの named import/export で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](docs/static-modules.md) に規約をまとめています。
 [文法チートシート](CHEATSHEET.md) に型・式・所有値・固定マクロと実行手順をまとめています。
 [初見評価の記録](docs/grammar-eval/REPORT.md) は、在庫台帳の読解と変更を固定ルーブリックで確かめたものです。
 [可読性の評価と改善](docs/readability/REPORT.md) では、型の反復・入れ子・配置・変更の追いやすさを別に評価しています。
@@ -412,15 +412,16 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 ## 実装
 
 ```text
-include 展開 → S 式 → 静的モジュール展開・型検査 → 型付き IR
-                           ├─ 呼び出しグラフ・副作用解析
-                           └─ folded WAT → .wasm → Wasmtime
+ファイル import / include → S 式 → 名前解決・型検査 → 型付き IR
+                                      ├─ 全ソースの解析・契約検査
+                                      └─ 到達性による宣言の除去 → WAT → Wasm
 ```
 
 - `src/ir.rs`: 型、ローカル・関数・ループの ID、閉じた式の列挙型。解析と出力の共通コントラクト。
 - `src/sexpr.rs`: 位置情報付きの S 式リーダー。`;;` と入れ子の `(; ;)` コメントに対応。
-- `src/source.rs`: 相対 include、循環検出、展開後の診断を元ファイルへ戻す。
+- `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
 - `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
+- `src/link.rs`: 検査済みの全 IR から到達する宣言を選び、生成用の ID を振り直す。
 - `src/buffers.rs`: bytes/text の private GC storage、UTF-8 検証と値操作。
 - `src/frontend.rs`: 型・名前・捕捉・可変性・match の網羅性・tail position の検査。
 - `src/typing.rs`: 宣言・推論した型の一覧と、ソース位置からの型の問い合わせ。
@@ -476,14 +477,16 @@ api.text('hello');                  // 'hello'
 api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 ```
 
-Component fixture では namespace 内の関数を use で取り込み、ABI export から呼んでいます。
-ファイルを分割する場合は、`(module (include "lib.wlt") ...)` と書けます。
-include はコンパイル時に展開されます。実行時のファイル I/O capability は増えません。
+ファイルからは `(import "stdlib/text.wlt" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
+標準ライブラリの依存と3つのアプリも named import を使います。未使用の定義とホスト import は生成時に除去し、必要な capability だけを manifest に残します。
+`include` は互換のテキスト展開として残します。ファイルの読み込みで実行時の I/O capability は増えません。
 
 
 メモリの管理境界・修正した保持経路・実測は [MEMORY.md](MEMORY.md) を参照してください。`just memory-check` で管理表、GC 到達性、断片化と反復時の保持量を再検査できます。
 
 `stdlib/text.wlt` に連結、u64/s64 の十進数変換と JSON string の生成があります。
+検索・分割・検査付き整数解析と text/JSON builder も [標準ライブラリ](stdlib/README.md) にあります。
+ログ集計・在庫台帳・workflow は共通の解析関数と JSON object builder を使っています。`just test-stdlib` で境界値と両 JS backend を検査できます。
 新しい構文と契約は [SPEC.md](SPEC.md#文字列ライブラリと配列のコピー) を参照してください。
 `just fmt-wlt file.wlt` でコメントを保持して整形し、`just check-wlt-format file.wlt` で検査できます。
 ログ集計の変更前後は `just compare-log-stats before-directory after-directory` で条件を変えて交互に測定できます。

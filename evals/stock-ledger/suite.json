@@ -1,6 +1,6 @@
 {
   "id": "stock-ledger",
-  "version": 2,
+  "version": 4,
   "cheatsheet": "CHEATSHEET.md",
   "main": "examples/apps/stock-ledger/main.wlt",
   "counted": "examples/apps/stock-ledger/main-counted.wlt",

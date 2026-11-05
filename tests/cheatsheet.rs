@@ -6,7 +6,15 @@ fn cheatsheet_complete_modules_compile_and_their_tests_execute() {
     let mut examples = 0;
     for block in guide.split("```wat\n").skip(1) {
         let source = block.split("```").next().unwrap();
-        let compiled = wlt::compile(source)
+        // Printed includes resolve from the project root, as in the guide.
+        let input = tempfile::Builder::new()
+            .prefix(".cheatsheet-")
+            .suffix(".wlt")
+            .tempfile_in(env!("CARGO_MANIFEST_DIR"))
+            .unwrap();
+        std::fs::write(input.path(), source).unwrap();
+        let loaded = wlt::source::load(input.path()).unwrap();
+        let compiled = wlt::compile(loaded.text())
             .unwrap_or_else(|e| panic!("cheatsheet example {}: {e}", examples + 1));
         let directory = tempfile::tempdir().unwrap();
         let path = directory.path().join("example.wasm");

@@ -270,12 +270,13 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 
 ```text
 (include "relative.wlt")
+(import "relative.wlt" (func $read $local) (type $State) (tag $Error))
 (namespace $stock
-  (public (opaque $State) (func $new) (func $get))
+  (export (opaque $State) (func $new) (func $get))
   (type $State (struct ...))
   (func $new ...)
   (func $get ...))
-(use $stock (type $State $Alias) (func $get))
+(import $stock (type $State $Alias) (func $get))
 (call $stock.get argument)
 ```
 
@@ -283,6 +284,10 @@ namespace 内は既定で非公開。`public (type $T)` は表現も公開し、
 opaque の構築・フィールド／配列操作・match は宣言 namespace 内だけ。別名経由も同じ。
 include は宣言を挿入し、参照元ファイルからの相対パスを使う。親 namespace の名前は暗黙に取り込まず、完全修飾名はルートから。
 `public` と Wasm の `(export "main")` は別。ABI export はルートの関数に置く。
+`export` の名前リストは `public` と、namespace からの `import` は `use` と同じ意味。
+ファイル import は選んだ名前だけを束縛し、同じファイルの型・定義を共有する。import した別名も静的 export で再公開できる。
+ルートの `(export "name" (func $local))` で import した関数を ABI export にできる。使わない定義は生成時に落ちる。
+[境界・DCE・未対応範囲](docs/static-modules.md) を参照。
 
 ## bytes / text とライブラリ
 
@@ -300,6 +305,25 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
 
 ライブラリはルート宣言位置で、呼出し元からの相対パスで `stdlib/text.wlt` を include する。
 関数の使用は通常の `(call $string.json ...)`。内部の作業配列を扱う関数は reads/writes/allocates を持つ。
+
+検索・分割・整数解析には `$buffer.find-byte`、`$string.find`、`$string.split-once`、`$string.parse-u64` / `$string.parse-s64` を使う。
+位置は UTF-8 byte 単位。`$buffer.parse-u64(bytes,start,length,limit)` でアプリ固有の上限も指定でき、不正な入力は none になる。
+[全 API と境界の規約](stdlib/README.md) を参照。JSON object はキー・値・区切りを自動でエスケープ／出力できる。
+
+```wat
+(module
+  (import "stdlib/json.wlt"
+    (func $json.new) (func $json.string) (func $json.u64) (func $json.finish))
+  (func $record (export "record") (param $name text) (param $count i64)
+    (result text) (effects reads writes allocates)
+    (let $o (call $json.new)
+      (block (result text)
+        (call $json.string (local.get $o) (text.lit "name") (local.get $name))
+        (call $json.u64 (local.get $o) (text.lit "count") (local.get $count))
+        (call $json.finish (local.get $o))))))
+```
+
+`$json.finish` は内容を返して空 object に戻す。text 断片を組む場合は `stdlib/builder.wlt` の `$builder.new` / `$builder.text` / `$builder.finish` を使う。
 
 ## 確認コマンド
 

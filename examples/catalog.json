@@ -386,7 +386,7 @@
     },
     {
       "path": "examples/modules.wlt",
-      "pattern": "static namespaces, private helpers and import aliases",
+      "pattern": "named file imports, private helpers and selective exports",
       "expected": "42"
     },
     {

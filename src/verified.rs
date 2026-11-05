@@ -9,7 +9,8 @@ use std::process::Command;
 pub const LEAN_VERSION: &str = "+v4.34.1";
 pub const KERNEL_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/proof/Ownership.lean");
 
-/// Check a single IR, verify its ownership contracts, then emit that same IR.
+/// Check a single IR, verify its contracts, then emit its reachable declarations.
+/// Reachability and index remapping are compiler TCB, outside the contract kernel.
 /// No native-WAT fallback, unknown imports, or owned values at raw exports.
 pub fn compile(source: &str) -> Result<Compilation, Error> {
     let module = crate::check(source)

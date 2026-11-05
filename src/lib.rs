@@ -11,6 +11,7 @@ pub mod flow;
 pub mod format;
 mod frontend;
 pub mod ir;
+mod link;
 mod modules;
 pub mod native;
 pub mod ownership;
@@ -70,7 +71,7 @@ pub struct Compilation {
     pub wat: String,
     pub wasm: Vec<u8>,
     pub analysis: Analysis,
-    /// Structured extension IR when the source belongs to the checked subset.
+    /// Complete checked extension IR, before declaration reachability projection.
     /// Native WAT outside that subset is validated but has no source expression IR.
     pub ir: Option<ir::Module>,
 }
@@ -144,7 +145,8 @@ pub(crate) fn compile_checked(source: &str, ir: ir::Module) -> Result<Compilatio
 
 pub(crate) fn emit_checked(ir: ir::Module) -> Result<Compilation, Error> {
     let analysis = analysis::analyze(&ir);
-    let wat = emit::emit(&ir);
+    let linked = link::project(&ir);
+    let wat = emit::emit(&linked);
     let wasm =
         wat::parse_str(&wat).map_err(|error| Error::message(format!("generated WAT: {error}")))?;
     wasmparser::Validator::new()

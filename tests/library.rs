@@ -16,6 +16,64 @@ fn standard_library_has_executable_language_tests() {
 }
 
 #[test]
+fn standard_library_search_parse_and_builder_contracts_execute_natively() {
+    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args(["test", "tests/stdlib.test.wlt"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("9 passed; 0 failed; 0 errors"));
+}
+
+#[test]
+fn builder_representation_and_mutation_effects_are_checked() {
+    let loaded = wlt::source::load("tests/stdlib.test.wlt").unwrap();
+    let prefix = loaded.text().trim_end().strip_suffix(')').unwrap();
+    for (body, message) in [
+        (
+            "(func $bad (param $b (ref $builder.Builder)) (effects pure) (call $builder.text (local.get $b) (text.lit \"x\")))",
+            "effect contract",
+        ),
+        (
+            "(func $bad (param $b (ref $builder.Builder)) (result i32) (struct.get $builder.Builder $length (local.get $b)))",
+            "opaque",
+        ),
+        (
+            "(func $bad (param $o (ref $json.Object)) (effects pure) (call $json.u64 (local.get $o) (text.lit \"n\") (i64.const 1)))",
+            "effect contract",
+        ),
+    ] {
+        assert!(
+            wlt::check(&format!("{prefix} {body})"))
+                .unwrap_err()
+                .to_string()
+                .contains(message)
+        );
+    }
+    let module = wlt::check(loaded.text()).unwrap();
+    let analysis = wlt::analysis::analyze(&module);
+    for name in [
+        "$buffer.find-byte",
+        "$buffer.find",
+        "$buffer.parse-u64",
+        "$string.parse-s64",
+    ] {
+        let effects = &analysis
+            .functions
+            .iter()
+            .find(|f| f.name.ends_with(name.trim_start_matches('$')))
+            .unwrap()
+            .semantic_effects;
+        assert!(!effects.reads && !effects.writes && !effects.host && !effects.suspends);
+    }
+}
+
+#[test]
 fn array_to_bytes_copies_and_checks_unsigned_octets() {
     let source = r#"(module
       (type $A (array (mut i32)))

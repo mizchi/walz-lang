@@ -95,9 +95,10 @@ fn aliases_work_in_explicit_scoped_forms_and_inferred_constructors() {
 
 #[test]
 fn unused_aliases_are_checked_without_changing_executable_types() {
-    let plain = wlt::compile("(module (func $f (result i32) (i32.const 42)))").unwrap();
+    let plain =
+        wlt::compile("(module (func $f (export \"f\") (result i32) (i32.const 42)))").unwrap();
     let aliased = wlt::compile(
-        "(module (type.alias $Unused (option i64)) (func $f (result i32) (i32.const 42)))",
+        "(module (type.alias $Unused (option i64)) (func $f (export \"f\") (result i32) (i32.const 42)))",
     )
     .unwrap();
     assert_eq!(plain.wasm, aliased.wasm);

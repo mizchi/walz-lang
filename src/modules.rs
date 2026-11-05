@@ -42,9 +42,10 @@ struct Scope {
     declarations: Vec<Sexp>,
     definitions: BTreeMap<Symbol, String>,
     aliases: BTreeMap<Symbol, String>,
-    public: BTreeSet<Symbol>,
+    public: BTreeMap<Symbol, crate::ir::Span>,
     opaque: BTreeSet<Symbol>,
     uses: Vec<Sexp>,
+    file: Option<String>,
 }
 impl Scope {
     fn lookup(&self, symbol: &Symbol) -> Option<&String> {
@@ -78,24 +79,48 @@ fn identifier(source: &str, node: &Sexp) -> Result<String, Error> {
     }
     Ok(n)
 }
-fn collect(source: &str, scope: &str, nodes: &[Sexp], scopes: &mut Scopes) -> Result<(), Error> {
-    let mut current = Scope::default();
+fn collect(
+    source: &str,
+    scope: &str,
+    nodes: &[Sexp],
+    scopes: &mut Scopes,
+    file: Option<&str>,
+) -> Result<(), Error> {
+    let mut current = Scope {
+        file: file.map(str::to_owned),
+        ..Scope::default()
+    };
     for node in nodes {
         let items = node.list().unwrap_or(&[]);
         match node.head() {
-            Some("namespace") => {
+            Some("namespace" | "file.namespace") => {
                 let name = items
                     .get(1)
                     .ok_or_else(|| Error::at(source, node.span, "missing namespace name"))?;
-                let path = qualified(scope, &identifier(source, name)?)
-                    .trim_start_matches('$')
-                    .to_owned();
+                let generated = node.head() == Some("file.namespace");
+                let name = identifier(source, name)?;
+                if generated && !scope.is_empty() {
+                    return Err(Error::at(
+                        source,
+                        node.span,
+                        "file modules belong to the compilation root",
+                    ));
+                }
+                let path = qualified(scope, &name).trim_start_matches('$').to_owned();
                 if scopes.contains_key(&path) || path == scope {
                     return Err(Error::at(source, node.span, "duplicate namespace"));
                 }
-                collect(source, &path, &items[2..], scopes)?;
+                collect(
+                    source,
+                    &path,
+                    &items[2..],
+                    scopes,
+                    if generated { Some(&path) } else { file },
+                )?;
             }
-            Some("public") => {
+            Some("public") | Some("export")
+                if node.head() == Some("public") || items.get(1).and_then(Sexp::list).is_some() =>
+            {
                 for export in &items[1..] {
                     let parts = export.list().unwrap_or(&[]);
                     let kind = if export.head() == Some("opaque") {
@@ -116,7 +141,7 @@ fn collect(source: &str, scope: &str, nodes: &[Sexp], scopes: &mut Scopes) -> Re
                             .opaque
                             .insert(Symbol::new(symbol.kind, symbol.name.clone()));
                     }
-                    if !current.public.insert(symbol) {
+                    if current.public.insert(symbol, export.span).is_some() {
                         return Err(Error::at(
                             source,
                             export.span,
@@ -125,7 +150,22 @@ fn collect(source: &str, scope: &str, nodes: &[Sexp], scopes: &mut Scopes) -> Re
                     }
                 }
             }
+            Some("test") if file.is_some() => {
+                return Err(
+                    Error::at(source, node.span, "file modules cannot declare tests")
+                        .help("put tests in a separate entry file that imports the library"),
+                );
+            }
             Some("use") => current.uses.push(node.clone()),
+            Some("import") if items.get(1).and_then(Sexp::atom).is_some() => {
+                current.uses.push(node.clone())
+            }
+            Some("import") if items.get(2).and_then(Sexp::text).is_none() => {
+                return Err(
+                    Error::at(source, node.span, "file imports require source::load")
+                        .help("load the entry file before checking or compiling its source"),
+                );
+            }
             _ => {
                 let declaration = if node.head() == Some("import") {
                     items.get(3).unwrap_or(node)
@@ -159,12 +199,12 @@ fn collect(source: &str, scope: &str, nodes: &[Sexp], scopes: &mut Scopes) -> Re
             }
         }
     }
-    for symbol in &current.public {
+    for symbol in &current.opaque {
         if !current.definitions.contains_key(symbol) {
             return Err(Error::at(
                 source,
                 nodes.first().map(|n| n.span).unwrap_or_default(),
-                format!("unknown public {} `{}`", symbol.kind.name(), symbol.name),
+                "opaque exports require a local type definition",
             ));
         }
     }
@@ -192,6 +232,7 @@ fn import_aliases(
     source: &str,
     import: &Sexp,
     scopes: &Scopes,
+    scope: &str,
 ) -> Result<Vec<(Symbol, String)>, Error> {
     let parts = import.list().unwrap();
     if parts.len() < 3 {
@@ -202,9 +243,11 @@ fn import_aliases(
         ));
     }
     let namespace = identifier(source, &parts[1])?;
-    let target = scopes
-        .get(namespace.trim_start_matches('$'))
+    let target_name = paths(scopes, scope, namespace.trim_start_matches('$'))
+        .into_iter()
+        .find(|p| scopes.contains_key(p))
         .ok_or_else(|| Error::at(source, import.span, "unknown namespace"))?;
+    let target = &scopes[&target_name];
     let mut aliases = Vec::new();
     for binding in &parts[2..] {
         let parts = binding.list().unwrap_or(&[]);
@@ -217,12 +260,23 @@ fn import_aliases(
             ));
         }
         let symbol = Symbol::new(kind.unwrap(), identifier(source, &parts[1])?);
-        // Resolve only definitions, even after earlier imports have been bound.
+        if symbol.name.contains('.')
+            && target.file.as_deref() == Some(target_name.as_str())
+            && target.lookup(&symbol).is_none()
+        {
+            // A namespaced file export still requires an explicit named import.
+            let definition = resolve(source, scopes, &target_name, symbol.kind, &parts[1])?;
+            let alias = Symbol::new(
+                symbol.kind,
+                identifier(source, parts.get(2).unwrap_or(&parts[1]))?,
+            );
+            aliases.push((alias, definition));
+            continue;
+        }
         let definition = target
-            .definitions
-            .get(&symbol)
+            .lookup(&symbol)
             .ok_or_else(|| Error::at(source, binding.span, "unknown imported member"))?;
-        if !target.public.contains(&symbol) {
+        if !target.public.contains_key(&symbol) {
             return Err(Error::at(source, binding.span, "private namespace member"));
         }
         let alias = Symbol::new(
@@ -234,13 +288,47 @@ fn import_aliases(
     Ok(aliases)
 }
 fn resolve_imports(source: &str, scopes: &mut Scopes) -> Result<(), Error> {
-    let pending = scopes
+    // Diagnose impossible exports at the declaring file before an importer
+    // reports them missing. Forwarded names may await their named imports.
+    for scope in scopes.values() {
+        for (symbol, span) in &scope.public {
+            let planned = scope
+                .uses
+                .iter()
+                .flat_map(|n| n.list().unwrap_or(&[]).iter().skip(2))
+                .any(|n| {
+                    let parts = n.list().unwrap_or(&[]);
+                    n.head().and_then(SymbolKind::parse) == Some(symbol.kind)
+                        && parts.get(2).or_else(|| parts.get(1)).and_then(Sexp::atom)
+                            == Some(symbol.name.as_str())
+                });
+            if scope.lookup(symbol).is_none() && !planned {
+                return Err(Error::at(
+                    source,
+                    *span,
+                    format!("unknown public {} `{}`", symbol.kind.name(), symbol.name),
+                ));
+            }
+        }
+    }
+    let mut pending = scopes
         .iter_mut()
         .map(|(name, scope)| (name.clone(), std::mem::take(&mut scope.uses)))
+        .flat_map(|(name, imports)| imports.into_iter().map(move |i| (name.clone(), i)))
         .collect::<Vec<_>>();
-    for (name, imports) in pending {
-        for import in imports {
-            let aliases = import_aliases(source, &import, scopes)?;
+    while !pending.is_empty() {
+        let mut remaining = Vec::new();
+        let mut first_error = None;
+        let mut progress = false;
+        for (name, import) in pending {
+            let aliases = match import_aliases(source, &import, scopes, &name) {
+                Ok(aliases) => aliases,
+                Err(error) => {
+                    first_error.get_or_insert(error);
+                    remaining.push((name, import));
+                    continue;
+                }
+            };
             let scope = scopes.get_mut(&name).unwrap();
             for (symbol, definition) in aliases {
                 if scope.lookup(&symbol).is_some() {
@@ -252,9 +340,48 @@ fn resolve_imports(source: &str, scopes: &mut Scopes) -> Result<(), Error> {
                 }
                 scope.aliases.insert(symbol, definition);
             }
+            progress = true;
+        }
+        if !progress {
+            return Err(first_error.unwrap());
+        }
+        pending = remaining;
+    }
+    for scope in scopes.values() {
+        for (symbol, span) in &scope.public {
+            if scope.lookup(symbol).is_none() {
+                return Err(Error::at(
+                    source,
+                    *span,
+                    format!("unknown public {} `{}`", symbol.kind.name(), symbol.name),
+                ));
+            }
         }
     }
     Ok(())
+}
+fn paths(scopes: &Scopes, scope: &str, path: &str) -> Vec<String> {
+    if let Some(file) = &scopes[scope].file {
+        let mut out = Vec::new();
+        let mut ancestor = scope;
+        loop {
+            out.push(format!("{ancestor}.{path}"));
+            if ancestor == file {
+                break;
+            }
+            ancestor = ancestor.rsplit_once('.').unwrap().0;
+        }
+        // The loader's use declarations refer to other file identities directly.
+        if scopes
+            .get(path)
+            .is_some_and(|s| s.file.as_deref() == Some(path))
+        {
+            out.push(path.into());
+        }
+        out
+    } else {
+        vec![path.into()]
+    }
 }
 fn resolve(
     source: &str,
@@ -267,15 +394,25 @@ fn resolve(
     if let Some(target) = scopes[scope].lookup(&symbol) {
         return Ok(target.clone());
     }
-    if let Some((path, member)) = symbol.name.trim_start_matches('$').rsplit_once('.')
-        && let Some(target) = scopes.get(path)
-    {
-        let member = Symbol::new(kind, format!("${member}"));
-        if let Some(name) = target.lookup(&member) {
-            if scope == path || target.public.contains(&member) {
-                return Ok(name.clone());
+    if let Some((path, member)) = symbol.name.trim_start_matches('$').rsplit_once('.') {
+        for path in paths(scopes, scope, path) {
+            let Some(target) = scopes.get(&path) else {
+                continue;
+            };
+            if target.file != scopes[scope].file {
+                return Err(Error::at(
+                    source,
+                    node.span,
+                    "file module members require a named import",
+                ));
             }
-            return Err(Error::at(source, node.span, "private namespace member"));
+            let member = Symbol::new(kind, format!("${member}"));
+            if let Some(name) = target.lookup(&member) {
+                if scope == path || target.public.contains_key(&member) {
+                    return Ok(name.clone());
+                }
+                return Err(Error::at(source, node.span, "private namespace member"));
+            }
         }
     }
     Err(Error::at(
@@ -406,7 +543,15 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     if !items[1..].iter().any(|n| {
         matches!(
             n.head(),
-            Some("namespace" | "use" | "public" | "type.alias")
+            Some(
+                "namespace"
+                    | "file.namespace"
+                    | "use"
+                    | "public"
+                    | "type.alias"
+                    | "export"
+                    | "import"
+            )
         )
     }) {
         return Ok(Expanded {
@@ -416,7 +561,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         });
     }
     let mut scopes = Scopes::new();
-    collect(source, "", &items[1..], &mut scopes)?;
+    collect(source, "", &items[1..], &mut scopes, None)?;
     resolve_imports(source, &mut scopes)?;
     let mut output = vec![items[0].clone()];
     let opaque = scopes
@@ -460,6 +605,48 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
             rewrite(source, &scopes, &name, &mut node)?;
             output.push(node);
         }
+    }
+    // WAT's declarative export form can expose a selected static binding.
+    // Attach it after privacy checks, so imported files cannot self-export to
+    // the enclosing Wasm instance and callers need no forwarding function.
+    let exports = output
+        .iter()
+        .filter(|n| n.head() == Some("export"))
+        .cloned()
+        .collect::<Vec<_>>();
+    output.retain(|n| n.head() != Some("export"));
+    for export in exports {
+        let parts = export.list().unwrap();
+        let descriptor = parts.get(2).and_then(Sexp::list).unwrap_or(&[]);
+        if parts.len() != 3
+            || parts[1].text().is_none()
+            || descriptor.len() != 2
+            || descriptor[0].atom() != Some("func")
+        {
+            return Err(Error::at(
+                source,
+                export.span,
+                "expected (export \"name\" (func $function))",
+            ));
+        }
+        let target = descriptor[1].atom();
+        let definition = output
+            .iter_mut()
+            .find(|n| {
+                n.head() == Some("func")
+                    && n.list().and_then(|p| p.get(1)).and_then(Sexp::atom) == target
+            })
+            .ok_or_else(|| Error::at(source, export.span, "exports belong to defined functions"))?;
+        let Kind::List(items) = &mut definition.kind else {
+            unreachable!()
+        };
+        items.insert(
+            2,
+            Sexp {
+                kind: Kind::List(vec![parts[0].clone(), parts[1].clone()]),
+                span: export.span,
+            },
+        );
     }
     Ok(Expanded {
         syntax: Sexp {

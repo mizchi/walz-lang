@@ -1,0 +1,231 @@
+{
+  "schema": "wlt-imports-dce-comparison-v1",
+  "before": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/stdlib/after-final",
+  "after": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/stdlib/imports-dce-final",
+  "rounds": 7,
+  "callsPerSample": 10,
+  "node": "v24.21.0",
+  "cpu": "Apple M5",
+  "results": {
+    "log-stats": {
+      "samples": [
+        [
+          1.7754706999999996,
+          1.4718834000000016,
+          1.4279958999999978,
+          1.4560414999999978,
+          1.4528375000000069,
+          1.4454585000000038,
+          1.6020917999999995
+        ],
+        [
+          1.712654000000002,
+          1.4466751999999985,
+          1.4849333999999998,
+          1.4422708,
+          1.4496918000000023,
+          1.4289752000000049,
+          1.6109209000000106
+        ]
+      ],
+      "medianBeforeMs": 1.4560414999999978,
+      "medianAfterMs": 1.4496918000000023,
+      "wasmBytes": [
+        13942,
+        11711
+      ]
+    },
+    "stock-ledger": {
+      "samples": [
+        [
+          4.850287499999996,
+          3.9987875000000086,
+          4.057820800000007,
+          4.155975000000001,
+          4.134604100000035,
+          4.066404299999988,
+          4.064712499999985
+        ],
+        [
+          4.934504200000004,
+          4.029612599999979,
+          4.072641699999974,
+          4.3960419,
+          4.968758400000001,
+          5.026908299999991,
+          4.14447080000001
+        ]
+      ],
+      "medianBeforeMs": 4.066404299999988,
+      "medianAfterMs": 4.3960419,
+      "wasmBytes": [
+        15192,
+        13065
+      ]
+    },
+    "workflow": {
+      "samples": [
+        [
+          0.7049539999999979,
+          0.6450165999999854,
+          0.6439583000000084,
+          0.5265289999999936,
+          0.5221666000000141,
+          0.5224625999999943,
+          0.5116416999999955
+        ],
+        [
+          0.7739207999999735,
+          0.6469207999999866,
+          0.5203292000000147,
+          0.5890668999999775,
+          0.5236082000000352,
+          0.5197291999999833,
+          0.6257289999999784
+        ]
+      ],
+      "medianBeforeMs": 0.5265289999999936,
+      "medianAfterMs": 0.5890668999999775,
+      "wasmBytes": [
+        22966,
+        20939
+      ]
+    }
+  },
+  "captures": {
+    "after-final": {
+      "node": "v24.21.0",
+      "cpu": "Apple M5",
+      "hashes": {
+        "corpus.json": "89d1a4138c56bb48577a184e5d98be06581808648d208b2c953003072d8fd51c",
+        "log-stats/bindings.mjs": "59acd418b7f472652abee2cbd8585457707813dc952cf63b644e01b5df062dc0",
+        "log-stats/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "log-stats/core.wasm": "1152f0dd4e589a0e16fc75efbfd63d6df3928573289279a06a98143b259e437f",
+        "log-stats/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "log-stats/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "log-stats/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "log-stats/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "log-stats/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "log-stats/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad",
+        "source/examples/apps/log-stats/benchmark.wlt": "aebb6169e2cc6d3b17fd5ec53b0df3b20ccc40741dbe5b234b81ba825144f0dc",
+        "source/examples/apps/log-stats/decimal.wlt": "a08bdbd307e477ab69827dc7211420fd1cfed35850885ac810e90dd764d723ee",
+        "source/examples/apps/log-stats/main.wlt": "fb6fbc551d63b8d3a0064a408240de9af3cae926bb2ccd7aa3a041d2963208ee",
+        "source/examples/apps/log-stats/model.test.wlt": "6a97398c6dceac25d51e4c6d5dd30c70b498569addab3b4d57359ae2f99c36e1",
+        "source/examples/apps/log-stats/parse.wlt": "6e7de893b25a31991fdbfd674231338848117f8980af75cf655fbe1920301622",
+        "source/examples/apps/log-stats/report.wlt": "106eb873af8f12dec73aa9f3d826344f4d61d741973165aa53d5bcb4f734d417",
+        "source/examples/apps/log-stats/stats-impl.wlt": "e7e743cb19d4c0584b1e7e9731ed1cfe8f109318b8386e33291067f7a18fdf5f",
+        "source/examples/apps/log-stats/stats.wlt": "ff35e03b1047ea37da5b0e05b414e26c8231db59aebca860119ed78232a5012e",
+        "source/examples/apps/stock-ledger/main-counted.wlt": "2870e79b9727a82de23494a78cc2c6970adddeb7574f5b2f762bb220d96086cc",
+        "source/examples/apps/stock-ledger/main-explicit.wlt": "6fd3f7c05681e4ab1a9a41c954b6a7ff8879c8af8a59830bfde7b7d1555db5fa",
+        "source/examples/apps/stock-ledger/main.wlt": "ed66e2d9e4a8807a79512d7cfb3280746139e60fe2e018c35487e01ed5df28da",
+        "source/examples/apps/stock-ledger/model.test.wlt": "d4f3945576fc182909a9bc10aa6f67b994713a78342348c058a54262f0014798",
+        "source/examples/apps/stock-ledger/parse.wlt": "7286bbc5e46d95bf9621b5bb0b958723d83d29286b6f77e8dd5fc619fb6b0888",
+        "source/examples/apps/stock-ledger/program.wlt": "cdfcc7931190f7d081b28a8fc03164fb85eb0ac0233851156031af3f9c9f42b4",
+        "source/examples/apps/stock-ledger/report.wlt": "85791fba9e205c8ccfae0f49adef0d0b37d1de7997e7246270e7d67a5e1e1c9c",
+        "source/examples/apps/stock-ledger/stock.wlt": "71739390bbe000aac2fb062ab8838679cbd949acf896e800f275844447c81c35",
+        "source/examples/apps/workflow/benchmark.wlt": "5d29456b9f411faeee798482ba34d63b30a638cd67e6e04ab4f7ef5d0f88b1b6",
+        "source/examples/apps/workflow/compute.wlt": "aa8df9c3deae4b462dae39fa3ea04f3dd2b1d578509e41f53a300983c95e4e13",
+        "source/examples/apps/workflow/domain.wlt": "c813ca06b61310ea39f46a60e87e34e91d5b9cf229a8d802ced45f8a85bc61ea",
+        "source/examples/apps/workflow/graph.wlt": "cf624403cdb30a4fcde8d5fd1efa3fb39896d3fd72d114b6cac098aea4ade60c",
+        "source/examples/apps/workflow/main.wlt": "49b8c6fbee570ef21f7dad7e58309c657c739c35012c996a44fb89a3257d4af3",
+        "source/examples/apps/workflow/model.test.wlt": "6b0717340872af2d505204fe7f8a9ecda13d71c0fc932b148df0c4a450fa9a1f",
+        "source/examples/apps/workflow/parse.wlt": "56e96eecde18236a7f974ec6a67b26d6d91706ee0eaaacaebec5646e6f3fc171",
+        "source/examples/apps/workflow/planner.wlt": "fc8f4a656f2e203b862f5f5a4d658efaff0a407ff1647e881c591d8d5ec59dfe",
+        "source/examples/apps/workflow/program.wlt": "9ff9f5fa5955b0633d68fcd62431b4684126b6d9005d8b4841245d01e2eb81f9",
+        "source/examples/apps/workflow/queue.test.wlt": "87701b45da8d1e22643a2e5a9f98127a3e6824d459cddc2f6cafd62c2ca8cc41",
+        "source/examples/apps/workflow/queue.wlt": "3282cc4edc7d8fa48eea0511001c40cd826f6f9f46f3b8451e811348ae2a32c3",
+        "source/examples/apps/workflow/report.wlt": "86d5318126031a46b6ffef6504f440b8ce13eb1f59aba70db080c9e474b3a805",
+        "source/stdlib/builder.wlt": "1e2bdfa5605fa1bdfccb6528aef84a3718183c93038bb6af8b1f3ec9dbc941d1",
+        "source/stdlib/bytes.wlt": "4252b42d92ddd4174d9bff22572e1a7269db121c4f510489c25d1994ff8eede6",
+        "source/stdlib/json.wlt": "657fbdfe3b79147647745fdab148c90947b9fe6f2705193f180018dea49fc4af",
+        "source/stdlib/text.wlt": "b378c09dd6ab5bf4e9e98a1f6387e21f3480698b28dfcfa6cc90b6fb128a0fd9",
+        "stock-ledger/bindings.mjs": "cac6fe6deaf0468b36dc237d5a489eb4ef0c6fefb374f8abf7b56310a80b95d5",
+        "stock-ledger/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "stock-ledger/core.wasm": "fc9f743383d0def0f0159e106d1e601fe35e4a7e5fe6f4af53db8a43963a1356",
+        "stock-ledger/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "stock-ledger/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "stock-ledger/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "stock-ledger/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "stock-ledger/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "stock-ledger/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad",
+        "text-io.mjs": "471f61e9a30d6d8b227a0dd21e6328bac66aaf8a28f618e9902246e8e1b6d94f",
+        "workflow/bindings.mjs": "db2344a5e25d19ee9107fecf9fd5c39e1c54b519145c07158730594ab390919e",
+        "workflow/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "workflow/core.wasm": "40e1793ea9b36b0328b60ff275c4f45c28dea7503630c7099d19282c47f50c63",
+        "workflow/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "workflow/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "workflow/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "workflow/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "workflow/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "workflow/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad"
+      }
+    },
+    "imports-dce-final": {
+      "node": "v24.21.0",
+      "cpu": "Apple M5",
+      "hashes": {
+        "corpus.json": "89d1a4138c56bb48577a184e5d98be06581808648d208b2c953003072d8fd51c",
+        "log-stats/bindings.mjs": "decf3a83153a0e23d76783d38485106ac161a8f46514865aa4b5bb6aa05cebc4",
+        "log-stats/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "log-stats/core.wasm": "39604833b39455cba06de4ac419ebfe71399ff21160e0543834844fdf251cb51",
+        "log-stats/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "log-stats/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "log-stats/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "log-stats/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "log-stats/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "log-stats/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad",
+        "source/examples/apps/log-stats/benchmark.wlt": "f3bae818f66fdb74aac8c12dc2e1051a314834c43f686a46b9968823d2150609",
+        "source/examples/apps/log-stats/decimal.wlt": "f37958b9b2aff1625d4dc72e3cc071acad31c65bd505fa5b4cf4f970ddd870bc",
+        "source/examples/apps/log-stats/main.wlt": "8489f016cc57d5160a85548ce2f58239bd4856226a3639b998e5a30526aa0d87",
+        "source/examples/apps/log-stats/model.test.wlt": "d7bbf43f61d40b48f8e4f9fa52af0f88353543d92a2872aba59656af42ca4d6c",
+        "source/examples/apps/log-stats/parse.wlt": "d4607673e29028ff3ca1a976d6ab8514e5fc1f9a375edd914d2e6b0a81d592ef",
+        "source/examples/apps/log-stats/report.wlt": "580995eca2d7e3e47f1365089109af3cd73722298853e24427484303c6fb2da9",
+        "source/examples/apps/log-stats/stats-impl.wlt": "e7e743cb19d4c0584b1e7e9731ed1cfe8f109318b8386e33291067f7a18fdf5f",
+        "source/examples/apps/log-stats/stats.wlt": "ff35e03b1047ea37da5b0e05b414e26c8231db59aebca860119ed78232a5012e",
+        "source/examples/apps/stock-ledger/main-counted.wlt": "2870e79b9727a82de23494a78cc2c6970adddeb7574f5b2f762bb220d96086cc",
+        "source/examples/apps/stock-ledger/main-explicit.wlt": "6fd3f7c05681e4ab1a9a41c954b6a7ff8879c8af8a59830bfde7b7d1555db5fa",
+        "source/examples/apps/stock-ledger/main.wlt": "ed66e2d9e4a8807a79512d7cfb3280746139e60fe2e018c35487e01ed5df28da",
+        "source/examples/apps/stock-ledger/model.test.wlt": "84f532aa45f6ff7d3244adfed186799e892bdc793c39a44eb559d98deb1e2c4c",
+        "source/examples/apps/stock-ledger/parse.wlt": "a5bd1a274d11a98a86d4e0b26bc1b8eb16c168dca679b5394f5760af0888c305",
+        "source/examples/apps/stock-ledger/program.wlt": "1af7a0c63ab12e3eb9bf1032ec070832eeea337f283dec9bfe7c68d70e9fe0ee",
+        "source/examples/apps/stock-ledger/report.wlt": "1d3e9aa9698c9e390ec9777d44b7a4e3807a4e83f7a5f4ae73f61db494944afa",
+        "source/examples/apps/stock-ledger/stock.wlt": "71739390bbe000aac2fb062ab8838679cbd949acf896e800f275844447c81c35",
+        "source/examples/apps/workflow/benchmark.wlt": "292e28ff7a616553a54a233ef9944454013de156f4918444286db0213e90d44f",
+        "source/examples/apps/workflow/compute.wlt": "aa8df9c3deae4b462dae39fa3ea04f3dd2b1d578509e41f53a300983c95e4e13",
+        "source/examples/apps/workflow/domain.wlt": "c813ca06b61310ea39f46a60e87e34e91d5b9cf229a8d802ced45f8a85bc61ea",
+        "source/examples/apps/workflow/graph.wlt": "cf624403cdb30a4fcde8d5fd1efa3fb39896d3fd72d114b6cac098aea4ade60c",
+        "source/examples/apps/workflow/main.wlt": "49b8c6fbee570ef21f7dad7e58309c657c739c35012c996a44fb89a3257d4af3",
+        "source/examples/apps/workflow/model.test.wlt": "dbbdb04ee8ac137700605a60f80edcd1a86b7bcd3c8095e3bc08a8aff786461e",
+        "source/examples/apps/workflow/parse.wlt": "958b22e677bfe52294b0c2b58e4f87a0ba1454d9e757f63d8947593e0452e70e",
+        "source/examples/apps/workflow/planner.wlt": "fc8f4a656f2e203b862f5f5a4d658efaff0a407ff1647e881c591d8d5ec59dfe",
+        "source/examples/apps/workflow/program.wlt": "9047d4bd45201b6c77c5914c17d95f364241f511a9531866b5921c473c5d1459",
+        "source/examples/apps/workflow/queue.test.wlt": "87701b45da8d1e22643a2e5a9f98127a3e6824d459cddc2f6cafd62c2ca8cc41",
+        "source/examples/apps/workflow/queue.wlt": "3282cc4edc7d8fa48eea0511001c40cd826f6f9f46f3b8451e811348ae2a32c3",
+        "source/examples/apps/workflow/report.wlt": "b47ed2958ba9e173a7f73022833712e81713d114f1d6deb34fec349344e33eee",
+        "source/stdlib/builder.wlt": "9c08b8fc5afdeb286f2683d7ffee381b803e50642dc85c0e85b0d714260d0c81",
+        "source/stdlib/bytes.wlt": "4187b83302e23bbcf0efea85f169f67d6d230f6c8017c64307724713674f6529",
+        "source/stdlib/json.wlt": "e1bd081ccd1d0d9f1024dd5a48d65c9393a3099d6ac7598407186e469cd0cf42",
+        "source/stdlib/text.wlt": "81268d4a304feb22e0f11502bc40346fe80a5aa1d990f76142ce331e77ecabd8",
+        "stock-ledger/bindings.mjs": "f5aefd28c6cff821b18172014eed9d01c9c761669bf33dd935ece0a552da6a35",
+        "stock-ledger/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "stock-ledger/core.wasm": "7a677220718ac00627438bdc0b2f73213a13e6309b55bdecd782da62499491e6",
+        "stock-ledger/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "stock-ledger/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "stock-ledger/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "stock-ledger/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "stock-ledger/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "stock-ledger/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad",
+        "text-io.mjs": "471f61e9a30d6d8b227a0dd21e6328bac66aaf8a28f618e9902246e8e1b6d94f",
+        "workflow/bindings.mjs": "928f92b5cb0579fa874e1bbe5cb982bef57a6add0a23f38756b331aea701e3ca",
+        "workflow/core.mjs": "9435392d294c00896b0d247e9845e0a29b2e125ac32bd0a9b38b2c5ff90294a6",
+        "workflow/core.wasm": "bd0333c25b98f599c68ef64683546278e2ff2cf43ec7f16189189460c492e54a",
+        "workflow/host.mjs": "4d2fa4be93587b0bebced3f20f987e89cf63258839a78a45210e76c6f0bce98d",
+        "workflow/index.js": "0c4f86f4954bcb572bbb1f4cb71591620e3f5a4a9910d093402290b9ed17b522",
+        "workflow/manifest.json": "96b87b32e702b3cd7e72b7139dad14b4a4315e940642d311fca3c3db547bb4b8",
+        "workflow/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "workflow/package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+        "workflow/tasks.mjs": "bd5f17d64947965580f33c32b06e6280a1afb18ddb49b49c8228b60115fea6ad"
+      }
+    }
+  }
+}

@@ -156,6 +156,20 @@ test-io:
     cargo test --locked --test text_io
     node --expose-gc --test runtime/text-io.test.mjs runtime/text-program.test.mjs runtime/node-io.test.mjs
 
+test-stdlib:
+    cargo test --locked --test library
+    node --expose-gc --test runtime/library.test.mjs
+
+test-modules:
+    cargo test --locked --test modules --test static_imports --test dce
+    node --test runtime/modules.test.mjs
+
+stdlib-capture output="target/stdlib/before":
+    node runtime/stdlib-bench.mjs capture {{quote(output)}}
+
+stdlib-compare before="target/stdlib/before" after="target/stdlib/after" rounds="5":
+    node runtime/stdlib-bench.mjs compare {{quote(before)}} {{quote(after)}} {{quote(rounds)}}
+
 # Save a guest/runtime snapshot and a Firefox guest profile.
 profile label="current" rounds="40":
     node runtime/profile.mjs capture {{quote("target/profile/" + label)}} {{quote(rounds)}}
