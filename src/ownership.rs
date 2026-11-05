@@ -95,6 +95,7 @@ impl Kinds {
 
     pub fn is_owned(&self, ty: &Type) -> bool {
         match ty {
+            Type::Resource(_) => true,
             Type::Value(id) | Type::Ref { ty: id, .. } => self.owned[id.0],
             _ => false,
         }
@@ -182,7 +183,7 @@ impl Extractor<'_> {
                     "owned closure references cannot be inspected",
                 ));
             }
-            Let { local, value, body } => Operation::Seq {
+            Let { local, value, body } | Using { local, value, body } => Operation::Seq {
                 items: vec![
                     self.expression(value)?,
                     self.scoped([*local], self.expression(body)?),
@@ -414,13 +415,18 @@ fn has_owned_expression(expression: &Expr, kinds: &Kinds) -> bool {
 }
 
 fn has_exceptional_control(expression: &Expr) -> bool {
-    matches!(
-        expression.kind,
-        ExprKind::Try { .. } | ExprKind::Throw { .. }
-    ) || expression
-        .children()
-        .into_iter()
-        .any(has_exceptional_control)
+    matches!(expression.kind, ExprKind::Try { .. })
+        || expression
+            .children()
+            .into_iter()
+            .any(has_exceptional_control)
+}
+
+fn has_throwing_call(e: &Expr, effects: &[crate::effects::EffectSet]) -> bool {
+    matches!(e.kind,ExprKind::Call{function,..} if effects[function.0].throws_unknown || !effects[function.0].throws.is_empty())
+        || e.children()
+            .into_iter()
+            .any(|e| has_throwing_call(e, effects))
 }
 
 /// Extract and check ownership obligations. This is also the contract sent to
@@ -471,7 +477,7 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
     }
     let effects = crate::effects::infer(module);
     let mut functions = Vec::new();
-    for (index, function) in module.functions.iter().enumerate() {
+    for function in &module.functions {
         for local in &function.locals {
             kinds.check_type(source, &local.ty, local.span)?;
         }
@@ -492,11 +498,7 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
             }
             continue;
         };
-        if owns
-            && (has_exceptional_control(body)
-                || effects[index].throws_unknown
-                || !effects[index].throws.is_empty())
-        {
+        if owns && (has_exceptional_control(body) || has_throwing_call(body, &effects)) {
             return Err(Error::at(
                 source,
                 body.span,

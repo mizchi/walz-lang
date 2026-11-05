@@ -109,6 +109,18 @@ fn direct(expression: &Expr, module: &Module, functions: &[EffectSet]) -> Effect
         Throw { tag, .. } => {
             effects.throws.insert(*tag);
         }
+        ResourceNew { .. } => effects.allocates = true,
+        ResourceHandle(_) => effects.reads = true,
+        ResourceClose(v) | Using { value: v, .. } => {
+            let Type::Resource(id) = v.ty else {
+                unreachable!()
+            };
+            let TypeKind::Resource { close, .. } = module.types[id.0].kind else {
+                unreachable!()
+            };
+            effects.union(&functions[close.0]);
+            effects.writes = true;
+        }
         _ => {}
     }
     effects

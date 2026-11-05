@@ -106,6 +106,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
                     result,
                     suspends: grant.suspends,
                     capability: grant.capability.clone(),
+                    resource: None,
                     param_names: function.params.iter().map(|p| p.name.clone()).collect(),
                 },
             });

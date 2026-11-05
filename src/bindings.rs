@@ -14,6 +14,8 @@ pub struct Binding {
     pub capability: String,
     #[serde(default)]
     pub param_names: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resource: Option<ResourceBinding>,
 }
 
 pub fn lookup(function: &Function) -> Option<Binding> {
@@ -47,6 +49,7 @@ pub fn lookup(function: &Function) -> Option<Binding> {
         suspends,
         capability: capability.into(),
         param_names: vec![],
+        resource: None,
     })
 }
 
@@ -79,7 +82,8 @@ pub(crate) fn manifest(module: &Module) -> Vec<serde_json::Value> {
                 "params": binding.params,
                 "result": binding.result,
                 "capability": binding.capability,
-                "effects": { "host": true, "suspends": binding.suspends }
+                "effects": { "host": true, "suspends": binding.suspends },
+                "resource": binding.resource
             }))
         })
         .collect()
@@ -122,6 +126,25 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
             ));
         }
         if function.import_contract.is_some() {
+            if let Some(resource) = &binding.resource {
+                use ResourceOperation::*;
+                let valid = !resource.kind.is_empty()
+                    && match resource.operation {
+                        New => !binding.suspends && binding.result == "i32",
+                        Use => {
+                            binding.params.first().is_some_and(|p| p == "i32")
+                                && !crate::ownership::Kinds::new(module).is_owned(&function.result)
+                        }
+                        Close => {
+                            !binding.suspends
+                                && binding.params == ["i32"]
+                                && binding.result == "unit"
+                        }
+                    };
+                if !valid {
+                    return Err(Error::message("invalid resource binding contract".into()));
+                }
+            }
             if !binding.param_names.is_empty() && binding.param_names.len() != params.len() {
                 return Err(Error::message(
                     "binding parameter names must match arity".into(),
@@ -180,4 +203,18 @@ impl BindingPolicy {
             }
         }
     }
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceBinding {
+    pub kind: String,
+    pub operation: ResourceOperation,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ResourceOperation {
+    New,
+    Use,
+    Close,
 }

@@ -65,6 +65,25 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
             effects.allocates = op.allocates();
             effects.may_trap = op.may_trap();
         }
+        ResourceNew { .. } => {
+            effects.allocates = true;
+            effects.may_trap = true;
+        }
+        ResourceHandle(_) => {
+            effects.reads = true;
+            effects.may_trap = true;
+        }
+        ResourceClose(v) | Using { value: v, .. } => {
+            let Type::Resource(id) = v.ty else {
+                unreachable!()
+            };
+            let TypeKind::Resource { close, .. } = module.types[id.0].kind else {
+                unreachable!()
+            };
+            calls.insert(close);
+            effects.writes = true;
+            effects.may_trap = true;
+        }
         Call { function, .. } => {
             calls.insert(*function);
         }

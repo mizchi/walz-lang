@@ -154,6 +154,14 @@ impl Tables<'_> {
         }
         let items = self.list(node)?;
         match items {
+            [head, name] if matches!(head.atom(), Some("resource" | "borrow")) => {
+                let id = self.type_id(name)?;
+                Ok(if head.atom() == Some("borrow") {
+                    Type::Borrow(id)
+                } else {
+                    Type::Resource(id)
+                })
+            }
             [head, name] if head.atom() == Some("ref") => Ok(Type::Ref {
                 ty: self.type_id(name)?,
                 nullable: false,
@@ -571,6 +579,21 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
             tables.count(node, items, 3)?;
             let definition = tables.list(&items[2])?;
             match items[2].head() {
+                Some("resource") => {
+                    tables.count(&items[2], definition, 3)?;
+                    let kind = definition[1]
+                        .text()
+                        .ok_or_else(|| tables.error(node, "resource requires a kind string"))?
+                        .to_owned();
+                    let name = tables.name(&definition[2])?;
+                    let close = FunctionId(
+                        *tables
+                            .functions
+                            .get(&name)
+                            .ok_or_else(|| tables.error(node, "unknown resource destructor"))?,
+                    );
+                    TypeKind::Resource { kind, close }
+                }
                 Some("struct") => {
                     let mut fields = Vec::new();
                     let mut names = BTreeSet::new();
@@ -1554,6 +1577,69 @@ impl Checker<'_, '_> {
                     (
                         self.locals[id.0].ty.clone(),
                         if head == "move" { Move(id) } else { Local(id) },
+                    )
+                }
+                "resource.new" => {
+                    tables.count(node, items, 3)?;
+                    let ty = tables.type_id(&items[1])?;
+                    if !matches!(self.module.types[ty.0].kind, TypeKind::Resource { .. }) {
+                        return Err(tables.error(node, "expected resource type"));
+                    }
+                    let handle = self.expr_expected(
+                        &items[2],
+                        scope,
+                        loops,
+                        false,
+                        Some(&Type::Num(NumType::I32)),
+                    )?;
+                    (
+                        Type::Resource(ty),
+                        ResourceNew {
+                            ty,
+                            handle: Box::new(handle),
+                        },
+                    )
+                }
+                "resource.handle" | "resource.close" => {
+                    tables.count(node, items, 2)?;
+                    let value = self.expr(&items[1], scope, loops, false)?;
+                    if head == "resource.handle" {
+                        if !matches!(value.ty, Type::Borrow(_)) {
+                            return Err(tables.error(node, "resource.handle requires a borrow"));
+                        }
+                        (Type::Num(NumType::I32), ResourceHandle(Box::new(value)))
+                    } else {
+                        if !matches!(value.ty, Type::Resource(_)) {
+                            return Err(
+                                tables.error(node, "resource.close consumes an owned resource")
+                            );
+                        }
+                        (Type::Unit, ResourceClose(Box::new(value)))
+                    }
+                }
+                "using" => {
+                    tables.count(node, items, 4)?;
+                    let value = self.expr(&items[2], scope, loops, false)?;
+                    let Type::Resource(id) = value.ty else {
+                        return Err(tables.error(node, "using requires a resource"));
+                    };
+                    let mut inner = scope.clone();
+                    let name = tables.name(&items[1])?;
+                    let local = self.local(
+                        name.clone(),
+                        items[1].span,
+                        Type::Borrow(id),
+                        BindingKind::Let,
+                    );
+                    inner.insert(name, local);
+                    let body = self.expr_expected(&items[3], &inner, loops, false, expected)?;
+                    (
+                        body.ty.clone(),
+                        Using {
+                            local,
+                            value: Box::new(value),
+                            body: Box::new(body),
+                        },
                     )
                 }
                 "own.close" => {

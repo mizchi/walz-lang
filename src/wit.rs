@@ -77,6 +77,12 @@ impl Types<'_> {
                 }
                 _ => unreachable!("checked value type"),
             },
+            Type::Resource(_) | Type::Borrow(_) => {
+                return Err(Error::message(
+                    "resources require a host resource adapter and cannot cross value exports"
+                        .into(),
+                ));
+            }
             Type::Ref { .. } => return Err(Error::message(
                 "GC references are not WIT value types; use an explicit value or resource adapter"
                     .into(),

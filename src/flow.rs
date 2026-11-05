@@ -532,6 +532,11 @@ impl Visitor<'_> {
                 local,
                 value: initial,
                 body,
+            }
+            | Using {
+                local,
+                value: initial,
+                body,
             } => {
                 let initial = self.eval(initial, s);
                 s.bind(*local, initial);
@@ -733,7 +738,11 @@ impl Visitor<'_> {
                 }
                 format!("delivery.{op:?}")
             }
-            Close(e) | Drop(e) => {
+            ResourceNew { handle: e, .. }
+            | ResourceClose(e)
+            | ResourceHandle(e)
+            | Close(e)
+            | Drop(e) => {
                 self.eval(e, s);
                 "drop".into()
             }

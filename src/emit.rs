@@ -3,7 +3,9 @@ use crate::ir::*;
 fn ty(module: &Module, ty: &Type) -> String {
     match ty {
         Type::Num(_) | Type::Ref { .. } => module.type_name(ty),
-        Type::Value(id) => format!("(ref {})", module.types[id.0].name),
+        Type::Value(id) | Type::Resource(id) | Type::Borrow(id) => {
+            format!("(ref {})", module.types[id.0].name)
+        }
         Type::Unit | Type::Never => unreachable!("unit and never are not storage types"),
     }
 }
@@ -86,6 +88,7 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
                         .collect::<String>();
                     format!("(struct{fields})")
                 }
+                TypeKind::Resource { .. } => "(struct (field i32) (field (mut i32)))".into(),
                 TypeKind::Array(field) => format!("(array {})", storage(module, field)),
                 TypeKind::Value(ValueType::Bytes | ValueType::Text) => {
                     "(struct (field (ref $__byte_storage)))".into()
@@ -158,6 +161,13 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
         output.push_str(&format!("  (tag {} (param{payloads}))\n", tag.name));
     }
     output.push_str(&crate::buffers::helpers(module));
+    for (i, t) in module.types.iter().enumerate() {
+        if let TypeKind::Resource { close, .. } = &t.kind {
+            let name = &t.name;
+            let close = &module.functions[close.0].name;
+            output.push_str(&format!("(func $__resource_handle_{i} (param $r (ref {name})) (result i32) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.get {name} 0 (local.get $r)))\n(func $__resource_close_{i} (param $r (ref {name})) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.set {name} 1 (local.get $r) (i32.const 1)) (call {close} (struct.get {name} 0 (local.get $r))))\n"));
+        }
+    }
     for function in &module.functions {
         let Some(body) = &function.body else {
             continue;
@@ -457,6 +467,43 @@ impl Emitter<'_> {
             AsNonNull(value) => format!("(ref.as_non_null {})", self.expression(value)),
             RefEq(a, b) => format!("(ref.eq {} {})", self.expression(a), self.expression(b)),
             Drop(value) => format!("(drop {})", self.expression(value)),
+            ResourceNew { ty, handle } => format!(
+                "(struct.new {} {} (i32.const 0))",
+                self.module.types[ty.0].name,
+                self.expression(handle)
+            ),
+            ResourceHandle(value) => {
+                let Type::Borrow(id) = value.ty else {
+                    unreachable!()
+                };
+                format!(
+                    "(call $__resource_handle_{} {})",
+                    id.0,
+                    self.expression(value)
+                )
+            }
+            ResourceClose(value) => {
+                let Type::Resource(id) = value.ty else {
+                    unreachable!()
+                };
+                format!(
+                    "(call $__resource_close_{} {})",
+                    id.0,
+                    self.expression(value)
+                )
+            }
+            Using { local, value, body } => {
+                let Type::Borrow(id) = self.function.locals[local.0].ty else {
+                    unreachable!()
+                };
+                let v = self.expression(value);
+                let b = self.expression(body);
+                let r = result(self.module, &expression.ty);
+                format!(
+                    "(block{r} (local.set $__v{} {v}) (block $__using_done{}{} (block $__using_caught{} (result exnref) (br $__using_done{} (try_table{r} (catch_all_ref $__using_caught{}) {b}))) (call $__resource_close_{} (local.get $__v{})) (throw_ref)) (call $__resource_close_{} (local.get $__v{})))",
+                    local.0, local.0, r, local.0, local.0, local.0, id.0, local.0, id.0, local.0
+                )
+            }
             Close(value) => format!("(drop {})", self.expression(value)),
             Delivery { op, endpoint, args } => {
                 self.delivery_expression(*op, *endpoint, args, &expression.ty)

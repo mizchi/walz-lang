@@ -1,3 +1,4 @@
+import {Resources} from "./resources.mjs";
 // One active guest stack per instance. Requests, guest unwinding and host
 // disposal are separate stages; only the last stage publishes an acknowledgment.
 function materializeError(error, seen) {
@@ -61,6 +62,7 @@ export class Tasks {
     this.active = null;
     this.failure = null;
     this.nextId = 1;
+    this.resources = new Resources(()=>this.active,fn=>this.disposal(fn));
   }
   capture(instance) {
     if (instance.exports["cancel-requested"])
@@ -196,6 +198,11 @@ export class Tasks {
       );
       return record.result.promise;
     }
+    try { this.resources.closeScope(record); } catch(error) {
+      this.failure=error; this.finish(record,undefined,error);
+      if(inline)throw error;
+      return record.result.promise;
+    }
     if (record.disposals.length) {
       this.finish(record, value);
       return inline ? value : record.result.promise;
@@ -218,6 +225,12 @@ export class Tasks {
             .map((x) => x.reason),
         );
       }
+      try {this.resources.closeScope(record);} catch(error) {failures.push(error);}
+      while(record.disposals.length) {
+        const results=await Promise.allSettled(record.disposals.splice(0));
+        failures.push(...results.filter(r=>r.status==="rejected").map(r=>r.reason));
+      }
+      if(this.resources.failure)failures.push(this.resources.failure);
       if (failures.length)
         throw new AggregateError(failures, "task cleanup failed");
     } catch (cleanupError) {

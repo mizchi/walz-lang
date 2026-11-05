@@ -11,7 +11,7 @@ enum Item {
 }
 
 fn add_type(ty: &Type, pending: &mut Vec<Item>) {
-    if let Type::Ref { ty, .. } | Type::Value(ty) = ty {
+    if let Type::Ref { ty, .. } | Type::Value(ty) | Type::Resource(ty) | Type::Borrow(ty) = ty {
         pending.push(Item::Type(ty.0));
     }
 }
@@ -63,7 +63,8 @@ pub(crate) fn project(module: &Module) -> Module {
                                 .filter_map(|h| h.tag)
                                 .map(|id| Item::Tag(id.0)),
                         ),
-                        VariantNew { ty, .. }
+                        ResourceNew { ty, .. }
+                        | VariantNew { ty, .. }
                         | Match { ty, .. }
                         | StructNew { ty, .. }
                         | StructGet { ty, .. }
@@ -80,6 +81,7 @@ pub(crate) fn project(module: &Module) -> Module {
             }
             Item::Type(i) => {
                 match &module.types[i].kind {
+                    TypeKind::Resource { close, .. } => pending.push(Item::Function(close.0)),
                     TypeKind::Struct(fields) => {
                         for f in fields {
                             add_type(&f.ty, &mut pending);
@@ -198,6 +200,7 @@ pub(crate) fn project(module: &Module) -> Module {
                         ids.ty(&mut f.ty);
                     }
                 }
+                TypeKind::Resource { close, .. } => close.0 = ids.functions[close.0],
                 TypeKind::Array(field) => ids.ty(&mut field.ty),
                 TypeKind::Closure { captures, function } => {
                     function.0 = ids.functions[function.0];
@@ -262,7 +265,7 @@ impl Ids {
         id.0 = self.types[id.0];
     }
     fn ty(&self, ty: &mut Type) {
-        if let Type::Ref { ty, .. } | Type::Value(ty) = ty {
+        if let Type::Ref { ty, .. } | Type::Value(ty) | Type::Resource(ty) | Type::Borrow(ty) = ty {
             self.type_id(ty);
         }
     }
@@ -286,7 +289,8 @@ impl Ids {
                     }
                 }
             }
-            VariantNew { ty, .. }
+            ResourceNew { ty, .. }
+            | VariantNew { ty, .. }
             | Match { ty, .. }
             | StructNew { ty, .. }
             | StructGet { ty, .. }
@@ -328,7 +332,7 @@ impl Ids {
                     self.expression(&mut h.body);
                 }
             }
-            Let { value, body, .. } => {
+            Let { value, body, .. } | Using { value, body, .. } => {
                 self.expression(value);
                 self.expression(body);
             }
@@ -352,7 +356,10 @@ impl Ids {
                     self.expression(e);
                 }
             }
-            StructGet { object, .. }
+            ResourceNew { handle: object, .. }
+            | ResourceClose(object)
+            | ResourceHandle(object)
+            | StructGet { object, .. }
             | ArrayLen(object)
             | IsNull(object)
             | AsNonNull(object)

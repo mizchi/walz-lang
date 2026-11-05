@@ -1,0 +1,5 @@
+{"imports":[
+  {"module":"files","name":"open","params":[],"result":"i32","suspends":false,"capability":"file","resource":{"kind":"file","operation":"new"}},
+  {"module":"files","name":"read","params":["i32"],"result":"i32","suspends":false,"capability":"file","resource":{"kind":"file","operation":"use"}},
+  {"module":"files","name":"close","params":["i32"],"result":"unit","suspends":false,"capability":"file","resource":{"kind":"file","operation":"close"}}
+]}

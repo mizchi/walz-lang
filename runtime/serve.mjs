@@ -13,13 +13,14 @@ for (const [backend, compile] of [
       name,
       `tests/component-fixtures/${name}.wlt`,
     ]),
+    ["resources", "examples/resources/main.wlt"],
     ["wit-bindings", "examples/wit/main.wlt"],
     ["text-io", "examples/io/text-filter.wlt"],
     ["log-stats", "examples/apps/log-stats/main.wlt"],
     ["stock-ledger", "examples/apps/stock-ledger/main.wlt"],
     ["workflow", "examples/apps/workflow/main.wlt"],
   ])
-    await compile(source, join(directory, backend, fixture), fixture === "wit-bindings" ? {bindings:"examples/wit/generated/bindings.json"} : {});
+    await compile(source, join(directory, backend, fixture), fixture === "wit-bindings" ? {bindings:"examples/wit/generated/bindings.json"} : fixture === "resources" ? {bindings:"examples/resources/policy.json"} : {});
 await copyFile(
   new URL("./text-io.mjs", import.meta.url),
   join(directory, "text-io.mjs"),

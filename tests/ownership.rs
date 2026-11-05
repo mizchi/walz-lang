@@ -136,7 +136,7 @@ fn owners_cannot_escape_through_shared_storage_or_exception_paths() {
     rejects("(module (tag $E (param (own i64))))", "exception payload");
     rejects(
         "(module (tag $E) (func $f (param $x (own i64)) (throw $E)))",
-        "exceptional control",
+        "unconsumed owned",
     );
     rejects(
         "(module (import \"host\" \"make\" (func $make (result (own i64)))))",

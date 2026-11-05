@@ -10,7 +10,7 @@
 1. [x] bytes/text の検索・分割・検査付き整数解析と text/JSON builder を標準ライブラリにまとめる。ログ集計・在庫台帳・workflow で再利用し、出力と計測値を照合する。
 2. [x] マクロ版と明示版、Wasmtime と Node の差分検査を増やす。不正ソースと取消しのタイミングを fuzz し、失敗入力の縮小と回帰 corpus の保存まで行う。
 3. [x] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
-4. [ ] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
+4. [x] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
 5. [ ] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
 
 1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
@@ -41,10 +41,10 @@ JSON builder は object・string・整数・boolean の初版。配列・浮動�
 
 ## 3. 外部 resource と終了処理
 
-- [ ] 型付き resource handle と destructor。既存の own box とは区別する。
-- [ ] 明示 close と using。正常・例外・取消しの全終了経路を検査する。
+- [x] 型付き resource handle と同期 destructor。既存の own box とは区別する。
+- [x] 明示 close と using。正常・例外・取消しの全終了経路を検査する。
 - [ ] 所有値と try/throw の併用、所有 payload の Future/Stream 配送。
-- [ ] 必要な ABI 境界に限定した borrow。一般的な lifetime 機構は必要性を見て判断する。
+- [x] 必要な ABI 境界に限定した borrow。一般的な lifetime 機構は必要性を見て判断する。
 
 ## 4. モジュールと可視性
 

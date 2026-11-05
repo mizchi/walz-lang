@@ -160,6 +160,22 @@ export function createHostImports(options, tasks, bindings = []) {
   hosts[eventLoop] = tasks.host(
     hosts[eventLoop] ?? options.eventLoop ?? createEventLoop(),
   );
+  const original = {...hosts};
+  for (const binding of bindings.filter(b=>b.resource)) {
+    const {kind,operation}=binding.resource;
+    const provider=original[binding.module];
+    const fn=provider?.[binding.jsName];
+    if(typeof fn!=="function")throw new TypeError(`missing resource provider ${binding.module}#${binding.name}`);
+    const invoke=(...args)=>fn.apply(provider,args);
+    hosts[binding.module]={...hosts[binding.module]};
+    if(operation==="new") {
+      const closer=bindings.find(b=>b.resource?.kind===kind && b.resource.operation==="close");
+      const closeProvider=original[closer?.module],close=closeProvider?.[closer?.jsName];
+      if(typeof close!=="function")throw new TypeError(`missing destructor for ${kind}`);
+      hosts[binding.module][binding.jsName]=(...args)=>tasks.resources.add(kind,invoke(...args),v=>close.call(closeProvider,v));
+    } else if(operation==="use") hosts[binding.module][binding.jsName]=(id,...args)=>tasks.resources.use(kind,id,invoke,args);
+    else hosts[binding.module][binding.jsName]=id=>tasks.resources.close(kind,id);
+  }
   for (const namespace of new Set(bindings.map(b=>b.module))) {
     if (namespace !== eventLoop && hosts[namespace])
       hosts[namespace] = tasks.host(hosts[namespace],bindings.filter(b=>b.module===namespace && b.effects.suspends).map(b=>b.jsName));

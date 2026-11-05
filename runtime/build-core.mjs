@@ -19,7 +19,7 @@ export async function build(source, directory, options = {}) {
   );
   if (manifest.abi !== "wlt-core-js-v2")
     throw new Error("unsupported Core JS ABI");
-  for (const name of ["core.mjs", "host.mjs", "tasks.mjs"])
+  for (const name of ["core.mjs", "host.mjs", "tasks.mjs", "resources.mjs"])
     await copyFile(new URL(name, import.meta.url), join(output, name));
   await writeFile(
     join(output, "package.json"),

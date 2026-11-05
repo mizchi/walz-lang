@@ -829,3 +829,9 @@ E は共有できる同一の型です。nullable / non-null の一方への変�
 短い fold は source の stream<result<T,E>> と initial から型を決め、既存の loop/match に展開して検査します。
 S は共有できる非 unit、E は共有値、body は result<S,E> です。source、initial の評価順と1回ずつの評価、EOF / err の close、task の取消し確認は既存形と同じです。
 コンパイル時の型探索は実行を増やさず、仮の local/loop を本体へ残しません。式の検査量には1関数100万ステップの上限を設けます。
+
+## 外部 resource と借用
+
+同期 destructor を持つ nominal resource、非流出の borrow、using を追加した。
+詳細と所有権・例外・ホスト境界の制約は [外部資源の契約](docs/resources.md) を参照。
+WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参照。

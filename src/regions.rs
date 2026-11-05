@@ -372,6 +372,10 @@ impl Context<'_> {
                     self.allocate(e, 0, &e.ty)
                 }
             }
+            ResourceNew { handle, .. } => {
+                self.eval(handle);
+                self.allocate(e, 0, &e.ty)
+            }
             Const { .. } | Null(_) | Nop | Unreachable => Points::new(),
             Local(id) | Move(id) => self.locals[id.0].clone(),
             Numeric { args, .. } => {
@@ -380,7 +384,11 @@ impl Context<'_> {
                 }
                 Points::new()
             }
-            Close(value) | Drop(value) | IsNull(value) => {
+            ResourceClose(value)
+            | ResourceHandle(value)
+            | Close(value)
+            | Drop(value)
+            | IsNull(value) => {
                 self.eval(value);
                 Points::new()
             }
@@ -390,7 +398,7 @@ impl Context<'_> {
                 self.eval(b);
                 Points::new()
             }
-            Let { local, value, body } => {
+            Let { local, value, body } | Using { local, value, body } => {
                 let value = self.eval(value);
                 self.bind(*local, value);
                 self.eval(body)

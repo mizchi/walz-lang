@@ -17,6 +17,7 @@ pub mod native;
 pub mod ownership;
 pub mod proof;
 pub mod regions;
+mod resources;
 pub mod runner;
 mod scoped;
 mod sexpr;
@@ -107,6 +108,7 @@ pub fn check_with_policy(
     frontend::validate_alias_targets(source, &module, &aliases.targets)?;
     syntax.validate(source, &module)?;
     bindings::validate(source, &module)?;
+    resources::validate(source, &module)?;
     effects::validate(source, &module)?;
     ownership::validate(source, &module)?;
     Ok(module)

@@ -55,6 +55,8 @@ pub enum Type {
     },
     /// A semantic value whose hidden GC representation is not a source reference.
     Value(TypeId),
+    Resource(TypeId),
+    Borrow(TypeId),
     Unit,
     Never,
 }
@@ -76,6 +78,8 @@ impl Type {
                 name(*ty)
             ),
             Self::Value(ty) => name(*ty),
+            Self::Resource(ty) => format!("(resource {})", name(*ty)),
+            Self::Borrow(ty) => format!("(borrow {})", name(*ty)),
             Self::Unit => "unit".into(),
             Self::Never => "never".into(),
         }
@@ -304,6 +308,10 @@ impl DeliveryOp {
 
 #[derive(Clone, Debug, Serialize)]
 pub enum TypeKind {
+    Resource {
+        kind: String,
+        close: FunctionId,
+    },
     Struct(Vec<Field>),
     Array(Field),
     Variant(Vec<Variant>),
@@ -469,6 +477,17 @@ impl BufferOp {
 
 #[derive(Clone, Debug, Serialize)]
 pub enum ExprKind {
+    ResourceNew {
+        ty: TypeId,
+        handle: Box<Expr>,
+    },
+    ResourceHandle(Box<Expr>),
+    ResourceClose(Box<Expr>),
+    Using {
+        local: LocalId,
+        value: Box<Expr>,
+        body: Box<Expr>,
+    },
     Data(Vec<u8>),
     Buffer {
         op: BufferOp,
@@ -598,7 +617,7 @@ impl Expr {
             Try { body, handlers } => std::iter::once(body.as_ref())
                 .chain(handlers.iter().map(|handler| &handler.body))
                 .collect(),
-            Let { value, body, .. } => vec![value, body],
+            Let { value, body, .. } | Using { value, body, .. } => vec![value, body],
             If {
                 condition,
                 then_body,
@@ -611,6 +630,9 @@ impl Expr {
                 .collect(),
             Recur { assignments, .. } => assignments.iter().map(|(_, e)| e).collect(),
             StructGet { object, .. }
+            | ResourceNew { handle: object, .. }
+            | ResourceHandle(object)
+            | ResourceClose(object)
             | ArrayLen(object)
             | IsNull(object)
             | AsNonNull(object)

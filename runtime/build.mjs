@@ -51,6 +51,7 @@ export async function build(source, directory, options = {}) {
     new URL("./tasks.mjs", import.meta.url),
     join(output, "tasks.mjs"),
   );
+  await copyFile(new URL("./resources.mjs",import.meta.url),join(output,"resources.mjs"));
   await writeFile(
     join(output, "package.json"),
     '{"type":"module","private":true}\n',

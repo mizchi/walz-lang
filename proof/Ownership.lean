@@ -1,3 +1,7 @@
+/- Resource lowering note: `using` consumes its owned resource initializer,
+   introduces a shared, nonescaping borrow (checked in Rust), and checks its body
+   with Seq/Scope. Explicit throw uses Stop, requiring no live owners. The Wasm
+   finally adapter and host registry are compiler/runtime TCB, not this theorem. -/
 import Lean
 
 /-!
