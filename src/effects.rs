@@ -333,29 +333,13 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
         let Some(contract) = &function.effect_contract else {
             continue;
         };
-        let missing = Requirement::all(actual)
-            .into_iter()
-            .filter(|kind| match kind {
-                Requirement::Throws(_) | Requirement::ThrowsUnknown
-                    if contract.allowed.throws_unknown =>
-                {
-                    false
-                }
-                _ => !kind.present(&contract.allowed),
-            })
-            .collect::<Vec<_>>();
-        if !missing.is_empty() {
+        if let Some(excess) = excess(module, FunctionId(index), &inferred, &contract.allowed) {
             let mut error = Error::at(
                 source,
                 contract.span,
                 format!(
                     "effect contract for `{}` exceeded: {}",
-                    function.name,
-                    missing
-                        .iter()
-                        .map(|kind| kind.name(module))
-                        .collect::<Vec<_>>()
-                        .join(", ")
+                    function.name, excess.names
                 ),
             )
             .with_code("E_EFFECT_CONTRACT")
@@ -364,25 +348,58 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                 describe(&contract.allowed, module),
                 describe(actual, module)
             ));
-            if let Some(body) = &function.body {
-                for requirement in missing {
-                    if let Some(chain) = origin(
-                        body,
-                        requirement,
-                        module,
-                        &inferred,
-                        &mut BTreeSet::from([FunctionId(index)]),
-                    ) {
-                        for (span, message) in chain {
-                            error = error.related(source, span, message);
-                        }
-                    }
-                }
+            for (span, message) in excess.origins {
+                error = error.related(source, span, message);
             }
             return Err(error.help("remove the operations exceeding the declared bound, or explicitly allow their effects if intended"));
         }
     }
     Ok(())
+}
+
+pub(crate) struct Excess {
+    pub names: String,
+    pub origins: Vec<(Span, String)>,
+}
+
+/// The same subset and witness rules as ordinary effect contracts.
+pub(crate) fn excess(
+    module: &Module,
+    function: FunctionId,
+    inferred: &[EffectSet],
+    allowed: &EffectSet,
+) -> Option<Excess> {
+    let missing = Requirement::all(&inferred[function.0])
+        .into_iter()
+        .filter(|kind| {
+            !matches!(kind, Requirement::Throws(_) | Requirement::ThrowsUnknown)
+                || !allowed.throws_unknown
+        })
+        .filter(|kind| !kind.present(allowed))
+        .collect::<Vec<_>>();
+    if missing.is_empty() {
+        return None;
+    }
+    let names = missing
+        .iter()
+        .map(|kind| kind.name(module))
+        .collect::<Vec<_>>()
+        .join(", ");
+    let mut origins = vec![];
+    if let Some(body) = &module.functions[function.0].body {
+        for requirement in missing {
+            if let Some(chain) = origin(
+                body,
+                requirement,
+                module,
+                inferred,
+                &mut BTreeSet::from([function]),
+            ) {
+                origins.extend(chain);
+            }
+        }
+    }
+    Some(Excess { names, origins })
 }
 
 /// Lowering can discard unreachable suspension sites without changing the ABI.

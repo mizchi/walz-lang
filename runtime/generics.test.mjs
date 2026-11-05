@@ -20,6 +20,7 @@ for(const backend of ['core','component'])test(`${backend}: monomorphized list m
     for(const xs of [[],[1n,2n,3n],Array.from({length:1024},(_,i)=>BigInt(i))]){
       const result=api.scale(xs,-7n);
       assert.deepEqual(result,new BigInt64Array(xs.map(x=>x*-7n)));
+      assert.deepEqual(api.scalePure(xs,-7n),result);
       assert.equal(api.sum(result),xs.reduce((a,b)=>a+b,0n)*-7n);
       assert.deepEqual(api.identity(xs),new BigInt64Array(xs));
       assert.deepEqual(api.labels(xs,'日本語🦀'),xs.map(()=>'日本語🦀'));

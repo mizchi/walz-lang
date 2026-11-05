@@ -61,6 +61,7 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 - [x] 型・具体的なクロージャ型を引数とする単相化。明示した type.params と適用形を関数・型・alias・クロージャで共有。
 - [x] 具体化後の型と呼び出し先を閉じたままにする。型・effect・所有権・opaque を DCE 前に検査。
 - [x] map/fold などを重複せず記述する。stdlib/list.wlt と examples/generic-lists.wlt。詳細は [単相化](docs/generics.md)。
+- [x] where による shared/nonunit/callable と effect 上限。具体化時に型・署名・推論 effect を検査し、制約を実行用コードへ残さない。
 
 ## 6. 解析精度と契約の拡張（6.1–6.3 の初版を実装）
 

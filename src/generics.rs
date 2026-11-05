@@ -37,6 +37,7 @@ pub(crate) fn parameters(source: &str, node: &Sexp) -> Result<Vec<String>, Error
         .filter(|(_, n)| n.head() == Some("type.params"))
         .collect::<Vec<_>>();
     if groups.is_empty() {
+        crate::bounds::validate_declaration(source, node, &[])?;
         return Ok(vec![]);
     }
     if groups.len() != 1
@@ -73,6 +74,7 @@ pub(crate) fn parameters(source: &str, node: &Sexp) -> Result<Vec<String>, Error
             "type.params requires at least one parameter",
         ));
     }
+    crate::bounds::validate_declaration(source, node, &out)?;
     Ok(out)
 }
 
@@ -86,6 +88,7 @@ pub(crate) struct Expanded {
     pub syntax: Sexp,
     /// Nominal specializations inherit their template's representation privacy.
     pub origins: BTreeMap<String, String>,
+    pub bounds: Vec<crate::bounds::Site>,
     instances: Vec<(Span, Span, String)>,
 }
 impl Expanded {
@@ -125,6 +128,7 @@ struct Expander<'a> {
     origins: BTreeMap<String, String>,
     instances: Vec<(Span, Span, String)>,
     nodes: usize,
+    bounds: Vec<crate::bounds::Site>,
 }
 
 fn key(node: &Sexp) -> String {
@@ -320,6 +324,19 @@ impl Expander<'_> {
             };
             type_syntax::map_types(&mut syntax, &mut substitute)?;
             type_syntax::map_references(&mut syntax, &mut |_, n| substitute(n))?;
+            if syntax.list().unwrap().get(2).and_then(Sexp::head) == Some("where") {
+                let Kind::List(parts) = &mut syntax.kind else {
+                    unreachable!()
+                };
+                let mut site = crate::bounds::Site {
+                    generic: format!("{name}<{}>", keys.join(", ")),
+                    request: node.span,
+                    clause: parts.remove(2),
+                };
+                site.map_types(|ty| self.normalize(ty, 0))?;
+                site.check_categories(self.source)?;
+                self.bounds.push(site);
+            }
             if syntax.head() == Some("type.alias") {
                 self.aliases
                     .insert(concrete.clone(), syntax.list().unwrap()[2].clone());
@@ -377,6 +394,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         origins: BTreeMap::new(),
         instances: vec![],
         nodes: 0,
+        bounds: vec![],
     };
     e.charge(root)?;
     let mut ordinary = vec![items[0].clone()];
@@ -415,7 +433,9 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         if parts.iter().any(|n| n.head() == Some("export")) {
             return Err(e.error(node, "generic declarations cannot have Wasm exports; export a concrete application or wrapper"));
         }
-        if parts.len() < 4 || matches!(node.head(), Some("type" | "type.alias")) && parts.len() != 4
+        let definition = type_syntax::definition_index(parts);
+        if parts.len() <= definition
+            || matches!(node.head(), Some("type" | "type.alias")) && parts.len() != definition + 1
         {
             return Err(e.error(node, "invalid generic declaration"));
         }
@@ -486,5 +506,6 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         },
         origins: e.origins,
         instances: e.instances,
+        bounds: e.bounds,
     })
 }

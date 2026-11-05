@@ -422,6 +422,7 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 - `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
 - `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
 - `src/generics.rs`: 明示した型引数ごとの具体化、再利用、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
+- `src/bounds.rs`: where の shared/nonunit/callable と effect 上限を、具体的な型・署名・推論 effect で検査。
 - `src/type_syntax.rs`: 値型の位置と nominal な関数・heap 型の参照を区別する共通 visitor。
 - `src/link.rs`: 検査済みの全 IR から到達する宣言を選び、生成用の ID を振り直す。
 - `src/buffers.rs`: bytes/text の private GC storage、UTF-8 検証と値操作。

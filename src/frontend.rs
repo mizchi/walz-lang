@@ -453,7 +453,28 @@ impl Tables<'_> {
     }
 }
 
-pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
+/// Reuse the ordinary effect grammar for unapplied constraint declarations.
+pub(crate) fn validate_effect_syntax(source: &str, node: &Sexp) -> Result<(), Error> {
+    let mut tables = Tables::new(source);
+    for item in node.list().unwrap_or(&[]).iter().skip(1) {
+        if item.head() == Some("throws") {
+            for tag in item.list().unwrap().iter().skip(1) {
+                if tag.atom() != Some("*") {
+                    let name = tables.name(tag)?;
+                    let next = tables.tags.len();
+                    tables.tags.entry(name).or_insert(next);
+                }
+            }
+        }
+    }
+    tables.effect_contract(node).map(|_| ())
+}
+
+pub(crate) fn check<'b>(
+    source: &str,
+    root: &Sexp,
+    bounds: &'b [crate::bounds::Site],
+) -> Result<(Module, Vec<crate::bounds::EffectObligation<'b>>), Error> {
     let mut tables = Tables::new(source);
     let declarations = tables.list(root)?;
     if root.head() != Some("module") {
@@ -563,6 +584,9 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
         }
     }
     tables.collect_values(root)?;
+    for site in bounds {
+        tables.collect_values(&site.clause)?;
+    }
     let mut types = Vec::new();
     for node in type_nodes {
         let items = tables.list(node)?;
@@ -872,6 +896,20 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
         laws,
         tags,
     };
+    let constraints = crate::bounds::resolve(
+        source,
+        bounds,
+        |node| {
+            Ok(if node.atom().is_some_and(|n| n.starts_with('$')) {
+                crate::bounds::Argument::Heap(tables.type_id(node)?)
+            } else {
+                crate::bounds::Argument::Value(tables.payload_ty(node)?)
+            })
+        },
+        |node| tables.payload_ty(node),
+        |node| tables.effect_contract(node),
+    )?;
+    let obligations = crate::bounds::check_shapes(source, &module, constraints)?;
     // Body checking sees signatures only: no dependency on declaration order.
     let headers = module.clone();
     for (index, body) in bodies.into_iter().enumerate() {
@@ -960,7 +998,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
     module
         .types
         .extend(tables.values.borrow().types.iter().cloned());
-    Ok(module)
+    Ok((module, obligations))
 }
 
 /// Check unused aliases without making their private storage part of emission.

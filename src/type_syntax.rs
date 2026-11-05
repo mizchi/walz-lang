@@ -10,6 +10,17 @@ pub(crate) enum ReferenceKind {
     Function,
 }
 
+pub(crate) fn definition_index(items: &[Sexp]) -> usize {
+    let mut index = 2;
+    if items.get(index).and_then(Sexp::head) == Some("type.params") {
+        index += 1;
+    }
+    if items.get(index).and_then(Sexp::head) == Some("where") {
+        index += 1;
+    }
+    index
+}
+
 /// Visit a type before its payload types. A visitor may replace the whole type.
 /// Heap names inside `ref` remain nominal names and are resolved by modules.
 fn map_type(
@@ -126,21 +137,19 @@ pub(crate) fn map_types(
     };
     match head.as_str() {
         "type.alias" => {
-            let index = if items.get(2).and_then(Sexp::head) == Some("type.params") {
-                3
-            } else {
-                2
-            };
+            let index = definition_index(items);
+            for header in items.iter_mut().take(index).skip(2) {
+                map_types(header, f)?;
+            }
             if let Some(target) = items.get_mut(index) {
                 map_type(target, f)?;
             }
         }
         "type" => {
-            let index = if items.get(2).and_then(Sexp::head) == Some("type.params") {
-                3
-            } else {
-                2
-            };
+            let index = definition_index(items);
+            for header in items.iter_mut().take(index).skip(2) {
+                map_types(header, f)?;
+            }
             if let Some(definition) = items.get_mut(index) {
                 let kind = definition.head().unwrap_or("").to_owned();
                 if let Kind::List(parts) = &mut definition.kind {
@@ -170,6 +179,32 @@ pub(crate) fn map_types(
                             }
                         }
                         _ => {}
+                    }
+                }
+            }
+        }
+        "where" => {
+            for clause in items.iter_mut().skip(1) {
+                let head = clause.head().unwrap_or("").to_owned();
+                if let Kind::List(parts) = &mut clause.kind {
+                    if matches!(head.as_str(), "shared" | "nonunit") {
+                        for target in parts.iter_mut().skip(1) {
+                            map_type(target, f)?;
+                        }
+                    } else if head == "callable" {
+                        if let Some(target) = parts.get_mut(1) {
+                            map_type(target, f)?;
+                        }
+                        if let Some(parameters) = parts.get_mut(2)
+                            && let Kind::List(types) = &mut parameters.kind
+                        {
+                            for ty in types.iter_mut().skip(1) {
+                                map_type(ty, f)?;
+                            }
+                        }
+                        if let Some(result) = parts.get_mut(3) {
+                            map_types(result, f)?;
+                        }
                     }
                 }
             }

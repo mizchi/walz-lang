@@ -3,6 +3,7 @@
 mod aliases;
 pub mod analysis;
 pub mod bindings;
+mod bounds;
 mod buffers;
 pub mod component;
 pub mod effects;
@@ -109,12 +110,13 @@ pub fn check_with_policy(
     let checked = (|| {
         let aliases = aliases::expand(source, &generics.syntax)?;
         let expanded = scoped::expand(source, &aliases.syntax)?;
-        let mut module = frontend::check(source, &expanded)?;
+        let (mut module, bounds) = frontend::check(source, &expanded, &generics.bounds)?;
         policy.apply(&mut module);
         frontend::validate_alias_targets(source, &module, &aliases.targets)?;
         syntax.validate(source, &module, &generics.origins)?;
         bindings::validate(source, &module)?;
         resources::validate(source, &module)?;
+        bounds::check_effects(source, &module, &bounds)?;
         effects::validate(source, &module)?;
         ownership::validate(source, &module)?;
         Ok(module)

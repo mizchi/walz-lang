@@ -1,10 +1,11 @@
 (module
   (namespace $list
     (export (func $map) (func $fold))
-    (type $Storage (type.params $T) (array (mut $T)))
+    (type $Storage (type.params $T) (where (shared $T) (nonunit $T)) (array (mut $T)))
     ;; F is the concrete, shared closure type. Each element calls it once.
     (func $map
       (type.params $T $U $F)
+      (where (shared $T $U) (nonunit $T $U) (callable $F (param $T) (result $U)))
       (param $xs (list $T))
       (param $f (ref $F))
       (result (list $U))
@@ -39,6 +40,7 @@
 
     (func $fold
       (type.params $T $S $F)
+      (where (shared $T $S) (nonunit $T $S) (callable $F (param $S $T) (result $S)))
       (param $xs (list $T))
       (param $f (ref $F))
       (param $initial $S)

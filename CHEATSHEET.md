@@ -228,11 +228,18 @@ pattern let で own 成分を含む pair を分解するときは `(move $pair)`
 
 ```wat
 (module
-  (func $identity (type.params $T) (param $x $T) (result $T) (effects pure)
+  (func $identity (type.params $T) (where (shared $T) (nonunit $T))
+    (param $x $T) (result $T) (effects pure)
     (local.get $x))
   (func $main (export "main") (result i64) (effects pure)
     (call ($identity i64) (i64.const 42))))
 ```
+
+type.params の直後に `(where (shared $T) (nonunit $T))` を置くと、具体化する型引数を制限できる。
+共有は不変性を意味しない。コールバックには
+`(callable $F (param $T) (result $U) (effects pure))` と書ける。
+引数・戻り値が一致する共有・再呼出し可能なクロージャに限定し、effect は本体から推論する。
+effects を省略すれば effect の制限は課さない。未使用の適用も DCE 前に検査する。
 
 ```text
 (own.new T value)

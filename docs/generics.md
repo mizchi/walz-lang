@@ -69,3 +69,47 @@ map は共有・非 unit の T/U、fold は共有・非 unit の T/S と、繰�
 実行できる例は [generic-lists.wlt](../examples/generic-lists.wlt)。
 `just test-generics` で、最適化の有無、Wasmtime、両 JS ABI、メモリ回収、
 具体化の共有・所有権・opaque・名前の衝突・展開上限を検査する。
+
+## 具体化時の型引数制約
+
+`type.params` の直後に、任意の `(where constraint...)` を1つ置ける。
+func/type/type.alias/closure に共通で、制約はすべて満たす必要がある。
+制約の対象は、その宣言の型パラメータを明示する。
+
+```wat
+(func $map-pure (type.params $T $U $F)
+  (where
+    (shared $T $U)
+    (nonunit $T $U)
+    (callable $F (param $T) (result $U) (effects pure)))
+  (param $xs (list $T)) (param $f (ref $F)) (result (list $U))
+  (call ($list.map $T $U $F) (local.get $xs) (local.get $f)))
+```
+
+| 制約 | 判定 |
+| --- | --- |
+| `(shared $T...)` | 所有値と借用を含まない共有可能な型。GC 型・値型・クロージャの捕捉も再帰的に調べる |
+| `(nonunit $T...)` | unit 以外。格納や引数としての型の正当性は通常の型検査でも確認する |
+| `(callable $F (param T...) (result U) [(effects ...)])` | F が共有・再呼出し可能な具体的な nominal クロージャ型で、引数列と戻り値の型が一致する |
+
+shared は不変性を要求しない。可変 GC 配列・セルへの参照も、その中身が共有可能なら許可する。
+callable の署名は alias を展開した具体型で厳密に比較し、引数の反変性等の規則は追加しない。
+`(param)` は引数なし、`(result unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
+クロージャは callable を満たさない。引数や戻り値に所有型を明示すること自体は許可する。
+
+effects を省略した callable は effect の上限を課さない。指定する場合は通常の effect 契約と同じ
+reads/writes/allocates/suspends/host、`(throws $Tag...)`、`(throws *)` を使う。
+pure は単独で指定する。再帰・呼び出し先・catch を含む実際の本体から推論し、
+関数自身の effect 宣言を証拠として扱わない。ホスト import は信頼する policy に従い、
+未指定なら未知の effect として保守的に扱う。
+
+型と callable の署名は具体化した宣言のヘッダーがそろった時点で、本体の型検査より前に検査する。
+effect の上限は本体を型検査し、ホスト policy を適用した後に検査する。
+どちらも DCE・最適化より前に行い、呼び出されない callback や未使用の通常関数内の適用も検査する。
+適用・制約の両方の位置を `E_GENERIC_BOUND` で報告し、effect 違反には呼び出し経路を付ける。
+
+未適用でも where の位置・構造・対象パラメータ名・effect の文法は検査する。
+抽象的な型変数を使った body の宣言時検査、型クラス、実装探索、辞書渡しは追加しない。
+制約は検査用の情報として消去し、実行用の関数やランタイムの状態を増やさない。
+stdlib/list.wlt の map/fold も shared/nonunit/callable を宣言する。
+例の `scale-pure` は純粋なコールバックに限定した map を両 ABI へ公開する。

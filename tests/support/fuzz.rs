@@ -134,7 +134,7 @@ impl Expr {
             r#"(module (type.alias $Count i32)
           (import "trace" "event" (func $event (param $n i32) (result i32)))
           (import "trace" "get" (func $get (result i32)))
-          (func $identity (type.params $T) (param $x $T) (result $T) (effects pure) (local.get $x))
+          (func $identity (type.params $T) (where (shared $T) (nonunit $T)) (param $x $T) (result $T) (effects pure) (local.get $x))
           (func $dead (result (option i64)) (option.none i64))
           (func $main (export "main") (result i64)
             (let $value {body}

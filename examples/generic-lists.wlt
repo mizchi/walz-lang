@@ -27,11 +27,31 @@
 
   (func $identity
     (type.params $T)
+    (where (shared $T) (nonunit $T))
     (param $x $T)
     (result $T)
     (effects pure)
     (local.get $x))
   (export "identity" (func ($identity (list i64))))
+  ;; This wrapper also checks the inferred effects of the concrete callback.
+  (func $map-pure
+    (type.params $T $U $F)
+    (where
+      (shared $T $U)
+      (nonunit $T $U)
+      (callable $F (param $T) (result $U) (effects pure)))
+    (param $xs (list $T))
+    (param $f (ref $F))
+    (result (list $U))
+    (call ($list.map $T $U $F) (local.get $xs) (local.get $f)))
+
+  (func $scale-pure (export "scale-pure") (param $xs (list i64)) (param $factor i64)
+    (result (list i64)) (effects reads writes allocates)
+    (call
+      ($map-pure i64 i64 $Scale)
+      (local.get $xs)
+      (closure.new $Scale (local.get $factor))))
+
   (func $main (export "main") (result i64) (effects reads writes allocates)
     (call $sum
       (call $scale

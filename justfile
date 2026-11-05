@@ -264,6 +264,6 @@ test-lists:
     node --expose-gc --test runtime/lists.test.mjs runtime/list-bindings.test.mjs
 
 test-generics:
-    cargo test --locked --test generics
+    cargo test --locked --test generics --test generic_bounds
     cargo run --locked --quiet -- test examples/generic-lists.wlt
     node --expose-gc --test runtime/generics.test.mjs

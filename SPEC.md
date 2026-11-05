@@ -845,3 +845,5 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 
 `(type.params $T ...)` と `($name T...)` により、関数・型・alias・クロージャを単相化する。
 適用時の検査、再帰と展開の上限、公開 ABI、map/fold は [単相化の契約](docs/generics.md) を参照。
+`type.params` 直後の where は shared/nonunit/callable と callable の effect 上限を具体化時に検査する。
+型クラスや抽象的な body 検査は導入せず、制約を消去して既存の閉じた IR へ変換する。
