@@ -12,7 +12,7 @@ fn wlt_cli_and_source_tests_work_outside_the_checkout() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
         directory.path().join("minimal.test.wlt"),
-        "(module (test \"standalone\" (i32.const 1)))",
+        "(module (%test \"standalone\" (i32.const 1)))",
     )
     .unwrap();
     let output = Command::new(cli)

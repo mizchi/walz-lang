@@ -267,3 +267,11 @@ test-generics:
     cargo test --locked --test generics --test generic_bounds
     cargo run --locked --quiet -- test examples/generic-lists.wlt
     node --expose-gc --test runtime/generics.test.mjs
+
+# Inspect explicit % extension syntax, migration and native WAT boundaries.
+test-syntax:
+    cargo test --locked --test surface
+
+# Print a migration preview; pass --write through the CLI to update one file.
+migrate file:
+    cargo run --locked --quiet -- migrate {{quote(file)}}

@@ -104,7 +104,7 @@ fn flat(n: &Node) -> Option<String> {
     match n {
         Node::Token(t) => Some(t.clone()),
         Node::Comment(_) => None,
-        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.as_str(),"let"|"result.let"|"stream.fold-result"|"match")) => {
+        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('%'),"let"|"result.let"|"stream.fold-result"|"match")) => {
             None
         }
         Node::List(items) => Some(format!(
@@ -120,7 +120,7 @@ fn flat(n: &Node) -> Option<String> {
 fn head(n: &Node) -> Option<&str> {
     match n {
         Node::List(items) => match items.first()? {
-            Node::Token(t) => Some(t),
+            Node::Token(t) => Some(t.trim_start_matches('%')),
             _ => None,
         },
         _ => None,
@@ -148,7 +148,8 @@ fn header_end(items: &[Node]) -> usize {
             Some("ref" | "option" | "result" | "pair" | "own" | "future" | "stream")
         ),
     };
-    let fields = match name.as_str() {
+    let name = name.trim_start_matches('%');
+    let fields = match name {
         "result.let" => Some(if meaningful.len() == 4 { 2 } else { 4 }),
         "stream.fold-result" => Some(if meaningful.len() == 5 { 1 } else { 4 }),
         "pair.new" | "result.ok" | "result.err" => Some(
@@ -199,7 +200,7 @@ fn header_end(items: &[Node]) -> usize {
         }
         return end;
     }
-    if matches!(name.as_str(), "func" | "closure") {
+    if matches!(name, "func" | "closure") {
         let mut end = 1;
         if matches!(items.get(end),Some(Node::Token(t)) if t.starts_with('$')) {
             end += 1;
@@ -210,6 +211,8 @@ fn header_end(items: &[Node]) -> usize {
                     head(item),
                     Some(
                         "param"
+                            | "type.params"
+                            | "where"
                             | "result"
                             | "effects"
                             | "export"

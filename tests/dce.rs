@@ -1,12 +1,12 @@
 #[test]
 fn checked_output_retains_only_exported_functions_and_transitive_dependencies() {
     let source = r#"(module
-      (namespace $lib
-        (public (func $answer) (func $unused))
+      (%namespace $lib
+        (%public (func $answer) (func $unused))
         (import "wlt:host/event-loop@0.1.0" "defer-i64"
-          (func $sleep (param $n i32) (param $value i64) (result (future i64))))
+          (func $sleep (param $n i32) (param $value i64) (result (%future i64))))
         (type $Unused (struct (field i64)))
-        (func $unused (result (future i64)) (call $sleep (i32.const 1) (i64.const 1)))
+        (func $unused (result (%future i64)) (call $sleep (i32.const 1) (i64.const 1)))
         (func $helper (result i32) (i32.const 42))
         (func $answer (result i32) (call $helper)))
       (func $main (export "main") (result i32) (call $lib.answer)))"#;
@@ -41,8 +41,8 @@ fn checked_output_retains_only_exported_functions_and_transitive_dependencies() 
 fn unused_trusted_imports_do_not_require_host_capabilities_or_abi_codecs() {
     let source = r#"(module
       (import "wlt:host/event-loop@0.1.0" "defer-i64"
-        (func $sleep (param $n i32) (param $value i64) (result (future i64))))
-      (func $main (export "main") (result i32) (effects pure) (i32.const 42)))"#;
+        (func $sleep (param $n i32) (param $value i64) (result (%future i64))))
+      (func $main (export "main") (result i32) (%effects pure) (i32.const 42)))"#;
     let core = wlt::component::core_js::compile(source).unwrap();
     let component = wlt::component::compile(source).unwrap();
     assert_eq!(core.manifest["imports"].as_array().unwrap().len(), 0);
@@ -55,8 +55,8 @@ fn unused_trusted_imports_do_not_require_host_capabilities_or_abi_codecs() {
 fn unreachable_code_is_still_type_effect_and_ownership_checked() {
     for body in [
         "(func $bad (result i32) (i64.const 1))",
-        "(func $bad (param $b (ref $B)) (effects pure) (struct.set $B 0 (local.get $b) (i32.const 1)))",
-        "(func $bad (param $s (stream i32)) (nop))",
+        "(func $bad (param $b (ref $B)) (%effects pure) (struct.set $B 0 (local.get $b) (i32.const 1)))",
+        "(func $bad (param $s (%stream i32)) (nop))",
     ] {
         let source = format!(
             "(module (type $B (struct (field (mut i32)))) {body} (func $main (export \"main\") (result i32) (i32.const 42)))"
@@ -78,14 +78,14 @@ fn projection_keeps_closure_environments_recursive_types_tags_and_tests() {
       (tag $DeadTag (param i32))
       (type $Cell (struct (field $n i32) (field $next (ref null $Cell))))
       (tag $Error (param i32))
-      (closure $Read (capture $cell (ref $Cell)) (param $n i32) (result i32)
+      (%closure $Read (%capture $cell (ref $Cell)) (param $n i32) (result i32)
         (i32.add (struct.get $Cell $n (local.get $cell)) (local.get $n)))
       (func $dead (result i32) (i32.const 0))
       (func $main (export "main") (result i32)
-        (let $read (closure.new $Read (struct.new $Cell (i32.const 40) (ref.null $Cell)))
-          (try (result i32) (do (throw $Error (i32.const 2)))
-            (catch $Error ($n) (closure.call $Read (local.get $read) (local.get $n))))))
-      (test "reachable test" (i32.eq (call $main) (i32.const 42))))"#;
+        (%let $read (%closure.new $Read (struct.new $Cell (i32.const 40) (ref.null $Cell)))
+          (%try (result i32) (do (throw $Error (i32.const 2)))
+            (catch $Error ($n) (%closure.call $Read (local.get $read) (local.get $n))))))
+      (%test "reachable test" (i32.eq (call $main) (i32.const 42))))"#;
     let compiled = wlt::compile(source).unwrap();
     assert!(!compiled.wat.contains("$Dead"));
     assert!(!compiled.wat.contains("(func $dead"));

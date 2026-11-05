@@ -120,6 +120,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
     source.push_str(")\n");
     let policy = serde_json::to_string_pretty(&policy).unwrap();
     BindingPolicy::parse(&policy)?;
+    let source = crate::syntax::migrate(&source)?.text().to_owned();
     Ok(Generated { source, policy })
 }
 

@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug)]
 pub struct RunOptions {
+    pub legacy_syntax: bool,
     pub filter: Option<String>,
     pub list: bool,
     /// Includes Wasmtime process startup and compilation for each test.
@@ -21,6 +22,7 @@ pub struct RunOptions {
 impl Default for RunOptions {
     fn default() -> Self {
         Self {
+            legacy_syntax: false,
             filter: None,
             list: false,
             timeout: Duration::from_secs(5),
@@ -194,7 +196,11 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
     }
     for path in files {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
-            let loaded = crate::source::load(&path)?;
+            let loaded = if options.legacy_syntax {
+                crate::source::load_legacy(&path)?
+            } else {
+                crate::source::load(&path)?
+            };
             let source = loaded.text();
             let module = crate::check(source).map_err(|e| loaded.diagnostic(e))?;
             let tests = module

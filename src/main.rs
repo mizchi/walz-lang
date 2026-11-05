@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
-const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]";
+const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]\n       wlt migrate <file.wlt> [--write]\n       --legacy-syntax explicitly accepts pre-prefix WLT input";
 
 fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
     let mut paths = Vec::new();
@@ -43,15 +43,16 @@ fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOp
     Ok((paths, options))
 }
 
-fn test_command(args: &[OsString]) -> ExitCode {
+fn test_command(args: &[OsString], legacy: bool) -> ExitCode {
     use wlt::runner::TestOutcome;
-    let (paths, options) = match test_arguments(args) {
+    let (paths, mut options) = match test_arguments(args) {
         Ok(args) => args,
         Err(error) => {
             eprintln!("{error}\n{USAGE}");
             return ExitCode::from(2);
         }
     };
+    options.legacy_syntax = legacy;
     let report = wlt::runner::run(&paths, &options);
     for test in &report.tests {
         let path = test.path.display();
@@ -104,7 +105,18 @@ fn execute(
     path: &Path,
     output: Option<&Path>,
     policy: &wlt::bindings::BindingPolicy,
+    legacy: bool,
+    write_migration: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
+    if command == "migrate" {
+        let migration = wlt::syntax::migrate(&std::fs::read_to_string(path)?)?;
+        if write_migration {
+            std::fs::write(path, migration.text())?;
+        } else {
+            print!("{}", migration.text());
+        }
+        return Ok(true);
+    }
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
         let formatted =
@@ -121,7 +133,11 @@ fn execute(
         }
         return Ok(true);
     }
-    let loaded = wlt::source::load(path)?;
+    let loaded = if legacy {
+        wlt::source::load_legacy(path)?
+    } else {
+        wlt::source::load(path)?
+    };
     execute_source(command, path, output, loaded.text(), policy).map_err(|error| {
         match error.downcast::<wlt::Error>() {
             Ok(error) => loaded.diagnostic(*error).into(),
@@ -300,6 +316,20 @@ fn execute_source(
 
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    let legacy = args
+        .iter()
+        .position(|s| s == "--legacy-syntax")
+        .map(|i| args.remove(i))
+        .is_some();
+    let write_migration = args
+        .iter()
+        .position(|s| s == "--write")
+        .map(|i| args.remove(i))
+        .is_some();
+    if write_migration && !args.first().is_some_and(|s| s == "migrate") {
+        eprintln!("--write is only valid for migrate");
+        return ExitCode::from(2);
+    }
     if args.first().is_some_and(|s| s == "bind") {
         if args.len() != 4 {
             eprintln!("Usage: wlt bind <input.wit> <policy.json> <output-directory>");
@@ -355,11 +385,12 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     };
     if command == "test" {
-        return test_command(&args[1..]);
+        return test_command(&args[1..], legacy);
     }
     if !matches!(
         command,
         "check"
+            | "migrate"
             | "fmt"
             | "fmt-check"
             | "types"
@@ -389,7 +420,14 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let path = Path::new(&args[1]);
-    match execute(command, path, args.get(2).map(Path::new), &policy) {
+    match execute(
+        command,
+        path,
+        args.get(2).map(Path::new),
+        &policy,
+        legacy,
+        write_migration,
+    ) {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {

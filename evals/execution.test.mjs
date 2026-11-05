@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { prepareRun } from "./lib/runs.mjs";
 import { verifyRun } from "./lib/runner.mjs";
-import { assertSnapshotIncludes, metrics } from "./lib/source.mjs";
+import { assertSnapshotIncludes, metrics, sourceIncludes, functionForms } from "./lib/source.mjs";
 
 test("source inspection ignores strings/nested comments but rejects live includes", () => {
   assertSnapshotIncludes(String.raw`(module ;; (include "bad")
@@ -84,3 +84,13 @@ test(
     }
   },
 );
+
+test("prefixed syntax retains evaluation measurements and frozen include checks", () => {
+  const old = '(module (include "program.wlt") (func $f (let ($x) (pair (ref $stock.State) i32) (match $V))))';
+  const modern = old.replaceAll('(include ', '(%include ').replaceAll('(let ', '(%let ').replaceAll('(pair ', '(%pair ').replaceAll('(match ', '(%match ');
+  assertSnapshotIncludes(modern);
+  assert.deepEqual(sourceIncludes(modern), ["program.wlt"]);
+  assert.deepEqual(metrics(modern), metrics(old));
+  assert.deepEqual(functionForms(modern, "$f"), functionForms(old, "$f"));
+  assert.throws(() => assertSnapshotIncludes('(module (%include "../live.wlt"))'), /frozen/);
+});

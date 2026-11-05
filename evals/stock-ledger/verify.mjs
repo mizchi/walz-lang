@@ -24,14 +24,14 @@ export async function verifyStock({ source, output, checkInputs }) {
   if (!checks[0].passed) return { passed: false, checks };
   let runtime;
   await check("W1 type and Wasm validation", async () => {
-    await build(source, output);
+    await build(source, output, { legacySyntax: true });
     await instrument(output, "core");
     runtime = await import(pathToFileURL(join(output, "index.js")));
   });
   await check("W4 pair state and one initialization", async () => {
     const { stdout } = await exec(
       "cargo",
-      ["run", "--locked", "--quiet", "--", "ir", source],
+      ["run", "--locked", "--quiet", "--", "--legacy-syntax", "ir", source],
       { cwd: projectRoot, maxBuffer: 8 * 1024 * 1024 },
     );
     const ir = JSON.parse(stdout),
@@ -78,8 +78,8 @@ export async function verifyStock({ source, output, checkInputs }) {
     );
     assert.equal(calls[0].args[0].kind.Const.literal, "4096");
     const text = await readFile(source, "utf8");
-    assert.match(text, /\(stream\.fold-result\s/);
-    assert.match(text, /\(result\.let\s/);
+    assert.match(text, /\(%?stream\.fold-result\s/);
+    assert.match(text, /\(%?result\.let\s/);
     return { pairType, stockNewCalls: calls.length, outsideLoopBody: true };
   });
   const encode = (s) => new TextEncoder().encode(s);

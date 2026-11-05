@@ -1,18 +1,18 @@
 # 外部資源の最小契約
 
 ```wat
-(type $File (resource "file" $close))
-(using $file (resource.new $File (call $open))
+(type $File (%resource "file" $close))
+(%using $file (%resource.new $File (call $open))
   (call $read-file (local.get $file)))
 ```
 
-`(resource $File)` は所有値、`(borrow $File)` は `using` または関数引数でだけ扱う借用。
-`resource.close` は所有値を消費し、登録した destructor を一度呼ぶ。
-`using` は所有値を消費し、正常値・Result.err・Wasm 例外・取消しを通して終了時に close する。
-ループは内側で使えるが、外側への `recur` は close を飛ばすため拒否する。
+`(%resource $File)` は所有値、`(%borrow $File)` は `%using` または関数引数でだけ扱う借用。
+`%resource.close` は所有値を消費し、登録した destructor を一度呼ぶ。
+`%using` は所有値を消費し、正常値・Result.err・Wasm 例外・取消しを通して終了時に close する。
+ループは内側で使えるが、外側への `%recur` は close を飛ばすため拒否する。
 
 borrow は返却・GC 格納・クロージャ捕捉・例外 payload にできない。
-`resource.handle` は、その kind の host 操作の第1引数にだけ書ける。
+`%resource.handle` は、その kind の host 操作の第1引数にだけ書ける。
 一般の lifetime、借用した所有値の返却、async destructor は追加しない。
 所有値を持つ関数の try/catch と、例外を投げうる関数呼出しは引き続き拒否する。
 明示的な throw は、残った所有値がゼロであることを Stop 契約で検査する。

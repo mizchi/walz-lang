@@ -18,6 +18,7 @@ pub struct Source {
     text: String,
     path: PathBuf,
     chunks: Vec<Chunk>,
+    migration: Option<crate::syntax::Migration>,
 }
 impl Source {
     /// Expanded immutable text; IR spans refer to this compilation unit.
@@ -39,6 +40,13 @@ impl Source {
             // Already-localized loader errors must not be mapped a second time.
             if label.location.path.is_some() {
                 continue;
+            }
+            if let Some(migration) = &self.migration {
+                let span = Span {
+                    start: migration.original_offset(label.span.start),
+                    end: migration.original_offset(label.span.end),
+                };
+                *label = crate::diagnostic::Label::new(migration.original(), span, &label.message);
             }
             let offset = label.span.start;
             let chunk = self
@@ -85,7 +93,7 @@ impl Source {
     }
 }
 fn file_import(node: &Sexp) -> bool {
-    node.head() == Some("import")
+    matches!(node.head(), Some("import" | "%import"))
         && node
             .list()
             .and_then(|p| p.get(1))
@@ -97,14 +105,30 @@ fn file_import(node: &Sexp) -> bool {
             .and_then(Sexp::text)
             .is_none()
 }
-fn includes<'a>(node: &'a Sexp, output: &mut Vec<&'a Sexp>) {
-    if node.head() == Some("include") || file_import(node) {
+fn includes<'a>(
+    source: &str,
+    node: &'a Sexp,
+    output: &mut Vec<&'a Sexp>,
+    legacy: bool,
+) -> Result<(), Error> {
+    if !legacy
+        && (node.head() == Some("include") || node.head() == Some("import") && file_import(node))
+    {
+        return Err(Error::at(
+            source,
+            node.span,
+            "file linking requires %include or %import",
+        )
+        .with_code("E_WLT_PREFIX"));
+    }
+    if matches!(node.head(), Some("include" | "%include")) || file_import(node) {
         output.push(node);
-    } else if matches!(node.head(), Some("module" | "namespace")) {
+    } else if matches!(node.head(), Some("module" | "namespace" | "%namespace")) {
         for child in node.list().unwrap() {
-            includes(child, output);
+            includes(source, child, output, legacy)?;
         }
     }
+    Ok(())
 }
 #[derive(Default)]
 struct Modules {
@@ -118,6 +142,7 @@ fn expand(
     stack: &mut Vec<PathBuf>,
     output: &mut Source,
     modules: &mut Modules,
+    legacy: bool,
 ) -> Result<(), Error> {
     let canonical = path
         .canonicalize()
@@ -165,7 +190,7 @@ fn expand(
         }
     };
     let mut nodes = Vec::new();
-    includes(&syntax, &mut nodes);
+    includes(&original, &syntax, &mut nodes, legacy).map_err(|e| e.with_path(&canonical))?;
     let mut cursor = range.start;
     stack.push(canonical.clone());
     for node in nodes {
@@ -223,8 +248,9 @@ fn expand(
                     text: String::new(),
                     path: target.clone(),
                     chunks: vec![],
+                    migration: None,
                 };
-                expand(&target, true, stack, &mut unit, modules)?;
+                expand(&target, true, stack, &mut unit, modules, legacy)?;
                 modules.size += unit.text.len() + 64;
                 if modules.size > MAX_SOURCE {
                     return Err(Error::message("expanded source exceeds 16 MiB".into()));
@@ -233,7 +259,7 @@ fn expand(
                 name
             };
             output.append(
-                &format!("(use {name} "),
+                &format!("(%use {name} "),
                 node.span.start,
                 &canonical,
                 &original,
@@ -248,7 +274,7 @@ fn expand(
             )?;
             output.append(")", node.span.end - 1, &canonical, &original)?;
         } else {
-            expand(&target, true, stack, output, modules)?;
+            expand(&target, true, stack, output, modules, legacy)?;
         }
         output.append("\n", node.span.start, &canonical, &original)?;
         cursor = node.span.end;
@@ -259,14 +285,35 @@ fn expand(
 }
 /// Load a compilation unit. String-based check/compile never read files.
 pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
-    let path = path.as_ref();
+    load_mode(path.as_ref(), false)
+}
+
+/// Explicit compatibility entry for frozen historical evaluation inputs.
+pub fn load_legacy(path: impl AsRef<Path>) -> Result<Source, Error> {
+    let mut source = load_mode(path.as_ref(), true)?;
+    let migration =
+        crate::syntax::migrate_legacy(&source.text).map_err(|e| source.diagnostic(e))?;
+    source.text = migration.text().into();
+    source.migration = Some(migration);
+    Ok(source)
+}
+
+fn load_mode(path: &Path, legacy: bool) -> Result<Source, Error> {
     let mut source = Source {
         text: String::new(),
         path: path.into(),
         chunks: Vec::new(),
+        migration: None,
     };
     let mut modules = Modules::default();
-    expand(path, false, &mut Vec::new(), &mut source, &mut modules)?;
+    expand(
+        path,
+        false,
+        &mut Vec::new(),
+        &mut source,
+        &mut modules,
+        legacy,
+    )?;
     if modules.units.is_empty() {
         return Ok(source);
     }
@@ -318,6 +365,7 @@ pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
         text: String::new(),
         path: source.path.clone(),
         chunks: vec![],
+        migration: None,
     };
     append_range(&mut linked, &source, 0..end)?;
     for (name, unit) in modules.units {
@@ -328,7 +376,7 @@ pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
             .original
             .clone();
         linked.append(
-            &format!("\n(file.namespace {name}\n"),
+            &format!("\n(%file.namespace {name}\n"),
             0,
             &unit.path,
             &original,
@@ -366,6 +414,7 @@ fn rename_generated(source: &mut Source, renames: &[(String, String)]) -> Result
         text: String::new(),
         path: source.path.clone(),
         chunks: vec![],
+        migration: None,
     };
     for chunk in &source.chunks {
         let mut text = source.text[chunk.start..chunk.end].to_owned();

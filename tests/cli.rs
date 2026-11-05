@@ -141,7 +141,7 @@ fn reports_expression_and_binding_types_without_running_the_program() {
 fn static_type_errors_use_source_type_names() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("wrong-type.wlt");
-    std::fs::write(&path, "(module\n  (type $Left (struct))\n  (type $Right (struct))\n  (func $f (result (ref $Left)) (let $wrong (struct.new $Right) (local.get $wrong))))").unwrap();
+    std::fs::write(&path, "(module\n  (type $Left (struct))\n  (type $Right (struct))\n  (func $f (result (ref $Left)) (%let $wrong (struct.new $Right) (local.get $wrong))))").unwrap();
     for command_name in ["check", "types", "build"] {
         let mut cli = command();
         cli.arg(command_name).arg(&path);

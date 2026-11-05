@@ -2,19 +2,19 @@
   (type $Ints (array (mut i64)))
 
   (func $sum (param $xs (ref $Ints)) (result i64)
-    (loop $go
+    (%loop $go
       (bind $i i32 (i32.const 0))
       (bind $total i64 (i64.const 0))
       (result i64)
       (if (result i64) (i32.lt_u (local.get $i) (array.len (local.get $xs)))
         (then
-          (recur $go
+          (%recur $go
             (i32.add (local.get $i) (i32.const 1))
             (i64.add (local.get $total) (array.get $Ints (local.get $xs) (local.get $i)))))
         (else (local.get $total)))))
 
   (func $main (export "main") (result i64)
-    (let $xs (array.new_fixed $Ints 3 (i64.const 10) (i64.const 20) (i64.const 0))
+    (%let $xs (array.new_fixed $Ints 3 (i64.const 10) (i64.const 20) (i64.const 0))
       (block (result i64)
         (array.set $Ints (local.get $xs) (i32.const 2) (i64.const 12))
         (call $sum (local.get $xs))))))

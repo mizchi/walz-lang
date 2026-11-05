@@ -1,7 +1,7 @@
 # wlt 文法チートシート
 
 標準 WAT を基底に、型付きの式・GC データ・所有値・固定マクロを追加した言語。
-ここでは拡張を使う型付きコアを扱う。標準 WAT 単体は Wasm validator に通るものを受理するが、任意の WAT 命令と拡張の混在はまだできない。
+ここでは拡張を使う型付きコアを扱う。WLT の拡張入口には `%` を付ける。標準 WAT 単体はそのまま受理し、コア外の WAT と構文マクロの混在は opaque として全体を検証する。[境界と移行](docs/syntax.md) を参照。
 詳しい意味論は [SPEC.md](SPEC.md)、実用例は [在庫台帳](examples/apps/stock-ledger/README.md)。
 
 ## 最初に覚える規則
@@ -9,7 +9,7 @@
 - プログラムは `(module 宣言...)`。関数の本体は1つの式。複数の処理には block を使う。
 - `$name` は識別子、`"text"` は文字列、`;;` は行コメント、`(; ... ;)` は入れ子可能なコメント。
 - 引数と演算は左から右へ評価する。暗黙の数値変換・捕捉・ローカル再代入はない。
-- **`(result R)` は結果型の宣言。`(result T E)` は成功 T／エラー E の値型。**
+- **`(result R)` は結果型の宣言。`(%result T E)` は成功 T／エラー E の値型。**
 - 結果宣言を省略すると unit。本体から結果型を推論する指定ではない。
 - 共有 GC 参照と、消費が必要な own / Future / Stream を区別する。
 
@@ -20,27 +20,27 @@
 
 ```wat
 (module
-  (func $add (param $a i64) (param $b i64) (result i64) (effects pure)
+  (func $add (param $a i64) (param $b i64) (result i64) (%effects pure)
     (i64.add (local.get $a) (local.get $b)))
-  (func $main (export "main") (result i64) (effects pure)
-    (let $answer (call $add (i64.const 40) (i64.const 2))
+  (func $main (export "main") (result i64) (%effects pure)
+    (%let $answer (call $add (i64.const 40) (i64.const 2))
       (local.get $answer)))
-  (test "answer" (i64.eq (call $main) (i64.const 42))))
+  (%test "answer" (i64.eq (call $main) (i64.const 42))))
 ```
 
 | 型 | 意味 |
 |---|---|
 | `i32 i64 f32 f64` | Wasm の数値型。整数の加減乗算は折り返し、整数のゼロ除算等は trap。符号解釈は命令の `_s` / `_u` で指定 |
 | `(ref $T)` / `(ref null $T)` | GC の非 null／nullable 参照。型は nominal |
-| `bytes` / `text` | 不変なバイト列／妥当な UTF-8。内部参照の操作や比較はできない |
-| `(option T)` / `(result T E)` | none/some、ok/err の値型 |
-| `(pair T U)` | 2成分の値。成分が共有値なら pair も共有値 |
-| `(own T)` / `(future T)` / `(stream T)` | 消費する所有値。GC 参照への排他的所有を意味しない |
-| `unit` | 値のない結果。関数の引数・通常のフィールドには格納しない |
+| `%bytes` / `%text` | 不変なバイト列／妥当な UTF-8。内部参照の操作や比較はできない |
+| `(%option T)` / `(%result T E)` | none/some、ok/err の値型 |
+| `(%pair T U)` | 2成分の値。成分が共有値なら pair も共有値 |
+| `(%own T)` / `(%future T)` / `(%stream T)` | 消費する所有値。GC 参照への排他的所有を意味しない |
+| `%unit` | 値のない結果。関数の引数・通常のフィールドには格納しない |
 
 ```text
-(func $f (param $x T)... [(result R)] [(effects ...)] body)
-(let $x [T] initializer body)        ;; T は省略時に推論。不変の字句束縛
+(func $f (param $x T)... [(result R)] [(%effects ...)] body)
+(%let $x [T] initializer body)        ;; T は省略時に推論。不変の字句束縛
 (local.get $x)
 (call $f arg...)
 (block [(result R)] unit-expr... final-expr)
@@ -50,7 +50,7 @@
 (unreachable)                      ;; trap。Wasm 例外とは異なる
 ```
 
-if / block / match の結果宣言がない場合も unit。unit の戻り値は `(result unit)` と書かず、結果宣言を省略する。
+if / block / match の結果宣言がない場合も unit。unit の戻り値は `(result %unit)` と書かず、結果宣言を省略する。
 最後以外の block の式は unit にする。
 一時的な整数を捨てる場合は `(drop ...)`、状態の更新は mutable な GC フィールド／配列へ明示する。
 
@@ -76,12 +76,12 @@ if / block / match の結果宣言がない場合も unit。unit の戻り値は
 
 ```wat
 (module
-  (type $Item (variant (none) (count i64)))
+  (type $Item (%variant (none) (count i64)))
   (func $get (param $item (ref $Item)) (result i64)
-    (match $Item (result i64) (local.get $item)
+    (%match $Item (result i64) (local.get $item)
       (case none () (i64.const 0))
       (case count ($n) (local.get $n))))
-  (test "variant" (i64.eq (call $get (variant.new $Item count (i64.const 42))) (i64.const 42))))
+  (%test "variant" (i64.eq (call $get (%variant.new $Item count (i64.const 42))) (i64.const 42))))
 ```
 
 全ケースを1回ずつ書く。payload のない case も `()` が必要。型・個数・網羅性を検査する。
@@ -90,39 +90,39 @@ if / block / match の結果宣言がない場合も unit。unit の戻り値は
 ## Option / Result / pair
 
 ```text
-(option.none T)
-(option.some T value)
-(result.ok T E value)
-(result.err T E error)
-(pair.new T U first second)
+(%option.none T)
+(%option.some T value)
+(%result.ok T E value)
+(%result.err T E error)
+(%pair.new T U first second)
 
-(match (option T) (result R) subject
+(%match (%option T) (result R) subject
   (case none () no-value) (case some ($value) with-value))
-(match (result T E) (result R) subject
+(%match (%result T E) (result R) subject
   (case ok ($value) success) (case err ($error) failure))
-(match (pair T U) (result R) subject
+(%match (%pair T U) (result R) subject
   (case pair ($first $second) body))
 ```
 
-unit の成分は値引数と payload 束縛を省略する。例：`(result.ok unit i32)`、`(case ok () body)`。
-Result を返す関数は `(result (result T E))`。外側は宣言、内側は値型。
+unit の成分は値引数と payload 束縛を省略する。例：`(%result.ok %unit i32)`、`(case ok () body)`。
+Result を返す関数は `(result (%result T E))`。外側は宣言、内側は値型。
 
-pair の状態を Result で返す例。match の `(result (result ...))` も外側が宣言、内側が値型である。
+pair の状態を Result で返す例。match の `(result (%result ...))` も外側が宣言、内側が値型である。
 以下は明示形で、構築・分解する位置ごとに型を書く。型の alias と省略形も使える。
 
 ```wat
 (module
-  (func $increment (param $state (pair i64 i32))
-    (result (result (pair i64 i32) i32)) (effects pure)
-    (match (pair i64 i32) (result (result (pair i64 i32) i32)) (local.get $state)
+  (func $increment (param $state (%pair i64 i32))
+    (result (%result (%pair i64 i32) i32)) (%effects pure)
+    (%match (%pair i64 i32) (result (%result (%pair i64 i32) i32)) (local.get $state)
       (case pair ($id $count)
-        (result.ok (pair i64 i32) i32
-          (pair.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1)))))))
-  (test "pair state"
-    (match (result (pair i64 i32) i32) (result i32)
-      (call $increment (pair.new i64 i32 (i64.const 7) (i32.const 41)))
+        (%result.ok (%pair i64 i32) i32
+          (%pair.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1)))))))
+  (%test "pair state"
+    (%match (%result (%pair i64 i32) i32) (result i32)
+      (call $increment (%pair.new i64 i32 (i64.const 7) (i32.const 41)))
       (case ok ($state)
-        (match (pair i64 i32) (result i32) (local.get $state)
+        (%match (%pair i64 i32) (result i32) (local.get $state)
           (case pair ($id $count) (i32.eq (local.get $count) (i32.const 42)))))
       (case err ($error) (i32.const 0)))))
 ```
@@ -130,7 +130,7 @@ pair の状態を Result で返す例。match の `(result (result ...))` も外
 ### result.let：成功時だけ続ける
 
 ```text
-(result.let ($value) (result T E) U subject body)
+(%result.let ($value) (%result T E) U subject body)
 ```
 
 subject は result<T,E>、body は result<U,E>、式全体も result<U,E>。
@@ -139,7 +139,7 @@ subject は result<T,E>、body は result<U,E>、式全体も result<U,E>。
 | 位置 | 指定するもの |
 |---|---|
 | `($value)` | subject の成功 payload を body 内だけで使う名前 |
-| `(result T E)` | 入力 subject の値型 |
+| `(%result T E)` | 入力 subject の値型 |
 | `U` | body と式全体の成功型。エラー型 E は入力から引き継ぐ |
 | `subject` / `body` | 入力の式／成功時だけ評価する式 |
 
@@ -148,24 +148,24 @@ err なら body を評価せず、同じ E の err をこの式の結果にす�
 
 ```wat
 (module
-  (func $convert (param $input (result i64 i32)) (result (result i32 i32)) (effects pure)
-    (result.let ($n) (result i64 i32) i32 (local.get $input)
-      (result.ok i32 i32 (i32.wrap_i64 (local.get $n)))))
-  (test "result mapping"
-    (match (result i32 i32) (result i32) (call $convert (result.ok i64 i32 (i64.const 42)))
+  (func $convert (param $input (%result i64 i32)) (result (%result i32 i32)) (%effects pure)
+    (%result.let ($n) (%result i64 i32) i32 (local.get $input)
+      (%result.ok i32 i32 (i32.wrap_i64 (local.get $n)))))
+  (%test "result mapping"
+    (%match (%result i32 i32) (result i32) (call $convert (%result.ok i64 i32 (i64.const 42)))
       (case ok ($n) (i32.eq (local.get $n) (i32.const 42))) (case err ($e) (i32.const 0)))))
 ```
 
 ## Future / Stream と終了処理
 
 ```text
-(future.ready T value)
-(future.await T (move $future))       ;; future を消費し T を返す
-(future.close T (move $future))
-(stream.empty T)
-(stream.cons T value rest-stream)    ;; rest-stream も消費する
-(stream.next T (move $stream))       ;; pair<stream<T>, option<T>>
-(stream.close T (move $stream))
+(%future.ready T value)
+(%future.await T (%move $future))       ;; future を消費し T を返す
+(%future.close T (%move $future))
+(%stream.empty T)
+(%stream.cons T value rest-stream)    ;; rest-stream も消費する
+(%stream.next T (%move $stream))       ;; pair<stream<T>, option<T>>
+(%stream.close T (%move $stream))
 ```
 
 await/next は常に suspends。EOF の next も端点を返すので、最後は close が必要。
@@ -175,7 +175,7 @@ payload は共有できる値に限定する。端点自身は共有 GC フィ�
 ### stream.fold-result：失敗時も閉じる反復
 
 ```text
-(stream.fold-result T S E source initial ($state $item) body)
+(%stream.fold-result T S E source initial ($state $item) body)
 ```
 
 source は stream<result<T,E>>、initial は S、body は result<S,E>。全体は result<S,E>。
@@ -186,70 +186,70 @@ T=unit の束縛は `($state)` だけ。body は同じ関数の loop/match へ�
 
 ## 型の alias と省略形
 
-`(type.alias $State (pair i64 i32))` は透明な型の略記。型の位置に `$State` と書く。
+`(%type.alias $State (%pair i64 i32))` は透明な型の略記。型の位置に `$State` と書く。
 GC オブジェクトや nominal identity は増えない。`(ref $State)` のような heap 型名には使わない。
-forward 参照可、循環は禁止。namespace 内の公開は `(public (type $State))`、use も type と同じ。
+forward 参照可、循環は禁止。namespace 内の公開は `(%public (type $State))`、use も type と同じ。
 
 関数の結果、引数、明示した let 型などから期待型が決まれば、値の構築に型引数を繰り返さない。
 決まらない場合は型注釈を追加する。関数・if・block・明示形 match の結果宣言省略は従来どおり unit。
 
 ```wat
 (module
-  (type.alias $State (pair i64 i32))
-  (func $increment (param $state $State) (result (result $State i32))
-    (let ($id $count) (local.get $state)
-      (result.ok (pair.new (local.get $id) (i32.add (local.get $count) (i32.const 1))))))
-  (test "short state"
-    (match (call $increment (pair.new (i64.const 7) (i32.const 41)))
+  (%type.alias $State (%pair i64 i32))
+  (func $increment (param $state $State) (result (%result $State i32))
+    (%let ($id $count) (local.get $state)
+      (%result.ok (%pair.new (local.get $id) (i32.add (local.get $count) (i32.const 1))))))
+  (%test "short state"
+    (%match (call $increment (%pair.new (i64.const 7) (i32.const 41)))
       (case ok ($state)
-        (let ($id $count) (local.get $state) (i32.eq (local.get $count) (i32.const 42))))
+        (%let ($id $count) (local.get $state) (i32.eq (local.get $count) (i32.const 42))))
       (case err ($error) (i32.const 0)))))
 ```
 
 | 省略形 | 型の決め方 |
 |---|---|
-| `(result.ok value)` / `(result.err error)` | 期待する Result 型。unit payload の値引数は省略 |
-| `(pair.new first second)` | 期待する pair 型。unit 成分の値引数は省略 |
-| `(option.some value)` / `(option.none)` / `(own.new value)` | 期待する Option / Own 型 |
-| `(let ($first $second) subject body)` | subject の pair を一度だけ評価して分解。unit 成分の名前は省略 |
-| `(match subject (case ...)... )` | subject の型と期待する出力型。型付きの長い形も使用可 |
-| `(result.let ($value) subject body)` | subject の T/E と、期待型または body で局所的に決まる U |
-| `(stream.fold-result source initial ($state $item) body)` | source の T/E、initial または期待型の S。body は result<S,E> |
+| `(%result.ok value)` / `(%result.err error)` | 期待する Result 型。unit payload の値引数は省略 |
+| `(%pair.new first second)` | 期待する pair 型。unit 成分の値引数は省略 |
+| `(%option.some value)` / `(%option.none)` / `(%own.new value)` | 期待する Option / Own 型 |
+| `(%let ($first $second) subject body)` | subject の pair を一度だけ評価して分解。unit 成分の名前は省略 |
+| `(%match subject (case ...)... )` | subject の型と期待する出力型。型付きの長い形も使用可 |
+| `(%result.let ($value) subject body)` | subject の T/E と、期待型または body で局所的に決まる U |
+| `(%stream.fold-result source initial ($state $item) body)` | source の T/E、initial または期待型の S。body は result<S,E> |
 
 省略しても評価順、消費義務、effect、opaque の検査は同じ。result.let の E は共有かつ入力と出力で同じ型。fold の E も共有値、S は共有できる非 unit に限る。
-pattern let で own 成分を含む pair を分解するときは `(move $pair)` を使い、取り出した所有値も消費する。
+pattern let で own 成分を含む pair を分解するときは `(%move $pair)` を使い、取り出した所有値も消費する。
 任意の型の穴や関数をまたぐ全域型推論、暗黙の move / capture は導入しない。
 
 ## 所有値・クロージャ・effect
 
-汎用関数・型・alias・クロージャは名前の直後に `(type.params $T ...)` を宣言し、
-`($name T...)` で具体化する。型引数は明示し、具体化後も型・effect・所有権を検査する。
+汎用関数・型・alias・クロージャは名前の直後に `(%type.params $T ...)` を宣言し、
+`(%inst $name T...)` で具体化する。型引数は明示し、具体化後も型・effect・所有権を検査する。
 具体的なクロージャ型も渡せる。[詳細と map/fold](docs/generics.md)。
 
 ```wat
 (module
-  (func $identity (type.params $T) (where (shared $T) (nonunit $T))
-    (param $x $T) (result $T) (effects pure)
+  (func $identity (%type.params $T) (%where (shared $T) (nonunit $T))
+    (param $x $T) (result $T) (%effects pure)
     (local.get $x))
-  (func $main (export "main") (result i64) (effects pure)
-    (call ($identity i64) (i64.const 42))))
+  (func $main (export "main") (result i64) (%effects pure)
+    (call (%inst $identity i64) (i64.const 42))))
 ```
 
-type.params の直後に `(where (shared $T) (nonunit $T))` を置くと、具体化する型引数を制限できる。
+type.params の直後に `(%where (shared $T) (nonunit $T))` を置くと、具体化する型引数を制限できる。
 共有は不変性を意味しない。コールバックには
-`(callable $F (param $T) (result $U) (effects pure))` と書ける。
+`(callable $F (param $T) (result $U) (%effects pure))` と書ける。
 引数・戻り値が一致する共有・再呼出し可能なクロージャに限定し、effect は本体から推論する。
 effects を省略すれば effect の制限は課さない。未使用の適用も DCE 前に検査する。
 
 ```text
-(own.new T value)
-(move $owner)                       ;; 所有値を消費する位置に渡す
-(own.close (move $owner))            ;; 包みを消費。OS resource の destructor ではない
+(%own.new T value)
+(%move $owner)                       ;; 所有値を消費する位置に渡す
+(%own.close (%move $owner))            ;; 包みを消費。OS resource の destructor ではない
 
-(closure $Adder (capture $base i64) (param $x i64) (result i64)
+(%closure $Adder (%capture $base i64) (param $x i64) (result i64)
   (i64.add (local.get $base) (local.get $x)))
-(closure.new $Adder (i64.const 40))
-(closure.call $Adder closure (i64.const 2))
+(%closure.new $Adder (i64.const 40))
+(%closure.call $Adder closure (i64.const 2))
 ```
 
 所有値に local.get、drop、move 後の再利用は不可。Option/Result/pair に所有成分があれば全体も所有値。
@@ -269,13 +269,13 @@ effect 注釈は上限で、実際の本体から検査する。省略時は推�
 ## ループ・Wasm 例外
 
 ```text
-(loop $go (bind $i i32 initial)... (result R) body)
-(recur $go next-value...)            ;; 最内側 loop の末尾だけ。同時更新
-(for $go (bind $i i32 initial)...
+(%loop $go (bind $i i32 initial)... (result R) body)
+(%recur $go next-value...)            ;; 最内側 loop の末尾だけ。同時更新
+(%for $go (bind $i i32 initial)...
   (while condition) (step next-value...) unit-body)
 
 (tag $Error (param i32))
-(try (result R)
+(%try (result R)
   (do expression)
   (catch $Error ($code) handler)
   (catch_all handler))
@@ -288,22 +288,22 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 ## モジュール・不透明な公開型
 
 ```text
-(include "relative.wlt")
-(import "relative.wlt" (func $read $local) (type $State) (tag $Error))
-(namespace $stock
-  (export (opaque $State) (func $new) (func $get))
+(%include "relative.wlt")
+(%import "relative.wlt" (func $read $local) (type $State) (tag $Error))
+(%namespace $stock
+  (%export (opaque $State) (func $new) (func $get))
   (type $State (struct ...))
   (func $new ...)
   (func $get ...))
-(import $stock (type $State $Alias) (func $get))
+(%import $stock (type $State $Alias) (func $get))
 (call $stock.get argument)
 ```
 
 namespace 内は既定で非公開。`public (type $T)` は表現も公開し、`public (opaque $T)` は型だけ公開する。
 opaque の構築・フィールド／配列操作・match は宣言 namespace 内だけ。別名経由も同じ。
 include は宣言を挿入し、参照元ファイルからの相対パスを使う。親 namespace の名前は暗黙に取り込まず、完全修飾名はルートから。
-`public` と Wasm の `(export "main")` は別。ABI export はルートの関数に置く。
-`export` の名前リストは `public` と、namespace からの `import` は `use` と同じ意味。
+`%public` と Wasm の `(export "main")` は別。ABI export はルートの関数に置く。
+`export` の名前リストは `%public` と、namespace からの `import` は `%use` と同じ意味。
 ファイル import は選んだ名前だけを束縛し、同じファイルの型・定義を共有する。import した別名も静的 export で再公開できる。
 ルートの `(export "name" (func $local))` で import した関数を ABI export にできる。使わない定義は生成時に落ちる。
 [境界・DCE・未対応範囲](docs/static-modules.md) を参照。
@@ -312,12 +312,12 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
 
 | 式・関数 | 結果 |
 |---|---|
-| `(bytes.new i32-expr...)` | 不変 bytes |
-| `(bytes.from-array $Array array)` | 非 null の i32 配列をコピー。各要素0..255以外は trap |
-| `(bytes.len b)` / `(bytes.get b index)` | 長さ／0..255の要素。添字は符号なし、範囲外は trap |
-| `(bytes.slice b start length)` | コピーした bytes。範囲外は trap |
-| `(text.lit "日本語")` / `(text.byte-len t)` | text／UTF-8 byte 長 |
-| `(text.bytes t)` / `(text.from-bytes b)` | bytes／option<text>。不正 UTF-8 は none |
+| `(%bytes.new i32-expr...)` | 不変 bytes |
+| `(%bytes.from-array $Array array)` | 非 null の i32 配列をコピー。各要素0..255以外は trap |
+| `(%bytes.len b)` / `(%bytes.get b index)` | 長さ／0..255の要素。添字は符号なし、範囲外は trap |
+| `(%bytes.slice b start length)` | コピーした bytes。範囲外は trap |
+| `(%text.lit "日本語")` / `(%text.byte-len t)` | text／UTF-8 byte 長 |
+| `(%text.bytes t)` / `(%text.from-bytes b)` | bytes／option<text>。不正 UTF-8 は none |
 | `$string.concat(text,text)` | text の連結 |
 | `$string.u64(i64)` / `$string.s64(i64)` | ビットパターンの符号なし／符号付き十進数化 |
 | `$string.json(text)` | 引用符込みの JSON string |
@@ -331,14 +331,14 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
 
 ```wat
 (module
-  (import "stdlib/json.wlt"
+  (%import "stdlib/json.wlt"
     (func $json.new) (func $json.string) (func $json.u64) (func $json.finish))
-  (func $record (export "record") (param $name text) (param $count i64)
-    (result text) (effects reads writes allocates)
-    (let $o (call $json.new)
-      (block (result text)
-        (call $json.string (local.get $o) (text.lit "name") (local.get $name))
-        (call $json.u64 (local.get $o) (text.lit "count") (local.get $count))
+  (func $record (export "record") (param $name %text) (param $count i64)
+    (result %text) (%effects reads writes allocates)
+    (%let $o (call $json.new)
+      (block (result %text)
+        (call $json.string (local.get $o) (%text.lit "name") (local.get $name))
+        (call $json.u64 (local.get $o) (%text.lit "count") (local.get $count))
         (call $json.finish (local.get $o))))))
 ```
 
@@ -381,6 +381,6 @@ JS
 例：行数を返す版なら `{"tag":"ok","val":3}`、I/O エラーなら `{"tag":"err","val":3}` 等を受け取る。
 この観測用スクリプトは Result を表示するだけで、err をプロセスの失敗終了へ変換しない。
 
-`test "name" i32-expr` は0なら失敗、非0なら成功。`law` は純粋な整数式の全入力を Lean で検査する別の契約。
+`test "name" i32-expr` は0なら失敗、非0なら成功。`%law` は純粋な整数式の全入力を Lean で検査する別の契約。
 実行用の stdin/stdout 接続は既存の text I/O capability。read-lines は stream<result<text,i32>>、write-line は future<result<unit,i32>> を返す。
 暗黙の型引数推論・trait、任意のマクロ定義、一般的な borrow/lifetime、汎用の WASI binding は含まない。

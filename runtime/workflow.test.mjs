@@ -131,24 +131,24 @@ for (const backend of ["core", "component"])
         const next = () =>
           (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0);
         for (let i = 0; i < 240; i++)
-          random.push(`TASK\tjob${i}\t${next() % 23}`);
+          random.push(`TASK	job${i}	${next() % 23}`);
         for (let i = 1; i < 240; i++)
           for (let n = 0, count = next() % 4; n < count; n++)
-            random.push(`AFTER\tjob${i}\tjob${next() % i}`);
-        for (const workers of [1, 2, 7, 32, 3]) random.push(`PLAN\t${workers}`);
+            random.push(`AFTER	job${i}	job${next() % i}`);
+        for (const workers of [1, 2, 7, 32, 3]) random.push(`PLAN	${workers}`);
         const capacity = Array.from(
           { length: 4097 },
-          (_, i) => `TASK\tt${i}\t0`,
+          (_, i) => `TASK	t${i}	0`,
         ).concat(["TASK\tt0\t1"]);
         const chain = Array.from(
           { length: 2200 },
-          (_, i) => `TASK\tc${i}\t1000000`,
+          (_, i) => `TASK	c${i}	1000000`,
         );
-        for (let i = 1; i < 2200; i++) chain.push(`AFTER\tc${i}\tc${i - 1}`);
+        for (let i = 1; i < 2200; i++) chain.push(`AFTER	c${i}	c${i - 1}`);
         chain.push("PLAN\t7");
-        const dense = Array.from({ length: 257 }, (_, i) => `TASK\td${i}\t0`);
+        const dense = Array.from({ length: 257 }, (_, i) => `TASK	d${i}	0`);
         for (let i = 0; i < 65536; i++)
-          dense.push(`AFTER\td${i % 256}\td${i >>> 8}`);
+          dense.push(`AFTER	d${i % 256}	d${i >>> 8}`);
         dense.push("AFTER\td256\td0", "AFTER\td0\td0");
         const cases = [
           sample,
@@ -224,7 +224,7 @@ for (const backend of ["core", "component"])
             "TASK\tAa\t1",
             "TASK\tBB\t2",
             "AFTER\tBB\tAa",
-            ...Array.from({ length: 260 }, (_, i) => `TASK\tkey${i}\t${i % 3}`),
+            ...Array.from({ length: 260 }, (_, i) => `TASK	key${i}	${i % 3}`),
             "TASK\tAa\t7",
             "AFTER\tkey259\tBB",
             "PLAN\t7",

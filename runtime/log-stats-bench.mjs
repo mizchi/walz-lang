@@ -129,7 +129,7 @@ try {
       bucket.count++;
       bucket.total_ms += ms;
       bucket.max_ms = Math.max(bucket.max_ms, ms);
-      return `${name}\t${ms}\t${config.message}`;
+      return `${name}	${ms}	${config.message}`;
     });
     return {
       bytes: new TextEncoder().encode(lines.join("\n") + "\n"),

@@ -11,6 +11,7 @@ pub(crate) struct Sexp {
 pub(crate) enum Kind {
     Atom(String),
     Text(String),
+    Bytes(Vec<u8>),
     List(Vec<Sexp>),
 }
 
@@ -23,10 +24,10 @@ impl Sexp {
         }
     }
     pub fn text(&self) -> Option<&str> {
-        if let Kind::Text(s) = &self.kind {
-            Some(s)
-        } else {
-            None
+        match &self.kind {
+            Kind::Text(s) => Some(s),
+            Kind::Bytes(bytes) => std::str::from_utf8(bytes).ok(),
+            _ => None,
         }
     }
     pub fn list(&self) -> Option<&[Sexp]> {
@@ -114,58 +115,51 @@ impl Reader<'_> {
         }
         self.space()?;
         let start = self.position;
-        let kind =
-            match self.advance() {
-                Some('(') => {
-                    let mut items = Vec::new();
-                    loop {
-                        self.space()?;
-                        if self.rest().starts_with(')') {
-                            self.position += 1;
-                            break;
-                        }
-                        if self.rest().is_empty() {
-                            return Err(Error::at(
-                                self.source,
-                                Span { start, end: start },
-                                "unclosed '('; expected ')'",
-                            ));
-                        }
-                        items.push(self.read(depth + 1)?);
+        let kind = match self.advance() {
+            Some('(') => {
+                let mut items = Vec::new();
+                loop {
+                    self.space()?;
+                    if self.rest().starts_with(')') {
+                        self.position += 1;
+                        break;
                     }
-                    Kind::List(items)
-                }
-                Some(')') => return Err(self.error("unexpected ')'")),
-                Some('"') => {
-                    let mut text = String::new();
-                    loop {
-                        match self.advance() {
-                            Some('"') => break,
-                            Some('\\') => text.push(match self.advance() {
-                                Some('n') => '\n',
-                                Some('r') => '\r',
-                                Some('t') => '\t',
-                                Some('"') => '"',
-                                Some('\\') => '\\',
-                                _ => return Err(self.error("unsupported string escape")),
-                            }),
-                            Some(ch) if !ch.is_control() => text.push(ch),
-                            Some(_) => return Err(self.error("control character in string")),
-                            None => return Err(self.error("unterminated string")),
-                        }
+                    if self.rest().is_empty() {
+                        return Err(Error::at(
+                            self.source,
+                            Span { start, end: start },
+                            "unclosed '('; expected ')'",
+                        ));
                     }
-                    Kind::Text(text)
+                    items.push(self.read(depth + 1)?);
                 }
-                Some(_) => {
-                    while self.rest().chars().next().is_some_and(|ch| {
-                        !ch.is_whitespace() && !matches!(ch, '(' | ')' | '"' | ';')
-                    }) {
-                        self.advance();
-                    }
-                    Kind::Atom(self.source[start..self.position].to_owned())
+                Kind::List(items)
+            }
+            Some(')') => return Err(self.error("unexpected ')'")),
+            Some('"') => {
+                let mut offset = start;
+                let token = wast::lexer::Lexer::new(self.source)
+                    .parse(&mut offset)
+                    .map_err(|error| self.error(&error.to_string()))?
+                    .ok_or_else(|| self.error("unterminated string"))?;
+                self.position = offset;
+                let bytes = token.string(self.source).into_owned();
+                match String::from_utf8(bytes) {
+                    Ok(text) => Kind::Text(text),
+                    Err(error) => Kind::Bytes(error.into_bytes()),
                 }
-                None => return Err(self.error("expected module")),
-            };
+            }
+            Some(_) => {
+                let mut offset = start;
+                wast::lexer::Lexer::new(self.source)
+                    .parse(&mut offset)
+                    .map_err(|error| self.error(&error.to_string()))?
+                    .ok_or_else(|| self.error("expected token"))?;
+                self.position = offset;
+                Kind::Atom(self.source[start..self.position].to_owned())
+            }
+            None => return Err(self.error("expected module")),
+        };
         Ok(Sexp {
             kind,
             span: Span {

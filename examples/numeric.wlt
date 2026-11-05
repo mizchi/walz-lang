@@ -8,10 +8,10 @@
         (if (result f64) (f64.eq (local.get $x) (f64.const 0))
           (then (f64.const 0))
           (else
-            (loop $newton (bind $i i32 (i32.const 0)) (bind $estimate f64 (local.get $x))
+            (%loop $newton (bind $i i32 (i32.const 0)) (bind $estimate f64 (local.get $x))
               (result f64)
               (if (result f64) (i32.lt_u (local.get $i) (i32.const 32))
-                (then (recur $newton (i32.add (local.get $i) (i32.const 1))
+                (then (%recur $newton (i32.add (local.get $i) (i32.const 1))
                   (f64.div (f64.add (local.get $estimate)
                     (f64.div (local.get $x) (local.get $estimate))) (f64.const 2))))
                 (else (local.get $estimate)))))))))

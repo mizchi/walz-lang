@@ -18,7 +18,7 @@
         (i32.add (struct.get $Machine $events (local.get $machine)) (i32.const 1)))))
 
   (func $main (export "main") (result i32)
-    (let $machine (struct.new $Machine (i32.const 0) (i32.const 0))
+    (%let $machine (struct.new $Machine (i32.const 0) (i32.const 0))
       (block (result i32)
         (call $step (local.get $machine) (i32.const 1))
         (call $step (local.get $machine) (i32.const 0))

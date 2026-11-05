@@ -11,7 +11,7 @@ export async function build(source, directory, options = {}) {
   await mkdir(output, { recursive: true });
   await execFile(
     "cargo",
-    ["run", "--locked", "--quiet", "--", "core-js", resolve(source), output, ...(options.bindings ? ["--bindings", resolve(options.bindings)] : [])],
+    ["run", "--locked", "--quiet", "--", ...(options.legacySyntax ? ["--legacy-syntax"] : []), "core-js", resolve(source), output, ...(options.bindings ? ["--bindings", resolve(options.bindings)] : [])],
     { cwd: root, maxBuffer: 4 * 1024 * 1024 },
   );
   const manifest = JSON.parse(

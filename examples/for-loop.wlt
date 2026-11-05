@@ -1,9 +1,9 @@
 (module
   (type $Cell (struct (field $sum (mut i64))))
   (func $main (export "main") (result i64)
-    (let $cell (struct.new $Cell (i64.const 0))
+    (%let $cell (struct.new $Cell (i64.const 0))
       (block (result i64)
-        (for $sum (bind $i i64 (i64.const 0))
+        (%for $sum (bind $i i64 (i64.const 0))
           (while (i64.lt_s (local.get $i) (i64.const 4)))
           (step (i64.add (local.get $i) (i64.const 1)))
           (struct.set $Cell $sum (local.get $cell)

@@ -4,9 +4,9 @@ use std::process::Command;
 fn component_build_emits_a_valid_canonical_interface_and_rejects_unknown_bindings() {
     let source = r#"(module
       (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
-      (func $main (export "main") (result (option (result i64 i32))) (effects host suspends)
-        (block (result (option (result i64 i32))) (call $sleep (i32.const 1))
-          (option.some (result i64 i32) (result.ok i64 i32 (i64.const 42))))))"#;
+      (func $main (export "main") (result (%option (%result i64 i32))) (%effects host suspends)
+        (block (result (%option (%result i64 i32))) (call $sleep (i32.const 1))
+          (%option.some (%result i64 i32) (%result.ok i64 i32 (i64.const 42))))))"#;
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("source.wlt");
     let output = dir.path().join("component.wasm");
@@ -67,7 +67,7 @@ fn trusted_event_loop_contracts_are_fixed_and_ownership_still_applies() {
             "unknown event-loop binding",
         ),
         (
-            "(module (import \"wlt:host/event-loop@0.1.0\" \"defer-i64\" (func $defer (param $ms i32) (param $n i64) (result (future i64)))) (func $bad (let $f (call $defer (i32.const 1) (i64.const 42)) (nop))))",
+            "(module (import \"wlt:host/event-loop@0.1.0\" \"defer-i64\" (func $defer (param $ms i32) (param $n i64) (result (%future i64)))) (func $bad (%let $f (call $defer (i32.const 1) (i64.const 42)) (nop))))",
             "unconsumed owned",
         ),
     ] {
@@ -84,8 +84,8 @@ fn imported_and_exported_interface_aliases_roundtrip_as_wit() {
         include_str!("component-fixtures/event-loop.wlt"),
         // Generated type names must not collide with public function names.
         r#"(module
-          (func $f (export "t0") (result (option unit)) (effects pure) (option.some unit))
-          (func $g (export "wlt-unit") (effects pure) (nop)))"#,
+          (func $f (export "t0") (result (%option %unit)) (%effects pure) (%option.some %unit))
+          (func $g (export "wlt-unit") (%effects pure) (nop)))"#,
     ] {
         let component = wlt::component::compile(source).unwrap();
         let dir = tempfile::tempdir().unwrap();

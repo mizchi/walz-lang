@@ -95,27 +95,29 @@ impl Expr {
                 *next += 1;
                 let a = a.render(short, next);
                 let b = b.render(short, next);
-                let value = format!("(pair.new i32 i32 {a} {b})");
+                let value = format!("(%pair.new i32 i32 {a} {b})");
                 let body = format!("(i32.sub (local.get $a{id}) (local.get $b{id}))");
                 if short {
-                    format!("(let ($a{id} $b{id}) {value} {body})")
+                    format!("(%let ($a{id} $b{id}) {value} {body})")
                 } else {
                     format!(
-                        "(match (pair i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
+                        "(%match (%pair i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
                     )
                 }
             }
             Self::List(a, b) => format!(
-                "(list.get i32 (list.new i32 {} {}) (i32.const 1))",
+                "(%list.get i32 (%list.new i32 {} {}) (i32.const 1))",
                 a.render(short, next),
                 b.render(short, next)
             ),
-            Self::Generic(a) => format!("(call ($identity $Count) {})", a.render(short, next)),
+            Self::Generic(a) => {
+                format!("(call (%inst $identity $Count) {})", a.render(short, next))
+            }
             Self::Result(a, ok) => {
                 let id = *next;
                 *next += 1;
                 format!(
-                    "(match (result i32 i32) (result i32) (result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
+                    "(%match (%result i32 i32) (result i32) (%result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
                     if *ok { "ok" } else { "err" },
                     a.render(short, next)
                 )
@@ -131,13 +133,13 @@ impl Expr {
     fn source(&self, short: bool) -> String {
         let body = self.render(short, &mut 0);
         format!(
-            r#"(module (type.alias $Count i32)
+            r#"(module (%type.alias $Count i32)
           (import "trace" "event" (func $event (param $n i32) (result i32)))
           (import "trace" "get" (func $get (result i32)))
-          (func $identity (type.params $T) (where (shared $T) (nonunit $T)) (param $x $T) (result $T) (effects pure) (local.get $x))
-          (func $dead (result (option i64)) (option.none i64))
+          (func $identity (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effects pure) (local.get $x))
+          (func $dead (result (%option i64)) (%option.none i64))
           (func $main (export "main") (result i64)
-            (let $value {body}
+            (%let $value {body}
               (i64.or (i64.shl (i64.extend_i32_u (call $get)) (i64.const 32))
                 (i64.extend_i32_u (local.get $value))))))"#
         )

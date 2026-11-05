@@ -1,25 +1,25 @@
 # 不変の list<T>
 
-`(list T)` は要素型ごとに具体化する組込みの値型。コンテナを変更する操作はなく、
-`bytes` と同様に内部の GC 配列を参照・比較・変更することはできない。
+`(%list T)` は要素型ごとに具体化する組込みの値型。コンテナを変更する操作はなく、
+`%bytes` と同様に内部の GC 配列を参照・比較・変更することはできない。
 要素には共有の数値・値型・GC 参照を使える。所有値と borrow は格納できない。
 GC 参照の要素が指すオブジェクトの可変性は、その参照型の規則に従う。
 
 | 構文 | 結果・性質 |
 | --- | --- |
-| `(list.new T value...)` | 左から一度ずつ評価して作る。引数なしなら空 |
-| `(list.len T xs)` | i32 の要素数 |
-| `(list.get T xs index)` | 要素。添字は符号なしで扱い、範囲外は Wasm trap |
-| `(list.slice T xs start length)` | 範囲をコピー。範囲外は trap。終端の長さ0は有効 |
-| `(list.from-array T $Array source)` | 要素型が同じ GC 配列からコピーする |
+| `(%list.new T value...)` | 左から一度ずつ評価して作る。引数なしなら空 |
+| `(%list.len T xs)` | i32 の要素数 |
+| `(%list.get T xs index)` | 要素。添字は符号なしで扱い、範囲外は Wasm trap |
+| `(%list.slice T xs start length)` | 範囲をコピー。範囲外は trap。終端の長さ0は有効 |
+| `(%list.from-array T $Array source)` | 要素型が同じ GC 配列からコピーする |
 
 slice/from-array はコンテナをコピーする。GC 参照の要素は参照を共有する。
 元の可変配列を書き換えても、コピー済み list の要素スロットは変わらない。
 `list.new unit` には要素数に応じた `(nop)` などの unit 式を書く。
 
 ```wat
-(list.get i64
-  (list.new i64 (i64.const 40) (i64.const 2))
+(%list.get i64
+  (%list.new i64 (i64.const 40) (i64.const 2))
   (i32.const 1))
 ```
 
@@ -35,7 +35,7 @@ Wasm GC 配列の到達性はエンジンに任せ、独自の GC ランタイ�
 JS には配列、数値要素には対応する TypedArray も渡せる。
 数値 list の返り値は Int32Array/BigInt64Array/Float32Array/Float64Array、それ以外は Array。
 これは Component の生成 binding に合わせた形。s64 の値は BigInt を使う。
-WIT `list<u8>` は引き続き `bytes` / Uint8Array へ対応する。
+WIT `list<u8>` は引き続き `%bytes` / Uint8Array へ対応する。
 List を Future/Stream の共有 payload にすることはできるが、Future/Stream を list に格納することはできない。
 
 検査は `just test-lists`。Rust の型・所有権・escape 解析、Wasmtime/Node の副作用順、

@@ -1,1 +1,1 @@
-(module (namespace $stats (include "stats-impl.wlt")))
+(module (%namespace $stats (%include "stats-impl.wlt")))

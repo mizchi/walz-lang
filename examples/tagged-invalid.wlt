@@ -5,7 +5,7 @@
     (field $left (ref null $Expr)) (field $right (ref null $Expr))))
 
   (func $main (export "main") (result i64)
-    (let $node (struct.new $Expr (i32.const 1) (i64.const 0)
+    (%let $node (struct.new $Expr (i32.const 1) (i64.const 0)
       (ref.null $Expr) (ref.null $Expr))
       (if (result i64) (i32.eq (struct.get $Expr $tag (local.get $node)) (i32.const 1))
         (then (struct.get $Expr $value

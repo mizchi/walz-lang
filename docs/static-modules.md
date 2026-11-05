@@ -1,23 +1,23 @@
 # Named import / export と DCE
 
-`include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
+`%include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
 関数・型・tag を選んで使うときは、相対パスの named import を使います。
 
 `math.wlt`:
 
 ```wat
 (module
-  (export (func $answer) (func $unused))
-  (func $helper (result i32) (effects pure) (i32.const 42))
-  (func $answer (result i32) (effects pure) (call $helper))
-  (func $unused (result i32) (effects pure) (i32.const 99)))
+  (%export (func $answer) (func $unused))
+  (func $helper (result i32) (%effects pure) (i32.const 42))
+  (func $answer (result i32) (%effects pure) (call $helper))
+  (func $unused (result i32) (%effects pure) (i32.const 99)))
 ```
 
 `main.wlt`:
 
 ```wat
 (module
-  (import "math.wlt" (func $answer $chosen))
+  (%import "math.wlt" (func $answer $chosen))
   (export "main" (func $chosen)))
 ```
 
@@ -29,11 +29,11 @@
 
 | 宣言 | 意味 |
 | --- | --- |
-| `(export (func $f) (type $T) (tag $Error))` | 静的に公開する名前。`public` も互換で受理 |
-| `(export (opaque $State))` | 型を公開し、その表現を宣言スコープに閉じる |
-| `(import "file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
-| `(import "stdlib/text.wlt" (func $string.u64 $unsigned))` | ファイル内 namespace の公開パスを選択 |
-| `(import $math (func $f $local))` | 同じコンパイル単位の namespace から選択。`use` も互換で受理 |
+| `(%export (func $f) (type $T) (tag $Error))` | 静的に公開する名前。`%public` も互換で受理 |
+| `(%export (opaque $State))` | 型を公開し、その表現を宣言スコープに閉じる |
+| `(%import "file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
+| `(%import "stdlib/text.wlt" (func $string.u64 $unsigned))` | ファイル内 namespace の公開パスを選択 |
+| `(%import $math (func $f $local))` | 同じコンパイル単位の namespace から選択。`%use` も互換で受理 |
 | `(export "name" (func $local))` | ルートから Wasm / Component API に公開。静的 import の関数も指定可能 |
 | 関数内の `(export "name")` | 従来どおりの Wasm ABI export |
 | `(import "host" "member" (func ...))` | 従来どおりの Wasm / WIT ホスト import |
@@ -44,11 +44,11 @@
 opaque 型の所有スコープも維持します。絶対パスと循環 import は拒否し、include と合わせて深さ64・展開後16MiBの上限を適用します。
 ファイル名の解決・診断の元ファイルへの対応は `source::load` が担当し、文字列 API の check/compile はファイル I/O を行いません。
 
-再公開は `(import "source.wlt" (func $original $renamed))` と `(export (func $renamed))` を組み合わせます。
+再公開は `(%import "source.wlt" (func $original $renamed))` と `(%export (func $renamed))` を組み合わせます。
 namespace 内では従来の完全修飾参照も使えますが、別ファイルの定義へは named import が必要です。
 変数の再代入、トップレベル実行、start、メモリ初期化などをこの静的ファイルモジュールに追加していません。
 wildcard・default import/export・dynamic import・循環モジュールは未対応です。
-取り込むライブラリ内の `test` も拒否します。テストは別の入口ファイルから API を import して書き、生成物の根に意図せず追加されることを防ぎます。
+取り込むライブラリ内の `%test` も拒否します。テストは別の入口ファイルから API を import して書き、生成物の根に意図せず追加されることを防ぎます。
 
 ## 生成時の除去
 
@@ -62,7 +62,7 @@ Component の trusted binding 検査は削除前にも適用するため、未�
 この到達性解析と ID の再割当てはコンパイラの TCB です。Lean の契約カーネルによる意味保存の証明は追加していません。
 
 標準 WAT 単体は従来どおり書き換えません。start・メモリ・table・global や外部の import 解決を含む任意の WAT に、この除去を適用することはありません。
-`include` の結果が標準 WAT だけになる場合も、その経路を維持します。named file import は型付きの静的リンク経路です。
+`%include` の結果が標準 WAT だけになる場合も、その経路を維持します。named file import は型付きの静的リンク経路です。
 
 Wasm の import はインスタンス化時に必要な外部定義であり、start 等も実行されます。[Wasm Core 仕様](https://www.w3.org/TR/wasm-core/#modules)
 ESM の import は別モジュールの binding への参照で、値をコピーする宣言ではありません。[ECMAScript FAQ](https://github.com/tc39/ecma262/blob/main/FAQ.md#why-are-imported-module-bindings-aliased-instead-of-copied)

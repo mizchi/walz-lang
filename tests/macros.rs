@@ -67,9 +67,9 @@ fn for_is_a_macro_with_simultaneous_steps_and_an_immutable_induction_binding() {
     let source = r#"(module
       (type $Cell (struct (field $n (mut i64))))
       (func $main (export "main") (result i64)
-        (let $cell (struct.new $Cell (i64.const 0))
+        (%let $cell (struct.new $Cell (i64.const 0))
           (block (result i64)
-            (for $walk (bind $i i64 (i64.const 0)) (bind $j i64 (i64.const 1))
+            (%for $walk (bind $i i64 (i64.const 0)) (bind $j i64 (i64.const 1))
               (while (i64.lt_s (local.get $i) (i64.const 3)))
               (step (i64.add (local.get $i) (i64.const 1)) (local.get $i))
               (struct.set $Cell $n (local.get $cell)
@@ -77,7 +77,7 @@ fn for_is_a_macro_with_simultaneous_steps_and_an_immutable_induction_binding() {
             (i64.add (struct.get $Cell $n (local.get $cell)) (i64.const 40))))))"#;
     assert_eq!(run(source), "42");
     let wat = wlt::compile(source).unwrap().wat;
-    assert!(!wat.contains("(for "));
+    assert!(!wat.contains("(%for "));
     assert!(wat.contains("(loop ") && wat.contains("(br "));
 }
 
@@ -89,14 +89,14 @@ fn try_catch_uses_native_tags_and_supports_multiple_and_gc_payloads() {
       (func $raise (result i64)
         (throw $Error (i32.const 2) (struct.new $Box (i64.const 40))))
       (func $main (export "main") (result i64)
-        (try (result i64) (do (call $raise))
+        (%try (result i64) (do (call $raise))
           (catch $Unused ($code) (i64.const -1))
           (catch $Error ($code $box)
             (i64.add (i64.extend_i32_s (local.get $code)) (struct.get $Box $n (local.get $box)))))))"#;
     assert_eq!(run(source), "42");
     let wat = wlt::compile(source).unwrap().wat;
     assert!(wat.contains("try_table") && wat.contains("throw $Error"));
-    assert!(!wat.contains("(try "));
+    assert!(!wat.contains("(%try "));
 }
 
 #[test]
@@ -105,9 +105,9 @@ fn normal_return_does_not_run_handlers_and_rethrow_escapes_the_current_handler()
         run(r#"(module (tag $E (param i64))
       (func $main (export "main") (result i64)
         (i64.add
-          (try (result i64) (do (i64.const 20)) (catch_all (unreachable)))
-          (try (result i64)
-            (do (try (result i64) (do (throw $E (i64.const 21)))
+          (%try (result i64) (do (i64.const 20)) (catch_all (unreachable)))
+          (%try (result i64)
+            (do (%try (result i64) (do (throw $E (i64.const 21)))
               (catch $E ($n) (throw $E (i64.add (local.get $n) (i64.const 1))))))
             (catch $E ($n) (local.get $n))))))"#),
         "42"
@@ -119,12 +119,12 @@ fn catch_all_catches_exceptions_but_does_not_catch_traps() {
     assert_eq!(
         run(r#"(module (tag $E)
       (func $main (export "main") (result i64)
-        (try (result i64) (do (throw $E)) (catch_all (i64.const 42)))))"#),
+        (%try (result i64) (do (throw $E)) (catch_all (i64.const 42)))))"#),
         "42"
     );
     let output = invoke(
         r#"(module (func $main (export "main") (result i64)
-      (try (result i64) (do (i64.div_s (i64.const 1) (i64.const 0)))
+      (%try (result i64) (do (i64.div_s (i64.const 1) (i64.const 0)))
         (catch_all (i64.const 42)))))"#,
     );
     assert!(!output.status.success());
@@ -138,10 +138,10 @@ fn exceptions_and_for_keep_evaluation_order_and_work_inside_tests() {
       (tag $E (param i64))
       (type $Cell (struct (field $n (mut i64))))
       (func $main (export "main") (result i64)
-        (let $cell (struct.new $Cell (i64.const 0))
-          (try (result i64)
+        (%let $cell (struct.new $Cell (i64.const 0))
+          (%try (result i64)
             (do (block (result i64)
-              (for $walk (bind $i i64 (i64.const 0))
+              (%for $walk (bind $i i64 (i64.const 0))
                 (while (i64.lt_s (local.get $i) (i64.const 10)))
                 (step (i64.add (local.get $i) (i64.const 1)))
                 (if (i64.eq (local.get $i) (i64.const 3))
@@ -165,27 +165,27 @@ fn malformed_macros_and_payload_types_are_rejected() {
         ),
         ("(module (func $f (throw $Missing)))", "unknown tag"),
         (
-            "(module (tag $E (param i64)) (func $f (try (do (nop)) (catch $E () (nop)))))",
+            "(module (tag $E (param i64)) (func $f (%try (do (nop)) (catch $E () (nop)))))",
             "payload binding count",
         ),
         (
-            "(module (tag $E) (func $f (try (do (nop)) (catch $E () (nop)) (catch $E () (nop)))))",
+            "(module (tag $E) (func $f (%try (do (nop)) (catch $E () (nop)) (catch $E () (nop)))))",
             "duplicate catch",
         ),
         (
-            "(module (func $f (try (do (nop)) (catch_all (nop)) (catch_all (nop)))))",
+            "(module (func $f (%try (do (nop)) (catch_all (nop)) (catch_all (nop)))))",
             "catch_all must be last",
         ),
         (
-            "(module (func $f (for $l (bind $i i64 (i64.const 0)) (while (i64.const 1)) (step (i64.const 1)) (nop))))",
+            "(module (func $f (%for $l (bind $i i64 (i64.const 0)) (while (i64.const 1)) (step (i64.const 1)) (nop))))",
             "expected i32, got i64",
         ),
         (
-            "(module (func $f (for $l (bind $i i64 (i64.const 0)) (while (i32.const 1)) (step (i32.const 1)) (nop))))",
+            "(module (func $f (%for $l (bind $i i64 (i64.const 0)) (while (i32.const 1)) (step (i32.const 1)) (nop))))",
             "expected i64, got i32",
         ),
         (
-            "(module (func $f (for $l (bind $i i64 (i64.const 0)) (while (i32.const 1)) (step (i64.const 1)) (i64.const 1))))",
+            "(module (func $f (%for $l (bind $i i64 (i64.const 0)) (while (i32.const 1)) (step (i64.const 1)) (i64.const 1))))",
             "expected unit, got i64",
         ),
     ] {
@@ -250,7 +250,7 @@ fn exception_effects_are_distinct_from_traps_and_propagate_through_calls() {
         r#"(module (tag $E)
       (func $trap (result i64) (i64.div_s (i64.const 1) (i64.const 0)))
       (func $raise (throw $E))
-      (func $caught (try (do (call $raise)) (catch_all (nop)))))"#,
+      (func $caught (%try (do (call $raise)) (catch_all (nop)))))"#,
     )
     .unwrap();
     let analysis = wlt::analysis::analyze(&module);
@@ -268,13 +268,13 @@ fn empty_for_skips_body_and_step_and_nested_handlers_keep_lexical_scopes() {
         run(r#"(module (tag $E (param i64))
       (func $main (export "main") (result i64)
         (block (result i64)
-          (for $empty (bind $i i64 (i64.const 0))
+          (%for $empty (bind $i i64 (i64.const 0))
             (while (i32.const 0)) (step (unreachable)) (unreachable))
-          (loop $walk (bind $n i64 (i64.const 0)) (result i64)
-            (try (result i64) (do (throw $E (local.get $n)))
+          (%loop $walk (bind $n i64 (i64.const 0)) (result i64)
+            (%try (result i64) (do (throw $E (local.get $n)))
               (catch $E ($n)
                 (if (result i64) (i64.lt_s (local.get $n) (i64.const 42))
-                  (then (recur $walk (i64.add (local.get $n) (i64.const 1))))
+                  (then (%recur $walk (i64.add (local.get $n) (i64.const 1))))
                   (else (local.get $n)))))))))"#),
         "42"
     );

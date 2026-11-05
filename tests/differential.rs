@@ -45,7 +45,7 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
             dir.path().join("leaf.wlt"),
             format!(
                 r#"(module
-          (export (opaque $State) (func $new) (func $get))
+          (%export (opaque $State) (func $new) (func $get))
           (type $State (struct (field $n i32)))
           (func $new (result (ref $State)) (struct.new $State (i32.const {seed})))
           (func $get (param $s (ref $State)) (result i32) (struct.get $State $n (local.get $s))))"#
@@ -57,8 +57,8 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
             dir.path().join("facade.wlt"),
             format!(
                 r#"(module
-          (import "sub/../leaf.wlt" (type $State $S) (func $new $make) (func $get {private}))
-          (export (type $S) (func $make)))"#
+          (%import "sub/../leaf.wlt" (type $State $S) (func $new $make) (func $get {private}))
+          (%export (type $S) (func $make)))"#
             ),
         )
         .unwrap();
@@ -66,8 +66,8 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
         std::fs::write(
             &main,
             r#"(module
-          (import "facade.wlt" (type $S) (func $make))
-          (import "./leaf.wlt" (func $get $read))
+          (%import "facade.wlt" (type $S) (func $make))
+          (%import "./leaf.wlt" (func $get $read))
           (func $main (export "main") (result i32) (call $read (call $make))))"#,
         )
         .unwrap();
@@ -85,7 +85,7 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
         );
         std::fs::write(
             &main,
-            format!("(module (import \"facade.wlt\" (func {private} $leaked)))"),
+            format!("(module (%import \"facade.wlt\" (func {private} $leaked)))"),
         )
         .unwrap();
         let loaded = wlt::source::load(&main).unwrap();

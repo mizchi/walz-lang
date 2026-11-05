@@ -1,16 +1,16 @@
 (module
-  (import "../../../stdlib/text.wlt" (func $string.u64))
-  (include "compute.wlt")
-  (func $must (param $result (result unit (ref $domain.Error)))
-    (match (local.get $result)
+  (%import "../../../stdlib/text.wlt" (func $string.u64))
+  (%include "compute.wlt")
+  (func $must (param $result (%result %unit (ref $domain.Error)))
+    (%match (local.get $result)
       (case ok () (nop))
       (case err ($e) (unreachable))))
 
   (func $jobs (param $n i32) (result (ref $graph.Graph))
-    (let $g (call $graph.new)
+    (%let $g (call $graph.new)
       (block
         (result (ref $graph.Graph))
-        (for $add
+        (%for $add
           (bind $i i32 (i32.const 0))
           (while (i32.lt_u (local.get $i) (local.get $n)))
           (step (i32.add (local.get $i) (i32.const 1)))
@@ -22,7 +22,7 @@
         (local.get $g))))
 
   (func $chain (export "chain") (param $n i32) (param $rounds i32) (result i64)
-    (effects reads writes allocates)
+    (%effects reads writes allocates)
     (if
       (result i64)
       (i32.or
@@ -30,7 +30,7 @@
         (i32.gt_u (local.get $rounds) (i32.const 100)))
       (then (unreachable))
       (else
-        (loop $repeat
+        (%loop $repeat
           (bind $round i32 (i32.const 0))
           (bind $sum i64 (i64.const 0))
           (result i64)
@@ -39,10 +39,10 @@
             (i32.eq (local.get $round) (local.get $rounds))
             (then (local.get $sum))
             (else
-              (let $g (call $jobs (local.get $n))
+              (%let $g (call $jobs (local.get $n))
                 (block
                   (result i64)
-                  (for $link
+                  (%for $link
                     (bind $i i32 (i32.const 1))
                     (while (i32.lt_u (local.get $i) (local.get $n)))
                     (step (i32.add (local.get $i) (i32.const 1)))
@@ -55,10 +55,10 @@
                             (local.get $g)
                             (i32.sub (local.get $i) (i32.const 1))))
                       )))
-                  (match (call $planner.run (local.get $g) (i32.const 7))
+                  (%match (call $planner.run (local.get $g) (i32.const 7))
                     (case err ($e) (unreachable))
                     (case ok ($r)
-                      (recur $repeat
+                      (%recur $repeat
                         (i32.add (local.get $round) (i32.const 1))
                         (i64.add
                           (local.get $sum)
@@ -67,15 +67,15 @@
             ))))
     ))
 
-  (func $edge-limit (export "edge-limit") (result i32) (effects reads writes allocates)
-    (let $g (call $jobs (i32.const 257))
+  (func $edge-limit (export "edge-limit") (result i32) (%effects reads writes allocates)
+    (%let $g (call $jobs (i32.const 257))
       (block
         (result i32)
-        (for $row
+        (%for $row
           (bind $i i32 (i32.const 0))
           (while (i32.lt_u (local.get $i) (i32.const 256)))
           (step (i32.add (local.get $i) (i32.const 1)))
-          (for $column
+          (%for $column
             (bind $j i32 (i32.const 0))
             (while (i32.lt_u (local.get $j) (i32.const 256)))
             (step (i32.add (local.get $j) (i32.const 1)))
@@ -86,11 +86,11 @@
                 (call $graph.id (call $graph.at (local.get $g) (local.get $j))))
             )))
         ;; Existing edges remain idempotent even after the capacity is reached.
-        (call $must (call $graph.after (local.get $g) (text.lit "0") (text.lit "0")))
-        (match (call $graph.after (local.get $g) (text.lit "256") (text.lit "0"))
+        (call $must (call $graph.after (local.get $g) (%text.lit "0") (%text.lit "0")))
+        (%match (call $graph.after (local.get $g) (%text.lit "256") (%text.lit "0"))
           (case ok () (i32.const 0))
           (case err ($e)
-            (match (local.get $e)
+            (%match (local.get $e)
               (case invalid ($d) (i32.const 0))
               (case duplicate ($d) (i32.const 0))
               (case unknown ($d) (i32.const 0))

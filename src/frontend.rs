@@ -1839,7 +1839,7 @@ impl Checker<'_, '_> {
                         },
                     )
                 }
-                "loop" => self.loop_expr(node, items, scope, loops)?,
+                "loop" | "native.loop" => self.loop_expr(node, items, scope, loops)?,
                 "recur" => {
                     let name_node = items
                         .get(1)
@@ -2663,11 +2663,13 @@ impl Checker<'_, '_> {
         let (result, start) = self.result(items, start)?;
         self.tables.count(node, items, start + 1)?;
         let mut nested_loops = loops.to_vec();
-        nested_loops.push(LoopContext {
-            name,
-            id,
-            bindings: bindings.iter().map(|(id, _)| *id).collect(),
-        });
+        if node.head() != Some("native.loop") {
+            nested_loops.push(LoopContext {
+                name,
+                id,
+                bindings: bindings.iter().map(|(id, _)| *id).collect(),
+            });
+        }
         let body = self.expr_as(&items[start], &nested, &nested_loops, true, &result)?;
         Ok((
             result,

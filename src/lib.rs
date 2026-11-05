@@ -17,6 +17,7 @@ mod link;
 mod lists;
 mod modules;
 pub mod native;
+mod native_macros;
 mod optimize;
 pub mod ownership;
 pub mod proof;
@@ -26,6 +27,7 @@ pub mod runner;
 mod scoped;
 mod sexpr;
 pub mod source;
+pub mod syntax;
 mod type_syntax;
 pub mod typing;
 pub mod verified;
@@ -105,6 +107,7 @@ pub fn check_with_policy(
     policy: &bindings::BindingPolicy,
 ) -> Result<ir::Module, Error> {
     let syntax = sexpr::parse(source)?;
+    let syntax = syntax::normalize(source, &syntax)?;
     let syntax = modules::expand(source, &syntax)?;
     let generics = generics::expand(source, &syntax.syntax)?;
     let checked = (|| {
@@ -163,7 +166,34 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
             ir,
         });
     }
-    let module = check(source)?;
+    let module = match check(source) {
+        Ok(module) => module,
+        Err(error) => {
+            if error.diagnostic().code == "E_CHECK"
+                && let Some(wat) = native_macros::expand(source)?
+            {
+                let wasm = wat::parse_str(&wat).map_err(|e| {
+                    Error::message(format!("expanded WAT: {e}")).with_code("E_NATIVE_WAT")
+                })?;
+                wasmparser::Validator::new()
+                    .validate_all(&wasm)
+                    .map_err(|e| {
+                        Error::message(format!("expanded Wasm: {e}")).with_code("E_NATIVE_WAT")
+                    })?;
+                return Ok(Compilation {
+                    wat,
+                    wasm,
+                    analysis: Analysis {
+                        opaque: true,
+                        module_effects: Effects::unknown(),
+                        functions: vec![],
+                    },
+                    ir: None,
+                });
+            }
+            return Err(error);
+        }
+    };
     if !options.optimize {
         if !module.laws.is_empty() {
             verified::verify(source, &module)?;

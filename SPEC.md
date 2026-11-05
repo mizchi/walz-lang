@@ -6,8 +6,9 @@
 対応範囲は固定した `wat`/`wasmparser` の既定の検証機能です。スタック形式、匿名関数、数値インデックス、線形メモリ、バイト文字列、標準の例外命令などを型付きコアの制限で拒否しません。
 元の WAT にローカルの再代入や動的な呼び出しがあれば、その Wasm の意味を保ちます。`$__` の予約も拡張側だけの規約です。
 
-標準 WAT として受理できない追加構文は、以下の型付きコアで名前・型・束縛・網羅性を検査し、標準 WAT へ展開します。
-拡張を含むモジュールの本体は、現在このコアの folded expression 規約に従います。標準 WAT の任意の命令と拡張を混在させるための部分ごとの型推論は未実装です。
+WLT の拡張入口はすべて `%` で始めます。標準の `import` / `export` と、静的リンクの `%import` / `%export` を区別します。値型の `(%result T E)` と結果宣言の `(result T)` も区別します。型引数は `(%inst $name T...)` で適用します。[接頭辞・移行・解析の境界](docs/syntax.md) に規約をまとめています。
+
+追加構文は、以下の型付きコアで名前・型・束縛・網羅性を検査し、標準 WAT へ展開します。このコアの本体は folded expression 規約に従います。コア外の WAT と構文マクロ `%let` / `%loop` / `%for` を併用する場合は、展開後の Wasm 全体を検証し、解析を opaque とします。この経路から effect・所有権などの契約を検査済みと扱うことはありません。
 構文ごとの展開は固定し、利用者が eval や任意の処理を実行するマクロシステムは設けません。
 `expand`/`wat` コマンドと `wlt::expand` で展開結果を確認できます。
 
@@ -21,10 +22,10 @@
 
 ## 表現と型
 
-プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `closure`・`test`・`law`・`namespace` および静的な named `import` / `export` です。ファイルの宣言位置では include も使えます。
-型は `i32`・`i64`・`f32`・`f64`・`(ref $T)`・`(ref null $T)`・`(option T)`・`(result T E)`・`(pair T U)`・`(own T)`・`(future T)`・`(stream T)`・`bytes`・`text`。戻り値を宣言しない式・関数は unit です。
+プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `%closure`・`%test`・`%law`・`%namespace` および静的な named `%import` / `%export` です。ファイルの宣言位置では `%include` も使えます。
+型は `i32`・`i64`・`f32`・`f64`・`(ref $T)`・`(ref null $T)`・`(%option T)`・`(%result T E)`・`(%pair T U)`・`(%own T)`・`(%future T)`・`(%stream T)`・`%bytes`・`%text`。戻り値を宣言しない式・関数は unit です。
 関数の引数・戻り値、構造体のフィールド、配列の要素、クロージャの捕捉値には型が必要です。
-`let` の束縛型は注釈がなければ初期値から一意に決まり、`case` の束縛型は payload の宣言から決まります。
+`%let` の束縛型は注釈がなければ初期値から一意に決まり、`case` の束縛型は payload の宣言から決まります。
 暗黙の型変換はなく、non-null 参照から同じ型の nullable 参照への適合だけを認めます。
 GC 型は名前で区別します。前方参照と再帰型を認め、出力時には1つの Wasm recursion group にまとめます。
 
@@ -38,7 +39,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 戻り値注釈を省略した関数や result を省略した block/if/match の型は unit であり、本体から戻り値型を推論する指定ではありません。
 
 `typing::report(&module)` は、関数ごとの params/captures の ID、戻り値型、全束縛の ID・名前・宣言位置・型・束縛の種類、全ソース式の位置・型を返します。
-同名の束縛も関数内の ID で区別します。型名は `i64`・`(ref $T)`・`(ref null $T)`・`unit`・`never` のように表示します。
+同名の束縛も関数内の ID で区別します。型名は `i64`・`(ref $T)`・`(ref null $T)`・`%unit`・`never` のように表示します。
 位置は API に渡したソース（include を使う場合は展開後）の UTF-8 byte offset の半開区間 `[start, end)` です。省略された unit 本体にはソース式の位置がなく、式の一覧には含めません。
 `typing::type_at(&module, offset)` で束縛の宣言名または最も内側の式の型を取得でき、対象範囲外は `None` です。
 型の問い合わせは既に解決した型を参照し、Wasm を実行しません。
@@ -49,7 +50,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 束縛は字句スコープで、内側の同名束縛による隠蔽を認めます。引数・捕捉宣言の重複はエラーです。
 
 ```text
-(let $name [T] initial-value body)
+(%let $name [T] initial-value body)
 (local.get $name)
 (block [(result T)] unit-expression ... result-expression)
 (if [(result T)] condition (then expression) (else expression))
@@ -61,13 +62,13 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 
 すべて folded expression とし、1関数の本体は1つの式です。複数の処理は `block` でまとめます。
 block の最後以外の式は unit でなければならず、不要な値は `drop` で明示します。
-条件は `i32`、分岐の型は result と一致させます。`unreachable` と `recur` は値を返さず、任意の結果型の位置で使えます。
+条件は `i32`、分岐の型は result と一致させます。`unreachable` と `%recur` は値を返さず、任意の結果型の位置で使えます。
 評価順序は左から右です。関数の定義順は呼び出しの可否に影響しません。
 ローカルの再代入はありません。Wasm の `local.set` はこの言語のソースでは使えません。
 
-`let` には `(let $x i64 (i64.const 42) body)` のように任意の型注釈を書けます。
+`%let` には `(%let $x i64 (i64.const 42) body)` のように任意の型注釈を書けます。
 注釈があれば初期値がその型に適合することを検査し、束縛には注釈した型を保持します。
-例えば `(let $x (ref null $T) (struct.new $T ...) body)` の `$x` は nullable です。初期値の式自体の型は non-null のままです。
+例えば `(%let $x (ref null $T) (struct.new $T ...) body)` の `$x` は nullable です。初期値の式自体の型は non-null のままです。
 
 ## GC データ
 
@@ -88,21 +89,21 @@ nullable 参照の検査による暗黙の型絞り込みは行いません。�
 ## Option/Result の値型
 
 ```wat
-(func $make (result (option (result i64 i32))) (effects pure)
-  (option.some (result i64 i32) (result.ok i64 i32 (i64.const 42))))
+(func $make (result (%option (%result i64 i32))) (%effects pure)
+  (%option.some (%result i64 i32) (%result.ok i64 i32 (i64.const 42))))
 
-(match (option i64) (result i64) (option.none i64)
+(%match (%option i64) (result i64) (%option.none i64)
   (case none () (i64.const 0))
   (case some ($value) (local.get $value)))
 ```
 
-型は `(option T)` と `(result T E)`。入れ子、引数・戻り値・フィールド・配列要素・明示 capture・loop 状態に使えます。
+型は `(%option T)` と `(%result T E)`。入れ子、引数・戻り値・フィールド・配列要素・明示 capture・loop 状態に使えます。
 同じ型引数の組合せは1つの内部型に具体化します。型引数が異なる値を暗黙には変換しません。
-関数の結果宣言で Result 値を返す場合は `(result (result T E))` と書きます。標準 WAT の複数戻り値の宣言とは文脈で区別します。
+関数の結果宣言で Result 値を返す場合は `(result (%result T E))` と書きます。標準 WAT の複数戻り値の宣言とは文脈で区別します。
 
-構築は `(option.none T)`、`(option.some T value)`、`(result.ok T E value)`、`(result.err T E value)` です。
+構築は `(%option.none T)`、`(%option.some T value)`、`(%result.ok T E value)`、`(%result.err T E value)` です。
 型引数には unit も使えます。その側は payload を持たず、構築時の value と case の束縛を省略します。
-例えば `(result.ok unit i32)`、`(option.some unit)` です。unit 自体はフィールドや引数などに保存する型としては使えません。
+例えば `(%result.ok %unit i32)`、`(%option.some %unit)` です。unit 自体はフィールドや引数などに保存する型としては使えません。
 
 match の型指定には上のような型構築子を渡し、Option は none/some、Result は ok/err の全ケースを記述します。
 payload の個数・型と網羅性を検査し、値がない場合も case の空の束縛列 `()` は必要です。
@@ -114,15 +115,15 @@ payload に通常の GC 参照を持つ場合、その参照の identity や可�
 
 ## 閉じた enum と網羅的な match
 
-enum は `variant` 型として宣言します。ケース名は `$` を付けない ASCII 識別子で、先頭は英字または `_`、以降は英数字・`_`・`.`・`-` です。
+enum は `%variant` 型として宣言します。ケース名は `$` を付けない ASCII 識別子で、先頭は英字または `_`、以降は英数字・`_`・`.`・`-` です。
 
 ```wat
-(type $Result (variant (ok i64) (error i32)))
-(type $List (variant (nil) (cons i64 (ref $List))))
+(type $Result (%variant (ok i64) (error i32)))
+(type $List (%variant (nil) (cons i64 (ref $List))))
 
-(variant.new $Result ok (i64.const 42))
+(%variant.new $Result ok (i64.const 42))
 
-(match $Result (result i64) (local.get $result)
+(%match $Result (result i64) (local.get $result)
   (case ok ($value) (local.get $value))
   (case error ($code) (i64.const -1)))
 ```
@@ -133,7 +134,7 @@ enum は `variant` 型として宣言します。ケース名は `$` を付け�
 構築時の個数・型を検査するので、`(ref $List)` が必要な位置に `ref.null` は渡せません。
 参照先が明示的に可変なオブジェクトなら、その参照先の変更は可能です。
 
-`match` は `(match $Type [(result R)] subject (case name ($bindings...) body) ...)` です。
+`%match` は `(%match $Type [(result R)] subject (case name ($bindings...) body) ...)` です。
 subject は指定した enum 型の non-null 参照でなければならず、一度だけ評価します。
 ケースの順序は自由ですが、全ケースをちょうど1回ずつ書く必要があります。未知のケース・重複・分岐漏れはエラーです。
 束縛の個数は payload と一致させ、型はケースの宣言から決まります。同一 case 内の束縛名の重複はエラーです。
@@ -142,7 +143,7 @@ subject は指定した enum 型の non-null 参照でなければならず、�
 ワイルドカード・ガード・入れ子のパターンはありません。入れ子の分解には別の match を書きます。
 
 ソースで enum の内部を `struct.new/get/set` することや、別の enum 型として扱うことはできません。
-`variant.new` は引数のないケースも毎回割り当てます。`ref.eq` は参照同一性を比較し、構造的な等値比較は提供しません。
+`%variant.new` は引数のないケースも毎回割り当てます。`ref.eq` は参照同一性を比較し、構造的な等値比較は提供しません。
 
 Wasm には不変の i32 タグを持つ基底 GC struct と、ケースごとの final な subtype を出力します。
 各 subtype はタグに続いて、そのケースに必要な payload だけを保持します。タグ分岐と検査付き `ref.cast` で分解します。
@@ -153,23 +154,23 @@ enum の構築も割当て失敗を含む `allocates=true`・`may_trap=true` で
 ## 状態を引数で渡すループ
 
 ```text
-(loop $label
+(%loop $label
   (bind $state T initial-value) ...
   [(result R)]
   body)
 
-(recur $label next-value ...)
+(%recur $label next-value ...)
 ```
 
 初期値は外側のスコープで左から右に評価します。loop の body では state が読めます。
-body が通常の値を返すとループを終了します。`recur` は最も内側のループの末尾位置でだけ使えます。
+body が通常の値を返すとループを終了します。`%recur` は最も内側のループの末尾位置でだけ使えます。
 recur は各引数を左から右にすべて評価してから、すべての state を同時に更新して反復します。
 個数・型は bind と一致させます。この反復は Wasm の loop/br に変換され、呼び出しスタックを増やしません。
 
 ## for マクロ
 
 ```text
-(for $label
+(%for $label
   (bind $state T initial-value) ...
   (while i32-condition)
   (step next-state ...)
@@ -187,7 +188,7 @@ step は bind と同じ個数・型が必要です。本体が例外を投げた
 ```wat
 (tag $Error (param i32 i64))
 
-(try (result i64)
+(%try (result i64)
   (do (throw $Error (i32.const 1) (i64.const 42)))
   (catch $Error ($code $value) (local.get $value))
   (catch_all (i64.const -1)))
@@ -210,14 +211,14 @@ throw の割当てと資源枯渇も保守的に作用へ含めます。handler 
 ## 明示的なクロージャ
 
 ```text
-(closure $C
-  (capture $captured T) ...
+(%closure $C
+  (%capture $captured T) ...
   (param $argument U) ...
   [(result R)]
   body)
 
-(closure.new $C capture-value ...)
-(closure.call $C closure-value argument ...)
+(%closure.new $C capture-value ...)
+(%closure.call $C closure-value argument ...)
 ```
 
 宣言はモジュール直下に置き、宣言ごとに固有の型 `(ref $C)` を作ります。
@@ -233,7 +234,7 @@ throw の割当てと資源枯渇も保守的に作用へ含めます。handler 
 ## テスト宣言
 
 ```wat
-(test "name" i32-expression)
+(%test "name" i32-expression)
 ```
 
 宣言はモジュール直下に置き、名前は空白のみではない文字列です。同一モジュール内の同名テストを拒否します。
@@ -276,14 +277,14 @@ import には副作用を過小評価する注釈を認めず、読み書き・�
 
 ```wat
 (func $add (param $x i64) (param $y i64) (result i64)
-  (effects pure)
+  (%effects pure)
   (i64.add (local.get $x) (local.get $y)))
 
-(func $raise (effects (throws $Error))
+(func $raise (%effects (throws $Error))
   (throw $Error (i64.const 42)))
 ```
 
-関数と closure のヘッダに `(effects ...)` を指定できます。省略時は実装から推論します。
+関数と closure のヘッダに `(%effects ...)` を指定できます。省略時は実装から推論します。
 項目は reads、writes、allocates、suspends、host、`(throws $Tag...)`、`(throws *)` です。pure は空の集合の別名で、他の項目と併記できません。
 指定した集合は許可する作用の上限です。実装の作用が上限を超えた場合は、契約の位置と不足する作用を報告します。
 重複、未知の項目・tag、複数の effects 宣言を拒否します。契約は本体より前に置きます。
@@ -340,21 +341,21 @@ WIT は任意の effect 契約を保持しないため、生成 interface だけ
 ## 所有値の最小規約
 
 ```wat
-(let $ticket (own.new i64 (i64.const 42))
-  (match (own i64) (result i64) (move $ticket)
+(%let $ticket (%own.new i64 (i64.const 42))
+  (%match (%own i64) (result i64) (%move $ticket)
     (case own ($value) (local.get $value))))
 
-(let $unused (own.new unit)
-  (own.close (move $unused)))
+(%let $unused (%own.new %unit)
+  (%own.close (%move $unused)))
 ```
 
-`(own T)` は共有可能なデータ T を包む、複製できない値です。T は unit でもよく、その場合 own.new の値引数と case の束縛を省略します。
+`(%own T)` は共有可能なデータ T を包む、複製できない値です。T は unit でもよく、その場合 own.new の値引数と case の束縛を省略します。
 own.new は新しい所有値を作り、move はローカル・引数・捕捉値の所有権を渡します。所有値に local.get は使えません。move 後の再使用、所有しない値の move、所有値の drop を拒否します。
 own は case own の match で消費して内容を取り出すか、own.close で明示的に消費します。暗黙の解放はありません。
 現在の own.close は所有するデータの包みを消費し、Wasm の drop に展開します。OS リソースの close や Future/Stream の cancel を実装する操作ではありません。
 own は payload の GC 参照を排他的にしません。既存の共有 GC 参照の別名や変更可能性はそのままです。own の内部へ別の所有値を直接包むことは認めません。
 
-`(pair T U)` は `(pair.new T U first second)` で作り、case pair の match で分解します。unit 成分の値引数と束縛は省略します。
+`(%pair T U)` は `(%pair.new T U first second)` で作り、case pair の match で分解します。unit 成分の値引数と束縛は省略します。
 pair、Option、Result は、成分のどれかが所有値なら全体も所有値です。所有値を捕捉する closure も所有値になり、構築時の所有 capture と呼び出し時の環境に move を使います。
 所有 closure は nullable にできず、ref.eq/is_null/as_non_null で参照を観測できません。自身を呼び出すと消費され、捕捉した所有値も本体で処理する必要があります。
 共有される struct/array/参照型 variant のフィールド、例外 payload への所有値の格納は拒否します。
@@ -371,8 +372,8 @@ borrow/lifetime、部分 move、async frame、リソース destructor は未実�
 ## 配送済みの Future と有限 Stream
 
 ```wat
-(let $future (future.ready i64 (i64.const 42))
-  (future.await i64 (move $future)))
+(%let $future (%future.ready i64 (i64.const 42))
+  (%future.await i64 (%move $future)))
 ```
 
 Future/Stream は readable end に対応する opaque な所有値です。直接の match・ref 操作、共有 GC フィールドへの格納、暗黙の drop は認めません。
@@ -382,13 +383,13 @@ Result のような共有データの組合せ、GC 参照、unit は使えま�
 
 | 操作 | 型・意味 |
 |---|---|
-| `(future.ready T value)` | Future<T> を作る。unit なら value を省略 |
-| `(future.await T future)` | 端点を消費して T を返す。suspends を持つ |
-| `(future.close T future)` | 受け取りを放棄し、端点を消費。unit を返す |
-| `(stream.empty T)` | 終端の Stream<T> を作る |
-| `(stream.cons T value rest)` | value を先頭とする Stream<T> を作り、rest を消費。unit なら value を省略 |
-| `(stream.next T stream)` | 端点を消費し、pair<Stream<T>,Option<T>> を返す。suspends を持つ |
-| `(stream.close T stream)` | 残りの受け取りを放棄し、端点を消費。unit を返す |
+| `(%future.ready T value)` | Future<T> を作る。unit なら value を省略 |
+| `(%future.await T future)` | 端点を消費して T を返す。suspends を持つ |
+| `(%future.close T future)` | 受け取りを放棄し、端点を消費。unit を返す |
+| `(%stream.empty T)` | 終端の Stream<T> を作る |
+| `(%stream.cons T value rest)` | value を先頭とする Stream<T> を作り、rest を消費。unit なら value を省略 |
+| `(%stream.next T stream)` | 端点を消費し、pair<Stream<T>,Option<T>> を返す。suspends を持つ |
+| `(%stream.close T stream)` | 残りの受け取りを放棄し、端点を消費。unit を返す |
 
 構築時の引数は左から右に一度ずつ評価し、読み取りの対象式も一度だけ評価します。
 await で返した Future は再利用できません。next の後は返された Stream だけを使います。
@@ -409,10 +410,10 @@ await/next には、中断境界として suspends を常に付けます。通�
 ## law と契約付き実行
 
 ```wat
-(func $add (param $x i32) (param $y i32) (result i32) (effects pure)
+(func $add (param $x i32) (param $y i32) (result i32) (%effects pure)
   (i32.add (local.get $x) (local.get $y)))
 
-(law "addition is commutative" (param $x i32) (param $y i32)
+(%law "addition is commutative" (param $x i32) (param $y i32)
   (i32.eq (call $add (local.get $x) (local.get $y))
           (call $add (local.get $y) (local.get $x))))
 ```
@@ -608,22 +609,22 @@ jco の補正には pending-copy のキャンセル接続、取消し完了後�
 
 ## bytes / text と ABI
 
-`bytes` は不変な任意のバイト列、`text` は不変な検証済み UTF-8 の値型です。
+`%bytes` は不変な任意のバイト列、`%text` は不変な検証済み UTF-8 の値型です。
 両者とも non-null で共有でき、同一性・格納参照・書込みは公開しません。
 内部では packed i8 の private GC 配列を wrapper に格納し、可変な配列への書込みを構築時だけに制限します。
 数値から bytes への格納は Wasm i8 と同じく下位8ビットを使います。
 
 | 式 | 結果と規約 |
 |---|---|
-| `(bytes.new i32-expr...)` | `bytes`。空も可。各式は左から一度だけ評価 |
-| `(bytes.from-array $Array array-expr)` | 非 null の i32 配列を不変 bytes へコピー。各要素が0..255以外なら trap。可変配列にも対応 |
-| `(bytes.len bytes-expr)` | `i32` のバイト数 |
-| `(bytes.get bytes-expr index)` | `i32` の 0..255。index は符号なし、範囲外は trap |
-| `(bytes.slice bytes-expr start length)` | `bytes`。start <= size かつ length <= size-start。範囲外は trap |
-| `(text.lit "日本語")` | `text`。ソースリテラルは UTF-8 |
-| `(text.byte-len text-expr)` | `i32` の UTF-8 バイト数 |
-| `(text.bytes text-expr)` | `bytes`。内容を保つ。private storage は共有可能 |
-| `(text.from-bytes bytes-expr)` | `(option text)`。UTF-8 が不正なら none、正しければ some |
+| `(%bytes.new i32-expr...)` | `%bytes`。空も可。各式は左から一度だけ評価 |
+| `(%bytes.from-array $Array array-expr)` | 非 null の i32 配列を不変 bytes へコピー。各要素が0..255以外なら trap。可変配列にも対応 |
+| `(%bytes.len bytes-expr)` | `i32` のバイト数 |
+| `(%bytes.get bytes-expr index)` | `i32` の 0..255。index は符号なし、範囲外は trap |
+| `(%bytes.slice bytes-expr start length)` | `%bytes`。start <= size かつ length <= size-start。範囲外は trap |
+| `(%text.lit "日本語")` | `%text`。ソースリテラルは UTF-8 |
+| `(%text.byte-len text-expr)` | `i32` の UTF-8 バイト数 |
+| `(%text.bytes text-expr)` | `%bytes`。内容を保つ。private storage は共有可能 |
+| `(%text.from-bytes bytes-expr)` | `(%option %text)`。UTF-8 が不正なら none、正しければ some |
 
 不正な continuation、切れた系列、overlong、surrogate、U+10FFFF より大きい値を拒否します。
 NUL・BOM は通常のデータとして保存します。正規化、grapheme、コードポイント添字、比較・連結などの文字列ライブラリはまだありません。
@@ -645,19 +646,19 @@ JS では bytes は Uint8Array、text は string です。文字列の lowering 
 
 ```wat
 (module
-  (namespace $math
-    (public (func $add) (type $Box))
+  (%namespace $math
+    (%public (func $add) (type $Box))
     (type $Box (struct (field $n i32)))
     (func $add (param $n i32) (result (ref $Box))
       (struct.new $Box (i32.add (local.get $n) (i32.const 2)))))
-  (use $math (func $add $make) (type $Box))
+  (%use $math (func $add $make) (type $Box))
   (func $main (export "main") (result i32)
     (struct.get $Box $n (call $make (i32.const 40)))))
 ```
 
-`namespace` は名前の静的なスコープを作り、宣言の既定は非公開です。
-`(export (func $f) (type $T) (tag $Error))` は、そのスコープの func/type/tag を静的リンク向けに公開します。`public` は互換の綴りです。closure は func と type を別々に公開できます。
-`import $path (func/type/tag $member [$alias])...` は公開する宣言への静的な別名です。`use` も互換の綴りとして受理します。
+`%namespace` は名前の静的なスコープを作り、宣言の既定は非公開です。
+`(%export (func $f) (type $T) (tag $Error))` は、そのスコープの func/type/tag を静的リンク向けに公開します。`%public` は互換の綴りです。closure は func と type を別々に公開できます。
+`%import $path (func/type/tag $member [$alias])...` は公開する宣言への静的な別名です。`%use` も互換の綴りとして受理します。
 名前空間をまたぐ完全修飾名 `$math.add` も公開検査を受けます。パスはルートからの絶対名です。
 同一スコープの宣言と use 別名の衝突、未定義名、非公開名へのアクセスは拒否します。
 名前空間は入れ子にでき、宣言と use の順序には依存しません。親スコープの名前は暗黙には取り込みません。
@@ -668,7 +669,7 @@ import した別名を export する再公開もできます。wildcard、defaul
 Wasm/Component 向けの `(export "name")` は関数内の ABI export です。ルートの `(export "name" (func $local))` でも定義関数・静的 import の関数をラッパーなしに公開できます。文字列のない静的 export とは区別します。
 `public (type $T)` はフィールドを含む定義を公開します。`public (opaque $T)` は型だけを公開し、表現への操作を宣言 namespace 内に制限します。フィールド単位の private は未実装です。詳細は末尾の opaque 型の節を参照してください。
 
-ファイル分割は宣言位置の `(include "relative.wlt")` で行います。ファイルは `(module declarations...)` を含み、その宣言を展開します。
+ファイル分割は宣言位置の `(%include "relative.wlt")` で行います。ファイルは `(module declarations...)` を含み、その宣言を展開します。
 include 自体はスコープを作りません。ライブラリ側で namespace を宣言するか、呼び出し側の namespace の中に include します。
 パスは include を書いたファイルからの相対位置で解決します。絶対パス、循環、深さ64以上、展開後16 MiBを超える入力は拒否します。
 同一ファイルを自動で一度だけにする処理はなく、重複する宣言はエラーです。
@@ -676,7 +677,7 @@ CLI とテストランナーは include を展開し、通常の型エラーは�
 ライブラリ API は `source::load(path)` と `check(loaded.text())` / `compile(loaded.text())` を分け、文字列を受け取る check/compile 自体はファイルを読みません。
 IR の Span は展開後の text に対する範囲です。診断は `loaded.diagnostic(error)` で元の位置へ変換できます。
 
-ファイルからの `(import "relative.wlt" (func $f $alias) (type $T) (tag $E))` は選んだ公開名だけを束縛します。
+ファイルからの `(%import "relative.wlt" (func $f $alias) (type $T) (tag $E))` は選んだ公開名だけを束縛します。
 各ファイルは独立したスコープを持ち、canonical path ごとに一度だけ読み込み、型と定義を共有します。
 ファイル内 namespace の公開パス（例 `$string.u64`）も指定できます。親や依存ファイルの名前は暗黙に取り込みません。
 全ソースの検査後、ABI export・test・law から到達する関数・型・tag だけを生成します。未使用のホスト import と capability も除去します。
@@ -726,12 +727,12 @@ Node の handle 管理は runtime/node-io.mjs に分離します。通常完了�
 
 ## 文字列ライブラリと配列のコピー
 
-`bytes.from-array` の引数は指定した配列型の非 null 参照で、式を一度だけ評価する。
+`%bytes.from-array` の引数は指定した配列型の非 null 参照で、式を一度だけ評価する。
 元配列と格納域を共有せず、元配列を後から変更しても bytes/text の内容は変わらない。
 可変配列を読む場合は reads を持ち、memory 解析にも対象の要素読み取りを残す。返す値から元配列への参照はない。
 新しい bytes 自身に観測可能な identity はないので、格納用の物理的な割当てと semantic allocates は区別する。
 
-ルートの宣言位置で `(include "stdlib/text.wlt")` を使う。include のパスは呼出し元からの相対位置に合わせる。
+ルートの宣言位置で `(%include "stdlib/text.wlt")` を使う。include のパスは呼出し元からの相対位置に合わせる。
 `$buffer.concat(bytes,bytes)`、`$string.concat(text,text)`、`$string.u64(i64)`、`$string.s64(i64)`、`$string.json(text)` を提供する。
 u64 は64 bitのビットパターンを符号なし十進数へ、s64 は符号付き十進数へ変換する。
 json は引用符を含む JSON string を返し、quote/backslash/制御文字をエスケープする。
@@ -748,8 +749,8 @@ JSON object builder はフィールド名・値のエスケープと区切りを
 ## Result と Stream の限定マクロ
 
 ```wat
-(result.let ($value) (result T E) U subject body)
-(stream.fold-result T S E source initial ($state $item) body)
+(%result.let ($value) (%result T E) U subject body)
+(%stream.fold-result T S E source initial ($state $item) body)
 ```
 
 result.let は subject を一度評価し、ok の payload を body に束縛する。body の結果は result<U,E>。
@@ -770,15 +771,15 @@ result.let の err 経路に別の所有値が残る場合も拒否する。
 ## opaque な公開型
 
 ```wat
-(namespace $counter
-  (public (opaque $State) (func $new) (func $get))
+(%namespace $counter
+  (%public (opaque $State) (func $new) (func $get))
   (type $State (struct (field $n (mut i32))))
   (func $new (result (ref $State)) (struct.new $State (i32.const 0)))
   (func $get (param $s (ref $State)) (result i32)
     (struct.get $State $n (local.get $s))))
 ```
 
-外部では nominal な型として参照・受渡しできる。通常の `(use $counter (type $State $Alias))` も使える。
+外部では nominal な型として参照・受渡しできる。通常の `(%use $counter (type $State $Alias))` も使える。
 構築、フィールド／要素の読書き、variant の match、配列長取得と bytes.from-array は、宣言した namespace の中だけで認める。
 別名経由と、型が推論された参照経由にも同じ検査を行う。ref.eq、nullability と GC の意味は既存の規則を使う。
 検査は型付き IR の操作と元の宣言スコープを照合し、追加の実行時ラッパーや ABI は作らない。
@@ -795,25 +796,25 @@ EOF で完了した正常な main、Result の err、SIGINT の終了コード�
 
 ## 透明な型 alias と局所的な型引数の省略
 
-`(type.alias $Name T)` は型の出現箇所に展開する透明な略記です。型名の名前空間を使い、GC の type / closure と同名にはできません。
+`(%type.alias $Name T)` は型の出現箇所に展開する透明な略記です。型名の名前空間を使い、GC の type / closure と同名にはできません。
 前方参照を許可し、循環・深さ256超・展開ノード100万超を拒否します。未使用の target も既存の型・所有性規則で検査します。
 alias 自体を実行用 IR の nominal type にせず、未使用 alias の型を実行用 Wasm に追加しません。
-namespace 内の `public (type $Name)` と `use` に対応します。alias に opaque は指定できず、target の opaque 制限は展開後も適用します。
+namespace 内の `public (type $Name)` と `%use` に対応します。alias に opaque は指定できず、target の opaque 制限は展開後も適用します。
 型の位置では `$Name` と書きます。heap type ID を要求する `(ref $Name)` や `struct.get $Name` 等には使えません。
 unit の alias は payload の位置に限定し、通常の関数引数やフィールドへ unit を導入しません。
 
 次の省略形を既存の明示形に追加します。
 
 ```text
-(result.ok [value])                 ;; expected result<T,E>
-(result.err [error])                ;; expected result<T,E>
-(pair.new [first] [second])         ;; expected pair<T,U>、unit成分は省略
-(option.none) / (option.some value)  ;; expected option<T>
-(own.new [value])                   ;; expected own<T>
-(match subject (case variant ($names...) body)...)
-(let ($first $second) subject body)
-(result.let ($value) subject body)
-(stream.fold-result source initial ($state $item) body)
+(%result.ok [value])                 ;; expected result<T,E>
+(%result.err [error])                ;; expected result<T,E>
+(%pair.new [first] [second])         ;; expected pair<T,U>、unit成分は省略
+(%option.none) / (%option.some value)  ;; expected option<T>
+(%own.new [value])                   ;; expected own<T>
+(%match subject (case variant ($names...) body)...)
+(%let ($first $second) subject body)
+(%result.let ($value) subject body)
+(%stream.fold-result source initial ($state $item) body)
 ```
 
 値を構築する省略形は、関数の戻り値、呼出しの引数、明示した束縛型、フィールド、明示した分岐の結果型等から期待型が決まる場合に検査します。
@@ -838,12 +839,12 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 
 ## 不変の list
 
-`(list T)` と5つの操作、WIT list<T> の変換は [list の契約](docs/lists.md) を参照。
+`(%list T)` と5つの操作、WIT list<T> の変換は [list の契約](docs/lists.md) を参照。
 所有権を持つ要素や借用の格納は認めない。
 
 ## 利用者定義のジェネリクス
 
-`(type.params $T ...)` と `($name T...)` により、関数・型・alias・クロージャを単相化する。
+`(%type.params $T ...)` と `(%inst $name T...)` により、関数・型・alias・クロージャを単相化する。
 適用時の検査、再帰と展開の上限、公開 ABI、map/fold は [単相化の契約](docs/generics.md) を参照。
-`type.params` 直後の where は shared/nonunit/callable と callable の effect 上限を具体化時に検査する。
+`%type.params` 直後の where は shared/nonunit/callable と callable の effect 上限を具体化時に検査する。
 型クラスや抽象的な body 検査は導入せず、制約を消去して既存の閉じた IR へ変換する。

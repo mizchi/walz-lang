@@ -423,6 +423,9 @@ fn resolve(
 }
 fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Result<(), Error> {
     let head = node.head().unwrap_or("").to_owned();
+    if head.starts_with('@') {
+        return Ok(());
+    }
     if head == "export" && !scope.is_empty() {
         return Err(Error::at(
             source,

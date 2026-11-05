@@ -32,7 +32,7 @@ function corpus() {
       result: 0,
     },
     "stock-ledger": {
-      lines: Array.from({ length: n }, () => [`ADD\t${key}\t1`, `TAKE\t${key}\t1`, `SHOW\t${key}`]).flat(),
+      lines: Array.from({ length: n }, () => [`ADD	${key}	1`, `TAKE	${key}	1`, `SHOW	${key}`]).flat(),
       expected: Array.from({ length: n }, () => [
         { op: "ADD", key, ok: true, quantity: 1 },
         { op: "TAKE", key, ok: true, quantity: 0 },

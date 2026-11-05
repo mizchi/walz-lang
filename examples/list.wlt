@@ -6,7 +6,7 @@
     (if (result i64) (ref.is_null (local.get $xs))
       (then (i64.const 0))
       (else
-        (let $node (ref.as_non_null (local.get $xs))
+        (%let $node (ref.as_non_null (local.get $xs))
           (i64.add (struct.get $List $head (local.get $node))
             (call $sum (struct.get $List $tail (local.get $node))))))))
 

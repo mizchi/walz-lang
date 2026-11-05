@@ -174,6 +174,7 @@ export async function prepareRun(
         "--locked",
         "--quiet",
         "--",
+        "--legacy-syntax",
         "check",
         join(directory, "writer/candidate.wlt"),
       ]),

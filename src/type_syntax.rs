@@ -79,6 +79,9 @@ pub(crate) fn map_references(
     f: &mut impl FnMut(ReferenceKind, &mut Sexp) -> Result<(), Error>,
 ) -> Result<(), Error> {
     let head = node.head().unwrap_or("").to_owned();
+    if head.starts_with('@') {
+        return Ok(());
+    }
     let Kind::List(items) = &mut node.kind else {
         return Ok(());
     };
@@ -136,6 +139,7 @@ pub(crate) fn map_types(
         return Ok(());
     };
     match head.as_str() {
+        _ if head.starts_with('@') => {}
         "type.alias" => {
             let index = definition_index(items);
             for header in items.iter_mut().take(index).skip(2) {

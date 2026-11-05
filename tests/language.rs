@@ -35,14 +35,14 @@ fn folded_wat_and_immutable_lexical_bindings() {
       (func $double (param $x i64) (result i64)
         (i64.mul (local.get $x) (i64.const 2)))
       (func $main (export "main") (result i64)
-        (let $x (i64.const 20)
+        (%let $x (i64.const 20)
           (i64.add (call $double (local.get $x)) (i64.const 2)))))"#),
         "42"
     );
     assert_eq!(
         run(r#"(module (func $main (export "main") (result i64)
-      (let $x (i64.const 10)
-        (i64.add (let $x (i64.const 20) (local.get $x)) (local.get $x)))))"#),
+      (%let $x (i64.const 10)
+        (i64.add (%let $x (i64.const 20) (local.get $x)) (local.get $x)))))"#),
         "30"
     );
 }
@@ -54,8 +54,8 @@ fn gc_structs_recursive_types_and_explicit_mutation() {
       (type $Cell (struct (field $value (mut i64))))
       (type $Node (struct (field $value i64) (field $next (ref null $Node))))
       (func $main (export "main") (result i64)
-        (let $cell (struct.new $Cell (i64.const 0))
-          (let $node (struct.new $Node (i64.const 42) (ref.null $Node))
+        (%let $cell (struct.new $Cell (i64.const 0))
+          (%let $node (struct.new $Node (i64.const 42) (ref.null $Node))
             (block (result i64)
               (struct.set $Cell $value (local.get $cell)
                 (struct.get $Node $value (local.get $node)))
@@ -70,13 +70,13 @@ fn arrays_and_loops_with_explicit_state() {
         run(r#"(module
       (type $Ints (array (mut i64)))
       (func $main (export "main") (result i64)
-        (let $xs (array.new_fixed $Ints 3 (i64.const 10) (i64.const 20) (i64.const 12))
-          (loop $sum
+        (%let $xs (array.new_fixed $Ints 3 (i64.const 10) (i64.const 20) (i64.const 12))
+          (%loop $sum
             (bind $i i32 (i32.const 0))
             (bind $acc i64 (i64.const 0))
             (result i64)
             (if (result i64) (i32.lt_s (local.get $i) (array.len (local.get $xs)))
-              (then (recur $sum
+              (then (%recur $sum
                 (i32.add (local.get $i) (i32.const 1))
                 (i64.add (local.get $acc) (array.get $Ints (local.get $xs) (local.get $i)))))
               (else (local.get $acc)))))))"#),
@@ -89,13 +89,13 @@ fn recur_updates_all_state_simultaneously() {
     assert_eq!(
         run(r#"(module
       (func $main (export "main") (result i64)
-        (loop $swap
+        (%loop $swap
           (bind $a i64 (i64.const 1))
           (bind $b i64 (i64.const 2))
           (bind $i i32 (i32.const 0))
           (result i64)
           (if (result i64) (i32.lt_s (local.get $i) (i32.const 3))
-            (then (recur $swap (local.get $b) (local.get $a)
+            (then (%recur $swap (local.get $b) (local.get $a)
               (i32.add (local.get $i) (i32.const 1))))
             (else (i64.add (i64.mul (local.get $a) (i64.const 10)) (local.get $b)))))))"#),
         "21"
@@ -105,13 +105,13 @@ fn recur_updates_all_state_simultaneously() {
 #[test]
 fn closures_have_explicit_captures_and_can_escape_their_creator() {
     let source = r#"(module
-      (closure $Adder (capture $base i64) (param $x i64) (result i64)
+      (%closure $Adder (%capture $base i64) (param $x i64) (result i64)
         (i64.add (local.get $base) (local.get $x)))
       (func $make (param $n i64) (result (ref $Adder))
-        (closure.new $Adder (local.get $n)))
+        (%closure.new $Adder (local.get $n)))
       (func $main (export "main") (result i64)
-        (let $f (call $make (i64.const 40))
-          (closure.call $Adder (local.get $f) (i64.const 2)))))"#;
+        (%let $f (call $make (i64.const 40))
+          (%closure.call $Adder (local.get $f) (i64.const 2)))))"#;
     assert_eq!(run(source), "42");
     let compiled = compile(source).unwrap();
     let summary = compiled
@@ -129,17 +129,17 @@ fn captured_references_share_explicit_mutable_objects() {
     assert_eq!(
         run(r#"(module
       (type $Cell (struct (field $value (mut i64))))
-      (closure $Increment (capture $cell (ref $Cell)) (result i64)
+      (%closure $Increment (%capture $cell (ref $Cell)) (result i64)
         (block (result i64)
           (struct.set $Cell $value (local.get $cell)
             (i64.add (struct.get $Cell $value (local.get $cell)) (i64.const 1)))
           (struct.get $Cell $value (local.get $cell))))
       (func $main (export "main") (result i64)
-        (let $cell (struct.new $Cell (i64.const 40))
-          (let $f (closure.new $Increment (local.get $cell))
+        (%let $cell (struct.new $Cell (i64.const 40))
+          (%let $f (%closure.new $Increment (local.get $cell))
             (block (result i64)
-              (drop (closure.call $Increment (local.get $f)))
-              (closure.call $Increment (local.get $f)))))))"#),
+              (drop (%closure.call $Increment (local.get $f)))
+              (%closure.call $Increment (local.get $f)))))))"#),
         "42"
     );
 }
@@ -207,27 +207,27 @@ fn rejects_programs_outside_the_analyzable_core() {
             "immutable array",
         ),
         (
-            "(module (closure $C (param $x i64) (result i64) (i64.add (local.get $x) (local.get $hidden))))",
+            "(module (%closure $C (param $x i64) (result i64) (i64.add (local.get $x) (local.get $hidden))))",
             "unbound local",
         ),
         (
-            "(module (closure $C (capture $x i64) (param $x i64) (result i64) (local.get $x)))",
+            "(module (%closure $C (%capture $x i64) (param $x i64) (result i64) (local.get $x)))",
             "duplicate binding",
         ),
         (
-            "(module (closure $C (capture $x i64) (result i64) (local.get $x)) (func $f (result (ref $C)) (closure.new $C)))",
+            "(module (%closure $C (%capture $x i64) (result i64) (local.get $x)) (func $f (result (ref $C)) (%closure.new $C)))",
             "capture count",
         ),
         (
-            "(module (func $f (result i64) (recur $missing)))",
+            "(module (func $f (result i64) (%recur $missing)))",
             "unknown loop",
         ),
         (
-            "(module (func $f (result i64) (loop $l (bind $x i64 (i64.const 0)) (result i64) (recur $l (i32.const 1)))))",
+            "(module (func $f (result i64) (%loop $l (bind $x i64 (i64.const 0)) (result i64) (%recur $l (i32.const 1)))))",
             "type mismatch",
         ),
         (
-            "(module (func $f (result i64) (loop $l (bind $x i64 (i64.const 0)) (result i64) (i64.add (recur $l (local.get $x)) (i64.const 1)))))",
+            "(module (func $f (result i64) (%loop $l (bind $x i64 (i64.const 0)) (result i64) (i64.add (%recur $l (local.get $x)) (i64.const 1)))))",
             "tail position",
         ),
         ("(module (memory 1))", "unsupported declaration"),
@@ -300,11 +300,11 @@ fn tail_recur_can_be_nested_under_let_and_unit_blocks() {
     assert_eq!(
         run(r#"(module
       (func $main (export "main") (result i64)
-        (loop $go (bind $i i32 (i32.const 0)) (result i64)
+        (%loop $go (bind $i i32 (i32.const 0)) (result i64)
           (if (result i64) (i32.lt_s (local.get $i) (i32.const 3))
             (then
-              (let $next (i32.add (local.get $i) (i32.const 1))
-                (block (nop) (recur $go (local.get $next)))))
+              (%let $next (i32.add (local.get $i) (i32.const 1))
+                (block (nop) (%recur $go (local.get $next)))))
             (else (i64.const 42))))))"#),
         "42"
     );
@@ -325,7 +325,7 @@ fn constants_arrays_and_reference_operations_keep_wasm_semantics() {
     assert_eq!(
         run(r#"(module (type $Ints (array i64))
       (func $main (export "main") (result i64)
-        (let $xs (array.new $Ints (i64.const 7) (i32.const 6))
+        (%let $xs (array.new $Ints (i64.const 7) (i32.const 6))
           (array.get $Ints (local.get $xs) (i32.const 5)))))"#),
         "7"
     );
@@ -338,7 +338,7 @@ fn constants_arrays_and_reference_operations_keep_wasm_semantics() {
     assert_eq!(
         run(r#"(module (type $Value (struct (field i64)))
       (func $main (export "main") (result i32)
-        (let $p (struct.new $Value (i64.const 1))
+        (%let $p (struct.new $Value (i64.const 1))
           (ref.eq (local.get $p) (local.get $p)))))"#),
         "1"
     );
@@ -348,18 +348,18 @@ fn constants_arrays_and_reference_operations_keep_wasm_semantics() {
 fn captures_are_value_snapshots_and_nominal_types_do_not_mix() {
     assert_eq!(
         run(r#"(module
-      (closure $C (capture $x i64) (result i64) (local.get $x))
+      (%closure $C (%capture $x i64) (result i64) (local.get $x))
       (func $main (export "main") (result i64)
-        (let $x (i64.const 42)
-          (let $f (closure.new $C (local.get $x))
-            (let $x (i64.const 100)
-              (closure.call $C (local.get $f)))))))"#),
+        (%let $x (i64.const 42)
+          (%let $f (%closure.new $C (local.get $x))
+            (%let $x (i64.const 100)
+              (%closure.call $C (local.get $f)))))))"#),
         "42"
     );
     let source = r#"(module
-      (closure $A (result i64) (i64.const 1))
-      (closure $B (result i64) (i64.const 2))
-      (func $f (result i64) (closure.call $A (closure.new $B))))"#;
+      (%closure $A (result i64) (i64.const 1))
+      (%closure $B (result i64) (i64.const 2))
+      (func $f (result i64) (%closure.call $A (%closure.new $B))))"#;
     assert!(
         compile(source)
             .err()
@@ -374,15 +374,15 @@ fn closure_environment_stays_live_during_allocation_pressure() {
     assert_eq!(
         run(r#"(module
       (type $Garbage (struct (field i32)))
-      (closure $C (capture $x i64) (result i64) (local.get $x))
+      (%closure $C (%capture $x i64) (result i64) (local.get $x))
       (func $main (export "main") (result i64)
-        (let $f (closure.new $C (i64.const 42))
-          (loop $go (bind $i i32 (i32.const 0)) (result i64)
+        (%let $f (%closure.new $C (i64.const 42))
+          (%loop $go (bind $i i32 (i32.const 0)) (result i64)
             (if (result i64) (i32.lt_u (local.get $i) (i32.const 200000))
               (then (block (result i64)
                 (drop (struct.new $Garbage (local.get $i)))
-                (recur $go (i32.add (local.get $i) (i32.const 1)))))
-              (else (closure.call $C (local.get $f))))))))"#),
+                (%recur $go (i32.add (local.get $i) (i32.const 1)))))
+              (else (%closure.call $C (local.get $f))))))))"#),
         "42"
     );
 }
@@ -396,7 +396,7 @@ fn malformed_input_has_diagnostics_instead_of_panics() {
         "(module (type))",
         "(module (func))",
         "(module (type $T))",
-        "(module (func $f (let)))",
+        "(module (func $f (%let)))",
         "(module (func $f (array.new_fixed)))",
         "(module (; comment",
         "(module (import \"unterminated)",

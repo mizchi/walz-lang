@@ -1,8 +1,8 @@
 (module
-  (include "queue.wlt")
-  (test "empty and singleton queues"
-    (let $q (call $queue.new (i32.const 1))
-      (let $empty (i32.eq (call $queue.pop (local.get $q)) (i32.const -1))
+  (%include "queue.wlt")
+  (%test "empty and singleton queues"
+    (%let $q (call $queue.new (i32.const 1))
+      (%let $empty (i32.eq (call $queue.pop (local.get $q)) (i32.const -1))
         (block
           (result i32)
           (call $queue.push (local.get $q) (i32.const 42))
@@ -10,16 +10,16 @@
             (local.get $empty)
             (i32.eq (call $queue.pop (local.get $q)) (i32.const 42))))
       )))
-  (test "reverse insertion and both heap children"
-    (let $q (call $queue.new (i32.const 100))
+  (%test "reverse insertion and both heap children"
+    (%let $q (call $queue.new (i32.const 100))
       (block
         (result i32)
-        (for $insert
+        (%for $insert
           (bind $i i32 (i32.const 100))
           (while (local.get $i))
           (step (i32.sub (local.get $i) (i32.const 1)))
           (call $queue.push (local.get $q) (i32.sub (local.get $i) (i32.const 1))))
-        (loop $check
+        (%loop $check
           (bind $i i32 (i32.const 0))
           (result i32)
           (if
@@ -30,17 +30,17 @@
               (if
                 (result i32)
                 (i32.eq (call $queue.pop (local.get $q)) (local.get $i))
-                (then (recur $check (i32.add (local.get $i) (i32.const 1))))
+                (then (%recur $check (i32.add (local.get $i) (i32.const 1))))
                 (else (i32.const 0))))
           ))))
   )
-  (test "new smaller priorities and duplicate values"
-    (let $q (call $queue.new (i32.const 4))
+  (%test "new smaller priorities and duplicate values"
+    (%let $q (call $queue.new (i32.const 4))
       (block
         (result i32)
         (call $queue.push (local.get $q) (i32.const 3))
         (call $queue.push (local.get $q) (i32.const 2))
-        (let $first (i32.eq (call $queue.pop (local.get $q)) (i32.const 2))
+        (%let $first (i32.eq (call $queue.pop (local.get $q)) (i32.const 2))
           (block
             (result i32)
             (call $queue.push (local.get $q) (i32.const 1))

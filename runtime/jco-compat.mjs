@@ -60,7 +60,8 @@ export function adaptJspiGlue(source) {
     const declaration = `function ${kind}Read(`;
     if (!source.includes(declaration)) continue;
     source = source.replace(declaration, `function wltRaw${kind}Read(`);
-    source += `\n`; // Insert inside instantiate, where tables and options live.
+    source += `
+`; // Insert inside instantiate, where tables and options live.
     const endClass = kind === "future" ? "FutureEnd" : "StreamEnd";
     // Failed payload conversion leaves an abandoned copy buffer in 0.23.0.
     // Clear it before guest-scope cleanup drops the readable end.
@@ -70,7 +71,8 @@ export function adaptJspiGlue(source) {
       const run=()=>{try{const value=wltRaw${kind}Read(ctx,handle,...args);return value?.then?Promise.resolve(value).catch(failed):value;}catch(error){return failed(error);}};
       if(!options?.wlt?.read)return run();
       return options.wlt.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__wltCancellingRead=true;end.cancel();}},run);
-    }\n`;
+    }
+`;
     source = source.replace(
       `function wltRaw${kind}Read(`,
       `${wrapper}function wltRaw${kind}Read(`,
@@ -81,7 +83,8 @@ export function adaptJspiGlue(source) {
   if(source.includes("class StreamEnd")) {
     const wakeup=/(const streamEnd = this;\n)([ \t]+)(return task\.suspendUntil\(\{)/g;
     if(!wakeup.test(source))throw new Error("jco failed-copy wakeup patch no longer matches");
-    source=source.replace(wakeup,(_,head,indent,tail)=>`${head}${indent}if(injectedWritePromise)injectedWritePromise.catch(error=>streamEnd.setPendingEvent(()=>{throw error;}));\n${indent}${tail}`);
+    source=source.replace(wakeup,(_,head,indent,tail)=>`${head}${indent}if(injectedWritePromise)injectedWritePromise.catch(error=>streamEnd.setPendingEvent(()=>{throw error;}));
+${indent}${tail}`);
   }
   // Task failure cleanup runs after jco has retired the caller task. Only
   // that private cleanup scope may drop readers without a current task.
@@ -97,7 +100,8 @@ export function adaptJspiGlue(source) {
   if (source.includes(marker))
     source = source.replace(
       marker,
-      `if(options?.wlt?.disposal){options.wlt.disposal(()=>disposeFn.call(value));return;}\n${marker}`,
+      `if(options?.wlt?.disposal){options.wlt.disposal(()=>disposeFn.call(value));return;}
+${marker}`,
     );
   // A cancelled copy has detached its guest buffer. Waiting for iterator.next()
   // here deadlocks a cancelled task whose producer waits for iterator.return().

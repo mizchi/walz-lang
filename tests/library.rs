@@ -36,7 +36,7 @@ fn builder_representation_and_mutation_effects_are_checked() {
     let prefix = loaded.text().trim_end().strip_suffix(')').unwrap();
     for (body, message) in [
         (
-            "(func $bad (param $b (ref $builder.Builder)) (effects pure) (call $builder.text (local.get $b) (text.lit \"x\")))",
+            "(func $bad (param $b (ref $builder.Builder)) (%effects pure) (call $builder.text (local.get $b) (%text.lit \"x\")))",
             "effect contract",
         ),
         (
@@ -44,7 +44,7 @@ fn builder_representation_and_mutation_effects_are_checked() {
             "opaque",
         ),
         (
-            "(func $bad (param $o (ref $json.Object)) (effects pure) (call $json.u64 (local.get $o) (text.lit \"n\") (i64.const 1)))",
+            "(func $bad (param $o (ref $json.Object)) (%effects pure) (call $json.u64 (local.get $o) (%text.lit \"n\") (i64.const 1)))",
             "effect contract",
         ),
     ] {
@@ -78,13 +78,13 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
     let source = r#"(module
       (type $A (array (mut i32)))
       (func $main (export "main") (result i32)
-        (let $a (array.new_fixed $A 2 (i32.const 65) (i32.const 255))
-          (let $b (bytes.from-array $A (local.get $a))
+        (%let $a (array.new_fixed $A 2 (i32.const 65) (i32.const 255))
+          (%let $b (%bytes.from-array $A (local.get $a))
             (block (result i32)
               (array.set $A (local.get $a) (i32.const 0) (i32.const 0))
-              (i32.add (bytes.get (local.get $b) (i32.const 0)) (bytes.get (local.get $b) (i32.const 1)))))))
-      (func $bad (export "bad") (result bytes)
-        (bytes.from-array $A (array.new_fixed $A 1 (i32.const 256)))))"#;
+              (i32.add (%bytes.get (local.get $b) (i32.const 0)) (%bytes.get (local.get $b) (i32.const 1)))))))
+      (func $bad (export "bad") (result %bytes)
+        (%bytes.from-array $A (array.new_fixed $A 1 (i32.const 256)))))"#;
     let compiled = wlt::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("program.wasm");
@@ -117,11 +117,11 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
         ("i64", "reads", false),
     ] {
         let source = format!(
-            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result bytes) (effects {effect}) (bytes.from-array $A (local.get $a))))"
+            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result %bytes) (%effects {effect}) (%bytes.from-array $A (local.get $a))))"
         );
         assert_eq!(wlt::check(&source).is_ok(), ok, "{source}");
     }
-    let source = "(module (type $A (array (mut i32))) (func $copy (param $a (ref $A)) (result bytes) (bytes.from-array $A (local.get $a))))";
+    let source = "(module (type $A (array (mut i32))) (func $copy (param $a (ref $A)) (result %bytes) (%bytes.from-array $A (local.get $a))))";
     let module = wlt::check(source).unwrap();
     let analysis = wlt::analysis::analyze(&module);
     let memory = &analysis.functions[0].memory;
@@ -137,5 +137,5 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
             .iter()
             .all(|p| matches!(p.root, wlt::regions::Root::Allocation { .. }))
     );
-    wlt::compile("(module (type $A (array i32)) (func $f (result bytes) (bytes.from-array $A (unreachable))))").unwrap();
+    wlt::compile("(module (type $A (array i32)) (func $f (result %bytes) (%bytes.from-array $A (unreachable))))").unwrap();
 }

@@ -4,11 +4,12 @@
 旧名 gcwat からの変更点と過去の評価記録の扱いは [MIGRATION.md](MIGRATION.md) にまとめています。
 
 Wasm GC と静的解析を前提に、標準 WAT を基底として型付きマクロを追加する小さな言語の試作です。
-標準 WAT は書き換えず受け付け、拡張側には不変の `let`、loop/for、明示 capture、enum/match、Wasm 例外の try/catch を用意します。`if` の結果値は標準 Wasm の意味を使います。
+拡張の入口には `%` を付け、標準 WAT と区別します。旧構文は `wlt migrate FILE` で移行できます。[構文の境界と移行](docs/syntax.md) を参照してください。
+標準 WAT は書き換えず受け付け、拡張側には不変の `%let`、`%loop` / `%for`、明示 `%capture`、enum / `%match`、Wasm 例外の `%try` / catch を用意します。`if` の結果値は標準 Wasm の意味を使います。
 構造体・配列・クロージャ環境は Wasm GC のオブジェクトです。Component 境界の変換用バッファだけを、専用の線形メモリアロケータで管理します。
 
-`bytes` / `text` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
-相対パスの named import/export で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](docs/static-modules.md) に規約をまとめています。
+`%bytes` / `%text` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
+相対パスの `%import` / `%export` で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](docs/static-modules.md) に規約をまとめています。
 [文法チートシート](CHEATSHEET.md) に型・式・所有値・固定マクロと実行手順をまとめています。
 [初見評価の記録](docs/grammar-eval/REPORT.md) は、在庫台帳の読解と変更を固定ルーブリックで確かめたものです。
 [可読性の評価と改善](docs/readability/REPORT.md) では、型の反復・入れ子・配置・変更の追いやすさを別に評価しています。
@@ -64,59 +65,59 @@ Rust 1.97 以降と just を使用します。実行と実行テストには Was
 
 ```wat
 (module
-  (closure $Adder
-    (capture $base i64)
+  (%closure $Adder
+    (%capture $base i64)
     (param $x i64)
     (result i64)
     (i64.add (local.get $base) (local.get $x)))
 
   (func $main (export "main") (result i64)
-    (let $add40 (closure.new $Adder (i64.const 40))
-      (closure.call $Adder (local.get $add40) (i64.const 2)))))
+    (%let $add40 (%closure.new $Adder (i64.const 40))
+      (%closure.call $Adder (local.get $add40) (i64.const 2)))))
 ```
 
 クロージャは宣言ごとの固有型を持ちます。捕捉値を引数で渡して構築し、呼び出し先は型から静的に決まります。
 例えば `$Adder` は、捕捉値を保持する GC struct と、環境を第1引数に取る通常の Wasm 関数へ変換されます。
 可変状態を捕捉する場合は `counter.wlt` のように、`mut` フィールドを持つオブジェクトへの参照を渡します。
 
-enum は `(type $Result (variant (ok i64) (error i32)))` と宣言し、`(variant.new $Result ok (i64.const 42))` で構築します。
+enum は `(type $Result (%variant (ok i64) (error i32)))` と宣言し、`(%variant.new $Result ok (i64.const 42))` で構築します。
 
 ```wat
-(match $Result (result i64) (local.get $result)
+(%match $Result (result i64) (local.get $result)
   (case ok ($value) (local.get $value))
   (case error ($code) (i64.const -1)))
 ```
 
-payload の型と個数、case の網羅性と重複をコンパイル時に検査します。再帰 enum と、case 内の明示 capture・末尾 `recur` も使えます。
+payload の型と個数、case の網羅性と重複をコンパイル時に検査します。再帰 enum と、case 内の明示 capture・末尾 `%recur` も使えます。
 `examples/ast-interpreter.wlt` はこの形式で実装しています。`examples/result.wlt` は組込みの Result 値型を使います。
 
 ```wat
-(func $answer (result (option i64)) (effects pure)
-  (option.some i64 (i64.const 42)))
+(func $answer (result (%option i64)) (%effects pure)
+  (%option.some i64 (i64.const 42)))
 ```
 
-`(option T)`・`(result T E)` は型引数ごとに具体化します。入れ子、unit payload、配列・フィールド・明示 capture に対応します。
+`(%option T)`・`(%result T E)` は型引数ごとに具体化します。入れ子、unit payload、配列・フィールド・明示 capture に対応します。
 これらの格納用 GC オブジェクトの identity はソースで比較できません。payload 自身の GC 参照の性質は保持します。
-`(effects ...)` は reads/writes/allocates/suspends/host と、関数外へ出る throws の上限を検査します。
+`(%effects ...)` は reads/writes/allocates/suspends/host と、関数外へ出る throws の上限を検査します。
 pure な関数でも値のための物理的な割当てや trap はあり得るため、従来の低水準の解析情報も別に残します。
 
-`(pair T U)` も値型として使え、WIT では tuple に対応します。
+`(%pair T U)` も値型として使え、WIT では tuple に対応します。
 
 ## 所有権と証明を通して実行する
 
 ```wat
-(let $ticket (own.new i64 (i64.const 42))
-  (match (own i64) (result i64) (move $ticket)
+(%let $ticket (%own.new i64 (i64.const 42))
+  (%match (%own i64) (result i64) (%move $ticket)
     (case own ($value) (local.get $value))))
 ```
 
-`(own T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
-Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(own.close (move $ticket))` で明示的に消費します。
+`(%own T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
+Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(%own.close (%move $ticket))` で明示的に消費します。
 内容を match で取り出すことも消費です。own は payload の GC 参照を排他的にする型ではなく、own.close は外部リソースの終了処理をまだ実装していません。
 borrow/lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。[ownership.wlt](examples/ownership.wlt) に組と once-call クロージャの例があります。
 
 ```wat
-(law "adding zero preserves the value" (param $x i32)
+(%law "adding zero preserves the value" (param $x i32)
   (i32.eq (call $add (local.get $x) (i32.const 0)) (local.get $x)))
 ```
 
@@ -133,12 +134,12 @@ Rust API `check` と調査用の types/ir/analyze は law を証明しません�
 ## 配送済みの Future と有限 Stream
 
 ```wat
-(let $future (future.ready i64 (i64.const 42))
-  (future.await i64 (move $future)))
+(%let $future (%future.ready i64 (i64.const 42))
+  (%future.await i64 (%move $future)))
 ```
 
-`(future T)` と `(stream T)` は opaque な所有値です。ready/empty/cons で構築し、await/next/close だけで扱います。
-next は `(pair (stream T) (option T))` を返すので、次回は返された Stream を使います。終端の none でも端点が返り、最後に明示 close が必要です。
+`(%future T)` と `(%stream T)` は opaque な所有値です。ready/empty/cons で構築し、await/next/close だけで扱います。
+next は `(%pair (%stream T) (%option T))` を返すので、次回は返された Stream を使います。終端の none でも端点が返り、最後に明示 close が必要です。
 payload は共有できるデータに限定し、unit、Result、GC 参照も扱えます。Future/Stream 自体や own 値を payload にすることは初版では拒否します。
 await/next は suspends を持ち、呼び出し元へ伝播します。WIT の future/stream 型と読み取り関数の async にも対応します。
 
@@ -288,7 +289,7 @@ Lean のモデルでは一度限りの受け取り、配送順序、終端・clo
 
 ```wat
 (tag $Error (param i64))
-(try (result i64)
+(%try (result i64)
   (do (throw $Error (i64.const 42)))
   (catch $Error ($value) (local.get $value)))
 ```
@@ -301,8 +302,8 @@ try/catch は `try_table` へ展開し、trap は捕捉しません。for は bi
 複数の機能を組み合わせた例として、[依存グラフのワークフロープランナー](examples/apps/workflow/README.md)があります。
 GC グラフ・状態 enum・複数ワーカーへの割当て・循環検出・非同期 I/O を実装し、独立した参照実装と両バックエンドで照合しています。
 
-関数の引数・戻り値などの注釈を境界にして、各式の型、`let` の束縛型、`case` の payload の型を求めます。
-`let` にも `(let $answer i64 (i64.const 42) body)` と任意の型注釈を書けます。暗黙の数値型変換は行いません。
+関数の引数・戻り値などの注釈を境界にして、各式の型、`%let` の束縛型、`case` の payload の型を求めます。
+`%let` にも `(%let $answer i64 (i64.const 42) body)` と任意の型注釈を書けます。暗黙の数値型変換は行いません。
 型エラーは位置とソース上の型名で表示し、例えば `type mismatch: expected i64, got i32` となります。
 引数数、名前候補、型の期待値の根拠、先行する move、effect の原因、opaque の所有 namespace も診断します。
 Rust API の `Error::diagnostic()` では分類・主範囲・関連位置・補足・修正方針を取得できます。[診断のデータ契約](docs/diagnostics.md)を参照してください。
@@ -332,7 +333,7 @@ Rust API では `wlt::check(source)` が型付き IR を返し、`wlt::typing::r
   (func $double (param $n i64) (result i64)
     (i64.mul (local.get $n) (i64.const 2)))
 
-  (test "double returns 42"
+  (%test "double returns 42"
     (i64.eq (call $double (i64.const 21)) (i64.const 42))))
 ```
 
@@ -376,7 +377,7 @@ Rust API は `wlt::runner::run(paths, options)` で、各テストの結果・�
 
 型付きコアの呼び出し先は静的に決まるので、再帰を含む呼び出しグラフに沿って固定点まで副作用を伝播できます。
 不変フィールドの読み取りは `reads` に含めず、nullable な参照なら `may_trap` を付けます。
-`match` は外部 Wasm の不正な enum 表現に備える実行時検査を持つため、`may_trap` を保守的に付けます。
+`%match` は外部 Wasm の不正な enum 表現に備える実行時検査を持つため、`may_trap` を保守的に付けます。
 未知の外部関数は全項目を保守的に true とします。固定した event-loop binding は型と作用を検査し、host と必要な suspends を伝播します。ホストへの import を実行する場合は、埋め込み側で実装を与えてください。
 CLI の `run` は import のない `main` を実行する最小ランチャーです。
 
@@ -457,7 +458,7 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 - `src/lib.rs`: `check(&str)` は型付きコアの IR、`compile(&str)` は標準 WAT と拡張の両方に対応します。Wasm は wasmparser でも検証します。
 
 列挙型はタグとケース別の GC subtype へ変換します。bytes/text は private な packed GC 配列を使い、text は UTF-8 を検証します。
-利用者定義の関数・型・alias・クロージャは、`(type.params $T ...)` と `($name T...)` により単相化します。
+利用者定義の関数・型・alias・クロージャは、`(%type.params $T ...)` と `(%inst $name T...)` により単相化します。
 具体的なクロージャ型を引数にする [map/fold の実例](examples/generic-lists.wlt) と
 [具体化時の検査規則](docs/generics.md) を参照してください。
 異なるクロージャ型を共通のインターフェースで呼ぶ糖衣、finally、共有 GC ヒープのスレッド間利用の糖衣は、この核の外に置いています。
@@ -483,9 +484,9 @@ api.text('hello');                  // 'hello'
 api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 ```
 
-ファイルからは `(import "stdlib/text.wlt" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
+ファイルからは `(%import "stdlib/text.wlt" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
 標準ライブラリの依存と3つのアプリも named import を使います。未使用の定義とホスト import は生成時に除去し、必要な capability だけを manifest に残します。
-`include` は互換のテキスト展開として残します。ファイルの読み込みで実行時の I/O capability は増えません。
+`%include` は互換のテキスト展開として残します。ファイルの読み込みで実行時の I/O capability は増えません。
 
 
 メモリの管理境界・修正した保持経路・実測は [MEMORY.md](MEMORY.md) を参照してください。`just memory-check` で管理表、GC 到達性、断片化と反復時の保持量を再検査できます。

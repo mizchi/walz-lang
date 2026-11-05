@@ -1,62 +1,62 @@
 (module
-  (include "program.wlt")
+  (%include "program.wlt")
   (func $main
     (export "main")
-    (result (result i32 i32))
-    (effects reads writes allocates host suspends)
-    (let $initial
+    (result (%result i32 i32))
+    (%effects reads writes allocates host suspends)
+    (%let $initial
       (call $stock.new (i32.const 4096))
-      (loop $read
-        (bind $lines (stream (result text i32)) (call $read-lines))
+      (%loop $read
+        (bind $lines (%stream (%result %text i32)) (call $read-lines))
         (bind $state (ref $stock.State) (local.get $initial))
-        (result (result i32 i32))
-        (match
-          (pair (stream (result text i32)) (option (result text i32)))
-          (result (result i32 i32))
-          (stream.next (result text i32) (move $lines))
+        (result (%result i32 i32))
+        (%match
+          (%pair (%stream (%result %text i32)) (%option (%result %text i32)))
+          (result (%result i32 i32))
+          (%stream.next (%result %text i32) (%move $lines))
           (case pair
             ($next $item)
-            (match
-              (option (result text i32))
-              (result (result i32 i32))
+            (%match
+              (%option (%result %text i32))
+              (result (%result i32 i32))
               (local.get $item)
               (case none
                 ()
                 (block
-                  (result (result i32 i32))
-                  (stream.close (result text i32) (move $next))
-                  (result.ok i32 i32 (i32.const 0))
+                  (result (%result i32 i32))
+                  (%stream.close (%result %text i32) (%move $next))
+                  (%result.ok i32 i32 (i32.const 0))
                 )
               )
               (case some
                 ($result)
-                (match
-                  (result text i32)
-                  (result (result i32 i32))
+                (%match
+                  (%result %text i32)
+                  (result (%result i32 i32))
                   (local.get $result)
                   (case err
                     ($code)
                     (block
-                      (result (result i32 i32))
-                      (stream.close (result text i32) (move $next))
-                      (result.err i32 i32 (local.get $code))
+                      (result (%result i32 i32))
+                      (%stream.close (%result %text i32) (%move $next))
+                      (%result.err i32 i32 (local.get $code))
                     )
                   )
                   (case ok
                     ($line)
-                    (match
-                      (result unit i32)
-                      (result (result i32 i32))
+                    (%match
+                      (%result %unit i32)
+                      (result (%result i32 i32))
                       (call $app.process (local.get $state) (local.get $line))
                       (case err
                         ($code)
                         (block
-                          (result (result i32 i32))
-                          (stream.close (result text i32) (move $next))
-                          (result.err i32 i32 (local.get $code))
+                          (result (%result i32 i32))
+                          (%stream.close (%result %text i32) (%move $next))
+                          (%result.err i32 i32 (local.get $code))
                         )
                       )
-                      (case ok () (recur $read (move $next) (local.get $state)))
+                      (case ok () (%recur $read (%move $next) (local.get $state)))
                     )
                   )
                 )

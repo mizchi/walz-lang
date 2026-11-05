@@ -8,7 +8,7 @@ fn native_guest_profile_driver_runs_the_actual_text_guest_and_checks_cleanup() {
         "(module",
         r#"(module
       (type $Unused (struct (field i64)))
-      (func $unused (result (option i64)) (option.none i64))
+      (func $unused (result (%option i64)) (%option.none i64))
       (import "wlt:host/event-loop@0.1.0" "yield" (func $unused-clock))"#,
         1,
     );

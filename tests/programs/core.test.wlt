@@ -1,29 +1,29 @@
 (module
   (type $Ints (array (mut i64)))
-  (type $Option (variant (none) (some i64)))
+  (type $Option (%variant (none) (some i64)))
 
-  (test "typed arithmetic"
-    (let $answer i64 (i64.add (i64.const 40) (i64.const 2))
+  (%test "typed arithmetic"
+    (%let $answer i64 (i64.add (i64.const 40) (i64.const 2))
       (i64.eq (local.get $answer) (i64.const 42))))
 
-  (test "simultaneous loop state"
+  (%test "simultaneous loop state"
     (i64.eq
-      (loop $swap
+      (%loop $swap
         (bind $a i64 (i64.const 1)) (bind $b i64 (i64.const 2))
         (bind $n i32 (i32.const 0)) (result i64)
         (if (result i64) (i32.lt_s (local.get $n) (i32.const 3))
-          (then (recur $swap (local.get $b) (local.get $a)
+          (then (%recur $swap (local.get $b) (local.get $a)
             (i32.add (local.get $n) (i32.const 1))))
           (else (i64.add (i64.mul (local.get $a) (i64.const 10)) (local.get $b)))))
       (i64.const 21)))
 
-  (test "exhaustive enum and selected arm"
-    (match $Option (result i32) (variant.new $Option some (i64.const 42))
+  (%test "exhaustive enum and selected arm"
+    (%match $Option (result i32) (%variant.new $Option some (i64.const 42))
       (case none () (unreachable))
       (case some ($value) (i64.eq (local.get $value) (i64.const 42)))))
 
-  (test "explicit array mutation"
-    (let $values (array.new_fixed $Ints 2 (i64.const 20) (i64.const 0))
+  (%test "explicit array mutation"
+    (%let $values (array.new_fixed $Ints 2 (i64.const 20) (i64.const 0))
       (block (result i32)
         (array.set $Ints (local.get $values) (i32.const 1) (i64.const 22))
         (i64.eq

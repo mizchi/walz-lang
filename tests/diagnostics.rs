@@ -20,7 +20,7 @@ fn call_arity_counts_only_source_arguments_and_names_the_callee() {
             .iter()
             .any(|label| label.message.contains("$add") && label.location.line == 2)
     );
-    let closure = "(module (closure $C (capture $x i32) (param $y i32) (result i32) (local.get $y)) (func $f (param $c (ref $C)) (result i32) (closure.call $C (local.get $c))))";
+    let closure = "(module (%closure $C (%capture $x i32) (param $y i32) (result i32) (local.get $y)) (func $f (param $c (ref $C)) (result i32) (%closure.call $C (local.get $c))))";
     let error = rejects(closure, "E_CALL_ARITY");
     assert!(error.to_string().contains("closure environment"));
 }
@@ -39,7 +39,7 @@ fn unknown_local_suggests_only_visible_bindings_and_limits_capture_advice() {
     );
     assert!(error.diagnostic().help.is_empty());
     let error = rejects(
-        "(module (closure $C (result i32) (local.get $missing)))",
+        "(module (%closure $C (result i32) (local.get $missing)))",
         "E_UNKNOWN_LOCAL",
     );
     assert!(error.to_string().contains("captures must be explicit"));
@@ -83,7 +83,7 @@ fn type_errors_explain_numeric_operand_parameter_and_declared_result_origins() {
 
 #[test]
 fn moved_value_diagnostic_identifies_binding_and_first_move() {
-    let source = "(module (func $f\n (let $owner (own.new i32 (i32.const 1))\n  (block\n   (own.close (move $owner))\n   (own.close (move $owner))))))";
+    let source = "(module (func $f\n (%let $owner (%own.new i32 (i32.const 1))\n  (block\n   (%own.close (%move $owner))\n   (%own.close (%move $owner))))))";
     let error = rejects(source, "E_OWNERSHIP_MOVED");
     assert!(error.to_string().contains("`$owner`"));
     assert_eq!(
@@ -108,7 +108,7 @@ fn moved_value_diagnostic_identifies_binding_and_first_move() {
 
 #[test]
 fn effect_diagnostic_explains_declared_bound_and_transitive_cause() {
-    let source = "(module\n (type $Cell (struct (field $value (mut i32))))\n (func $read (param $cell (ref $Cell)) (result i32)\n  (struct.get $Cell $value (local.get $cell)))\n (func $f (param $cell (ref $Cell)) (result i32) (effects pure)\n  (call $read (local.get $cell))))";
+    let source = "(module\n (type $Cell (struct (field $value (mut i32))))\n (func $read (param $cell (ref $Cell)) (result i32)\n  (struct.get $Cell $value (local.get $cell)))\n (func $f (param $cell (ref $Cell)) (result i32) (%effects pure)\n  (call $read (local.get $cell))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert!(error.to_string().contains("declared: pure"));
     assert!(error.to_string().contains("required: reads"));
@@ -130,7 +130,7 @@ fn effect_diagnostic_explains_declared_bound_and_transitive_cause() {
 
 #[test]
 fn opaque_diagnostic_identifies_type_owner_and_declaration() {
-    let source = "(module\n (namespace $lib\n  (public (opaque $State))\n  (type $State (struct (field $n i32))))\n (func $read (param $s (ref $lib.State)) (result i32)\n  (struct.get $lib.State $n (local.get $s))))";
+    let source = "(module\n (%namespace $lib\n  (%public (opaque $State))\n  (type $State (struct (field $n i32))))\n (func $read (param $s (ref $lib.State)) (result i32)\n  (struct.get $lib.State $n (local.get $s))))";
     let error = rejects(source, "E_OPAQUE_REPRESENTATION");
     assert!(error.to_string().contains("`$lib.State`"));
     assert!(error.to_string().contains("namespace `$lib`"));
@@ -152,7 +152,7 @@ fn included_primary_and_related_spans_map_independently_with_unicode_columns() {
     )
     .unwrap();
     let program = directory.path().join("main.wlt");
-    std::fs::write(&program, "(module\n (include \"lib.wlt\")\n (func $main (result i64) (; 日本語 ;) (call $f (i32.const 1))))").unwrap();
+    std::fs::write(&program, "(module\n (%include \"lib.wlt\")\n (func $main (result i64) (; 日本語 ;) (call $f (i32.const 1))))").unwrap();
     let source = wlt::source::load(&program).unwrap();
     let error = source.diagnostic(check(source.text()).unwrap_err());
     let diagnostic = error.diagnostic();
@@ -186,7 +186,7 @@ fn included_primary_and_related_spans_map_independently_with_unicode_columns() {
 
 #[test]
 fn branch_move_provenance_retains_each_reachable_origin() {
-    let source = "(module (func $f (param $flag i32)\n (let $owner (own.new i32 (i32.const 1))\n  (block\n   (if (local.get $flag)\n    (then (own.close (move $owner)))\n    (else (own.close (move $owner))))\n   (own.close (move $owner))))))";
+    let source = "(module (func $f (param $flag i32)\n (%let $owner (%own.new i32 (i32.const 1))\n  (block\n   (if (local.get $flag)\n    (then (%own.close (%move $owner)))\n    (else (%own.close (%move $owner))))\n   (%own.close (%move $owner))))))";
     let error = rejects(source, "E_OWNERSHIP_MOVED");
     let origins = error
         .diagnostic()
@@ -203,7 +203,7 @@ fn branch_move_provenance_retains_each_reachable_origin() {
     );
     assert!(origins.iter().all(|label| label.message.contains("branch")));
     // Removing only the final second use makes the branch join valid.
-    check(&source.replace("\n   (own.close (move $owner))", "\n   (nop)")).unwrap();
+    check(&source.replace("\n   (%own.close (%move $owner))", "\n   (nop)")).unwrap();
 }
 
 #[test]
@@ -217,7 +217,7 @@ fn inner_type_errors_do_not_blame_an_outer_call_or_result_bound() {
 
 #[test]
 fn effect_provenance_ignores_caught_throws_and_finds_handler_rethrows() {
-    let source = "(module (tag $E (param i32))\n (func $f (result i32) (effects pure)\n  (try (result i32)\n   (do (throw $E (i32.const 1)))\n   (catch $E ($value) (throw $E (local.get $value))))))";
+    let source = "(module (tag $E (param i32))\n (func $f (result i32) (%effects pure)\n  (%try (result i32)\n   (do (throw $E (i32.const 1)))\n   (catch $E ($value) (throw $E (local.get $value))))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert_eq!(error.diagnostic().related.len(), 1);
     assert_eq!(error.diagnostic().related[0].location.line, 5);
@@ -226,7 +226,7 @@ fn effect_provenance_ignores_caught_throws_and_finds_handler_rethrows() {
 
 #[test]
 fn effect_provenance_handles_recursive_calls_and_unknown_imports() {
-    let source = "(module\n (type $Cell (struct (field (mut i32))))\n (func $a (param $c (ref $Cell)) (effects pure) (call $b (local.get $c)))\n (func $b (param $c (ref $Cell))\n  (block (call $a (local.get $c))\n   (struct.set $Cell 0 (local.get $c) (i32.const 1)))))";
+    let source = "(module\n (type $Cell (struct (field (mut i32))))\n (func $a (param $c (ref $Cell)) (%effects pure) (call $b (local.get $c)))\n (func $b (param $c (ref $Cell))\n  (block (call $a (local.get $c))\n   (struct.set $Cell 0 (local.get $c) (i32.const 1)))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert!(
         error
@@ -236,7 +236,7 @@ fn effect_provenance_handles_recursive_calls_and_unknown_imports() {
             .any(|label| label.location.line == 6 && label.message.contains("struct.set"))
     );
     let error = rejects(
-        "(module (import \"host\" \"f\" (func $host)) (func $f (effects pure) (call $host)))",
+        "(module (import \"host\" \"f\" (func $host)) (func $f (%effects pure) (call $host)))",
         "E_EFFECT_CONTRACT",
     );
     assert!(
@@ -260,7 +260,7 @@ fn included_cli_errors_keep_related_locations_and_do_not_panic_at_eof() {
     .unwrap();
     std::fs::write(
         &program,
-        "(module\n (include \"lib.wlt\")\n (func $main (result i64) (call $f (i32.const 1))))",
+        "(module\n (%include \"lib.wlt\")\n (func $main (result i64) (call $f (i32.const 1))))",
     )
     .unwrap();
     let output = std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
@@ -312,7 +312,7 @@ fn numeric_repair_hint_uses_the_surrounding_type_without_implying_a_cast() {
 
 #[test]
 fn alias_cycle_reports_the_ordered_edges_and_a_non_prescriptive_repair() {
-    let source = "(module\n (type.alias $Entry $Input)\n (type.alias $Input (option $Output))\n (type.alias $Output $Input))";
+    let source = "(module\n (%type.alias $Entry $Input)\n (%type.alias $Input (%option $Output))\n (%type.alias $Output $Input))";
     let error = rejects(source, "E_ALIAS_CYCLE");
     assert!(
         error.to_string().contains("$Input -> $Output -> $Input"),
@@ -372,10 +372,10 @@ fn alias_cycle_edges_keep_their_individual_include_locations() {
     let directory = tempfile::tempdir().unwrap();
     let library = directory.path().join("types.wlt");
     let program = directory.path().join("main.wlt");
-    std::fs::write(&library, "(module\n (type.alias $Input $Output))").unwrap();
+    std::fs::write(&library, "(module\n (%type.alias $Input $Output))").unwrap();
     std::fs::write(
         &program,
-        "(module\n (include \"types.wlt\")\n (type.alias $Output $Input))",
+        "(module\n (%include \"types.wlt\")\n (%type.alias $Output $Input))",
     )
     .unwrap();
     let loaded = wlt::source::load(&program).unwrap();

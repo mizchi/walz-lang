@@ -7,9 +7,9 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     let output = dir.path().join("output");
     std::fs::write(
         &source,
-        r#"(module (func $internal (result text) (effects pure) (text.lit "internal"))
+        r#"(module (func $internal (result %text) (%effects pure) (%text.lit "internal"))
           (func $f (export "main") (param $x i64) (result i64)
-          (effects pure) (local.get $x)))"#,
+          (%effects pure) (local.get $x)))"#,
     )
     .unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
@@ -42,7 +42,7 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
 fn core_js_does_not_overwrite_its_source_with_an_artifact() {
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("core.wasm");
-    let text = "(module (func $f (export \"main\") (effects pure) (nop)))";
+    let text = "(module (func $f (export \"main\") (%effects pure) (nop)))";
     std::fs::write(&source, text).unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("core-js")

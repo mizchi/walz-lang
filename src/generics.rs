@@ -135,7 +135,7 @@ fn key(node: &Sexp) -> String {
     match &node.kind {
         Kind::Atom(s) => s.clone(),
         Kind::List(items) => format!("({})", items.iter().map(key).collect::<Vec<_>>().join(" ")),
-        Kind::Text(_) => unreachable!("type arguments cannot contain strings"),
+        Kind::Text(_) | Kind::Bytes(_) => unreachable!("type arguments cannot contain strings"),
     }
 }
 
@@ -399,6 +399,10 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     e.charge(root)?;
     let mut ordinary = vec![items[0].clone()];
     for node in &items[1..] {
+        if node.head().is_some_and(|h| h.starts_with('@')) {
+            ordinary.push(node.clone());
+            continue;
+        }
         let parameters = parameters(source, node)?;
         let declaration = if node.head() == Some("import") {
             node.list().and_then(|p| p.get(3)).unwrap_or(node)

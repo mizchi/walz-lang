@@ -345,6 +345,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "wasmparser",
+ "wast",
  "wat",
  "wit-parser",
 ]

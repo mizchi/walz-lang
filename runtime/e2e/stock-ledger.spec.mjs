@@ -11,7 +11,14 @@ for (const backend of ["core", "component"])
       const { createTextIO, TEXT_IO } = await import("/text-io.mjs");
       const key = 'a"\\日本語🦀\0';
       const bytes = new TextEncoder().encode(
-        `ADD\t${key}\t2\nTAKE\t${key}\t5\nSHOW\t${key}\nADD\tAa\t4\nADD\tBB\t5\nSHOW\tAa\ninvalid\n`,
+        `ADD	${key}	2
+TAKE	${key}	5
+SHOW	${key}
+ADD	Aa	4
+ADD	BB	5
+SHOW	Aa
+invalid
+`,
       );
       const output = [];
       let memory;

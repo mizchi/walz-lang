@@ -22,14 +22,14 @@ for (const backend of ['core', 'component']) test(`${backend}: generated WIT bin
     const namespace = 'example:host/service@1.0.0';
     await writeFile(grants,JSON.stringify({imports:['echo','later','wait','many'].map(name=>({module:namespace,name,suspends:name==='wait',capability:'test'}))}));
     await execFile('cargo',['run','--quiet','--','bind',wit,grants,generated]);
-    const ty = '(result (pair i64 (option text)) (pair f32 bytes))';
+    const ty = "(%result (%pair i64 (%option %text)) (%pair f32 %bytes))";
     const source = join(dir,'main.wlt');
-    await writeFile(source, `(module (include "gen/bindings.wlt")
-      (func $echo (export "echo") (param $v ${ty}) (result ${ty}) (effects host) (call $service.echo (local.get $v)))
-      (func $later (export "later") (param $v i64) (result (result i64 i32)) (effects host suspends)
-        (future.await (result i64 i32) (call $service.later (local.get $v))))
-      (func $wait (export "wait") (result (option text)) (effects host suspends) (call $service.wait (i64.const 42)))
-      (func $many (export "many") (result i32) (effects host) (call $service.many ${Array.from({length:17},(_,i)=>`(i32.const ${i})`).join(' ')})))`);
+    await writeFile(source, `(module (%include "gen/bindings.wlt")
+      (func $echo (export "echo") (param $v ${ty}) (result ${ty}) (%effects host) (call $service.echo (local.get $v)))
+      (func $later (export "later") (param $v i64) (result (%result i64 i32)) (%effects host suspends)
+        (%future.await (%result i64 i32) (call $service.later (local.get $v))))
+      (func $wait (export "wait") (result (%option %text)) (%effects host suspends) (call $service.wait (i64.const 42)))
+      (func $many (export "many") (result i32) (%effects host) (call $service.many ${Array.from({length:17},(_,i)=>`(i32.const ${i})`).join(' ')})))`);
     const {build} = await import(backend==='core'?'./build-core.mjs':'./build.mjs');
     const out = join(dir,'out');
     await build(source,out,{bindings:join(generated,'bindings.json')});

@@ -1,7 +1,7 @@
 (module
   (tag $DivideByZero (param i32))
   (func $divide (export "divide") (param $n i64) (param $d i64) (result i64)
-    (try (result i64)
+    (%try (result i64)
       (do (if (result i64) (i64.eqz (local.get $d))
         (then (throw $DivideByZero (i32.const 1)))
         (else (i64.div_s (local.get $n) (local.get $d)))))

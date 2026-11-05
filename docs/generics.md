@@ -1,27 +1,27 @@
 # 明示的な型引数と単相化
 
-宣言名の直後に `(type.params $T ...)` を置く。`func`、`type`、`type.alias`、
-`closure` に共通の文法で、適用は `($name T...)`。型引数の推論・trait・辞書渡し・
+宣言名の直後に `(%type.params $T ...)` を置く。`func`、`type`、`%type.alias`、
+`%closure` に共通の文法で、適用は `(%inst $name T...)`。型引数の推論・trait・辞書渡し・
 実行時の型消去は導入しない。通常の WAT の関数と呼び出しはそのまま使える。
 
 ```wat
 (module
-  (func $identity (type.params $T) (param $x $T) (result $T) (effects pure)
+  (func $identity (%type.params $T) (param $x $T) (result $T) (%effects pure)
     (local.get $x))
-  (func $main (export "main") (result i64) (effects pure)
-    (call ($identity i64) (i64.const 42))))
+  (func $main (export "main") (result i64) (%effects pure)
+    (call (%inst $identity i64) (i64.const 42))))
 ```
 
 ```wat
-(type.alias $Values (type.params $T) (list $T))
-(type $Box (type.params $T) (struct (field $T)))
-(closure $Identity (type.params $T) (param $x $T) (result $T) (local.get $x))
+(%type.alias $Values (%type.params $T) (%list $T))
+(type $Box (%type.params $T) (struct (field $T)))
+(%closure $Identity (%type.params $T) (param $x $T) (result $T) (local.get $x))
 
 ;; 値型、heap 型、呼び出し先にも同じ適用形を使う。
-(param $xs ($Values i64))
-(param $box (ref ($Box i64)))
-(struct.new ($Box i64) (i64.const 42))
-(closure.call ($Identity i64) (closure.new ($Identity i64)) (i64.const 42))
+(param $xs (%inst $Values i64))
+(param $box (ref (%inst $Box i64)))
+(struct.new (%inst $Box i64) (i64.const 42))
+(%closure.call (%inst $Identity i64) (%closure.new (%inst $Identity i64)) (i64.const 42))
 ```
 
 型引数には数値・値型・GC 参照・具体的な nominal 型名を使える。nominal 名を渡すときは
@@ -46,7 +46,7 @@ opaque な型の具体化にも、元の型を定義した namespace の制限�
 依存の深さ64、展開ノード100万を上限とする。上限超過はコンパイル診断になる。
 
 汎用宣言には直接 Wasm export を付けない。具体的な wrapper を export するか、
-`(export "identity" (func ($identity i64)))` と指定する。
+`(export "identity" (func (%inst $identity i64)))` と指定する。
 WIT と両 JS ABI に出るシグネチャは具体型だけになる。ホスト import にも具体型を要求する。
 
 ## 具体的なクロージャ型を渡す map / fold
@@ -54,9 +54,9 @@ WIT と両 JS ABI に出るシグネチャは具体型だけになる。ホス�
 `stdlib/list.wlt` は named import で次の汎用関数を公開する。
 
 ```wat
-(import "../stdlib/list.wlt" (func $list.map) (func $list.fold))
-(call ($list.map i64 text $Label) xs label-closure)
-(call ($list.fold i64 i64 $Sum) xs sum-closure initial)
+(%import "../stdlib/list.wlt" (func $list.map) (func $list.fold))
+(call (%inst $list.map i64 %text $Label) xs label-closure)
+(call (%inst $list.fold i64 i64 $Sum) xs sum-closure initial)
 ```
 
 map は共有・非 unit の T/U、fold は共有・非 unit の T/S と、繰り返し呼べる具体的な
@@ -72,29 +72,29 @@ map は共有・非 unit の T/U、fold は共有・非 unit の T/S と、繰�
 
 ## 具体化時の型引数制約
 
-`type.params` の直後に、任意の `(where constraint...)` を1つ置ける。
+`%type.params` の直後に、任意の `(%where constraint...)` を1つ置ける。
 func/type/type.alias/closure に共通で、制約はすべて満たす必要がある。
 制約の対象は、その宣言の型パラメータを明示する。
 
 ```wat
-(func $map-pure (type.params $T $U $F)
-  (where
+(func $map-pure (%type.params $T $U $F)
+  (%where
     (shared $T $U)
     (nonunit $T $U)
-    (callable $F (param $T) (result $U) (effects pure)))
-  (param $xs (list $T)) (param $f (ref $F)) (result (list $U))
-  (call ($list.map $T $U $F) (local.get $xs) (local.get $f)))
+    (callable $F (param $T) (result $U) (%effects pure)))
+  (param $xs (%list $T)) (param $f (ref $F)) (result (%list $U))
+  (call (%inst $list.map $T $U $F) (local.get $xs) (local.get $f)))
 ```
 
 | 制約 | 判定 |
 | --- | --- |
 | `(shared $T...)` | 所有値と借用を含まない共有可能な型。GC 型・値型・クロージャの捕捉も再帰的に調べる |
 | `(nonunit $T...)` | unit 以外。格納や引数としての型の正当性は通常の型検査でも確認する |
-| `(callable $F (param T...) (result U) [(effects ...)])` | F が共有・再呼出し可能な具体的な nominal クロージャ型で、引数列と戻り値の型が一致する |
+| `(callable $F (param T...) (result U) [(%effects ...)])` | F が共有・再呼出し可能な具体的な nominal クロージャ型で、引数列と戻り値の型が一致する |
 
 shared は不変性を要求しない。可変 GC 配列・セルへの参照も、その中身が共有可能なら許可する。
 callable の署名は alias を展開した具体型で厳密に比較し、引数の反変性等の規則は追加しない。
-`(param)` は引数なし、`(result unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
+`(param)` は引数なし、`(result %unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
 クロージャは callable を満たさない。引数や戻り値に所有型を明示すること自体は許可する。
 
 effects を省略した callable は effect の上限を課さない。指定する場合は通常の effect 契約と同じ

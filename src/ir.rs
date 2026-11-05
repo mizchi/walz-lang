@@ -416,8 +416,29 @@ impl Module {
     }
     /// Format a type belonging to this checked module using source type names.
     pub fn type_name(&self, ty: &Type) -> String {
+        match ty {
+            Type::Unit => "%unit".into(),
+            Type::Resource(id) => format!("(%resource {})", self.types[id.0].name),
+            Type::Borrow(id) => format!("(%borrow {})", self.types[id.0].name),
+            Type::Value(id) => match &self.types[id.0].kind {
+                TypeKind::Value(value) => {
+                    let name = value.type_name(|ty| self.type_name(ty));
+                    if let Some(rest) = name.strip_prefix('(') {
+                        format!("(%{rest}")
+                    } else {
+                        format!("%{name}")
+                    }
+                }
+                _ => unreachable!("value type"),
+            },
+            _ => ty.format_with(|id| self.types[id.0].name.clone()),
+        }
+    }
+
+    /// Stable semantic names used by trusted ABI policy contracts.
+    pub(crate) fn shape_name(&self, ty: &Type) -> String {
         ty.format_with(|id| match &self.types[id.0].kind {
-            TypeKind::Value(value) => value.type_name(|ty| self.type_name(ty)),
+            TypeKind::Value(value) => value.type_name(|ty| self.shape_name(ty)),
             _ => self.types[id.0].name.clone(),
         })
     }

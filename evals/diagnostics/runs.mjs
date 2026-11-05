@@ -55,7 +55,7 @@ async function compiler() {
 async function invoke(cli, args, root) {
   let result;
   try {
-    const out = await exec(cli.path, args, {
+    const out = await exec(cli.path, ["--legacy-syntax", ...args], {
       cwd: projectRoot,
       timeout: 20000,
       maxBuffer: 2 * 1024 * 1024,

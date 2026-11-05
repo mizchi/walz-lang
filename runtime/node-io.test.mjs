@@ -16,7 +16,7 @@ test("text CLI preserves application error codes without labelling them as I/O f
     const source = join(dir, "error.wlt");
     await writeFile(
       source,
-      '(module (func $main (export "main") (result (result i32 i32)) (effects pure) (result.err i32 i32 (i32.const 1001))))',
+      "(module (func $main (export \"main\") (result (%result i32 i32)) (%effects pure) (%result.err i32 i32 (i32.const 1001))))",
     );
     await build(source, join(dir, "app"));
     await assert.rejects(

@@ -99,8 +99,8 @@ const ioCommands = (rows) => [
   "PLAN\t2",
 ];
 const chain = (n) => [
-  ...Array.from({ length: n }, (_, i) => `TASK\tc${i}\t1000000`),
-  ...Array.from({ length: n - 1 }, (_, i) => `AFTER\tc${i + 1}\tc${i}`),
+  ...Array.from({ length: n }, (_, i) => `TASK	c${i}	1000000`),
+  ...Array.from({ length: n - 1 }, (_, i) => `AFTER	c${i + 1}	c${i}`),
   "PLAN\t7",
 ];
 

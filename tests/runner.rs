@@ -21,12 +21,12 @@ fn discovers_nested_test_files_deduplicates_and_accepts_nonzero_results() {
     std::fs::write(
         tests.join("core.test.wlt"),
         r#"(module
-      (type $Option (variant (none) (some i64)))
+      (type $Option (%variant (none) (some i64)))
       (func $double (param $n i64) (result i64) (i64.mul (local.get $n) (i64.const 2)))
-      (test "numeric" (i64.eq (call $double (i64.const 21)) (i64.const 42)))
-      (test "enum" (match $Option (result i32) (variant.new $Option some (i64.const 42))
+      (%test "numeric" (i64.eq (call $double (i64.const 21)) (i64.const 42)))
+      (%test "enum" (%match $Option (result i32) (%variant.new $Option some (i64.const 42))
         (case none () (i32.const 0)) (case some ($n) (i64.eq (local.get $n) (i64.const 42)))))
-      (test "nonzero" (i32.const -1)))"#,
+      (%test "nonzero" (i32.const -1)))"#,
     )
     .unwrap();
     // Directory discovery must not treat ordinary modules as test files.
@@ -52,19 +52,19 @@ fn failures_traps_and_compile_errors_do_not_hide_later_tests() {
     std::fs::write(
         directory.path().join("a.test.wlt"),
         r#"(module
-      (test "false" (i32.const 0))
-      (test "trap" (unreachable))
-      (test "after failure" (i32.const 1)))"#,
+      (%test "false" (i32.const 0))
+      (%test "trap" (unreachable))
+      (%test "after failure" (i32.const 1)))"#,
     )
     .unwrap();
     std::fs::write(
         directory.path().join("b.test.wlt"),
-        "(module (test \"wrong type\" (i64.const 1)))",
+        "(module (%test \"wrong type\" (i64.const 1)))",
     )
     .unwrap();
     std::fs::write(
         directory.path().join("c.test.wlt"),
-        "(module (test \"after compile error\" (i32.const 1)))",
+        "(module (%test \"after compile error\" (i32.const 1)))",
     )
     .unwrap();
     let output = cli(directory.path(), &["test", "."]);
@@ -89,9 +89,9 @@ fn list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error() {
         directory.path().join("suite.wlt"),
         r#"(module
       (import "host" "read" (func $read (result i32)))
-      (test "enum one" (call $read))
-      (test "numeric" (i32.const 1))
-      (test "enum two" (i32.const 1)))"#,
+      (%test "enum one" (call $read))
+      (%test "numeric" (i32.const 1))
+      (%test "enum two" (i32.const 1)))"#,
     )
     .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
@@ -125,8 +125,8 @@ fn infinite_tests_time_out_and_the_runner_continues() {
     std::fs::write(
         directory.path().join("suite.wlt"),
         r#"(module
-      (test "infinite" (loop $forever (result i32) (recur $forever)))
-      (test "after timeout" (i32.const 1)))"#,
+      (%test "infinite" (%loop $forever (result i32) (%recur $forever)))
+      (%test "after timeout" (i32.const 1)))"#,
     )
     .unwrap();
     let output = cli(
@@ -146,29 +146,29 @@ fn infinite_tests_time_out_and_the_runner_continues() {
 fn test_names_and_bodies_are_checked_without_exposing_generated_functions() {
     for (source, expected) in [
         (
-            "(module (test \"same\" (i32.const 1)) (test \"same\" (i32.const 1)))",
+            "(module (%test \"same\" (i32.const 1)) (%test \"same\" (i32.const 1)))",
             "duplicate test name",
         ),
-        ("(module (test \"\" (i32.const 1)))", "non-empty test name"),
+        ("(module (%test \"\" (i32.const 1)))", "non-empty test name"),
         (
-            "(module (test $name (i32.const 1)))",
+            "(module (%test $name (i32.const 1)))",
             "expected test name string",
         ),
         (
-            "(module (test \"bad\" (i64.const 1)))",
+            "(module (%test \"bad\" (i64.const 1)))",
             "expected i32, got i64",
         ),
         (
-            "(module (test \"bad\" (local.get $hidden)))",
+            "(module (%test \"bad\" (local.get $hidden)))",
             "unbound local",
         ),
-        ("(module (test \"bad\" (nop)))", "expected i32, got unit"),
+        ("(module (%test \"bad\" (nop)))", "expected i32, got unit"),
         (
-            "(module (test \"bad\" (i32.const 1) (i32.const 1)))",
+            "(module (%test \"bad\" (i32.const 1) (i32.const 1)))",
             "expected (test",
         ),
         (
-            "(module (test \"hidden\" (i32.const 1)) (func $f (result i32) (call $__test0)))",
+            "(module (%test \"hidden\" (i32.const 1)) (func $f (result i32) (call $__test0)))",
             "unknown function",
         ),
     ] {
@@ -180,7 +180,7 @@ fn test_names_and_bodies_are_checked_without_exposing_generated_functions() {
         directory.path().join("collision.wlt"),
         r#"(module
       (func $user (export "__wlt_test_0") (result i32) (i32.const 0))
-      (test "generated export" (i32.const 1)))"#,
+      (%test "generated export" (i32.const 1)))"#,
     )
     .unwrap();
     let output = cli(directory.path(), &["test", "collision.wlt"]);
@@ -203,7 +203,7 @@ fn reports_empty_suites_missing_runtime_and_invalid_arguments() {
     }
     std::fs::write(
         directory.path().join("one.wlt"),
-        "(module (test \"one\" (i32.const 1)))",
+        "(module (%test \"one\" (i32.const 1)))",
     )
     .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
@@ -220,13 +220,13 @@ fn reports_empty_suites_missing_runtime_and_invalid_arguments() {
 fn tests_keep_explicit_gc_effects_and_a_closed_call_graph() {
     let source = r#"(module
       (type $Cell (struct (field $value (mut i64))))
-      (closure $Add (capture $base i64) (param $n i64) (result i64)
+      (%closure $Add (%capture $base i64) (param $n i64) (result i64)
         (i64.add (local.get $base) (local.get $n)))
-      (test "immutable capture"
-        (let $f (closure.new $Add (i64.const 40))
-          (i64.eq (closure.call $Add (local.get $f) (i64.const 2)) (i64.const 42))))
-      (test "explicit mutation"
-        (let $cell (struct.new $Cell (i64.const 0))
+      (%test "immutable capture"
+        (%let $f (%closure.new $Add (i64.const 40))
+          (i64.eq (%closure.call $Add (local.get $f) (i64.const 2)) (i64.const 42))))
+      (%test "explicit mutation"
+        (%let $cell (struct.new $Cell (i64.const 0))
           (block (result i32)
             (struct.set $Cell $value (local.get $cell) (i64.const 42))
             (i64.eq (struct.get $Cell $value (local.get $cell)) (i64.const 42))))))"#;
@@ -243,7 +243,7 @@ fn tests_keep_explicit_gc_effects_and_a_closed_call_graph() {
         let function = &module.functions[test.function.0];
         assert!(function.params.is_empty() && function.captures.is_empty());
         assert_eq!(module.type_name(&function.result), "i32");
-        assert!(source[test.span.start..test.span.end].starts_with("(test"));
+        assert!(source[test.span.start..test.span.end].starts_with("(%test"));
     }
 }
 

@@ -49,7 +49,8 @@ export function releaseEndpoints(source) {
         detach(channel.writeEnd());
         ${globals}.remove(rep);
       }
-    }\n`;
+    }
+`;
     if (kind === "Future") {
       source = replaceOnce(
         source,

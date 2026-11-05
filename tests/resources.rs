@@ -1,12 +1,12 @@
 const SOURCE: &str = r#"(module
-  (type $File (resource "file" $close))
+  (type $File (%resource "file" $close))
   (import "files" "open" (func $open (result i32)))
   (import "files" "read" (func $read (param $id i32) (result i32)))
   (import "files" "close" (func $close (param $id i32)))
-  (func $read-file (param $f (borrow $File)) (result i32) (effects host reads)
-    (call $read (resource.handle (local.get $f))))
-  (func $main (export "main") (result i32) (effects host reads writes allocates)
-    (using $f (resource.new $File (call $open)) (call $read-file (local.get $f)))))"#;
+  (func $read-file (param $f (%borrow $File)) (result i32) (%effects host reads)
+    (call $read (%resource.handle (local.get $f))))
+  (func $main (export "main") (result i32) (%effects host reads writes allocates)
+    (%using $f (%resource.new $File (call $open)) (call $read-file (local.get $f)))))"#;
 
 fn policy() -> wlt::bindings::BindingPolicy {
     wlt::bindings::BindingPolicy::parse(r#"{"imports":[
@@ -31,16 +31,16 @@ fn borrowed_resources_cannot_escape_or_be_duplicated() {
         SOURCE
             .replace("(call $read-file (local.get $f))", "(local.get $f)")
             .replace(
-                "(result i32) (effects host reads writes allocates)",
-                "(result (borrow $File)) (effects host reads writes allocates)",
+                "(%result i32) (%effects host reads writes allocates)",
+                "(result (%borrow $File)) (%effects host reads writes allocates)",
             ),
         SOURCE.replace(
             "(call $read-file (local.get $f))",
-            "(resource.close (local.get $f))",
+            "(%resource.close (local.get $f))",
         ),
         SOURCE.replace(
             "(call $read-file (local.get $f))",
-            "(let $x (resource.handle (local.get $f)) (local.get $x))",
+            "(%let $x (%resource.handle (local.get $f)) (local.get $x))",
         ),
         SOURCE.replace("(call $open)", "(i32.const 1)"),
         SOURCE
@@ -50,7 +50,7 @@ fn borrowed_resources_cannot_escape_or_be_duplicated() {
             )
             .replace(
                 "(module",
-                "(module (type $Bad (struct (field (borrow $File))))",
+                "(module (type $Bad (struct (field (%borrow $File))))",
             ),
     ] {
         assert!(
@@ -63,8 +63,8 @@ fn borrowed_resources_cannot_escape_or_be_duplicated() {
 #[test]
 fn using_rejects_a_branch_that_skips_its_destructor() {
     let source = SOURCE.replace(
-        "(using $f (resource.new $File (call $open)) (call $read-file (local.get $f)))",
-        "(loop $again (result i32) (using $f (resource.new $File (call $open)) (recur $again)))",
+        "(%using $f (%resource.new $File (call $open)) (call $read-file (local.get $f)))",
+        "(%loop $again (result i32) (%using $f (%resource.new $File (call $open)) (%recur $again)))",
     );
     assert!(
         wlt::check_with_policy(&source, &policy())
@@ -77,15 +77,15 @@ fn using_rejects_a_branch_that_skips_its_destructor() {
 #[test]
 fn resources_and_borrows_resolve_across_an_opaque_namespace() {
     let source = r#"(module
-      (namespace $file (export (opaque $File) (func $new) (func $read))
-        (type $File (resource "file" $drop))
+      (%namespace $file (%export (opaque $File) (func $new) (func $read))
+        (type $File (%resource "file" $drop))
         (import "files" "open" (func $open (result i32)))
         (import "files" "read" (func $read-host (param $id i32) (result i32)))
         (import "files" "close" (func $drop (param $id i32)))
-        (func $new (result (resource $File)) (resource.new $File (call $open)))
-        (func $read (param $f (borrow $File)) (result i32) (call $read-host (resource.handle (local.get $f)))))
-      (func $main (export "main") (result i32) (effects host reads writes allocates)
-        (using $file (call $file.new) (call $file.read (local.get $file)))))"#;
+        (func $new (result (%resource $File)) (%resource.new $File (call $open)))
+        (func $read (param $f (%borrow $File)) (result i32) (call $read-host (%resource.handle (local.get $f)))))
+      (func $main (export "main") (result i32) (%effects host reads writes allocates)
+        (%using $file (call $file.new) (call $file.read (local.get $file)))))"#;
     wlt::component::compile_with_policy(source, &policy()).unwrap();
 }
 
@@ -94,7 +94,7 @@ fn dce_retains_the_implicit_destructor_of_a_raw_resource_factory() {
     let source = r#"(module
       (import "files" "open" (func $open (result i32)))
       (import "files" "close" (func $close (param $id i32)))
-      (func $main (export "main") (effects host) (drop (call $open))))"#;
+      (func $main (export "main") (%effects host) (drop (call $open))))"#;
     let built = wlt::component::core_js::compile_with_policy(source, &policy()).unwrap();
     assert_eq!(built.manifest["imports"].as_array().unwrap().len(), 2);
 }

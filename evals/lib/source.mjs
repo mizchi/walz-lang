@@ -84,13 +84,13 @@ export function assertSnapshotIncludes(source) {
   if (root[0] !== "module") throw new Error("expected module");
   const walk = (node) => {
     if (!Array.isArray(node)) return;
-    if (node[0] === "include") {
+    if (["include", "%include"].includes(node[0])) {
       if (node.length !== 2 || node[1]?.text !== '"program.wlt"')
         throw new Error(
           'candidate may only include "program.wlt" from the frozen support',
         );
       count++;
-    } else if (node[0] === "module" || node[0] === "namespace")
+    } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
   walk(root);
@@ -110,17 +110,18 @@ export function metrics(source) {
       maxDepth = Math.max(maxDepth, depth);
     } else if (item === ")") depth--;
   }
+  const canonical = (name) => typeof name === "string" ? name.replace(/^%/, "") : name;
   const text = (node) =>
     Array.isArray(node)
       ? "(" + node.map(text).join(" ") + ")"
       : typeof node === "string"
-        ? node
+        ? canonical(node)
         : node.text;
   const walk = (node) => {
     if (!Array.isArray(node)) return;
-    if (node[0] === "match") match++;
-    if (node[0] === "let" && Array.isArray(node[1])) patterns++;
-    if (node[0] === "pair" && text(node) === "(pair (ref $stock.State) i32)")
+    if (canonical(node[0]) === "match") match++;
+    if (canonical(node[0]) === "let" && Array.isArray(node[1])) patterns++;
+    if (canonical(node[0]) === "pair" && text(node) === "(pair (ref $stock.State) i32)")
       stateTypes++;
     node.forEach(walk);
   };
@@ -148,7 +149,10 @@ export function functionForms(source, name) {
   const heads = {};
   const count = (node) => {
     if (!Array.isArray(node)) return;
-    if (typeof node[0] === "string") heads[node[0]] = (heads[node[0]] ?? 0) + 1;
+    if (typeof node[0] === "string") {
+      const head = node[0].replace(/^%/, "");
+      heads[head] = (heads[head] ?? 0) + 1;
+    }
     node.forEach(count);
   };
   count(target);
@@ -160,12 +164,12 @@ export function sourceIncludes(source) {
     paths = [];
   const walk = (node) => {
     if (!Array.isArray(node)) return;
-    if (node[0] === "include") {
+    if (["include", "%include"].includes(node[0])) {
       if (node.length !== 2 || typeof node[1]?.text !== "string")
         throw new Error("invalid include");
       // Evaluation fixtures use literal relative filenames, not WAT byte escapes.
       paths.push(JSON.parse(node[1].text));
-    } else if (node[0] === "module" || node[0] === "namespace")
+    } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
   walk(root);

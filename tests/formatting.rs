@@ -4,7 +4,7 @@ use std::process::Command;
 fn formatter_preserves_native_tokens_comments_and_is_idempotent() {
     for source in [
         "(module ;; keep 日本語\n(memory 1)(data(i32.const 0)\"\\00\\ff(;not a comment;)\") (func(export \"main\")(result i32) i32.const 42))",
-        "(module (;outer (;nested;) ;) (func $main (export \"main\") (result text) (text.lit \"日本語🦀\\n\")))",
+        "(module (;outer (;nested;) ;) (func $main (export \"main\") (result %text) (%text.lit \"日本語🦀\\n\")))",
     ] {
         let formatted = wlt::format::source(source).unwrap();
         assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
@@ -46,13 +46,13 @@ fn format_cli_checks_then_writes_only_a_valid_source_file() {
 #[test]
 fn formatter_groups_contracts_and_macro_headers_and_attaches_closing_delimiters() {
     let source = r#"(module
-      (func $convert (param $input (result i64 i32))
-        (result (result i32 i32)) (effects pure)
-        (result.let ($value) (result i64 i32) i32 (local.get $input)
-          (result.ok i32 i32 (i32.wrap_i64 (local.get $value))))))"#;
+      (func $convert (param $input (%result i64 i32))
+        (result (%result i32 i32)) (%effects pure)
+        (%result.let ($value) (%result i64 i32) i32 (local.get $input)
+          (%result.ok i32 i32 (i32.wrap_i64 (local.get $value))))))"#;
     let formatted = wlt::format::source(source).unwrap();
-    assert!(formatted.contains("(func $convert (param $input (result i64 i32))"));
-    assert!(formatted.contains("(result.let ($value) (result i64 i32) i32\n"));
+    assert!(formatted.contains("(func $convert (param $input (%result i64 i32))"));
+    assert!(formatted.contains("(%result.let ($value) (%result i64 i32) i32\n"));
     assert!(formatted.lines().filter(|line| line.trim() == ")").count() <= 1);
     assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
     assert_eq!(
@@ -113,7 +113,7 @@ fn formatter_preserves_catalog_and_application_binaries() {
 
 #[test]
 fn formatter_bounds_closing_groups_in_deeply_nested_code() {
-    let source = "(module (func $f (result i32) (let $a (i32.const 42) (let $b (local.get $a) (let $c (local.get $b) (i32.add (local.get $c) (i32.const 0)))))))";
+    let source = "(module (func $f (result i32) (%let $a (i32.const 42) (%let $b (local.get $a) (%let $c (local.get $b) (i32.add (local.get $c) (i32.const 0)))))))";
     let formatted = wlt::format::source(source).unwrap();
     assert!(
         formatted
@@ -130,23 +130,23 @@ fn formatter_bounds_closing_groups_in_deeply_nested_code() {
 
 #[test]
 fn formatter_keeps_short_macro_inputs_out_of_the_header() {
-    let source = r#"(module (func $main (result (result i64 i32))
-      (result.let ($total)
-        (stream.fold-result (stream.empty (result i64 i32)) (i64.const 0) ($sum $item)
-          (result.ok (i64.add (local.get $sum) (local.get $item))))
-        (result.ok (local.get $total)))))"#;
+    let source = r#"(module (func $main (result (%result i64 i32))
+      (%result.let ($total)
+        (%stream.fold-result (%stream.empty (%result i64 i32)) (i64.const 0) ($sum $item)
+          (%result.ok (i64.add (local.get $sum) (local.get $item))))
+        (%result.ok (local.get $total)))))"#;
     let formatted = wlt::format::source(source).unwrap();
-    assert!(formatted.contains("(result.let ($total)\n"), "{formatted}");
-    assert!(formatted.contains("(stream.fold-result\n"), "{formatted}");
+    assert!(formatted.contains("(%result.let ($total)\n"), "{formatted}");
+    assert!(formatted.contains("(%stream.fold-result\n"), "{formatted}");
     assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
 }
 
 #[test]
 fn formatter_exposes_pattern_let_continuation_even_when_it_fits_one_line() {
-    let source = "(module (func $f (param $p (pair i32 i32)) (result i32) (let ($a $b) (local.get $p) (local.get $b))))";
+    let source = "(module (func $f (param $p (%pair i32 i32)) (result i32) (%let ($a $b) (local.get $p) (local.get $b))))";
     let formatted = wlt::format::source(source).unwrap();
     assert!(
-        formatted.contains("(let ($a $b) (local.get $p)\n"),
+        formatted.contains("(%let ($a $b) (local.get $p)\n"),
         "{formatted}"
     );
     assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);

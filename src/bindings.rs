@@ -116,9 +116,9 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
         let params = function
             .params
             .iter()
-            .map(|id| module.type_name(&function.locals[id.0].ty))
+            .map(|id| module.shape_name(&function.locals[id.0].ty))
             .collect::<Vec<_>>();
-        if params != binding.params || module.type_name(&function.result) != binding.result {
+        if params != binding.params || module.shape_name(&function.result) != binding.result {
             return Err(Error::at(
                 source,
                 Span::default(),
