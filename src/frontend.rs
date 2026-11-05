@@ -1632,7 +1632,7 @@ impl Checker<'_, '_> {
                         BindingKind::Let,
                     );
                     inner.insert(name, local);
-                    let body = self.expr_expected(&items[3], &inner, loops, false, expected)?;
+                    let body = self.expr_expected(&items[3], &inner, loops, tail, expected)?;
                     (
                         body.ty.clone(),
                         Using {
