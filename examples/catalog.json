@@ -26,6 +26,11 @@
       "expected": "42"
     },
     {
+      "path": "examples/generic-lists.wlt",
+      "pattern": "monomorphized list map/fold with concrete closure types",
+      "expected": "42"
+    },
+    {
       "path": "examples/factorial.wlt",
       "pattern": "numeric loop",
       "expected": "3628800",

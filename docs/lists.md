@@ -24,7 +24,8 @@ slice/from-array はコンテナをコピーする。GC 参照の要素は参照
 ```
 
 可変 GC 配列で結果を構築してから list にコピーする map と、list を読む sum の例を
-`examples/list-batch.wlt` に置く。利用者定義の型引数や汎用関数は追加していない。
+`examples/list-batch.wlt` に置く。汎用の map/fold は [単相化](generics.md) と
+`examples/generic-lists.wlt` を参照。
 
 WIT は `list<T>`、Canonical ABI は要素領域の ptr/length を使う。
 要素の size/alignment に従い、入れ子の領域も再帰的に解放する。読み込みは長さ・乗算・

@@ -412,7 +412,7 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 ## 実装
 
 ```text
-ファイル import / include → S 式 → 名前解決・型検査 → 型付き IR
+ファイル import / include → S 式 → 名前解決・単相化・型検査 → 型付き IR
                                       ├─ 全ソースの解析・契約検査
                                       └─ 到達性による宣言の除去 → WAT → Wasm
 ```
@@ -421,6 +421,8 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 - `src/sexpr.rs`: 位置情報付きの S 式リーダー。`;;` と入れ子の `(; ;)` コメントに対応。
 - `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
 - `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
+- `src/generics.rs`: 明示した型引数ごとの具体化、再利用、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
+- `src/type_syntax.rs`: 値型の位置と nominal な関数・heap 型の参照を区別する共通 visitor。
 - `src/link.rs`: 検査済みの全 IR から到達する宣言を選び、生成用の ID を振り直す。
 - `src/buffers.rs`: bytes/text の private GC storage、UTF-8 検証と値操作。
 - `src/frontend.rs`: 型・名前・捕捉・可変性・match の網羅性・tail position の検査。
@@ -454,7 +456,10 @@ Rust API は `regions::analyze(&module)` と `flow::analyze(&module, &function)`
 - `src/lib.rs`: `check(&str)` は型付きコアの IR、`compile(&str)` は標準 WAT と拡張の両方に対応します。Wasm は wasmparser でも検証します。
 
 列挙型はタグとケース別の GC subtype へ変換します。bytes/text は private な packed GC 配列を使い、text は UTF-8 を検証します。
-異なるクロージャ型を共通のインターフェースで呼ぶ糖衣、利用者定義のジェネリクス、finally、共有 GC ヒープのスレッド間利用の糖衣は、この核の外に置いています。
+利用者定義の関数・型・alias・クロージャは、`(type.params $T ...)` と `($name T...)` により単相化します。
+具体的なクロージャ型を引数にする [map/fold の実例](examples/generic-lists.wlt) と
+[具体化時の検査規則](docs/generics.md) を参照してください。
+異なるクロージャ型を共通のインターフェースで呼ぶ糖衣、finally、共有 GC ヒープのスレッド間利用の糖衣は、この核の外に置いています。
 
 次の型・effect 設計は Verse の effect family と WASI 0.3.0 の WIT に合わせます。
 Option/Result は値、Future/Stream は所有する配送ハンドル、suspends は制御上の作用として分けます。

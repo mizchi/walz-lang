@@ -434,29 +434,15 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
         return Ok(());
     };
     let kind = match head.as_str() {
-        "func" | "call" | "closure.call" => Some(SymbolKind::Function),
-        "type" | "type.alias" | "closure" | "struct.new" | "struct.get" | "struct.set"
-        | "closure.new" | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get"
-        | "array.set" | "variant.new" | "ref.null" | "resource.new" => Some(SymbolKind::Type),
+        "func" => Some(SymbolKind::Function),
+        "type" | "type.alias" | "closure" => Some(SymbolKind::Type),
         "tag" | "throw" | "catch" => Some(SymbolKind::Tag),
         _ => None,
     };
     if let Some(kind) = kind
-        && let Some(name) = items.get_mut(1).filter(|n| n.atom().is_some())
+        && let Some(name) = items.get_mut(1)
     {
-        name.kind = Kind::Atom(resolve(source, scopes, scope, kind, name)?);
-    }
-    if (head == "ref" || head == "borrow" || head == "resource" && items.len() == 2)
-        && let Some(name) = items
-            .last_mut()
-            .filter(|n| n.atom().is_some_and(|a| a.starts_with('$')))
-    {
-        name.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Type, name)?);
-    }
-    if head == "list.from-array"
-        && let Some(ty) = items.get_mut(2)
-    {
-        ty.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Type, ty)?);
+        resolve_application(source, scopes, scope, kind, name, &BTreeSet::new())?;
     }
     if head == "resource" && items.len() == 3 {
         let close = &mut items[2];
@@ -475,6 +461,31 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     Ok(())
 }
 
+fn resolve_application(
+    source: &str,
+    scopes: &Scopes,
+    scope: &str,
+    kind: SymbolKind,
+    node: &mut Sexp,
+    parameters: &BTreeSet<String>,
+) -> Result<(), Error> {
+    let name = if node.head().is_some_and(|h| h.starts_with('$')) {
+        let Kind::List(items) = &mut node.kind else {
+            unreachable!()
+        };
+        &mut items[0]
+    } else {
+        node
+    };
+    if name
+        .atom()
+        .is_some_and(|a| a.starts_with('$') && !parameters.contains(a))
+    {
+        name.kind = Kind::Atom(resolve(source, scopes, scope, kind, name)?);
+    }
+    Ok(())
+}
+
 pub(crate) struct Expanded {
     pub syntax: Sexp,
     opaque: BTreeMap<String, Opaque>,
@@ -485,7 +496,12 @@ struct Opaque {
     declaration: crate::ir::Span,
 }
 impl Expanded {
-    pub fn validate(&self, source: &str, module: &crate::ir::Module) -> Result<(), Error> {
+    pub fn validate(
+        &self,
+        source: &str,
+        module: &crate::ir::Module,
+        origins: &BTreeMap<String, String>,
+    ) -> Result<(), Error> {
         use crate::ir::{ExprKind::*, Type};
         for function in &module.functions {
             let mut pending = function.body.iter().collect::<Vec<_>>();
@@ -517,7 +533,9 @@ impl Expanded {
                     _ => None,
                 };
                 let declaration = ty.map(|id| &module.types[id.0]);
-                if let Some(opaque) = declaration.and_then(|ty| self.opaque.get(&ty.name)) {
+                if let Some(opaque) = declaration
+                    .and_then(|ty| self.opaque.get(origins.get(&ty.name).unwrap_or(&ty.name)))
+                {
                     let caller = self
                         .zones
                         .iter()
@@ -567,7 +585,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
                     | "export"
                     | "import"
             )
-        )
+        ) || n.list().and_then(|p| p.get(2)).and_then(Sexp::head) == Some("type.params")
     }) {
         return Ok(Expanded {
             syntax: root.clone(),
@@ -611,11 +629,26 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         let declarations = std::mem::take(&mut scopes.get_mut(&name).unwrap().declarations);
         for mut node in declarations {
             zones.push((node.span, name.clone()));
-            crate::aliases::map_types(&mut node, &mut |ty| {
-                if ty.atom().is_some_and(|a| a.starts_with('$')) {
-                    ty.kind = Kind::Atom(resolve(source, &scopes, &name, SymbolKind::Type, ty)?);
-                }
+            let parameters = crate::generics::parameters(source, &node)?
+                .into_iter()
+                .collect();
+            crate::type_syntax::map_types(&mut node, &mut |ty| {
+                resolve_application(source, &scopes, &name, SymbolKind::Type, ty, &parameters)?;
                 Ok(())
+            })?;
+            crate::type_syntax::map_references(&mut node, &mut |function, operand| {
+                resolve_application(
+                    source,
+                    &scopes,
+                    &name,
+                    if function == crate::type_syntax::ReferenceKind::Function {
+                        SymbolKind::Function
+                    } else {
+                        SymbolKind::Type
+                    },
+                    operand,
+                    &parameters,
+                )
             })?;
             rewrite(source, &scopes, &name, &mut node)?;
             output.push(node);
@@ -645,6 +678,10 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
             ));
         }
         let target = descriptor[1].atom();
+        if target.is_none() {
+            output.push(export);
+            continue;
+        }
         let definition = output
             .iter_mut()
             .find(|n| {

@@ -222,6 +222,18 @@ pattern let で own 成分を含む pair を分解するときは `(move $pair)`
 
 ## 所有値・クロージャ・effect
 
+汎用関数・型・alias・クロージャは名前の直後に `(type.params $T ...)` を宣言し、
+`($name T...)` で具体化する。型引数は明示し、具体化後も型・effect・所有権を検査する。
+具体的なクロージャ型も渡せる。[詳細と map/fold](docs/generics.md)。
+
+```wat
+(module
+  (func $identity (type.params $T) (param $x $T) (result $T) (effects pure)
+    (local.get $x))
+  (func $main (export "main") (result i64) (effects pure)
+    (call ($identity i64) (i64.const 42))))
+```
+
 ```text
 (own.new T value)
 (move $owner)                       ;; 所有値を消費する位置に渡す
@@ -364,4 +376,4 @@ JS
 
 `test "name" i32-expr` は0なら失敗、非0なら成功。`law` は純粋な整数式の全入力を Lean で検査する別の契約。
 実行用の stdin/stdout 接続は既存の text I/O capability。read-lines は stream<result<text,i32>>、write-line は future<result<unit,i32>> を返す。
-単相化ジェネリクス、任意のマクロ定義、borrow/lifetime、汎用の WASI binding は初版に含まない。
+暗黙の型引数推論・trait、任意のマクロ定義、一般的な borrow/lifetime、汎用の WASI binding は含まない。

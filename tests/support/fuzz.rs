@@ -10,6 +10,7 @@ pub enum Expr {
     Mul(Box<Expr>, Box<Expr>),
     Pair(Box<Expr>, Box<Expr>),
     List(Box<Expr>, Box<Expr>),
+    Generic(Box<Expr>),
     Result(Box<Expr>, bool),
     Choose(Box<Expr>, Box<Expr>, Box<Expr>),
 }
@@ -22,7 +23,7 @@ impl Expr {
             Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) | Self::List(a, b) => {
                 vec![(**a).clone(), (**b).clone()]
             }
-            Self::Result(a, _) => vec![(**a).clone()],
+            Self::Generic(a) | Self::Result(a, _) => vec![(**a).clone()],
             Self::Choose(a, b, c) => vec![(**a).clone(), (**b).clone(), (**c).clone()],
             _ => vec![],
         }
@@ -42,7 +43,7 @@ impl Expr {
                         1 => b,
                         _ => c,
                     },
-                    Self::Result(a, _) => a,
+                    Self::Generic(a) | Self::Result(a, _) => a,
                     _ => unreachable!(),
                 };
                 **target = smaller;
@@ -65,7 +66,7 @@ impl Expr {
                 a.eval(trace);
                 b.eval(trace)
             }
-            Self::Result(a, _) => a.eval(trace),
+            Self::Generic(a) | Self::Result(a, _) => a.eval(trace),
             Self::Choose(a, b, c) => {
                 if a.eval(trace) & 1 == 0 {
                     b.eval(trace)
@@ -109,6 +110,7 @@ impl Expr {
                 a.render(short, next),
                 b.render(short, next)
             ),
+            Self::Generic(a) => format!("(call ($identity $Count) {})", a.render(short, next)),
             Self::Result(a, ok) => {
                 let id = *next;
                 *next += 1;
@@ -132,6 +134,7 @@ impl Expr {
             r#"(module (type.alias $Count i32)
           (import "trace" "event" (func $event (param $n i32) (result i32)))
           (import "trace" "get" (func $get (result i32)))
+          (func $identity (type.params $T) (param $x $T) (result $T) (effects pure) (local.get $x))
           (func $dead (result (option i64)) (option.none i64))
           (func $main (export "main") (result i64)
             (let $value {body}
@@ -147,7 +150,7 @@ fn random(state: &mut u64) -> u32 {
     (*state >> 32) as u32
 }
 fn generate(state: &mut u64, depth: u32) -> Expr {
-    let choice = random(state) % 8;
+    let choice = random(state) % 9;
     if depth == 0 || choice < 2 {
         return if choice == 1 {
             Expr::Trace(random(state) as i32)
@@ -163,7 +166,8 @@ fn generate(state: &mut u64, depth: u32) -> Expr {
         4 => Expr::Pair(a, b),
         5 => Expr::Choose(a, b, Box::new(generate(state, depth - 1))),
         6 => Expr::Result(a, random(state).is_multiple_of(2)),
-        _ => Expr::List(a, b),
+        7 => Expr::List(a, b),
+        _ => Expr::Generic(a),
     }
 }
 pub fn reduce(mut input: Expr, mut fails: impl FnMut(&Expr) -> bool) -> Expr {

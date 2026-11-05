@@ -10,6 +10,7 @@ mod emit;
 pub mod flow;
 pub mod format;
 mod frontend;
+mod generics;
 pub mod ir;
 mod link;
 mod lists;
@@ -24,6 +25,7 @@ pub mod runner;
 mod scoped;
 mod sexpr;
 pub mod source;
+mod type_syntax;
 pub mod typing;
 pub mod verified;
 pub mod wit;
@@ -75,7 +77,7 @@ pub struct Compilation {
     pub wat: String,
     pub wasm: Vec<u8>,
     pub analysis: Analysis,
-    /// Complete checked extension IR, before declaration reachability projection.
+    /// Checked, monomorphized extension IR, before declaration reachability projection.
     /// Native WAT outside that subset is validated but has no source expression IR.
     pub ir: Option<ir::Module>,
 }
@@ -103,17 +105,21 @@ pub fn check_with_policy(
 ) -> Result<ir::Module, Error> {
     let syntax = sexpr::parse(source)?;
     let syntax = modules::expand(source, &syntax)?;
-    let aliases = aliases::expand(source, &syntax.syntax)?;
-    let expanded = scoped::expand(source, &aliases.syntax)?;
-    let mut module = frontend::check(source, &expanded)?;
-    policy.apply(&mut module);
-    frontend::validate_alias_targets(source, &module, &aliases.targets)?;
-    syntax.validate(source, &module)?;
-    bindings::validate(source, &module)?;
-    resources::validate(source, &module)?;
-    effects::validate(source, &module)?;
-    ownership::validate(source, &module)?;
-    Ok(module)
+    let generics = generics::expand(source, &syntax.syntax)?;
+    let checked = (|| {
+        let aliases = aliases::expand(source, &generics.syntax)?;
+        let expanded = scoped::expand(source, &aliases.syntax)?;
+        let mut module = frontend::check(source, &expanded)?;
+        policy.apply(&mut module);
+        frontend::validate_alias_targets(source, &module, &aliases.targets)?;
+        syntax.validate(source, &module, &generics.origins)?;
+        bindings::validate(source, &module)?;
+        resources::validate(source, &module)?;
+        effects::validate(source, &module)?;
+        ownership::validate(source, &module)?;
+        Ok(module)
+    })();
+    checked.map_err(|error| generics.annotate(source, error))
 }
 
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
