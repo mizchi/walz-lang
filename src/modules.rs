@@ -437,7 +437,7 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
         "func" | "call" | "closure.call" => Some(SymbolKind::Function),
         "type" | "type.alias" | "closure" | "struct.new" | "struct.get" | "struct.set"
         | "closure.new" | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get"
-        | "array.set" | "variant.new" | "ref.null" | "match" => Some(SymbolKind::Type),
+        | "array.set" | "variant.new" | "ref.null" | "resource.new" => Some(SymbolKind::Type),
         "tag" | "throw" | "catch" => Some(SymbolKind::Tag),
         _ => None,
     };
@@ -446,12 +446,16 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     {
         name.kind = Kind::Atom(resolve(source, scopes, scope, kind, name)?);
     }
-    if head == "ref"
+    if (head == "ref" || head == "borrow" || head == "resource" && items.len() == 2)
         && let Some(name) = items
             .last_mut()
             .filter(|n| n.atom().is_some_and(|a| a.starts_with('$')))
     {
         name.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Type, name)?);
+    }
+    if head == "resource" && items.len() == 3 {
+        let close = &mut items[2];
+        close.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Function, close)?);
     }
     if head == "throws" {
         for name in &mut items[1..] {
@@ -482,7 +486,8 @@ impl Expanded {
             let mut pending = function.body.iter().collect::<Vec<_>>();
             while let Some(e) = pending.pop() {
                 let ty = match &e.kind {
-                    StructNew { ty, .. }
+                    ResourceNew { ty, .. }
+                    | StructNew { ty, .. }
                     | StructGet { ty, .. }
                     | StructSet { ty, .. }
                     | ArrayNew { ty, .. }
@@ -491,8 +496,9 @@ impl Expanded {
                     | ArraySet { ty, .. }
                     | VariantNew { ty, .. }
                     | Match { ty, .. } => Some(*ty),
-                    ArrayLen(object) => match object.ty {
+                    ResourceHandle(object) | ArrayLen(object) => match object.ty {
                         Type::Ref { ty, .. } => Some(ty),
+                        Type::Borrow(ty) => Some(ty),
                         _ => None,
                     },
                     Buffer {

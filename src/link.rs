@@ -33,6 +33,21 @@ pub(crate) fn project(module: &Module) -> Module {
         match item {
             Item::Function(i) => {
                 let f = &module.functions[i];
+                if let Some(resource) = crate::bindings::lookup(f).and_then(|b| b.resource)
+                    && resource.operation == crate::bindings::ResourceOperation::New
+                {
+                    for (i, f) in module.functions.iter().enumerate() {
+                        if crate::bindings::lookup(f)
+                            .and_then(|b| b.resource)
+                            .is_some_and(|r| {
+                                r.kind == resource.kind
+                                    && r.operation == crate::bindings::ResourceOperation::Close
+                            })
+                        {
+                            pending.push(Item::Function(i));
+                        }
+                    }
+                }
                 for local in &f.locals {
                     add_type(&local.ty, &mut pending);
                 }

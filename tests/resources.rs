@@ -73,3 +73,28 @@ fn using_rejects_a_branch_that_skips_its_destructor() {
             .contains("using scope")
     );
 }
+
+#[test]
+fn resources_and_borrows_resolve_across_an_opaque_namespace() {
+    let source = r#"(module
+      (namespace $file (export (opaque $File) (func $new) (func $read))
+        (type $File (resource "file" $drop))
+        (import "files" "open" (func $open (result i32)))
+        (import "files" "read" (func $read-host (param $id i32) (result i32)))
+        (import "files" "close" (func $drop (param $id i32)))
+        (func $new (result (resource $File)) (resource.new $File (call $open)))
+        (func $read (param $f (borrow $File)) (result i32) (call $read-host (resource.handle (local.get $f)))))
+      (func $main (export "main") (result i32) (effects host reads writes allocates)
+        (using $file (call $file.new) (call $file.read (local.get $file)))))"#;
+    wlt::component::compile_with_policy(source, &policy()).unwrap();
+}
+
+#[test]
+fn dce_retains_the_implicit_destructor_of_a_raw_resource_factory() {
+    let source = r#"(module
+      (import "files" "open" (func $open (result i32)))
+      (import "files" "close" (func $close (param $id i32)))
+      (func $main (export "main") (effects host) (drop (call $open))))"#;
+    let built = wlt::component::core_js::compile_with_policy(source, &policy()).unwrap();
+    assert_eq!(built.manifest["imports"].as_array().unwrap().len(), 2);
+}

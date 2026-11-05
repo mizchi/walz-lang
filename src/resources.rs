@@ -19,6 +19,17 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
             ));
         }
     }
+    for f in &module.functions {
+        if let Some(r) = bindings::lookup(f).and_then(|b| b.resource)
+            && r.operation == Op::New
+            && !closers.contains_key(&r.kind)
+        {
+            return Err(fail(
+                Span::default(),
+                "resource factory requires a destructor binding",
+            ));
+        }
+    }
     for declaration in &module.types {
         let mut fields = vec![];
         match &declaration.kind {
