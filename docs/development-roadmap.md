@@ -25,3 +25,5 @@ CI は Rust/Lean/Wasm CLI と JS/Chromium の2ジョブを実行し、失敗入�
 
 到達しない suspend を除去しても、公開関数の async ABI は元の解析結果を維持する。
 不要になった host import は除去し、JS の Promise 契約を変更しない。
+
+除去した一時 GC 箱の割当失敗など、資源限界による挙動の一致は対象外。payload 自体の trap は維持する。

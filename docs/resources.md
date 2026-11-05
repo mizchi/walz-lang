@@ -25,7 +25,7 @@ kind ごとに destructor を一つ指定する。use から所有 endpoint を�
 
 ホスト registry は task と kind を検査し、閉じた ID を再利用しない。
 Wasm trap は catch できないため、task 終了時の registry の解放を併用する。
-解放は逆順で、ひとつ失敗しても残りを試みる。取消しの完了通知は解放を待つ。
+解放は逆順で、ひとつ失敗しても残りを試みる。取消しの完了通知は解放を待つ。host Promise が abort で reject する場合も、disposer の完了後に guest を unwind して close する。
 destructor 失敗後の instance は再利用しない。
 
 WIT native resource の own/borrow ABI は後続。現在は明示的な host adapter であり、

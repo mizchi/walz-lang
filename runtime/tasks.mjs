@@ -288,19 +288,29 @@ export class Tasks {
               const value = fn.apply(host, args),
                 record = this.active;
               if (!record || !blocking.includes(name)) return value;
-              let disposed = false;
+              let disposed = false, cleanup;
               const cancel = () => {
                 if (disposed) return;
                 disposed = true;
                 const dispose =
                   value?.[Symbol.asyncDispose] ?? value?.[Symbol.dispose];
-                if (dispose) this.disposal(() => dispose.call(value));
+                if (dispose) cleanup = this.disposal(() => dispose.call(value));
               };
               record.blocking.add(cancel);
               if (record.state === "cancelling") cancel();
-              return Promise.resolve(value).finally(() =>
-                record.blocking.delete(cancel),
-              );
+              const cancelled = async () => {
+                // The host operation may reject with AbortError. Complete its
+                // disposal before unwinding guest using scopes and closing resources.
+                await cleanup;
+                throw new WebAssembly.Exception(this.tag, []);
+              };
+              return Promise.resolve(value).then(
+                value => record.state === "cancelling" ? cancelled() : value,
+                error => {
+                  if (record.state === "cancelling") return cancelled();
+                  throw error;
+                },
+              ).finally(() => record.blocking.delete(cancel));
             },
       ]),
     );

@@ -25,10 +25,10 @@ for(const backend of ['core','component'])test(`${backend}: resources close exac
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
     await build('examples/resources/main.wlt',dir,{bindings:'examples/resources/policy.json'});
     const {instantiate,TaskCancelledError}=await import(pathToFileURL(join(dir,'index.js')));
-    let next=0,closed=[],pending;
+    let next=0,closed=[],pending,stopped=false;
     const {api,start}=await instantiate({imports:{files:{
-      open:()=>({id:++next}),read:f=>f.id,close:f=>closed.push(f.id),
-    }},eventLoop:{sleep:()=>{pending=Promise.withResolvers();pending.promise[Symbol.asyncDispose]=()=>pending.resolve();return pending.promise;}}});
+      open:()=>({id:++next}),read:f=>f.id,close:f=>{if(f.id===7)assert.ok(stopped,"resource closed before abort disposal finished");closed.push(f.id);},
+    }},eventLoop:{sleep:()=>{pending=Promise.withResolvers();pending.promise[Symbol.asyncDispose]=async()=>{pending.reject(new Error("aborted"));await Promise.resolve();stopped=true;};return pending.promise;}}});
     assert.equal(api.normal(),1);assert.deepEqual(closed,[1]);
     assert.deepEqual(api.err(),{tag:'err',val:7});assert.deepEqual(closed,[1,2]);
     api.explicit();api.nested();assert.deepEqual(closed,[1,2,3,5,4]);

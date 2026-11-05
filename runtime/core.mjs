@@ -76,6 +76,8 @@ class Boundary {
     return this.allocator.alloc(size);
   }
   failHost(error, message) {
+    if (error instanceof WebAssembly.Exception && error.is(this.tasks.tag))
+      throw error;
     this.hostFailure ??=
       error instanceof Error && !message
         ? error
