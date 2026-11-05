@@ -86,7 +86,12 @@ pub(super) fn component_signature(f: &Function, async_: bool, scope: &str) -> St
             .iter()
             .enumerate()
             .map(|(i, id)| format!(
-                "(param \"p{i}\" {}) ",
+                "(param \"{}\" {}) ",
+                f.import_contract
+                    .as_ref()
+                    .and_then(|b| b.param_names.get(i))
+                    .cloned()
+                    .unwrap_or_else(|| format!("p{i}")),
                 component_type_in(&f.locals[id.0].ty, scope)
             ))
             .collect::<String>(),

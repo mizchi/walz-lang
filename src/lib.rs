@@ -24,6 +24,7 @@ pub mod source;
 pub mod typing;
 pub mod verified;
 pub mod wit;
+pub mod wit_bindgen;
 
 use serde::Serialize;
 pub mod diagnostic;
@@ -90,11 +91,19 @@ impl Default for CompileOptions {
 /// Resolve names and check types and effect contracts, returning typed IR.
 /// Does not lower the checked IR or invoke a Wasm runtime.
 pub fn check(source: &str) -> Result<ir::Module, Error> {
+    check_with_policy(source, &bindings::BindingPolicy::default())
+}
+
+pub fn check_with_policy(
+    source: &str,
+    policy: &bindings::BindingPolicy,
+) -> Result<ir::Module, Error> {
     let syntax = sexpr::parse(source)?;
     let syntax = modules::expand(source, &syntax)?;
     let aliases = aliases::expand(source, &syntax.syntax)?;
     let expanded = scoped::expand(source, &aliases.syntax)?;
-    let module = frontend::check(source, &expanded)?;
+    let mut module = frontend::check(source, &expanded)?;
+    policy.apply(&mut module);
     frontend::validate_alias_targets(source, &module, &aliases.targets)?;
     syntax.validate(source, &module)?;
     bindings::validate(source, &module)?;
@@ -106,6 +115,16 @@ pub fn check(source: &str) -> Result<ir::Module, Error> {
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
 pub fn compile(source: &str) -> Result<Compilation, Error> {
     compile_with_options(source, CompileOptions::default())
+}
+
+pub fn compile_with_policy(
+    source: &str,
+    policy: &bindings::BindingPolicy,
+) -> Result<Compilation, Error> {
+    if policy.imports.is_empty() {
+        return compile(source);
+    }
+    compile_checked(source, check_with_policy(source, policy)?)
 }
 
 pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Compilation, Error> {

@@ -103,6 +103,7 @@ fn execute(
     command: &str,
     path: &Path,
     output: Option<&Path>,
+    policy: &wlt::bindings::BindingPolicy,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
@@ -121,7 +122,7 @@ fn execute(
         return Ok(true);
     }
     let loaded = wlt::source::load(path)?;
-    execute_source(command, path, output, loaded.text()).map_err(|error| {
+    execute_source(command, path, output, loaded.text(), policy).map_err(|error| {
         match error.downcast::<wlt::Error>() {
             Ok(error) => loaded.diagnostic(*error).into(),
             Err(error) => error,
@@ -134,9 +135,10 @@ fn execute_source(
     path: &Path,
     output: Option<&Path>,
     source: &str,
+    policy: &wlt::bindings::BindingPolicy,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "core-js" | "profile-text") {
-        let built = wlt::component::core_js::compile(source)?;
+        let built = wlt::component::core_js::compile_with_policy(source, policy)?;
         let profile = if command == "profile-text" {
             Some(wlt::component::profiling::compile(source)?)
         } else {
@@ -171,7 +173,7 @@ fn execute_source(
         return Ok(true);
     }
     if matches!(command, "component" | "component-wat") {
-        let built = wlt::component::compile(source)?;
+        let built = wlt::component::compile_with_policy(source, policy)?;
         if command == "component-wat" {
             print!("{}", built.wat);
         } else {
@@ -191,11 +193,14 @@ fn execute_source(
         return Ok(true);
     }
     if command == "proof" {
-        print!("{}", wlt::proof::emit(&wlt::check(source)?)?);
+        print!(
+            "{}",
+            wlt::proof::emit(&wlt::check_with_policy(source, policy)?)?
+        );
         return Ok(true);
     }
     if command == "contracts" {
-        let module = wlt::check(source)?;
+        let module = wlt::check_with_policy(source, policy)?;
         println!(
             "{}",
             serde_json::to_string_pretty(&wlt::ownership::validate(source, &module)?)?
@@ -203,21 +208,25 @@ fn execute_source(
         return Ok(true);
     }
     if command == "wit" {
-        let module = wlt::check(source)?;
+        let module = wlt::check_with_policy(source, policy)?;
         print!("{}", wlt::wit::emit(&module)?);
         return Ok(true);
     }
     if command == "check" {
-        wlt::validate(source)?;
+        if policy.imports.is_empty() {
+            wlt::validate(source)?;
+        } else {
+            wlt::check_with_policy(source, policy)?;
+        }
         println!("ok");
         return Ok(true);
     }
     // Source inspection depends only on the front end, not on Wasm emission.
     if matches!(command, "check" | "types" | "ir" | "analyze") {
-        let module = match wlt::check(source) {
+        let module = match wlt::check_with_policy(source, policy) {
             Ok(module) => module,
             Err(_) => {
-                let compilation = wlt::compile(source)?;
+                let compilation = wlt::compile_with_policy(source, policy)?;
                 match command {
                     "types" => println!(
                         "{}",
@@ -255,7 +264,7 @@ fn execute_source(
     let compiled = if matches!(command, "verify" | "run-verified") {
         wlt::verified::compile(source)?
     } else {
-        wlt::compile(source)?
+        wlt::compile_with_policy(source, policy)?
     };
     match command {
         "wat" | "expand" => print!("{}", compiled.wat),
@@ -290,7 +299,53 @@ fn execute_source(
 }
 
 fn main() -> ExitCode {
-    let args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    if args.first().is_some_and(|s| s == "bind") {
+        if args.len() != 4 {
+            eprintln!("Usage: wlt bind <input.wit> <policy.json> <output-directory>");
+            return ExitCode::from(2);
+        }
+        let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+            let generated = wlt::wit_bindgen::generate(
+                Path::new(&args[1]),
+                None,
+                &std::fs::read_to_string(&args[2])?,
+            )?;
+            let out = Path::new(&args[3]);
+            if out.join("bindings.wlt").exists() || out.join("bindings.json").exists() {
+                return Err("binding outputs already exist".into());
+            }
+            std::fs::create_dir_all(out)?;
+            std::fs::write(out.join("bindings.wlt"), generated.source)?;
+            std::fs::write(out.join("bindings.json"), generated.policy)?;
+            Ok(())
+        })();
+        return match result {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("{e}");
+                ExitCode::FAILURE
+            }
+        };
+    }
+    let mut policy = wlt::bindings::BindingPolicy::default();
+    if let Some(i) = args.iter().position(|s| s == "--bindings") {
+        let Some(path) = args.get(i + 1) else {
+            eprintln!("--bindings requires a policy file");
+            return ExitCode::from(2);
+        };
+        match std::fs::read_to_string(path)
+            .map_err(|e| e.to_string())
+            .and_then(|s| wlt::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
+        {
+            Ok(p) => policy = p,
+            Err(e) => {
+                eprintln!("{e}");
+                return ExitCode::FAILURE;
+            }
+        }
+        args.drain(i..i + 2);
+    }
     if args.len() == 1 && (args[0] == "--help" || args[0] == "-h") {
         println!("{USAGE}");
         return ExitCode::SUCCESS;
@@ -334,7 +389,7 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let path = Path::new(&args[1]);
-    match execute(command, path, args.get(2).map(Path::new)) {
+    match execute(command, path, args.get(2).map(Path::new), &policy) {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {

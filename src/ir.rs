@@ -357,6 +357,7 @@ pub struct Function {
     pub exports: Vec<String>,
     pub body: Option<Expr>,
     pub effect_contract: Option<crate::effects::EffectContract>,
+    pub import_contract: Option<crate::bindings::Binding>,
 }
 
 #[derive(Clone, Debug, Serialize)]

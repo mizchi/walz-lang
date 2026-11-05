@@ -183,9 +183,9 @@ class Boundary {
         const value = host[name](...decode(args));
         return suspends
           ? Promise.resolve(value)
-              .then(convert)
+              .then(v => convert(v,args))
               .catch((error) => this.failHost(error))
-          : convert(value);
+          : convert(value,args);
       } catch (error) {
         return this.failHost(error);
       }

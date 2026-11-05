@@ -19,6 +19,16 @@ struct Types<'a> {
     needs_unit: bool,
 }
 
+pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
+    Types {
+        module,
+        unit_name: "wlt-unit".into(),
+        needs_unit: false,
+    }
+    .render(ty)
+    .map(|_| ())
+}
+
 impl Types<'_> {
     fn render(&mut self, ty: &Type) -> Result<String, Error> {
         Ok(match ty {

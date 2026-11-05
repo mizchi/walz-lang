@@ -17,7 +17,14 @@ pub struct CoreJs {
 }
 
 pub fn compile(source: &str) -> Result<CoreJs, Error> {
-    let module = super::checked_module(source)?;
+    compile_with_policy(source, &crate::bindings::BindingPolicy::default())
+}
+
+pub fn compile_with_policy(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+) -> Result<CoreJs, Error> {
+    let module = super::checked_module_with_policy(source, policy)?;
     let mut adapter = Adapter::new(&module);
     adapter.memory_exports = true;
     // Only boundary types and endpoint payloads need lifting/lowering helpers.
@@ -128,15 +135,37 @@ fn bindings(adapter: &Adapter<'_>) -> String {
         {
             let binding = crate::bindings::lookup(f).unwrap();
             let name = crate::bindings::js_name(name);
-            let result = match f.result {
-                Type::Value(id) => format!("v=>c.add({},v)", id.0),
-                _ => "v=>v".into(),
-            };
-            let mut slot = 0;
-            let mut decoded = Vec::new();
-            for id in &f.params {
-                let ty = &f.locals[id.0].ty;
-                decoded.push(match ty {
+            if f.import_contract.is_some() {
+                let mut offset = 0;
+                let mut args = Vec::new();
+                for id in &f.params {
+                    let ty = &f.locals[id.0].ty;
+                    offset = align(offset, adapter.layout(ty).align);
+                    args.push(read(ty, &format!("args[0]+{offset}")));
+                    offset += adapter.layout(ty).size;
+                }
+                let convert = if f.result == Type::Unit {
+                    "()=>undefined".into()
+                } else {
+                    format!("(v,args)=>{{{}}}", write(&f.result, "args[1]", "v"))
+                };
+                out.push_str(&format!(
+                    "c.hostImport('host{i}',{}, {},{convert},{},args=>[{}]);\n",
+                    quoted(&name),
+                    binding.suspends,
+                    quoted(namespace),
+                    args.join(",")
+                ));
+            } else {
+                let result = match f.result {
+                    Type::Value(id) => format!("v=>c.add({},v)", id.0),
+                    _ => "v=>v".into(),
+                };
+                let mut slot = 0;
+                let mut decoded = Vec::new();
+                for id in &f.params {
+                    let ty = &f.locals[id.0].ty;
+                    decoded.push(match ty {
                     Type::Num(_) => format!("args[{slot}]"),
                     Type::Value(id) => match adapter.value(*id) {
                         ValueType::Text => format!("new TextDecoder('utf-8',{{fatal:true,ignoreBOM:true}}).decode(new Uint8Array(c.memory.buffer,args[{slot}],args[{}]))",slot+1),
@@ -145,15 +174,16 @@ fn bindings(adapter: &Adapter<'_>) -> String {
                     },
                     _ => unreachable!("trusted binding parameter"),
                 });
-                slot += adapter.flat(ty).len();
+                    slot += adapter.flat(ty).len();
+                }
+                out.push_str(&format!(
+                    "c.hostImport('host{i}',{}, {},{result},{},args=>[{}]);\n",
+                    quoted(&name),
+                    binding.suspends,
+                    quoted(namespace),
+                    decoded.join(",")
+                ));
             }
-            out.push_str(&format!(
-                "c.hostImport('host{i}',{}, {},{result},{},args=>[{}]);\n",
-                quoted(&name),
-                binding.suspends,
-                quoted(namespace),
-                decoded.join(",")
-            ));
         }
         if f.exports.is_empty() || adapter.module.tests.iter().any(|t| t.function.0 == i) {
             continue;

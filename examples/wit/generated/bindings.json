@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "module": "example:host/service@1.0.0",
+      "name": "echo",
+      "params": [
+        "(result (pair i64 (option text)) i32)"
+      ],
+      "result": "(result (pair i64 (option text)) i32)",
+      "suspends": false,
+      "capability": "echo",
+      "param_names": [
+        "value"
+      ]
+    },
+    {
+      "module": "example:host/service@1.0.0",
+      "name": "wait",
+      "params": [],
+      "result": "text",
+      "suspends": true,
+      "capability": "clock",
+      "param_names": []
+    }
+  ]
+}

@@ -9,13 +9,13 @@ import { adaptJspiGlue } from "./jco-compat.mjs";
 const execFile = promisify(execFileCallback);
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-export async function build(source, directory) {
+export async function build(source, directory, options = {}) {
   const output = resolve(directory);
   await mkdir(output, { recursive: true });
   const binary = join(output, "component.wasm");
   await execFile(
     "cargo",
-    ["run", "--locked", "--quiet", "--", "component", resolve(source), binary],
+    ["run", "--locked", "--quiet", "--", "component", resolve(source), binary, ...(options.bindings ? ["--bindings", resolve(options.bindings)] : [])],
     { cwd: root, maxBuffer: 4 * 1024 * 1024 },
   );
   const manifest = JSON.parse(await readFile(`${binary}.json`, "utf8"));

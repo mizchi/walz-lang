@@ -16,6 +16,13 @@ impl Adapter<'_> {
             .enumerate()
             .filter(|(_, f)| matches!(f.kind, FunctionKind::Import { .. }))
         {
+            if f.import_contract.is_some() {
+                out.push_str(&format!(
+                    "(import \"__component\" \"host{i}\" (func $__host{i}{}))\n",
+                    self.import_signature(f)
+                ));
+                continue;
+            }
             let params = f
                 .params
                 .iter()
@@ -59,6 +66,9 @@ impl Adapter<'_> {
         out
     }
     fn host_wrapper(&self, index: usize, f: &Function) -> String {
+        if f.import_contract.is_some() {
+            return self.value_host_wrapper(index, f);
+        }
         let params = f
             .params
             .iter()

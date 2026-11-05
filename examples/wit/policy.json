@@ -1,0 +1,4 @@
+{"imports":[
+  {"module":"example:host/service@1.0.0","name":"echo","suspends":false,"capability":"echo"},
+  {"module":"example:host/service@1.0.0","name":"wait","suspends":true,"capability":"clock"}
+]}

@@ -6,12 +6,12 @@ import { resolve, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 const execFile = promisify(execFileCallback);
 const root = fileURLToPath(new URL("..", import.meta.url));
-export async function build(source, directory) {
+export async function build(source, directory, options = {}) {
   const output = resolve(directory);
   await mkdir(output, { recursive: true });
   await execFile(
     "cargo",
-    ["run", "--locked", "--quiet", "--", "core-js", resolve(source), output],
+    ["run", "--locked", "--quiet", "--", "core-js", resolve(source), output, ...(options.bindings ? ["--bindings", resolve(options.bindings)] : [])],
     { cwd: root, maxBuffer: 4 * 1024 * 1024 },
   );
   const manifest = JSON.parse(

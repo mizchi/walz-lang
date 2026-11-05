@@ -10,6 +10,7 @@ mod abi;
 pub mod core_js;
 mod endpoints;
 mod functions;
+mod imports;
 pub mod profiling;
 mod values;
 
@@ -29,7 +30,14 @@ pub struct Component {
 }
 
 pub fn compile(source: &str) -> Result<Component, Error> {
-    let module = checked_module(source)?;
+    compile_with_policy(source, &crate::bindings::BindingPolicy::default())
+}
+
+pub fn compile_with_policy(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+) -> Result<Component, Error> {
+    let module = checked_module_with_policy(source, policy)?;
     let adapter = Adapter::new(&module);
     let core = crate::emit::emit_component(&module, &adapter);
     let effects = crate::effects::infer(&module);
@@ -37,7 +45,14 @@ pub fn compile(source: &str) -> Result<Component, Error> {
 }
 
 fn checked_module(source: &str) -> Result<Module, Error> {
-    let module = crate::check(source)?;
+    checked_module_with_policy(source, &crate::bindings::BindingPolicy::default())
+}
+
+fn checked_module_with_policy(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+) -> Result<Module, Error> {
+    let module = crate::check_with_policy(source, policy)?;
     for f in &module.functions {
         if matches!(f.kind, FunctionKind::Import { .. }) && crate::bindings::lookup(f).is_none() {
             return Err(Error::message(
@@ -75,6 +90,17 @@ fn assemble(
                     "(export \"t{}\" (type {scope}t{} (eq $t{})))\n",
                     id.0, id.0, id.0
                 ));
+            }
+        }
+        if functions.iter().all(|(_, f)| f.import_contract.is_some()) {
+            exports = format!("(alias outer 1 $unit (type {scope}unit))\n");
+            for ty in &adapter.types {
+                if let Type::Value(id) = ty {
+                    exports.push_str(&format!(
+                        "(alias outer 1 $t{} (type {scope}t{}))\n",
+                        id.0, id.0
+                    ));
+                }
             }
         }
         let mut lowers = String::new();

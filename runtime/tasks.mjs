@@ -265,7 +265,7 @@ export class Tasks {
     if (record.state === "cancelling") cancel();
     return Promise.resolve(value).finally(() => record.reads.delete(cancel));
   }
-  host(host) {
+  host(host, blocking = ["sleep", "yield"]) {
     return Object.fromEntries(
       Object.entries(host).map(([name, fn]) => [
         name,
@@ -274,7 +274,7 @@ export class Tasks {
           : (...args) => {
               const value = fn.apply(host, args),
                 record = this.active;
-              if (!record || !["sleep", "yield"].includes(name)) return value;
+              if (!record || !blocking.includes(name)) return value;
               let disposed = false;
               const cancel = () => {
                 if (disposed) return;

@@ -1,0 +1,6 @@
+package example:host@1.0.0;
+interface service {
+  echo: func(value: result<tuple<s64, option<string>>, s32>) -> result<tuple<s64, option<string>>, s32>;
+  wait: async func() -> string;
+}
+world guest { import service; }

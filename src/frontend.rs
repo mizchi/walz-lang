@@ -667,6 +667,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
             result: Type::Unit,
             exports: vec![],
             body: None,
+            import_contract: None,
             effect_contract: None,
         };
         let mut body = None;
@@ -782,6 +783,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
             result: Type::Num(NumType::I32),
             exports: vec![export],
             body: None,
+            import_contract: None,
             effect_contract: None,
         });
         bodies.push(Some(&items[2]));
@@ -824,6 +826,7 @@ pub(crate) fn check(source: &str, root: &Sexp) -> Result<Module, Error> {
             result: Type::Num(NumType::I32),
             exports: vec![],
             body: None,
+            import_contract: None,
             effect_contract: Some(crate::effects::EffectContract {
                 span: node.span,
                 allowed: crate::effects::EffectSet::default(),

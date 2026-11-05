@@ -5,14 +5,21 @@ use crate::{Error, effects::EffectSet};
 pub const EVENT_LOOP: &str = "wlt:host/event-loop@0.1.0";
 pub const TEXT_IO: &str = "wlt:host/text-io@0.1.0";
 
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Binding {
-    pub params: &'static [&'static str],
-    pub result: &'static str,
+    pub params: Vec<String>,
+    pub result: String,
     pub suspends: bool,
-    pub capability: &'static str,
+    pub capability: String,
+    #[serde(default)]
+    pub param_names: Vec<String>,
 }
 
 pub fn lookup(function: &Function) -> Option<Binding> {
+    if let Some(binding) = &function.import_contract {
+        return Some(binding.clone());
+    }
     let FunctionKind::Import { module, name } = &function.kind else {
         return None;
     };
@@ -35,10 +42,11 @@ pub fn lookup(function: &Function) -> Option<Binding> {
             _ => return None,
         };
     Some(Binding {
-        params,
-        result,
+        params: params.iter().map(|s| (*s).to_owned()).collect(),
+        result: result.into(),
         suspends,
-        capability,
+        capability: capability.into(),
+        param_names: vec![],
     })
 }
 
@@ -96,6 +104,7 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
         let family = match namespace.as_str() {
             EVENT_LOOP => "event-loop",
             TEXT_IO => "text-io",
+            _ if function.import_contract.is_some() => "policy",
             _ => continue,
         };
         let binding =
@@ -112,6 +121,63 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                 format!("binding signature mismatch for `{}`", function.name),
             ));
         }
+        if function.import_contract.is_some() {
+            if !binding.param_names.is_empty() && binding.param_names.len() != params.len() {
+                return Err(Error::message(
+                    "binding parameter names must match arity".into(),
+                ));
+            }
+            for id in &function.params {
+                crate::wit::validate_type(module, &function.locals[id.0].ty)?;
+            }
+            crate::wit::validate_type(module, &function.result)?;
+        }
     }
     Ok(())
+}
+
+/// Compiler configuration supplied by the host, never inferred from guest source.
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BindingPolicy {
+    pub imports: Vec<PolicyImport>,
+}
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct PolicyImport {
+    pub module: String,
+    pub name: String,
+    #[serde(flatten)]
+    pub binding: Binding,
+}
+impl BindingPolicy {
+    pub fn parse(json: &str) -> Result<Self, Error> {
+        let policy: Self = serde_json::from_str(json)
+            .map_err(|e| Error::message(format!("binding policy: {e}")))?;
+        let mut seen = std::collections::BTreeSet::new();
+        for item in &policy.imports {
+            if item.binding.capability.is_empty() || !seen.insert((&item.module, &item.name)) {
+                return Err(Error::message(
+                    "binding policy requires unique imports and nonempty capabilities".into(),
+                ));
+            }
+            if matches!(item.module.as_str(), EVENT_LOOP | TEXT_IO) {
+                return Err(Error::message(
+                    "binding policy cannot override built-in contracts".into(),
+                ));
+            }
+        }
+        Ok(policy)
+    }
+    pub(crate) fn apply(&self, module: &mut Module) {
+        for f in &mut module.functions {
+            if let FunctionKind::Import { module, name } = &f.kind
+                && let Some(item) = self
+                    .imports
+                    .iter()
+                    .find(|p| &p.module == module && &p.name == name)
+            {
+                f.import_contract = Some(item.binding.clone());
+            }
+        }
+    }
 }

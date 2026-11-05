@@ -8,8 +8,8 @@
 複雑なアプリケーションで確認した不足を、次の順に進める。
 
 1. [x] bytes/text の検索・分割・検査付き整数解析と text/JSON builder を標準ライブラリにまとめる。ログ集計・在庫台帳・workflow で再利用し、出力と計測値を照合する。
-2. [ ] マクロ版と明示版、Wasmtime と Node の差分検査を増やす。不正ソースと取消しのタイミングを fuzz し、失敗入力の縮小と回帰 corpus の保存まで行う。
-3. [ ] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
+2. [x] マクロ版と明示版、Wasmtime と Node の差分検査を増やす。不正ソースと取消しのタイミングを fuzz し、失敗入力の縮小と回帰 corpus の保存まで行う。
+3. [x] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
 4. [ ] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
 5. [ ] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
 
@@ -34,7 +34,7 @@ JSON builder は object・string・整数・boolean の初版。配列・浮動�
 
 - [ ] WIT から import/export の型を生成する。
 - [x] 固定した text I/O の型・host effect・必須 capability と manifest、明示的な host 接続。
-- [ ] 任意の WIT binding について型と実装に対応する effect/capability 契約。
+- [x] 対応する WIT 値型の freestanding import と明示的な effect/capability policy。対応範囲は [WIT binding](docs/wit-bindings.md) を参照。
 - [x] Node の標準入出力・ファイルを、値だけを渡す text I/O capability に接続。
 - [ ] WASI の標準ファイル・ネットワーク binding。WASI の版を固定する。
 - [x] UTF-8 入力の空行をフィルタして出力し、途中取消しでも解放する CLI。

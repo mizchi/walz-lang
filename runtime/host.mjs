@@ -160,6 +160,10 @@ export function createHostImports(options, tasks, bindings = []) {
   hosts[eventLoop] = tasks.host(
     hosts[eventLoop] ?? options.eventLoop ?? createEventLoop(),
   );
+  for (const namespace of new Set(bindings.map(b=>b.module))) {
+    if (namespace !== eventLoop && hosts[namespace])
+      hosts[namespace] = tasks.host(hosts[namespace],bindings.filter(b=>b.module===namespace && b.effects.suspends).map(b=>b.jsName));
+  }
   for (const binding of bindings) {
     if (typeof hosts[binding.module]?.[binding.jsName] !== "function")
       throw new TypeError(
