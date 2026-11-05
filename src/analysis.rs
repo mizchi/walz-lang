@@ -44,7 +44,11 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
             effects.allocates = true;
             effects.may_trap = true;
         }
-        Buffer {
+        List {
+            op: ListOp::FromArray(ty),
+            ..
+        }
+        | Buffer {
             op: BufferOp::FromArray(ty),
             ..
         } => {
@@ -54,6 +58,10 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
             effects.reads = field.mutable;
             effects.allocates = true;
             effects.may_trap = true;
+        }
+        List { op, .. } => {
+            effects.allocates = matches!(op, ListOp::New | ListOp::Slice);
+            effects.may_trap = !matches!(op, ListOp::Len);
         }
         Buffer { op, .. } => {
             effects.allocates = op.allocates();

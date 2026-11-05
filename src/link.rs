@@ -64,6 +64,12 @@ pub(crate) fn project(module: &Module) -> Module {
                     use ExprKind::*;
                     match &e.kind {
                         Call { function, .. } => pending.push(Item::Function(function.0)),
+                        List { list, op, .. } => {
+                            pending.push(Item::Type(list.0));
+                            if let ListOp::FromArray(id) = op {
+                                pending.push(Item::Type(id.0));
+                            }
+                        }
                         Buffer { buffer, op, .. } => {
                             pending.push(Item::Type(buffer.0));
                             if let BufferOp::FromArray(id) = op {
@@ -117,6 +123,9 @@ pub(crate) fn project(module: &Module) -> Module {
                         }
                     }
                     TypeKind::Value(value) => {
+                        if let ValueType::List(t) = value {
+                            add_type(t, &mut pending);
+                        }
                         if let ValueType::Stream(payload) = value {
                             let option = module.value_id(&ValueType::Option(payload.clone()));
                             let pair = module.value_id(&ValueType::Pair {
@@ -232,7 +241,8 @@ pub(crate) fn project(module: &Module) -> Module {
                 }
                 TypeKind::Value(value) => match value {
                     ValueType::Bytes | ValueType::Text => {}
-                    ValueType::Option(t)
+                    ValueType::List(t)
+                    | ValueType::Option(t)
                     | ValueType::Own(t)
                     | ValueType::Future(t)
                     | ValueType::Stream(t) => ids.ty(t),
@@ -289,6 +299,12 @@ impl Ids {
         use ExprKind::*;
         match &mut e.kind {
             Call { function, .. } => function.0 = self.functions[function.0],
+            List { list, op, .. } => {
+                self.type_id(list);
+                if let ListOp::FromArray(id) = op {
+                    self.type_id(id);
+                }
+            }
             Buffer { buffer, op, .. } => {
                 self.type_id(buffer);
                 if let BufferOp::FromArray(id) = op {

@@ -12,6 +12,7 @@ pub mod format;
 mod frontend;
 pub mod ir;
 mod link;
+mod lists;
 mod modules;
 pub mod native;
 mod optimize;

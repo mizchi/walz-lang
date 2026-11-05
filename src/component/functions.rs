@@ -151,7 +151,7 @@ impl Adapter<'_> {
             (struct.set $__task_entry 2 (local.get $e) (i32.const 0))
             (struct.set $__task_entry 3 (local.get $e) (ref.null $__task_entry))
             (struct.set $__task_entry 4 (local.get $e) (ref.null $__task_entry)))
-          (func $__task_cleanup (local $e (ref null $__task_entry))
+          (func $__task_cleanup (export \"__task_cleanup\") (local $e (ref null $__task_entry))
             (loop $again (local.set $e (global.get $__task_owned))
               (if (ref.is_null (local.get $e)) (then) (else
                 {drops} (call $__task_release (ref.as_non_null (local.get $e))) (br $again))))

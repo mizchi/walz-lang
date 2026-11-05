@@ -17,8 +17,8 @@ policy に重複・不足・余分な項目がある場合、生成を拒否す�
 生成ソースを取り込むだけでは信頼しない。ホスト側も `imports` に関数を明示的に供給する。
 
 初版は interface 内の freestanding 関数、s32/s64/f32/f64、string、list<u8>、
-option/result、2要素 tuple、future/stream を扱う。空 payload の result/future/stream も扱う。
-別名を解決し、未対応の整数型、record、enum、flags、resource、汎用 list、world 直下の関数は
+option/result、2要素 tuple、共有要素の list<T>、future/stream を扱う。空 payload の result/future/stream も扱う。
+別名を解決し、未対応の整数型、record、enum、flags、resource、所有要素の list、world 直下の関数は
 明示的に拒否する。WASI 一式の binding 生成はまだ対応範囲に含めない。
 
 Core＋JSPI は型別の record codec、Component は Canonical ABI の flatten/indirect を使う。

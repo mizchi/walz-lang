@@ -140,7 +140,10 @@ impl<'a> Adapter<'a> {
                 TypeKind::Value(ValueType::Bytes | ValueType::Text) => true,
                 TypeKind::Value(ValueType::Own(_)) => false,
                 TypeKind::Value(
-                    ValueType::Option(t) | ValueType::Future(t) | ValueType::Stream(t),
+                    ValueType::List(t)
+                    | ValueType::Option(t)
+                    | ValueType::Future(t)
+                    | ValueType::Stream(t),
                 ) => self.portable(t),
                 TypeKind::Value(ValueType::Result { ok, err }) => {
                     self.portable(ok) && self.portable(err)
@@ -159,7 +162,9 @@ impl<'a> Adapter<'a> {
             Type::Num(NumType::I64 | NumType::F64) => Layout { size: 8, align: 8 },
             Type::Num(_) => Layout { size: 4, align: 4 },
             Type::Value(id) => match self.value(*id) {
-                ValueType::Bytes | ValueType::Text => Layout { size: 8, align: 4 },
+                ValueType::Bytes | ValueType::Text | ValueType::List(_) => {
+                    Layout { size: 8, align: 4 }
+                }
                 ValueType::Pair { first, second } => {
                     let a = self.layout(first);
                     let b = self.layout(second);
@@ -208,7 +213,9 @@ impl<'a> Adapter<'a> {
             Type::Num(n) => vec![*n],
             Type::Unit => vec![NumType::I32],
             Type::Value(id) => match self.value(*id) {
-                ValueType::Bytes | ValueType::Text => vec![NumType::I32, NumType::I32],
+                ValueType::Bytes | ValueType::Text | ValueType::List(_) => {
+                    vec![NumType::I32, NumType::I32]
+                }
                 ValueType::Future(_) | ValueType::Stream(_) => vec![NumType::I32],
                 ValueType::Pair { first, second } => [self.flat(first), self.flat(second)].concat(),
                 _ => {
@@ -246,6 +253,7 @@ impl<'a> Adapter<'a> {
             let def = match self.value(*id) {
                 ValueType::Bytes => "(list u8)".into(),
                 ValueType::Text => "string".into(),
+                ValueType::List(t) => format!("(list {})", component_type(t)),
                 ValueType::Option(t) => format!("(option {})", component_type(t)),
                 ValueType::Result { ok, err } => format!(
                     "(result {}{})",

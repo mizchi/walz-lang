@@ -77,7 +77,7 @@ export async function instantiate(options={}) {
     getCoreModule=async name=>WebAssembly.compile(await (await import('node:fs/promises')).readFile(new URL(name,import.meta.url)));
   }
   const instantiateCore=async(module,imports)=>tasks.capture(await (options.instantiateCore??WebAssembly.instantiate)(module,imports));
-  return tasks.bind(await create(getCoreModule,imports,instantiateCore,{wlt:{read:tasks.read.bind(tasks),disposal:tasks.disposal.bind(tasks)}}));
+  return tasks.bind(await create(getCoreModule,imports,instantiateCore,{wlt:{read:tasks.read.bind(tasks),disposal:tasks.disposal.bind(tasks),cleaning:()=>tasks.cleaning===true}}));
 }
 `,
   );

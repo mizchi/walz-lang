@@ -138,6 +138,13 @@ fn shape(r: &Resolve, ty: Type, depth: usize) -> Result<String, Error> {
         Type::Id(id) => match &r.types[id].kind {
             TypeDefKind::Type(t) => sub(*t)?,
             TypeDefKind::List(Type::U8) => "bytes".into(),
+            TypeDefKind::List(t) => {
+                let payload = sub(*t)?;
+                if contains_endpoint(r, *t, 0) {
+                    return Err(Error::message("WIT list elements must be shared data; future/stream elements are unsupported".into()));
+                }
+                format!("(list {payload})")
+            }
             TypeDefKind::Option(t) => format!("(option {})", sub(*t)?),
             TypeDefKind::Result(t) => format!("(result {} {})", optional(t.ok)?, optional(t.err)?),
             TypeDefKind::Tuple(t) if t.types.len() == 2 => {
@@ -154,4 +161,19 @@ fn shape(r: &Resolve, ty: Type, depth: usize) -> Result<String, Error> {
         },
         t => return Err(Error::message(format!("unsupported WIT primitive: {t:?}"))),
     })
+}
+
+fn contains_endpoint(r: &Resolve, ty: Type, depth: usize) -> bool {
+    if depth > 64 {
+        return true;
+    }
+    let Type::Id(id) = ty else { return false };
+    let sub = |t| contains_endpoint(r, t, depth + 1);
+    match &r.types[id].kind {
+        TypeDefKind::Future(_) | TypeDefKind::Stream(_) => true,
+        TypeDefKind::Type(t) | TypeDefKind::List(t) | TypeDefKind::Option(t) => sub(*t),
+        TypeDefKind::Tuple(t) => t.types.iter().copied().any(sub),
+        TypeDefKind::Result(t) => t.ok.into_iter().chain(t.err).any(sub),
+        _ => false,
+    }
 }

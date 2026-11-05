@@ -439,6 +439,13 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
             TypeKind::Struct(fields) => fields.iter().map(|f| &f.ty).collect::<Vec<_>>(),
             TypeKind::Array(field) => vec![&field.ty],
             TypeKind::Variant(variants) => variants.iter().flat_map(|v| &v.payloads).collect(),
+            TypeKind::Value(ValueType::List(ty)) if kinds.is_owned(ty) => {
+                return Err(Error::at(
+                    source,
+                    origin,
+                    "list elements must be shared data",
+                ));
+            }
             TypeKind::Value(ValueType::Own(ty)) if kinds.is_owned(ty) => {
                 return Err(Error::at(source, origin, "own payload must be shared data"));
             }

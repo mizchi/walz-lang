@@ -64,6 +64,37 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                     ),
                 )
             }
+            ValueType::List(payload) => {
+                let layout = a.layout(payload);
+                let stride = layout.size;
+                let align = layout.align;
+                let limit = (16 * 1024 * 1024) / stride;
+                let r = read(payload, &format!("q+i*{stride}"));
+                let w = write(payload, &format!("q+i*{stride}"), "v[i]");
+                let typed = match payload {
+                    Type::Num(NumType::I32) => Some("Int32Array"),
+                    Type::Num(NumType::I64) => Some("BigInt64Array"),
+                    Type::Num(NumType::F32) => Some("Float32Array"),
+                    Type::Num(NumType::F64) => Some("Float64Array"),
+                    _ => None,
+                };
+                let read = if let Some(typed) = typed {
+                    format!("const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;")
+                } else {
+                    format!("return Array.from({{length:n}},(_,i)=>{r});")
+                };
+                let valid = typed
+                    .map(|typed| format!("(Array.isArray(v)||v instanceof {typed})"))
+                    .unwrap_or("Array.isArray(v)".into());
+                (
+                    format!(
+                        "const q=c.view().getUint32(p,true),n=c.view().getUint32(p+4,true);if(n>{limit}||q%{align}||q+n*{stride}>c.memory.buffer.byteLength)throw new TypeError('invalid list bounds');{read}"
+                    ),
+                    format!(
+                        "if(!{valid}||v.length>{limit})throw new TypeError('expected bounded list');const n=v.length,q=n?c.alloc(n*{stride}):0;c.view().setUint32(p,q,true);c.view().setUint32(p+4,n,true);for(let i=0;i<n;i++){{{w}}}"
+                    ),
+                )
+            }
             ValueType::Future(_) | ValueType::Stream(_) => (
                 format!("return c.take({},c.view().getUint32(p,true));", id.0),
                 format!("c.view().setUint32(p,c.add({},v),true);", id.0),

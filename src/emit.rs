@@ -1,6 +1,6 @@
 use crate::ir::*;
 
-fn ty(module: &Module, ty: &Type) -> String {
+pub(crate) fn ty(module: &Module, ty: &Type) -> String {
     match ty {
         Type::Num(_) | Type::Ref { .. } => module.type_name(ty),
         Type::Value(id) | Type::Resource(id) | Type::Borrow(id) => {
@@ -90,6 +90,17 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
                 }
                 TypeKind::Resource { .. } => "(struct (field i32) (field (mut i32)))".into(),
                 TypeKind::Array(field) => format!("(array {})", storage(module, field)),
+                TypeKind::Value(ValueType::List(payload)) => {
+                    let element = if *payload == Type::Unit {
+                        "i8".into()
+                    } else {
+                        ty(module, payload)
+                    };
+                    output.push_str(&format!(
+                        "(type $__list_storage_{index} (array (mut {element})))\n"
+                    ));
+                    format!("(struct (field (ref $__list_storage_{index})))")
+                }
                 TypeKind::Value(ValueType::Bytes | ValueType::Text) => {
                     "(struct (field (ref $__byte_storage)))".into()
                 }
@@ -161,6 +172,7 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
         output.push_str(&format!("  (tag {} (param{payloads}))\n", tag.name));
     }
     output.push_str(&crate::buffers::helpers(module));
+    output.push_str(&crate::lists::helpers(module));
     for (i, t) in module.types.iter().enumerate() {
         if let TypeKind::Resource { close, .. } = &t.kind {
             let name = &t.name;
@@ -252,6 +264,10 @@ impl Emitter<'_> {
     fn expression(&mut self, expression: &Expr) -> String {
         use ExprKind::*;
         let code = match &expression.kind {
+            List { op, list, args } => {
+                let values = args.iter().map(|a| self.expression(a)).collect::<Vec<_>>();
+                crate::lists::expression(self.module, *op, *list, &values)
+            }
             Data(bytes) => {
                 let Type::Value(id) = expression.ty else {
                     unreachable!()

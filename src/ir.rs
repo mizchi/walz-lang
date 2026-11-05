@@ -172,6 +172,7 @@ pub struct Variant {
 pub enum ValueType {
     Bytes,
     Text,
+    List(Type),
     Option(Type),
     Result {
         ok: Type,
@@ -199,7 +200,7 @@ impl ValueType {
             }
         };
         match self {
-            Self::Bytes | Self::Text => vec![],
+            Self::Bytes | Self::Text | Self::List(_) => vec![],
             Self::Option(ty) => vec![
                 Variant {
                     name: "none".into(),
@@ -249,6 +250,7 @@ impl ValueType {
         match self {
             Self::Bytes => "bytes".into(),
             Self::Text => "text".into(),
+            Self::List(ty) => format!("(list {})", format(ty)),
             Self::Option(ty) => format!("(option {})", format(ty)),
             Self::Result { ok, err } => format!("(result {} {})", format(ok), format(err)),
             Self::Pair { first, second } => format!("(pair {} {})", format(first), format(second)),
@@ -478,8 +480,22 @@ impl BufferOp {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+pub enum ListOp {
+    New,
+    Len,
+    Get,
+    Slice,
+    FromArray(TypeId),
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub enum ExprKind {
+    List {
+        op: ListOp,
+        list: TypeId,
+        args: Vec<Expr>,
+    },
     ResourceNew {
         ty: TypeId,
         handle: Box<Expr>,
@@ -605,7 +621,8 @@ impl Expr {
     pub fn children(&self) -> Vec<&Expr> {
         use ExprKind::*;
         match &self.kind {
-            Buffer { args, .. }
+            List { args, .. }
+            | Buffer { args, .. }
             | Numeric { args, .. }
             | Call { args, .. }
             | Delivery { args, .. } => args.iter().collect(),
@@ -659,7 +676,8 @@ impl Expr {
     pub fn children_mut(&mut self) -> Vec<&mut Expr> {
         use ExprKind::*;
         match &mut self.kind {
-            Buffer { args, .. }
+            List { args, .. }
+            | Buffer { args, .. }
             | Numeric { args, .. }
             | Call { args, .. }
             | Delivery { args, .. } => args.iter_mut().collect(),

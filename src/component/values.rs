@@ -23,6 +23,11 @@ impl Adapter<'_> {
                 self.released_memory(ty, "(local.get $p)")
             ));
             if let Type::Value(id) = ty
+                && matches!(self.value(*id), ValueType::List(_))
+            {
+                out.push_str(&self.list_helpers(*id));
+            }
+            if let Type::Value(id) = ty
                 && matches!(self.value(*id), ValueType::Bytes | ValueType::Text)
             {
                 out.push_str(&self.buffer_helpers(*id));
@@ -74,6 +79,7 @@ impl Adapter<'_> {
                 "(if (i32.load {}) (then (call $__free (i32.load {ptr}))))",
                 pointer_at(ptr, 4)
             ),
+            ValueType::List(_) => format!("(call $__release_list_{} {ptr})", id.0),
             ValueType::Pair { first, second } => format!(
                 "{} {}",
                 self.release(first, ptr),
@@ -148,6 +154,11 @@ impl Adapter<'_> {
                 format!("(if (i32.ne (i32.load8_u {ptr}) (i32.const 0)) (then (unreachable)))")
             }
             Type::Value(id) => match self.value(*id) {
+                ValueType::List(_) => format!(
+                    "(call $__lift_list_{} (i32.load {ptr}) (i32.load {}))",
+                    id.0,
+                    pointer_at(ptr, 4)
+                ),
                 ValueType::Bytes | ValueType::Text => format!(
                     "(call $__lift_buffer_{} (i32.load {ptr}) (i32.load {}))",
                     id.0,
@@ -203,6 +214,7 @@ impl Adapter<'_> {
             Type::Num(n) => format!("({}.store {ptr} {value})", n.wat()),
             Type::Unit => format!("(i32.store8 {ptr} (i32.const 0))"),
             Type::Value(id) => match self.value(*id) {
+                ValueType::List(_) => format!("(call $__lower_list_{} {value} {ptr})", id.0),
                 ValueType::Bytes | ValueType::Text => {
                     format!("(call $__lower_buffer_{} {value} {ptr})", id.0)
                 }
@@ -274,6 +286,10 @@ impl Adapter<'_> {
                 values[0].0
             ),
             Type::Value(id) => match self.value(*id) {
+                ValueType::List(_) => format!(
+                    "(call $__lift_list_{} {} {})",
+                    id.0, values[0].0, values[1].0
+                ),
                 ValueType::Bytes | ValueType::Text => format!(
                     "(call $__lift_buffer_{} {} {})",
                     id.0, values[0].0, values[1].0

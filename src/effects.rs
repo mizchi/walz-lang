@@ -90,7 +90,11 @@ fn direct(expression: &Expr, module: &Module, functions: &[EffectSet]) -> Effect
             };
             effects.reads = fields[*field].mutable;
         }
-        Buffer {
+        List {
+            op: ListOp::FromArray(ty),
+            ..
+        }
+        | Buffer {
             op: BufferOp::FromArray(ty),
             ..
         } => {

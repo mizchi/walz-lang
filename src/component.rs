@@ -11,6 +11,7 @@ pub mod core_js;
 mod endpoints;
 mod functions;
 mod imports;
+mod lists;
 pub mod profiling;
 mod values;
 

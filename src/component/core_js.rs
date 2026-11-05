@@ -71,9 +71,10 @@ fn collect(adapter: &Adapter<'_>, ty: &Type, used: &mut BTreeSet<Type>) {
     }
     if let Type::Value(id) = ty {
         match adapter.value(*id) {
-            ValueType::Option(t) | ValueType::Future(t) | ValueType::Stream(t) => {
-                collect(adapter, t, used)
-            }
+            ValueType::List(t)
+            | ValueType::Option(t)
+            | ValueType::Future(t)
+            | ValueType::Stream(t) => collect(adapter, t, used),
             ValueType::Result { ok, err } => {
                 collect(adapter, ok, used);
                 collect(adapter, err, used);

@@ -64,3 +64,24 @@ fn wit_generation_rejects_missing_authority_and_unsupported_shapes() {
             .contains("unsupported WIT")
     );
 }
+
+#[test]
+fn generated_lists_resolve_aliases_and_reject_owned_elements_early() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("list.wit");
+    let grants = r#"{"imports":[{"module":"example:lists/io","name":"read","suspends":false,"capability":"input"}]}"#;
+    std::fs::write(&input,"package example:lists; interface io { type element = result<tuple<s64,string>,s32>; read: func() -> list<element>; } world guest { import io; }").unwrap();
+    let generated = wlt::wit_bindgen::generate(&input, None, grants).unwrap();
+    assert!(
+        generated
+            .source
+            .contains("(list (result (pair i64 text) i32))")
+    );
+    std::fs::write(&input,"package example:lists; interface io { read: func() -> list<option<future<s64>>>; } world guest { import io; }").unwrap();
+    assert!(
+        wlt::wit_bindgen::generate(&input, None, grants)
+            .unwrap_err()
+            .to_string()
+            .contains("shared data")
+    );
+}

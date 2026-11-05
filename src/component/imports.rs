@@ -123,7 +123,7 @@ impl Adapter<'_> {
             Type::Num(n) => vec![(load(*n, p), *n)],
             Type::Unit => vec![(format!("(i32.load8_u {p})"), NumType::I32)],
             Type::Value(id) => match self.value(*id) {
-                ValueType::Text | ValueType::Bytes => vec![
+                ValueType::List(_) | ValueType::Text | ValueType::Bytes => vec![
                     (load(NumType::I32, p), NumType::I32),
                     (load(NumType::I32, &pointer_at(p, 4)), NumType::I32),
                 ],

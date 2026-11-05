@@ -56,6 +56,9 @@ impl Types<'_> {
                         format!("{name}<{}>", self.render(payload)?)
                     }
                 }
+                TypeKind::Value(ValueType::List(payload)) => {
+                    format!("list<{}>", self.render(payload)?)
+                }
                 TypeKind::Value(ValueType::Option(payload)) => {
                     format!("option<{}>", self.render(payload)?)
                 }

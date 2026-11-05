@@ -65,11 +65,20 @@ export class Tasks {
     this.resources = new Resources(()=>this.active,fn=>this.disposal(fn));
   }
   capture(instance) {
+    if (instance.exports["free-all"])
+      this.freeBoundary = instance.exports["free-all"];
+    if (instance.exports.__task_cleanup)
+      this.guestCleanup = instance.exports.__task_cleanup;
     if (instance.exports["cancel-requested"])
       this.flag = instance.exports["cancel-requested"];
     if (instance.exports.__task_cancel)
       this.tag = instance.exports.__task_cancel;
     return instance;
+  }
+  cleanupGuest() {
+    this.cleaning = true;
+    try { this.guestCleanup?.(); }
+    finally { this.cleaning = false; }
   }
   bind(component) {
     if (!this.flag || !this.tag)
@@ -187,7 +196,7 @@ export class Tasks {
     } catch (error) {
       record.args = [];
       this.finish(record, undefined, error);
-      if (inline) throw error;
+      if (inline && !this.asyncExports.has(record.name)) throw error;
       return record.result.promise;
     }
     record.args = [];
@@ -214,6 +223,10 @@ export class Tasks {
     record.settling = true;
     try {
       const failures = [];
+      if (error) {
+        try { this.cleanupGuest(); }
+        catch (cleanupError) { failures.push(cleanupError); }
+      }
       // Jco schedules disposal when readable ends are dropped. The bridge
       // registers each disposal before its microtask starts, so no timer race
       // or fixed grace period is needed here.
@@ -236,6 +249,13 @@ export class Tasks {
     } catch (cleanupError) {
       this.failure = cleanupError;
       error = cleanupError;
+    }
+    if (error) {
+      try { this.freeBoundary?.(); }
+      catch (cleanupError) {
+        error = new AggregateError([error, cleanupError], "boundary cleanup failed");
+        this.failure = error;
+      }
     }
     const cancelled =
       record.state === "cancelling" &&

@@ -9,6 +9,7 @@ pub enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
     Pair(Box<Expr>, Box<Expr>),
+    List(Box<Expr>, Box<Expr>),
     Result(Box<Expr>, bool),
     Choose(Box<Expr>, Box<Expr>, Box<Expr>),
 }
@@ -18,7 +19,7 @@ impl Expr {
     }
     fn children(&self) -> Vec<Expr> {
         match self {
-            Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) => {
+            Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) | Self::List(a, b) => {
                 vec![(**a).clone(), (**b).clone()]
             }
             Self::Result(a, _) => vec![(**a).clone()],
@@ -33,12 +34,8 @@ impl Expr {
             for smaller in child.smaller() {
                 let mut candidate = self.clone();
                 let target = match &mut candidate {
-                    Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) => {
-                        if i == 0 {
-                            a
-                        } else {
-                            b
-                        }
+                    Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) | Self::List(a, b) => {
+                        if i == 0 { a } else { b }
                     }
                     Self::Choose(a, b, c) => match i {
                         0 => a,
@@ -64,6 +61,10 @@ impl Expr {
             Self::Add(a, b) => a.eval(trace).wrapping_add(b.eval(trace)),
             Self::Mul(a, b) => a.eval(trace).wrapping_mul(b.eval(trace)),
             Self::Pair(a, b) => a.eval(trace).wrapping_sub(b.eval(trace)),
+            Self::List(a, b) => {
+                a.eval(trace);
+                b.eval(trace)
+            }
             Self::Result(a, _) => a.eval(trace),
             Self::Choose(a, b, c) => {
                 if a.eval(trace) & 1 == 0 {
@@ -103,6 +104,11 @@ impl Expr {
                     )
                 }
             }
+            Self::List(a, b) => format!(
+                "(list.get i32 (list.new i32 {} {}) (i32.const 1))",
+                a.render(short, next),
+                b.render(short, next)
+            ),
             Self::Result(a, ok) => {
                 let id = *next;
                 *next += 1;
@@ -141,7 +147,7 @@ fn random(state: &mut u64) -> u32 {
     (*state >> 32) as u32
 }
 fn generate(state: &mut u64, depth: u32) -> Expr {
-    let choice = random(state) % 7;
+    let choice = random(state) % 8;
     if depth == 0 || choice < 2 {
         return if choice == 1 {
             Expr::Trace(random(state) as i32)
@@ -156,7 +162,8 @@ fn generate(state: &mut u64, depth: u32) -> Expr {
         3 => Expr::Mul(a, b),
         4 => Expr::Pair(a, b),
         5 => Expr::Choose(a, b, Box::new(generate(state, depth - 1))),
-        _ => Expr::Result(a, random(state).is_multiple_of(2)),
+        6 => Expr::Result(a, random(state).is_multiple_of(2)),
+        _ => Expr::List(a, b),
     }
 }
 pub fn reduce(mut input: Expr, mut fails: impl FnMut(&Expr) -> bool) -> Expr {

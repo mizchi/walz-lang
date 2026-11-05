@@ -835,3 +835,8 @@ S は共有できる非 unit、E は共有値、body は result<S,E> です。so
 同期 destructor を持つ nominal resource、非流出の borrow、using を追加した。
 詳細と所有権・例外・ホスト境界の制約は [外部資源の契約](docs/resources.md) を参照。
 WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参照。
+
+## 不変の list
+
+`(list T)` と5つの操作、WIT list<T> の変換は [list の契約](docs/lists.md) を参照。
+所有権を持つ要素や借用の格納は認めない。

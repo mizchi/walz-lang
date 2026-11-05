@@ -258,6 +258,7 @@ impl Context<'_> {
                 Member::Field { index },
             ) => fields.get(*index).map(|f| (f.ty.clone(), f.mutable)),
             (TypeKind::Array(field), Member::Element) => Some((field.ty.clone(), field.mutable)),
+            (TypeKind::Value(ValueType::List(t)), Member::Element) => Some((t.clone(), false)),
             (TypeKind::Variant(variants), Member::Payload { variant, index }) => variants
                 .get(*variant)?
                 .payloads
@@ -342,6 +343,31 @@ impl Context<'_> {
         use ExprKind::*;
         let result = match &e.kind {
             Data(_) => self.allocate(e, 0, &e.ty),
+            List { op, args, .. } => {
+                let values = args.iter().map(|e| self.eval(e)).collect::<Vec<_>>();
+                match op {
+                    ListOp::Len => Points::new(),
+                    ListOp::Get => project(&values[0], &Member::Element, &self.summary.heap),
+                    _ => {
+                        let mut elements = Points::new();
+                        if *op == ListOp::New {
+                            for value in values {
+                                elements.extend(value);
+                            }
+                        } else {
+                            if let ListOp::FromArray(id) = op
+                                && matches!(self.module.types[id.0].kind,TypeKind::Array(ref field) if field.mutable)
+                            {
+                                self.access(&values[0], Member::Element, false);
+                            }
+                            elements = project(&values[0], &Member::Element, &self.summary.heap);
+                        }
+                        let objects = self.allocate(e, 0, &e.ty);
+                        self.store(&objects, Member::Element, elements, true);
+                        objects
+                    }
+                }
+            }
             Buffer { op, args, .. } => {
                 for arg in args {
                     let objects = self.eval(arg);

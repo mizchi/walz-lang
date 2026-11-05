@@ -258,3 +258,7 @@ test-resources:
 test-json:
     cargo test --locked --test json_values
     node --test runtime/json-value.test.mjs
+
+test-lists:
+    cargo test --locked --test lists --test wit_bindings --test differential
+    node --expose-gc --test runtime/lists.test.mjs runtime/list-bindings.test.mjs

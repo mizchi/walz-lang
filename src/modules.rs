@@ -453,6 +453,11 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     {
         name.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Type, name)?);
     }
+    if head == "list.from-array"
+        && let Some(ty) = items.get_mut(2)
+    {
+        ty.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Type, ty)?);
+    }
     if head == "resource" && items.len() == 3 {
         let close = &mut items[2];
         close.kind = Kind::Atom(resolve(source, scopes, scope, SymbolKind::Function, close)?);
@@ -501,6 +506,10 @@ impl Expanded {
                         Type::Borrow(ty) => Some(ty),
                         _ => None,
                     },
+                    List {
+                        op: crate::ir::ListOp::FromArray(ty),
+                        ..
+                    } => Some(*ty),
                     Buffer {
                         op: crate::ir::BufferOp::FromArray(ty),
                         ..

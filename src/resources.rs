@@ -61,7 +61,8 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
             TypeKind::Array(f) => fields.push(&f.ty),
             TypeKind::Variant(v) => fields.extend(v.iter().flat_map(|v| &v.payloads)),
             TypeKind::Value(v) => match v {
-                ValueType::Option(t)
+                ValueType::List(t)
+                | ValueType::Option(t)
                 | ValueType::Own(t)
                 | ValueType::Future(t)
                 | ValueType::Stream(t) => fields.push(t),

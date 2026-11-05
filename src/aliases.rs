@@ -24,7 +24,7 @@ fn map_type(
     f(node)?;
     if matches!(
         node.head(),
-        Some("option" | "result" | "pair" | "own" | "future" | "stream")
+        Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream")
     ) && let Kind::List(items) = &mut node.kind
     {
         for item in &mut items[1..] {
@@ -56,7 +56,7 @@ fn type_argument(node: &Sexp) -> bool {
     node.atom().is_some()
         || matches!(
             node.head(),
-            Some("ref" | "option" | "result" | "pair" | "own" | "future" | "stream")
+            Some("ref" | "list" | "option" | "result" | "pair" | "own" | "future" | "stream")
         )
 }
 
@@ -191,6 +191,15 @@ pub(crate) fn map_types(
                 }
             }
         }
+        "list.new" | "list.len" | "list.get" | "list.slice" | "list.from-array" => {
+            if let Some(ty) = items.get_mut(1) {
+                map_type(ty, f)?;
+            }
+            let start = if head == "list.from-array" { 3 } else { 2 };
+            for e in items.iter_mut().skip(start) {
+                map_types(e, f)?;
+            }
+        }
         "option.none" | "option.some" | "own.new" | "future.ready" | "future.await"
         | "future.close" | "stream.empty" | "stream.cons" | "stream.next" | "stream.close"
         | "pair.new" | "result.ok" | "result.err" => {
@@ -302,7 +311,7 @@ impl Resolver<'_> {
         let mut output = node.clone();
         if matches!(
             node.head(),
-            Some("option" | "result" | "pair" | "own" | "future" | "stream")
+            Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream")
         ) && let Kind::List(items) = &mut output.kind
         {
             let mut nodes = 2; // This list and its constructor atom.

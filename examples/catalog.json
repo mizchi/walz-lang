@@ -21,6 +21,11 @@
       "expected": "42"
     },
     {
+      "path": "examples/list-batch.wlt",
+      "pattern": "immutable lists with array-backed map and list traversal",
+      "expected": "42"
+    },
+    {
       "path": "examples/factorial.wlt",
       "pattern": "numeric loop",
       "expected": "3628800",

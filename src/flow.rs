@@ -477,6 +477,12 @@ impl Visitor<'_> {
         let mut bounds = None;
         let operation = match &e.kind {
             Data(_) => "text.lit".into(),
+            List { op, args, .. } => {
+                for arg in args {
+                    self.eval(arg, s);
+                }
+                format!("list.{op:?}")
+            }
             Buffer { op, args, .. } => {
                 for arg in args {
                     self.eval(arg, s);

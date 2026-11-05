@@ -225,6 +225,10 @@ class Boundary {
           "cannot enter component instance after failure",
           { cause: error },
         );
+        // Retire registered guest ends before draining partially converted ends.
+        // finish() may invoke this again; the guest cleanup is idempotent.
+        try { this.tasks.cleanupGuest(); }
+        catch (cleanupError) { error = new AggregateError([error,cleanupError], "guest cleanup failed"); }
         for (const [handle, entry] of this.handles)
           this.drop(entry.type, handle);
         this.allocator["free-all"]();

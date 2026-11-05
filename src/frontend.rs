@@ -195,6 +195,10 @@ impl Tables<'_> {
             return Ok(None);
         };
         Ok(match node.head() {
+            Some("list") => {
+                self.count(node, items, 2)?;
+                Some(ValueType::List(self.payload_ty(&items[1])?))
+            }
             Some("option") => {
                 self.count(node, items, 2)?;
                 Some(ValueType::Option(self.payload_ty(&items[1])?))
@@ -279,6 +283,9 @@ impl Tables<'_> {
             self.intern_value(value);
         }
         match node.head() {
+            Some(name) if name.starts_with("list.") && items.len() >= 2 => {
+                self.intern_value(ValueType::List(self.payload_ty(&items[1])?));
+            }
             Some(name) if DeliveryOp::parse(name).is_some() && items.len() >= 2 => {
                 let op = DeliveryOp::parse(name).unwrap();
                 let payload = self.payload_ty(&items[1])?;
@@ -326,7 +333,7 @@ impl Tables<'_> {
             s == "unit" || s == "bytes" || s == "text" || NumType::parse(s).is_some()
         }) || matches!(
             node.head(),
-            Some("ref" | "option" | "own" | "future" | "stream" | "pair")
+            Some("ref" | "list" | "option" | "own" | "future" | "stream" | "pair")
         ) || node.head() == Some("result") && node.list().unwrap().len() == 3
     }
 
@@ -1461,6 +1468,10 @@ impl Checker<'_, '_> {
     fn variants(&self, node: &Sexp, ty: TypeId) -> Result<Cow<'_, [Variant]>, Error> {
         if let Some(value) = self.tables.value(&Type::Value(ty)) {
             return match value {
+                ValueType::List(_) => Err(self.tables.error(
+                    node,
+                    "list values require list operations; their representation cannot be matched",
+                )),
                 ValueType::Bytes
                 | ValueType::Text
                 | ValueType::Future(_)
@@ -1642,6 +1653,9 @@ impl Checker<'_, '_> {
                             body: Box::new(body),
                         },
                     )
+                }
+                "list.new" | "list.len" | "list.get" | "list.slice" | "list.from-array" => {
+                    self.list_expr(node, items, scope, loops)?
                 }
                 "own.close" => {
                     count(2)?;
@@ -2100,6 +2114,49 @@ impl Checker<'_, '_> {
         } else {
             Ok((Type::Unit, start))
         }
+    }
+
+    fn list_expr(
+        &mut self,
+        node: &Sexp,
+        items: &[Sexp],
+        scope: &Scope,
+        loops: &[LoopContext],
+    ) -> Result<(Type, ExprKind), Error> {
+        let tables = self.tables;
+        let payload = tables.payload_ty(
+            items
+                .get(1)
+                .ok_or_else(|| tables.error(node, "missing list element type"))?,
+        )?;
+        let list = tables.intern_value(ValueType::List(payload.clone()));
+        let ty = Type::Value(list);
+        let i32ty = Type::Num(NumType::I32);
+        let (op, start, params, result) = match node.head().unwrap() {
+            "list.new" => (ListOp::New, 2, vec![payload; items.len() - 2], ty),
+            "list.len" => (ListOp::Len, 2, vec![ty], i32ty),
+            "list.get" => (ListOp::Get, 2, vec![ty, i32ty], payload),
+            "list.slice" => (ListOp::Slice, 2, vec![ty.clone(), i32ty.clone(), i32ty], ty),
+            _ => {
+                tables.count(node, items, 4)?;
+                let array = tables.type_id(&items[2])?;
+                if self.array(node, array)?.ty != payload {
+                    return Err(tables.error(node, "list.from-array element type mismatch"));
+                }
+                (
+                    ListOp::FromArray(array),
+                    3,
+                    vec![Type::Ref {
+                        ty: array,
+                        nullable: false,
+                    }],
+                    ty,
+                )
+            }
+        };
+        tables.count(node, items, start + params.len())?;
+        let args = self.expressions_as(&items[start..], scope, loops, &params)?;
+        Ok((result, ExprKind::List { op, list, args }))
     }
 
     fn buffer_expr(

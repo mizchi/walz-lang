@@ -61,16 +61,36 @@ export function adaptJspiGlue(source) {
     if (!source.includes(declaration)) continue;
     source = source.replace(declaration, `function wltRaw${kind}Read(`);
     source += `\n`; // Insert inside instantiate, where tables and options live.
+    const endClass = kind === "future" ? "FutureEnd" : "StreamEnd";
+    // Failed payload conversion leaves an abandoned copy buffer in 0.23.0.
+    // Clear it before guest-scope cleanup drops the readable end.
     const wrapper = `function ${kind}Read(ctx,handle,...args){
-      const run=()=>wltRaw${kind}Read(ctx,handle,...args);
-      if(!options?.wlt?.read)return run();
       const end=get${kind[0].toUpperCase() + kind.slice(1)}End({tableIdx:ctx.${table},${handle}:handle});
+      const failed=error=>{end.resetPendingBufferMeta();end.setCopyState(${endClass}.CopyState.DONE);throw error;};
+      const run=()=>{try{const value=wltRaw${kind}Read(ctx,handle,...args);return value?.then?Promise.resolve(value).catch(failed):value;}catch(error){return failed(error);}};
+      if(!options?.wlt?.read)return run();
       return options.wlt.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__wltCancellingRead=true;end.cancel();}},run);
     }\n`;
     source = source.replace(
       `function wltRaw${kind}Read(`,
       `${wrapper}function wltRaw${kind}Read(`,
     );
+  }
+  // Attach rejection handling before a synchronous read parks its task.
+  // Waiting for a success event before observing failure deadlocks the reader.
+  if(source.includes("class StreamEnd")) {
+    const wakeup=/(const streamEnd = this;\n)([ \t]+)(return task\.suspendUntil\(\{)/g;
+    if(!wakeup.test(source))throw new Error("jco failed-copy wakeup patch no longer matches");
+    source=source.replace(wakeup,(_,head,indent,tail)=>`${head}${indent}if(injectedWritePromise)injectedWritePromise.catch(error=>streamEnd.setPendingEvent(()=>{throw error;}));\n${indent}${tail}`);
+  }
+  // Task failure cleanup runs after jco has retired the caller task. Only
+  // that private cleanup scope may drop readers without a current task.
+  if(source.includes("function streamDropReadable(")) {
+    const start=source.indexOf("function streamDropReadable(");
+    const guard="if (!task) { throw new Error('invalid/missing async task'); }";
+    const at=source.indexOf(guard,start);
+    if(at<start || at>start+600)throw new Error("jco cleanup patch no longer matches; review pinned transpiler");
+    source=source.slice(0,at)+guard.replace("if (!task)","if (!task && !options?.wlt?.cleaning?.())")+source.slice(at+guard.length);
   }
   const marker =
     "const reportErr = (err) => console.error('[jco] error while disposing discarded host value', err);";
