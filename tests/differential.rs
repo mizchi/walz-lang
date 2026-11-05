@@ -20,6 +20,23 @@ fn reducer_preserves_the_failure_and_reaches_a_structural_minimum() {
 }
 
 #[test]
+fn reducer_can_shrink_a_payload_while_preserving_its_required_wrapper() {
+    use support::fuzz::Expr;
+    let input = Expr::Result(
+        Box::new(Expr::Add(
+            Box::new(Expr::Const(91)),
+            Box::new(Expr::Trace(42)),
+        )),
+        true,
+    );
+    let reduced = support::fuzz::reduce(
+        input,
+        |e| matches!(e,Expr::Result(value,true) if value.has_trace()),
+    );
+    assert_eq!(reduced, Expr::Result(Box::new(Expr::Trace(42)), true));
+}
+
+#[test]
 fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
     for seed in 0..32 {
         let dir = tempfile::tempdir().unwrap();

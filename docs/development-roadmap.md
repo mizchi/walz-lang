@@ -10,7 +10,7 @@
 
 `just fuzz SEED CASES` は有限な型付き式を生成する。演算結果と host 呼出し順のハッシュを独立に計算し、マクロ／明示版と最適化有無を Wasmtime と Node で照合する。
 不正ソースの変異も検査し、コンパイラの panic を失敗として扱う。失敗は `target/fuzz/failures/` に保存する。
-保存された式は `just fuzz-replay FILE` で再実行できる。言語全体や全入力についての健全性の証明ではない。
+保存された式 JSON と不正入力 .wlt は `just fuzz-replay FILE` で再実行できる。式の payload を含む部分木と、不正入力の文字列を縮小する。言語全体や全入力についての健全性の証明ではない。
 `runtime/fuzz.test.mjs` は取消しの queued / pending / completion と微小ステップの順序を seed から選び、返却値・取消し理由・二重 close・管理表の残数を検査する。
 
 CI は Rust/Lean/Wasm CLI と JS/Chromium の2ジョブを実行し、失敗入力・ブラウザログを artifact として保存する。ツールの版と配布物のハッシュは `ci/tools.json` に固定する。

@@ -25,3 +25,6 @@ Core＋JSPI は型別の record codec、Component は Canonical ABI の flatten/
 外部 import の instance 型は余分な型 export を要求せず、WIT の引数名を維持する。
 Rust の形検査と両 backend の Node 往復検査を `tests/wit_bindings.rs` と
 `runtime/wit-bindings.test.mjs` に置く。
+
+取消しは協調的に進む。async の host Promise に `Symbol.asyncDispose`／`Symbol.dispose` があれば取消し時に呼ぶ。
+host 操作が完了しない限り、解放と取消しの完了通知も待つ。

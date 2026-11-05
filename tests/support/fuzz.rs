@@ -26,6 +26,34 @@ impl Expr {
             _ => vec![],
         }
     }
+    fn smaller(&self) -> Vec<Self> {
+        let mut out = vec![Self::Const(0)];
+        out.extend(self.children());
+        for (i, child) in self.children().iter().enumerate() {
+            for smaller in child.smaller() {
+                let mut candidate = self.clone();
+                let target = match &mut candidate {
+                    Self::Add(a, b) | Self::Mul(a, b) | Self::Pair(a, b) => {
+                        if i == 0 {
+                            a
+                        } else {
+                            b
+                        }
+                    }
+                    Self::Choose(a, b, c) => match i {
+                        0 => a,
+                        1 => b,
+                        _ => c,
+                    },
+                    Self::Result(a, _) => a,
+                    _ => unreachable!(),
+                };
+                **target = smaller;
+                out.push(candidate);
+            }
+        }
+        out
+    }
     fn eval(&self, trace: &mut i32) -> i32 {
         match self {
             Self::Const(n) => *n,
@@ -128,13 +156,12 @@ fn generate(state: &mut u64, depth: u32) -> Expr {
         3 => Expr::Mul(a, b),
         4 => Expr::Pair(a, b),
         5 => Expr::Choose(a, b, Box::new(generate(state, depth - 1))),
-        _ => Expr::Result(a, random(state) % 2 == 0),
+        _ => Expr::Result(a, random(state).is_multiple_of(2)),
     }
 }
 pub fn reduce(mut input: Expr, mut fails: impl FnMut(&Expr) -> bool) -> Expr {
     loop {
-        let mut candidates = vec![Expr::Const(0)];
-        candidates.extend(input.children());
+        let candidates = input.smaller();
         if let Some(next) = candidates.into_iter().find(|e| e != &input && fails(e)) {
             input = next;
         } else {
@@ -150,9 +177,11 @@ fn execute(expr: &Expr, directory: &Path) -> Result<(), String> {
         .into_iter()
         .enumerate()
     {
-        let compiled =
+        let compiled = std::panic::catch_unwind(|| {
             wlt::compile_with_options(&expr.source(short), wlt::CompileOptions { optimize })
-                .map_err(|e| format!("compile:{e}"))?;
+        })
+        .map_err(|_| "compiler-panic:generated typed input".to_owned())?
+        .map_err(|e| format!("compile:{e}"))?;
         let path = directory.join(format!("{index}.wasm"));
         std::fs::write(&path, compiled.wasm).unwrap();
         let out = Command::new("wasmtime")
@@ -201,6 +230,16 @@ pub fn run() {
         .map(|s| s.parse::<usize>().unwrap())
         .unwrap_or(24);
     assert!((1..=10000).contains(&count));
+    if let Ok(path) = std::env::var("WLT_FUZZ_REPLAY")
+        && path.ends_with(".wlt")
+    {
+        let source = std::fs::read_to_string(path).unwrap();
+        assert!(
+            std::panic::catch_unwind(|| wlt::compile(&source)).is_ok(),
+            "replayed source panicked"
+        );
+        return;
+    }
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("trace.wasm"),wat::parse_str(r#"(module
       (global $n (mut i32) (i32.const 0))
@@ -238,15 +277,39 @@ pub fn run() {
             );
         }
         let text = expr.source(true);
-        for _ in 0..8 {
+        for mutation in 0..8 {
             let mut bytes = text.as_bytes().to_vec();
-            let index = random(&mut state) as usize % bytes.len();
-            bytes[index] = b"()$;\"012 xyz"[random(&mut state) as usize % 12];
+            let byte_index = random(&mut state) as usize % bytes.len();
+            bytes[byte_index] = b"()$;\"012 xyz"[random(&mut state) as usize % 12];
             let source = String::from_utf8(bytes).unwrap();
-            assert!(
-                std::panic::catch_unwind(|| wlt::compile(&source)).is_ok(),
-                "parser panic: seed {seed}: {source}"
-            );
+            if std::panic::catch_unwind(|| wlt::compile(&source)).is_err() {
+                let mut reduced = source;
+                let mut chunk = reduced.len() / 2;
+                while chunk > 0 {
+                    let mut start = 0;
+                    while start + chunk <= reduced.len() {
+                        let candidate =
+                            format!("{}{}", &reduced[..start], &reduced[start + chunk..]);
+                        if std::panic::catch_unwind(|| wlt::compile(&candidate)).is_err() {
+                            reduced = candidate;
+                        } else {
+                            start += chunk;
+                        }
+                    }
+                    chunk /= 2;
+                }
+                let folder = Path::new("target/fuzz/failures");
+                std::fs::create_dir_all(folder).unwrap();
+                let path = folder.join(format!(
+                    "mutation-{seed}-{index}-{mutation}-{}.wlt",
+                    std::process::id()
+                ));
+                std::fs::write(&path, reduced).unwrap();
+                panic!(
+                    "parser panic: seed {seed}, mutation {mutation}; replay {}",
+                    path.display()
+                );
+            }
         }
     }
 }
