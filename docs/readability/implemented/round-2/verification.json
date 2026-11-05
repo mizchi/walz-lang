@@ -1,0 +1,230 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "frozen inputs",
+      "passed": true
+    },
+    {
+      "name": "W1 type and Wasm validation",
+      "passed": true
+    },
+    {
+      "name": "W4 pair state and one initialization",
+      "passed": true,
+      "evidence": {
+        "pairType": 13,
+        "stockNewCalls": 1,
+        "outsideLoopBody": true
+      }
+    },
+    {
+      "name": "W2 empty",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 0
+        },
+        "json": [],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W2 blank and comment",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 2
+        },
+        "json": [],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W2 mixed",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 3
+        },
+        "json": [
+          {
+            "op": "ADD",
+            "key": "a",
+            "ok": true,
+            "quantity": 1
+          },
+          {
+            "op": "SHOW",
+            "key": "a",
+            "ok": true,
+            "quantity": 1
+          },
+          {
+            "ok": false,
+            "error": "invalid-command"
+          }
+        ],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W2 state reuse, no trailing LF",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 3
+        },
+        "json": [
+          {
+            "op": "ADD",
+            "key": "a",
+            "ok": true,
+            "quantity": 1
+          },
+          {
+            "op": "ADD",
+            "key": "a",
+            "ok": true,
+            "quantity": 3
+          },
+          {
+            "op": "SHOW",
+            "key": "a",
+            "ok": true,
+            "quantity": 3
+          }
+        ],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W2 business failure continues",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 2
+        },
+        "json": [
+          {
+            "op": "TAKE",
+            "key": "missing",
+            "ok": false,
+            "error": "insufficient-stock"
+          },
+          {
+            "op": "SHOW",
+            "key": "missing",
+            "ok": true,
+            "quantity": 0
+          }
+        ],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W2 unicode and CRLF",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "ok",
+          "val": 2
+        },
+        "json": [
+          {
+            "op": "ADD",
+            "key": "日本語🦀",
+            "ok": true,
+            "quantity": 2
+          },
+          {
+            "op": "SHOW",
+            "key": "日本語🦀",
+            "ok": true,
+            "quantity": 2
+          }
+        ],
+        "closed": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W3 utf8 failure",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "err",
+          "val": 1
+        },
+        "closed": 1,
+        "writes": 0,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W3 read failure",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "err",
+          "val": 2
+        },
+        "closed": 1,
+        "writes": 0,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W3 write failure",
+      "passed": true,
+      "evidence": {
+        "result": {
+          "tag": "err",
+          "val": 3
+        },
+        "closed": 1,
+        "writes": 1,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W3 read cancellation",
+      "passed": true,
+      "evidence": {
+        "closed": 1,
+        "acknowledgedAfterCleanup": true,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    },
+    {
+      "name": "W3 write cancellation",
+      "passed": true,
+      "evidence": {
+        "closed": 1,
+        "acknowledgedAfterCleanup": true,
+        "handles": 0,
+        "arenaLive": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "answers": {
+    "flow": "両版の main は、まず stock.new(4096) で空の台帳を作り、その後 read-lines のストリームを fold する。fold は source、initial の順に一度ずつ評価し、配送された各行について app.process(state, line) を実行する。処理が ok(unit) なら同じ台帳を次の反復へ渡す。EOF ではストリームを閉じて最終状態を ok で返し、外側の result.let の成功側が ok(0) を返す。入力または app.process の err はストリームを閉じて伝播し、成功側を評価しない。result.let 自体を関数からの暗黙 return と読むわけではない。",
+    "state": "counted の fold 状態 S は (pair (ref $stock.State) i32) で、台帳参照とカウンタからなる共有可能な値。初期値は pair(initial, 0)。各反復で $state を $ledger と $count に分解し、app.process が ok(unit) のときだけ同じ台帳と count+1 を包み直す。i32.add は折り返す。EOF の成功時には $final を分解して ok(count) を返す。数えるのは I/O が成功して処理された配送行であり、空行、# 行、業務エラーを出力した行も含む。入力や処理の I/O が失敗した場合は成功カウンタを返さず err(code) になる。成功値は Result の payload で、text-cli の exit code ではなく、同 CLI はそれを表示しない。",
+    "errors": "read-lines が配送する err(i32) と app.process の err(i32) は I/O 失敗で、fold と外側の result.let を通って main の err(code) になる。在庫不足・容量超過・構文不正は app.process が JSON のエラーレコードとして出力し、その出力の I/O が成功すれば ok(unit) になる。したがって counted は業務エラーの件数ではなく処理行数を返す。取消しは通常の Result とは別の task scope の扱い。"
+  },
+  "before": {
+    "flow": 2,
+    "types": 2,
+    "scope": 2,
+    "layout": 2,
+    "changes": 2
+  },
+  "after": {
+    "flow": 3,
+    "types": 2,
+    "scope": 2,
+    "layout": 3,
+    "changes": 2
+  },
+  "evidence": [
+    {
+      "axis": "flow",
+      "location": "before/main.gwat:3-8,10-31; after/main.gwat:3-5,9-19",
+      "reason": "before は関数の契約と束縛、result.let の入力型・出力型が縦に離れ、処理本体と最後の ok(0) の関係を追うのに戻り読みが必要だった。after は契約と初期化がまとまり、fold とその後の成功値を短い範囲で見渡せる。流れの把握は改善した。"
+    },
+    {
+      "axis": "flow",
+      "location": "before/counted.gwat:13-42; after/counted.gwat:7-23",
+      "reason": "いずれも process 成功後に加算し、最後にカウンタを返す順序は読める。after は行処理から最終値の抽出までの距離が短く、全体像が見えやすい。ただし EOF や err 時の close はコードの明示ではなく CHEATSHEET.md:174-184 のマクロ契約に依存するので、意味を説明できること自体は加点していない。"
+    },
+    {
+      "axis": "types",
+      "location": "before/counted.gwat:11,14,19-20,26,28,38; after/counted.gwat:6-7,11-12,15,17,21",
+      "reason": "(pair (ref $stock.State) i32) の完全な型表記は両方で7箇所あり、さらに pair.new の2箇所でも成分型を書く。整形で型の同一性を確認しやすい箇所は増えたが、型を保持して読み比べる負担と反復自体は解消していないため同点。"
+    },
+    {
+      "axis": "types",
+      "location": "before/main.gwat:13-17,25-26; after/main.gwat:9-10,16; CHEATSHEET.md:132-146,177-183",
+      "reason": "裸の i32 や (ref $stock.State) が出力成功型、fold 状態型、エラー型のどれかは引数位置で判断する。after はヘッダーをまとめて型と式の境界を見せるが、位置規則を覚える必要は同じ。チートシートで正解できたことを型の読みやすさの改善とは扱わない。"
+    },
+    {
+      "axis": "scope",
+      "location": "before/counted.gwat:18-42; after/counted.gwat:10-23",
+      "reason": "$state の pair 分解、$ledger と $count の使用、$final の分解の対応は両方で追える。after は束縛と使用の距離を縮める一方、入れ子の段数、名前、束縛の有効範囲は変わらない。改善と悪化があり、軸全体では同点。"
+    },
+    {
+      "axis": "scope",
+      "location": "before/counted.gwat:31-38,42-48; after/counted.gwat:20-23; after/main.gwat:18-19",
+      "reason": "before は独立した閉じ括弧の行とインデントから、どの式を抜けて次の式へ進むかを確認できる。after の加算行と最後の case には長い閉じ括弧列が集まり、fold の終了と外側の result.let の成功側を確認する際に視線を上へ戻した。圧縮による実際の悪化であり、scope を加点しなかった理由。"
+    },
+    {
+      "axis": "layout",
+      "location": "before/main.gwat:3-6,23-28; after/main.gwat:3-4,16-18; before/counted.gwat:9-18; after/counted.gwat:6-10",
+      "reason": "after は関数名・export・戻り値を同じ行に置き、effects を次の行にまとめる。result.let の束縛・入力型・出力型、fold の T/S/E もヘッダーとしてまとまり、その後の式と区別しやすい。before の各引数を1行ずつにする配置より読み始めが速い。"
+    },
+    {
+      "axis": "layout",
+      "location": "before/counted.gwat:38-44; after/counted.gwat:21-23",
+      "reason": "after は最終 match の型宣言をまとめるが、case の束縛と成功式と全体の閉じ括弧を1行へ集めている。before の case body の段落ちより、最終処理の境界は弱い。layout の全箇所が改善したわけではなく、全体として3にとどめる。"
+    },
+    {
+      "axis": "changes",
+      "location": "before/main.gwat:13-28,31 と before/counted.gwat:11-42; after/main.gwat:9-18,19 と after/counted.gwat:6-23",
+      "reason": "カウンタ導入では fold 状態、result.let の入力と出力、match の対象と結果、result.ok、pair.new、最終値の抽出を整合させる必要がある。after でも同じ型注釈の探索と pair の包み直しが残る。加算行が見渡しやすくなっただけでは変更負担が解決したとはいえず、同点とした。"
+    }
+  ],
+  "issues": [
+    {
+      "priority": 1,
+      "kind": "syntax",
+      "location": "after/counted.gwat:6-7,9,11-12,15,17-18,21",
+      "problem": "複合状態型が構築・分解・成功値の包み直しごとに反復し、型の読み取りとカウンタ導入時の変更箇所探索を支配している。整形だけでは同じトークンの反復を取り除けない。",
+      "fix": "将来の文法変更として複合値型の alias、または文脈から明確な型引数の省略を検討する。CHEATSHEET.md:109-110 が現状では型を毎回書くと定めているため、既に使える機能とは扱わず、今回の採点にも織り込まない。"
+    },
+    {
+      "priority": 2,
+      "kind": "format",
+      "location": "after/counted.gwat:20-23; after/main.gwat:18-19",
+      "problem": "複数階層の閉じ括弧を式の末尾へ集中させたため、fold body の終了、外側の成功側への移行、関数の終了を目視で対応させにくい。最終 case の束縛と実行式も密集している。",
+      "fix": "既存文法のまま、長い閉じ括弧列の一部を対応するインデントの独立行へ分ける。特に fold を閉じる境界と最終成功式の境界を見せ、counted の最終 case body は改行して1段下げる。全ての短い式を展開する必要はない。"
+    },
+    {
+      "priority": 3,
+      "kind": "syntax",
+      "location": "after/main.gwat:9-10,16; after/counted.gwat:6-7,15",
+      "problem": "result.let の裸の出力成功型と fold の T/S/E は位置だけで役割を表し、同じ i32 が異なる役割で隣接する。ヘッダーをまとめても役割の再確認が残る。",
+      "fix": "将来の構文として役割名を持つ型引数の表記を検討する。現状の型引数を読み飛ばせるとは評価しない。整形だけで対処する間はヘッダーをまとめた配置を維持する。"
+    },
+    {
+      "priority": 4,
+      "kind": "naming",
+      "location": "before/counted.gwat:18-22; after/counted.gwat:10-14",
+      "problem": "main の $state は台帳参照だが counted の同名は台帳とカウンタの pair を指す。両プログラムを比較すると、同じ名前の意味の拡張を頭の中で補う必要がある。",
+      "fix": "counted の fold 束縛を $accumulator など pair 全体だと分かる名前へ変更し、分解後の $ledger と区別する。名前の変更で対処でき、新しい文法は不要。"
+    },
+    {
+      "priority": 5,
+      "kind": "docs",
+      "location": "after/counted.gwat:16-20; CONTRACT.md:14-19",
+      "problem": "加算条件は process の ok であり、空行・コメント行・業務エラーの行も数えることは外部契約を合わせれば理解できるが、カウンタの近くには意図が示されていない。",
+      "fix": "カウンタを説明する短いコメントで、I/O に成功した配送行を数え、空行・コメント行・業務エラーも含むことと i32 の折り返しを明記する。これは意味の確認を助ける文書上の改善であり、型の反復や変更負担の解決とは区別する。"
+    }
+  ],
+  "preferred": "after",
+  "limitations": [
+    "読む範囲は comparison-task.md、RUBRIC.md、CHEATSHEET.md、CONTRACT.md、指定された before/after の main.gwat と counted.gwat に限定した。baseline、他の評価、実装は参照せず、コンパイラも起動していない。",
+    "同じ評価者が before、after の順に読む比較なので、after は先に意味を学んだ影響を完全には除けない。採点根拠は具体的な配置と反復に限定した。",
+    "採点は主観的な読み取り負担であり、実行の正しさ、実際の変更所要時間、独立した複数読者の成績を測ったものではない。",
+    "意味の回答はチートシートと外部契約を併用している。コード単独で EOF 時の close や業務エラーの分類を理解できたことを意味しない。",
+    "after は flow と layout が3に達したが、types、scope、changes は2のままで、全軸3以上という目標は未達。整形による括弧列の悪化も残る。",
+    "提案した値型 alias、型引数省略、役割名付き型引数は将来の文法案であり、現在使える構文として採点していない。"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "scores": {
+    "flow": 3,
+    "types": 3,
+    "scope": 3,
+    "layout": 3,
+    "changes": 3
+  },
+  "total": 15,
+  "meetsReadabilityTarget": true,
+  "answersCheckedByParent": true,
+  "runtimeChecksPassed": true,
+  "notes": [
+    "主観的可読性の点数。実行成功を点数に加算しない。",
+    "親が型・制御・所有性・エラー経路の説明をコードと契約に照合し、重大な誤読なし。"
+  ]
+}

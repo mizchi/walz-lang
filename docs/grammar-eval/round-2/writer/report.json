@@ -1,0 +1,17 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-2/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "ok"
+    }
+  ],
+  "repairs": [],
+  "ambiguities": [],
+  "assumptions": [
+    "app.process が成功した各配送行の後に i32.add でカウンタを進める。途中で I/O err が出る場合は行数を返さず、既存どおり err を伝播する。",
+    "許可された CLI check による静的検査までを実施し、入力付きの実行検証は行っていない。"
+  ],
+  "extraDocumentsRead": []
+}

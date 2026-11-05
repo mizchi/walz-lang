@@ -1,0 +1,49 @@
+{
+  "answers": {
+    "Q1": "外側の (result R) は main の返り値型を宣言する構文で、R が内側の (result i32 i32) である。内側は成功値 T=i32、エラー値 E=i32 を持つ Result の値型である。したがって main は i32 を2個返す関数ではなく、成功なら ok(i32)、失敗なら err(i32) の値を返す関数である。",
+    "Q2": "result.let の裸の型引数は、subject の成功型 T ではなく、body と式全体の成功型 U を指定する。外側では (result (ref $stock.State) i32) が subject の型で、裸の i32 が U。subject の fold は result<(ref $stock.State),i32>、body の result.ok は result<i32,i32>、外側 result.let 全体も result<i32,i32>。内側では (result unit i32) が subject の型で、裸の (ref $stock.State) が U。subject の app.process は result<unit,i32>、body は result<(ref $stock.State),i32>、内側 result.let 全体も result<(ref $stock.State),i32>。どちらも err では body を実行せず、同じエラー値を式の結果へ伝播する。暗黙の関数 return ではない。",
+    "Q3": "内側の成功型 T は unit なので、束縛する成功 payload が存在しない。result.let の束縛位置自体は必要なので、($value) の代わりに明示的な空の束縛リスト () を書く。$state は型 (ref $stock.State)、$line は型 text で、どちらも fold の body 内だけで有効であり、その内側の result.let からも参照できる。$final は外側 result.let の成功 payload で型は (ref $stock.State)。有効範囲はその成功時の body、すなわち最後の result.ok 式であり、subject の fold 内では有効ではない。",
+    "Q4": "read-lines の返り値は (stream (result text i32))。fold の状態 S は (ref $stock.State)。fold 全体は (result (ref $stock.State) i32)。app.process の返り値は (result unit i32) で、引数は (ref $stock.State) と text。",
+    "Q5": "EOF では fold が最後の Stream 端点を close し、ok(state) を返す。外側 result.let がその状態を $final に束縛し、main は ok(0) を返す。EOF の stream.next でも端点が返るので、EOF を見ただけで端点の処理が不要になるわけではない。入力の I/O err は fold が端点を close して同じ err(code) を返し、外側も body を実行せず err(code) を返す。app.process の err は内側 result.let から fold の body の err となり、fold が close して err(code)、外側も err(code) となる。在庫不足は app.process が JSON のエラーレコードを出力する業務上の結果であり、I/O が成功すれば ok(unit) なので反復を継続する。その出力で I/O が失敗すれば通常の err(code) 経路へ入る。",
+    "Q6": "State は opaque 型の共有可能な非 null GC 参照であり、own/Future/Stream のような消費すべき所有値ではない。このため local.get で繰り返し使え、move や close を行わない。opaque は表現へのアクセス制限であって排他的所有の宣言ではない。Stream は所有値なので、fold が source を引き受け、next で現在の端点を消費して次の端点を受け取り、EOF または入力・body の Result エラーで残った端点を close する。通常の err はこの明示された Result の分岐として処理される。取消しは main の通常の Result 値とは別で、既存の task scope が終了確認を担当する。fold は任意の throw に対する finally ではなく、任意の例外や trap まで必ず close するとは読めない。",
+    "Q7": "fold 自身の評価順は source、initial の順で、それぞれ一度だけである。この例では fold の source にある read-lines 呼び出し、その後 initial にある local.get $initial が一度ずつ評価される。ただし台帳を作る stock.new は周囲の let の initializer なので、fold に入る前、したがって read-lines より前に既に一度実行されている。$final は共有 GC 参照なので未使用でも所有値の未消費にはならない。Stream の close は fold が結果を作る前に行うため、$final を使うかどうかにも依存しない。",
+    "Q8": "変更を理解し、候補のソースを書くにはこの3資料で足りる。S を (pair (ref $stock.State) i32) にし、initial を pair.new で台帳参照と 0 にする。fold の body で pair を match して台帳と現在の行数を取り出し、app.process が ok(unit) のときに台帳と i32.add による行数+1 の pair を result.ok で返す。内側 result.let の U と fold の S をこの pair 型へ変える。外側 result.let の subject 型も result<pair型,i32> とし、成功時に最終 pair を match して行数を取り出し、result.ok i32 i32 で返す。pair の両成分が共有値なので、この pair に move/close は不要。配送行数には空行と # 行、I/O が成功した業務エラー行も含める。stock.size は異なる品目数なので代用しない。i32 の加算は折り返し、I/O err は従来と同じく err(code) になる。未定義記号については、サンプルの外部名は contract.md に揃っており、pair/match/i32.add など必要な構文・演算もチートシートから読み取れる。新しい API の名前や振る舞いを推測する必要はない。実行分岐は正常行・空行/#行・業務エラー行・入力I/O err・処理中I/O err・EOF・取消しに分けて理解できる。ファイルの実行パスについては作業ディレクトリと check <候補のパス>、include が参照元から相対解決されること、writer ディレクトリに橋渡しファイルが置かれることまでは明記されている。ただし reader に示された3資料には writer の具体的なパスと変更候補を stdin/stdout 付きで起動する具体的コマンドはない。変更の記述や型検査手順の理解に追加検索は不要だが、候補を実際に実行する際は配布先のパスと起動手順の確認が必要。今回の読解ではコンパイラを起動しておらず、実際に候補が通ることまでは検証していない。"
+  },
+  "issues": [
+    {
+      "severity": "minor",
+      "location": "sample.gwat: 外側・内側の result.let と main の result 宣言",
+      "cause": "構文の読みづらさ。同じ result が返り値宣言と値型の両方に現れ、result.let では入力の Result 型の後に出力成功型だけが裸で続く。説明を読めば判別できるが、初見では裸の i32 がエラー型なのか出力型なのかを一度チートシートへ戻って確認した。必要な意味論が欠けているわけではない。",
+      "suggestedFix": "サンプルに短い注釈を付け、外側は T=State/U=i32/E=i32、内側は T=unit/U=State/E=i32 と示す。または result.let のひな形直下に、引数位置と役割を対応させる1行の説明を置く。"
+    },
+    {
+      "severity": "suggestion",
+      "location": "sample.gwat: () と $state/$line/$final の束縛",
+      "cause": "構文の読みづらさ。空の () は unit の無 payload 束縛という知識が必要で、改行された入れ子から各束縛の有効範囲を目で追う負担もある。チートシートには規則があるので、資料不足による未解決点ではない。",
+      "suggestedFix": "サンプルの () に『app.process の成功値は unit』、$final に『fold 成功時の最終状態』程度のコメントを付ける。"
+    },
+    {
+      "severity": "minor",
+      "location": "contract.md: 最終段落／cheatsheet.md: 確認コマンド",
+      "cause": "資料不足。型検査のコマンドと作業ディレクトリは明確だが、配布される writer ディレクトリの具体的な場所と、変更候補を入力付きで実行するコマンドはこの3資料にはない。変換の理解・ソース作成を妨げないが、実行確認まで単独で完結するとは断言できない。",
+      "suggestedFix": "配布時の writer ディレクトリ名、候補ファイル名の例、その候補に stdin を渡して main を実行する具体的コマンドを記載する。"
+    },
+    {
+      "severity": "minor",
+      "location": "reader-task.md: selfAssessment の G/T/C/D",
+      "cause": "評価指示の不足。G/T/C/D が何を測るか、尺度の上限・下限、数値の良し悪しが定義されていないため、根拠を持って採点できない。",
+      "suggestedFix": "各軸の名前・意味・数値範囲・高得点の意味を定義する。この回答では数値必須という形式だけを満たすため、-1 を未採点の印として使った。"
+    }
+  ],
+  "assumptions": [
+    "この回答は reader-task.md、cheatsheet.md、sample.gwat、contract.md のみを読み、リンク先・実装・他の出力は読まず、コンパイラも起動していない。i32.add はチートシートに直接掲載されていないため、標準 WAT を基底とするという説明と、既に知っている標準 WAT の演算知識を使った。標準 WAT 未経験の読者なら、この演算名の説明を1行補うとよい。",
+    "『配送行数』は read-lines が要素として配送した行の数と解釈した。contract.md が空行と # 行も配送すると明記しているため、それらも数える。正常終了時の成功値に関する変更なので、途中で I/O err となった場合には行数を返さない。",
+    "selfAssessment の G/T/C/D は定義がないため独自の意味や尺度を割り当てず、すべて -1 を未採点の印とした。理解上の未解決点は具体的な実行コマンドであり、Q1〜Q7 の型と制御フローには高い確信がある。"
+  ],
+  "selfAssessment": {
+    "G": -1,
+    "T": -1,
+    "C": -1,
+    "D": -1
+  }
+}

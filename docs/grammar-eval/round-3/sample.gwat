@@ -1,0 +1,35 @@
+(module
+  (include "program.gwat")
+  (func $main
+    (export "main")
+    (result (result i32 i32))
+    (effects reads writes allocates host suspends)
+    (let $initial
+      (call $stock.new (i32.const 4096))
+      ;; result.let: 入力 T=State、出力 U=i32、共通のエラー E=i32。
+      (result.let
+        ;; $final は fold 成功時の最終状態。この body 内だけで有効。
+        ($final)
+        (result (ref $stock.State) i32)
+        i32
+        (stream.fold-result text
+          (ref $stock.State)
+          i32
+          (call $read-lines)
+          (local.get $initial)
+          ($state $line)
+          ;; app.process は成功 payload が unit なので束縛は ()。
+          ;; この内側の result.let は U=State を次の反復へ渡す。
+          (result.let
+            ()
+            (result unit i32)
+            (ref $stock.State)
+            (call $app.process (local.get $state) (local.get $line))
+            (result.ok (ref $stock.State) i32 (local.get $state))
+          )
+        )
+        (result.ok i32 i32 (i32.const 0))
+      )
+    )
+  )
+)

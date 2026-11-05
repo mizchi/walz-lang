@@ -1,0 +1,20 @@
+[
+  { "op": "ADD", "key": "日本語🦀", "ok": true, "quantity": 10 },
+  { "op": "TAKE", "key": "日本語🦀", "ok": true, "quantity": 7 },
+  { "op": "SHOW", "key": "日本語🦀", "ok": true, "quantity": 7 },
+  {
+    "op": "TAKE",
+    "key": "日本語🦀",
+    "ok": false,
+    "error": "insufficient-stock"
+  },
+  { "op": "SHOW", "key": "日本語🦀", "ok": true, "quantity": 7 },
+  { "op": "ADD", "key": "\"quoted\"\\key", "ok": true, "quantity": 2 },
+  { "op": "SHOW", "key": "missing", "ok": true, "quantity": 0 },
+  { "op": "ADD", "key": "Aa", "ok": true, "quantity": 4 },
+  { "op": "ADD", "key": "BB", "ok": true, "quantity": 5 },
+  { "op": "SHOW", "key": "Aa", "ok": true, "quantity": 4 },
+  { "op": "SHOW", "key": "BB", "ok": true, "quantity": 5 },
+  { "ok": false, "error": "invalid-command" },
+  { "op": "TAKE", "key": "missing", "ok": false, "error": "insufficient-stock" }
+]

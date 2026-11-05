@@ -1,0 +1,14 @@
+# operation<TAB>key<TAB>quantity
+ADD	日本語🦀	10
+TAKE	日本語🦀	3
+SHOW	日本語🦀
+TAKE	日本語🦀	9
+SHOW	日本語🦀
+ADD	"quoted"\key	2
+SHOW	missing
+ADD	Aa	4
+ADD	BB	5
+SHOW	Aa
+SHOW	BB
+ADD	invalid	4294967296
+TAKE	missing	1

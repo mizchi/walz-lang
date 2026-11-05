@@ -1,0 +1,26 @@
+{
+  "old-counted": {
+    "lines": 25,
+    "tokens": 242,
+    "maxDepth": 12,
+    "stateTypeOccurrences": 7,
+    "matchCount": 2,
+    "patternLets": 0
+  },
+  "counted": {
+    "lines": 22,
+    "tokens": 151,
+    "maxDepth": 11,
+    "stateTypeOccurrences": 1,
+    "matchCount": 0,
+    "patternLets": 2
+  },
+  "refactored": {
+    "lines": 27,
+    "tokens": 193,
+    "maxDepth": 8,
+    "stateTypeOccurrences": 1,
+    "matchCount": 0,
+    "patternLets": 2
+  }
+}

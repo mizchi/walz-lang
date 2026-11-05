@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-4/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "ok\n"
+    }
+  ],
+  "repairs": [],
+  "ambiguities": [],
+  "assumptions": [
+    "completed は候補の実装と CLI check の成功を示す。実行時の行数・JSON・I/O 失敗・取消しは、この役で許可された CLI 診断の範囲では実行確認していない。"
+  ],
+  "extraDocumentsRead": []
+}

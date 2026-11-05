@@ -1,0 +1,34 @@
+// Shape contract for gcwat's planned WASI 0.3-aligned types.
+// This is a test interface, not an implementation of any wasi:* package.
+package gcwat:async-contract@0.1.0;
+
+interface shapes {
+  variant io-error {
+    denied,
+    closed,
+    other(option<string>),
+  }
+
+  resource file;
+
+  // Value errors and absence stay in the result type.
+  lookup: func(key: string) -> option<string>;
+  type maybe-result = option<result<u64, io-error>>;
+
+  // The function's completion and a returned future's completion are separate.
+  wait-now: async func() -> result<u64, io-error>;
+  receive-later: func() -> future<result<u64, io-error>>;
+
+  // Keep the stream and final completion/error future separate.
+  read: func(source: borrow<file>)
+    -> tuple<stream<u8>, future<result<_, io-error>>>;
+  write: func(destination: borrow<file>, data: stream<u8>)
+    -> future<result<_, io-error>>;
+
+  // Resource ownership is a distinct boundary rule, even with a GC inside.
+  open: async func(path: string) -> result<file, io-error>;
+}
+
+world contract {
+  export shapes;
+}

@@ -1,0 +1,16 @@
+(module
+  (closure $Scale (capture $factor i64) (param $x i64) (result i64)
+    (i64.mul (local.get $factor) (local.get $x)))
+  (closure $Add (capture $offset i64) (param $x i64) (result i64)
+    (i64.add (local.get $offset) (local.get $x)))
+  (closure $Compose (capture $first (ref $Scale)) (capture $second (ref $Add))
+    (param $x i64) (result i64)
+    (closure.call $Add (local.get $second)
+      (closure.call $Scale (local.get $first) (local.get $x))))
+
+  (func $make (result (ref $Compose))
+    (closure.new $Compose
+      (closure.new $Scale (i64.const 6))
+      (closure.new $Add (i64.const 30))))
+  (func $main (export "main") (result i64)
+    (closure.call $Compose (call $make) (i64.const 2))))

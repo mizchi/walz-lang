@@ -1,0 +1,40 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-3/writer/candidate.gwat",
+      "exitCode": 1,
+      "diagnostic": "初回検査: candidate.gwat:1:1: unclosed '('; expected ')'"
+    },
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-3/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "括弧修正後: ok"
+    },
+    {
+      "command": "cargo run --locked --quiet -- types /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-3/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "$main の結果型は (result i32 i32)、$state と $final は (pair (ref $stock.State) i32)。出力全体は大きいためツール表示で省略された。"
+    },
+    {
+      "command": "cargo run --locked --quiet -- fmt /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-3/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "出力なし。候補を整形。"
+    },
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-3/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "整形後: ok"
+    }
+  ],
+  "repairs": [
+    "初回 check が検出した module の閉じ括弧不足を1回修正した。"
+  ],
+  "ambiguities": [],
+  "assumptions": [
+    "app.process が ok(unit) を返した配送行は、空行・# 行・業務エラー行を含めて1行と数える。契約上、I/O 失敗時は行数の成功値を返さない。",
+    "stream.fold-result の EOF close、入力 err と body err の伝播、取消しの task scope に関する動作は配布資料の契約に従う。",
+    "許可された CLI check/types/fmt の範囲で検証した。ランタイム実行は行っていない。"
+  ],
+  "extraDocumentsRead": []
+}

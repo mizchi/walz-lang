@@ -1,0 +1,79 @@
+{
+  "answers": {
+    "flow": "before/main.gwat:7–8 で最大4096品目の空台帳を作る。15–20 の stream.fold-result が read-lines のストリームを読み、各行について23–28 の app.process を実行し、成功時は同じ台帳を次の状態に返す。EOFではストリームを閉じて最終状態が成功値になり、外側の result.let（10–14,31）がこれを ok(0) に変える。入力の err または app.process の err ではストリームを閉じて err(code) が伝播し、後続の成功時bodyは評価されない。",
+    "state": "before/counted.gwat:11,14 の状態型は (pair (ref $stock.State) i32)。共有可能な台帳参照と処理行数を持つ。17 で台帳と0を組にし、19–22 で各反復の状態を $ledger と $count に分解する。27 の app.process が成功した場合だけ28–31で同じ台帳と count+1 を新しい組にして返す。38–42で最終状態を分解し、main は ok(count) を返す。空行・#行・業務エラー行も app.process が ok なら数え、i32.add は折り返す。成功値はプロセスの終了コードではなく Result のpayload。",
+    "errors": "read-lines の要素型は result<text,i32>、app.process の返り値は result<unit,i32> で、どちらの err もI/O失敗。fold-result と result.let により main の err(code) になる。業務エラー（在庫不足・容量超過・構文不正）は app.process がJSONを出し、その出力が成功すれば ok(unit) なので行数も増える。before/counted.gwat:23–31だけではこの意味の違いは分からず、CONTRACT.md:10–16 の契約が必要。取消しは通常のResultとは別のtask scopeで扱う。",
+    "change": "台帳単体だったfold状態を台帳とカウンタのpairへ変更した。before/main.gwat:13,16,26,28に対応する型を書き換えるほか、before/counted.gwat:17に初期pair、19–22に反復時のmatch/case、28–31に成功時のpair再構築と加算、38–42に最終pairのmatch/caseを追加した。mainの返却型とeffectは変わらない。カウンタの意味を担う処理は初期0・成功時+1・最終countの返却だが、その前後にpairの構築・分解と複合型注釈が広がっている。"
+  },
+  "scores": {
+    "flow": {
+      "score": 2,
+      "evidence": "before/main.gwat:7–8,18–20,27,31の順を抽出すれば台帳作成→入力→行処理→0の返却を追える。しかしresult.letのヘッダーが10–14に分散し、foldの15–20をまたいだ31まで外側の成功継続を保留する必要がある。countedでは13–37の反復を越えて38–44の最終matchへ戻り、主処理が深い位置の27にある。説明可能であることとは別に、直線的な処理順を頭の中で再構成する負担がある。"
+    },
+    "types": {
+      "score": 1,
+      "evidence": "before/counted.gwatでは同じ (pair (ref $stock.State) i32) が11,14,19,20,26,28,38に反復し、17,29のpair.newにも成分型を書く。20の (result (result ...)) は外側の結果宣言と内側の値型を区別して読む必要がある。12,15の裸のi32は隣接していてもそれぞれresult.letの出力成功型とfoldのエラー型であり、位置規則の確認が必要になる。"
+    },
+    "scope": {
+      "score": 2,
+      "evidence": "before/counted.gwat:18の $state/$line、22の $ledger/$count と27,30–31の利用は字句的に対応し、字下げも助けになる。一方、let→result.let→fold→match→case→result.let→result.ok→pair.newと入れ子になり、32–37の閉じ括弧を追ってから外側の $final（10,40）へ戻る。22と41で同名の $ledger/$count を別スコープに束縛するため、同じ文字列の対応先も読み分ける必要がある。"
+    },
+    "layout": {
+      "score": 2,
+      "evidence": "before/main.gwat:3–6の関数契約はまとまり、counted:22のcaseとpayloadも同じ行にある。しかしmain:10–14では束縛名の前にコメントが挟まり、result.letの入力型・出力型・subjectをひとまとまりで見づらい。counted:9–18でもマクロのヘッダーが縦に分解され、32–37と43–48の閉じ括弧だけの行が構造の把握に多くの縦方向の移動を要求する。整形だけでも改善余地はあるが、長い複合型の反復自体は残る。"
+    },
+    "changes": {
+      "score": 1,
+      "evidence": "実質的な行数処理はbefore/counted.gwat:17の0、31の加算、42の返却である。その周囲で11,14,19–20,26,28,38の複合型、17,29の構築、19–22,38–41の分解を追わなければならない。before/main.gwat:28の「同じ状態を返す」1式がcounted:19–36のmatchと包み直しへ膨らみ、カウンタ導入の意味的な差分が型と構造の差分に埋もれる。"
+    }
+  },
+  "issues": [
+    {
+      "priority": 1,
+      "kind": "syntax",
+      "location": "before/counted.gwat:11,14,19–20,26,28,38",
+      "problem": "同一の複合状態型を7か所で再記述し、状態にフィールドを足す変更の確認対象が増える。改行位置を変えても反復と変更箇所は減らない。",
+      "fix": "状態型に名前を付けて参照できる型alias、または構築・分解・Resultの型引数を文脈から省略できる規則を検討する。aliasなら状態表現の変更点を1か所に集め、呼び出し箇所では同じ名前を使う。"
+    },
+    {
+      "priority": 2,
+      "kind": "format",
+      "location": "before/main.gwat:9–20; before/counted.gwat:9–18,23–27",
+      "problem": "マクロ名、束縛、型引数が別々の行に置かれ、ヘッダーがどこで終わって入力式が始まるかを視線だけで把握しづらい。mainでは説明コメントがヘッダーの内部も分断する。",
+      "fix": "コメントをヘッダーの直前に置き、result.letの束縛と型引数、fold-resultのT/S/Eをそれぞれ連続するまとまりにする。source、initial、束縛、bodyはヘッダーの後で区切って配置し、同じトークン列のまま比較する。"
+    },
+    {
+      "priority": 3,
+      "kind": "format",
+      "location": "before/main.gwat:28–35; before/counted.gwat:29–37,41–48",
+      "problem": "閉じ括弧だけの行が続き、カウンタ更新から最終結果への距離と末尾の余白が大きい。どのレベルを閉じたかを数える作業が発生する。",
+      "fix": "短い式の閉じ括弧はその式の最終行に寄せる。caseのbodyと外側の成功継続がインデントで見分けられるようにし、連続する閉じ括弧専用行を減らす。"
+    },
+    {
+      "priority": 4,
+      "kind": "syntax",
+      "location": "before/main.gwat:13–17; before/counted.gwat:11–15,19–20,25–26",
+      "problem": "resultの値型と結果宣言が同じ語で入れ子になり、マクロの裸の型引数は位置によって成功型またはエラー型になる。読み手が型の内容だけでなく各構文の位置規則を保持する必要がある。",
+      "fix": "マクロの出力型・状態型・エラー型を区別できるラベル付きヘッダー、または結果宣言の共通表現を検討する。整形後にも裸のi32の役割を迷うかを再評価してから、最小限の変更を選ぶ。"
+    },
+    {
+      "priority": 5,
+      "kind": "syntax",
+      "location": "before/counted.gwat:19–22,28–31,38–42",
+      "problem": "2成分の状態の更新と1成分の取り出しのために、pair型指定を伴うmatch/caseと再構築が2段階に増える。初期化・増分・返却より構造操作の方が大きい。",
+      "fix": "pairを直接分解する束縛や成分へのアクセス、名前付きの状態表現を検討する。反復のbodyでは行処理と成功後のcount更新が並んで見えることを目標にし、どの案も別の型反復を増やさないか確認する。"
+    },
+    {
+      "priority": 6,
+      "kind": "naming",
+      "location": "before/counted.gwat:7,10,18,22,41",
+      "problem": "$initial/$final/$stateはpair全体だが、元のmainでは同じ名前が台帳参照だった。countedの $state と $ledger の役割の違いはmatchの型と分解を見るまで確定しない。",
+      "fix": "$initial-state/$final-stateなどpair全体を示す名前と、台帳成分を示す $ledger を一貫して使う。名前変更だけでは型反復やmatchの負担は解消しないため優先度は下げる。"
+    }
+  ],
+  "limitations": [
+    "指定されたRUBRIC.md、CHEATSHEET.md、CONTRACT.md、before/main.gwat、before/counted.gwatと課題文だけを読んだ。実装・他の評価・過去の会話は参照せず、コンパイラも起動していない。",
+    "採点は初見の主観的な読解負担の評価であり、読了時間や誤答率の実測ではない。正確な意味の説明は資料に基づくもので、その正確さを可読性の加点にはしていない。",
+    "整形案と構文案は実施・検証していない。全軸3以上の目標は現状では未達で、整形後に残る負担は別の初見評価で確認する必要がある。"
+  ]
+}

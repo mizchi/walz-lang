@@ -1,0 +1,39 @@
+{
+  "answers": {
+    "Q1": "外側の (result R) は main の関数結果型を宣言する構文で、ここで R は内側の (result i32 i32) である。内側は成功 payload が i32、エラー payload も i32 の Result 値型。Result が二重に包まれた値を返すという意味ではない。main は成功なら ok(0)、I/O 失敗なら err(code) を返す。",
+    "Q2": "裸の型引数 U は body と result.let 式全体の成功型だけを指定し、エラー型 E は入力 Result から引き継ぐ。外側は U=i32、subject は (result (ref $stock.State) i32)、body は (result i32 i32)、全体も (result i32 i32)。内側は U=(ref $stock.State)、subject は (result unit i32)、body は (result (ref $stock.State) i32)、全体も (result (ref $stock.State) i32)。どちらも E=i32。",
+    "Q3": "内側の subject の成功型 T は unit で、成功時に取り出す値がない。そのため payload の束縛名を置かず、束縛リストを () と明示する。$state は (ref $stock.State)、$line は text で、fold の body 内だけで有効であり、内側の result.let の subject と body では使える。$final は外側の result.let の subject である fold が成功したときの (ref $stock.State) で、外側の result.let の body 内だけで有効。fold の中や result.let の外には出ない。",
+    "Q4": "read-lines の戻り値は (stream (result text i32))。fold の状態 S は (ref $stock.State)。fold 式全体は (result (ref $stock.State) i32)。app.process の戻り値は (result unit i32)。",
+    "Q5": "EOF では fold が最後の Stream 端点を close して ok(最終 State) を返す。外側の result.let がその成功を受け、main は ok(0) を返す。入力の I/O err では fold が端点を close して同じ i32 の err を返し、外側の成功 body は評価されず main も err(code) になる。app.process の err は I/O 失敗であり、内側の result.let が State を返す body を飛ばして err を返し、fold が端点を close し、main まで err が伝わる。在庫不足は業務エラーで、app.process が JSON エラーレコードを出し、出力 I/O が成功すれば ok(unit) を返す。したがって通常は次の行へ進み、後続の I/O 失敗がなければ main は ok(0) になる。容量超過・構文不正もこの業務エラー側に属する。",
+    "Q6": "State は opaque な型の共有 GC 参照であり、own / Future / Stream のような消費義務のある所有値ではない。同じ State 参照を再利用でき、move や close は使わない。GC による回収と外部端点の終了は別である。Stream は fold が一度受け取り、next による消費と返された後続端点の引継ぎを繰り返し、EOF または入力・body の Result.err で close する。通常の err は main の Result に表現される一方、取消しは別の task scope が終了確認を担当する。fold は任意の throw に対する finally ではなく、取消しや任意の例外に対する独自の万能な終了保証を推測してはいけない。",
+    "Q7": "fold は source を先に、initial を次に、それぞれ一度だけ評価する。このサンプルでは fold の中では (call $read-lines) の後に (local.get $initial) を評価する。ただし stock.new 自体は fold の initial の位置に直接あるのではなく、外側の let の initializer なので、fold に入る前にすでに一度実行されている。$final が未使用でも安全である。これは共有 GC 参照なので消費義務はなく、Stream 端点の終了は fold がすでに担当している。",
+    "Q8": "この3資料で変更を理解し、実装できる。状態 S を (pair (ref $stock.State) i32) にし、initial を (pair.new (ref $stock.State) i32 (local.get $initial) (i32.const 0)) にする。fold の body では pair を match して台帳参照とカウントを取り出し、app.process に台帳参照と $line を渡す。その成功時だけ、同じ参照と (i32.add カウント (i32.const 1)) を pair に戻して result.ok で返す。内側の result.let の U、fold の S、外側の result.let の入力成功型をこの pair 型にそろえる。外側の result.let の U は i32 のままにし、成功時の $final を pair として分解してカウントを result.ok i32 i32 で返す。match 自体も Result を返すため、その結果宣言は (result (result ...)) と書く。read-lines が配送する全行を数えるので、空行・# 行・I/O に成功した業務エラー行も1行に含む。i32.add は指定どおり折り返す。I/O err 時にはカウントを成功値として返さず err を伝える。未定義記号については、外部名と型は contract に、pair・match・Result・加算の構文は cheatsheet にあり、新しい不明な記号は要らない。API の推測も不要で、State のフィールドを読んだり未記載の関数を作ったりする必要はない。実行パスとコマンドは契約末尾にあり、作業ディレクトリは /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat、候補は target/grammar-eval/round-3/writer/candidate.gwat。cargo run --locked --quiet -- check にその候補の絶対パスを渡し、node runtime/build-core.mjs に同じ候補と target/grammar-eval/round-3/run の絶対パスを渡し、node runtime/text-cli.mjs にその出力ディレクトリと --input examples/apps/stock-ledger/sample.tsv を渡す手順を再現できる。include は program.gwat のままでよい。理解・実装・記載された起動手順の再現に追加検索は要らない。ただし、CLI から main の成功 payload の数値を直接取り出して照合する方法までは3資料にない。ここではコンパイラや実行コマンドは起動していない。",
+    "Q9": "資料の型規則では型が通り、$probe は i32 の 42 を返す。result.let の入力型は (result unit i32)、裸の U は unit なので、成功 body と式全体の型は (result unit i32)。unit に payload がないため () と (result.ok unit i32) は正しい形である。subject は err(7) なので body の result.ok は評価されず、result.let 式は err(7) になる。これは関数からの暗黙 return ではない。その Result は所有成分を持たない共有値なので drop でき、drop は unit となって block の最後以外の式の条件も満たす。その後 (i32.const 42) まで進み、block と関数の結果型 i32 を満たす。ここには host・suspends・読み書き等の semantic effect もないため pure 宣言とも矛盾しない。これは読解による判断で、コンパイラによる確認はしていない。"
+  },
+  "issues": [
+    {
+      "severity": "suggestion",
+      "location": "cheatsheet.md: Option / Result / pair および result.let",
+      "cause": "結果宣言と Result 値型が同じ result という字面を使い、pair 状態への変更ではさらに同じ長い型を構築・match・Result・fold に反復する。規則は説明されていて意味上の資料不足はないが、変更時に括弧と型引数を取り違えやすい構文上の負荷は残る。",
+      "suggestedFix": "現在の規則説明を維持し、pair 状態の fold を1つ載せ、入力成功型 T・出力成功型 U・状態型 S が現れる箇所を短いコメントで対応付ける。"
+    },
+    {
+      "severity": "minor",
+      "location": "contract.md: 起動コマンドと main の成功値の説明",
+      "cause": "成功値の行数は main の Result 内にあり exit code ではないと分かるが、提示された text-cli の起動手順からその数値を直接観測する方法は説明されていない。実装に必要な情報はそろっている一方、変更後の成功 payload を手元で数値照合する段階の資料は不足している。",
+      "suggestedFix": "main の返す ok の payload を表示またはアサートする既存の方法があれば、正確なコマンドや最小テスト例を添える。CLI がその payload を表示しない場合は、その制限と確認方法を明記する。"
+    }
+  ],
+  "assumptions": [
+    "配送行数は read-lines が渡す入力要素の行数を指し、JSON の出力行数や業務上の成功件数とは区別した。根拠は、空行と # 行も配送されるという契約、および成功値だけを行数に変えるという変更範囲である。",
+    "program.gwat の橋渡しファイルは契約どおり親が writer ディレクトリに置くものとし、その存在や内容は調べていない。",
+    "型が通るという回答は許可された3資料の規則に基づく判断であり、実装の挙動やコンパイラの正しさまでは検証していない。",
+    "D の『パスとコマンド再現』は、契約にある検査・ビルド・入力付き起動の再現可能性として採点した。成功 payload の観測方法が未記載な点は別途 issue にした。"
+  ],
+  "selfAssessment": {
+    "G": 4,
+    "T": 4,
+    "C": 4,
+    "D": 4
+  }
+}

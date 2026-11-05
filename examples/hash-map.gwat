@@ -1,0 +1,52 @@
+(module
+  (type $Entry (struct
+    (field $key i32) (field $value (mut i64)) (field $next (ref null $Entry))))
+  (type $Buckets (array (mut (ref null $Entry))))
+
+  ;; Eight buckets: keys 1 and 9 deliberately collide.
+  (func $bucket (param $key i32) (result i32)
+    (i32.and (local.get $key) (i32.const 7)))
+
+  (func $find (param $map (ref $Buckets)) (param $key i32) (result (ref null $Entry))
+    (loop $chain
+      (bind $entry (ref null $Entry) (array.get $Buckets (local.get $map) (call $bucket (local.get $key))))
+      (result (ref null $Entry))
+      (if (result (ref null $Entry)) (ref.is_null (local.get $entry))
+        (then (local.get $entry))
+        (else
+          (let $node (ref.as_non_null (local.get $entry))
+            (if (result (ref null $Entry))
+              (i32.eq (struct.get $Entry $key (local.get $node)) (local.get $key))
+              (then (local.get $node))
+              (else (recur $chain (struct.get $Entry $next (local.get $node))))))))))
+
+  (func $put (param $map (ref $Buckets)) (param $key i32) (param $value i64)
+    (let $found (call $find (local.get $map) (local.get $key))
+      (if (ref.is_null (local.get $found))
+        (then
+          (let $index (call $bucket (local.get $key))
+            (array.set $Buckets (local.get $map) (local.get $index)
+              (struct.new $Entry (local.get $key) (local.get $value)
+                (array.get $Buckets (local.get $map) (local.get $index))))))
+        (else
+          (struct.set $Entry $value (ref.as_non_null (local.get $found)) (local.get $value))))))
+
+  (func $get-or-zero (param $map (ref $Buckets)) (param $key i32) (result i64)
+    (let $found (call $find (local.get $map) (local.get $key))
+      (if (result i64) (ref.is_null (local.get $found))
+        (then (i64.const 0))
+        (else (struct.get $Entry $value (ref.as_non_null (local.get $found)))))))
+
+  (func $example-map (result (ref $Buckets))
+    (let $map (array.new $Buckets (ref.null $Entry) (i32.const 8))
+      (block (result (ref $Buckets))
+        (call $put (local.get $map) (i32.const 1) (i64.const 10))
+        (call $put (local.get $map) (i32.const 9) (i64.const 20))
+        (call $put (local.get $map) (i32.const 1) (i64.const 22))
+        (local.get $map))))
+  (func $lookup (export "lookup") (param $key i32) (result i64)
+    (call $get-or-zero (call $example-map) (local.get $key)))
+  (func $main (export "main") (result i64)
+    (let $map (call $example-map)
+      (i64.add (call $get-or-zero (local.get $map) (i32.const 1))
+        (call $get-or-zero (local.get $map) (i32.const 9))))))

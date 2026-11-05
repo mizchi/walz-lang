@@ -1,0 +1,10 @@
+(module
+  (tag $DivideByZero (param i32))
+  (func $divide (export "divide") (param $n i64) (param $d i64) (result i64)
+    (try (result i64)
+      (do (if (result i64) (i64.eqz (local.get $d))
+        (then (throw $DivideByZero (i32.const 1)))
+        (else (i64.div_s (local.get $n) (local.get $d)))))
+      (catch $DivideByZero ($code) (i64.const -1))))
+  (func $main (export "main") (result i64)
+    (call $divide (i64.const 84) (i64.const 2))))

@@ -1,0 +1,31 @@
+(module
+  (type $Ints (array (mut i64)))
+  (closure $Scale (capture $factor i64) (param $x i64) (result i64)
+    (i64.mul (local.get $factor) (local.get $x)))
+  (closure $Sum (param $acc i64) (param $x i64) (result i64)
+    (i64.add (local.get $acc) (local.get $x)))
+
+  ;; The callback type is concrete. A different closure type needs specialization.
+  (func $map (param $xs (ref $Ints)) (param $f (ref $Scale)) (result (ref $Ints))
+    (let $output (array.new $Ints (i64.const 0) (array.len (local.get $xs)))
+      (loop $go (bind $i i32 (i32.const 0)) (result (ref $Ints))
+        (if (result (ref $Ints)) (i32.lt_u (local.get $i) (array.len (local.get $xs)))
+          (then (block (result (ref $Ints))
+            (array.set $Ints (local.get $output) (local.get $i)
+              (closure.call $Scale (local.get $f) (array.get $Ints (local.get $xs) (local.get $i))))
+            (recur $go (i32.add (local.get $i) (i32.const 1)))))
+          (else (local.get $output))))))
+
+  (func $fold (param $xs (ref $Ints)) (param $f (ref $Sum)) (param $initial i64) (result i64)
+    (loop $go (bind $i i32 (i32.const 0)) (bind $acc i64 (local.get $initial))
+      (result i64)
+      (if (result i64) (i32.lt_u (local.get $i) (array.len (local.get $xs)))
+        (then (recur $go (i32.add (local.get $i) (i32.const 1))
+          (closure.call $Sum (local.get $f) (local.get $acc)
+            (array.get $Ints (local.get $xs) (local.get $i)))))
+        (else (local.get $acc)))))
+
+  (func $main (export "main") (result i64)
+    (let $xs (array.new_fixed $Ints 3 (i64.const 1) (i64.const 2) (i64.const 3))
+      (let $scaled (call $map (local.get $xs) (closure.new $Scale (i64.const 7)))
+        (call $fold (local.get $scaled) (closure.new $Sum) (i64.const 0))))))

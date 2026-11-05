@@ -1,0 +1,10 @@
+# level<TAB>duration_ms<TAB>message
+INFO	12	request started
+WARN	40	遅いリクエスト🦀
+ERROR	7	failed
+INFO	8	request completed
+
+DEBUG	1	unknown level
+INFO	4294967296	overflow
+INFO	0	
+ERROR	4294967295	maximum	extra message column

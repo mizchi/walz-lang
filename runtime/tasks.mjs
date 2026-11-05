@@ -1,0 +1,295 @@
+// One active guest stack per instance. Requests, guest unwinding and host
+// disposal are separate stages; only the last stage publishes an acknowledgment.
+function materializeError(error, seen) {
+  if (!(error instanceof Error)) return;
+  seen ??= new Set();
+  if (seen.has(error)) return;
+  seen.add(error);
+  // V8's lazy CallSites can retain the guest and its closures after a failed
+  // task. Read ordinary stacks before publishing errors, including cleanup
+  // failures and causes, without replacing the original error or its identity.
+  try {
+    void error.stack;
+  } catch {
+    // Custom diagnostic getters must not replace the original failure.
+  }
+  materializeError(
+    Object.getOwnPropertyDescriptor(error, "cause")?.value,
+    seen,
+  );
+  const errors = Object.getOwnPropertyDescriptor(error, "errors")?.value;
+  if (Array.isArray(errors))
+    for (const nested of errors) materializeError(nested, seen);
+}
+
+export class TaskCancelledError extends Error {
+  constructor(reason) {
+    super("Task cancelled", { cause: reason });
+    this.name = "TaskCancelledError";
+    materializeError(this);
+  }
+}
+const terminal = new Set(["returned", "cancelled", "failed"]);
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((a, b) => {
+    resolve = a;
+    reject = b;
+  });
+  return { promise, resolve, reject };
+}
+
+// Construct handles outside the scheduler's method scope: keeping completed
+// task history must not keep the instance alive through a captured `this`.
+function taskHandle(record) {
+  return Object.freeze({
+    get state() {
+      return record.state;
+    },
+    result: record.result.promise,
+    cancel(reason) {
+      return record.cancel ? record.cancel(reason) : record.done.promise;
+    },
+  });
+}
+
+export class Tasks {
+  constructor({ onTaskEvent = () => {}, asyncExports = [] } = {}) {
+    this.notify = onTaskEvent;
+    this.asyncExports = new Set(asyncExports);
+    this.queue = [];
+    this.active = null;
+    this.failure = null;
+    this.nextId = 1;
+  }
+  capture(instance) {
+    if (instance.exports["cancel-requested"])
+      this.flag = instance.exports["cancel-requested"];
+    if (instance.exports.__task_cancel)
+      this.tag = instance.exports.__task_cancel;
+    return instance;
+  }
+  bind(component) {
+    if (!this.flag || !this.tag)
+      throw new Error("component lacks the cancellation ABI");
+    this.raw = component.api;
+    const api = Object.fromEntries(
+      Object.entries(this.raw).map(([name, fn]) => [
+        name,
+        typeof fn === "function" ? (...args) => this.invoke(name, args) : fn,
+      ]),
+    );
+    // Both aliases must use the scheduler; raw exports are never exposed.
+    return {
+      ...component,
+      api,
+      "gcwat:generated/api@0.1.0": api,
+      start: this.start.bind(this),
+    };
+  }
+  create(name, args, options = {}) {
+    if (!Object.hasOwn(this.raw, name) || typeof this.raw[name] !== "function")
+      throw new TypeError(`unknown export ${name}`);
+    if (!Array.isArray(args))
+      throw new TypeError("task arguments must be an array");
+    const result = deferred(),
+      done = deferred();
+    result.promise.catch(() => {});
+    const record = {
+      id: this.nextId++,
+      name,
+      args: [...args],
+      state: "queued",
+      started: false,
+      settling: false,
+      reason: undefined,
+      result,
+      done,
+      disposals: [],
+      reads: new Set(),
+      blocking: new Set(),
+    };
+    const cancel = (reason) => {
+      if (terminal.has(record.state) || record.settling) return done.promise;
+      if (record.state === "cancelling") return done.promise;
+      record.reason = reason;
+      if (!record.started) {
+        record.state = "cancelled";
+        record.cancel = undefined;
+        record.detach?.();
+        record.detach = undefined;
+        record.args = [];
+        result.reject(new TaskCancelledError(reason));
+        done.resolve({ status: "cancelled", started: false });
+        return done.promise;
+      }
+      record.state = "cancelling";
+      this.flag.value = 1;
+      for (const cancelRead of record.reads) cancelRead();
+      for (const operation of record.blocking) operation();
+      return done.promise;
+    };
+    record.cancel = cancel;
+    record.public = taskHandle(record);
+    if (options.signal) {
+      const signal = options.signal;
+      if (typeof signal.addEventListener !== "function")
+        throw new TypeError("expected AbortSignal");
+      const abort = () => cancel(signal.reason);
+      record.detach = () => signal.removeEventListener("abort", abort);
+      signal.addEventListener("abort", abort, { once: true });
+      if (signal.aborted) abort();
+    }
+    return record;
+  }
+  start(name, args = [], options = {}) {
+    const record = this.create(name, args, options);
+    this.queue.push(record);
+    queueMicrotask(() => this.pump());
+    return record.public;
+  }
+  pump() {
+    if (this.active) return;
+    while (this.queue.length) {
+      const record = this.queue.shift();
+      if (record.state === "queued") {
+        this.execute(record);
+        return;
+      }
+    }
+  }
+  invoke(name, args) {
+    if (this.failure) {
+      if (this.asyncExports.has(name)) return Promise.reject(this.failure);
+      throw this.failure;
+    }
+    if (this.active || this.queue.length) {
+      if (!this.asyncExports.has(name))
+        throw new Error(
+          "component is busy; use start() to queue a synchronous export",
+        );
+      return this.start(name, args).result;
+    }
+    const record = this.create(name, args);
+    return this.execute(record, true);
+  }
+  execute(record, inline = false) {
+    this.active = record;
+    record.started = true;
+    record.state = "running";
+    this.flag.value = 0;
+    let value;
+    try {
+      if (this.failure) throw this.failure;
+      value = this.raw[record.name](...record.args);
+    } catch (error) {
+      record.args = [];
+      this.finish(record, undefined, error);
+      if (inline) throw error;
+      return record.result.promise;
+    }
+    record.args = [];
+    if (this.asyncExports.has(record.name)) {
+      Promise.resolve(value).then(
+        (value) => this.finish(record, value),
+        (error) => this.finish(record, undefined, error),
+      );
+      return record.result.promise;
+    }
+    if (record.disposals.length) {
+      this.finish(record, value);
+      return inline ? value : record.result.promise;
+    }
+    this.publish(record, value);
+    return value;
+  }
+  async finish(record, value, error) {
+    record.settling = true;
+    try {
+      const failures = [];
+      // Jco schedules disposal when readable ends are dropped. The bridge
+      // registers each disposal before its microtask starts, so no timer race
+      // or fixed grace period is needed here.
+      while (record.disposals.length) {
+        const results = await Promise.allSettled(record.disposals.splice(0));
+        failures.push(
+          ...results
+            .filter((x) => x.status === "rejected")
+            .map((x) => x.reason),
+        );
+      }
+      if (failures.length)
+        throw new AggregateError(failures, "task cleanup failed");
+    } catch (cleanupError) {
+      this.failure = cleanupError;
+      error = cleanupError;
+    }
+    const cancelled =
+      record.state === "cancelling" &&
+      error instanceof WebAssembly.Exception &&
+      error.is(this.tag);
+    this.publish(record, value, error, cancelled);
+  }
+  publish(record, value, error, cancelled = false) {
+    materializeError(error);
+    record.state = cancelled ? "cancelled" : error ? "failed" : "returned";
+    record.cancel = undefined;
+    record.detach?.();
+    record.detach = undefined;
+    if (cancelled) record.result.reject(new TaskCancelledError(record.reason));
+    else if (error) record.result.reject(error);
+    else if (typeof value?.resolveAsValue === "function")
+      value.resolveAsValue(record.result.resolve);
+    else record.result.resolve(value);
+    record.done.resolve({ status: record.state, started: record.started });
+    this.active = null;
+    this.flag.value = 0;
+    queueMicrotask(() => this.pump());
+  }
+  disposal(thunk) {
+    const operation = Promise.resolve().then(thunk);
+    if (this.active) this.active.disposals.push(operation);
+    else
+      operation.catch((error) => console.error("host disposal failed", error));
+    // A cancellation request may await only done, rather than result.
+    operation.catch(() => {});
+    return operation;
+  }
+  read(cancel, run) {
+    const value = run();
+    if (!value || typeof value.then !== "function") return value;
+    const record = this.active;
+    if (!record) return value;
+    record.reads.add(cancel);
+    this.notify({ type: "read-pending", id: record.id });
+    if (record.state === "cancelling") cancel();
+    return Promise.resolve(value).finally(() => record.reads.delete(cancel));
+  }
+  host(host) {
+    return Object.fromEntries(
+      Object.entries(host).map(([name, fn]) => [
+        name,
+        typeof fn !== "function"
+          ? fn
+          : (...args) => {
+              const value = fn.apply(host, args),
+                record = this.active;
+              if (!record || !["sleep", "yield"].includes(name)) return value;
+              let disposed = false;
+              const cancel = () => {
+                if (disposed) return;
+                disposed = true;
+                const dispose =
+                  value?.[Symbol.asyncDispose] ?? value?.[Symbol.dispose];
+                if (dispose) this.disposal(() => dispose.call(value));
+              };
+              record.blocking.add(cancel);
+              if (record.state === "cancelling") cancel();
+              return Promise.resolve(value).finally(() =>
+                record.blocking.delete(cancel),
+              );
+            },
+      ]),
+    );
+  }
+}

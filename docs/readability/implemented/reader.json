@@ -1,0 +1,69 @@
+{
+  "answers": {
+    "flow": "main.gwat:5で最大4096品目の空の台帳を作り、7〜13でread-linesの各行を順にapp.processへ渡す。foldのsourceはinitialより先に一度だけ評価されるが、このinitialは既に5行目で作成済みの値である。app.processがok(unit)なら同じ台帳を次の状態として返す。入力のerrまたは処理のerrなら残るStream端点をcloseしてerr(code)。EOFでも端点をcloseしok(最終状態)になり、6行目のresult.letが成功したとき14行目でok(0)を返す。$finalはこのmainでは利用しない。",
+    "state": "counted.gwat:3の$Scanはpair<(ref $stock.State), i32>であり、台帳参照と行数の組である。6行目で空の台帳と0から開始し、12行目で現在の状態を分解する。app.processがokのとき18〜19行目で同じ台帳とcount+1の新しいpairを次の状態にする。空行・コメント・業務エラーもprocessがokなら数える。正常なEOF後は21行目で最終pairを分解しok(count)を返す。i32加算は折り返す。I/O失敗があれば行数の成功値は返さずerr(code)になる。",
+    "alias": "type.aliasは透明な型の略記で、別の実行時の包みやGCオブジェクト、nominal identityを作らない。counted.gwat:3の$Scanはpairの型位置の名前でありheap型名ではない。6、17行目のpair.newは従来と同じpair値を作る。台帳のGC参照はそのまま保持する。",
+    "ownership": "両サンプルのfold状態は共有可能な値で、counted.gwat:12、21のpattern letはsubjectを一度評価してpairを分解する。$Scanの成分はGC共有参照とi32なのでlocal.getでよくmoveは不要。own成分を含むpairを分解する場合はsubjectを(move $pair)にし、得られた所有値も消費する。pattern letは暗黙のmoveを導入しない。Stream端点の消費とcloseはfoldが担う。",
+    "errors": "在庫不足・容量超過・構文不正などの業務エラーはapp.processがJSONエラーレコードとして出力し、出力I/Oが成功すればok(unit)になる。したがってcountedではこれらの行も数える。app.processのerr(i32)とread-linesのerr(i32)はI/O失敗であり、foldは端点をcloseして同じエラーを返す。取消しは通常のResultの外のtask scopeの責務である。",
+    "scope": "短いresult.letは関数からの暗黙returnではない。subjectがerrならそのresult.let式がerrになりbodyを評価しない。ok payloadはbody内だけで束縛される。main.gwat:11の()は成功payloadがunitなので名前がないことを示す。counted.gwat:12の$ledger/$countと21の同名の束縛は別スコープである。",
+    "changes": "counted.gwat:3で状態のpair成分の型、6行目で初期値、12行目で更新前の分解、15行目で台帳を渡す処理、16〜19行目で次状態と加算、21行目で最終状態から取り出す成功値を追う。カウンタをi64に変えるなら3行目の第2成分、4行目の外側Resultの成功型、6行目のゼロ、19行目の加算と定数を変える。4行目のエラー型i32と6行目のstock.newの4096はカウンタと無関係なので維持する。数え方だけを変えるなら主に14〜19行目の成功継続を変更する。型引数の反復はないが、初期値からfold状態を経て最終返値へ流れる型を確認する必要はある。"
+  },
+  "scores": {
+    "flow": {
+      "score": 3,
+      "evidence": "main.gwat:5で初期化、7〜13で入力の反復、14で成功値という順に読める。foldヘッダーのsource/initial/束縛は8〜10にまとまる。一方、EOFのcloseと失敗伝播はソースに出ずcheatsheet.md:180〜184の規則確認が要り、6の$finalが未使用なのも小さな寄り道になる。"
+    },
+    "types": {
+      "score": 3,
+      "evidence": "counted.gwat:3に状態型が一度だけあり、6の$initial注釈から17のpair.newまで型の反復なく追える。4の(result (result i32 i32))は宣言と値型の区別が必要で、3のpair成分にはフィールド名がなく、12の束縛との対応を確認する。16〜19の省略されたResult/pair型も、3、6とfoldの規則へ少し戻る。省略自体を満点の理由にはしない。"
+    },
+    "scope": {
+      "score": 2,
+      "evidence": "counted.gwat:6〜20でlet、result.let、fold、pattern let、result.letが入れ子になり、19の連続する閉じ括弧と20の独立した)))のあと、21がどの継続に属するかを開き位置と照合する必要がある。12と21の$ledger/$countが同名で別スコープなのも状態の前後を一見で区別しにくい。各束縛の利用自体は局所的だが、スコープ境界を追う負担は目立つ。"
+    },
+    "layout": {
+      "score": 2,
+      "evidence": "main.gwat:3〜4とcounted.gwat:4〜5の関数契約、およびcounted.gwat:8〜11のfoldヘッダーはまとまっている。一方、counted.gwat:20の)))と22の)))、main.gwat:15の))が独立し、式の終端をその場で認識しにくい。counted.gwat:21はpattern let、subject、最終Resultを一行に詰め、12の分解と見た目も揃わない。"
+    },
+    "changes": {
+      "score": 3,
+      "evidence": "counted.gwat:3、6、12、19、21で状態の宣言・初期化・分解・更新・返値を追える。複合型やエラー型の再記述がないため包み直しの修正箇所は少ない。カウンタ型を変える際は4の成功型と6、19の数値命令を区別する必要があり、12と21の位置によるpair分解、型を省略した17の構築を照合する小さな負担は残る。"
+    }
+  },
+  "comparison": "初回採点flow=3/types=3/scope=2/layout=2/changes=3を固定してからold-counted.gwatを読んだ。旧版6〜7、11〜12、15、17〜18、22で繰り返していた(pair (ref $stock.State) i32)とResultの型注釈が、新版では3のaliasと6の注釈に集まった。旧版11〜14、22〜24のmatch/caseを新版12、21のpattern letで置き換え、pair分解のためだけの型・結果宣言・case層を減らした点は良い。旧版6、15の裸の出力成功型も消え、処理と型引数を見分ける負担が下がる。一方、旧版22〜24で複数行だった最終分解・返値が新版21で一行に詰まり、その位置はかえって見つけにくい。新版でも20、22の独立した閉じ括弧は残り、入れ子の境界の視認性は改善し切っていない。型の記述を省略した分、初期状態・fold状態・最終値の型対応を局所的な期待型の規則で補う必要はある。旧版との比較で新版の採点は変更していない。",
+  "issues": [
+    {
+      "priority": 1,
+      "kind": "format",
+      "location": "counted.gwat:19〜22; main.gwat:14〜15",
+      "problem": "連続する閉じ括弧を独立行に分けており、開いた継続式との対応を数えて確認する必要がある。",
+      "fix": "閉じ括弧を対応する最後の式の末尾に一貫して置き、foldのbodyと外側result.letのbodyのインデント境界を揃える。"
+    },
+    {
+      "priority": 2,
+      "kind": "format",
+      "location": "counted.gwat:21",
+      "problem": "最終状態のpattern letと成功Resultが一行にまとまり、処理本体側の分解と異なる見た目になる。",
+      "fix": "subjectと継続のResultを分け、12行目と同じ分解レイアウトにする。"
+    },
+    {
+      "priority": 2,
+      "kind": "naming",
+      "location": "counted.gwat:12,21",
+      "problem": "更新前と最終状態に同じ$ledger/$countを使い、コードを斜めに読むと別スコープの束縛を区別しにくい。",
+      "fix": "最終状態側を$final-ledger/$final-countのように区別する。"
+    },
+    {
+      "priority": 3,
+      "kind": "naming",
+      "location": "counted.gwat:3,11",
+      "problem": "$Scan/$stateだけではpairの第1・第2成分がコード上に明示されず、3行目と12行目を対応させて読む必要がある。",
+      "fix": "aliasを$ScanStateなど状態型と分かる名前にするか、型宣言にledger/countの順序を示す短いコメントを置く。"
+    }
+  ],
+  "limitations": [
+    "指定資料とmain.gwat/counted.gwatのみで初回判断した主観評価である。コンパイラ、実行結果、読了時間、他の評価、実装は参照していない。",
+    "型・制御の理解を説明できることは読みやすさの加点に使っていない。scopeとlayoutは同じ括弧配置を、それぞれ束縛境界と視覚上の区切りの観点から評価している。",
+    "old-counted.gwatは初回の回答・採点・課題判断を固定した後に比較のためだけに読んだ。"
+  ]
+}

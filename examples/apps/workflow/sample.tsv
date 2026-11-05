@@ -1,0 +1,13 @@
+# dependencies: prepare -> compile + lint -> test -> package
+TASK	prepare	2
+TASK	compile	5
+TASK	lint	3
+TASK	test	4
+TASK	package	1
+AFTER	compile	prepare
+AFTER	lint	prepare
+AFTER	test	compile
+AFTER	test	lint
+AFTER	package	test
+PLAN	2
+PLAN	1

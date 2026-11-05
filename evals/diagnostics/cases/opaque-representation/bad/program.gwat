@@ -1,0 +1,4 @@
+(module
+  (include "lib.gwat")
+  (func $read (param $state (ref $lib.State)) (result i32)
+    (struct.get $lib.State $value (local.get $state))))

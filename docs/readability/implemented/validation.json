@@ -1,0 +1,49 @@
+{
+  "rust": {
+    "passed": 178,
+    "failed": 0,
+    "ignored": 0
+  },
+  "nodeSuite": {
+    "passed": 30,
+    "failed": 0,
+    "skipped": 5
+  },
+  "stockLedgerFinal": {
+    "backends": [
+      "core",
+      "component"
+    ],
+    "passed": 2,
+    "failed": 0,
+    "variants": [
+      "main",
+      "main-explicit",
+      "main-counted"
+    ],
+    "oracleOperations": 3000
+  },
+  "browserRegression": {
+    "passed": 22,
+    "failed": 0
+  },
+  "fixedExecutionChecks": {
+    "passed": 14,
+    "failed": 0
+  },
+  "checks": [
+    "cargo fmt -- --check",
+    "cargo clippy --locked --all-targets -- -D warnings"
+  ],
+  "readability": {
+    "total": 15,
+    "scores": {
+      "flow": 3,
+      "types": 3,
+      "scope": 3,
+      "layout": 3,
+      "changes": 3
+    },
+    "allAxesAtLeast3": true
+  }
+}

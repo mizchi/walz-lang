@@ -1,0 +1,1 @@
+(module (include "../../../../examples/apps/stock-ledger/program.gwat"))

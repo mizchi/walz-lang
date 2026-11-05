@@ -1,0 +1,415 @@
+{
+  "examples": [
+    {
+      "path": "examples/closure.gwat",
+      "pattern": "escaping closure",
+      "expected": "42"
+    },
+    {
+      "path": "examples/counter.gwat",
+      "pattern": "captured mutable state",
+      "expected": "42"
+    },
+    {
+      "path": "examples/collections.gwat",
+      "pattern": "array traversal",
+      "expected": "42"
+    },
+    {
+      "path": "examples/list.gwat",
+      "pattern": "recursive nullable list",
+      "expected": "42"
+    },
+    {
+      "path": "examples/factorial.gwat",
+      "pattern": "numeric loop",
+      "expected": "3628800",
+      "checks": [
+        {
+          "export": "factorial",
+          "args": [
+            "0"
+          ],
+          "expected": "1"
+        },
+        {
+          "export": "factorial",
+          "args": [
+            "5"
+          ],
+          "expected": "120"
+        }
+      ]
+    },
+    {
+      "path": "examples/mutual-recursion.gwat",
+      "pattern": "mutually recursive functions",
+      "expected": "1",
+      "checks": [
+        {
+          "export": "even",
+          "args": [
+            "17"
+          ],
+          "expected": "0"
+        },
+        {
+          "export": "even",
+          "args": [
+            "0"
+          ],
+          "expected": "1"
+        }
+      ]
+    },
+    {
+      "path": "examples/ast-interpreter.gwat",
+      "pattern": "recursive variant AST with exhaustive match",
+      "expected": "42"
+    },
+    {
+      "path": "examples/variants.gwat",
+      "pattern": "Option with nullary and unary cases",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "value",
+          "args": [
+            "0"
+          ],
+          "expected": "0"
+        },
+        {
+          "export": "value",
+          "args": [
+            "1"
+          ],
+          "expected": "42"
+        },
+        {
+          "export": "value",
+          "args": [
+            "-1"
+          ],
+          "expected": "42"
+        }
+      ]
+    },
+    {
+      "path": "examples/graph-cycle.gwat",
+      "pattern": "cyclic mutable graph",
+      "expected": "42"
+    },
+    {
+      "path": "examples/sorting.gwat",
+      "pattern": "insertion sort",
+      "expected": "12345",
+      "checks": [
+        {
+          "export": "edge",
+          "args": [],
+          "expected": "1244"
+        },
+        {
+          "export": "empty",
+          "args": [],
+          "expected": "0"
+        }
+      ]
+    },
+    {
+      "path": "examples/binary-search.gwat",
+      "pattern": "early loop exit",
+      "expected": "3",
+      "checks": [
+        {
+          "export": "lookup",
+          "args": [
+            "8"
+          ],
+          "expected": "-1"
+        },
+        {
+          "export": "lookup",
+          "args": [
+            "1"
+          ],
+          "expected": "0"
+        },
+        {
+          "export": "lookup",
+          "args": [
+            "9"
+          ],
+          "expected": "4"
+        }
+      ]
+    },
+    {
+      "path": "examples/matrix.gwat",
+      "pattern": "nested loops and matrix product",
+      "expected": "134",
+      "checks": [
+        {
+          "export": "entry",
+          "args": [
+            "0",
+            "0"
+          ],
+          "expected": "19"
+        },
+        {
+          "export": "entry",
+          "args": [
+            "0",
+            "1"
+          ],
+          "expected": "22"
+        },
+        {
+          "export": "entry",
+          "args": [
+            "1",
+            "0"
+          ],
+          "expected": "43"
+        },
+        {
+          "export": "entry",
+          "args": [
+            "1",
+            "1"
+          ],
+          "expected": "50"
+        }
+      ]
+    },
+    {
+      "path": "examples/higher-order.gwat",
+      "pattern": "map and fold with a concrete closure type",
+      "expected": "42"
+    },
+    {
+      "path": "examples/closure-compose.gwat",
+      "pattern": "closure capturing other closures",
+      "expected": "42"
+    },
+    {
+      "path": "examples/result.gwat",
+      "pattern": "explicit checked errors",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "error-code",
+          "args": [
+            "84",
+            "0"
+          ],
+          "expected": "1"
+        },
+        {
+          "export": "error-code",
+          "args": [
+            "-9223372036854775808",
+            "-1"
+          ],
+          "expected": "2"
+        },
+        {
+          "export": "error-code",
+          "args": [
+            "84",
+            "2"
+          ],
+          "expected": "0"
+        }
+      ]
+    },
+    {
+      "path": "examples/state-machine.gwat",
+      "pattern": "mutable state machine",
+      "expected": "204"
+    },
+    {
+      "path": "examples/text-parser.gwat",
+      "pattern": "ASCII number and expression parser",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "invalid",
+          "args": [],
+          "expected": "-1"
+        },
+        {
+          "export": "empty",
+          "args": [],
+          "expected": "-1"
+        },
+        {
+          "export": "incomplete",
+          "args": [],
+          "expected": "-1"
+        },
+        {
+          "export": "trailing",
+          "args": [],
+          "expected": "-1"
+        },
+        {
+          "export": "zero",
+          "args": [],
+          "expected": "0"
+        }
+      ]
+    },
+    {
+      "path": "examples/hash-map.gwat",
+      "pattern": "hash table with collision chains",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "lookup",
+          "args": [
+            "1"
+          ],
+          "expected": "22"
+        },
+        {
+          "export": "lookup",
+          "args": [
+            "9"
+          ],
+          "expected": "20"
+        },
+        {
+          "export": "lookup",
+          "args": [
+            "2"
+          ],
+          "expected": "0"
+        }
+      ]
+    },
+    {
+      "path": "examples/numeric.gwat",
+      "pattern": "floating point iterative algorithm",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "sqrt",
+          "args": [
+            "0"
+          ],
+          "expected": "0"
+        },
+        {
+          "export": "sqrt",
+          "args": [
+            "81"
+          ],
+          "expected": "9"
+        }
+      ]
+    },
+    {
+      "path": "examples/host-import.gwat",
+      "pattern": "external I/O boundary",
+      "runtime_error": "unknown import"
+    },
+    {
+      "path": "examples/tagged-invalid.gwat",
+      "pattern": "manual variant invariant is not statically enforced",
+      "runtime_error": "null reference"
+    },
+    {
+      "path": "examples/numeric-conversion.gwat",
+      "pattern": "standard Wasm numeric conversion",
+      "expected": "42"
+    },
+    {
+      "path": "examples/math-intrinsic.gwat",
+      "pattern": "standard Wasm sqrt",
+      "expected": "42"
+    },
+    {
+      "path": "examples/tail-call.gwat",
+      "pattern": "standard Wasm tail call",
+      "expected": "42"
+    },
+    {
+      "path": "examples/for-loop.gwat",
+      "pattern": "for macro with explicit induction state",
+      "expected": "42"
+    },
+    {
+      "path": "examples/exceptions.gwat",
+      "pattern": "native Wasm exceptions with lexical catch bindings",
+      "expected": "42",
+      "checks": [
+        {
+          "export": "divide",
+          "args": [
+            "84",
+            "0"
+          ],
+          "expected": "-1"
+        },
+        {
+          "export": "divide",
+          "args": [
+            "84",
+            "3"
+          ],
+          "expected": "28"
+        }
+      ]
+    },
+    {
+      "path": "examples/value-types.gwat",
+      "pattern": "semantic Option/Result values and checked pure effects",
+      "expected": "42"
+    },
+    {
+      "path": "examples/ownership.gwat",
+      "pattern": "explicit move, owned pair and once-call closure",
+      "expected": "42"
+    },
+    {
+      "path": "examples/verified-laws.gwat",
+      "pattern": "universal bitvector laws gate owned execution",
+      "expected": "42"
+    },
+    {
+      "path": "examples/ready-delivery.gwat",
+      "pattern": "owned ready future, finite stream and independent completion",
+      "expected": "42"
+    },
+    {
+      "path": "examples/modules.gwat",
+      "pattern": "static namespaces, private helpers and import aliases",
+      "expected": "42"
+    },
+    {
+      "path": "examples/bytes-text.gwat",
+      "pattern": "immutable bytes, UTF-8 validation and slicing",
+      "expected": "42"
+    }
+  ],
+  "probes": [
+    {
+      "path": "examples/probes/heterogeneous-closures.gwat",
+      "diagnostic": "type mismatch",
+      "limitation": "no common callable interface"
+    },
+    {
+      "path": "examples/probes/outer-recur.gwat",
+      "diagnostic": "innermost loop",
+      "limitation": "no nonlocal loop transfer"
+    },
+    {
+      "path": "examples/probes/readonly-array-view.gwat",
+      "diagnostic": "type mismatch",
+      "limitation": "no read-only view or ownership freeze"
+    }
+  ]
+}

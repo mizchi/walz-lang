@@ -1,0 +1,18 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/grammar-eval/round-1/writer/candidate.gwat",
+      "exitCode": 0,
+      "diagnostic": "ok\n"
+    }
+  ],
+  "repairs": [],
+  "ambiguities": [],
+  "assumptions": [
+    "成功時の返り値では、app.process が ok(unit) を返した配送行ごとに i32.add で1を加算する。空行、# 行、JSON の業務エラーレコードを出した行も契約上 ok(unit) なので数える。",
+    "stream.fold-result の EOF 処理では本体が呼ばれないため、EOF は数えない。I/O err は result.let と stream.fold-result を通じて伝播する。",
+    "取消しは既存の task scope の契約に従う。実行時の検証は行わず、許可された check 診断と配布契約を根拠に完了とした。"
+  ],
+  "extraDocumentsRead": []
+}

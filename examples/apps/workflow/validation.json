@@ -1,0 +1,224 @@
+{
+  "schema": "gcwat-workflow-validation-v1",
+  "date": "2026-11-05",
+  "versions": {
+    "node": "v24.21.0",
+    "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+    "wasmtime": "wasmtime 42.0.1 (6844a83b5 2026-02-25)"
+  },
+  "implementationSha256": "2a34282b29bcac73d073dbe9955a46e89caca65ce890b37775becab897cde5cc",
+  "sourceHashes": {
+    "benchmark.gwat": "af48706c775e8988e724ae222cfffcb59c5580194823a803e5d103760d36a29a",
+    "compute.gwat": "b541d5cb1b311ae22b632f6f4814b840424e2d8f35d4c75391d42c0a21d7765a",
+    "domain.gwat": "c813ca06b61310ea39f46a60e87e34e91d5b9cf229a8d802ced45f8a85bc61ea",
+    "expected.json": "5ea3451544167068b7863471c7edeaa53801d8548ee1e82bc0270f335231d06b",
+    "graph.gwat": "5bc0ffa84180932425644b464454be055505c78b3b7b51b9cdbe395a21b3867c",
+    "main.gwat": "9c2f2b1bddb0703095b431fc18e9e9bab48fd9cb1a59d949a2ea42fcd28bc492",
+    "model.test.gwat": "3d681aae833251b7c951a93990d38349ea3033135847ec3af43959d1300809a7",
+    "parse.gwat": "f932fcd1ca5cb2abb1fdca98098ce74b5caf8a06c9e98f1398a58a0c69919dc7",
+    "planner.gwat": "f1555ca0166f4f7bc421a8071bd0d3850052e04c6f367dbac1b24cea2f929bdd",
+    "program.gwat": "9f3cd7984878c4bc44f50b5f0183bfc8b840170f5bceeddd6dba33ece3e390bc",
+    "report.gwat": "a64b73b1e586dadd42addb240d12d70f6ebcbcc2b123ee8344448a7dce0036d3",
+    "sample.tsv": "0c050409583d0b224fb64d3b95b9831492cb7a131bcb764707418437297aff40"
+  },
+  "bodyLines": 892,
+  "coreWasm": {
+    "bytes": 17041,
+    "sha256": "b9c2cacafdc61aa1f0731e41c17469724230e1d968084d1ac0b95fb246ce97c0"
+  },
+  "passedCommands": [
+    "just test",
+    "just check",
+    "just test-evals",
+    "just test-workflow",
+    "just test-workflow-stress",
+    "just build-workflow",
+    "just workflow"
+  ],
+  "nativeModelTests": 12,
+  "rustWorkflowTests": 2,
+  "jsTests": 3,
+  "backends": {
+    "core": {
+      "backend": "core",
+      "node": "v24.21.0",
+      "stress": true,
+      "cases": [
+        {
+          "lines": 13,
+          "records": 12,
+          "elapsedMs": 1.7905420000001868
+        },
+        {
+          "lines": 0,
+          "records": 0,
+          "elapsedMs": 0.06379199999992125
+        },
+        {
+          "lines": 2,
+          "records": 2,
+          "elapsedMs": 0.15454200000021956
+        },
+        {
+          "lines": 7,
+          "records": 8,
+          "elapsedMs": 0.25975000000016735
+        },
+        {
+          "lines": 7,
+          "records": 2,
+          "elapsedMs": 0.1847499999998945
+        },
+        {
+          "lines": 4,
+          "records": 1,
+          "elapsedMs": 0.12466700000004494
+        },
+        {
+          "lines": 5,
+          "records": 6,
+          "elapsedMs": 0.23737500000015643
+        },
+        {
+          "lines": 5,
+          "records": 5,
+          "elapsedMs": 0.18258300000024974
+        },
+        {
+          "lines": 7,
+          "records": 6,
+          "elapsedMs": 0.21441600000025574
+        },
+        {
+          "lines": 7,
+          "records": 1,
+          "elapsedMs": 0.1386659999998301
+        },
+        {
+          "lines": 13,
+          "records": 11,
+          "elapsedMs": 0.43562500000007276
+        },
+        {
+          "lines": 959,
+          "records": 1205,
+          "elapsedMs": 26.831709000000046
+        },
+        {
+          "lines": 4098,
+          "records": 2,
+          "elapsedMs": 50.02495899999985
+        },
+        {
+          "lines": 4400,
+          "records": 2201,
+          "elapsedMs": 152.88175
+        },
+        {
+          "lines": 65795,
+          "records": 1,
+          "elapsedMs": 1331.596541
+        }
+      ],
+      "pureChainMs": 100.94933400000082,
+      "pureDenseMs": 26.19483300000047,
+      "reuseRounds": 20,
+      "inputAndWriteCancellation": true,
+      "ioFailures": true,
+      "liveHandlesAfterEachCall": 0
+    },
+    "component": {
+      "backend": "component",
+      "node": "v24.21.0",
+      "stress": true,
+      "cases": [
+        {
+          "lines": 13,
+          "records": 12,
+          "elapsedMs": 46.35754199999974
+        },
+        {
+          "lines": 0,
+          "records": 0,
+          "elapsedMs": 11.817042000000583
+        },
+        {
+          "lines": 2,
+          "records": 2,
+          "elapsedMs": 14.911833000000115
+        },
+        {
+          "lines": 7,
+          "records": 8,
+          "elapsedMs": 29.79541700000027
+        },
+        {
+          "lines": 7,
+          "records": 2,
+          "elapsedMs": 21.08299999999963
+        },
+        {
+          "lines": 4,
+          "records": 1,
+          "elapsedMs": 18.124375000000327
+        },
+        {
+          "lines": 5,
+          "records": 6,
+          "elapsedMs": 23.223250000000007
+        },
+        {
+          "lines": 5,
+          "records": 5,
+          "elapsedMs": 21.9154580000004
+        },
+        {
+          "lines": 7,
+          "records": 6,
+          "elapsedMs": 24.879624999999578
+        },
+        {
+          "lines": 7,
+          "records": 1,
+          "elapsedMs": 21.590000000000146
+        },
+        {
+          "lines": 13,
+          "records": 11,
+          "elapsedMs": 37.72974999999951
+        },
+        {
+          "lines": 959,
+          "records": 1205,
+          "elapsedMs": 2513.6338749999995
+        },
+        {
+          "lines": 4098,
+          "records": 2,
+          "elapsedMs": 4711.841042
+        },
+        {
+          "lines": 4400,
+          "records": 2201,
+          "elapsedMs": 7858.1342909999985
+        },
+        {
+          "lines": 65795,
+          "records": 1,
+          "elapsedMs": 77877.873916
+        }
+      ],
+      "pureChainMs": 107.51654199999757,
+      "pureDenseMs": 25.97595900000306,
+      "reuseRounds": 20,
+      "inputAndWriteCancellation": true,
+      "ioFailures": true,
+      "liveHandlesAfterEachCall": 0
+    }
+  },
+  "measurementNotes": [
+    "Single observations, not statistical benchmarks. Timing includes guest, mock input/output and stream/ABI handling; build and instantiation are excluded.",
+    "The I/O-free workload constructs IDs without parsing TSV or emitting JSON, so the difference is not an exact isolated ABI overhead measurement.",
+    "Ownership tables and ABI allocations were zero after calls, I/O failures and acknowledged cancellation. GC heap peak or long-term reclamation was not measured."
+  ]
+}

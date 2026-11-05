@@ -1,0 +1,28 @@
+{
+  "answers": {
+    "Q1": "外側の (result R) は main の結果型の宣言で、R は内側の (result i32 i32) という1つの値型。内側は成功 payload が i32、エラー payload も i32 の Result 型であり、i32 を2個返す宣言ではない。この main は成功時に ok(0)、I/O 失敗時に err(code) を返す。",
+    "Q2": "裸の型引数 U は body と result.let 全体の成功型を指定する。入力の成功型 T やエラー型 E ではない。外側では T=(ref $stock.State)、E=i32、U=i32。subject の fold は (result (ref $stock.State) i32)、body は (result i32 i32)、式全体も (result i32 i32)。内側では T=unit、E=i32、U=(ref $stock.State)。subject の app.process は (result unit i32)、body は (result (ref $stock.State) i32)、式全体も (result (ref $stock.State) i32)。subject が err なら body を評価せず、そのエラーを当該 result.let の値として返す。",
+    "Q3": "内側の subject の成功型が unit であり、取り出す成功 payload がないため、束縛位置を () と明記する必要がある。$state は fold の現在状態で型は (ref $stock.State)、$line は配送された行で型は text。両者は fold の body 内だけで有効で、内側 result.let の subject と body から利用できる。$final は fold の成功 payload を受ける外側 result.let の束縛で、型は (ref $stock.State)。外側 result.let の body 内だけで有効であり、subject である fold 内や result.let の外では利用できない。",
+    "Q4": "read-lines の結果は (stream (result text i32))。fold の状態 S は (ref $stock.State) で initial も同じ型。fold 全体は (result (ref $stock.State) i32)。app.process の結果は (result unit i32)。",
+    "Q5": "EOF では fold が端点を close して現在状態を ok(state) にし、外側 result.let の body が実行されるので main は ok(0) になる。EOF の next でも端点が返るため close は必要で、ここでは fold が担当する。入力 stream の I/O err は該当要素の body を実行せず、端点を close して同じコードの err を fold、外側 result.let、main へ伝える。app.process の err も内側の body を実行せず、fold が close して同じ I/O エラーを main へ伝え、後続行は処理しない。在庫不足は業務エラーで、app.process が JSON のエラーレコードを出す。出力 I/O が成功すれば ok(unit) なので状態を再利用して次の行へ進み、後に EOF となれば main は ok(0)。そのエラー出力の I/O が失敗すれば err になる。",
+    "Q6": "State は共有できる GC 参照であって所有値ではないため、local.get で再利用でき、move や close による消費は不要。GC の回収と外部 Stream 端点の終了処理は別。Stream は所有値で、手動なら move して stream.next に渡し、戻った新しい端点を次に渡し、最後に stream.close で消費する。サンプルではこの反復と消費を fold が行い、EOF、入力の err、body の err で close する。通常の err は Result 値として main に返るが、取消しは main の通常の Result とは別で、既存の task scope が終了確認を担当する。fold は任意の throw に対する finally ではなく、資料からそのような例外時の close を保証することはできない。",
+    "Q7": "fold は source、initial の順で各1回だけ評価する。このサンプルでは let の initializer の stock.new が先に評価済みで、その後 fold が read-lines を1回呼び、local.get $initial を1回評価する。$final が未使用でも安全である。これは共有 GC 参照で消費義務がなく、Stream の close は fold 自身が成功 payload を返す前に行うので、$final を使うかどうかには依存しない。",
+    "Q8": "この3資料だけで理解・実装できる。状態 S を (pair (ref $stock.State) i32) に変更し、initial を台帳参照と i32.const 0 の pair.new にする。fold の body で match により台帳参照と行数を取り出し、app.process が ok(unit) のときだけ、同じ台帳参照と i32.add による行数+1 を pair.new にして ok で返す。内側 result.let の裸の U と成功構築型もこの pair 型にする。外側 result.let の入力成功型を pair 型にし、裸の U は i32 のまま、最終 pair を match して行数を ok(i32) で返す。空行と # 行も配送されて app.process は ok(unit) を返すため、配送行数に含める。i32 の加算は折り返し規則を使う。I/O err は従来どおり伝播する。未定義記号はない。stock.State、stock.new、read-lines、app.process の契約と include の橋渡しが明示されており、size を行数の代わりに使う必要もない。pair.new、pair の match、i32.add、result.let の構文が示され、API を推測する必要はない。作業ディレクトリ、候補の絶対パス、check、build-core、入力付き text-cli のコマンド、成功 payload を観測する runTextProgram のスクリプトまであるので、実行パスとコマンドを再現できる。text-cli の成功終了コードは常に0で、行数は main の Result 内にある点も明記されている。追加検索は不要。本評価では指定どおり実装やリンク先を読まず、コンパイラや起動コマンドも実行していない。",
+    "Q9": "型は通り、関数の結果は i32 の 42 になる。result.let は T=unit、E=i32、U=unit なので、subject、body、式全体はいずれも (result unit i32)。subject が err(7) なので body の result.ok は評価されず、result.let 式の値が err(7) となる。これは共有値なので drop に渡せて、drop は unit を返す。result.let の err は関数からの暗黙 return ではないため、block は次の i32.const 42 まで進み、block と probe の i32 の結果になる。これらの式に宣言された pure を超える effect はない。"
+  },
+  "issues": [
+    {
+      "severity": "suggestion",
+      "location": "cheatsheet.md の pair の例と sample.gwat の fold を組み合わせる変更課題",
+      "cause": "資料不足ではないが、pair の状態を導入すると (pair (ref $stock.State) i32) を fold、Result、match、pair.new の複数箇所に繰り返して書く必要があり、構文上の記述量が増える。各型引数の役割は資料に定義されている。",
+      "suggestedFix": "学習の補助として、GC 参照とカウンタを pair に持つ fold の短い完成例を任意で追加すると、既存の pair の例からの組み立てを照合しやすい。実装に必須の追加説明ではない。"
+    }
+  ],
+  "assumptions": [],
+  "selfAssessment": {
+    "G": 4,
+    "T": 4,
+    "C": 4,
+    "D": 4
+  }
+}

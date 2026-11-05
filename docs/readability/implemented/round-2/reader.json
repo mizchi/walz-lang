@@ -1,0 +1,62 @@
+{
+  "answers": {
+    "flow": "main.gwat:5 で上限4096の空台帳を作り、7–13 の fold を実行する。fold は8の read-lines、9の初期状態の順に一度だけ評価し、配送された各行について12の app.process を呼ぶ。成功時だけ13で同じ台帳参照を次状態にする。EOFなら端点をcloseして最終状態をokで返し、入力またはbodyがerrなら端点をcloseしてerrを返す。外側6の result.let はfold成功時だけ14を評価し、mainはok(0)を返す。$final は束縛されるが利用されない。",
+    "state": "counted.gwat:4 の $ScanState は pair<(ref $stock.State), i32> の透明な別名で、共有できる台帳参照とi32行数を持つ。5–13の advance は result<$ScanState,i32> を返し、app.process がokのときだけ同じ台帳参照とcount+1を返す。15–26のmainは成功時に最終countのok(i32)を返す。空行、コメント行、業務エラーの行もI/Oが成功すれば加算される。加算はi32の折り返し規則。I/Oが失敗した場合は成功値の行数ではなくerr(code)が返る。",
+    "alias": "counted.gwat:4 の type.alias は型の略記で、宣言自体は実行時の値もGCオブジェクトもnominal identityも作らない。18と12のpair.newがpair値を作り、その中の台帳はstock.newで作られた同じ参照を引き継ぐ。aliasを使ったことによる新しい台帳identityはない。",
+    "ownership": "counted.gwat:7と25はsubjectのpairを一度だけ評価して成分を字句束縛するpattern let。このpairは共有できる参照と整数だけなのでlocal.getで読める。ownなどの所有成分を含むpairならpair全体も所有値となり、subjectは(move $pair)で渡し、取り出した所有値も消費する必要がある。pattern letが暗黙のmoveを行うわけではない。",
+    "errors": "contract.md:13–16に従い、在庫不足・容量超過・構文不正はJSONの業務エラーレコードになり、出力I/Oが成功すればapp.processはok(unit)。counted.gwat:9–12はそれらも加算する。app.processのerr(i32)とread-linesの要素のerr(i32)はI/O失敗で、foldは残ったstream端点をcloseしてerrを返す。EOFでもnextが端点を返すためcloseが必要であり、このサンプルではstream.fold-resultが担当する。",
+    "scope": "短いresult.letも関数からのreturnではない。subjectがerrならその式のbodyだけを評価せず、同じエラー型のerrをその式の結果にする。counted.gwat:9のerrはadvanceの末尾式の結果として返り、19のerrはmainの末尾式の結果として返るため、この配置では結果として関数の返り値になる。$ledger/$countは7のbody内、$final-ledger/$final-countは25のbody内、foldの$progress/$lineは23に続くbody内だけで使える。",
+    "changes": "カウンタの表現を追う起点はcounted.gwat:4の$ScanState。更新の変更は5–13のadvance、とくに7の分解と12の加算・再構築を確認する。初期値は17–18、最終値の取り出しは25–26、外部へ返す成功型は15にある。advanceの6の成功型はaliasなので複合型の書き換えは不要で、20–24のfoldも型引数の更新は不要。仮に整数型そのものを変更するなら4の成分、12の命令と定数、18の初期定数、15の成功型が対応する変更箇所で、6と15のエラー型i32まで変える必要はない。ただし配布契約はi32の折り返しを指定しているため、実際に別の整数型へ変えるには契約変更も必要。加算条件を変える場合は9–12のapp.process成功後という配置と8の説明も確認する。"
+  },
+  "scores": {
+    "flow": {
+      "score": 3,
+      "evidence": "main.gwat:5–14は作成→fold→成功値0の順に読め、counted.gwat:17–26も初期化→反復→最終countの順が保たれている。ただしfoldのEOF/err時のcloseはコード上に現れずcheatsheet.md:180–183で確認が必要で、main.gwat:6の未使用$finalは用途を一瞬探す。"
+    },
+    "types": {
+      "score": 3,
+      "evidence": "counted.gwat:4に状態の複合型が集まり、5–7と17の$ScanStateから12・18のpair.newの型を追える。同じpair型の反復は少ない。一方、6と15の(result (result ...))では宣言と値型を区別し、9・19のresult.letの型はsubjectと周囲の期待型から補う必要があり、cheatsheet.md:192–218の局所推論規則を確認する負担は残る。"
+    },
+    "scope": {
+      "score": 3,
+      "evidence": "counted.gwat:7の$ledger/$countは10・12、23の$progress/$lineは24、25の$final-countは26という短い対応で追える。$initial-state/$final-stateも役割が分かれる。ただし9のresult.letから13の閉じ括弧までと19のresult.letから27までにはlet/fold/funcの境界確認が必要で、局所的にほぼ迷わない4点までは届かない。"
+    },
+    "layout": {
+      "score": 3,
+      "evidence": "counted.gwat:3–6は型の説明・alias・advanceの契約、15–16はmainの契約としてまとまる。20–24のfoldもsource、initial、束縛、bodyが行ごとに分かれる。一方12にpair再構築と加算が同居し、13の独立した)))と27の)))は対応する開始式を目で戻って数える必要がある。"
+    },
+    "changes": {
+      "score": 3,
+      "evidence": "counted.gwat:4のaliasと5–13のadvanceに状態表現と更新が集まり、20–24の反復に複合型を再記述しないため更新処理の場所は見つけやすい。それでも型変更には12・18の型付き数値命令/定数と15の公開成功型を確認し、初期化17–18と取り出し25–26にも往復する。型の省略だけで変更箇所が一か所になるわけではない。"
+    }
+  },
+  "comparison": "新形式の得点は旧形式を読む前に全軸3点で固定し、比較後も維持した。旧old-counted.gwat:6–7,9,11–12,15,17–18,22に反復していたpairとResultの型が、新counted.gwat:4の$ScanStateと5–6の関数契約に集まり、カウンタ型変更のたびに同じ複合型を探す負担が減った。旧11–14と22–24の単一caseのmatchは新7と25のpattern letになり、単なる分解を網羅的分岐として読まずに済む。新5–13のadvanceへ行処理を分けたことでmainの初期化・反復・成功値が17–26で見渡せる。一方、旧6–7と15にはresult.letの出力型やfoldのT/S/Eがその場に明示されており、新形式ではその情報を関数契約や初期値から補う必要がある。旧mainだけを追えば更新まで読めた点に対して、新24からadvanceへ一度移る必要も増えた。新13・27にも独立した閉じ括弧群が残るため、型反復と深いmatchは減ったが、すべての構造確認が不要になったわけではない。",
+  "issues": [
+    {
+      "priority": 2,
+      "kind": "format",
+      "location": "counted.gwat:11–13,25–27; main.gwat:14–15",
+      "problem": "処理本体と別行の閉じ括弧群が分離されており、どのlet・result.let・funcが閉じたかを開始行へ戻って確認する。とくにadvanceでは12の長い再構築式と13の)))が重なる。",
+      "fix": "pair.newの各成分と加算式を段下げし、閉じ括弧は対応する最終式にまとめるなど、同一の整形規則を適用して独立した閉じ括弧だけの行を減らす。"
+    },
+    {
+      "priority": 3,
+      "kind": "naming",
+      "location": "main.gwat:6",
+      "problem": "$finalという名前の束縛を作るが14では使わないため、最終状態を後で参照するのかを探す。counted版の$final-stateとは利用目的が異なる。",
+      "fix": "未使用であることが明らかな名前にするか、このmainは最終台帳を破棄して成功値0だけを返すことを短いコメントで示す。"
+    },
+    {
+      "priority": 3,
+      "kind": "docs",
+      "location": "cheatsheet.md:213–216; counted.gwat:9,19–24",
+      "problem": "省略形の規則は表にまとまっているが、このサンプルを読むときにはresult.letの出力型を周囲から得る場合とbodyから得る場合、foldのSをinitialから得る場合を同時に対応付ける必要がある。型の省略は文字量を減らす一方、初見では型の出所がコードに見えにくい。",
+      "fix": "チートシートの省略形の表に、ここで使うfold→result.letの小さな例と推論される入力/出力型を添える。全箇所へ型注釈を戻す必要はない。"
+    }
+  ],
+  "limitations": [
+    "許可されたreader-task.md、RUBRIC.md、cheatsheet.md、contract.md、main.gwat、counted.gwatだけで新形式を採点し、得点を固定してからold-counted.gwatを追加で読んだ。",
+    "コンパイラ・実行・依存実装は確認していない。型・終了処理・I/Oの説明は配布資料の契約に基づく。",
+    "可読性の主観評価であり、読了時間や実行結果を推測していない。"
+  ]
+}

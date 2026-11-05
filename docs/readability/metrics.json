@@ -1,0 +1,54 @@
+{
+  "main": {
+    "before": {
+      "lines": 35,
+      "closingOnlyLines": 6,
+      "maxClosingRun": 2,
+      "pairTypeOccurrences": 0,
+      "sameTokens": true,
+      "wasmSha256": "99c3982c7e4b12f23b64190761a6162fa1b234da1f59b555511db9420f22928a"
+    },
+    "after": {
+      "lines": 19,
+      "closingOnlyLines": 0,
+      "maxClosingRun": 6,
+      "pairTypeOccurrences": 0,
+      "sameTokens": true,
+      "wasmSha256": "99c3982c7e4b12f23b64190761a6162fa1b234da1f59b555511db9420f22928a"
+    },
+    "final": {
+      "lines": 20,
+      "closingOnlyLines": 1,
+      "maxClosingRun": 4,
+      "pairTypeOccurrences": 0,
+      "sameTokens": true,
+      "wasmSha256": "99c3982c7e4b12f23b64190761a6162fa1b234da1f59b555511db9420f22928a"
+    }
+  },
+  "counted": {
+    "before": {
+      "lines": 48,
+      "closingOnlyLines": 12,
+      "maxClosingRun": 2,
+      "pairTypeOccurrences": 7,
+      "sameTokens": true,
+      "wasmSha256": "b531178106c2e27a52ff23a1edc31fddb1211380117fcf3575934a57267d3aca"
+    },
+    "after": {
+      "lines": 23,
+      "closingOnlyLines": 0,
+      "maxClosingRun": 8,
+      "pairTypeOccurrences": 7,
+      "sameTokens": true,
+      "wasmSha256": "b531178106c2e27a52ff23a1edc31fddb1211380117fcf3575934a57267d3aca"
+    },
+    "final": {
+      "lines": 25,
+      "closingOnlyLines": 2,
+      "maxClosingRun": 4,
+      "pairTypeOccurrences": 7,
+      "sameTokens": true,
+      "wasmSha256": "b531178106c2e27a52ff23a1edc31fddb1211380117fcf3575934a57267d3aca"
+    }
+  }
+}

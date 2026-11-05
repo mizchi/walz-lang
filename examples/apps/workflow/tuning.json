@@ -1,0 +1,810 @@
+{
+  "schema": "gcwat-workflow-tuning-v1",
+  "date": "2026-11-05",
+  "selectedSnapshots": {
+    "before": "target/workflow-tune/before",
+    "after": "target/workflow-tune/after-final"
+  },
+  "captures": [
+    {
+      "node": "v24.21.0",
+      "cpu": "Apple M5",
+      "artifactSetSha256": "16e3a6a26e0afc0d4bf2b49f48364471c08b81f4c76107c575f3d9841d83abee",
+      "hashes": {
+        "component-compute/component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+        "component-compute/component.core2.wasm": "9ebe4351b3e39eab6c0a566338b408c39543ba62211cb6b5635da2d2bf94697f",
+        "component-compute/component.js": "2698025d2e0fadb34a68d7206190ed845b6a60368f06a42ed930c4db03ac8992",
+        "component-compute/component.wasm": "9f5569fedc9adc182a3ae15747b0e3c68817e42f7c1b81e7c7d90dd9ae986b46",
+        "component-io/component.conditional-suspending-3-i32-to-i32.wasm": "35c29b68ea15d5863e2d217570c61a4dfeb5d252d51caae4e09a2c8626dc9e74",
+        "component-io/component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+        "component-io/component.core2.wasm": "3780efc2cb53a82477e3c3515b1416169b7304050eb5311bc6ab32e12c02e645",
+        "component-io/component.js": "8c3117557b50d995efbc29d90c2ad82e42394c2c4222d63df0d8c257f6eafb6b",
+        "component-io/component.wasm": "ffac08444a12d8c4e6bbd34ce1397d2b7692620ae5b161f81a4ec6d4cd3e3be8",
+        "compute.wasm": "a754ddfab4fac2461fa4abce2827f693b84a1a1d89c9ff9fb089558f9011f835",
+        "core-compute/core.wasm": "370e9c93d08605a5e2978c3393a861c5ffd057ed628ae0fe2c68786e52eabdfb",
+        "core-compute/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "core-io/core.wasm": "b9c2cacafdc61aa1f0731e41c17469724230e1d968084d1ac0b95fb246ce97c0",
+        "core-io/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "text-io.mjs": "85dc1d466f67677ddb97223b7ab163447ecee148fe02a88ba450aa2f5e8191c6",
+        "workflow-oracle.mjs": "2de87e61e258970c38a834ab835e625c6e7deb3c454f27710de3f87decaae56a"
+      }
+    },
+    {
+      "node": "v24.21.0",
+      "cpu": "Apple M5",
+      "artifactSetSha256": "bb45c621b810a63ed00b005f6dd469acbb9d11e6bae1344a86bf0cedbaf6b3c0",
+      "hashes": {
+        "component-compute/component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+        "component-compute/component.core2.wasm": "18812743a53dbfd1b3a1851ba99c71e69c059a07840b4f1e41e69ceae7c1c0cf",
+        "component-compute/component.js": "41a4178b72eff3d56b9a3dde0d07c3f96df183def511283d46305d9b9639be31",
+        "component-compute/component.wasm": "b0b47a8f28336ea76dcd38c91a67833a672f8fe9a7e0480148bf4c6faa6f4e89",
+        "component-io/component.conditional-suspending-3-i32-to-i32.wasm": "35c29b68ea15d5863e2d217570c61a4dfeb5d252d51caae4e09a2c8626dc9e74",
+        "component-io/component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+        "component-io/component.core2.wasm": "e296865e05a68d40b9d2f7f16d4e71656d6a2e3ddc36308722c8e4361982d0d0",
+        "component-io/component.js": "7113eaffa8bddf8f33d63659a0517fba8ffe53310af392bf19711e08b779a056",
+        "component-io/component.wasm": "b9b17525111ac399f6aaea6339f38c6f81e6b271ab1c319e8f62bca8c262d93b",
+        "compute.wasm": "967d7d7a9fa51b6ad9ec6953a22e45f8a528e0658c6c5b3124057176f112744a",
+        "core-compute/core.wasm": "f3bc1ee3a5dcd840d5180d9b043a430f52c4b11117672a1cfa71990451cb4a3d",
+        "core-compute/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "core-io/core.wasm": "b01e2c380647500b7775a01a9f64dbd65025181a58183f8af79e62d093d3fa55",
+        "core-io/memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+        "text-io.mjs": "85dc1d466f67677ddb97223b7ab163447ecee148fe02a88ba450aa2f5e8191c6",
+        "workflow-oracle.mjs": "2de87e61e258970c38a834ab835e625c6e7deb3c454f27710de3f87decaae56a"
+      }
+    }
+  ],
+  "comparison": {
+    "before": "/Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/workflow-tune/before",
+    "after": "/Users/mz/ghq/github.com/bytecodealliance/wasmtime/examples/gcwat/target/workflow-tune/after-final",
+    "rounds": 3,
+    "node": "v24.21.0",
+    "cpu": "Apple M5",
+    "results": {
+      "core": {
+        "io-commands": {
+          "before": [
+            3.673500000000004,
+            3.283166999999999,
+            3.227540999999995
+          ],
+          "after": [
+            3.5882079999999945,
+            3.451332999999998,
+            3.278917
+          ],
+          "medianBeforeMs": 3.283166999999999,
+          "medianAfterMs": 3.451332999999998,
+          "speedup": 0.9512750580717655
+        },
+        "io-chain": {
+          "before": [
+            97.567542,
+            90.60016600000017,
+            86.63845900000001
+          ],
+          "after": [
+            17.202166999999918,
+            17.80645900000013,
+            14.288833000000068
+          ],
+          "medianBeforeMs": 90.60016600000017,
+          "medianAfterMs": 17.202166999999918,
+          "speedup": 5.266787957587007
+        },
+        "compute-chain": {
+          "before": [
+            88.77604199999996,
+            71.483792,
+            70.64983300000017
+          ],
+          "after": [
+            0.8122920000000704,
+            0.6758749999999054,
+            0.5113340000000335
+          ],
+          "medianBeforeMs": 71.483792,
+          "medianAfterMs": 0.6758749999999054,
+          "speedup": 105.76481154061031
+        },
+        "compute-edges": {
+          "before": [
+            22.28908300000012,
+            22.062208000000055,
+            21.75654099999997
+          ],
+          "after": [
+            7.270416999999952,
+            6.440499999999929,
+            7.276249999999891
+          ],
+          "medianBeforeMs": 22.062208000000055,
+          "medianAfterMs": 7.270416999999952,
+          "speedup": 3.034517552432027
+        }
+      },
+      "component": {
+        "io-commands": {
+          "before": [
+            3792.5298329999996,
+            3791.643,
+            3789.7057080000013
+          ],
+          "after": [
+            106.77824999999939,
+            68.38733300000058,
+            104.77191699999821
+          ],
+          "medianBeforeMs": 3791.643,
+          "medianAfterMs": 104.77191699999821,
+          "speedup": 36.18949722949199
+        },
+        "io-chain": {
+          "before": [
+            8428.876708000003,
+            8362.467749999996,
+            8343.525708000001
+          ],
+          "after": [
+            231.75654100000247,
+            184.69704199999978,
+            218.6188340000008
+          ],
+          "medianBeforeMs": 8362.467749999996,
+          "medianAfterMs": 218.6188340000008,
+          "speedup": 38.251360127554086
+        },
+        "compute-chain": {
+          "before": [
+            91.92779100000189,
+            70.13370799999393,
+            73.94804200000362
+          ],
+          "after": [
+            0.8630420000044978,
+            0.6910409999982221,
+            0.5832500000033178
+          ],
+          "medianBeforeMs": 73.94804200000362,
+          "medianAfterMs": 0.6910409999982221,
+          "speedup": 107.0096303984769
+        },
+        "compute-edges": {
+          "before": [
+            23.273874999998952,
+            21.579375000001164,
+            21.572500000002037
+          ],
+          "after": [
+            6.459625000003143,
+            6.575582999998005,
+            6.448374999999942
+          ],
+          "medianBeforeMs": 21.579375000001164,
+          "medianAfterMs": 6.459625000003143,
+          "speedup": 3.340654449753765
+        }
+      }
+    }
+  },
+  "profiles": [
+    {
+      "elapsedMs": 2300.166208,
+      "timers": {
+        "0": 3011,
+        "10": 1
+      },
+      "cpuSelfMs": [
+        [
+          "(idle)",
+          1332.3659999999986
+        ],
+        [
+          "(program)",
+          315.66999999999985
+        ],
+        [
+          "_debugLog",
+          112.67000000000002
+        ],
+        [
+          "listOnTimeout",
+          66.916
+        ],
+        [
+          "processTimers",
+          56.913999999999994
+        ],
+        [
+          "",
+          52.99899999999999
+        ],
+        [
+          "popAsyncContext",
+          30.58500000000001
+        ],
+        [
+          "runMicrotasks",
+          29.624
+        ],
+        [
+          "tick",
+          15.709999999999999
+        ],
+        [
+          "emitBeforeScript",
+          15.208
+        ],
+        [
+          "post",
+          12.583
+        ],
+        [
+          "setTimeout",
+          12.25
+        ],
+        [
+          "_lowerFlatU8",
+          11.791
+        ],
+        [
+          "shift",
+          9.542
+        ],
+        [
+          "suspendedThreadReady",
+          8.168
+        ]
+      ],
+      "guest": {
+        "samples": 31246,
+        "self": [
+          {
+            "name": "::planner.ready",
+            "samples": 7630,
+            "percent": 24.419125648082954
+          },
+          {
+            "name": "::planner.pending",
+            "samples": 4871,
+            "percent": 15.589195417013377
+          },
+          {
+            "name": "::planner.entry",
+            "samples": 3603,
+            "percent": 11.531075977725148
+          },
+          {
+            "name": "::graph.index",
+            "samples": 3442,
+            "percent": 11.01581002368303
+          },
+          {
+            "name": "::planner.find",
+            "samples": 3116,
+            "percent": 9.972476476989055
+          },
+          {
+            "name": "::planner.done",
+            "samples": 3067,
+            "percent": 9.815656404019714
+          },
+          {
+            "name": "::lex.equal",
+            "samples": 1607,
+            "percent": 5.143058311463867
+          },
+          {
+            "name": "::graph.at",
+            "samples": 1356,
+            "percent": 4.339755488702554
+          },
+          {
+            "name": "::graph.dependencies",
+            "samples": 1078,
+            "percent": 3.450041605325482
+          },
+          {
+            "name": "::graph.find",
+            "samples": 930,
+            "percent": 2.976380976765026
+          },
+          {
+            "name": "::graph.size",
+            "samples": 423,
+            "percent": 1.3537732829802214
+          },
+          {
+            "name": "::graph.edge-job",
+            "samples": 60,
+            "percent": 0.1920245791461307
+          }
+        ],
+        "inclusive": [
+          {
+            "name": "::chain",
+            "samples": 31246,
+            "percent": 100
+          },
+          {
+            "name": "::planner.run",
+            "samples": 27972,
+            "percent": 89.52185879792613
+          },
+          {
+            "name": "::planner.fill",
+            "samples": 27956,
+            "percent": 89.47065224348717
+          },
+          {
+            "name": "::planner.find",
+            "samples": 27948,
+            "percent": 89.44504896626768
+          },
+          {
+            "name": "::planner.ready",
+            "samples": 23748,
+            "percent": 76.00332842603854
+          },
+          {
+            "name": "::planner.pending",
+            "samples": 4871,
+            "percent": 15.589195417013377
+          },
+          {
+            "name": "::planner.entry",
+            "samples": 3603,
+            "percent": 11.531075977725148
+          },
+          {
+            "name": "::graph.index",
+            "samples": 3442,
+            "percent": 11.01581002368303
+          },
+          {
+            "name": "::graph.find",
+            "samples": 3228,
+            "percent": 10.330922358061832
+          },
+          {
+            "name": "::planner.done",
+            "samples": 3067,
+            "percent": 9.815656404019714
+          },
+          {
+            "name": "::graph.after",
+            "samples": 2150,
+            "percent": 6.88088075273635
+          },
+          {
+            "name": "::lex.equal",
+            "samples": 1607,
+            "percent": 5.143058311463867
+          }
+        ]
+      }
+    },
+    {
+      "elapsedMs": 73.353625,
+      "timers": {
+        "0": 61,
+        "10": 1
+      },
+      "cpuSelfMs": [
+        [
+          "(idle)",
+          29.960000000000004
+        ],
+        [
+          "(program)",
+          12.458
+        ],
+        [
+          "post",
+          8.916
+        ],
+        [
+          "_debugLog",
+          7.042
+        ],
+        [
+          "",
+          3.4160000000000004
+        ],
+        [
+          "processImmediate",
+          2.542
+        ],
+        [
+          "next",
+          1.584
+        ],
+        [
+          "(garbage collector)",
+          1.541
+        ],
+        [
+          "isPeerDroppedFn",
+          1.541
+        ],
+        [
+          "writeValues",
+          1.5
+        ],
+        [
+          "__receive21",
+          1.5
+        ],
+        [
+          "_lowerFlatStringUTF8",
+          1.5
+        ],
+        [
+          "drainPendingValues",
+          1.5
+        ],
+        [
+          "reclaim",
+          1.5
+        ],
+        [
+          "emitAfterScript",
+          1.417
+        ]
+      ],
+      "guest": {
+        "samples": 63,
+        "self": [
+          {
+            "name": "::graph.find",
+            "samples": 14,
+            "percent": 22.22222222222222
+          },
+          {
+            "name": "::must",
+            "samples": 12,
+            "percent": 19.047619047619047
+          },
+          {
+            "name": "::__bytes_slice",
+            "samples": 7,
+            "percent": 11.11111111111111
+          },
+          {
+            "name": "::graph.add",
+            "samples": 3,
+            "percent": 4.761904761904762
+          },
+          {
+            "name": "::graph.size",
+            "samples": 3,
+            "percent": 4.761904761904762
+          },
+          {
+            "name": "::graph.hash",
+            "samples": 3,
+            "percent": 4.761904761904762
+          },
+          {
+            "name": "::string.valid",
+            "samples": 3,
+            "percent": 4.761904761904762
+          },
+          {
+            "name": "::planner.prepare",
+            "samples": 2,
+            "percent": 3.1746031746031744
+          },
+          {
+            "name": "::lex.equal",
+            "samples": 2,
+            "percent": 3.1746031746031744
+          },
+          {
+            "name": "::planner.release",
+            "samples": 2,
+            "percent": 3.1746031746031744
+          },
+          {
+            "name": "::planner.fill",
+            "samples": 2,
+            "percent": 3.1746031746031744
+          },
+          {
+            "name": "::graph.bucket",
+            "samples": 2,
+            "percent": 3.1746031746031744
+          }
+        ],
+        "inclusive": [
+          {
+            "name": "::chain",
+            "samples": 63,
+            "percent": 100
+          },
+          {
+            "name": "::jobs",
+            "samples": 38,
+            "percent": 60.317460317460316
+          },
+          {
+            "name": "::graph.find",
+            "samples": 18,
+            "percent": 28.571428571428573
+          },
+          {
+            "name": "::graph.add",
+            "samples": 15,
+            "percent": 23.80952380952381
+          },
+          {
+            "name": "::graph.after",
+            "samples": 14,
+            "percent": 22.22222222222222
+          },
+          {
+            "name": "::string.u64",
+            "samples": 13,
+            "percent": 20.634920634920636
+          },
+          {
+            "name": "::must",
+            "samples": 12,
+            "percent": 19.047619047619047
+          },
+          {
+            "name": "::planner.run",
+            "samples": 9,
+            "percent": 14.285714285714286
+          },
+          {
+            "name": "::__bytes_slice",
+            "samples": 7,
+            "percent": 11.11111111111111
+          },
+          {
+            "name": "::graph.bucket",
+            "samples": 5,
+            "percent": 7.936507936507937
+          },
+          {
+            "name": "::graph.size",
+            "samples": 3,
+            "percent": 4.761904761904762
+          },
+          {
+            "name": "::graph.hash",
+            "samples": 3,
+            "percent": 4.761904761904762
+          }
+        ]
+      }
+    }
+  ],
+  "stress": {
+    "core": {
+      "backend": "core",
+      "node": "v24.21.0",
+      "stress": true,
+      "cases": [
+        {
+          "lines": 13,
+          "records": 12,
+          "elapsedMs": 1.749042000000145
+        },
+        {
+          "lines": 0,
+          "records": 0,
+          "elapsedMs": 0.04970899999989342
+        },
+        {
+          "lines": 2,
+          "records": 2,
+          "elapsedMs": 0.10674999999991996
+        },
+        {
+          "lines": 7,
+          "records": 8,
+          "elapsedMs": 0.25329099999999016
+        },
+        {
+          "lines": 7,
+          "records": 2,
+          "elapsedMs": 0.22141599999986283
+        },
+        {
+          "lines": 4,
+          "records": 1,
+          "elapsedMs": 0.106708000000026
+        },
+        {
+          "lines": 5,
+          "records": 6,
+          "elapsedMs": 0.22895800000014788
+        },
+        {
+          "lines": 5,
+          "records": 5,
+          "elapsedMs": 0.23508300000003146
+        },
+        {
+          "lines": 7,
+          "records": 6,
+          "elapsedMs": 0.19020799999998417
+        },
+        {
+          "lines": 7,
+          "records": 1,
+          "elapsedMs": 0.1479580000000169
+        },
+        {
+          "lines": 6,
+          "records": 5,
+          "elapsedMs": 0.17012499999987085
+        },
+        {
+          "lines": 267,
+          "records": 527,
+          "elapsedMs": 10.721417000000201
+        },
+        {
+          "lines": 13,
+          "records": 11,
+          "elapsedMs": 0.3096250000000964
+        },
+        {
+          "lines": 959,
+          "records": 1205,
+          "elapsedMs": 19.837750000000142
+        },
+        {
+          "lines": 4098,
+          "records": 2,
+          "elapsedMs": 34.30774999999994
+        },
+        {
+          "lines": 4400,
+          "records": 2201,
+          "elapsedMs": 70.86220800000001
+        },
+        {
+          "lines": 65795,
+          "records": 1,
+          "elapsedMs": 767.2763329999998
+        }
+      ],
+      "pureChainMs": 1.170208000000457,
+      "pureDenseMs": 8.106709000000592,
+      "reuseRounds": 20,
+      "inputAndWriteCancellation": true,
+      "ioFailures": true,
+      "liveHandlesAfterEachCall": 0
+    },
+    "component": {
+      "backend": "component",
+      "node": "v24.21.0",
+      "stress": true,
+      "cases": [
+        {
+          "lines": 13,
+          "records": 12,
+          "elapsedMs": 19.2601250000007
+        },
+        {
+          "lines": 0,
+          "records": 0,
+          "elapsedMs": 11.565375000000131
+        },
+        {
+          "lines": 2,
+          "records": 2,
+          "elapsedMs": 12.00854100000015
+        },
+        {
+          "lines": 7,
+          "records": 8,
+          "elapsedMs": 14.307582999999795
+        },
+        {
+          "lines": 7,
+          "records": 2,
+          "elapsedMs": 13.8306249999996
+        },
+        {
+          "lines": 4,
+          "records": 1,
+          "elapsedMs": 13.636999999999716
+        },
+        {
+          "lines": 5,
+          "records": 6,
+          "elapsedMs": 13.342249999999694
+        },
+        {
+          "lines": 5,
+          "records": 5,
+          "elapsedMs": 13.98004200000014
+        },
+        {
+          "lines": 7,
+          "records": 6,
+          "elapsedMs": 14.444707999999991
+        },
+        {
+          "lines": 7,
+          "records": 1,
+          "elapsedMs": 14.112082999999984
+        },
+        {
+          "lines": 6,
+          "records": 5,
+          "elapsedMs": 14.393999999999323
+        },
+        {
+          "lines": 267,
+          "records": 527,
+          "elapsedMs": 80.54566699999941
+        },
+        {
+          "lines": 13,
+          "records": 11,
+          "elapsedMs": 12.733750000000327
+        },
+        {
+          "lines": 959,
+          "records": 1205,
+          "elapsedMs": 149.27579200000037
+        },
+        {
+          "lines": 4098,
+          "records": 2,
+          "elapsedMs": 233.41441600000053
+        },
+        {
+          "lines": 4400,
+          "records": 2201,
+          "elapsedMs": 419.0087080000003
+        },
+        {
+          "lines": 65795,
+          "records": 1,
+          "elapsedMs": 4056.626124999999
+        }
+      ],
+      "pureChainMs": 1.6856250000000728,
+      "pureDenseMs": 8.146667000000889,
+      "reuseRounds": 20,
+      "inputAndWriteCancellation": true,
+      "ioFailures": true,
+      "liveHandlesAfterEachCall": 0
+    }
+  },
+  "coreWasmBytes": {
+    "before": 17041,
+    "after": 19533
+  },
+  "tests": {
+    "rust": "all passed",
+    "nodeWithGc": {
+      "passed": 43,
+      "skipped": 0
+    },
+    "playwright": {
+      "passed": 24
+    },
+    "evalHarness": {
+      "passed": 11
+    },
+    "nativeModel": 12,
+    "nativeQueue": 3,
+    "stressWithGc": {
+      "passed": 4,
+      "backendCasesEach": 17
+    }
+  },
+  "notes": [
+    "Warm once per saved variant, then alternate order for three rounds. Report medians; no wall-clock pass threshold.",
+    "Build, instantiation, oracle checks and assertions are excluded from latency samples. Every call checks output, input closure and zero live ABI allocations.",
+    "CPU and Wasmtime guest profiles are separate from unprofiled timing samples. The after guest profile has only 63 samples; detailed ranking is coarse.",
+    "The intermediate snapshot named after used an intrusive job hash chain; after-final is the corrected and tested version with separate hash entries."
+  ]
+}

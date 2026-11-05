@@ -1,0 +1,129 @@
+{
+  "axes": {
+    "G": [
+      {
+        "item": "結果宣言と Result 値型",
+        "points": 1,
+        "evidence": "Q1"
+      },
+      {
+        "item": "裸 U の役割",
+        "points": 1,
+        "evidence": "Q2"
+      },
+      {
+        "item": "unit の束縛",
+        "points": 1,
+        "evidence": "Q3"
+      },
+      {
+        "item": "ローカルのスコープ",
+        "points": 1,
+        "evidence": "Q3"
+      }
+    ],
+    "T": [
+      {
+        "item": "入力型",
+        "points": 1,
+        "evidence": "Q4"
+      },
+      {
+        "item": "状態型",
+        "points": 1,
+        "evidence": "Q4"
+      },
+      {
+        "item": "fold の結果型",
+        "points": 1,
+        "evidence": "Q4"
+      },
+      {
+        "item": "処理関数の結果型",
+        "points": 1,
+        "evidence": "Q4"
+      }
+    ],
+    "C": [
+      {
+        "item": "EOF と close",
+        "points": 1,
+        "evidence": "Q5"
+      },
+      {
+        "item": "I/O err 伝播",
+        "points": 1,
+        "evidence": "Q5"
+      },
+      {
+        "item": "業務エラー区別",
+        "points": 1,
+        "evidence": "Q5"
+      },
+      {
+        "item": "GC と所有端点・取消し",
+        "points": 1,
+        "evidence": "Q6,Q7"
+      }
+    ],
+    "W": [
+      {
+        "item": "型・Wasm 検証",
+        "points": 1,
+        "evidence": "verification:W1"
+      },
+      {
+        "item": "成功値と JSON",
+        "points": 1,
+        "evidence": "verification:W2 全6例"
+      },
+      {
+        "item": "エラー・取消し解放",
+        "points": 1,
+        "evidence": "verification:W3 全5例"
+      },
+      {
+        "item": "pair 状態と初期化",
+        "points": 1,
+        "evidence": "verification:W4"
+      }
+    ],
+    "D": [
+      {
+        "item": "未定義記号なし",
+        "points": 1,
+        "evidence": "Q8"
+      },
+      {
+        "item": "API 推測なし",
+        "points": 1,
+        "evidence": "Q8,writer/report"
+      },
+      {
+        "item": "パス・コマンド再現",
+        "points": 0,
+        "evidence": "Q8: 候補の起動手順がない"
+      },
+      {
+        "item": "追加検索不要",
+        "points": 1,
+        "evidence": "Q8,writer/report.extraDocumentsRead=[]"
+      }
+    ]
+  },
+  "scores": {
+    "G": 4,
+    "T": 4,
+    "C": 4,
+    "W": 4,
+    "D": 3
+  },
+  "total": 19,
+  "criticalPassed": true,
+  "passed": true,
+  "notes": [
+    "自己採点尺度を配布指示に記載し忘れたため reader は -1。親は具体的な回答を固定基準で採点。",
+    "サンプルの型と制御の回答は正解。読みにくさの指摘は構文上の重大な誤読ではない。",
+    "親の verifier 初稿の JSON フィールド名を既存 expected.json に照合して訂正した後に採点した。候補コードは修正なし。"
+  ]
+}

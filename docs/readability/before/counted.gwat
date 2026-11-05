@@ -1,0 +1,48 @@
+(module
+  (include "program.gwat")
+  (func $main
+    (export "main")
+    (result (result i32 i32))
+    (effects reads writes allocates host suspends)
+    (let $initial
+      (call $stock.new (i32.const 4096))
+      (result.let
+        ($final)
+        (result (pair (ref $stock.State) i32) i32)
+        i32
+        (stream.fold-result text
+          (pair (ref $stock.State) i32)
+          i32
+          (call $read-lines)
+          (pair.new (ref $stock.State) i32 (local.get $initial) (i32.const 0))
+          ($state $line)
+          (match (pair (ref $stock.State) i32)
+            (result (result (pair (ref $stock.State) i32) i32))
+            (local.get $state)
+            (case pair ($ledger $count)
+              (result.let
+                ()
+                (result unit i32)
+                (pair (ref $stock.State) i32)
+                (call $app.process (local.get $ledger) (local.get $line))
+                (result.ok (pair (ref $stock.State) i32) i32
+                  (pair.new (ref $stock.State) i32
+                    (local.get $ledger)
+                    (i32.add (local.get $count) (i32.const 1))
+                  )
+                )
+              )
+            )
+          )
+        )
+        (match (pair (ref $stock.State) i32)
+          (result (result i32 i32))
+          (local.get $final)
+          (case pair ($ledger $count)
+            (result.ok i32 i32 (local.get $count))
+          )
+        )
+      )
+    )
+  )
+)

@@ -1,0 +1,9 @@
+// Value-only application capabilities, not a wasi:* implementation.
+package gcwat:host@0.1.0;
+interface text-io {
+  read-lines: func() -> stream<result<string, s32>>;
+  write-line: func(line: string) -> future<result<_, s32>>;
+}
+world text-program {
+  import text-io;
+}
