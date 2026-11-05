@@ -12,9 +12,10 @@
 3. [x] 既存の値型を対象に WIT binding を生成する。effect/capability は WIT から推測せず、別の信頼する policy で指定する。
 4. [x] 型付きの外部 resource handle と明示 close を追加し、正常・Result の err・例外・取消しで終了処理を検査する。現在の own box は OS 資源の destructor を持たない。
 5. [x] 小さな型付き IR 最適化として、生成直後に match する Result/Pair を簡約する。評価順・例外・所有権を保つ検査を用意し、証明済みの範囲と未証明の範囲を分ける。
+6. [x] JSON 値と parser を WLT ライブラリで実装する。配列・null・数値の字句と Unicode escape を扱い、重複を確認してからジェネリクスを判断する。
 
 1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
-JSON builder は object・string・整数・boolean の初版。配列・浮動小数点・null の値 API は後続。
+JSON 値・parser・配列・null・小数/指数の字句を扱う API を追加した。数値は正確な text として保持する。binary float の変換は後続。詳細は [JSON 値](docs/json-values.md)。
 
 ## リポジトリの独立
 
@@ -107,7 +108,7 @@ UTF-8 validator、ファイル展開、名前解決と adapter は TCB に含み
 - [x] 4: コメントを保持する fmt / fmt-check と、開始括弧位置・アプリケーションエラーの診断。
 - [x] 6: 行長・不正率・チャンクサイズを変えた交互比較。JSON 1行出力、行 enum の統合、集計状態の直接参照。
 
-この順序の5（単相化ジェネリクス）は実装していない。6.6 の一般的な最適化パスも引き続き未実装。
+この順序の5（単相化ジェネリクス）は必要な重複が少ないため保留。6.6 は共有 Result/Pair の直後の match の簡約を実装し、一般の解析依存の最適化は後続。
 
 ## 改善後の実用例での確認
 

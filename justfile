@@ -243,3 +243,18 @@ check-wlt-format file="examples/apps/log-stats/main.wlt":
 memory-check:
     node --expose-gc --test runtime/memory.test.mjs runtime/retention.test.mjs
     node --expose-gc runtime/memory-audit.mjs
+
+bind wit policy output:
+    cargo run --locked --quiet -- bind {{quote(wit)}} {{quote(policy)}} {{quote(output)}}
+
+test-bindings:
+    cargo test --locked --test wit_bindings
+    node --test runtime/wit-bindings.test.mjs
+
+test-resources:
+    cargo test --locked --test resources
+    node --test runtime/resources.test.mjs
+
+test-json:
+    cargo test --locked --test json_values
+    node --test runtime/json-value.test.mjs

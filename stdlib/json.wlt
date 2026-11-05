@@ -1,5 +1,9 @@
 (module
   (namespace $json
+    (import "json-value.wlt"
+      (type $json-value.Value)
+      (func $json-value.number)
+      (func $json-value.stringify))
     (import "builder.wlt"
       (type $builder.Builder)
       (func $builder.finish)
@@ -16,6 +20,9 @@
       (func $s64)
       (func $boolean)
       (func $object)
+      (func $null)
+      (func $number)
+      (func $value)
       (func $finish))
     (type $Object
       (struct (field $builder (ref $builder.Builder)) (field $first (mut i32))))
@@ -103,4 +110,32 @@
           (call $builder.text
             (struct.get $Object $builder (local.get $o))
             (local.get $value))))
-    )))
+    )
+
+    (func $null (param $o (ref $Object)) (param $key text)
+      (effects reads writes allocates)
+      (block
+        (call $key (local.get $o) (local.get $key))
+        (call $builder.text
+          (struct.get $Object $builder (local.get $o))
+          (text.lit "null"))))
+
+    (func $value (param $o (ref $Object)) (param $key text)
+      (param $value (ref $json-value.Value)) (effects reads writes allocates)
+      (let $text (call $json-value.stringify (local.get $value))
+        (block
+          (call $key (local.get $o) (local.get $key))
+          (call $builder.text
+            (struct.get $Object $builder (local.get $o))
+            (local.get $text))))
+    )
+
+    (func $number (param $o (ref $Object)) (param $key text) (param $lexeme text)
+      (result (result unit i32)) (effects reads writes allocates)
+      (result.let ($value)
+        (call $json-value.number (local.get $lexeme))
+        (block
+          (result (result unit i32))
+          (call $value (local.get $o) (local.get $key) (local.get $value))
+          (result.ok unit i32))))
+  ))

@@ -61,3 +61,7 @@ JSON のフィールドは追加順に並びます。同名のキーはそのま
 `just test-stdlib` で Wasmtime と Core / Component の実行を確認します。ブラウザは `just test-e2e` に含まれます。
 `just stdlib-capture DIRECTORY` で3アプリの生成物と入力・期待値・ソースのハッシュを固定し、変更後に別名で capture します。
 `just stdlib-compare BEFORE AFTER` は固定した Core＋JSPI 成果物を交互に測定し、各呼出しの出力・入力終了・ABI の未解放数0を照合します。
+
+`json-value.wlt` は不変の JSON 値、parser、配列・object の構築と参照、stringify を提供します。
+`json.wlt` の object builder は `null`、検査付き `number`、任意の JSON `value` も書けます。
+数値の精度、入力上限、API は [JSON 値と parser](../docs/json-values.md) を参照してください。
