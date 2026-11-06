@@ -558,3 +558,50 @@ JS
 `(%test "name" i32-expr)` は0なら失敗、非0なら成功。`%law` は純粋な整数式の全入力を Lean で検査する別の契約。
 実行用の stdin/stdout 接続は既存の text I/O capability。read-lines は stream<result<text,i32>>、write-line は future<result<unit,i32>> を返す。
 暗黙の型引数推論・trait、任意のマクロ定義、一般的な borrow/lifetime、汎用の WASI binding は含まない。
+
+## 数値・平坦な Result 連鎖・newtype・早期脱出
+
+スカラーの変換・飽和変換・丸め・sqrt・min/max・reinterpret は標準 WAT の命令名をそのまま使う。
+`i32.trunc_f64_s` は範囲外と NaN で trap、`i32.trunc_sat_f64_s` は飽和変換。
+
+```text
+(type $UserId (%newtype i64))
+(%newtype.wrap $UserId scalar)        ;; 型検査後に消去。基底はi32/i64/f32/f64
+(%newtype.unwrap $UserId id-value)    ;; 異なるnewtypeや数値への暗黙変換はない
+
+(%result.do
+  ($a first-result)
+  ($b second-result)
+  (() unit-success-result)
+  final-result)
+
+(return [value])
+(block $done [(result R)] body...)
+(br $done [value])
+(br_if $done [value] condition)       ;; falseならvalueが残る
+```
+
+`%result.do` は1個以上の束縛と最後の Result 式。左から右に一度ずつ評価し、最初の err で残りを省略してその式の err を返す。エラー型はすべて同じ。`$a` は後の束縛から参照でき、unit 成功は `()` に束縛する。暗黙に関数から return しない。
+
+```wat
+(module
+  (%import "wlt:std" (type $result))
+  (type $Id (%newtype i32))
+  (func $compute (result (%inst $result $Id i32)) (%effects pure)
+    (%result.do
+      ($a (%result.ok i32 i32 (i32.const 40)))
+      ($b (%result.ok i32 i32 (i32.const 2)))
+      (%result.ok $Id i32
+        (%newtype.wrap $Id (i32.add (local.get $a) (local.get $b))))))
+  (func $main (export "main") (result i32) (%effects pure)
+    (%match (call $compute)
+      (case ok ($id) (return (%newtype.unwrap $Id (local.get $id))))
+      (case err ($code) (i32.const 0))))
+  (%test "newtype and flat results" (i32.eq (call $main) (i32.const 42))))
+```
+
+名前付き block の分岐値と return 値は宣言した結果型に合わせる。`br_if` は値を条件より先に評価する。
+`%using` を抜ける return・分岐・反復は、値の評価後に抜ける scope だけを逆順に close する。
+所有値と try/catch を併用できるが、全経路で消費する。後続の引数が例外を投げて先の所有引数が取り残される場合も拒否する。
+newtype は WLT 内で型を区別し、JavaScript/WIT 境界では基底の数値になる。値域検査や JavaScript の brand を自動では追加しない。
+[詳しい制約と例](docs/core-expressions.md)。

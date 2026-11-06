@@ -69,7 +69,9 @@ fn checked_module_with_policy(
         .zip(crate::effects::infer(&module))
         .map(|(f, e)| (f.name.clone(), e.suspends))
         .collect();
-    Ok(crate::link::project(&crate::optimize::simplify(&module)))
+    Ok(crate::newtypes::lower(&crate::link::project(
+        &crate::optimize::simplify(&module),
+    )))
 }
 
 fn assemble(

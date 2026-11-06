@@ -61,17 +61,13 @@ fn borrowed_resources_cannot_escape_or_be_duplicated() {
 }
 
 #[test]
-fn using_rejects_a_branch_that_skips_its_destructor() {
+fn using_closes_before_recurring_outside_its_scope() {
     let source = SOURCE.replace(
         "(%using $f (%resource.new $File (call $open)) (call $read-file (local.get $f)))",
         "(%loop $again (result i32) (%using $f (%resource.new $File (call $open)) (%recur $again)))",
     );
-    assert!(
-        wlt::check_with_policy(&source, &policy())
-            .unwrap_err()
-            .to_string()
-            .contains("using scope")
-    );
+    wlt::check_with_policy(&source, &policy()).unwrap();
+    wlt::component::core_js::compile_with_policy(&source, &policy()).unwrap();
 }
 
 #[test]
@@ -97,4 +93,15 @@ fn dce_retains_the_implicit_destructor_of_a_raw_resource_factory() {
       (func $main (export "main") (%effects host) (drop (call $open))))"#;
     let built = wlt::component::core_js::compile_with_policy(source, &policy()).unwrap();
     assert_eq!(built.manifest["imports"].as_array().unwrap().len(), 2);
+}
+
+#[test]
+fn a_branch_cannot_carry_a_borrow_out_of_using() {
+    let source=SOURCE.replace(
+      "(%using $f (%resource.new $File (call $open)) (call $read-file (local.get $f)))",
+      "(%let $escaped (block $done (result (%borrow $File)) (%using $f (%resource.new $File (call $open)) (br $done (local.get $f)))) (call $read-file (local.get $escaped)))");
+    let error = wlt::check_with_policy(&source, &policy())
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("borrow"), "{error}");
 }

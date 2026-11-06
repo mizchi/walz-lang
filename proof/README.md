@@ -17,7 +17,7 @@ Lean がない場合も、証明が失敗した場合も、Wasm を出力・実�
 
 ## 所有権
 
-契約の操作は nop、take、scope、seq、branch、loop、again、stop です。共有値の型は既存の型検査で処理し、契約には所有するローカル ID の利用だけを残します。
+version 1 の契約の操作は nop、take、scope、seq、branch、loop、again、stop です。共有値の型は既存の型検査で処理し、契約には所有するローカル ID の利用だけを残します。
 宣言的な `Valid` は、利用可能な所有集合、ループへ戻すべき集合、操作、正常終了時に残る集合の関係です。
 `check_sound` は、検査が成功した契約がこの関係を満たすことを証明します。`double_take_rejected` は、一度消費した同じスロットを再消費できないことを任意の入力集合について証明します。
 loop は再帰的に実行しません。入口の状態と、again の戻す状態の一致を検査します。停止性や、いつか close に到達することは保証しません。
@@ -25,6 +25,14 @@ loop は再帰的に実行しません。入口の状態と、again の戻す状
 正常系の証人として、同じ所有値をそれぞれの分岐で1回ずつ消費する契約を受理します。破れた証人として、二重消費、片方だけ消費する分岐、外側の所有値を失うループ、消費せず抜けるスコープを拒否します。
 Lean ファイル内の example と `tests/verified.rs` が独立した検査器でこれらを確認し、`tests/ownership.rs` は対応する wlt の実コードが拒否されることも検査します。
 `sorry` や独自の公理は使いません。Lean の標準論理とカーネルを信頼します。
+
+## 分岐・return・例外の証明書
+
+version 2 は、新しい制御を使う関数に `body` の代わりに `graph` を持つ。ノードは利用可能な slot の集合、nop/bind/take/absent/finish、後続ノードを記録する。slot には引数評価途中の所有値も含む。正常・例外の辺は推論した effect と囲む handler/label から Rust が抽出する。すべての辺で、遷移後の所有集合と後続の入口集合が一致し、finish は空集合であることを Lean が検査する。入力を持つのに後続のない nop、到達可能な未注釈ノード、不正な添字も拒否する。
+
+`stepCheck_sound` は宣言的な `StepValid` との対応、`graph_node_sound` は各後続への状態の一致、`graph_path_sound` は任意回の反復を含む経路上に注釈が存在することを証明する。生成した JSON の偽造例も `tests/verified.rs` から独立して拒否する。version 1 の関数は同じファイル内に混在できる。
+
+例外経路の抽出と effect 推論の完全性、IR との対応、borrow の非流出と using の finally、newtype の消去はコンパイラ TCB に残る。[言語上の規約](../docs/core-expressions.md) を参照。
 
 ## アプリケーションの law
 

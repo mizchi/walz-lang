@@ -156,6 +156,8 @@ fn dependencies(
 /// Produce inspectable Lean source. Laws universally quantify numeric params;
 /// bv_decide produces proof terms checked by Lean's kernel over fixed-width bits.
 pub fn emit(module: &Module) -> Result<String, Error> {
+    let lowered = crate::newtypes::lower(module);
+    let module = &lowered;
     let mut output = String::new();
     if !module.laws.is_empty() {
         output.push_str("import Std.Tactic.BVDecide\n");

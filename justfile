@@ -297,8 +297,8 @@ test-resources:
     node --test runtime/resources.test.mjs
 
 test-json:
-    cargo test --locked --test json_values
-    node --test runtime/json-value.test.mjs
+    cargo test --locked --test json_values --test buffers
+    node --test runtime/json-value.test.mjs runtime/json-parser.test.mjs runtime/json-parser-bench.test.mjs
 
 test-lists:
     cargo test --locked --test lists --test wit_bindings --test differential
@@ -317,3 +317,34 @@ test-syntax:
 test-standard:
     cargo test --locked --test standard --test surface
     node --expose-gc --test runtime/standard.test.mjs
+
+# Small typed-core features and the scalar representation at both JS boundaries.
+test-core-expressions:
+    cargo test --locked --test scalar --test result_do --test newtypes --test control --test exception_ownership --test verified --test resources
+    node --test runtime/language-core.test.mjs runtime/resources.test.mjs
+
+# GC witnesses, exact ABI/resource counts, and retained heap for the five core extensions.
+memory-core-expressions output="target/core-expressions-memory/current":
+    node --expose-gc runtime/core-expressions-memory.mjs {{quote(output)}}
+
+# The JSON parser and serializer execute in WLT; this adapter only handles I/O.
+build-json-parser output="target/json-parser":
+    node runtime/build-core.mjs examples/json-parser/main.wlt {{quote(output)}}
+
+json-parser program="target/json-parser":
+    @node runtime/json-parser.mjs {{quote(program)}}
+
+# Freeze parser binaries, native release reference, sources and input documents.
+json-bench-capture output="target/json-parser-bench/current":
+    node runtime/json-parser-bench.mjs capture {{quote(output)}}
+
+# Compare only frozen artifacts; output must be a new directory.
+json-bench snapshot="target/json-parser-bench/current" output="target/json-parser-bench/results" rounds="9":
+    node --expose-gc runtime/json-parser-bench.mjs run {{quote(snapshot)}} {{quote(output)}} {{quote(rounds)}}
+
+# Run frozen before/after binaries together with identical input and API checks.
+json-bench-compare before after output rounds="9":
+    node --expose-gc runtime/json-bench/compare.mjs {{quote(before)}} {{quote(after)}} {{quote(output)}} {{quote(rounds)}}
+
+test-json-bench:
+    node --test runtime/json-parser-bench.test.mjs

@@ -68,7 +68,9 @@ fn reference(head: &str) -> Option<(ReferenceKind, usize)> {
         "call" | "closure.call" => (ReferenceKind::Function, 1),
         "struct.new" | "struct.get" | "struct.set" | "closure.new" | "bytes.from-array"
         | "array.new" | "array.new_fixed" | "array.get" | "array.set" | "variant.new"
-        | "ref.null" | "resource.new" => (ReferenceKind::Type, 1),
+        | "ref.null" | "resource.new" | "newtype.wrap" | "newtype.unwrap" => {
+            (ReferenceKind::Type, 1)
+        }
         "list.from-array" => (ReferenceKind::Type, 2),
         _ => return None,
     })
@@ -158,6 +160,11 @@ pub(crate) fn map_types(
                 let kind = definition.head().unwrap_or("").to_owned();
                 if let Kind::List(parts) = &mut definition.kind {
                     match kind.as_str() {
+                        "newtype" => {
+                            if let Some(base) = parts.get_mut(1) {
+                                map_type(base, f)?;
+                            }
+                        }
                         "struct" => {
                             for field in &mut parts[1..] {
                                 if field.head() == Some("field")

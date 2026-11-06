@@ -10,6 +10,20 @@ fn immutable_bytes_and_utf8_text_have_checked_types_and_portable_abi() {
 }
 
 #[test]
+fn byte_slices_lower_to_a_bulk_gc_copy() {
+    let source = include_str!("component-fixtures/buffers.wlt");
+    let compiled = wlt::compile(source).unwrap();
+    // The packed byte storage must stay on the GC heap. A slice should use
+    // Wasm's bulk copy rather than a per-byte loop or linear-memory scratch.
+    assert!(
+        compiled
+            .wat
+            .contains("array.copy $__byte_storage $__byte_storage")
+    );
+    assert!(!compiled.wat.contains("(memory "));
+}
+
+#[test]
 fn buffers_cannot_be_mutated_or_observed_as_references() {
     for body in [
         "(ref.eq (local.get $b) (local.get $b))",

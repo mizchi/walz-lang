@@ -163,6 +163,7 @@ struct Context<'a> {
     effects: &'a [crate::effects::EffectSet],
     locals: Vec<Points>,
     summary: Summary,
+    labels: BTreeMap<LoopId, Points>,
 }
 impl Context<'_> {
     fn bind(&mut self, id: LocalId, values: Points) {
@@ -342,6 +343,53 @@ impl Context<'_> {
     fn eval(&mut self, e: &Expr) -> Points {
         use ExprKind::*;
         let result = match &e.kind {
+            Label { label, body } => {
+                let mut p = self.eval(body);
+                if let Some(branches) = self.labels.get(label) {
+                    p.extend(branches.iter().cloned());
+                }
+                p
+            }
+            Branch {
+                label,
+                values,
+                condition,
+                bindings,
+                is_loop,
+            } => {
+                let evaluated = values.iter().map(|v| self.eval(v)).collect::<Vec<_>>();
+                if let Some(c) = condition {
+                    self.eval(c);
+                }
+                if *is_loop {
+                    for (id, p) in bindings.iter().zip(&evaluated) {
+                        self.bind(*id, p.clone());
+                    }
+                } else {
+                    for p in &evaluated {
+                        self.labels
+                            .entry(*label)
+                            .or_default()
+                            .extend(p.iter().cloned());
+                    }
+                }
+                if condition.is_some() {
+                    evaluated.into_iter().next().unwrap_or_default()
+                } else {
+                    Points::new()
+                }
+            }
+            Return(v) => {
+                if let Some(v) = v {
+                    let p = self.eval(v);
+                    self.summary.returns.extend(p);
+                }
+                Points::new()
+            }
+            Newtype { value, .. } => {
+                self.eval(value);
+                Points::new()
+            }
             Data(_) => self.allocate(e, 0, &e.ty),
             List { op, args, .. } => {
                 let values = args.iter().map(|e| self.eval(e)).collect::<Vec<_>>();
@@ -717,6 +765,7 @@ pub fn analyze(module: &Module) -> Vec<MemorySummary> {
         let before = summaries.clone();
         for (index, function) in module.functions.iter().enumerate() {
             let mut context = Context {
+                labels: BTreeMap::new(),
                 module,
                 function,
                 summaries: &before,
@@ -735,7 +784,8 @@ pub fn analyze(module: &Module) -> Vec<MemorySummary> {
                 }
             }
             if let Some(body) = &function.body {
-                context.summary.returns = context.eval(body);
+                let normal = context.eval(body);
+                context.summary.returns.extend(normal);
             } else {
                 if references(&function.result) {
                     context.summary.returns = points(Root::Unknown);

@@ -141,3 +141,53 @@ fn ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_prote
         assert!(String::from_utf8_lossy(&output.stderr).contains("owned exports"));
     }
 }
+
+#[test]
+fn independent_kernel_checks_graph_edges_contexts_and_terminals() {
+    use serde_json::{Value, json};
+    let n = |op: &str, id: usize, context: Value, next: Vec<usize>| json!({"op":op,"id":id,"context":context,"next":next});
+    let good = vec![
+        n("take", 0, json!([0]), vec![1]),
+        n("finish", 0, json!([]), vec![]),
+    ];
+    let mut double = good.clone();
+    double[1] = n("take", 0, json!([]), vec![2]);
+    double.push(n("finish", 0, json!([]), vec![]));
+    let mut mismatch = good.clone();
+    mismatch[1]["context"] = json!([0]);
+    let mut missing = good.clone();
+    missing[1]["context"] = Value::Null;
+    let cases = vec![
+        (good, true),
+        (double, false),
+        (mismatch, false),
+        (missing, false),
+        (vec![n("finish", 0, json!([0]), vec![])], false),
+        (vec![n("nop", 0, json!([0]), vec![])], false),
+        (vec![n("nop", 0, json!([0]), vec![10])], false),
+        (vec![n("nop", 0, json!([0, 0]), vec![0])], false),
+        // A diverging path can keep an owner; every iteration still checks it.
+        (vec![n("nop", 0, json!([0]), vec![0])], true),
+    ];
+    for (nodes, accepted) in cases {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("graph.json");
+        std::fs::write(&path,json!({"version":2,"functions":[{"name":"graph","inputs":[0],"graph":{"entry":0,"nodes":nodes}}]}).to_string()).unwrap();
+        let output = Command::new("lean")
+            .args([
+                wlt::verified::LEAN_VERSION,
+                "--run",
+                wlt::verified::KERNEL_PATH,
+            ])
+            .arg(path)
+            .output()
+            .unwrap();
+        assert_eq!(
+            output.status.success(),
+            accepted,
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}

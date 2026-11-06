@@ -17,6 +17,16 @@
 1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
 JSON 値・parser・配列・null・小数/指数の字句を扱う API を追加した。数値は正確な text として保持する。binary float の変換は後続。詳細は [JSON 値](docs/json-values.md)。
 
+## 型付きコアの小さな拡張（1 → 2 → 3 → 4 → 5）
+
+- [x] 1: 標準スカラーの変換・飽和変換・丸め・sqrt・min/max・reinterpret・回転・符号拡張。署名をWasm validatorと照合する。
+- [x] 2: `%result.do`。既存のresult.letへ展開し、左から右の一度だけの評価とerrの短絡を保つ。
+- [x] 3: スカラーnewtypeと明示wrap/unwrap。nominalな検査とopaqueを保ち、実行用表現では消去する。
+- [x] 4: 型付きreturn・名前付きblock/br/br_if。所有権とescapeを追い、抜けるusingだけを逆順にcloseする。
+- [x] 5: 所有値と例外の併用。引数評価途中の所有slot、catch、反復、未処理例外の経路をRustとLeanで検査する。
+
+仕様と限界は [数値・Result・newtype・制御](docs/core-expressions.md)。`just test-core-expressions`、Nodeの両ABI、Chromiumで検査する。
+
 ## 開発ツールと標準コレクション
 
 - [x] `check --json` で既存の診断契約と終了コードを機械処理可能にする。
@@ -51,7 +61,8 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 
 - [x] 型付き resource handle と同期 destructor。既存の own box とは区別する。
 - [x] 明示 close と using。正常・例外・取消しの全終了経路を検査する。
-- [ ] 所有値と try/throw の併用、所有 payload の Future/Stream 配送。
+- [x] 所有値と try/throw の併用。正常・例外・分岐経路と評価途中の所有値を検査し、Leanの制御フロー証明書で照合する。
+- [ ] 所有 payload の Future/Stream 配送。
 - [x] 必要な ABI 境界に限定した borrow。一般的な lifetime 機構は必要性を見て判断する。
 
 ## 4. モジュールと可視性

@@ -11,6 +11,7 @@ fn entry(name: &str) -> bool {
     matches!(
         name,
         "let"
+            | "newtype"
             | "for"
             | "match"
             | "recur"
@@ -40,6 +41,7 @@ fn entry(name: &str) -> bool {
             | "stream"
     ) || [
         "closure.",
+        "newtype.",
         "list.",
         "bytes.",
         "text.",
@@ -365,6 +367,14 @@ impl<'a> Plan<'a> {
         let normalized = items.first().and_then(Sexp::atom).unwrap_or("").to_owned();
         let count = items.len();
         for (i, child) in items.iter_mut().enumerate().skip(1) {
+            if normalized == "result.do" && i + 1 < count {
+                if let Kind::List(binding) = &mut child.kind {
+                    for expression in binding.iter_mut().skip(1) {
+                        self.walk(expression, false, depth + 1)?;
+                    }
+                }
+                continue;
+            }
             let binders = matches!(normalized.as_str(), "let" | "result.let") && i == 1
                 || matches!(normalized.as_str(), "case" | "catch") && i == 2
                 || normalized == "stream.fold-result" && i == if count == 8 { 6 } else { 3 };

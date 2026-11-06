@@ -413,6 +413,11 @@
       "path": "examples/simd-kernels/demo.wlt",
       "pattern": "resident packed GC arrays and wide SIMD integer sums",
       "expected": "42"
+    },
+    {
+      "path": "examples/json-parser/main.wlt",
+      "pattern": "WLT recursive-descent JSON parser and opaque GC AST lookup",
+      "expected": "42"
     }
   ],
   "probes": [

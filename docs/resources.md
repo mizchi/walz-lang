@@ -9,14 +9,12 @@
 `(%inst $resource $File)` は所有値、`(%inst $borrow $File)` は `%using` または関数引数でだけ扱う借用。
 `%resource.close` は所有値を消費し、登録した destructor を一度呼ぶ。
 `%using` は所有値を消費し、正常値・Result.err・Wasm 例外・取消しを通して終了時に close する。
-ループは内側で使えるが、外側への `%recur` は close を飛ばすため拒否する。
+return・br・br_if・外側のループへの `%recur` でも、抜ける using を逆順に close する。分岐しない br_if と、using の内側だけを抜ける分岐は資源を早く閉じない。
 
 borrow は返却・GC 格納・クロージャ捕捉・例外 payload にできない。
 `%resource.handle` は、その kind の host 操作の第1引数にだけ書ける。
 一般の lifetime、借用した所有値の返却、async destructor は追加しない。
-所有値を持つ関数の try/catch と、例外を投げうる関数呼出しは引き続き拒否する。
-明示的な throw は、残った所有値がゼロであることを Stop 契約で検査する。
-catch は所有値を持たない外側の関数に書ける。
+所有値と try/catch・例外を投げる呼出しを併用できる。通常・例外・分岐先の所有集合を検査し、失われる所有値と、後続の引数評価が例外を投げて取り残される所有一時値を拒否する。捕捉されない throw では未消費の所有値を残せない。[詳細](core-expressions.md) を参照。borrow は分岐の payload にもできない。
 
 ホストの policy に `resource: {kind, operation}` を加える。operation は new/use/close。
 new は同期 factory の値を返す i32 handle、use は第1引数の handle をホスト値へ変換する。

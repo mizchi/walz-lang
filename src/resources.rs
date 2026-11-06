@@ -33,6 +33,7 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
     for declaration in &module.types {
         let mut fields = vec![];
         match &declaration.kind {
+            TypeKind::Newtype(_) => {}
             TypeKind::Resource { kind, close } => {
                 let f = &module.functions[close.0];
                 let b = bindings::lookup(f).ok_or_else(|| {
@@ -132,29 +133,16 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                         ));
                     }
                 }
+                ExprKind::Branch { values, .. }
+                    if values.iter().any(|v| matches!(v.ty, Type::Borrow(_))) =>
+                {
+                    return Err(fail(e.span, "borrow cannot be carried by a branch"));
+                }
                 ExprKind::Using { body, .. } => {
                     if kinds.is_owned(&body.ty) || matches!(body.ty, Type::Borrow(_)) {
                         return Err(fail(
                             e.span,
                             "using cannot return a borrow or an owned value",
-                        ));
-                    }
-                    let mut nested = vec![body.as_ref()];
-                    let mut labels = std::collections::BTreeSet::new();
-                    let mut branches = vec![];
-                    while let Some(e) = nested.pop() {
-                        if let ExprKind::Loop { label, .. } = e.kind {
-                            labels.insert(label);
-                        }
-                        if let ExprKind::Recur { label, .. } = e.kind {
-                            branches.push(label);
-                        }
-                        nested.extend(e.children());
-                    }
-                    if branches.iter().any(|label| !labels.contains(label)) {
-                        return Err(fail(
-                            e.span,
-                            "recur cannot leave a using scope; close before recurring",
                         ));
                     }
                 }

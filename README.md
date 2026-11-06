@@ -1,10 +1,12 @@
 # WLT
 
-Wasm GC と静的解析を前提にした、WAT の小さな拡張言語です。標準 WAT を受け付け、追加構文の入口を `%` で区別します。
+English | [日本語](README.ja.md)
 
-- 不変の字句束縛、enum/match、明示的なクロージャ捕捉。
-- `wlt:std` からの基本型・標準関数の明示 import と、ジェネリクスの単相化。
-- 型・effect・所有権の検査と、Core Wasm / Core＋JSPI / Component への出力。
+WLT is a small extension of WAT built around Wasm GC and static analysis. It accepts standard WAT and marks language extensions with `%`.
+
+- Immutable lexical bindings, enums and pattern matching, and explicit closure captures.
+- Explicit imports of standard types and functions from `wlt:std`, with monomorphized generics.
+- Type, effect, and ownership checking, with output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
 
 ```wat
 (module
@@ -26,36 +28,39 @@ Wasm GC と静的解析を前提にした、WAT の小さな拡張言語です�
   ))
 ```
 
-複数束縛の `%let` は左から右に初期化し、後の初期値から前の束縛を参照できます。この例の `main` は42を返します。
+Grouped `%let` bindings initialize from left to right. Later initializers can refer to earlier bindings. The `main` function above returns 42.
 
-## 試す
+## Try it
 
-Rust 1.97以降、just、Wasm GC 対応の Wasmtime を使用します。
+You need Rust 1.97 or later, just, and a Wasmtime build with Wasm GC support.
 
 ```sh
 git clone https://github.com/mizchi/wlt-lang.git
 cd wlt-lang
 just run examples/closure.wlt     # 42
-just wat examples/closure.wlt     # WAT を確認
+just wat examples/closure.wlt     # inspect the generated WAT
 just test
 ```
 
-JS 実行には Node.js 24以降と pnpm、検証付き実行には Lean を使います。設定と各コマンドは [導入手順](docs/getting-started.md) にまとめています。
+JavaScript execution requires Node.js 24 or later and pnpm. Verified execution also uses Lean. See [Getting started](docs/getting-started.md) for setup and commands.
 
-## ドキュメント
+## Documentation
 
-| 読みたいこと | 文書 |
+The detailed documentation linked below is in Japanese.
+
+| Topic | Documentation |
 | --- | --- |
-| 文法を一覧する | [チートシート](CHEATSHEET.md)・[仕様](SPEC.md) |
-| 標準型、Future、複数束縛 | [標準モジュール](docs/standard.md) |
-| 型引数・制約・単相化 | [ジェネリクス](docs/generics.md) |
-| v128・ベクトル演算 | [SIMD](docs/simd.md)・[カーネルと速度比較](docs/simd-kernels.md) |
-| import/export と生成物の除去 | [静的モジュールと DCE](docs/static-modules.md) |
-| effect・型・メモリ領域の解析 | [型検査と静的解析](docs/analysis.md) |
-| 所有権と証明 | [検証付き実行](docs/verification.md)・[外部リソース](docs/resources.md) |
-| 非同期実行・ABI・取消し | [ランタイム](docs/runtime.md)・[WIT バインディング](docs/wit-bindings.md) |
-| テストと初見評価 | [テスト](docs/testing.md)・[evals](evals/README.md) |
-| 実装の構成 | [アーキテクチャ](docs/architecture.md) |
+| Scalar instructions, Result sequencing, newtypes and early exits | [Core expressions](docs/core-expressions.md) |
+| Syntax overview | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) |
+| Standard types, Future, and grouped bindings | [Standard modules](docs/standard.md) |
+| Type parameters, bounds, and monomorphization | [Generics](docs/generics.md) |
+| v128 and vector operations | [SIMD](docs/simd.md) · [Kernels and benchmarks](docs/simd-kernels.md) |
+| Imports, exports, and dead code elimination | [Static modules and DCE](docs/static-modules.md) |
+| Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
+| Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |
+| Async execution, ABI, and cancellation | [Runtime](docs/runtime.md) · [WIT bindings](docs/wit-bindings.md) |
+| Tests and first-time reader evaluations | [Testing](docs/testing.md) · [Evaluation harness](evals/README.md) |
+| Implementation structure | [Architecture](docs/architecture.md) |
 
-[サンプル一覧](examples/catalog.json)、[未対応範囲](ASSESSMENT.md)、[TODO](TODO.md)。
-Wasmtime 内の試作からの独立・旧名 gcwat の記録は [MIGRATION.md](MIGRATION.md) に残しています。
+See the [example catalog](examples/catalog.json), [current limitations](ASSESSMENT.md), and [TODO](TODO.md).
+The move from the original Wasmtime prototype and the former name, gcwat, are documented in [MIGRATION.md](MIGRATION.md).

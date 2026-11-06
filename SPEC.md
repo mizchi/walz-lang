@@ -25,7 +25,7 @@ WLT の拡張入口はすべて `%` で始めます。標準の `import` / `expo
 WLT の基本データ型は `(%import "wlt:std" (type $result) (type $option) (type $future) ...)` で明示的に取り込みます。型の適用は `(%inst $result T E)`、`(%inst $future T)` のように、利用者定義の汎用型と同じ構文です。`$text`・`$bytes`・`$unit` は型引数なしの alias です。Wasm の数値型や `ref` には import を必要としません。[標準モジュール](docs/standard.md) を参照してください。
 
 プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `%closure`・`%test`・`%law`・`%namespace` および静的な named `%import` / `%export` です。ファイルの宣言位置では `%include` も使えます。
-型は `i32`・`i64`・`f32`・`f64`・`v128`・`(ref $T)`・`(ref null $T)`・`(%inst $option T)`・`(%inst $result T E)`・`(%inst $pair T U)`・`(%inst $own T)`・`(%inst $future T)`・`(%inst $stream T)`・`$bytes`・`$text`。戻り値を宣言しない式・関数は unit です。
+型は scalar newtype の `$Name`・`i32`・`i64`・`f32`・`f64`・`v128`・`(ref $T)`・`(ref null $T)`・`(%inst $option T)`・`(%inst $result T E)`・`(%inst $pair T U)`・`(%inst $own T)`・`(%inst $future T)`・`(%inst $stream T)`・`$bytes`・`$text`。戻り値を宣言しない式・関数は unit です。
 
 `v128` と通常 SIMD の非メモリ命令は型付きコアで扱います。lane の形は命令で指定し、型は共通の `v128` です。即値とオペランドを検査し、Wasm 命令へ直接出力します。ベクトル自体は shared/nonunit を満たす値で、GC格納・捕捉・単相化にも使えます。対応範囲と使用例は [SIMD](docs/simd.md) を参照してください。
 関数の引数・戻り値、構造体のフィールド、配列の要素、クロージャの捕捉値には型が必要です。
@@ -35,6 +35,7 @@ GC 型は名前で区別します。前方参照と再帰型を認め、出力�
 
 WAT と同じ数値意味論を使います。整数演算はビット幅で折り返し、符号付き・符号なしの解釈は命令名で区別します。
 整数の除算・剰余は Wasm の条件で trap します。浮動小数点も Wasm の意味に従います。
+スカラーの変換・飽和変換・丸め・sqrt・min/max・reinterpret も型付きコアで直接扱います。[数値と制御の規約](docs/core-expressions.md) に例があります。
 型付きコアで扱う数値命令の一覧と型制約は `src/ir.rs` の `numeric_ops!` が定義します。標準 WAT 経路の命令集合はこの表に限定しません。
 
 名前解決・静的型検査・effect 契約・所有権の検査は `wlt::check(&str)` で独立して実行でき、検査済みの型付き IR を返します。law の証明はこの API では実行しません。
@@ -374,8 +375,8 @@ if/match の正常に合流する枝は、残っている所有ローカルの�
 状態を move して次の state に渡すことや、古い state を消費して新しい state を作ることはできます。
 停止しないループの終了や、trap・OOM の際のリソース解放は証明しません。明示的な unreachable へ進む場合には、その時点の所有値を処理済みにします。
 
-規約を小さくするため、所有値を扱う関数内の try/throw、外へ例外を出す呼び出し、所有値を受け渡す import は初版では拒否します。失敗は Result の値として返します。
-borrow/lifetime、部分 move、async frame、リソース destructor は未実装です。
+所有値と try/throw・例外を投げる呼出しを併用できます。catch・分岐・反復の入口の所有集合と、評価途中の所有 operand も検査します。所有値を失う例外経路は拒否します。
+一般の所有値を受け渡す未知の import、所有する例外 payload、部分 move、一般的な lifetime は扱いません。外部 resource には同期 destructor と非流出の borrow を提供します。[制御と所有権](docs/core-expressions.md) を参照してください。
 
 ## 配送済みの Future と有限 Stream
 
@@ -471,7 +472,7 @@ T/E は境界で WIT に表現できる型である必要があり、WIT の型�
 
 Result の err と Option の none は通常の値です。これらを返すだけでは throws/decides の effect は発生しません。
 `future<Result<T,E>>` は通常の組合せとして許可し、suspends と Result を組み合わせることも許可します。
-将来の Result 伝播の糖衣は match と関数の結果返却に展開し、Wasm throw への暗黙の変換は行いません。
+Result 伝播の `%result.let` / `%result.do` は match に展開し、その式の Result を返します。Wasm throw や関数からの暗黙 return へ変換しません。
 Wasm 例外、trap、task cancellation、読み書き操作の中断、配送完了、stream の終了、アプリケーションの err は別に扱います。
 内部例外から公開 Result への変換が必要な場合は、対応する tag と error variant を adapter に明示します。
 
@@ -856,3 +857,10 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 適用時の検査、再帰と展開の上限、公開 ABI、map/fold は [単相化の契約](docs/generics.md) を参照。
 `%type.params` 直後の where は shared/nonunit/callable と callable の effect 上限を具体化時に検査する。
 型クラスや抽象的な body 検査は導入せず、制約を消去して既存の閉じた IR へ変換する。
+
+
+## スカラー newtype と構造化された早期脱出
+
+`(type $Id (%newtype i64))`、`%newtype.wrap` / `%newtype.unwrap`、平坦な `%result.do` を提供します。
+標準 WAT の `return`、名前付き block、`br`、`br_if` は型付きコアでも検査し、抜ける `%using` の終了処理を実行します。
+型・評価順・所有権証明書・ABI の消去と対応範囲は [数値と制御の規約](docs/core-expressions.md) に定義します。

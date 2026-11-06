@@ -67,3 +67,21 @@ export async function collect() {
   const { heapUsed, external, arrayBuffers, rss } = process.memoryUsage();
   return { heapUsed, external, arrayBuffers, rss };
 }
+
+// Test artifacts only: no references/payloads escape through these snapshots.
+export async function instrumentScopes(directory) {
+  const path = join(directory, "tasks.mjs");
+  const source = await readFile(path, "utf8");
+  const marker = "      ...component,\n      api,";
+  if (source.split(marker).length !== 2)
+    throw new Error("task scope inspection anchor changed");
+  await writeFile(path, source.replace(marker, `      ...component,
+      __taskMemory:()=>({
+        resources:this.resources.entries.size, queued:this.queue.length,
+        active:this.active===null?0:1,
+        reads:this.active?.reads.size??0,
+        blocking:this.active?.blocking.size??0,
+        disposals:this.active?.disposals.length??0,
+      }),
+      api,`));
+}

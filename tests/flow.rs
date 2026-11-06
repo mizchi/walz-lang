@@ -201,3 +201,15 @@ fn signed_negative_index_counterexample_is_a_real_wasm_trap() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("out of bounds"));
 }
+
+#[test]
+fn labeled_branch_results_do_not_inherit_facts_from_the_normal_tail() {
+    let source = r#"(module (type $A (array i32))
+      (func $f (param $choose i32) (result i32)
+        (%let $a (array.new_fixed $A 1 (i32.const 42))
+          (%let $i (block $done (result i32)
+            (if (local.get $choose) (then (br $done (i32.const 99))) (else (nop)))
+            (i32.const 0))
+            (array.get $A (local.get $a) (local.get $i))))))"#;
+    assert_eq!(accesses(&facts(source, "$f"))[0]["bounds_proven"], false);
+}

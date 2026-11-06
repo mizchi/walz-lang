@@ -2,6 +2,10 @@ use crate::ir::*;
 
 pub(crate) fn ty(module: &Module, ty: &Type) -> String {
     match ty {
+        Type::Newtype(id) => match module.types[id.0].kind {
+            TypeKind::Newtype(n) => n.wat().into(),
+            _ => unreachable!(),
+        },
         Type::Num(_) | Type::Ref { .. } => module.type_name(ty),
         Type::Value(id) | Type::Resource(id) | Type::Borrow(id) => {
             format!("(ref {})", module.types[id.0].name)
@@ -58,7 +62,12 @@ pub(crate) fn emit_component(module: &Module, adapter: &crate::component::Adapte
 fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) -> String {
     let mut output = String::from("(module\n");
     // One explicit recursion group supports forward and recursive GC types.
-    if !module.types.is_empty() || adapter.is_some() {
+    if module
+        .types
+        .iter()
+        .any(|t| !matches!(t.kind, TypeKind::Newtype(_)))
+        || adapter.is_some()
+    {
         output.push_str("  (rec\n");
         if module
             .types
@@ -72,6 +81,7 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
         }
         for (index, declaration) in module.types.iter().enumerate() {
             let definition = match &declaration.kind {
+                TypeKind::Newtype(_) => continue,
                 TypeKind::Struct(fields)
                 | TypeKind::Closure {
                     captures: fields, ..
@@ -190,6 +200,8 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             temporaries: vec![],
             next_control: 0,
             adapter,
+            using: vec![],
+            labels: vec![],
         };
         let body = emitter.expression(body);
         output.push_str(&format!("  (func {}", function.name));
@@ -251,9 +263,24 @@ struct Emitter<'a> {
     temporaries: Vec<Type>,
     next_control: usize,
     adapter: Option<&'a crate::component::Adapter<'a>>,
+    using: Vec<(LocalId, TypeId, usize)>,
+    labels: Vec<(LoopId, usize, Type)>,
 }
 
 impl Emitter<'_> {
+    fn cleanup(&self, depth: usize) -> String {
+        self.using[depth..].iter().rev().map(|(local,ty,flag)|
+            format!(" (if (local.get $__temp{flag}) (then (local.set $__temp{flag} (i32.const 0)) (call $__resource_close_{} (local.get $__v{}))))",ty.0,local.0)
+        ).collect()
+    }
+    fn save(&mut self, value: &Expr, ty: Type) -> (String, usize) {
+        let temp = self.temporaries.len();
+        self.temporaries.push(ty);
+        (
+            format!(" (local.set $__temp{temp} {})", self.expression(value)),
+            temp,
+        )
+    }
     fn arguments(&mut self, expressions: &[Expr]) -> String {
         expressions
             .iter()
@@ -264,6 +291,96 @@ impl Emitter<'_> {
     fn expression(&mut self, expression: &Expr) -> String {
         use ExprKind::*;
         let code = match &expression.kind {
+            Label { label, body } => {
+                self.labels
+                    .push((*label, self.using.len(), expression.ty.clone()));
+                let b = self.expression(body);
+                self.labels.pop();
+                format!(
+                    "(block $__label{}{} {b})",
+                    label.0,
+                    result(self.module, &expression.ty)
+                )
+            }
+            Return(value) => {
+                let (evaluation, operand) = if let Some(v) = value {
+                    if self.function.result == Type::Unit {
+                        (self.expression(v), String::new())
+                    } else {
+                        let (s, t) = self.save(v, self.function.result.clone());
+                        (s, format!(" (local.get $__temp{t})"))
+                    }
+                } else {
+                    (String::new(), String::new())
+                };
+                format!("(block {evaluation}{} (return{operand}))", self.cleanup(0))
+            }
+            Branch {
+                label,
+                values,
+                condition,
+                bindings,
+                is_loop,
+            } => {
+                let (_, depth, target) = self
+                    .labels
+                    .iter()
+                    .rev()
+                    .find(|(id, _, _)| id == label)
+                    .cloned()
+                    .expect("checked label");
+                let mut evaluations = String::new();
+                let mut temps = vec![];
+                for (i, v) in values.iter().enumerate() {
+                    let ty = if *is_loop {
+                        self.function.locals[bindings[i].0].ty.clone()
+                    } else {
+                        target.clone()
+                    };
+                    let (s, t) = self.save(v, ty);
+                    evaluations.push_str(&s);
+                    temps.push(t);
+                }
+                let mut updates = String::new();
+                for (id, temp) in bindings.iter().zip(&temps) {
+                    updates.push_str(&format!(
+                        " (local.set $__v{} (local.get $__temp{temp}))",
+                        id.0
+                    ));
+                }
+                let args = if *is_loop {
+                    String::new()
+                } else {
+                    temps
+                        .iter()
+                        .map(|t| format!(" (local.get $__temp{t})"))
+                        .collect()
+                };
+                let name = format!("$__{}{}", if *is_loop { "loop" } else { "label" }, label.0);
+                let close = self.cleanup(depth);
+                if let Some(c) = condition {
+                    let (s, t) = self.save(c, Type::Num(NumType::I32));
+                    evaluations.push_str(&s);
+                    if *is_loop {
+                        let value = temps
+                            .first()
+                            .map(|t| format!(" (local.get $__temp{t})"))
+                            .unwrap_or_default();
+                        format!(
+                            "(block{} {evaluations} (if (local.get $__temp{t}) (then {close}{updates} (br {name}))){value})",
+                            result(self.module, &expression.ty)
+                        )
+                    } else {
+                        format!(
+                            "(block{} {evaluations} (br_if {name}{args} (block (result i32) (if (local.get $__temp{t}) (then {close})) (local.get $__temp{t}))))",
+                            result(self.module, &expression.ty)
+                        )
+                    }
+                } else {
+                    format!("(block {evaluations}{close}{updates} (br {name}{args}))")
+                }
+            }
+            Newtype { value, .. } => self.expression(value),
             List { op, list, args } => {
                 let values = args.iter().map(|a| self.expression(a)).collect::<Vec<_>>();
                 crate::lists::expression(self.module, *op, *list, &values)
@@ -391,13 +508,17 @@ impl Emitter<'_> {
                         format!(" (local.set $__v{} {})", id.0, self.expression(value))
                     })
                     .collect::<String>();
+                self.labels
+                    .push((*label, self.using.len(), expression.ty.clone()));
+                let b = self.expression(body);
+                self.labels.pop();
                 format!(
                     "(block{}{} (loop $__loop{}{} {}))",
                     result(self.module, &expression.ty),
                     initializers,
                     label.0,
                     result(self.module, &expression.ty),
-                    self.expression(body)
+                    b
                 )
             }
             Recur { label, assignments } => {
@@ -416,7 +537,18 @@ impl Emitter<'_> {
                         id.0
                     ));
                 }
-                format!("(block{evaluations}{updates} (br $__loop{}))", label.0)
+                let depth = self
+                    .labels
+                    .iter()
+                    .rev()
+                    .find(|(id, _, _)| id == label)
+                    .expect("checked loop")
+                    .1;
+                format!(
+                    "(block{evaluations}{}{updates} (br $__loop{}))",
+                    self.cleanup(depth),
+                    label.0
+                )
             }
             Call { function, args } => format!(
                 "(call {}{})",
@@ -514,11 +646,16 @@ impl Emitter<'_> {
                     unreachable!()
                 };
                 let v = self.expression(value);
+                let flag = self.temporaries.len();
+                self.temporaries.push(Type::Num(NumType::I32));
+                self.using.push((*local, id, flag));
                 let b = self.expression(body);
+                let close = self.cleanup(self.using.len() - 1);
+                self.using.pop();
                 let r = result(self.module, &expression.ty);
                 format!(
-                    "(block{r} (local.set $__v{} {v}) (block $__using_done{}{} (block $__using_caught{} (result exnref) (br $__using_done{} (try_table{r} (catch_all_ref $__using_caught{}) {b}))) (call $__resource_close_{} (local.get $__v{})) (throw_ref)) (call $__resource_close_{} (local.get $__v{})))",
-                    local.0, local.0, r, local.0, local.0, local.0, id.0, local.0, id.0, local.0
+                    "(block{r} (local.set $__v{} {v}) (local.set $__temp{flag} (i32.const 1)) (block $__using_done{}{} (block $__using_caught{} (result exnref) (br $__using_done{} (try_table{r} (catch_all_ref $__using_caught{}) {b}))) {close} (throw_ref)) {close})",
+                    local.0, local.0, r, local.0, local.0, local.0
                 )
             }
             Close(value) => format!("(drop {})", self.expression(value)),

@@ -4,10 +4,10 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 
 | 用途 | 構文 |
 | --- | --- |
-| 式・制御構造 | `%let`、`%for`、`%loop`、`%recur`、`%match`、`%try` |
+| 式・制御構造 | `%let`、`%for`、`%loop`、`%recur`、`%match`、`%try`、`%result.do` |
 | 値の操作 | `%list.new`、`%text.lit`、`%result.ok`、`%future.await` など |
 | 値型 | `$text`、`$bytes`、`$unit`、`(%inst $list T)`、`(%inst $option T)`、`(%inst $result T E)` など |
-| 宣言・注釈 | `%closure`、`%capture`、`%effects`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
+| 宣言・注釈 | `%closure`、`%capture`、`%effects`、`%newtype`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
 | 静的モジュール | `%include`、`%import`、`%export`、`%namespace`、`%public`、`%use` |
 | 型引数の適用 | `(%inst $name T...)`。関数・型・alias・クロージャで共通 |
 
@@ -54,3 +54,5 @@ WLT 拡張には `%` を必須とし、接頭辞の欠落を `E_WLT_PREFIX` と�
 凍結済みの評価入力を再実行するための変換だけを、評価ハーネス用の内部処理に残す。過去の入力・結果・スナップショットは保存する。標準型の import と複数束縛を質問した suite v7 に続き、標準APIの選択とi64カウンタへの変更を含む評価は suite v8 として区別する。
 
 `just test-syntax` で標準 WAT の保持、混在時の実行、診断位置、検査の境界を確認できる。
+
+数値命令・return・ラベル付き分岐、Result の平坦な連鎖と scalar newtype は [型付きコアの式](core-expressions.md) を参照。

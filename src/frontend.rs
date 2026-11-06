@@ -41,6 +41,7 @@ struct FunctionSite {
 struct Tables<'a> {
     source: &'a str,
     types: Names,
+    newtypes: BTreeMap<TypeId, NumType>,
     functions: Names,
     function_sites: BTreeMap<String, FunctionSite>,
     tags: Names,
@@ -58,6 +59,7 @@ impl Tables<'_> {
         Tables {
             source,
             types: Names::new(),
+            newtypes: BTreeMap::new(),
             functions: Names::new(),
             function_sites: BTreeMap::new(),
             tags: Names::new(),
@@ -147,12 +149,28 @@ impl Tables<'_> {
             return Ok(Type::Value(self.intern_value(value)));
         }
         if node.atom().is_some() {
+            if let Some(id) = node
+                .atom()
+                .and_then(|n| self.types.get(n))
+                .copied()
+                .map(TypeId)
+                && self.newtypes.contains_key(&id)
+            {
+                return Ok(Type::Newtype(id));
+            }
             return Err(self.error(
                 node,
                 "expected numeric type, reference, bytes, text, or constructed value type",
             ));
         }
         let items = self.list(node)?;
+        if items.first().and_then(Sexp::atom) == Some("ref")
+            && let Some(name) = items.last()
+            && let Ok(id) = self.type_id(name)
+            && self.newtypes.contains_key(&id)
+        {
+            return Err(self.error(node, "newtype is a scalar, not a GC heap type"));
+        }
         match items {
             [head, name] if matches!(head.atom(), Some("resource" | "borrow")) => {
                 let id = self.type_id(name)?;
@@ -330,7 +348,14 @@ impl Tables<'_> {
 
     fn is_payload_syntax(&self, node: &Sexp) -> bool {
         node.atom().is_some_and(|s| {
-            s == "unit" || s == "bytes" || s == "text" || NumType::parse(s).is_some()
+            s == "unit"
+                || s == "bytes"
+                || s == "text"
+                || NumType::parse(s).is_some()
+                || self
+                    .types
+                    .get(s)
+                    .is_some_and(|id| self.newtypes.contains_key(&TypeId(*id)))
         }) || matches!(
             node.head(),
             Some("ref" | "list" | "option" | "own" | "future" | "stream" | "pair")
@@ -583,6 +608,23 @@ pub(crate) fn check<'b>(
             return Err(tables.error(node, "duplicate function"));
         }
     }
+    for node in &type_nodes {
+        if let Some(parts) = node.list()
+            && let Some(definition) = parts.get(2)
+            && definition.head() == Some("newtype")
+        {
+            let fields = tables.list(definition)?;
+            tables.count(definition, fields, 2)?;
+            let scalar = fields[1]
+                .atom()
+                .and_then(NumType::parse)
+                .filter(|n| *n != NumType::V128)
+                .ok_or_else(|| tables.error(definition, "newtype requires i32, i64, f32 or f64"))?;
+            tables
+                .newtypes
+                .insert(TypeId(tables.types[tables.atom(&parts[1])?]), scalar);
+        }
+    }
     tables.collect_values(root)?;
     for site in bounds {
         tables.collect_values(&site.clause)?;
@@ -610,6 +652,7 @@ pub(crate) fn check<'b>(
             tables.count(node, items, 3)?;
             let definition = tables.list(&items[2])?;
             match items[2].head() {
+                Some("newtype") => TypeKind::Newtype(tables.newtypes[&TypeId(tables.types[&name])]),
                 Some("resource") => {
                     tables.count(&items[2], definition, 3)?;
                     let kind = definition[1]
@@ -922,6 +965,7 @@ pub(crate) fn check<'b>(
             module: &headers,
             locals: function.locals.clone(),
             next_loop: 0,
+            function_result: function.result.clone(),
             remaining_work: 1_000_000,
             closure: matches!(function.kind, FunctionKind::Closure { .. }),
         };
@@ -1013,6 +1057,10 @@ pub(crate) fn validate_alias_targets(
     let mut tables = Tables::new(source);
     for (index, declaration) in module.types.iter().enumerate() {
         match &declaration.kind {
+            TypeKind::Newtype(n) => {
+                tables.types.insert(declaration.name.clone(), index);
+                tables.newtypes.insert(TypeId(index), *n);
+            }
             TypeKind::Value(value) => {
                 tables
                     .values
@@ -1042,6 +1090,7 @@ struct LoopContext {
     name: String,
     id: LoopId,
     bindings: Vec<LocalId>,
+    block: Option<Type>,
 }
 
 struct Checker<'a, 's> {
@@ -1049,6 +1098,7 @@ struct Checker<'a, 's> {
     module: &'a Module,
     locals: Vec<Binding>,
     next_loop: usize,
+    function_result: Type,
     remaining_work: usize,
     closure: bool,
 }
@@ -1742,6 +1792,34 @@ impl Checker<'_, '_> {
                     }
                     (Type::Unit, Close(Box::new(value)))
                 }
+                "newtype.wrap" | "newtype.unwrap" => {
+                    count(3)?;
+                    let ty = tables.type_id(&items[1])?;
+                    let scalar = tables
+                        .newtypes
+                        .get(&ty)
+                        .copied()
+                        .ok_or_else(|| tables.error(&items[1], "expected a scalar newtype"))?;
+                    let unwrap = head == "newtype.unwrap";
+                    let input = if unwrap {
+                        Type::Newtype(ty)
+                    } else {
+                        Type::Num(scalar)
+                    };
+                    let value = self.expr_as(&items[2], scope, loops, false, &input)?;
+                    (
+                        if unwrap {
+                            Type::Num(scalar)
+                        } else {
+                            Type::Newtype(ty)
+                        },
+                        Newtype {
+                            ty,
+                            value: Box::new(value),
+                            unwrap,
+                        },
+                    )
+                }
                 "let" => {
                     if !(4..=5).contains(&items.len()) {
                         return Err(
@@ -1787,14 +1865,32 @@ impl Checker<'_, '_> {
                     )
                 }
                 "block" => {
-                    let (result, start) = self.result(items, 1)?;
+                    let named = items
+                        .get(1)
+                        .and_then(Sexp::atom)
+                        .is_some_and(|n| n.starts_with('$'));
+                    let (result, start) = self.result(items, if named { 2 } else { 1 })?;
+                    let mut nested_labels = loops.to_vec();
+                    let label = if named {
+                        let id = LoopId(self.next_loop);
+                        self.next_loop += 1;
+                        nested_labels.push(LoopContext {
+                            name: tables.name(&items[1])?,
+                            id,
+                            bindings: vec![],
+                            block: Some(result.clone()),
+                        });
+                        Some(id)
+                    } else {
+                        None
+                    };
                     let mut expressions = Vec::new();
                     for (i, expression) in items[start..].iter().enumerate() {
                         let last = i + start + 1 == items.len();
                         let expression = self.expr_expected(
                             expression,
                             scope,
-                            loops,
+                            &nested_labels,
                             last && tail,
                             Some(if last { &result } else { &Type::Unit }),
                         )?;
@@ -1813,9 +1909,100 @@ impl Checker<'_, '_> {
                     let ty = if expressions.last().is_some_and(|e| e.ty == Type::Never) {
                         Type::Never
                     } else {
-                        result
+                        result.clone()
                     };
-                    (ty, Block(expressions))
+                    if let Some(label) = label {
+                        (
+                            result.clone(),
+                            Label {
+                                label,
+                                body: Box::new(Expr {
+                                    ty: result,
+                                    span: node.span,
+                                    kind: Block(expressions),
+                                }),
+                            },
+                        )
+                    } else {
+                        (ty, Block(expressions))
+                    }
+                }
+                "return" => {
+                    let result = self.function_result.clone();
+                    let value = if result == Type::Unit && items.len() == 1 {
+                        None
+                    } else {
+                        count(2)?;
+                        Some(Box::new(
+                            self.expr_as(&items[1], scope, loops, false, &result)?,
+                        ))
+                    };
+                    (Type::Never, Return(value))
+                }
+                "br" | "br_if" => {
+                    let name = items
+                        .get(1)
+                        .ok_or_else(|| tables.error(node, "missing branch label"))?;
+                    let target = loops
+                        .iter()
+                        .rev()
+                        .find(|l| name.atom() == Some(l.name.as_str()))
+                        .cloned()
+                        .ok_or_else(|| {
+                            tables.error(name, "unknown branch label; use a named block or loop")
+                        })?;
+                    let parameters = if let Some(t) = &target.block {
+                        if *t == Type::Unit {
+                            vec![]
+                        } else {
+                            vec![t.clone()]
+                        }
+                    } else {
+                        target
+                            .bindings
+                            .iter()
+                            .map(|id| self.locals[id.0].ty.clone())
+                            .collect::<Vec<_>>()
+                    };
+                    let conditional = head == "br_if";
+                    if conditional && parameters.len() > 1 {
+                        return Err(
+                            tables.error(node, "typed br_if supports at most one branch value")
+                        );
+                    }
+                    count(2 + parameters.len() + usize::from(conditional))?;
+                    let values = self.expressions_as(
+                        &items[2..2 + parameters.len()],
+                        scope,
+                        loops,
+                        &parameters,
+                    )?;
+                    let condition = if conditional {
+                        Some(Box::new(self.expr_as(
+                            items.last().unwrap(),
+                            scope,
+                            loops,
+                            false,
+                            &Type::Num(NumType::I32),
+                        )?))
+                    } else {
+                        None
+                    };
+                    let result = if conditional {
+                        parameters.first().cloned().unwrap_or(Type::Unit)
+                    } else {
+                        Type::Never
+                    };
+                    (
+                        result,
+                        Branch {
+                            label: target.id,
+                            values,
+                            condition,
+                            bindings: target.bindings,
+                            is_loop: target.block.is_none(),
+                        },
+                    )
                 }
                 "if" => {
                     let (result, start) = self.result(items, 1)?;
@@ -1892,7 +2079,10 @@ impl Checker<'_, '_> {
                     if !tail {
                         return Err(self.tables.error(node, "recur must be in tail position"));
                     }
-                    if Some(target.id) != loops.last().map(|l| l.id) {
+                    if Some(target.id)
+                        != loops.iter().rev().find(|l| l.block.is_none()).map(|l| l.id)
+                        || target.block.is_some()
+                    {
                         return Err(self
                             .tables
                             .error(node, "recur must target the innermost loop"));
@@ -2702,13 +2892,12 @@ impl Checker<'_, '_> {
         let (result, start) = self.result(items, start)?;
         self.tables.count(node, items, start + 1)?;
         let mut nested_loops = loops.to_vec();
-        if node.head() != Some("native.loop") {
-            nested_loops.push(LoopContext {
-                name,
-                id,
-                bindings: bindings.iter().map(|(id, _)| *id).collect(),
-            });
-        }
+        nested_loops.push(LoopContext {
+            name,
+            id,
+            bindings: bindings.iter().map(|(id, _)| *id).collect(),
+            block: None,
+        });
         let body = self.expr_as(&items[start], &nested, &nested_loops, true, &result)?;
         Ok((
             result,

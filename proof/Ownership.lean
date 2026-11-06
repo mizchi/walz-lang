@@ -1,7 +1,7 @@
-/- Resource lowering note: `using` consumes its owned resource initializer,
-   introduces a shared, nonescaping borrow (checked in Rust), and checks its body
-   with Seq/Scope. Explicit throw uses Stop, requiring no live owners. The Wasm
-   finally adapter and host registry are compiler/runtime TCB, not this theorem. -/
+/- The v1 structured ownership checker and v2 control-flow certificates model
+   available owned slots. Using consumes a resource and introduces a shared,
+   nonescaping borrow. Its finally lowering and registry, exception edge
+   extraction, effect inference, and Wasm code generation remain TCB. -/
 import Lean
 
 /-!
@@ -224,18 +224,154 @@ partial def parseOp (json : Json) : Except String Op := do
   | "stop" => return .stop
   | other => throw s!"unknown ownership operation: {other}"
 
+/- Finite control-flow certificates for jumps and exceptional exits. Contexts
+   are availability sets, including transient owned operand-stack slots. The
+   extractor supplies edges; this kernel checks every reachable transition. -/
+inductive GraphStep where
+  | nop | bind (id : Nat) | take (id : Nat) | absent (id : Nat) | finish
+  deriving Repr, DecidableEq
+
+def stepCheck : GraphStep → Context → Option Context
+  | .nop, ctx => some ctx
+  | .bind id, ctx => if id ∈ ctx then none else some (add id ctx)
+  | .take id, ctx => if id ∈ ctx then some (remove id ctx) else none
+  | .absent id, ctx => if id ∈ ctx then none else some ctx
+  | .finish, ctx => if ctx = [] then some [] else none
+
+inductive StepValid : Context → GraphStep → Context → Prop where
+  | nop : StepValid ctx .nop ctx
+  | bind {id : Nat} (fresh : id ∉ ctx) : StepValid ctx (.bind id) (add id ctx)
+  | take {id : Nat} (live : id ∈ ctx) : StepValid ctx (.take id) (remove id ctx)
+  | absent {id : Nat} (gone : id ∉ ctx) : StepValid ctx (.absent id) ctx
+  | finish : StepValid [] .finish []
+
+theorem stepCheck_sound (op : GraphStep) (ctx out : Context)
+    (h : stepCheck op ctx = some out) : StepValid ctx op out := by
+  cases op with
+  | nop => simp [stepCheck] at h; subst out; exact .nop
+  | bind id =>
+      simp only [stepCheck] at h
+      split at h
+      next => cases h
+      next fresh => cases h; exact .bind fresh
+  | take id =>
+      simp only [stepCheck] at h
+      split at h
+      next live => cases h; exact .take live
+      next => cases h
+  | absent id =>
+      simp only [stepCheck] at h
+      split at h
+      next => cases h
+      next gone => cases h; exact .absent gone
+  | finish =>
+      simp only [stepCheck] at h
+      split at h
+      next empty => subst ctx; cases h; exact .finish
+      next => cases h
+
+structure GraphNode where
+  op : GraphStep
+  next : List Nat
+  context : Option Context
+
+structure GraphCert where
+  entry : Nat
+  nodes : Array GraphNode
+
+def annotation (g : GraphCert) (i : Nat) : Option Context :=
+  (g.nodes[i]?).bind (·.context)
+
+def nodeCheck (g : GraphCert) (n : GraphNode) : Bool :=
+  n.next.all (· < g.nodes.size) && match n.context with
+  | none => true
+  | some ctx => ctx.eraseDups.length == ctx.length && match stepCheck n.op ctx with
+    | none => false
+    | some out => (if n.op = .finish then n.next.isEmpty else !n.next.isEmpty) &&
+        n.next.all (fun j => annotation g j == some out)
+
+def graphCheck (g : GraphCert) (inputs : Context) : Bool :=
+  (annotation g g.entry == some inputs) && g.nodes.toList.all (nodeCheck g)
+
+/- A successful certificate gives a valid availability transition at each
+   annotated node, and the exact output at every successor. -/
+theorem graph_node_sound (g : GraphCert) (inputs : Context)
+    (h : graphCheck g inputs = true) {i : Nat} {n : GraphNode} {ctx : Context} (lookup : g.nodes[i]? = some n)
+    (hc : n.context = some ctx) :
+    ∃ out, StepValid ctx n.op out ∧ ∀ j ∈ n.next, annotation g j = some out := by
+  have member : n ∈ g.nodes.toList := by
+    exact Array.mem_toList_iff.mpr (Array.mem_of_getElem? lookup)
+  have hn : nodeCheck g n = true := by
+    have all := (Bool.and_eq_true_iff.mp h).2
+    exact List.all_eq_true.mp all n member
+  simp only [nodeCheck, hc] at hn
+  cases hs : stepCheck n.op ctx with
+  | none => simp [hs] at hn
+  | some out =>
+      refine ⟨out, stepCheck_sound _ _ _ hs, ?_⟩
+      simp only [hs] at hn
+      have edges := (Bool.and_eq_true_iff.mp (Bool.and_eq_true_iff.mp (Bool.and_eq_true_iff.mp hn).2).2).2
+      intro j hj
+      simpa using List.all_eq_true.mp edges j hj
+
+inductive GraphPath (g : GraphCert) : Nat → Prop where
+  | entry : GraphPath g g.entry
+  | edge (path : GraphPath g i) (lookup : g.nodes[i]? = some n)
+      (target : j ∈ n.next) : GraphPath g j
+
+/- Every path, including arbitrary loop iterations and exception edges, keeps
+   its certified availability state. No bounded unrolling is used. -/
+theorem graph_path_sound (g : GraphCert) (inputs : Context)
+    (h : graphCheck g inputs = true) (path : GraphPath g i) :
+    ∃ ctx, annotation g i = some ctx := by
+  induction path with
+  | entry =>
+      exact ⟨inputs, by simpa [graphCheck] using (Bool.and_eq_true_iff.mp h).1⟩
+  | edge path lookup target ih =>
+      rcases ih with ⟨ctx, hc⟩
+      have hc' : _ := hc
+      simp only [annotation, lookup, Option.bind_some] at hc'
+      rcases graph_node_sound g inputs h lookup hc' with ⟨out, _, edges⟩
+      exact ⟨out, edges _ target⟩
+
+open Lean in
+def parseGraph (json : Json) : Except String GraphCert := do
+  let entry ← json.getObjValAs? Nat "entry"
+  let nodes ← (← json.getObjVal? "nodes").getArr?
+  let nodes ← nodes.mapM fun n => do
+    let op ← match ← n.getObjValAs? String "op" with
+      | "nop" => pure GraphStep.nop
+      | "bind" => pure (GraphStep.bind (← n.getObjValAs? Nat "id"))
+      | "take" => pure (GraphStep.take (← n.getObjValAs? Nat "id"))
+      | "absent" => pure (GraphStep.absent (← n.getObjValAs? Nat "id"))
+      | "finish" => pure GraphStep.finish
+      | name => throw s!"unknown graph operation: {name}"
+    let next ← n.getObjValAs? (List Nat) "next"
+    let context ← n.getObjValAs? (Option Context) "context"
+    return ({op, next, context} : GraphNode)
+  return {entry, nodes}
+
 open Lean in
 def verifyJson (json : Json) : Except String Nat := do
-  if (← json.getObjValAs? Nat "version") != 1 then throw "unsupported contract version"
+  let version ← json.getObjValAs? Nat "version"
+  if version != 1 && version != 2 then throw "unsupported contract version"
   let functions ← (← json.getObjVal? "functions").getArr?
   for function in functions do
     let name ← function.getObjValAs? String "name"
     let inputs ← function.getObjValAs? (List Nat) "inputs"
     if inputs.eraseDups.length != inputs.length then throw s!"duplicate owner in {name}"
-    let body ← parseOp (← function.getObjVal? "body")
-    match check body (inputs.mergeSort (· ≤ ·)) [] with
-    | some none | some (some []) => pure ()
-    | _ => throw s!"ownership contract rejected: {name}"
+    match function.getObjVal? "graph" with
+    | .ok graph =>
+        if version != 2 then throw "graph requires contract version 2"
+        if (function.getObjVal? "body").isOk then throw "ambiguous ownership contract"
+        let graph ← parseGraph graph
+        if !graphCheck graph (inputs.mergeSort (· ≤ ·)) then
+          throw s!"ownership graph rejected: {name}"
+    | .error _ =>
+        let body ← parseOp (← function.getObjVal? "body")
+        match check body (inputs.mergeSort (· ≤ ·)) [] with
+        | some none | some (some []) => pure ()
+        | _ => throw s!"ownership contract rejected: {name}"
   return functions.size
 
 end Wlt

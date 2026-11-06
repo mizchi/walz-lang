@@ -511,6 +511,7 @@ impl Expanded {
             while let Some(e) = pending.pop() {
                 let ty = match &e.kind {
                     ResourceNew { ty, .. }
+                    | Newtype { ty, .. }
                     | StructNew { ty, .. }
                     | StructGet { ty, .. }
                     | StructSet { ty, .. }

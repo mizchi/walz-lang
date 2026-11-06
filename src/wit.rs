@@ -32,6 +32,12 @@ pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
 impl Types<'_> {
     fn render(&mut self, ty: &Type) -> Result<String, Error> {
         Ok(match ty {
+            Type::Newtype(id) => {
+                let TypeKind::Newtype(n) = self.module.types[id.0].kind else {
+                    unreachable!()
+                };
+                self.render(&Type::Num(n))?
+            }
             Type::Num(NumType::I32) => "s32".into(),
             Type::Num(NumType::I64) => "s64".into(),
             Type::Num(NumType::F32) => "f32".into(),
@@ -103,6 +109,8 @@ impl Types<'_> {
 /// Export representable public functions of a checked module as a WIT package.
 /// Unknown/escaping exceptions and nonportable types require explicit adapters.
 pub fn emit(module: &Module) -> Result<String, Error> {
+    let lowered = crate::newtypes::lower(module);
+    let module = &lowered;
     let exported = module
         .functions
         .iter()

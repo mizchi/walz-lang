@@ -9,7 +9,7 @@
 `(%inst $own T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
 Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(%own.close (%move $ticket))` で明示的に消費します。
 内容を match で取り出すことも消費です。own は payload の GC 参照を排他的にする型ではなく、own.close は外部リソースの終了処理をまだ実装していません。
-borrow/lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。[ownership.wlt](../examples/ownership.wlt) に組と once-call クロージャの例があります。
+一般的な lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。外部 resource には非流出の borrow と同期 destructor を提供します。[ownership.wlt](../examples/ownership.wlt) に組と once-call クロージャの例があります。
 
 ```wat
 (%law "adding zero preserves the value" (param $x i32)
@@ -25,3 +25,5 @@ law は i32/i64 の全入力で条件が非0になることを要求し、実際
 このモードでは未解析の WAT、import、所有値を渡す raw export、effect 上限のない公開関数を拒否します。通常の WAT の受付は維持します。
 Rust API `check` と調査用の types/ir/analyze は law を証明しません。CLI check と実行形式の生成は、law があれば証明を検査します。
 形式化した範囲と信頼する実装は [SPEC.md](../SPEC.md#law-と契約付き実行)・[proof/README.md](../proof/README.md) に記載しています。コンパイラ全体の意味保存や、停止性の証明は含みません。
+
+例外・return・ラベル付き分岐の所有状態は version 2 の制御フロー証明書でも検査します。実行用の newtype 消去前に nominal な型を検査し、integer law は消去後の表現について証明します。[対応範囲](core-expressions.md) を参照してください。

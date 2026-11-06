@@ -46,7 +46,10 @@ pub enum Operation {
 pub struct FunctionContract {
     pub name: String,
     pub inputs: Vec<LocalId>,
-    pub body: Contract,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub body: Option<Contract>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub graph: Option<crate::ownership_graph::Graph>,
 }
 
 #[derive(Debug, Serialize)]
@@ -249,7 +252,7 @@ impl Extractor<'_> {
                 items.push(node(span, Operation::Again));
                 Operation::Seq { items }
             }
-            Unreachable | Throw { .. } => {
+            Unreachable | Return(_) | Throw { .. } => {
                 let mut items = expression
                     .children()
                     .into_iter()
@@ -414,19 +417,21 @@ fn has_owned_expression(expression: &Expr, kinds: &Kinds) -> bool {
             .any(|e| has_owned_expression(e, kinds))
 }
 
-fn has_exceptional_control(expression: &Expr) -> bool {
-    matches!(expression.kind, ExprKind::Try { .. })
-        || expression
-            .children()
-            .into_iter()
-            .any(has_exceptional_control)
-}
-
-fn has_throwing_call(e: &Expr, effects: &[crate::effects::EffectSet]) -> bool {
-    matches!(e.kind,ExprKind::Call{function,..} if effects[function.0].throws_unknown || !effects[function.0].throws.is_empty())
+fn requires_graph(e: &Expr, owns: bool, effects: &[crate::effects::EffectSet]) -> bool {
+    matches!(
+        e.kind,
+        ExprKind::Label { .. }
+            | ExprKind::Branch { .. }
+            | ExprKind::Return(_)
+            | ExprKind::Using { .. }
+    ) || (owns
+        && (matches!(
+            e.kind,
+            ExprKind::Try { .. } | ExprKind::Throw { .. } | ExprKind::Unreachable
+        ) || matches!(e.kind, ExprKind::Call {function,..} if effects[function.0].throws_unknown || !effects[function.0].throws.is_empty())))
         || e.children()
             .into_iter()
-            .any(|e| has_throwing_call(e, effects))
+            .any(|child| requires_graph(child, owns, effects))
 }
 
 /// Extract and check ownership obligations. This is also the contract sent to
@@ -505,13 +510,6 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
             }
             continue;
         };
-        if owns && (has_exceptional_control(body) || has_throwing_call(body, &effects)) {
-            return Err(Error::at(
-                source,
-                body.span,
-                "owned functions cannot use exceptional control; return Result instead",
-            ));
-        }
         let extractor = Extractor {
             source,
             function,
@@ -525,34 +523,52 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
             .filter(|id| kinds.is_owned(&function.locals[id.0].ty))
             .copied()
             .collect::<Vec<_>>();
-        let result = check_contract(
-            source,
-            function,
-            &contract,
-            State {
-                live: inputs.iter().copied().collect(),
-                moved: BTreeMap::new(),
-            },
-            &[],
-        )?;
-        if result.is_some_and(|state| !state.live.is_empty()) {
-            return Err(Error::at(
+        let graph = if requires_graph(body, owns, &effects) {
+            Some(crate::ownership_graph::extract(
+                source, function, &kinds, &effects, &inputs,
+            )?)
+        } else {
+            None
+        };
+        if graph.is_none() {
+            let result = check_contract(
                 source,
-                body.span,
-                format!(
-                    "unconsumed owned parameter or capture in `{}`",
-                    function.name
-                ),
-            ));
+                function,
+                &contract,
+                State {
+                    live: inputs.iter().copied().collect(),
+                    moved: BTreeMap::new(),
+                },
+                &[],
+            )?;
+            if result.is_some_and(|state| !state.live.is_empty()) {
+                return Err(Error::at(
+                    source,
+                    body.span,
+                    format!(
+                        "unconsumed owned parameter or capture in `{}`",
+                        function.name
+                    ),
+                ));
+            }
         }
         functions.push(FunctionContract {
             name: function.name.clone(),
             inputs,
-            body: contract,
+            body: if graph.is_none() {
+                Some(contract)
+            } else {
+                None
+            },
+            graph,
         });
     }
     Ok(Contracts {
-        version: 1,
+        version: if functions.iter().any(|f| f.graph.is_some()) {
+            2
+        } else {
+            1
+        },
         functions,
     })
 }

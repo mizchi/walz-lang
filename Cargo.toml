@@ -15,6 +15,10 @@ license = "Apache-2.0 WITH LLVM-exception"
 name = "stdlib-docs"
 path = "tools/stdlib-docs.rs"
 
+[[example]]
+name = "json-bench"
+path = "tools/json-bench.rs"
+
 [dependencies]
 wat = "=1.262.0"
 wast = "=262.0.0"

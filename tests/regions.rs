@@ -190,3 +190,20 @@ fn suspension_invalidates_mutable_reference_contents_across_calls() {
             .any(|w| w["object"]["root"]["kind"] == "unknown")
     );
 }
+
+#[test]
+fn returns_and_block_branch_payloads_remain_visible_as_escaping_references() {
+    for body in [
+        "(return (local.get $a))",
+        "(block $done (result (ref $C)) (br $done (local.get $a)))",
+    ] {
+        let source = format!(
+            "(module (type $C (struct (field i32))) (func $f (result (ref $C)) (%let $a (struct.new $C (i32.const 42)) {body})))"
+        );
+        let m = memory(&source, "$f");
+        assert_eq!(
+            m["allocations"][0]["escapes"]["returned"], true,
+            "{body}: {m}"
+        );
+    }
+}

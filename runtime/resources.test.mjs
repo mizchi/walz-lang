@@ -52,6 +52,23 @@ for(const backend of ['core','component'])test(`${backend}: resources close exac
     const failure=broken.start('nested');await assert.rejects(failure.result,/close failed|cleanup/);
     assert.equal(attempts,2);
     assert.throws(()=>broken.api.normal());assert.equal(attempts,2);
+    // Branches close only the using scopes they leave, after operand evaluation.
+    let sequence=0; const exits=[];
+    const jumps=await instantiate({imports:{files:{
+      open:()=>({id:++sequence,closed:false}),
+      read:f=>{assert.equal(f.closed,false);return f.id;},
+      close:f=>{assert.equal(f.closed,false);f.closed=true;exits.push(f.id);},
+    }}});
+    assert.equal(jumps.api.earlyReturn(),2); assert.deepEqual(exits,[2,1]);
+    assert.equal(jumps.api.earlyBranch(),4); assert.deepEqual(exits,[2,1,4,3]);
+    assert.equal(jumps.api.conditional(1),42); assert.equal(exits.at(-1),5);
+    assert.equal(jumps.api.conditional(0),6); assert.equal(exits.at(-1),6);
+    assert.equal(jumps.api.innerBranch(),7); assert.equal(exits.at(-1),7);
+    assert.equal(jumps.api.recur(),10); assert.deepEqual(exits.slice(-3),[8,9,10]);
+    let returnAttempts=0;
+    const badReturn=await instantiate({imports:{files:{open:()=>({}),read:()=>42,close:()=>{returnAttempts++;throw new Error('close failed');}}}});
+    await assert.rejects(badReturn.start('earlyReturn').result,/close failed|cleanup/);
+    assert.equal(returnAttempts,2);
     assert.ok((await readFile(join(dir,backend==='core'?'manifest.json':'component.wasm.json'),'utf8')).includes('resource'));
   }finally{await rm(dir,{recursive:true,force:true});}
 });

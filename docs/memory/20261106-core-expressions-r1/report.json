@@ -1,0 +1,1245 @@
+{
+  "version": 1,
+  "date": "2026-11-06T02:40:13.324Z",
+  "node": "v24.21.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "head": "96ddc565c2486bab608a0323c5479e4f291e93f1",
+  "method": {
+    "warmupBatches": 1,
+    "measuredBatches": 6,
+    "gcsPerSample": 4,
+    "maxCollectionPasses": 8,
+    "retainedGrowthLimit": 2097152
+  },
+  "cases": [
+    {
+      "backend": "core",
+      "name": "result-return-branch-owned-exception",
+      "heapGrowth": 55536,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 5751648,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 121536512,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5804560,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 128303104,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5804136,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 129073152,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5804424,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 131907584,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5805928,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 152748032,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5807184,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 169132032,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "core",
+      "name": "newtype-list-future-stream",
+      "heapGrowth": 76528,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 5921968,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172310528,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5953896,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172474368,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5964136,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172474368,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5994592,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172490752,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5996176,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172490752,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 5998496,
+          "external": 2667376,
+          "arrayBuffers": 209171,
+          "rss": 172490752,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "core",
+      "name": "using-normal-err-return-branch-recur-catch",
+      "heapGrowth": 62432,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 6349136,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194035712,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 3200,
+          "closed": 3200,
+          "collectedResources": 128
+        },
+        {
+          "heapUsed": 6353704,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194035712,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 4800,
+          "closed": 4800,
+          "collectedResources": 192
+        },
+        {
+          "heapUsed": 6353904,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194035712,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 6400,
+          "closed": 6400,
+          "collectedResources": 256
+        },
+        {
+          "heapUsed": 6354720,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194035712,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 8000,
+          "closed": 8000,
+          "collectedResources": 320
+        },
+        {
+          "heapUsed": 6376992,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194035712,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 9600,
+          "closed": 9600,
+          "collectedResources": 384
+        },
+        {
+          "heapUsed": 6411568,
+          "external": 2732932,
+          "arrayBuffers": 209191,
+          "rss": 194248704,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 11200,
+          "closed": 11200,
+          "collectedResources": 448
+        }
+      ]
+    },
+    {
+      "backend": "core",
+      "name": "discarded-instances-with-held-history",
+      "modes": [
+        "return",
+        "branch",
+        "cancel",
+        "trap",
+        "destructor-failure",
+        "conversion-failure"
+      ],
+      "collectionPasses": 1,
+      "allCollected": true
+    },
+    {
+      "backend": "component",
+      "name": "result-return-branch-owned-exception",
+      "heapGrowth": -1122576,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 7641816,
+          "external": 2909991,
+          "arrayBuffers": 209199,
+          "rss": 201457664,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7651688,
+          "external": 2909991,
+          "arrayBuffers": 209199,
+          "rss": 201506816,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 6659128,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 201523200,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 6660008,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 201523200,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 6664960,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 201621504,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 6519240,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 201719808,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "component",
+      "name": "newtype-list-future-stream",
+      "heapGrowth": 33960,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 7838784,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 212828160,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7876560,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 232046592,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7857592,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 250232832,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7868792,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 250331136,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7894384,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 250363904,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        },
+        {
+          "heapUsed": 7872744,
+          "external": 2907623,
+          "arrayBuffers": 209199,
+          "rss": 250413056,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          }
+        }
+      ]
+    },
+    {
+      "backend": "component",
+      "name": "using-normal-err-return-branch-recur-catch",
+      "heapGrowth": -40440,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 8891928,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232407040,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 3200,
+          "closed": 3200,
+          "collectedResources": 128
+        },
+        {
+          "heapUsed": 8901944,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232538112,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 4800,
+          "closed": 4800,
+          "collectedResources": 192
+        },
+        {
+          "heapUsed": 8899920,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232538112,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 6400,
+          "closed": 6400,
+          "collectedResources": 256
+        },
+        {
+          "heapUsed": 8898896,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232554496,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 8000,
+          "closed": 8000,
+          "collectedResources": 320
+        },
+        {
+          "heapUsed": 8843848,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232554496,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 9600,
+          "closed": 9600,
+          "collectedResources": 384
+        },
+        {
+          "heapUsed": 8851488,
+          "external": 2907631,
+          "arrayBuffers": 209207,
+          "rss": 232554496,
+          "live": 0,
+          "linearBytes": 65536,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0
+          },
+          "opened": 11200,
+          "closed": 11200,
+          "collectedResources": 448
+        }
+      ]
+    },
+    {
+      "backend": "component",
+      "name": "discarded-instances-with-held-history",
+      "modes": [
+        "return",
+        "branch",
+        "cancel",
+        "trap",
+        "destructor-failure",
+        "conversion-failure"
+      ],
+      "collectionPasses": 2,
+      "allCollected": true
+    }
+  ],
+  "rawGc": {
+    "cases": [
+      "return",
+      "br",
+      "br_if",
+      "result.do",
+      "owned normal",
+      "owned catch",
+      "owned closure"
+    ],
+    "checkedObjects": 448,
+    "collectionPasses": 1,
+    "allCollected": true,
+    "pinnedControl": true,
+    "clearedRootCollected": true
+  },
+  "artifacts": {
+    "raw": "656f84639796115b54ec541cef607231aa7902e97c1bf401a9e2fc531e4ac78c",
+    "core/values": {
+      "bindings.mjs": "97102a6c0d513f4157dba3d9129006e57a2db45899e0f3af697ab5ee9c017287",
+      "core.mjs": "61fb51e0f85a40b05011aa0128eec7d92510dc85ef47e5b75185b27299a6025f",
+      "core.wasm": "c1c9638d6600bf4698dac82877e18013d846a69e0e0b0f9126d1a93c21d8590d",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "e16f06bcc4fbf4a6bf60eacd6727d8812964f65fb545ab79bc19ba714b75cb7c",
+      "manifest.json": "f2fd532d23d9aa13d484176224f870a7891d621275acb1b7f12af291bab2a292",
+      "memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571"
+    },
+    "core/resources": {
+      "bindings.mjs": "35cd676565edb5cbbcdb217fc155411f87d2f6afb1bd28a61d19dabeff18a978",
+      "core.mjs": "61fb51e0f85a40b05011aa0128eec7d92510dc85ef47e5b75185b27299a6025f",
+      "core.wasm": "d00368b80b9d84be1e8c25c58d811668d084d7a5fcaa57a887147125459501bc",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "fbe295875a306f3d34d910a68622c47d6516268dcbc3c0aa0d60d0e71daa4727",
+      "manifest.json": "d518771c1d711047cc63f28e3aca966b72c4f760ee6a9364b371a5b0897917ee",
+      "memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571"
+    },
+    "component/values": {
+      "component.conditional-suspending-3-i32-to-i32.wasm": "35c29b68ea15d5863e2d217570c61a4dfeb5d252d51caae4e09a2c8626dc9e74",
+      "component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+      "component.core2.wasm": "50050179d5c0272c7d86dbbec5aef481247c76d2da210c652904f17010969298",
+      "component.js": "8aac68ee26e7bdaf6d684ab1a4eccf21b5dffdaf7f8bfd5e12ddb84bee3af321",
+      "component.wasm": "4d62c8b96bf9a4a867ef3c4cd89a3af7f09fe02487fef386f1e3695c0a03f93a",
+      "component.wasm.json": "772299a2dcba0a27d6b3e294b9ad79cf9d570cf1983f1cdc89f234ef04a44e50",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "48068b8669a70a0d7abb74720b4487f733aba33481fd4f01e219c7c3bd033ab5",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571"
+    },
+    "component/resources": {
+      "component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+      "component.core2.wasm": "b5995b2e5a3a655bd0f2f378b030784ea511ee318da1cee0ddcc445867a9bec6",
+      "component.js": "90e25b5120ae6c5838ae40ead54a3e72422431c02cbd46de2600db7f2e439c8a",
+      "component.wasm": "1ddbe6d9c4e4f24788cea1485686f4d21a8fe762746c8d13f7ce8b1cea884f68",
+      "component.wasm.json": "3cd8a96eabe8f1f5c76beaabf49281061c4f01df6785cb5b90a22f88e9d13d8f",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "e619212622b756c3db57cf26fd2b01dcd31947e9ce648ffb887546b530190c82",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571"
+    }
+  },
+  "inspectionArtifacts": {
+    "core/values": {
+      "bindings.mjs": "97102a6c0d513f4157dba3d9129006e57a2db45899e0f3af697ab5ee9c017287",
+      "core.mjs": "56be03c271f3522b8ef0b247e0e45d8ea9e49f43d73a842c211b76b5c91dff68",
+      "core.wasm": "c1c9638d6600bf4698dac82877e18013d846a69e0e0b0f9126d1a93c21d8590d",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "e16f06bcc4fbf4a6bf60eacd6727d8812964f65fb545ab79bc19ba714b75cb7c",
+      "manifest.json": "f2fd532d23d9aa13d484176224f870a7891d621275acb1b7f12af291bab2a292",
+      "memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "68c7abdb235ddc0b497675f06a6fbac5c815c0c5bef309e0c67cfd8b16049108"
+    },
+    "core/resources": {
+      "bindings.mjs": "35cd676565edb5cbbcdb217fc155411f87d2f6afb1bd28a61d19dabeff18a978",
+      "core.mjs": "56be03c271f3522b8ef0b247e0e45d8ea9e49f43d73a842c211b76b5c91dff68",
+      "core.wasm": "d00368b80b9d84be1e8c25c58d811668d084d7a5fcaa57a887147125459501bc",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "fbe295875a306f3d34d910a68622c47d6516268dcbc3c0aa0d60d0e71daa4727",
+      "manifest.json": "d518771c1d711047cc63f28e3aca966b72c4f760ee6a9364b371a5b0897917ee",
+      "memory.wasm": "ef876d7c2e44d56cf37ce29cfdd5332d6a463444c279943d7634cc4f81683528",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "68c7abdb235ddc0b497675f06a6fbac5c815c0c5bef309e0c67cfd8b16049108"
+    },
+    "component/values": {
+      "component.conditional-suspending-3-i32-to-i32.wasm": "35c29b68ea15d5863e2d217570c61a4dfeb5d252d51caae4e09a2c8626dc9e74",
+      "component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+      "component.core2.wasm": "50050179d5c0272c7d86dbbec5aef481247c76d2da210c652904f17010969298",
+      "component.js": "18ceb1dd34f583ccea4f23dfb3bb37255a186a307818387a417732ee67fb27af",
+      "component.wasm": "4d62c8b96bf9a4a867ef3c4cd89a3af7f09fe02487fef386f1e3695c0a03f93a",
+      "component.wasm.json": "772299a2dcba0a27d6b3e294b9ad79cf9d570cf1983f1cdc89f234ef04a44e50",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "48068b8669a70a0d7abb74720b4487f733aba33481fd4f01e219c7c3bd033ab5",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "68c7abdb235ddc0b497675f06a6fbac5c815c0c5bef309e0c67cfd8b16049108"
+    },
+    "component/resources": {
+      "component.core.wasm": "2cea5f5c9186b8c3be0f072d4cefc1ab7c86fc33f1cc4934aa78930395083cc0",
+      "component.core2.wasm": "b5995b2e5a3a655bd0f2f378b030784ea511ee318da1cee0ddcc445867a9bec6",
+      "component.js": "f17eecc54da29ea5ef361a41cebd547b25214ca02b9848926bafaceecc8817cb",
+      "component.wasm": "1ddbe6d9c4e4f24788cea1485686f4d21a8fe762746c8d13f7ce8b1cea884f68",
+      "component.wasm.json": "3cd8a96eabe8f1f5c76beaabf49281061c4f01df6785cb5b90a22f88e9d13d8f",
+      "host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "index.js": "e619212622b756c3db57cf26fd2b01dcd31947e9ce648ffb887546b530190c82",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "tasks.mjs": "68c7abdb235ddc0b497675f06a6fbac5c815c0c5bef309e0c67cfd8b16049108"
+    }
+  },
+  "sources": {
+    "Cargo.lock": "83529b177042b54cf44dd7b74cd8bf731171b4cffc452a039b3ce7e08c34f278",
+    "examples/resources/main.wlt": "b95f5f9efce16582029e7b80aa1bfc3d3fba02d2e685ef234cc9cefe69943fff",
+    "examples/resources/policy.json": "57838f54995f737013ec785c9f1447861d994828c83cf49ec5e09671ae91951d",
+    "pnpm-lock.yaml": "2ed45abf3642c3f79b9f1c883e46ecf4cf9615052619bff1f44c190c322fc26d",
+    "runtime/async-abi.test.mjs": "af639bdf920618a30cf3f149525f7352cfe53feb95ef740542fa0c1727b0160b",
+    "runtime/build-core.mjs": "11c0f6ef408fb107929f3065f96559a493a8fed9a05ff4d33e7abc429561d2cf",
+    "runtime/build.mjs": "8280eb74c27c464ac5c0dada5cb955709b2c13c3def0451ab2c6a77afd2f01c3",
+    "runtime/collections.test.mjs": "108195f4b97358c4db43f456818b4495981d9e8541984c068fef591c2a6168d8",
+    "runtime/core-expressions-memory.mjs": "28ef5e8e89ce5d7fa8bb160d9f5da7d142167ab1278f8661e988d70cdd87100e",
+    "runtime/core.mjs": "61fb51e0f85a40b05011aa0128eec7d92510dc85ef47e5b75185b27299a6025f",
+    "runtime/core.test.mjs": "0195f906397c0cc1ce37350ed27ae0b378ea09ca08dba15eb11d6fb6e5565322",
+    "runtime/e2e/async-abi.spec.mjs": "e5ee22cf2206dd7f9f09b093df50b5f9159e9d4364bf8a6c93beebdd46661bfd",
+    "runtime/e2e/collections.spec.mjs": "a65f510be027528a1682dc7ff5bf70283ab56a29a5a6cb8c46cce89e7d840da9",
+    "runtime/e2e/json-value.spec.mjs": "749adab2850c905a3a9d615ab44a6653a432680332d2bdca9c0a33df5b82d637",
+    "runtime/e2e/jspi.spec.mjs": "64a56e436c728dd3e28cf666c0820a7274a4655edbc29551c912293d79dcc4d8",
+    "runtime/e2e/language-core.spec.mjs": "474c76f1d94d73fe0221c18c5045211aecb49652c0f18718395e352b561e67d2",
+    "runtime/e2e/library.spec.mjs": "4964c88ec6d69af2d6c4f120b6f3819b6652c035ad37556c3ff25c3ba835fb2f",
+    "runtime/e2e/lists.spec.mjs": "235daf0e8c749eac28d1f6a8185880071b0183561ef98d245b7cac584a6d9a56",
+    "runtime/e2e/log-stats.spec.mjs": "407873c5ae6e77bfade86c15ad92f5294d2d96485794092994c3a97424e080d6",
+    "runtime/e2e/modules.spec.mjs": "47cbe0061fb71fe250bd313e607eaf85291ae45b00ecb1d9b75054fb4f00727a",
+    "runtime/e2e/numeric-lists.spec.mjs": "4705e97f6bb816f747839e7528c5c63a167e47e0f76e008aca3ed53b628eae55",
+    "runtime/e2e/resources.spec.mjs": "44090ec17ffbcc081862bb9c7970d2d11b18ceab8fb9e7152c83c77b7419d5af",
+    "runtime/e2e/simd-kernels.spec.mjs": "86e54cc52dd96abc7e2da02c25aa6c095526d98de9ef1b70add50e4169d2b535",
+    "runtime/e2e/simd.spec.mjs": "c51eb2031ca0590217bcbbf09aa9a89684d8eb8cf9f58635993cb20c3d567bdf",
+    "runtime/e2e/standard.spec.mjs": "683f88426939fffb2c071b159f0f6706180ee262826bee020d67500388b2e69e",
+    "runtime/e2e/stock-ledger.spec.mjs": "509f06cd625b00673125befb0164ec4bdae81f0762781110152825f35b0b809c",
+    "runtime/e2e/text-io.spec.mjs": "a0b6d5b5525ebefdf7dfefaa11fc67514c7437a0afc08dd63f5bd9408eb2c00a",
+    "runtime/e2e/wit-bindings.spec.mjs": "998342967d45f9624050dc36414a729be098225cc999e67dc5de13da0aa1106a",
+    "runtime/e2e/workflow.spec.mjs": "11bb366c875185bd79620d1d406d74eec53fdf49c7a5dc1b4e05d1e1b340ae8a",
+    "runtime/fuzz.test.mjs": "8d233aaf202d69d02b5f2f8d937a0f7c6d0a3d9ad706d98c224de8a5d8cab774",
+    "runtime/generics.test.mjs": "001c366b275b8248cb40bee66a8852019ab6ab7ebae63951bc096fbb3c3d4e02",
+    "runtime/grammar-eval-prepare.mjs": "f7dccc78bd310018aff8cc2b76381ac9e1fcd7a12766361af48b344f77a00421",
+    "runtime/grammar-eval-verify.mjs": "b4a6abd0f6d89c331d3df526c9b407742b21568f56ed5810caed36c7dfe2d4ff",
+    "runtime/host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+    "runtime/jco-compat.mjs": "550bf71a67d0375b23a0512b6c526f19a640e9824d3e18f6e634d3b98aef2a83",
+    "runtime/jco-lifetime.mjs": "2c5a16a0489dde1b76d493c937392354527e428e46823cfa5107d4f7677faa47",
+    "runtime/jco-scheduler.mjs": "81c129fd0ed8f950785b082c9ababdee91a90c044507231858c8787415c7fc2c",
+    "runtime/jco-scheduler.test.mjs": "a06cf2d250040ff87bd20e50934852931c9b5423d3cc19afdf41b8ce27f65833",
+    "runtime/json-value.test.mjs": "fe810a2659405da3f6a2bea9032762f8481b77a172d64dd71462d0e9cf4c23a3",
+    "runtime/language-core.test.mjs": "4c29f5b92bef7aa684835bb67af17f173afc3d9ae1796420ec766402e907c3fa",
+    "runtime/library.test.mjs": "b8877215f4360fd64b23a3ad1356429a54e5780dd4f521ae10a27ff290983d0e",
+    "runtime/list-bindings.test.mjs": "635aac39db51fa52a11deb83b95274e00ad1eb7f60d806ecc41a77ee8f039b33",
+    "runtime/lists.test.mjs": "7a9ea115b63fb0787824060ca316bf11800bbe1ed3dc8d5d9183efd815ae5085",
+    "runtime/log-stats-bench.mjs": "2c2de850b0dfc966a18aa8c857b96783cfd28e1bd693325451ecc3d76c7ef4c7",
+    "runtime/log-stats-profile.mjs": "1f11bbd2aa4bcea977ea92fd688da78e0c94bba5845db869f34f4135f9c45772",
+    "runtime/log-stats.test.mjs": "69f30e194816ebe07f25872c5e1801a7c8dae2d186991bb5c32be2da1da15b1e",
+    "runtime/memory-audit.mjs": "21b90720012e063d324b3187fbc931c799099ab03e731dcdf8317358f3bcd7b9",
+    "runtime/memory.test.mjs": "8364317e6124344c85494c3a095b766ed5a15efee5b2a2160611af495c63514b",
+    "runtime/modules.test.mjs": "a8d1770cb8f8533a966ab433b45587e4f69ff3eab643b510b21fa1485782f01d",
+    "runtime/node-io.mjs": "58a50b4fa2c681517a25f8a190a1b8d1ef3040489610d82295b068bef0dab18c",
+    "runtime/node-io.test.mjs": "52dbec0ae085e76da28788c75fa5e343bd5f4b60a6379d36bbcb66cd96117738",
+    "runtime/numeric-lists.test.mjs": "a46039592397e241b638207e00d870f0b9befc6438ae5b67a7dd4c4588bc56bc",
+    "runtime/profile-node.mjs": "d87946effb97299b468bd0b0b333009f4490d97360bac90d811466f3a4623cd2",
+    "runtime/profile-summary.mjs": "d07c01cdbbc40ae9bc84a7a7a3b2378eb011415c892eb66538129a5d047ce57d",
+    "runtime/profile-summary.test.mjs": "89eda66260aaf33655dea8311b378734d87fb559932e9c27bcc3de34b0791b9f",
+    "runtime/profile.mjs": "96b81d9424f3c8bb6a95827a8efb169e2c6ae4286ba87160ad73dde4557d3179",
+    "runtime/resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+    "runtime/resources.test.mjs": "8ff0ce48a7ac46a13466a1566bd8cba061c92001a8d699e082eb6b077f2123b5",
+    "runtime/retention.test.mjs": "39d4c986b161a90fa2c00ae421e05fb3be19fb09d58d927240d03bf883b728d1",
+    "runtime/run.mjs": "b48a00a4d604265795850da9202b0783a94c36d279ca1039cc192db4e38e0ab6",
+    "runtime/runtime.test.mjs": "2aed6cd4862f0127f27f5c7889e3a58b7a95a070407d0d54ec9dc64177f8a124",
+    "runtime/serve.mjs": "44a2d078d8c5ebd60330df17b8d28d03eacdce7979f59de2ddec67f44a4ccaac",
+    "runtime/simd-kernels-bench.mjs": "cf303ab7f6fd6276f807f294a2ffbac6a1ddc5fce91d730d61d916457f94f447",
+    "runtime/simd-kernels-bench.test.mjs": "8bc21900ca7703229d84f73eb61f87252ad17227c180cadbd77781bfc61d4445",
+    "runtime/simd-kernels-compare.mjs": "f0b1ad7f2af79b44d7b6730baad26d6215ed0c5b2cdecc0d82d7646924d91e81",
+    "runtime/simd-kernels.test.mjs": "a93832f29643217e0dc3f47b07460340c5271556180692ca6d8130e9dd820139",
+    "runtime/simd-kernels/runner.mjs": "4b2c5efbe1ae8ff30f61e2328704487b5834e791179ed41f946791c2ecefe35f",
+    "runtime/simd-kernels/workloads.mjs": "18180c1cd7ca6618cd7901ecb13f336a09569e824d223fa9c20c53f15d30330d",
+    "runtime/simd.test.mjs": "d284ec9a1e4295d4533a28df372c6b10c0552eb5f3e5cfe070469226ceead644",
+    "runtime/standard.test.mjs": "334e4a98420c67c20d1401f0ce317067251cbd7cb70a1f47e5969c0692162461",
+    "runtime/stdlib-bench.mjs": "10b025d405b2de6094f933b46da4546c20b509acba68eac20582cf095ff477a3",
+    "runtime/stock-ledger-audit.mjs": "a6c026e351a11600a69d57dcc9cc7161d04a2dabd55a3bbe1b5efe43e84cbda9",
+    "runtime/stock-ledger.test.mjs": "bc69675745d5464482e81eb162f2cb137413a9d4d3c482f565e279b7c02827c5",
+    "runtime/tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571",
+    "runtime/tasks.test.mjs": "75dc5b47f2205be3429c67cfad7419a0fb42f1b7cfc96b84aa82d6847cf349fb",
+    "runtime/testing/memory.mjs": "6b6f9fe8055423a758c3e213a61d121f8c52e665e806ad83b9dc183c3a94296f",
+    "runtime/text-cli.mjs": "5656a00ee8f729e2d899983c487bdb5ba393f71066a6f5a62a70b3f3237d1833",
+    "runtime/text-io.mjs": "471f61e9a30d6d8b227a0dd21e6328bac66aaf8a28f618e9902246e8e1b6d94f",
+    "runtime/text-io.test.mjs": "c0592ec42670d90224ff7cf65ec57fb15fc582645a1b6e541f6b28a52e867825",
+    "runtime/text-program.test.mjs": "866fff83555070c140c17d84a65c5df42e452a7512b156115d4b7722d78d0dc2",
+    "runtime/wit-bindings.test.mjs": "65ced8863b9bd60db76f2b7a1246a20b1c1fb7dcdc8372514b5d9571cee9bc37",
+    "runtime/workflow-bench.mjs": "b301f853cb8581b2830d4c4b62af81a25e8176a92972ca78cf2685e1e0db5b69",
+    "runtime/workflow-oracle.mjs": "2de87e61e258970c38a834ab835e625c6e7deb3c454f27710de3f87decaae56a",
+    "runtime/workflow.test.mjs": "a38296c05b7879e730d858fb4e9cae73fd454f62abefadb8bbb09b602b23a69a",
+    "src/aliases.rs": "1a6cdb795c48305a0584e5b8a289c7ef27d6304d3abdefc6bf02b03c7be647bd",
+    "src/analysis.rs": "ab6f9d4fbd708992ff540a553ad5f9c7f05258178a8c7c9c9f74446a49731114",
+    "src/bindings.rs": "44d5e445067f5087f382e97678c6b20d323b0f69533f86017927adf27d847f1a",
+    "src/bounds.rs": "c84884ae096d7bc25500d15e56bbbeaee1da6f8bfe35eb8bec6e82f9a42e3915",
+    "src/buffers.rs": "eea60b428103d43bf76ebb941ad9116724b6c25ed0192fe656e8e38be72936c9",
+    "src/cli_inspection.rs": "8271c2f22c2cc7e37b67d03f335c6be3d5286cdd81b843baae6973f1d206301f",
+    "src/component-memory.wat": "6b1dbed3b344dd972d3e580ae0cba5bf29d58c1b29fc03f99c506dd106ff8ab8",
+    "src/component.rs": "6001816b19ce12233539aee17a177301b0b21e0aaa772323ca8b5d4a37ef3923",
+    "src/component/abi.rs": "ffa0b292ede885fcb190d59ca8870762fd00656024cf86b316eaae83ef4feaad",
+    "src/component/core_js.rs": "32c3cf1cee33cf1b642e7d807c628d0cd9a63387e7b72b848da9b9386fdc708e",
+    "src/component/core_js/values.rs": "3fe9d26c99838a439e3ca011396e5b81af9e2af1af1bdc18fcbd0d8881623177",
+    "src/component/endpoints.rs": "bc54642a3c6658363a2fc2e78414f1ac416051246d465f5da1a41aaec998e903",
+    "src/component/functions.rs": "b89a46aeec746601314d0c74ee174858719a00b21298e8a34997ca941b8eaa28",
+    "src/component/imports.rs": "0cb29be8ee199547bcdaa9ea41f10f5c598257a73bcd2bf126251ad317360b43",
+    "src/component/lists.rs": "408cc0b78c8a3921bd3d29548d9e3d1b8f7b9c3c8328c01208e504347f42b8f5",
+    "src/component/profiling.rs": "d21076721766286680d0a89a6406f63531e05c5a6a70ec47b52cfecb2493a743",
+    "src/component/values.rs": "9442d60b36cb17406ab1a54981fc09226e273904cc361183af072186817dedce",
+    "src/diagnostic.rs": "29ad4c627f24e47ce3c201e0b906baf773b296e7fe730555d2fd5ba9c6130021",
+    "src/effects.rs": "45f75d6eb8c601ee29b0acbd77c42b010c3835c21773b188ef2b2b9c2831db74",
+    "src/emit.rs": "dc7ec085cde99c2fb980aa194f6c035775a8130b34d8920dd57fc043cca1a0d7",
+    "src/flow.rs": "14339bb538296ae223453e0f94da9bedbec4ca5c64d267bc0ec82c182e61ec8b",
+    "src/format.rs": "25c5cfb49e153d97a22072688443e0fb7d40f097297fc3a31ea94d040bf9bb2d",
+    "src/frontend.rs": "6348ddfee0aedd327cdc185e040c9d5ba4591ddbf6eb6dd97ffa8c0877d0f530",
+    "src/generics.rs": "0464b3893d4ddaa560cd8368a8527bd6b1c6444c4532288a2637ee546a21d593",
+    "src/inspect.rs": "ad7bc063805c8af58bd40ec99cb48b407a8e628d56a79c1d602922bf13d88ac3",
+    "src/ir.rs": "7d6131951d23bb94d9d1aaf03adebe521bc5be4420edf3d4ded32cb8251da2e4",
+    "src/lib.rs": "8eeeb83c08f07c3529761da82a8695d0a6bcbe95f6be407964519249adfc5e70",
+    "src/link.rs": "36e8c269d0a1479aafec44246258a0a8b7921dd32279e17ee83e114ff09bc0e4",
+    "src/lists.rs": "1e3cb2f8b8b26a2218ab967cf3cf2cf452ddde04803ad8c4054846bf02eb2f82",
+    "src/main.rs": "f20c4059d6f80a0929e18732eb3e357f4e6f63eb2a3b52911ef0139c018c5c69",
+    "src/modules.rs": "a02f6e230c4048ca8455a65a9046529aedb3e7ad2dfd1d2d0e21fdcad34c969d",
+    "src/native.rs": "5561af057e69aff58e2dc740d2f2b7e1670e63df0e86c1a8669b3647fca2a788",
+    "src/native_macros.rs": "5637f3b1593a2ddd402da30e1fc5d623cd2f08ffff4bde24859134b69ccf47bb",
+    "src/newtypes.rs": "34e0a1b3f0682b3a3fdfc6691b5a88c12fa3bf453ab491f65d62f3238b2324d8",
+    "src/optimize.rs": "2c0c991e46b1f926bb8aff052443b96664e308c13a66d7b4bf20d4a2638d3ac5",
+    "src/ownership.rs": "6e7c091b8345dd6f1e6677a0d2a9f01821a094effc99667a97bded2e943d5d38",
+    "src/ownership_graph.rs": "560efa6135cc884c6c6eec87f880c9ddabe0c5d9cb38ac203fe925c86522981a",
+    "src/proof.rs": "c44ca7036b1233c11061b049c1b8074d22f2eb3c156e430ef8b65c053d79f6d4",
+    "src/regions.rs": "4662003a171886dba94dd1063fe11b4cd52d53882935b694fdb7008de7e94173",
+    "src/resources.rs": "8c0ddc24e714c7e1085e6e05fc2fbe74f223214176b0ee0bd22c2f9b91e7b01c",
+    "src/runner.rs": "fe6adfc8d312d5a63f779dea5d32052c9b2f0154dcc45ff6ec030cf4c822cb20",
+    "src/scoped.rs": "fb6dd86deb5d82892e1b9a05195e1687a13c06c5f882a088c996cdc30dc1e923",
+    "src/sexpr.rs": "18691641d6e41f88bfdf297facdbb300122107aeadaca9ec8cf3c07fe4260ec3",
+    "src/simd.rs": "f5013d97821da083f90dde890f3751f2924cdd32c152f64a9f4c2a4dca52d2f3",
+    "src/source.rs": "07be777071638287b258c0cfabc9939afc7e651e422d092339f3f3f45a9b8daf",
+    "src/standard.rs": "31afc7bcd6e8197807a2ef45173cde84e4b346feab98b39a147b89cdbfcf1a0f",
+    "src/standard_sources.rs": "d82825f30d115a483da01561f5bb5f1584747805a7d927789207411bd8b02d67",
+    "src/syntax.rs": "8e49f2069267765407fa161bdfd2f6b714f881f760d7fb7487157b7fbbb8f023",
+    "src/type_syntax.rs": "a1bb8e3405c796e6250d1f6bad7d964d729c8d58b84109ac0ed1cc62f78da631",
+    "src/typing.rs": "7f08a3ed79521ad313b2e1d36dc5272b80f83d20b7ff9eb3185beacb17b3f723",
+    "src/verified.rs": "517aae360bae080f8199298fa574f59a000cd39c422025cdfbfcb1692dd68d1b",
+    "src/wit.rs": "d40de42e8d4547db642856ed7abf646b51dc7f4afa2bf99b4ba0fd0e8f93f9fb",
+    "src/wit_bindgen.rs": "0cf550159ce5b8e53fc7972f755557fad96debd4994eaa01ada9d888c19c8615",
+    "stdlib/README.md": "bde9b10103f6007fe30b3cfefd98ffd68943c74a561142106b325cdd42f8e38d",
+    "stdlib/builder.wlt": "57a805e034f4616bf814fd9e0cb0c7e1af581ea25c025662131f70db85b986bd",
+    "stdlib/bytes.wlt": "73b3f9ffaf67266c2173050a6bada892d64a2220def1d1bdc76dc0b5b675003f",
+    "stdlib/dict.wlt": "76b41feb3b3f7801fac10f2db9bce9ba26b9ce28bf6bd14c9a381e3f0e1bf00e",
+    "stdlib/json-value.wlt": "dde715a93772476eca2d04af3e87ff754523da8861b9d9a454a1b0f5b45b53bc",
+    "stdlib/json.wlt": "62155c7cf2523495e3ca48f4600308ed5a47e4df5622a866ad16a1951bca9c83",
+    "stdlib/list-builder.wlt": "59ed266ab100ad83d4a079b62f4106cb9fe58de105d6ff8124e5fdcfbcbdcbf1",
+    "stdlib/list.wlt": "1d686144250a535846f747c2b8f478de53d5aab8fb17ab77044509f665931b38",
+    "stdlib/text.wlt": "857d650017713031ad5a8314bbfa941dbc7acd49ef4461c03664194edd3e4905",
+    "stdlib/types.wlt": "358d6e63686e9a0be8d83c5435c3b6417a49c21b57a1024c1bc749716bda5bd4",
+    "tests/component-fixtures/core-expressions-memory.wlt": "2ba3b5b5fff3104a39231fc38ffb9e4aacaeb2c4375c2bc28f89d9925e9a96fe",
+    "tests/gc-fixtures/core-expressions.wlt": "3bad4d9d1836be62663c2f9e5e7f2ffcadc38dbafa96058fd278d758d5f3a5f5"
+  }
+}

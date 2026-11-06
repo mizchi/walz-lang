@@ -53,6 +53,7 @@ impl NumType {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub enum Type {
     Num(NumType),
+    Newtype(TypeId),
     Ref {
         ty: TypeId,
         nullable: bool,
@@ -76,6 +77,7 @@ impl Type {
     pub(crate) fn format_with(&self, name: impl FnOnce(TypeId) -> String) -> String {
         match self {
             Self::Num(ty) => ty.wat().to_owned(),
+            Self::Newtype(ty) => name(*ty),
             Self::Ref { ty, nullable } => format!(
                 "(ref {}{})",
                 if *nullable { "null " } else { "" },
@@ -105,6 +107,8 @@ macro_rules! numeric_ops {
         #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
         pub enum NumericOp { $($variant),* }
         impl NumericOp {
+            #[cfg(test)]
+            const ALL: &[Self] = &[$(Self::$variant),*];
             pub fn parse(name: &str) -> Option<Self> {
                 Some(match name { $($name => Self::$variant,)* _ => return None })
             }
@@ -149,6 +153,63 @@ numeric_ops! {
     I64ExtendI32S => ("i64.extend_i32_s", I32, I64, 1, false),
     I64ExtendI32U => ("i64.extend_i32_u", I32, I64, 1, false),
     I32WrapI64 => ("i32.wrap_i64", I64, I32, 1, false),
+    I32Extend8S => ("i32.extend8_s", I32, I32, 1, false),
+    I32Extend16S => ("i32.extend16_s", I32, I32, 1, false),
+    I32Rotl => ("i32.rotl", I32, I32, 2, false),
+    I32Rotr => ("i32.rotr", I32, I32, 2, false),
+    I32TruncF32S => ("i32.trunc_f32_s", F32, I32, 1, true),
+    I32TruncSatF32S => ("i32.trunc_sat_f32_s", F32, I32, 1, false),
+    I32TruncF32U => ("i32.trunc_f32_u", F32, I32, 1, true),
+    I32TruncSatF32U => ("i32.trunc_sat_f32_u", F32, I32, 1, false),
+    I32TruncF64S => ("i32.trunc_f64_s", F64, I32, 1, true),
+    I32TruncSatF64S => ("i32.trunc_sat_f64_s", F64, I32, 1, false),
+    I32TruncF64U => ("i32.trunc_f64_u", F64, I32, 1, true),
+    I32TruncSatF64U => ("i32.trunc_sat_f64_u", F64, I32, 1, false),
+    I64Extend8S => ("i64.extend8_s", I64, I64, 1, false),
+    I64Extend16S => ("i64.extend16_s", I64, I64, 1, false),
+    I64Extend32S => ("i64.extend32_s", I64, I64, 1, false),
+    I64Rotl => ("i64.rotl", I64, I64, 2, false),
+    I64Rotr => ("i64.rotr", I64, I64, 2, false),
+    I64TruncF32S => ("i64.trunc_f32_s", F32, I64, 1, true),
+    I64TruncSatF32S => ("i64.trunc_sat_f32_s", F32, I64, 1, false),
+    I64TruncF32U => ("i64.trunc_f32_u", F32, I64, 1, true),
+    I64TruncSatF32U => ("i64.trunc_sat_f32_u", F32, I64, 1, false),
+    I64TruncF64S => ("i64.trunc_f64_s", F64, I64, 1, true),
+    I64TruncSatF64S => ("i64.trunc_sat_f64_s", F64, I64, 1, false),
+    I64TruncF64U => ("i64.trunc_f64_u", F64, I64, 1, true),
+    I64TruncSatF64U => ("i64.trunc_sat_f64_u", F64, I64, 1, false),
+    F32ConvertI32S => ("f32.convert_i32_s", I32, F32, 1, false),
+    F32ConvertI32U => ("f32.convert_i32_u", I32, F32, 1, false),
+    F32ConvertI64S => ("f32.convert_i64_s", I64, F32, 1, false),
+    F32ConvertI64U => ("f32.convert_i64_u", I64, F32, 1, false),
+    F32Abs => ("f32.abs", F32, F32, 1, false),
+    F32Ceil => ("f32.ceil", F32, F32, 1, false),
+    F32Floor => ("f32.floor", F32, F32, 1, false),
+    F32Trunc => ("f32.trunc", F32, F32, 1, false),
+    F32Nearest => ("f32.nearest", F32, F32, 1, false),
+    F32Sqrt => ("f32.sqrt", F32, F32, 1, false),
+    F32Min => ("f32.min", F32, F32, 2, false),
+    F32Max => ("f32.max", F32, F32, 2, false),
+    F32Copysign => ("f32.copysign", F32, F32, 2, false),
+    F64ConvertI32S => ("f64.convert_i32_s", I32, F64, 1, false),
+    F64ConvertI32U => ("f64.convert_i32_u", I32, F64, 1, false),
+    F64ConvertI64S => ("f64.convert_i64_s", I64, F64, 1, false),
+    F64ConvertI64U => ("f64.convert_i64_u", I64, F64, 1, false),
+    F64Abs => ("f64.abs", F64, F64, 1, false),
+    F64Ceil => ("f64.ceil", F64, F64, 1, false),
+    F64Floor => ("f64.floor", F64, F64, 1, false),
+    F64Trunc => ("f64.trunc", F64, F64, 1, false),
+    F64Nearest => ("f64.nearest", F64, F64, 1, false),
+    F64Sqrt => ("f64.sqrt", F64, F64, 1, false),
+    F64Min => ("f64.min", F64, F64, 2, false),
+    F64Max => ("f64.max", F64, F64, 2, false),
+    F64Copysign => ("f64.copysign", F64, F64, 2, false),
+    I32ReinterpretF32 => ("i32.reinterpret_f32", F32, I32, 1, false),
+    I64ReinterpretF64 => ("i64.reinterpret_f64", F64, I64, 1, false),
+    F32ReinterpretI32 => ("f32.reinterpret_i32", I32, F32, 1, false),
+    F64ReinterpretI64 => ("f64.reinterpret_i64", I64, F64, 1, false),
+    F32DemoteF64 => ("f32.demote_f64", F64, F32, 1, false),
+    F64PromoteF32 => ("f64.promote_f32", F32, F64, 1, false),
     F32Add => ("f32.add", F32, F32, 2, false), F64Add => ("f64.add", F64, F64, 2, false),
     F32Sub => ("f32.sub", F32, F32, 2, false), F64Sub => ("f64.sub", F64, F64, 2, false),
     F32Mul => ("f32.mul", F32, F32, 2, false), F64Mul => ("f64.mul", F64, F64, 2, false),
@@ -317,6 +378,7 @@ impl DeliveryOp {
 
 #[derive(Clone, Debug, Serialize)]
 pub enum TypeKind {
+    Newtype(NumType),
     Resource {
         kind: String,
         close: FunctionId,
@@ -445,13 +507,16 @@ impl Module {
     /// Stable semantic names used by trusted ABI policy contracts.
     pub(crate) fn shape_name(&self, ty: &Type) -> String {
         ty.format_with(|id| match &self.types[id.0].kind {
+            TypeKind::Newtype(n) => n.wat().into(),
             TypeKind::Value(value) => value.type_name(|ty| self.shape_name(ty)),
             _ => self.types[id.0].name.clone(),
         })
     }
 
     pub(crate) fn instance_type(&self, ty: TypeId) -> Type {
-        if matches!(self.types[ty.0].kind, TypeKind::Value(_)) {
+        if matches!(self.types[ty.0].kind, TypeKind::Newtype(_)) {
+            Type::Newtype(ty)
+        } else if matches!(self.types[ty.0].kind, TypeKind::Value(_)) {
             Type::Value(ty)
         } else {
             Type::Ref {
@@ -519,6 +584,23 @@ pub enum ListOp {
 
 #[derive(Clone, Debug, Serialize)]
 pub enum ExprKind {
+    Label {
+        label: LoopId,
+        body: Box<Expr>,
+    },
+    Branch {
+        label: LoopId,
+        values: Vec<Expr>,
+        condition: Option<Box<Expr>>,
+        bindings: Vec<LocalId>,
+        is_loop: bool,
+    },
+    Return(Option<Box<Expr>>),
+    Newtype {
+        ty: TypeId,
+        value: Box<Expr>,
+        unwrap: bool,
+    },
     List {
         op: ListOp,
         list: TypeId,
@@ -653,6 +735,14 @@ impl Expr {
     pub fn children(&self) -> Vec<&Expr> {
         use ExprKind::*;
         match &self.kind {
+            Label { body, .. } => vec![body],
+            Branch {
+                values, condition, ..
+            } => values
+                .iter()
+                .chain(condition.iter().map(Box::as_ref))
+                .collect(),
+            Return(value) => value.iter().map(Box::as_ref).collect(),
             List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
@@ -683,6 +773,7 @@ impl Expr {
                 .collect(),
             Recur { assignments, .. } => assignments.iter().map(|(_, e)| e).collect(),
             StructGet { object, .. }
+            | Newtype { value: object, .. }
             | ResourceNew { handle: object, .. }
             | ResourceHandle(object)
             | ResourceClose(object)
@@ -709,6 +800,14 @@ impl Expr {
     pub fn children_mut(&mut self) -> Vec<&mut Expr> {
         use ExprKind::*;
         match &mut self.kind {
+            Label { body, .. } => vec![body],
+            Branch {
+                values, condition, ..
+            } => values
+                .iter_mut()
+                .chain(condition.iter_mut().map(Box::as_mut))
+                .collect(),
+            Return(value) => value.iter_mut().map(Box::as_mut).collect(),
             List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
@@ -739,6 +838,7 @@ impl Expr {
                 .collect(),
             Recur { assignments, .. } => assignments.iter_mut().map(|(_, e)| e).collect(),
             StructGet { object, .. }
+            | Newtype { value: object, .. }
             | ResourceNew { handle: object, .. }
             | ResourceHandle(object)
             | ResourceClose(object)
@@ -760,6 +860,32 @@ impl Expr {
             } => vec![object, index, value],
             RefEq(a, b) => vec![a, b],
             Data(_) | Const { .. } | Local(_) | Move(_) | Null(_) | Nop | Unreachable => vec![],
+        }
+    }
+}
+
+#[cfg(test)]
+mod numeric_tests {
+    use super::*;
+    #[test]
+    fn declared_numeric_signatures_match_wasm_validation() {
+        for op in NumericOp::ALL {
+            let s = op.signature();
+            let params = (0..s.arity)
+                .map(|i| format!("(param $p{i} {})", s.input.wat()))
+                .collect::<String>();
+            let args = (0..s.arity)
+                .map(|i| format!(" (local.get $p{i})"))
+                .collect::<String>();
+            let text = format!(
+                "(module (func {params} (result {}) ({}{args})))",
+                s.output.wat(),
+                s.name
+            );
+            let wasm = wat::parse_str(&text).unwrap();
+            wasmparser::Validator::new()
+                .validate_all(&wasm)
+                .unwrap_or_else(|e| panic!("{}: {e}", s.name));
         }
     }
 }

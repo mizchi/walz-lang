@@ -1,6 +1,7 @@
 (module
   (%import "wlt:std"
     (type $option)
+    (type $pair)
     (type $result)
     (type $text))
   (%import "../../stdlib/json-value.wlt"
@@ -35,6 +36,23 @@
       (call $json-value.parse (local.get $source))
       (case ok ($value) (%result.ok $text i32 (call $json-value.stringify (local.get $value))))
       (case err ($offset) (%result.err $text i32 (local.get $offset)))))
+  ;; Observe the old value after creating another value sharing its list tail.
+  (func $prepend-snapshot (export "prepend-snapshot") (param $source $text)
+    (result (%inst $result (%inst $pair $text $text) i32)) (%effects reads writes allocates)
+    (%result.do
+      ($original (call $json-value.parse (local.get $source)))
+      ($updated (call $json-value.prepend (local.get $original) (call $json-value.null)))
+      (%result.ok (%pair.new
+        (call $json-value.stringify (local.get $original))
+        (call $json-value.stringify (local.get $updated))))))
+  (func $set-snapshot (export "set-snapshot") (param $source $text)
+    (result (%inst $result (%inst $pair $text $text) i32)) (%effects reads writes allocates)
+    (%result.do
+      ($original (call $json-value.parse (local.get $source)))
+      ($updated (call $json-value.set (local.get $original) (%text.lit "x") (call $json-value.null)))
+      (%result.ok (%pair.new
+        (call $json-value.stringify (local.get $original))
+        (call $json-value.stringify (local.get $updated))))))
   (func $get (export "get") (param $source $text) (param $key $text)
     (result (%inst $option $text)) (%effects reads writes allocates)
     (%match (%inst $result (ref $json-value.Value) i32) (result (%inst $option $text))

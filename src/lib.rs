@@ -19,8 +19,10 @@ mod lists;
 mod modules;
 pub mod native;
 mod native_macros;
+mod newtypes;
 mod optimize;
 pub mod ownership;
+mod ownership_graph;
 pub mod proof;
 pub mod regions;
 mod resources;
@@ -253,7 +255,7 @@ fn emit_module(ir: ir::Module, optimize: bool) -> Result<Compilation, Error> {
     } else {
         ir.clone()
     };
-    let wat = emit::emit(&linked);
+    let wat = emit::emit(&newtypes::lower(&linked));
     let wasm =
         wat::parse_str(&wat).map_err(|error| Error::message(format!("generated WAT: {error}")))?;
     wasmparser::Validator::new()

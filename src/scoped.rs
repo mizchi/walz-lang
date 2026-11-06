@@ -45,7 +45,48 @@ impl Expander {
         for child in items.iter_mut().skip(1) {
             self.walk(source, child)?;
         }
-        if head == "result.let" {
+        if head == "result.do" {
+            if items.len() < 3 {
+                return Err(Error::at(
+                    source,
+                    n.span,
+                    "expected (%result.do ($name result-expr)... final-result); use (() result-expr) for unit",
+                ));
+            }
+            let mut body = items.last().unwrap().clone();
+            for binding in items[1..items.len() - 1].iter().rev() {
+                let Some([name, subject]) = binding.list() else {
+                    return Err(Error::at(
+                        source,
+                        binding.span,
+                        "expected ($name result-expr) or (() result-expr)",
+                    ));
+                };
+                let names = if name.list().is_some_and(|names| names.is_empty()) {
+                    name.clone()
+                } else if name.atom().is_some_and(|name| name.starts_with('$')) {
+                    Sexp {
+                        kind: Kind::List(vec![name.clone()]),
+                        span: name.span,
+                    }
+                } else {
+                    return Err(Error::at(
+                        source,
+                        name.span,
+                        "result.do binding must be $name or ()",
+                    ));
+                };
+                body = self.template(
+                    "(result.let @names @subject @body)",
+                    n.span,
+                    &[("@names", &names), ("@subject", subject), ("@body", &body)],
+                )?;
+                // Check incrementally so a flat source cannot construct an
+                // unbounded nested tree before the final expansion limit.
+                limit(source, &body)?;
+            }
+            *n = body;
+        } else if head == "result.let" {
             // The checker supplies omitted types from its local context.
             if items.len() == 4 {
                 return Ok(());

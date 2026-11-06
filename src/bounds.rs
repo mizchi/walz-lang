@@ -241,6 +241,7 @@ fn shared(module: &Module, kinds: &Kinds, start: &Type) -> bool {
             continue;
         }
         match &module.types[id.0].kind {
+            TypeKind::Newtype(_) => {}
             TypeKind::Resource { .. } => return false,
             TypeKind::Struct(fields)
             | TypeKind::Closure {

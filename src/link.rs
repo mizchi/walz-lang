@@ -11,12 +11,28 @@ enum Item {
 }
 
 fn add_type(ty: &Type, pending: &mut Vec<Item>) {
-    if let Type::Ref { ty, .. } | Type::Value(ty) | Type::Resource(ty) | Type::Borrow(ty) = ty {
+    if let Type::Ref { ty, .. }
+    | Type::Value(ty)
+    | Type::Newtype(ty)
+    | Type::Resource(ty)
+    | Type::Borrow(ty) = ty
+    {
         pending.push(Item::Type(ty.0));
     }
 }
 
 pub(crate) fn project(module: &Module) -> Module {
+    project_roots(module, false)
+}
+
+/// Merge representation-equivalent value types after every reference has been
+/// canonicalized. Preserve all functions, tags and distinct type declarations,
+/// including when optimization/DCE was disabled by the caller.
+pub(crate) fn coalesce_values(module: &Module) -> Module {
+    project_roots(module, true)
+}
+
+fn project_roots(module: &Module, preserve: bool) -> Module {
     let mut pending = module
         .functions
         .iter()
@@ -25,6 +41,19 @@ pub(crate) fn project(module: &Module) -> Module {
         .map(|(i, _)| Item::Function(i))
         .collect::<Vec<_>>();
     pending.extend(module.laws.iter().map(|law| Item::Function(law.function.0)));
+    if preserve {
+        pending.extend((0..module.functions.len()).map(Item::Function));
+        pending.extend((0..module.tags.len()).map(Item::Tag));
+        let mut shapes = BTreeSet::new();
+        for (i, t) in module.types.iter().enumerate() {
+            if let TypeKind::Value(v) = &t.kind
+                && !shapes.insert(v.clone())
+            {
+                continue;
+            }
+            pending.push(Item::Type(i));
+        }
+    }
     let mut live = BTreeSet::new();
     while let Some(item) = pending.pop() {
         if !live.insert(item) {
@@ -84,7 +113,8 @@ pub(crate) fn project(module: &Module) -> Module {
                                 .filter_map(|h| h.tag)
                                 .map(|id| Item::Tag(id.0)),
                         ),
-                        ResourceNew { ty, .. }
+                        Newtype { ty, .. }
+                        | ResourceNew { ty, .. }
                         | VariantNew { ty, .. }
                         | Match { ty, .. }
                         | StructNew { ty, .. }
@@ -102,6 +132,7 @@ pub(crate) fn project(module: &Module) -> Module {
             }
             Item::Type(i) => {
                 match &module.types[i].kind {
+                    TypeKind::Newtype(_) => {}
                     TypeKind::Resource { close, .. } => pending.push(Item::Function(close.0)),
                     TypeKind::Struct(fields) => {
                         for f in fields {
@@ -219,6 +250,7 @@ pub(crate) fn project(module: &Module) -> Module {
         .filter(|(i, _)| live.contains(&Item::Type(*i)))
         .map(|(_, mut t)| {
             match &mut t.kind {
+                TypeKind::Newtype(_) => {}
                 TypeKind::Struct(fields) => {
                     for f in fields {
                         ids.ty(&mut f.ty);
@@ -290,7 +322,12 @@ impl Ids {
         id.0 = self.types[id.0];
     }
     fn ty(&self, ty: &mut Type) {
-        if let Type::Ref { ty, .. } | Type::Value(ty) | Type::Resource(ty) | Type::Borrow(ty) = ty {
+        if let Type::Ref { ty, .. }
+        | Type::Value(ty)
+        | Type::Newtype(ty)
+        | Type::Resource(ty)
+        | Type::Borrow(ty) = ty
+        {
             self.type_id(ty);
         }
     }
@@ -321,6 +358,7 @@ impl Ids {
                 }
             }
             ResourceNew { ty, .. }
+            | Newtype { ty, .. }
             | VariantNew { ty, .. }
             | Match { ty, .. }
             | StructNew { ty, .. }

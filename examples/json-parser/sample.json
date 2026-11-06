@@ -1,0 +1,6 @@
+{
+  "answer": 42,
+  "items": [null, true, "日本語\uD83E\uDD80"],
+  "large": 9007199254740993,
+  "decimal": 1.2300e-2
+}

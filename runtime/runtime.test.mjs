@@ -226,6 +226,9 @@ test(
       assert.deepEqual(output, new Uint8Array([0, 255, 128, 42]));
       assert.deepEqual(api.slice(output, 1, 2), new Uint8Array([255, 128]));
       assert.deepEqual(api.slice(output, 4, 0), new Uint8Array());
+      for (let start = 0; start <= output.length; start++)
+        for (let length = 0; length <= output.length - start; length++)
+          assert.deepEqual(api.slice(output, start, length), output.slice(start, start + length));
       assert.equal(api.get(output, 1), 255);
       assert.equal(await api.ready("🦀"), "🦀");
       assert.equal(
@@ -386,6 +389,8 @@ test(
         (api) => api.slice(output, 3, 2),
         (api) => api.slice(output, -1, 0),
         (api) => api.slice(output, 1, 0x7fffffff),
+        (api) => api.slice(output, 0, -1),
+        (api) => api.slice(output, output.length + 1, 0),
       ]) {
         const { api: bad } = await runtime.instantiate();
         assert.throws(() => invoke(bad));

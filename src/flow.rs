@@ -481,6 +481,52 @@ impl Visitor<'_> {
         let mut null_check = None;
         let mut bounds = None;
         let operation = match &e.kind {
+            Label { body, .. } => {
+                let reachable = s.reachable;
+                self.eval(body, s);
+                s.locals = self
+                    .function
+                    .locals
+                    .iter()
+                    .map(|l| Value::unknown(&l.ty))
+                    .collect();
+                s.less.clear();
+                s.reachable = reachable;
+                "block.label".into()
+            }
+            Branch {
+                values, condition, ..
+            } => {
+                for v in values {
+                    self.eval(v, s);
+                }
+                if let Some(c) = condition {
+                    self.eval(c, s);
+                } else {
+                    s.reachable = false;
+                }
+                "br".into()
+            }
+            Return(v) => {
+                if let Some(v) = v {
+                    self.eval(v, s);
+                }
+                s.reachable = false;
+                "return".into()
+            }
+            Newtype {
+                value: inner,
+                unwrap,
+                ..
+            } => {
+                self.eval(inner, s);
+                if *unwrap {
+                    "newtype.unwrap"
+                } else {
+                    "newtype.wrap"
+                }
+                .into()
+            }
             Data(_) => "text.lit".into(),
             List { op, args, .. } => {
                 for arg in args {

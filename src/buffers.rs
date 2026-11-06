@@ -27,15 +27,13 @@ pub(crate) fn helpers(module: &Module) -> String {
     let mut out = format!(
         r#"
       (func $__bytes_slice (param $v (ref {bytes})) (param $start i32) (param $n i32) (result (ref {bytes}))
-        (local $a (ref $__byte_storage)) (local $r (ref $__byte_storage)) (local $i i32)
+        (local $a (ref $__byte_storage)) (local $r (ref $__byte_storage))
         (local.set $a (struct.get {bytes} 0 (local.get $v)))
         (if (i32.gt_u (local.get $start) (array.len (local.get $a))) (then (unreachable)))
         (if (i32.gt_u (local.get $n) (i32.sub (array.len (local.get $a)) (local.get $start))) (then (unreachable)))
         (local.set $r (array.new_default $__byte_storage (local.get $n)))
-        (loop $copy (if (i32.lt_u (local.get $i) (local.get $n)) (then
-          (array.set $__byte_storage (local.get $r) (local.get $i)
-            (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $start) (local.get $i))))
-          (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $copy))))
+        (array.copy $__byte_storage $__byte_storage
+          (local.get $r) (i32.const 0) (local.get $a) (local.get $start) (local.get $n))
         (struct.new {bytes} (local.get $r)))
       (func $__text_bytes (param $v (ref {text})) (result (ref {bytes}))
         (struct.new {bytes} (struct.get {text} 0 (local.get $v))))
