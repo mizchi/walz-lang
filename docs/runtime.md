@@ -6,7 +6,7 @@
 ```
 
 `(%inst $future T)` と `(%inst $stream T)` は opaque な所有値です。ready/empty/cons で構築し、await/next/close だけで扱います。
-next は `(%inst $pair (%inst $stream T) (%inst $option T))` を返すので、次回は返された Stream を使います。終端の none でも端点が返り、最後に明示 close が必要です。
+next は `(%inst $tuple (%inst $stream T) (%inst $option T))` を返すので、次回は返された Stream を使います。終端の none でも端点が返り、最後に明示 close が必要です。
 payload は共有できるデータに限定し、unit、Result、GC 参照も扱えます。Future/Stream 自体や own 値を payload にすることは初版では拒否します。
 await/next は suspends を持ち、呼び出し元へ伝播します。WIT の future/stream 型と読み取り関数の async にも対応します。
 
@@ -167,7 +167,7 @@ api.text('hello');                  // 'hello'
 api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 ```
 
-標準関数は `(%import "wlt:std" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
+標準関数は `(%use "wlt:core" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
 標準ライブラリの依存と3つのアプリも named import を使います。未使用の定義とホスト import は生成時に除去し、必要な capability だけを manifest に残します。
 `%include` は互換のテキスト展開として残します。ファイルの読み込みで実行時の I/O capability は増えません。
 

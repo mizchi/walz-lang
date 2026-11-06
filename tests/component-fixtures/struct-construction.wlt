@@ -1,6 +1,6 @@
 (module
-  (%import "wlt:std" (type $text) (type $pair) (type $future))
-  (type $User (struct (field $name $text) (field $age i32) (field $email $text)))
+  (%use "wlt:core" (type $string) (type $tuple) (type $future))
+  (type $User (struct (field $name $string) (field $age i32) (field $email $string)))
   (type $Pair (struct (field $left i32) (field $right i32)))
   (type $Triple (struct (field $left i32) (field $middle i32) (field $right i32)))
   (type $Trace (struct (field $log (mut i32))))
@@ -11,28 +11,28 @@
   (tag $Stop)
   (func $fields
     (param $u (ref $User))
-    (result (%inst $pair $text (%inst $pair i32 $text)))
+    (result (%inst $tuple $string (%inst $tuple i32 $string)))
     (%effect pure)
-    (%pair.new
+    (%tuple.new
       (struct.get $User $name $u)
-      (%pair.new
+      (%tuple.new
         (struct.get $User $age $u)
         (struct.get $User $email $u)))
   )
 
   (func $profile
     (export "profile")
-    (param $name $text)
+    (param $name $string)
     (param $age i32)
-    (param $email $text)
-    (result (%inst $pair $text (%inst $pair i32 $text)))
+    (param $email $string)
+    (result (%inst $tuple $string (%inst $tuple i32 $string)))
     (%effect allocates)
     (call $fields
       (%$User::{:email $email :name $name :age $age})))
 
   (func $literal
     (export "literal-profile")
-    (result (%inst $pair $text (%inst $pair i32 $text)))
+    (result (%inst $tuple $string (%inst $tuple i32 $string)))
     (%effect allocates)
     (call $fields
       (%struct.new $User ($email "alice@example.com") ($age 30) ($name "日本語🦀"))))

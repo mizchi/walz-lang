@@ -1,6 +1,24 @@
 use crate::Error;
 use crate::ir::Span;
 
+#[cfg(test)]
+thread_local! {
+    static PARSE_LOG: std::cell::RefCell<Vec<(usize, u64)>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+#[cfg(test)]
+pub(crate) fn take_parse_log() -> Vec<(usize, u64)> {
+    PARSE_LOG.with(|log| std::mem::take(&mut *log.borrow_mut()))
+}
+
+#[cfg(test)]
+pub(crate) fn parse_key(source: &str) -> (usize, u64) {
+    use std::hash::Hasher;
+    let mut hash = std::collections::hash_map::DefaultHasher::new();
+    hash.write(source.as_bytes());
+    (source.len(), hash.finish())
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct Sexp {
     pub kind: Kind,
@@ -43,6 +61,8 @@ impl Sexp {
 }
 
 pub(crate) fn parse(source: &str) -> Result<Sexp, Error> {
+    #[cfg(test)]
+    PARSE_LOG.with(|log| log.borrow_mut().push(parse_key(source)));
     let mut reader = Reader {
         source,
         position: 0,

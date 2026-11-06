@@ -1,6 +1,6 @@
 (module
-  (%import "wlt:std"
-    (type $own))
+  (%use "wlt:core"
+    (type $box))
   (func $add (param $x i32) (param $y i32) (result i32) (%effect pure)
     (i32.add (local.get $x) (local.get $y)))
 
@@ -14,6 +14,6 @@
     (i32.eq (call $add (local.get $x) (i32.const 0)) (local.get $x)))
 
   (func $main (export "main") (result i32) (%effect pure)
-    (%let $answer (%own.new i32 (call $add (i32.const 40) (i32.const 2)))
-      (%match (%inst $own i32) (result i32) (%move $answer)
+    (%let $answer (%box.new i32 (call $add (i32.const 40) (i32.const 2)))
+      (%match (%inst $box i32) (result i32) (%move $answer)
         (case own ($value) (local.get $value))))))

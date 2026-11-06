@@ -1,13 +1,13 @@
 # 所有権と証明を通して実行する
 
 ```wat
-(%let $ticket (%own.new i64 (i64.const 42))
-  (%match (%inst $own i64) (result i64) (%move $ticket)
+(%let $ticket (%box.new i64 (i64.const 42))
+  (%match (%inst $box i64) (result i64) (%move $ticket)
     (case own ($value) (local.get $value))))
 ```
 
-`(%inst $own T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
-Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(%own.close (%move $ticket))` で明示的に消費します。
+`(%inst $box T)` は複製できない包みです。move 後の再利用、暗黙の放棄、共有 GC フィールドへの格納を拒否します。
+Option/Result/pair と捕捉するクロージャにも所有性が伝播します。使わない包みは `(%box.close (%move $ticket))` で明示的に消費します。
 内容を match で取り出すことも消費です。own は payload の GC 参照を排他的にする型ではなく、own.close は外部リソースの終了処理をまだ実装していません。
 一般的な lifetime は設けず、操作に渡した所有値は戻り値の一部として受け直す方針です。外部 resource には非流出の borrow と同期 destructor を提供します。[ownership.wlt](../examples/ownership.wlt) に組と once-call クロージャの例があります。
 

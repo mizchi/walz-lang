@@ -36,15 +36,15 @@ fn builder_representation_and_mutation_effects_are_checked() {
     let prefix = loaded.text().trim_end().strip_suffix(')').unwrap();
     for (body, message) in [
         (
-            "(func $bad (param $b (ref $builder.Builder)) (%effect pure) (call $builder.text (local.get $b) (%text.lit \"x\")))",
+            "(func $bad (param $b (ref $string-builder)) (%effect pure) (call $string-builder.text (local.get $b) (%string.lit \"x\")))",
             "effect contract",
         ),
         (
-            "(func $bad (param $b (ref $builder.Builder)) (result i32) (struct.get $builder.Builder $length (local.get $b)))",
+            "(func $bad (param $b (ref $string-builder)) (result i32) (struct.get $string-builder $length (local.get $b)))",
             "opaque",
         ),
         (
-            "(func $bad (param $o (ref $json.Object)) (%effect pure) (call $json.u64 (local.get $o) (%text.lit \"n\") (i64.const 1)))",
+            "(func $bad (param $o (ref $json-object)) (%effect pure) (call $json.object-builder.u64 (local.get $o) (%string.lit \"n\") (i64.const 1)))",
             "effect contract",
         ),
     ] {
@@ -58,9 +58,9 @@ fn builder_representation_and_mutation_effects_are_checked() {
     let module = wlt::check(loaded.text()).unwrap();
     let analysis = wlt::analysis::analyze(&module);
     for name in [
-        "$buffer.find-byte",
-        "$buffer.find",
-        "$buffer.parse-u64",
+        "$bytes.find-byte",
+        "$bytes.find",
+        "$bytes.parse-u64",
         "$string.parse-s64",
     ] {
         let effects = &analysis

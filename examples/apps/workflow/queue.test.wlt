@@ -1,5 +1,8 @@
 (module
-  (%include "queue.wlt")
+  (%use "./queue.wlt"
+    (func $new $queue.new)
+    (func $pop $queue.pop)
+    (func $push $queue.push))
   (%test "empty and singleton queues"
     (%let $q (call $queue.new (i32.const 1))
       (%let $empty (i32.eq (call $queue.pop (local.get $q)) (i32.const -1))

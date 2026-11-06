@@ -9,7 +9,7 @@ candidate.wlt を編集し、成功値を read-lines が配送した行数へ変
 元の JSON 出力、I/O err の伝播、業務エラー後の継続、取消しの終了処理を維持する。i32 の加算は折り返す。
 fold の状態は pair<(ref $stock.State),i32> とし、stock.new(4096) は main の開始時に一度だけ呼んで全行で再利用する。
 stream.fold-result と result.let を使う。通常の補助関数は使えるが、可変カウンタや別の状態表現で pair を回避しない。
-初期化では複数束縛の %let を少なくとも一度使い、型の明示参照は wlt:std から import した名前と %inst を使う。
+初期化では複数束縛の %let を少なくとも一度使い、型の明示参照は wlt:core から import した名前と %inst を使う。
 同じ candidate.wlt に次の公開関数も追加する。
 - `count64`：行数カウント版の成功型を i64 にしたもの。関数 `$count64` を宣言し `(export "count64")` を付ける。fold の状態も pair<(ref $stock.State),i64> とし、初期値・加算・定数を i64 に変更する。I/Oエラーは i32 のまま。i32 の最終結果を変換するだけでは不可。
 - `format-count`：関数 `$format-count` を宣言し `(export "format-count")` を付ける。引数は text 1つ、結果は Result<text,i32>。符号なし64bit整数の十進数全体を読み、成功なら `count=数字`（先頭ゼロを除く）を ok、空・負数・空白・不正文字・桁あふれなら err(1)。標準APIを選択して実装する。I/Oやホスト呼出しは不要。APIの型とeffectは api.md、解析の入力規約は下記の契約に従う。

@@ -1,1 +1,1 @@
-(module (%import "modules/math.wlt" (func $answer)) (export "main" (func $answer)))
+(module (%use "./modules/math.wlt" (func $answer)) (export "main" (func $answer)))

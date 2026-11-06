@@ -50,11 +50,11 @@ UTF-8 不正・I/O エラーは既存の Result エラーで終了する。正�
 | [stdlib/text.wlt](../../../stdlib/text.wlt) | 連結・符号付き／符号なし整数・JSON string | reads / writes / allocates |
 
 文字列操作の writes は、関数内で新規作成する作業配列の変更を含む保守的な上限で、入力 text/bytes は不変。
-集計状態のフィールド操作は、その型を宣言した namespace の中だけで認める。
+集計状態のフィールド操作は、その型を宣言した ファイル の中だけで認める。
 公開する Level は info/warn/error の enum で、配列添字のような任意の整数を受け取らない。
 入力行の enum にはレベルと duration を直接格納し、別の Level オブジェクトを毎行作らない。
 
-include / namespace / public で静的にリンクする。動的な関数探索やモジュールオブジェクトはない。
+%use / %export で静的にリンクする。動的な関数探索やモジュールオブジェクトはない。
 集計状態のサイズはレベル数に固定され、入力行数には比例しない。GC オブジェクトの回収は Wasm エンジンに委ねる。
 Stream の所有権はマクロの展開後の loop/move/match で検査し、EOF・入力エラー・集計エラーの各経路で閉じる。
 JSON 全体の書込みを await し、取消し時は既存の task scope が進行中の read/write と解放を終了する。

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 for (const backend of ["core", "component"])
-  test(`${backend}: wlt:std types and grouped bindings preserve async portable ABIs`, async () => {
+  test(`${backend}: wlt:core types and grouped bindings preserve async portable ABIs`, async () => {
     const directory = await mkdtemp(join(tmpdir(), "wlt-standard-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");

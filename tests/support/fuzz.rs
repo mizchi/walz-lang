@@ -95,13 +95,13 @@ impl Expr {
                 *next += 1;
                 let a = a.render(short, next);
                 let b = b.render(short, next);
-                let value = format!("(%pair.new i32 i32 {a} {b})");
+                let value = format!("(%tuple.new i32 i32 {a} {b})");
                 let body = format!("(i32.sub (local.get $a{id}) (local.get $b{id}))");
                 if short {
                     format!("(%let ($a{id} $b{id}) {value} {body})")
                 } else {
                     format!(
-                        "(%match (%pair i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
+                        "(%match (%tuple i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
                     )
                 }
             }

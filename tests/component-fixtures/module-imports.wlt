@@ -1,3 +1,4 @@
 (module
-  (%import "import-library.wlt" (func $library.answer $answer))
+  (%use "./import-library.wlt" (func $answer $library.answer))
+  (%use "./import-library.wlt" (func $answer $answer))
   (export "answer" (func $answer)))

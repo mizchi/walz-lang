@@ -1,14 +1,12 @@
 //! Test discovery and execution. Test code remains ordinary typed Wasm GC code;
 //! discovery, isolation, timeouts, and reporting are host responsibilities.
 
+pub use crate::harness::SuiteError;
 use crate::ir::Span;
 use serde::Serialize;
-use std::collections::BTreeSet;
-use std::fs::File;
-use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::process::Command;
+use std::time::Duration;
 
 #[derive(Clone, Debug)]
 pub struct RunOptions {
@@ -49,12 +47,6 @@ pub struct TestResult {
     pub outcome: TestOutcome,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SuiteError {
-    pub path: Option<PathBuf>,
-    pub message: String,
-}
-
 #[derive(Debug, Default, Serialize)]
 pub struct RunReport {
     pub tests: Vec<TestResult>,
@@ -89,87 +81,33 @@ impl RunReport {
     }
 }
 
-fn discover(path: &Path, files: &mut BTreeSet<PathBuf>, report: &mut RunReport) {
-    let result = (|| -> std::io::Result<()> {
-        let metadata = path.metadata()?;
-        if metadata.is_dir() {
-            for entry in std::fs::read_dir(path)? {
-                let entry = entry?;
-                let kind = entry.file_type()?;
-                // Do not follow directory symlinks or accidentally discover a
-                // second copy through one; explicitly supplied paths are allowed.
-                if kind.is_dir()
-                    || (kind.is_file()
-                        && entry.file_name().to_string_lossy().ends_with(".test.wlt"))
-                {
-                    discover(&entry.path(), files, report);
-                }
-            }
-        } else if metadata.is_file() {
-            files.insert(path.canonicalize()?);
-        } else {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "expected a file or directory",
-            ));
-        }
-        Ok(())
-    })();
-    if let Err(error) = result {
-        report.error(Some(path), error);
-    }
-}
-
-fn captured(file: &mut File) -> std::io::Result<String> {
-    file.rewind()?;
-    let mut bytes = Vec::new();
-    file.take(64 * 1024).read_to_end(&mut bytes)?;
-    Ok(String::from_utf8_lossy(&bytes).trim().to_owned())
-}
-
 fn invoke(path: &Path, export: &str, timeout: Duration) -> Result<TestOutcome, String> {
-    let mut stdout = tempfile::tempfile().map_err(|e| e.to_string())?;
-    let mut stderr = tempfile::tempfile().map_err(|e| e.to_string())?;
-    // Files avoid pipe-buffer deadlocks while the host enforces the timeout.
-    let started = Instant::now();
-    let mut child = Command::new("wasmtime")
-        .args([
-            "run",
-            "-W",
-            "gc=y,function-references=y,exceptions=y",
-            "--invoke",
-            export,
-        ])
-        .arg(path)
-        .stdin(Stdio::null())
-        .stdout(Stdio::from(stdout.try_clone().map_err(|e| e.to_string())?))
-        .stderr(Stdio::from(stderr.try_clone().map_err(|e| e.to_string())?))
-        .spawn()
-        .map_err(|e| format!("could not start wasmtime: {e}"))?;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) => {}
-            Err(error) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(error.to_string());
-            }
-        }
-        if started.elapsed() >= timeout {
-            child.kill().map_err(|e| e.to_string())?;
-            child.wait().map_err(|e| e.to_string())?;
-            return Ok(TestOutcome::TimedOut);
-        }
-        std::thread::sleep(Duration::from_millis(5).min(timeout.saturating_sub(started.elapsed())));
+    let output = crate::harness::invoke(
+        Command::new("wasmtime")
+            .args([
+                "run",
+                "-W",
+                "gc=y,function-references=y,exceptions=y",
+                "--invoke",
+                export,
+            ])
+            .arg(path),
+        timeout,
+        64 * 1024,
+    )
+    .map_err(|e| format!("could not start wasmtime: {e}"))?;
+    let Some(output) = output else {
+        return Ok(TestOutcome::TimedOut);
     };
+    let status = output.status;
     if !status.success() {
-        let error = captured(&mut stderr).map_err(|e| e.to_string())?;
+        let error = String::from_utf8_lossy(&output.stderr);
         return Ok(TestOutcome::Failed(format!(
             "wasmtime exited with {status}: {error}"
         )));
     }
-    let output = captured(&mut stdout).map_err(|e| e.to_string())?;
+    let output = String::from_utf8_lossy(&output.stdout);
+    let output = output.trim();
     match output.parse::<i32>() {
         Ok(0) => Ok(TestOutcome::Failed("returned 0".into())),
         Ok(_) => Ok(TestOutcome::Passed),
@@ -189,14 +127,9 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
         report.error(None, "test timeout must be positive");
         return report;
     }
-    let mut files = BTreeSet::new();
-    if paths.is_empty() {
-        discover(Path::new("tests"), &mut files, &mut report);
-    }
-    for path in paths {
-        discover(path, &mut files, &mut report);
-    }
-    for path in files {
+    let discovery = crate::harness::discover(paths, "tests", ".test.wlt");
+    report.errors.extend(discovery.errors);
+    for path in discovery.files {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
             let loaded = if options.legacy_syntax {
                 crate::source::load_legacy(&path)?

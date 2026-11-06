@@ -32,7 +32,7 @@ CLI とテストランナーもこの変換を使う。
 | `E_OWNERSHIP_MOVED` | 消費済み、または利用不能な所有値の再使用 |
 | `E_OWNERSHIP` | 所有権契約の状態不一致や未消費値 |
 | `E_EFFECT_CONTRACT` | 宣言した effect の上限を超える処理 |
-| `E_OPAQUE_REPRESENTATION` | 所有する namespace の外からの表現アクセス |
+| `E_OPAQUE_REPRESENTATION` | 所有する ファイル の外からの表現アクセス |
 | `E_ALIAS_CYCLE` | 透明な型 alias の参照循環。順序付き経路と各参照位置を表示 |
 | `E_CHECK` | その他の構文・名前解決・検査エラー |
 | `E_TOOL` | ソース範囲を持たないツール・入出力等の失敗 |

@@ -1,10 +1,15 @@
 (module
-  (%import "wlt:std"
-    (type $text))
-  (%include "parse.wlt")
-  (%include "stats.wlt")
-  (type $Corpus (array $text))
-  (func $once (param $input (ref $Corpus)) (param $rows i32) (result i64)
+  (%use "./parse.wlt" (func $line $parse.line) (type $Level $parse.Level))
+  (%use "./stats.wlt"
+    (func $consume $stats.consume)
+    (func $new $stats.new)
+    (func $total $stats.total))
+  (%use "wlt:core" (type $string))
+  (type $Corpus (array $string))
+  (func $once
+    (param $input (ref $Corpus))
+    (param $rows i32)
+    (result i64)
     (%effect reads writes allocates)
     (%let $s (call $stats.new)
       (%loop $scan
@@ -36,7 +41,11 @@
               (else (unreachable))))
         ))))
   ;; The same parser and accumulator as main.wlt; deliberately no host/ABI I/O.
-  (func $run (export "run") (param $rows i32) (param $rounds i32) (result i64)
+  (func $run
+    (export "run")
+    (param $rows i32)
+    (param $rounds i32)
+    (result i64)
     (%effect reads writes allocates)
     (if
       (result i64)
@@ -48,7 +57,7 @@
       (then (unreachable))
       (else
         (%let $input
-          (array.new_fixed $Corpus 6 (%text.lit "INFO\t12\trequest started") (%text.lit "WARN\t40\t遅いリクエスト🦀") (%text.lit "ERROR\t7\tfailed") (%text.lit "INFO\t8\trequest completed") (%text.lit "bad") (%text.lit "# comment"))
+          (array.new_fixed $Corpus 6 (%string.lit "INFO\t12\trequest started") (%string.lit "WARN\t40\t遅いリクエスト🦀") (%string.lit "ERROR\t7\tfailed") (%string.lit "INFO\t8\trequest completed") (%string.lit "bad") (%string.lit "# comment"))
           (%loop $repeat
             (bind $i i32 (i32.const 0))
             (bind $sum i64 (i64.const 0))

@@ -1,0 +1,132 @@
+{
+  "schema": "wlt-bench-profile-v1",
+  "snapshot": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/std-tune/v1-after-json3",
+  "host": {
+    "node": "v24.21.0",
+    "v8": "13.6.233.17-node.53",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5"
+  },
+  "wasmtime": "wasmtime 42.0.1 (6844a83b5 2026-02-25)",
+  "guest_iterations": 200000,
+  "cases": [
+    {
+      "name": "string.json ASCII 1024",
+      "file": "case-5.wasm",
+      "node": {
+        "samples": 803,
+        "self": [
+          {
+            "name": "wlt-std-0-text.string.json",
+            "url": "wasm://wasm/dbc8055e",
+            "samples": 577
+          },
+          {
+            "name": "__utf8",
+            "url": "wasm://wasm/dbc8055e",
+            "samples": 117
+          },
+          {
+            "name": "input1024",
+            "url": "wasm://wasm/dbc8055e",
+            "samples": 76
+          },
+          {
+            "name": "(garbage collector)",
+            "url": "",
+            "samples": 25
+          },
+          {
+            "name": "profile",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/bench-tune.mjs",
+            "samples": 3
+          },
+          {
+            "name": "post",
+            "url": "node:inspector",
+            "samples": 2
+          },
+          {
+            "name": "input1024",
+            "url": "wasm://wasm/dbc8055e",
+            "samples": 2
+          },
+          {
+            "name": "__utf8",
+            "url": "wasm://wasm/dbc8055e",
+            "samples": 1
+          }
+        ]
+      },
+      "guest": {
+        "samples": 998,
+        "intervalMs": 1,
+        "self": [
+          {
+            "name": "::wlt-std-0-text.string.json",
+            "samples": 598,
+            "percent": 59.91983967935872
+          },
+          {
+            "name": "::__bytes_from_array_0",
+            "samples": 278,
+            "percent": 27.85571142284569
+          },
+          {
+            "name": "::__utf8",
+            "samples": 103,
+            "percent": 10.32064128256513
+          },
+          {
+            "name": "::<wasm function 13>",
+            "samples": 13,
+            "percent": 1.3026052104208417
+          },
+          {
+            "name": "::wlt-std-0-text.string.valid",
+            "samples": 6,
+            "percent": 0.6012024048096193
+          }
+        ],
+        "inclusive": [
+          {
+            "name": "::<wasm function 13>",
+            "samples": 998,
+            "percent": 100
+          },
+          {
+            "name": "::wlt-std-0-text.string.json",
+            "samples": 985,
+            "percent": 98.69739478957916
+          },
+          {
+            "name": "::__bench5",
+            "samples": 985,
+            "percent": 98.69739478957916
+          },
+          {
+            "name": "::__bytes_from_array_0",
+            "samples": 278,
+            "percent": 27.85571142284569
+          },
+          {
+            "name": "::wlt-std-0-text.string.valid",
+            "samples": 109,
+            "percent": 10.92184368737475
+          },
+          {
+            "name": "::__utf8",
+            "samples": 103,
+            "percent": 10.32064128256513
+          },
+          {
+            "name": "::__text_decode",
+            "samples": 103,
+            "percent": 10.32064128256513
+          }
+        ]
+      }
+    }
+  ]
+}

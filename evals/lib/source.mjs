@@ -78,7 +78,7 @@ function tree(items) {
   if (stack.length || !root) throw new Error("unclosed module");
   return root;
 }
-export function assertSnapshotIncludes(source) {
+export function assertSnapshotIncludes(source, corePackage = 'wlt:core') {
   const root = tree(tokens(source));
   let count = 0;
   if (root[0] !== "module") throw new Error("expected module");
@@ -90,8 +90,8 @@ export function assertSnapshotIncludes(source) {
           'candidate may only include "program.wlt" from the frozen support',
         );
       count++;
-    } else if (["import", "%import"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
-      if (node[1].text !== '\"wlt:std\"') throw new Error("candidate may only import wlt:std in addition to frozen support");
+    } else if (["import", "%import", "%use"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
+      if (node[1].text !== JSON.stringify(corePackage)) throw new Error(`candidate may only import ${corePackage} in addition to frozen support`);
     } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
@@ -127,8 +127,8 @@ export function metrics(source) {
       if (Array.isArray(node[1][0])) grouped++;
       else patterns++;
     }
-    if ((canonical(node[0]) === "pair" && text(node) === "(pair (ref $stock.State) i32)") ||
-        (canonical(node[0]) === "inst" && text(node) === "(inst $pair (ref $stock.State) i32)"))
+    if ((["pair", "tuple"].includes(canonical(node[0])) && ["(pair (ref $stock.State) i32)", "(tuple (ref $stock.State) i32)"].includes(text(node))) ||
+        (canonical(node[0]) === "inst" && ["(inst $pair (ref $stock.State) i32)", "(inst $tuple (ref $stock.State) i32)"].includes(text(node))))
       stateTypes++;
     node.forEach(walk);
   };
@@ -158,7 +158,11 @@ export function functionForms(source, name) {
   const count = (node) => {
     if (!Array.isArray(node)) return;
     if (typeof node[0] === "string") {
-      const head = node[0].replace(/^%/, "");
+      // Count the same checked operation across historical/public spellings.
+      const head = node[0].replace(/^%/, "").replace(
+        /^(string|tuple|box)(?=\.|$)/,
+        family => ({ string: "text", tuple: "pair", box: "own" })[family],
+      );
       heads[head] = (heads[head] ?? 0) + 1;
       if (head === "let" && Array.isArray(node[1]?.[0])) heads["let.group"] = (heads["let.group"] ?? 0) + 1;
     }
@@ -178,6 +182,9 @@ export function sourceIncludes(source) {
         throw new Error("invalid include");
       // Evaluation fixtures use literal relative filenames, not WAT byte escapes.
       paths.push(JSON.parse(node[1].text));
+    } else if (["%use", "%import", "import"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
+      const path = JSON.parse(node[1].text);
+      if (!path.startsWith("wlt:")) paths.push(path);
     } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };

@@ -33,24 +33,24 @@ fn run(source: &str) -> String {
 fn owned_values_require_explicit_move_and_an_explicit_destination() {
     assert_eq!(
         run(r#"(module
-      (func $take (param $x (%own i64)) (result i64) (%effect pure)
-        (%match (%own i64) (result i64) (%move $x)
+      (func $take (param $x (%box i64)) (result i64) (%effect pure)
+        (%match (%box i64) (result i64) (%move $x)
           (case own ($n) (local.get $n))))
       (func $main (export "main") (result i64) (%effect pure)
-        (%let $x (%own.new i64 (i64.const 42)) (call $take (%move $x)))))"#),
+        (%let $x (%box.new i64 (i64.const 42)) (call $take (%move $x)))))"#),
         "42"
     );
     for (body, expected) in [
-        ("(%own.close (local.get $x))", "explicit move"),
+        ("(%box.close (local.get $x))", "explicit move"),
         (
-            "(block (%own.close (%move $x)) (%own.close (%move $x)))",
+            "(block (%box.close (%move $x)) (%box.close (%move $x)))",
             "already moved",
         ),
         ("(nop)", "unconsumed owned"),
         ("(drop (%move $x))", "cannot drop an owned"),
     ] {
         rejects(
-            &format!("(module (func $f (%let $x (%own.new i64 (i64.const 1)) {body})))"),
+            &format!("(module (func $f (%let $x (%box.new i64 (i64.const 1)) {body})))"),
             expected,
         );
     }
@@ -64,20 +64,20 @@ fn owned_values_require_explicit_move_and_an_explicit_destination() {
 fn ownership_propagates_through_pairs_options_results_and_once_closures() {
     assert_eq!(
         run(r#"(module
-      (%closure $Take (%capture $x (%own i64)) (result i64) (%effect pure)
-        (%match (%own i64) (result i64) (%move $x) (case own ($n) (local.get $n))))
+      (%closure $Take (%capture $x (%box i64)) (result i64) (%effect pure)
+        (%match (%box i64) (result i64) (%move $x) (case own ($n) (local.get $n))))
       (func $main (export "main") (result i64) (%effect allocates)
         (%let $wrapped
-          (%option.some (%result (%pair (%own i64) i64) i32)
-            (%result.ok (%pair (%own i64) i64) i32
-              (%pair.new (%own i64) i64 (%own.new i64 (i64.const 40)) (i64.const 2))))
-          (%match (%option (%result (%pair (%own i64) i64) i32)) (result i64) (%move $wrapped)
+          (%option.some (%result (%tuple (%box i64) i64) i32)
+            (%result.ok (%tuple (%box i64) i64) i32
+              (%tuple.new (%box i64) i64 (%box.new i64 (i64.const 40)) (i64.const 2))))
+          (%match (%option (%result (%tuple (%box i64) i64) i32)) (result i64) (%move $wrapped)
             (case none () (i64.const -1))
             (case some ($result)
-              (%match (%result (%pair (%own i64) i64) i32) (result i64) (%move $result)
+              (%match (%result (%tuple (%box i64) i64) i32) (result i64) (%move $result)
                 (case err ($e) (i64.const -2))
-                (case ok ($pair)
-                  (%match (%pair (%own i64) i64) (result i64) (%move $pair)
+                (case ok ($tuple)
+                  (%match (%tuple (%box i64) i64) (result i64) (%move $tuple)
                     (case pair ($x $n)
                       (%let $f (%closure.new $Take (%move $x))
                         (i64.add (%closure.call $Take (%move $f)) (local.get $n))))))))))))"#),
@@ -85,8 +85,8 @@ fn ownership_propagates_through_pairs_options_results_and_once_closures() {
     );
     rejects(
         r#"(module
-      (%closure $C (%capture $x (%own i64)) (%own.close (%move $x)))
-      (func $f (%let $c (%closure.new $C (%own.new i64 (i64.const 1)))
+      (%closure $C (%capture $x (%box i64)) (%box.close (%move $x)))
+      (func $f (%let $c (%closure.new $C (%box.new i64 (i64.const 1)))
         (block (%closure.call $C (%move $c)) (%closure.call $C (%move $c))))))"#,
         "already moved",
     );
@@ -97,25 +97,25 @@ fn branches_must_leave_the_same_owners_and_loop_edges_restore_their_contract() {
     assert_eq!(
         run(r#"(module
       (func $main (export "main") (result i64)
-        (%let $x (%own.new i64 (i64.const 42))
-          (%loop $again (bind $n i64 (i64.const 3)) (bind $x (%own i64) (%move $x)) (result i64)
+        (%let $x (%box.new i64 (i64.const 42))
+          (%loop $again (bind $n i64 (i64.const 3)) (bind $x (%box i64) (%move $x)) (result i64)
             (if (result i64) (i64.eqz (local.get $n))
-              (then (%match (%own i64) (result i64) (%move $x) (case own ($v) (local.get $v))))
+              (then (%match (%box i64) (result i64) (%move $x) (case own ($v) (local.get $v))))
               (else (%recur $again (i64.sub (local.get $n) (i64.const 1)) (%move $x))))))))"#),
         "42"
     );
     rejects(
         r#"(module (func $f (param $flag i32)
-      (%let $x (%own.new i64 (i64.const 1))
-        (block (if (local.get $flag) (then (%own.close (%move $x))) (else (nop)))
-          (%own.close (%move $x))))))"#,
+      (%let $x (%box.new i64 (i64.const 1))
+        (block (if (local.get $flag) (then (%box.close (%move $x))) (else (nop)))
+          (%box.close (%move $x))))))"#,
         "branch ownership",
     );
     rejects(
         r#"(module (func $f
-      (%let $x (%own.new i64 (i64.const 1))
+      (%let $x (%box.new i64 (i64.const 1))
         (%loop $again (bind $n i64 (i64.const 0))
-          (block (%own.close (%move $x)) (%recur $again (local.get $n)))))))"#,
+          (block (%box.close (%move $x)) (%recur $again (local.get $n)))))))"#,
         "loop ownership",
     );
 }
@@ -123,44 +123,44 @@ fn branches_must_leave_the_same_owners_and_loop_edges_restore_their_contract() {
 #[test]
 fn owners_cannot_escape_through_shared_storage_or_exception_paths() {
     for source in [
-        "(module (type $Box (struct (field (%own i64)))))",
-        "(module (type $Array (array (%option (%own i64)))))",
-        "(module (type $V (%variant (case (%own i64)))))",
+        "(module (type $Box (struct (field (%box i64)))))",
+        "(module (type $Array (array (%option (%box i64)))))",
+        "(module (type $V (%variant (case (%box i64)))))",
     ] {
         rejects(source, "shared GC storage");
     }
     rejects(
-        "(module (func $f (%own.close (%own.new (%own i64) (%own.new i64 (i64.const 1))))))",
+        "(module (func $f (%box.close (%box.new (%box i64) (%box.new i64 (i64.const 1))))))",
         "own payload must be shared",
     );
-    rejects("(module (tag $E (param (%own i64))))", "exception payload");
+    rejects("(module (tag $E (param (%box i64))))", "exception payload");
     rejects(
-        "(module (tag $E) (func $f (param $x (%own i64)) (throw $E)))",
+        "(module (tag $E) (func $f (param $x (%box i64)) (throw $E)))",
         "unconsumed owned",
     );
     rejects(
-        "(module (import \"host\" \"make\" (func $make (result (%own i64)))))",
+        "(module (import \"host\" \"make\" (func $make (result (%box i64)))))",
         "owned import",
     );
     rejects(
-        "(module (func $f (param $x (%own i64)) (unreachable)))",
+        "(module (func $f (param $x (%box i64)) (unreachable)))",
         "unconsumed owned",
     );
     rejects(
         r#"(module
-      (%closure $C (%capture $x (%own i64)) (%own.close (%move $x)))
+      (%closure $C (%capture $x (%box i64)) (%box.close (%move $x)))
       (type $Box (struct (field (ref $C)))))"#,
         "shared GC storage",
     );
     rejects(
         r#"(module
-      (%closure $C (%capture $x (%own i64)) (%own.close (%move $x)))
+      (%closure $C (%capture $x (%box i64)) (%box.close (%move $x)))
       (func $bad (param $c (ref null $C)) (nop)))"#,
         "cannot be nullable",
     );
     rejects(
         r#"(module
-      (%closure $C (%capture $x (%own i64)) (%own.close (%move $x)))
+      (%closure $C (%capture $x (%box i64)) (%box.close (%move $x)))
       (func $bad (param $a (ref $C)) (param $b (ref $C)) (result i32)
         (ref.eq (%move $a) (%move $b))))"#,
         "identity cannot be inspected",
@@ -178,15 +178,15 @@ fn close_and_return_preserve_evaluation_order_and_shared_values_stay_reusable() 
       (type $Cell (struct (field (mut i64))))
       (func $main (export "main") (result i64)
         (%let $cell (struct.new $Cell (i64.const 0))
-          (%let $x (%own.new (ref $Cell) (local.get $cell))
+          (%let $x (%box.new (ref $Cell) (local.get $cell))
             (block (result i64)
               (struct.set $Cell 0 (local.get $cell) (i64.const 42))
-              (%own.close (%move $x))
+              (%box.close (%move $x))
               (struct.get $Cell 0 (local.get $cell)))))))"#),
         "42"
     );
     rejects(
-        "(module (func $f (block (%own.new i64 (i64.const 1)) (nop))))",
+        "(module (func $f (block (%box.new i64 (i64.const 1)) (nop))))",
         "discard an owned",
     );
 }

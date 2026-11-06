@@ -55,7 +55,7 @@ async function compiler() {
 async function invoke(cli, args, root) {
   let result;
   try {
-    const out = await exec(cli.path, ["--legacy-syntax", ...args], {
+    const out = await exec(cli.path, [...(cli.legacySyntax ? ["--legacy-syntax"] : []), ...args], {
       cwd: projectRoot,
       timeout: 20000,
       maxBuffer: 2 * 1024 * 1024,
@@ -453,7 +453,7 @@ export async function verifyDiagnostics(directory) {
     const inputsFingerprint = await checkInputs(directory),
       manifest = await json(join(directory, "manifest.json"));
     const implementation = await implementationFingerprint(),
-      cli = await compiler(),
+      cli = { ...await compiler(), legacySyntax: manifest.suite.version < 4 },
       cases = {};
     let diagnosticsCurrent = true;
     for (const c of manifest.suite.cases) {

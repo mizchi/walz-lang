@@ -175,9 +175,9 @@ for (const backend of ["core", "component"])
       await writeFile(
         source,
         `(module
-      (import "wlt:host/text-io@0.1.0" "write-line" (func $write (param $text %text) (result (%future (%result %unit i32)))))
-      (func $main (export "main") (param $text %text) (result (%result %unit i32)) (%effect host suspends)
-        (%future.await (%result %unit i32) (call $write (local.get $text)))))`,
+      (import "wlt:host/text-io@0.1.0" "write-line" (func $write (param $string %string) (result (%future (%result %unit i32)))))
+      (func $main (export "main") (param $string %string) (result (%result %unit i32)) (%effect host suspends)
+        (%future.await (%result %unit i32) (call $write (local.get $string)))))`,
       );
       const { build } = await import(
         backend === "core" ? "./build-core.mjs" : "./build.mjs"

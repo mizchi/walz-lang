@@ -5,12 +5,12 @@
 
 Wasm GC と静的解析を前提に、標準 WAT を基底として型付きマクロを追加する小さな言語の試作です。
 拡張の入口には `%` を付け、標準 WAT と区別します。[構文の境界](syntax.md) を参照してください。
-基本型と標準関数は `(%import "wlt:std" ...)` から明示的に取り込み、Result や Future は `(%inst $result T E)` / `(%inst $future T)` で参照します。`%let` は複数の束縛をまとめて左から右に初期化できます。[標準モジュールと束縛の例](standard.md) を参照してください。
+基本型と標準関数は `(%use "wlt:core" ...)` から明示的に取り込み、Result や Future は `(%inst $result T E)` / `(%inst $future T)` で参照します。`%let` は複数の束縛をまとめて左から右に初期化できます。[標準モジュールと束縛の例](standard.md) を参照してください。
 標準 WAT は書き換えず受け付け、拡張側には不変の `%let`、`%loop` / `%for`、明示 `%capture`、enum / `%match`、Wasm 例外の `%try` / catch を用意します。`if` の結果値は標準 Wasm の意味を使います。
 構造体・配列・クロージャ環境は Wasm GC のオブジェクトです。Component 境界の変換用バッファだけを、専用の線形メモリアロケータで管理します。
 
-`$bytes` / `$text` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
-相対パスの `%import` / `%export` で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](static-modules.md) に規約をまとめています。
+`$bytes` / `$string` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
+相対パスの `%use` / `%export` で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](static-modules.md) に規約をまとめています。
 [文法チートシート](../CHEATSHEET.md) に型・式・所有値・固定マクロと実行手順をまとめています。
 [初見評価の記録](grammar-eval/REPORT.md) は、在庫台帳の読解と変更を固定ルーブリックで確かめたものです。
 [可読性の評価と改善](readability/REPORT.md) では、型の反復・入れ子・配置・変更の追いやすさを別に評価しています。
@@ -102,4 +102,4 @@ payload の型と個数、case の網羅性と重複をコンパイル時に検�
 `(%effect ...)` は reads/writes/allocates/suspends/host と、関数外へ出る throws の上限を検査します。
 pure な関数でも値のための物理的な割当てや trap はあり得るため、従来の低水準の解析情報も別に残します。
 
-`(%inst $pair T U)` も値型として使え、WIT では tuple に対応します。
+`(%inst $tuple T U)` も値型として使え、WIT では tuple に対応します。

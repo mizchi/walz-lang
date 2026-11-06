@@ -134,7 +134,7 @@ fn arithmetic_constraints_work_in_generic_functions_and_reject_missing_instances
             },
             false,
         );
-        for ty in ["v128", "%text", "(%own i32)", "%unit"] {
+        for ty in ["v128", "%string", "(%box i32)", "%unit"] {
             let source = format!(
                 "(module (func $require (%type.params $T) (%where ({class} $T)) (nop)) (func $unused (call (%inst $require {ty}))))"
             );

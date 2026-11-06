@@ -10,6 +10,12 @@ readme = "README.md"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace]
+members = [".", "crates/wlt-web"]
+default-members = ["."]
+
+[[bench]]
+name = "frontend"
+harness = false
 
 [[example]]
 name = "stdlib-docs"
@@ -18,6 +24,10 @@ path = "tools/stdlib-docs.rs"
 [[example]]
 name = "json-bench"
 path = "tools/json-bench.rs"
+
+[[example]]
+name = "bench-capture"
+path = "tools/bench-capture.rs"
 
 [dependencies]
 wat = "=1.262.0"
@@ -28,5 +38,11 @@ serde_json = "1"
 tempfile = "3"
 wit-parser = "=0.262.0"
 
+[build-dependencies]
+wast = "=262.0.0"
+
 [profile.dev]
 debug = 0
+
+[dev-dependencies]
+criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support", "html_reports"] }

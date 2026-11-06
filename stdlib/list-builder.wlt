@@ -1,136 +1,131 @@
 (module
-  (%namespace $list-builder
-    (%import "wlt:std" (type $list))
-    (%export
-      (opaque $Builder)
-      (func $new)
-      (func $push)
-      (func $extend)
-      (func $len)
-      (func $finish)
-      (func $clear))
-    (type $Chunk
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (struct (field $value $T) (field $previous (ref null (%inst $Chunk $T))))
-    )
-    (type $Builder
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (struct
-        (field $head (mut (ref null (%inst $Chunk $T))))
-        (field $length (mut i32))))
-    (type $Storage (%type.params $T) (%where (shared $T) (nonunit $T)) (array (mut $T)))
-    (func $new
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (result (ref (%inst $Builder $T)))
-      (%effect allocates)
-      (struct.new (%inst $Builder $T) (ref.null (%inst $Chunk $T)) 0))
+  (%use "wlt:core" (type $list))
+  (%export
+    (opaque $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.len)
+    (func $list-builder.finish)
+    (func $list-builder.clear))
+  (type $Chunk
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (struct (field $value $T) (field $previous (ref null (%inst $Chunk $T))))
+  )
+  (type $list-builder
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (struct (field $head (mut (ref null (%inst $Chunk $T)))) (field $length (mut i32))))
+  (type $Storage (%type.params $T) (%where (shared $T) (nonunit $T)) (array (mut $T)))
+  (func $list-builder.new
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (result (ref (%inst $list-builder $T)))
+    (%effect allocates)
+    (struct.new (%inst $list-builder $T) (ref.null (%inst $Chunk $T)) 0))
 
-    (func $len
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $b (ref (%inst $Builder $T)))
-      (result i32)
-      (%effect reads)
-      (struct.get (%inst $Builder $T) $length $b))
+  (func $list-builder.len
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $b (ref (%inst $list-builder $T)))
+    (result i32)
+    (%effect reads)
+    (struct.get (%inst $list-builder $T) $length $b))
 
-    (func $clear
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $b (ref (%inst $Builder $T)))
-      (%effect writes)
-      (block
-        (struct.set (%inst $Builder $T) $head $b (ref.null (%inst $Chunk $T)))
-        (struct.set (%inst $Builder $T) $length $b 0)))
+  (func $list-builder.clear
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $b (ref (%inst $list-builder $T)))
+    (%effect writes)
+    (block
+      (struct.set (%inst $list-builder $T) $head $b (ref.null (%inst $Chunk $T)))
+      (struct.set (%inst $list-builder $T) $length $b 0)))
 
-    (func $push
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $b (ref (%inst $Builder $T)))
-      (param $value $T)
-      (%effect reads writes allocates)
-      (%let $length (struct.get (%inst $Builder $T) $length $b)
-        (if
-          (= $length -1)
-          (then (unreachable))
-          (else
+  (func $list-builder.push
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $b (ref (%inst $list-builder $T)))
+    (param $value $T)
+    (%effect reads writes allocates)
+    (%let $length (struct.get (%inst $list-builder $T) $length $b)
+      (if
+        (= $length -1)
+        (then (unreachable))
+        (else
+          (block
+            (struct.set
+              (%inst $list-builder $T)
+              $head
+              $b
+              (struct.new (%inst $Chunk $T)
+                $value
+                (struct.get (%inst $list-builder $T) $head $b)))
+            (struct.set (%inst $list-builder $T) $length $b (+ $length 1))))
+      )))
+
+  (func $list-builder.extend
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $b (ref (%inst $list-builder $T)))
+    (param $values (%inst $list $T))
+    (%effect reads writes allocates)
+    (%for $append
+      (bind $i i32 0)
+      (while (i32.lt_u $i (%list.len $T $values)))
+      (step (+ $i 1))
+      (call (%inst $list-builder.push $T) $b (%list.get $T $values $i))))
+
+  (func $list-builder.copy
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $out (ref (%inst $Storage $T)))
+    (param $head (ref (%inst $Chunk $T)))
+    (param $length i32)
+    (%effect writes)
+    (%loop $copy
+      (bind $chunk (ref null (%inst $Chunk $T)) $head)
+      (bind $end i32 $length)
+      (if
+        (ref.is_null $chunk)
+        (then (nop))
+        (else
+          (%let $chunk (ref.as_non_null $chunk)
             (block
-              (struct.set
-                (%inst $Builder $T)
-                $head
-                $b
-                (struct.new (%inst $Chunk $T)
-                  $value
-                  (struct.get (%inst $Builder $T) $head $b)))
-              (struct.set (%inst $Builder $T) $length $b (+ $length 1))))
-        )))
+              (array.set
+                (%inst $Storage $T)
+                $out
+                (- $end 1)
+                (struct.get (%inst $Chunk $T) $value $chunk))
+              (%recur $copy (struct.get (%inst $Chunk $T) $previous $chunk) (- $end 1))))
+        ))))
 
-    (func $extend
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $b (ref (%inst $Builder $T)))
-      (param $values (%inst $list $T))
-      (%effect reads writes allocates)
-      (%for $append
-        (bind $i i32 0)
-        (while (i32.lt_u $i (%list.len $T $values)))
-        (step (+ $i 1))
-        (call (%inst $push $T) $b (%list.get $T $values $i))))
-
-    (func $copy
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $out (ref (%inst $Storage $T)))
-      (param $head (ref (%inst $Chunk $T)))
-      (param $length i32)
-      (%effect writes)
-      (%loop $copy
-        (bind $chunk (ref null (%inst $Chunk $T)) $head)
-        (bind $end i32 $length)
-        (if
-          (ref.is_null $chunk)
-          (then (nop))
-          (else
-            (%let $chunk (ref.as_non_null $chunk)
-              (block
-                (array.set
-                  (%inst $Storage $T)
-                  $out
-                  (- $end 1)
-                  (struct.get (%inst $Chunk $T) $value $chunk))
-                (%recur $copy
-                  (struct.get (%inst $Chunk $T) $previous $chunk)
-                  (- $end 1))))
-          ))))
-
-    (func $finish
-      (%type.params $T)
-      (%where (shared $T) (nonunit $T))
-      (param $b (ref (%inst $Builder $T)))
-      (result (%inst $list $T))
-      (%effect reads writes allocates)
-      (%let $length (struct.get (%inst $Builder $T) $length $b)
-        (if
-          (result (%inst $list $T))
-          (i32.eqz $length)
-          (then (%list.new $T))
-          (else
-            (%let
-              (($head (ref.as_non_null (struct.get (%inst $Builder $T) $head $b)))
-               ($out
-                 (array.new
-                   (%inst $Storage $T)
-                   (struct.get (%inst $Chunk $T) $value $head)
-                   $length)))
-              (block
-                (result (%inst $list $T))
-                (call (%inst $copy $T) $out $head $length)
-                (%let $snapshot (%list.from-array $T (%inst $Storage $T) $out)
-                  (block
-                    (result (%inst $list $T))
-                    (call (%inst $clear $T) $b)
-                    $snapshot))))
-          ))))
-  ))
+  (func $list-builder.finish
+    (%type.params $T)
+    (%where (shared $T) (nonunit $T))
+    (param $b (ref (%inst $list-builder $T)))
+    (result (%inst $list $T))
+    (%effect reads writes allocates)
+    (%let $length (struct.get (%inst $list-builder $T) $length $b)
+      (if
+        (result (%inst $list $T))
+        (i32.eqz $length)
+        (then (%list.new $T))
+        (else
+          (%let
+            (($head (ref.as_non_null (struct.get (%inst $list-builder $T) $head $b)))
+             ($out
+               (array.new
+                 (%inst $Storage $T)
+                 (struct.get (%inst $Chunk $T) $value $head)
+                 $length)))
+            (block
+              (result (%inst $list $T))
+              (call (%inst $list-builder.copy $T) $out $head $length)
+              (%let $snapshot (%list.from-array $T (%inst $Storage $T) $out)
+                (block
+                  (result (%inst $list $T))
+                  (call (%inst $list-builder.clear $T) $b)
+                  $snapshot))))
+        ))))
+)

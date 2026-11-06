@@ -45,7 +45,7 @@ fn emits_wit_for_nested_options_results_and_unit_payloads() {
       (func $empty (export "type") (result (%result i64 %unit)) (%effect pure) (%result.err i64 %unit))
       (func $both (export "wlt-unit") (result (%result %unit %unit)) (%effect pure) (%result.ok %unit %unit))
       (func $event (export "event") (result (%option %unit)) (%effect pure) (%option.some %unit))
-      (func $pair (export "pair") (result (%pair %unit i64)) (%effect pure) (%pair.new %unit i64 (i64.const 42))))"#,
+      (func $tuple (export "pair") (result (%tuple %unit i64)) (%effect pure) (%tuple.new %unit i64 (i64.const 42))))"#,
     );
     assert!(wit.contains("option<result<s64, s32>>"), "{wit}");
     assert!(wit.contains("result<_, s32>"), "{wit}");
@@ -76,12 +76,12 @@ fn imported_suspension_becomes_async_only_after_escaping_errors_are_handled() {
 fn delivery_types_preserve_wasi_shapes_and_reads_have_async_signatures() {
     let wit = validate_wit(
         r#"(module
-      (func $fetch (export "fetch") (result (%pair (%stream i64) (%future (%result %unit i32)))) (%effect pure)
-        (%pair.new (%stream i64) (%future (%result %unit i32))
+      (func $fetch (export "fetch") (result (%tuple (%stream i64) (%future (%result %unit i32)))) (%effect pure)
+        (%tuple.new (%stream i64) (%future (%result %unit i32))
           (%stream.empty i64) (%future.ready (%result %unit i32) (%result.ok %unit i32))))
       (func $read (export "read") (param $next (%future i64)) (result i64) (%effect suspends)
         (%future.await i64 (%move $next)))
-      (func $step (export "step") (param $stream (%stream i64)) (result (%pair (%stream i64) (%option i64))) (%effect suspends)
+      (func $step (export "step") (param $stream (%stream i64)) (result (%tuple (%stream i64) (%option i64))) (%effect suspends)
         (%stream.next i64 (%move $stream)))
       (func $event (export "event") (result (%future %unit)) (%effect pure) (%future.ready %unit))
       (func $events (export "events") (result (%stream %unit)) (%effect pure) (%stream.empty %unit)))"#,
@@ -121,7 +121,7 @@ fn rejects_nonportable_types_and_escaping_exceptions() {
             "WIT export name",
         ),
         (
-            "(module (func $f (export \"f\") (result (%own i64)) (%own.new i64 (i64.const 1))))",
+            "(module (func $f (export \"f\") (result (%box i64)) (%box.new i64 (i64.const 1))))",
             "explicit resource adapter",
         ),
         ("(module (func $f (nop)))", "no exported functions"),

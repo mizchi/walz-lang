@@ -7,7 +7,7 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     let output = dir.path().join("output");
     std::fs::write(
         &source,
-        r#"(module (func $internal (result %text) (%effect pure) (%text.lit "internal"))
+        r#"(module (func $internal (result %string) (%effect pure) (%string.lit "internal"))
           (func $f (export "main") (param $x i64) (result i64)
           (%effect pure) (local.get $x)))"#,
     )

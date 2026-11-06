@@ -98,7 +98,7 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
     const api = await readFile(join(directory, "writer/api.md"), "utf8");
     assert.match(api, /\(func \$string.parse-u64/);
     assert.match(api, /具体化時に推論/);
-    assert.ok(!api.includes("(func $buffer.matches"));
+    assert.ok(!api.includes("(func $bytes.matches"));
     assert.ok(!manifest.roles.writer.some((p) => p.includes("counted")));
     await assert.rejects(access(join(directory, "writer/counted.wlt")));
     const bridge = await readFile(

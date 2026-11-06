@@ -1,2 +1,2 @@
 (module
-  (include "math.wlt"))
+  (%include "math.wlt"))

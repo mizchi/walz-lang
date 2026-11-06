@@ -1,16 +1,16 @@
 # 辞書とlist builder
 
-`wlt:std` の通常のWLTライブラリとして提供する。型引数は共有可能・非unitに制限し、具体化後の型・effect・所有権・opaque検査を行う。GCの寿命管理を使い、ホストの管理表や新しい言語構文は追加しない。
+`wlt:core` の通常のWLTライブラリとして提供する。型引数は共有可能・非unitに制限し、具体化後の型・effect・所有権・opaque検査を行う。GCの寿命管理を使い、ホストの管理表や新しい言語構文は追加しない。
 
 ## textキーのdict
 
 ```text
-(%import "wlt:std"
-  (type $dict.Dict)
+(%use "wlt:core"
+  (type $dict)
   (func $dict.new) (func $dict.len) (func $dict.get)
   (func $dict.set) (func $dict.remove) (func $dict.clear) (func $dict.entries))
 
-(ref (%inst $dict.Dict T))
+(ref (%inst $dict T))
 ```
 
 | 操作 | 結果・動作 | effect上限 |
@@ -33,12 +33,12 @@ entriesの完成後に辞書を更新・削除・clearしても、返したlist�
 ## 不変listを作るbuilder
 
 ```text
-(%import "wlt:std"
-  (type $list-builder.Builder)
+(%use "wlt:core"
+  (type $list-builder)
   (func $list-builder.new) (func $list-builder.push) (func $list-builder.extend)
   (func $list-builder.len) (func $list-builder.finish) (func $list-builder.clear))
 
-(ref (%inst $list-builder.Builder T))
+(ref (%inst $list-builder T))
 ```
 
 `new<T>()` は空のbuilder、`push<T>(b,value)` は末尾追加、`extend<T>(b,list)` は先頭から順に追加する。`len<T>(b)` は追加済みの要素数。`finish<T>(b)` は追加順の不変listを返して空へ戻し、`clear<T>(b)` は要素を捨てて空へ戻す。

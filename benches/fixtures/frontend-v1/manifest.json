@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "files": {
+    "json.wlt": "57f69cb87baa8b28d38435fd1fa6bacc72c6b438350e29326308f583071e9e3c",
+    "let.wlt": "cba98f072d56809626b70692d73b0ad524b316b90c8c9ee4cf758e8118fbb3e1",
+    "native.wlt": "d0ffa083b37034668d173dbb42d68433195255cd719e2d85180b55a462e98fd3",
+    "std-string.wlt": "5113cf8fc79bca424d6f832448bd0e4cf4f669819f0076ffb8ed706382112b6b",
+    "std-types.wlt": "66318aa12bcb156e066d2b07265d8486cd34e67e23e63c99db8d5e27967ab179",
+    "stock-ledger.wlt": "593a89ead01826488ab3b1fe738f78a8290a0fe2db671a33a50c25e429aa5351",
+    "type-error.wlt": "a139584a241c60bb8594ca99db4fa5f0f19b29333ea0e3fcee50d59a3e9a641a",
+    "workflow.wlt": "4ff26127f784a288dd606790c1e68255cbaea34a25fdc02da0148592413fe546"
+  }
+}

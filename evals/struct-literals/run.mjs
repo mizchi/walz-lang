@@ -10,7 +10,7 @@ const same=(a,b)=>{try{assert.deepEqual(a,b);return true;}catch{return false;}};
 export async function prepare(output) {
   await mkdir(dirname(output),{recursive:true});
   await mkdir(output);
-  const manifest={schema:'wlt-struct-readability-v3',cases:cases.map(c=>c.id),axes,labels:{readerA:labelsFor(variants),readerB:labelsFor([...variants].reverse())},hashes:{}};
+  const manifest={schema:'wlt-struct-readability-v7',cases:cases.map(c=>c.id),axes,labels:{readerA:labelsFor(variants),readerB:labelsFor([...variants].reverse())},hashes:{}};
   const put=async(name,text)=>{await writeFile(join(output,name),text,{flag:'wx'});manifest.hashes[name]=hash(text);};
   await mkdir(join(output,'support'));
   for(const name of ['run.mjs','cases.mjs','rubric.md'])await put('support/'+name,await readFile(new URL(name,import.meta.url),'utf8'));

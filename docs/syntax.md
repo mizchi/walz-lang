@@ -6,18 +6,18 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 | 用途 | 構文 |
 | --- | --- |
 | 式・制御構造 | `%let`、`%for`、`%loop`、`%recur`、`%match`、`%try`、`%result.do` |
-| 値の操作 | `%list.new`、`%text.lit`、`%result.ok`、`%future.await` など |
+| 値の操作 | `%list.new`、`%string.lit`、`%result.ok`、`%future.await` など |
 | struct構築 | `(%struct.new $T ($field 式) ...)`。`{}`のfield群と`(%$T::{...})`の短縮形も使える |
-| 値型 | `$text`、`$bytes`、`$unit`、`(%inst $list T)`、`(%inst $option T)`、`(%inst $result T E)` など |
+| 値型 | `$string`、`$bytes`、`$unit`、`(%inst $list T)`、`(%inst $option T)`、`(%inst $result T E)` など |
 | 宣言・注釈 | `%closure`、`%capture`、`%effect`、`%newtype`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
-| 静的モジュール | `%include`、`%import`、`%export`、`%namespace`、`%public`、`%use` |
+| 静的モジュール | `%include`、`%use`、`%export`、`%public` |
 | 型引数の適用 | `(%inst $name T...)`。関数・型・alias・クロージャで共通 |
 
 拡張の内部にある `case`、`bind`、`while`、`step`、`catch`と`%where`の制約名は、その入口に属するデータ構文なので接頭辞を付けない。`if`、`then`、`else`、`block`、`param`、結果宣言の `result` は WAT の構文を使う。
 
 型付きコアの式位置では、`$foo`を`local.get`の省略形、期待するスカラー型が分かる数値を`.const`の省略形として使える。letの型注釈は`(%let $x (type i32) 1 body)`と書ける。この`(type T)`は`%let`に属する注釈であり、独立した命令ではない。[規約と例](core-expressions.md#ローカル参照と数値の省略形)。
 
-基本型は `(%import "wlt:std" (type $result) (type $option) (type $future) ...)` で明示的に取り込む。Result と Future は `(%inst $result T E)` / `(%inst $future T)`、型引数のない text は `$text` と参照する。複数束縛は `(%let (($a initial-a) ($b initial-b)) body)` で左から右に初期化する。[標準モジュールと束縛](standard.md) に詳しい規約をまとめた。
+基本型は `(%use "wlt:core" (type $result) (type $option) (type $future) ...)` で明示的に取り込む。Result と Future は `(%inst $result T E)` / `(%inst $future T)`、型引数のない text は `$string` と参照する。複数束縛は `(%let (($a initial-a) ($b initial-b)) body)` で左から右に初期化する。[標準モジュールと束縛](standard.md) に詳しい規約をまとめた。
 
 ```wat
 (module
@@ -33,7 +33,7 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 型付きコアの戻り値は0個（unit）または1値に限る。pair は1つの値として返し、pair の分解 let で取り出す。標準 WAT の複数戻り値は標準 WAT 経路で検証・コンパイルし、型付きコアの複数束縛へ自動変換しない。
 
 ```wat
-(%import "math.wlt" (func $answer))  ;; ソースの静的リンク
+(%use "./math.wlt" (func $answer))  ;; ソースの静的リンク
 (%export (func $answer))            ;; ソース API に公開
 (import "host" "answer" (func $host-answer (result i32)))
 (export "answer" (func $answer))    ;; Wasm API に公開

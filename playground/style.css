@@ -1,0 +1,46 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #1c2b3c; background: #f3f6fa; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header, main, footer { max-width: 1600px; margin: auto; padding: 24px 32px; }
+header { position: relative; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.github-link { position: absolute; top: 24px; right: 32px; color: #315bc1; font-size: 13px; font-weight: 600; text-underline-offset: 3px; }
+h1 { margin: 6px 0 0; font-size: 28px; letter-spacing: -.04em; }
+header p, .hint, .pane-title span { color: #516477; font-size: 13px; }
+.eyebrow { font: 600 11px ui-monospace, monospace; letter-spacing: .12em; color: #315bc1; }
+main { padding-top: 8px; }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; }
+.toolbar label { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+button, select { font: inherit; font-size: 13px; border: 1px solid #c6d1df; border-radius: 6px; padding: 8px 12px; background: #fff; color: inherit; }
+button { cursor: pointer; }
+button:hover:enabled { border-color: #315bc1; }
+button:disabled, select:disabled { opacity: .45; cursor: default; }
+a:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 2px solid #6087ee; outline-offset: 2px; }
+#compile { background: #315bc1; border-color: #315bc1; color: white; }
+#compile-status { font-size: 12px; margin-left: auto; }
+#samples { max-width: min(380px, 65vw); }
+.sample-guide { padding: 14px 16px; margin: 0 0 16px; border-left: 3px solid #315bc1; background: #eaf0fc; border-radius: 4px; font-size: 13px; }
+.sample-guide p { margin: 6px 0; line-height: 1.6; color: #364d67; }
+.sample-guide span { display: block; color: #315096; font: 12px/1.6 ui-monospace, monospace; overflow-wrap: anywhere; }
+.workspace { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #c6d1df; border-radius: 10px; overflow: hidden; background: white; }
+.editor-pane, .output-pane { min-width: 0; }
+.editor-pane { border-right: 1px solid #c6d1df; }
+.pane-title, .tabs { height: 48px; display: flex; gap: 14px; align-items: center; padding: 0 16px; background: #fff; border-bottom: 1px solid #dce3ec; font-size: 13px; }
+.pane-title span { margin-left: auto; font-size: 11px; }
+.tabs button { height: 48px; border: 0; border-radius: 0; background: transparent; }
+.tabs button[aria-selected="true"] { color: #315bc1; box-shadow: inset 0 -2px #315bc1; }
+textarea, pre { font: 13px/1.7 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
+textarea { display: block; width: 100%; height: 57vh; min-height: 340px; padding: 20px; border: 0; resize: vertical; background: #162234; color: #e1e9f6; }
+.output-pane pre { height: 57vh; min-height: 340px; overflow: auto; margin: 0; padding: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.execution { margin-top: 16px; }
+#run-output { margin: 0; padding: 16px; min-height: 62px; border: 1px solid #c6d1df; background: white; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+footer { padding-top: 0; color: #516477; font-size: 11px; }
+@media (max-width: 800px) {
+  header, main, footer { padding-left: 16px; padding-right: 16px; }
+  header { display: block; }
+  .github-link { right: 16px; }
+  .workspace { grid-template-columns: 1fr; }
+  .editor-pane { border-right: 0; border-bottom: 1px solid #c6d1df; }
+  textarea, .output-pane pre { height: 40vh; min-height: 240px; }
+  .pane-title span { display: none; }
+  #compile-status { width: 100%; margin-left: 0; }
+}

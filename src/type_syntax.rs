@@ -414,7 +414,7 @@ fn walk_types(
                 walk_types(e, f, locals)?;
             }
         }
-        "func" | "closure" | "law" => {
+        "func" | "closure" | "law" | "bench" => {
             if let Some(name) = items.get_mut(1) {
                 map_arguments(name, f)?;
             }

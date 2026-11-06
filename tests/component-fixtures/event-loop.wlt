@@ -1,8 +1,8 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $future)
     (type $option)
-    (type $pair)
+    (type $tuple)
     (type $result)
     (type $stream))
   (type $Cell (struct (field i64)))
@@ -23,7 +23,7 @@
   (func $sum (export "sum-ticks") (param $count i32) (param $ms i32) (result i64) (%effect host suspends)
     (%loop $read (bind $stream (%inst $stream i64) (call $ticks (local.get $count) (local.get $ms)))
                 (bind $total i64 (i64.const 0)) (result i64)
-      (%match (%inst $pair (%inst $stream i64) (%inst $option i64)) (result i64) (%stream.next i64 (%move $stream))
+      (%match (%inst $tuple (%inst $stream i64) (%inst $option i64)) (result i64) (%stream.next i64 (%move $stream))
         (case pair ($next $item)
           (%match (%inst $option i64) (result i64) (local.get $item)
             (case none () (block (result i64) (%stream.close i64 (%move $next)) (local.get $total)))

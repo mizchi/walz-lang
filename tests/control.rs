@@ -57,9 +57,9 @@ fn early_exits_cannot_discard_owners_or_cross_mismatched_label_types() {
     ] {
         assert!(wlt::check(&format!("(module (func $f (result i32) {body}))")).is_err());
     }
-    let bad = "(module (func $f (param $x (%own i32)) (result i32) (%effect pure) (return (i32.const 42))))";
+    let bad = "(module (func $f (param $x (%box i32)) (result i32) (%effect pure) (return (i32.const 42))))";
     assert!(wlt::check(bad).is_err());
-    let good = "(module (func $f (param $x (%own i32)) (result (%own i32)) (%effect pure) (return (%move $x))))";
+    let good = "(module (func $f (param $x (%box i32)) (result (%box i32)) (%effect pure) (return (%move $x))))";
     wlt::check(good).unwrap();
 }
 
@@ -70,14 +70,14 @@ fn named_loop_branches_and_owned_block_results_are_checked() {
         "42",
     );
     let good = r#"(module (func $main (export "main") (result i32) (%effect pure)
-      (%let $x (%own.new i32 (i32.const 42))
-        (%match (%own i32) (result i32)
-          (block $done (result (%own i32)) (br $done (%move $x)))
+      (%let $x (%box.new i32 (i32.const 42))
+        (%match (%box i32) (result i32)
+          (block $done (result (%box i32)) (br $done (%move $x)))
           (case own ($n) (return (local.get $n)))))))"#;
     let compiled = wlt::verified::compile(good).unwrap();
     assert!(!compiled.analysis.opaque);
     let bad = r#"(module (func $f (result i32)
-      (block $done (result i32) (%let $x (%own.new i32 (i32.const 1)) (br $done (i32.const 42))))))"#;
+      (block $done (result i32) (%let $x (%box.new i32 (i32.const 1)) (br $done (i32.const 42))))))"#;
     let error = wlt::check(bad).unwrap_err().to_string();
     assert!(error.contains("unconsumed"), "{error}");
 }

@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $result)
     (type $unit))
   (%include "../../examples/apps/workflow/compute.wlt")
@@ -12,8 +12,8 @@
     (%let $g (call $graph.new)
       (block
         (result (ref $graph.Graph))
-        (call $must (call $graph.add (local.get $g) (%text.lit "Aa") (i64.const 1)))
-        (call $must (call $graph.add (local.get $g) (%text.lit "BB") (i64.const 2)))
+        (call $must (call $graph.add (local.get $g) (%string.lit "Aa") (i64.const 1)))
+        (call $must (call $graph.add (local.get $g) (%string.lit "BB") (i64.const 2)))
         (local.get $g))))
 
   (func $first (export "first") (param $g (ref $graph.Graph)) (result (ref $graph.Job))

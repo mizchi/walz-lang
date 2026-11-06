@@ -508,6 +508,8 @@ pub(crate) fn check<'b>(
     let mut type_nodes = Vec::new();
     let mut function_nodes = Vec::new();
     let mut test_nodes = Vec::new();
+    let mut bench_nodes = Vec::new();
+    let mut bench_names = BTreeSet::new();
     let mut law_nodes = Vec::new();
     let mut law_names = BTreeSet::new();
     let mut test_names = BTreeSet::new();
@@ -554,6 +556,19 @@ pub(crate) fn check<'b>(
                     return Err(tables.error(&items[1], "duplicate test name"));
                 }
                 test_nodes.push(node);
+            }
+            Some("bench") => {
+                let name = items
+                    .get(1)
+                    .and_then(Sexp::text)
+                    .ok_or_else(|| tables.error(node, "expected benchmark name string"))?;
+                if name.trim().is_empty() {
+                    return Err(tables.error(&items[1], "expected non-empty benchmark name"));
+                }
+                if !bench_names.insert(name.to_owned()) {
+                    return Err(tables.error(&items[1], "duplicate benchmark name"));
+                }
+                bench_nodes.push(node);
             }
             Some("law") => {
                 if items.len() < 3 {
@@ -883,6 +898,69 @@ pub(crate) fn check<'b>(
         });
         bodies.push(Some(&items[2]));
     }
+    let mut benches = Vec::new();
+    for (index, node) in bench_nodes.into_iter().enumerate() {
+        let items = tables.list(node)?;
+        let mut cursor = 2;
+        let mut locals = Vec::new();
+        let mut params = Vec::new();
+        if let Some(parameter) = items.get(cursor).filter(|n| n.head() == Some("param")) {
+            let parts = tables.list(parameter)?;
+            tables.count(parameter, parts, 3)?;
+            if tables.ty(&parts[2])? != Type::Num(NumType::I32) {
+                return Err(tables.error(parameter, "expected an i32 iteration parameter"));
+            }
+            locals.push(Binding {
+                name: tables.name(&parts[1])?,
+                span: parts[1].span,
+                ty: Type::Num(NumType::I32),
+                kind: BindingKind::Parameter,
+            });
+            params.push(LocalId(0));
+            cursor += 1;
+        }
+        if items.get(cursor).is_some_and(|n| n.head() == Some("param")) {
+            return Err(tables.error(node, "benchmarks accept at most one iteration parameter"));
+        }
+        let result = if let Some(result) = items.get(cursor).filter(|n| n.head() == Some("result"))
+        {
+            let parts = tables.list(result)?;
+            tables.count(result, parts, 2)?;
+            cursor += 1;
+            tables.ty(&parts[1])?
+        } else {
+            Type::Unit
+        };
+        if items.len() != cursor + 1 {
+            return Err(tables.error(node, "expected one benchmark body after optional (param $iteration i32) and (result type)"));
+        }
+        let base = format!("__wlt_bench_{index}");
+        let mut export = base.clone();
+        let mut suffix = 0;
+        while !exported_names.insert(export.clone()) {
+            suffix += 1;
+            export = format!("{base}_{suffix}");
+        }
+        benches.push(BenchDecl {
+            name: items[1].text().unwrap().to_owned(),
+            span: node.span,
+            function: FunctionId(functions.len()),
+            export: export.clone(),
+        });
+        functions.push(Function {
+            name: format!("$__bench{index}"),
+            kind: FunctionKind::Defined,
+            locals,
+            params,
+            captures: vec![],
+            result,
+            exports: vec![export],
+            body: None,
+            import_contract: None,
+            effect_contract: None,
+        });
+        bodies.push(Some(&items[cursor]));
+    }
     let mut laws = Vec::new();
     for (index, node) in law_nodes.into_iter().enumerate() {
         let items = tables.list(node)?;
@@ -934,6 +1012,7 @@ pub(crate) fn check<'b>(
         types,
         functions,
         tests,
+        benches,
         laws,
         tags,
     };

@@ -31,8 +31,8 @@ async function fixture(source, run) {
 
 const source = `(module
   (func $main (export "main") (param $x i64) (result i64) (%effect pure) (local.get $x))
-  (func $transfer (export "transfer") (param $x (%pair (%future i64) (%pair %text %unit)))
-    (result (%pair (%future i64) (%pair %text %unit))) (%effect pure) (%move $x))
+  (func $transfer (export "transfer") (param $x (%tuple (%future i64) (%tuple %string %unit)))
+    (result (%tuple (%future i64) (%tuple %string %unit))) (%effect pure) (%move $x))
   (func $option (export "option") (param $x (%option (%option i64)))
     (result (%option (%option i64))) (%effect pure) (local.get $x)))`;
 

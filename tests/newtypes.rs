@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use std::process::Command;
 
 #[test]
@@ -42,7 +43,7 @@ fn scalar_newtypes_are_nominal_and_erase_without_gc_allocations() {
 #[test]
 fn newtypes_work_in_gc_storage_values_and_portable_scalar_boundaries() {
     let source = r#"(module
-      (%import "wlt:std" (type $list))
+      (%use "wlt:core" (type $list))
       (type $Id (%newtype i64))
       (type $Box (struct (field $value $Id)))
       (func $roundtrip (export "roundtrip") (param $id $Id) (result $Id) (%effect pure)
@@ -68,7 +69,7 @@ fn newtypes_work_in_gc_storage_values_and_portable_scalar_boundaries() {
 #[test]
 fn opaque_newtypes_keep_representation_private_and_laws_erase_after_checking() {
     let source = r#"(module
-      (%namespace $user
+      (%legacy.namespace $user
         (%export (opaque $Id) (func $new) (func $number))
         (type $Id (%newtype i32))
         (func $new (param $n i32) (result $Id) (%newtype.wrap $Id (local.get $n)))

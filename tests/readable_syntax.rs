@@ -8,17 +8,17 @@ fn same_wasm(short: &str, explicit: &str) {
 #[test]
 fn constructors_use_their_expected_value_type() {
     same_wasm(
-        r#"(module (func $f (result (%option (%result (%pair i64 i32) i32)))
-          (%option.some (%result.ok (%pair.new (i64.const 40) (i32.const 2))))))"#,
-        r#"(module (func $f (result (%option (%result (%pair i64 i32) i32)))
-          (%option.some (%result (%pair i64 i32) i32)
-            (%result.ok (%pair i64 i32) i32 (%pair.new i64 i32 (i64.const 40) (i32.const 2))))))"#,
+        r#"(module (func $f (result (%option (%result (%tuple i64 i32) i32)))
+          (%option.some (%result.ok (%tuple.new (i64.const 40) (i32.const 2))))))"#,
+        r#"(module (func $f (result (%option (%result (%tuple i64 i32) i32)))
+          (%option.some (%result (%tuple i64 i32) i32)
+            (%result.ok (%tuple i64 i32) i32 (%tuple.new i64 i32 (i64.const 40) (i32.const 2))))))"#,
     );
     for (ty, expression) in [
         ("(%option i64)", "(%option.none)"),
         ("(%result %unit i32)", "(%result.ok)"),
         ("(%result i64 i32)", "(%result.err (i32.const 1))"),
-        ("(%own i64)", "(%own.new (i64.const 42))"),
+        ("(%box i64)", "(%box.new (i64.const 42))"),
     ] {
         wlt::compile(&format!("(module (func $f (result {ty}) {expression}))")).unwrap();
     }
@@ -43,8 +43,8 @@ fn missing_or_wrong_constructor_context_is_rejected() {
     for expression in [
         "(%let $v (%option.none) (nop))",
         "(%let $v (%result.ok (i64.const 1)) (nop))",
-        "(%let $v (%pair.new (i64.const 1) (i32.const 2)) (nop))",
-        "(%let $v (%own.new (i64.const 1)) (%own.close (%move $v)))",
+        "(%let $v (%tuple.new (i64.const 1) (i32.const 2)) (nop))",
+        "(%let $v (%box.new (i64.const 1)) (%box.close (%move $v)))",
     ] {
         let error = wlt::check(&format!("(module (func $f {expression}))"))
             .unwrap_err()
@@ -61,15 +61,15 @@ fn missing_or_wrong_constructor_context_is_rejected() {
 #[test]
 fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
     same_wasm(
-        r#"(module (func $f (param $p (%pair i64 i32)) (result i64)
+        r#"(module (func $f (param $p (%tuple i64 i32)) (result i64)
           (%let ($a $b) (local.get $p) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b))))))"#,
-        r#"(module (func $f (param $p (%pair i64 i32)) (result i64)
-          (%match (%pair i64 i32) (result i64) (local.get $p)
+        r#"(module (func $f (param $p (%tuple i64 i32)) (result i64)
+          (%match (%tuple i64 i32) (result i64) (local.get $p)
             (case pair ($a $b) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b)))))))"#,
     );
     wlt::compile(
-        r#"(module (func $f (param $p (%pair %unit (%own i64)))
-      (%let ($value) (%move $p) (%own.close (%move $value)))))"#,
+        r#"(module (func $f (param $p (%tuple %unit (%box i64)))
+      (%let ($value) (%move $p) (%box.close (%move $value)))))"#,
     )
     .unwrap();
     for body in [
@@ -78,14 +78,14 @@ fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
     ] {
         assert!(
             wlt::check(&format!(
-                "(module (func $f (param $p (%pair i64 i32)) {body}))"
+                "(module (func $f (param $p (%tuple i64 i32)) {body}))"
             ))
             .is_err()
         );
     }
     let error = wlt::check(
-        r#"(module (func $f (param $p (%pair (%own i64) i32))
-      (%let ($a $b) (local.get $p) (%own.close (%move $a)))))"#,
+        r#"(module (func $f (param $p (%tuple (%box i64) i32))
+      (%let ($a $b) (local.get $p) (%box.close (%move $a)))))"#,
     )
     .unwrap_err()
     .to_string();
@@ -120,13 +120,13 @@ fn short_result_let_uses_subject_error_and_expected_or_body_success() {
 #[test]
 fn short_fold_infers_state_and_result_without_leaking_probe_locals() {
     let module = wlt::check(
-        r#"(module (func $f (result (%result (%pair i64 i32) i32))
+        r#"(module (func $f (result (%result (%tuple i64 i32) i32))
       (%stream.fold-result
         (%let $source (%stream.empty (%result i64 i32)) (%move $source))
         (%let $initial (i64.const 0)
-          (block (result (%pair i64 i32))
+          (block (result (%tuple i64 i32))
             (%loop $probe (bind $temporary i32 (i32.const 0)) (nop))
-            (%pair.new (local.get $initial) (i32.const 0)))) ($state $item)
+            (%tuple.new (local.get $initial) (i32.const 0)))) ($state $item)
         (%result.ok (local.get $state)))))"#,
     )
     .unwrap();
@@ -259,16 +259,16 @@ fn short_macros_preserve_ownership_and_effect_boundaries() {
         r#"(module (func $f (result (%result i64 i32)) (%effect pure)
           (%stream.fold-result (%stream.empty (%result i64 i32)) (i64.const 0) ($s $i)
             (%result.ok (local.get $s)))))"#,
-        r#"(module (func $f (param $r (%result i64 (%own i32))) (result (%result i64 (%own i32)))
+        r#"(module (func $f (param $r (%result i64 (%box i32))) (result (%result i64 (%box i32)))
           (%result.let ($v) (%move $r) (%result.ok (local.get $v)))))"#,
-        r#"(module (func $f (result (%result (%own i64) i32))
-          (%stream.fold-result (%stream.empty (%result i64 i32)) (%own.new i64 (i64.const 0)) ($s $i)
+        r#"(module (func $f (result (%result (%box i64) i32))
+          (%stream.fold-result (%stream.empty (%result i64 i32)) (%box.new i64 (i64.const 0)) ($s $i)
             (%result.ok (%move $s)))))"#,
     ] {
         assert!(wlt::check(source).is_err(), "{source}");
     }
     wlt::compile(
-        r#"(module (func $f (param $r (%result (%own i64) i32)) (result (%result (%own i64) i32))
+        r#"(module (func $f (param $r (%result (%box i64) i32)) (result (%result (%box i64) i32))
       (%result.let ($v) (%move $r) (%result.ok (%move $v)))))"#,
     )
     .unwrap();
@@ -296,7 +296,7 @@ fn inferred_composite_types_survive_checking_and_emission() {
         r#"(module
       (func $fold
         (%let $r (%stream.fold-result (%stream.empty (%result i64 i32))
-          (%pair.new i32 i64 (i32.const 0) (i64.const 0)) ($s $i)
+          (%tuple.new i32 i64 (i32.const 0) (i64.const 0)) ($s $i)
           (%result.ok (local.get $s))) (drop (local.get $r))))
       (func $map (param $input (%result i64 i32)) (result i32)
         (%let $r (%result.let ($v) (local.get $input) (%result.ok (i32.wrap_i64 (local.get $v))))
@@ -306,7 +306,7 @@ fn inferred_composite_types_survive_checking_and_emission() {
     .unwrap();
     let error = wlt::check(
         r#"(module (func $f (param $input (%result i64 i32))
-      (%let $owner (%own.new i64 (i64.const 0))
+      (%let $owner (%box.new i64 (i64.const 0))
         (block (%result.let ($v) (local.get $input) (%result.ok (%move $owner))) (nop)))))"#,
     )
     .unwrap_err()

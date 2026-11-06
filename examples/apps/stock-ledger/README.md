@@ -66,7 +66,7 @@ text-cli は成功 payload を表示しない。数値の確認方法は [チー
 | [program.wlt](program.wlt) | 業務 Result と I/O Result の接続、共有ライブラリの読込み |
 
 `Aa` と `BB` は実際に同じハッシュ値になるため、衝突時も別々の在庫を保持できることを検査する。
-再利用した `$string.json`・`$string.concat`・`$string.u64` により、可変長の入力キーと数量を手動のバイト列生成なしで出力できた。
+再利用した `$json.object-builder.string`・`$string.concat`・`$string.u64` により、可変長の入力キーと数量を手動のバイト列生成なしで出力できた。
 
 ## 意図どおり改善した部分
 

@@ -156,6 +156,19 @@ fn collect(
                         .help("put tests in a separate entry file that imports the library"),
                 );
             }
+            Some("bench") if file.is_some() => {
+                return Err(
+                    Error::at(source, node.span, "file modules cannot declare benchmarks")
+                        .help("put benchmarks in a separate entry file that imports the library"),
+                );
+            }
+            Some("use") if items.get(1).and_then(Sexp::text).is_some() => {
+                return Err(
+                    Error::at(source, node.span, "file uses require source::load")
+                        .with_code("E_SOURCE_REQUIRED")
+                        .help("load the entry file to resolve its relative %use paths"),
+                );
+            }
             Some("use") => current.uses.push(node.clone()),
             Some("import") if items.get(1).and_then(Sexp::atom).is_some() => {
                 current.uses.push(node.clone())
@@ -277,7 +290,7 @@ fn import_aliases(
             .lookup(&symbol)
             .ok_or_else(|| Error::at(source, binding.span, "unknown imported member"))?;
         if !target.public.contains_key(&symbol) {
-            return Err(Error::at(source, binding.span, "private namespace member"));
+            return Err(Error::at(source, binding.span, "private module member"));
         }
         let alias = Symbol::new(
             symbol.kind,
@@ -411,7 +424,7 @@ fn resolve(
                 if scope == path || target.public.contains_key(&member) {
                     return Ok(name.clone());
                 }
-                return Err(Error::at(source, node.span, "private namespace member"));
+                return Err(Error::at(source, node.span, "private module member"));
             }
         }
     }
@@ -551,12 +564,12 @@ impl Expanded {
                         let owner = if opaque.owner.is_empty() {
                             "the root module".to_owned()
                         } else {
-                            format!("namespace `${}`", opaque.owner)
+                            format!("module `${}`", opaque.owner)
                         };
                         return Err(Error::at(
                             source,
                             e.span,
-                            format!("opaque type representation is private to its namespace: `{name}` belongs to {owner}"),
+                            format!("opaque type representation is private to its module: `{name}` belongs to {owner}"),
                         ).with_code("E_OPAQUE_REPRESENTATION")
                             .related(source, opaque.declaration, format!("opaque type `{name}` declared here"))
                             .help(format!("use public functions of {owner} to access this value")));

@@ -131,7 +131,7 @@ fn scalar_bit_counts_use_standard_width_and_zero_semantics() {
 #[test]
 fn vectors_are_shared_values_in_gc_storage_captures_generics_and_lists() {
     let source = r#"(module
-      (%import "wlt:std" (type $option) (func $list-builder.new) (func $list-builder.push) (func $list-builder.finish))
+      (%use "wlt:core" (type $option) (func $list-builder.new) (func $list-builder.push) (func $list-builder.finish))
       (type $Box (struct (field $v (mut v128))))
       (type $Array (array (mut v128)))
       (func $id (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effect pure) (local.get $x))
@@ -205,7 +205,7 @@ fn trusted_host_policies_also_reject_vector_abi_shapes() {
     for (ty, shape) in [("v128", "v128"), ("(%inst $list v128)", "(list v128)")] {
         let source = format!(
             r#"(module
-          (%import "wlt:std" (type $list))
+          (%use "wlt:core" (type $list))
           (import "simd:host/math" "take" (func $take (param $v {ty})))
           (func $main (export "main") (result i32) (%effect pure) (i32.const 42)))"#
         );
@@ -259,11 +259,11 @@ fn portable_boundaries_reject_vectors_recursively_and_laws_do_not_skip_them() {
         "v128",
         "(%inst $list v128)",
         "(%inst $option v128)",
-        "(%inst $pair i32 v128)",
+        "(%inst $tuple i32 v128)",
         "(%inst $future v128)",
     ] {
         let source = format!(
-            r#"(module (%import "wlt:std" (type $list) (type $option) (type $pair) (type $future)) (func $f (export "f") (param $x {ty}) (result {ty}) (%effect pure) (local.get $x)))"#
+            r#"(module (%use "wlt:core" (type $list) (type $option) (type $tuple) (type $future)) (func $f (export "f") (param $x {ty}) (result {ty}) (%effect pure) (local.get $x)))"#
         );
         // Future is owned; the corresponding move below keeps the boundary test valid.
         let source = if ty.starts_with("(%inst $future") {

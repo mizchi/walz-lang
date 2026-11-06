@@ -1,19 +1,19 @@
 (module
-  (%import "wlt:std"
-    (type $text)
+  (%use "wlt:core"
+    (type $string)
     (type $result)
-    (type $json-value.Value $Value)
-    (func $json-value.parse $parse)
-    (func $json-value.stringify $stringify)
-    (func $json-value.get $get)
-    (func $json-value.as-number $as-number)
+    (type $json-value $Value)
+    (func $json.parse $parse)
+    (func $json.stringify $stringify)
+    (func $json.get $get)
+    (func $json.as-number $as-number)
     (func $string.parse-s64 $integer))
   ;; Parsing and AST serialization both execute in WLT / Wasm GC.
   ;; The host only reads UTF-8, invokes this export, and prints the result.
   (func $normalize
     (export "normalize")
-    (param $source $text)
-    (result (%inst $result $text i32))
+    (param $source $string)
+    (result (%inst $result $string i32))
     (%effect reads writes allocates)
     (%result.do
       ($value (call $parse (local.get $source)))
@@ -24,7 +24,7 @@
     (param $value (ref $Value))
     (result i32)
     (%effect pure)
-    (%match (call $get (local.get $value) (%text.lit "answer"))
+    (%match (call $get (local.get $value) (%string.lit "answer"))
       (case none () (i32.const 0))
       (case some ($field)
         (%match (call $as-number (local.get $field))
@@ -41,7 +41,7 @@
     (result i32)
     (%effect reads writes allocates)
     (%match
-      (call $parse (%text.lit "{\"answer\":42,\"items\":[null,true,\"日本語🦀\"]}"))
+      (call $parse (%string.lit "{\"answer\":42,\"items\":[null,true,\"日本語🦀\"]}"))
       (case err ($offset) (i32.const 0))
       (case ok ($value) (call $answer (local.get $value))))
   ))

@@ -1,7 +1,8 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 #[test]
 fn checked_output_retains_only_exported_functions_and_transitive_dependencies() {
     let source = r#"(module
-      (%namespace $lib
+      (%legacy.namespace $lib
         (%public (func $answer) (func $unused))
         (import "wlt:host/event-loop@0.1.0" "defer-i64"
           (func $sleep (param $n i32) (param $value i64) (result (%future i64))))

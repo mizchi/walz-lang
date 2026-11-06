@@ -306,6 +306,9 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
     for test in &mut out.tests {
         test.function.0 = ids.functions[test.function.0];
     }
+    for bench in &mut out.benches {
+        bench.function.0 = ids.functions[bench.function.0];
+    }
     for law in &mut out.laws {
         law.function.0 = ids.functions[law.function.0];
     }

@@ -53,6 +53,24 @@ fn checked_module_with_policy(
     source: &str,
     policy: &crate::bindings::BindingPolicy,
 ) -> Result<Module, Error> {
+    prepare_module(source, policy, crate::verified::verify_component, true)
+}
+
+fn checked_browser_module(source: &str, optimize: bool) -> Result<Module, Error> {
+    prepare_module(
+        source,
+        &crate::bindings::BindingPolicy::default(),
+        crate::verified::check_browser_component,
+        optimize,
+    )
+}
+
+fn prepare_module(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+    check_contracts: fn(&str, &Module) -> Result<(), Error>,
+    optimize: bool,
+) -> Result<Module, Error> {
     let mut module = crate::check_with_policy(source, policy)?;
     for f in &module.functions {
         if matches!(f.kind, FunctionKind::Import { .. }) && crate::bindings::lookup(f).is_none() {
@@ -62,16 +80,19 @@ fn checked_module_with_policy(
         }
     }
     crate::wit::emit(&module)?;
-    crate::verified::verify_component(source, &module)?;
+    check_contracts(source, &module)?;
     module.abi_suspends = module
         .functions
         .iter()
         .zip(crate::effects::infer(&module))
         .map(|(f, e)| (f.name.clone(), e.suspends))
         .collect();
-    Ok(crate::newtypes::lower(&crate::link::project(
-        &crate::optimize::simplify(&module),
-    )))
+    let module = if optimize {
+        crate::optimize::simplify(&module)
+    } else {
+        module
+    };
+    Ok(crate::newtypes::lower(&crate::link::project(&module)))
 }
 
 fn assemble(

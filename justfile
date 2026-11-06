@@ -1,5 +1,16 @@
 default: run
 
+playground-build:
+    node tools/build-playground.mjs
+
+playground: playground-build
+    node tools/serve-playground.mjs
+
+test-playground: playground-build
+    node --test playground/samples.test.mjs
+    cargo test --locked -p wlt-web
+    pnpm exec playwright test --config playwright.playground.config.mjs
+
 run file="examples/closure.wlt":
     cargo run --locked --quiet -- run {{quote(file)}}
 
@@ -199,6 +210,13 @@ test-stdlib:
     cargo test --locked --test library
     node --expose-gc --test runtime/library.test.mjs
 
+test-views:
+    cargo test --locked --test views --test array_views
+    node --expose-gc --test runtime/views.test.mjs runtime/array-views.test.mjs
+
+test-naming:
+    cargo test --locked --test naming --test wit --test wit_bindings --test standard --test surface
+
 # Generate public standard signatures from the compiler's embedded catalogue.
 stdlib-docs:
     cargo run --locked --quiet --example stdlib-docs
@@ -253,13 +271,55 @@ test-e2e:
     pnpm exec playwright test
 
 test:
-    cargo test --locked
+    cargo test --locked --workspace
 
 test-language path="tests" filter="":
     cargo run --locked --quiet -- test {{quote(path)}} --filter {{quote(filter)}}
 
 list-tests path="tests" filter="":
     cargo run --locked --quiet -- test {{quote(path)}} --filter {{quote(filter)}} --list
+
+bench path="." filter="":
+    cargo run --locked --release --quiet -- bench {{quote(path)}} --filter {{quote(filter)}}
+
+list-benches path="." filter="":
+    cargo run --locked --quiet -- bench {{quote(path)}} --filter {{quote(filter)}} --list
+
+test-bench:
+    cargo test --locked --test benchmarks --test runner --lib
+    node --test runtime/bench-runner.test.mjs
+
+# Freeze %bench Wasm before changing std. All outputs require fresh paths.
+bench-capture source output:
+    node runtime/bench-tune.mjs capture {{quote(source)}} {{quote(output)}}
+
+bench-profile snapshot output filter="" iterations="1000000":
+    node runtime/bench-tune.mjs profile {{quote(snapshot)}} {{quote(output)}} {{quote(filter)}} {{quote(iterations)}}
+
+bench-compare before after output samples="15":
+    node runtime/bench-tune.mjs compare {{quote(before)}} {{quote(after)}} {{quote(output)}} {{quote(samples)}}
+
+test-std-tune:
+    cargo test --locked --test stdlib_tuning --test library --test views
+    node --expose-gc --test runtime/bench-tune.test.mjs runtime/stdlib-tuning.test.mjs
+
+frontend-bench filter="":
+    cargo bench --locked --bench frontend -- {{quote(filter)}}
+
+frontend-save label filter="":
+    node tools/frontend-bench.mjs save {{quote(label)}} {{quote(filter)}}
+
+frontend-compare label filter="":
+    node tools/frontend-bench.mjs compare {{quote(label)}} {{quote(filter)}}
+
+frontend-profile id output seconds="5":
+    node tools/frontend-profile.mjs {{quote(id)}} {{quote(output)}} {{quote(seconds)}}
+
+test-frontend:
+    cargo test --locked --lib standard::performance_contracts
+    cargo test --locked --bench frontend
+    cargo build --locked --bin wlt
+    node --test runtime/frontend-reference.test.mjs
 
 wit-check:
     mkdir -p target
@@ -276,8 +336,8 @@ probes:
     cargo test --locked --test examples capability_probes_record_reproducible_language_limits -- --nocapture
 
 check: check-stdlib-docs
-    cargo fmt -- --check
-    cargo clippy --locked --all-targets -- -D warnings
+    cargo fmt --all -- --check
+    cargo clippy --locked --workspace --all-targets -- -D warnings
 
 fmt:
     cargo fmt

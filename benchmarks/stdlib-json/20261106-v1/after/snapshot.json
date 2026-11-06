@@ -1,0 +1,87 @@
+{
+  "cases": [
+    {
+      "file": "case-0.wasm",
+      "name": "input 64"
+    },
+    {
+      "file": "case-1.wasm",
+      "name": "string.concat 64"
+    },
+    {
+      "file": "case-2.wasm",
+      "name": "string.json ASCII 64"
+    },
+    {
+      "file": "case-3.wasm",
+      "name": "input 1024"
+    },
+    {
+      "file": "case-4.wasm",
+      "name": "string.concat 1024"
+    },
+    {
+      "file": "case-5.wasm",
+      "name": "string.json ASCII 1024"
+    },
+    {
+      "file": "case-6.wasm",
+      "name": "string.json Unicode"
+    },
+    {
+      "file": "case-7.wasm",
+      "name": "string.json escaped"
+    },
+    {
+      "file": "case-8.wasm",
+      "name": "bytes.concat 1024"
+    },
+    {
+      "file": "case-9.wasm",
+      "name": "builder 16x64"
+    },
+    {
+      "file": "case-10.wasm",
+      "name": "JSON parse long string"
+    }
+  ],
+  "schema": "wlt-bench-snapshot-v1",
+  "source": "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/benchmarks/std_tune_bench.wlt",
+  "date": "2026-11-06T13:57:54.394Z",
+  "host": {
+    "node": "v24.21.0",
+    "v8": "13.6.233.17-node.53",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5"
+  },
+  "hashes": {
+    "case-0.wasm": "b07240b6d0055b41410339fff4b5499b8703ca3205af785ed26cfe09db375bb2",
+    "case-1.wasm": "fa1aea3f954bd6ae29dfca5dc6c579120c7ebc2e004c7fcfb34127f9f388805b",
+    "case-10.wasm": "a59fb5d15a7a1c409669437d4b8e8fe9e526fc4b7ab4a63274cffa37d6e72907",
+    "case-2.wasm": "9f852241874b18eb9f95bc6bab959783437bc6c4dac1196e7e5d11cd64da3592",
+    "case-3.wasm": "3eb5b8291098fdd8b7d383d2eaafdc4c06b1bf15a09e5ec27e5ecf797af92f6b",
+    "case-4.wasm": "707a739a641a90a53a25300a4b845f3039195166cce20a8879cfc3d92f4937b4",
+    "case-5.wasm": "48cc73de939f7d3ee0dffa1c69db8c509d57eef39a8a31324acbb6a9e85a7fef",
+    "case-6.wasm": "09b3a0d596bc9804a4286c60cb31a3cd1c0b85e12ba48662979bac016d9c4d52",
+    "case-7.wasm": "e2780a9eba5c13baff6177834d3a2e6b781a91ac4c42ad855b6f61a8e189c1bc",
+    "case-8.wasm": "fc734c06b6c7c95ac1f8edb80e78d92f77de59de29765d9ecad09e5ee51b7d7c",
+    "case-9.wasm": "dc4d4e63bbcfdea397af84701065647472916948d278c8f42bf0a423d72e1269",
+    "driver.mjs": "ee5aff2305ef99b0353742584e02565b445420c97f9fedeecad4f9a6aa816a1b",
+    "expanded.wlt": "a0a0d94c4a9f89a5f813435dde3b2d4a0fe781dc0770a82e829478785fe0ee02",
+    "metadata.json": "55096ce8cff252f28b030db89e3a87293747d784a9935b1421ccd026622de000",
+    "source.wlt": "a0a0d94c4a9f89a5f813435dde3b2d4a0fe781dc0770a82e829478785fe0ee02",
+    "stdlib/README.md": "b048b938e011daee3634952fb582a53abd95e331f171c5069ed4f4a62c5ec93f",
+    "stdlib/builder.wlt": "506f9b56fadd7ced67ab2e2785984d4cefdb04da03a28afaf62d924aad64ad08",
+    "stdlib/bytes-view.wlt": "909eb8613a78d37e2b2ec95e423c42d7c936c8fd5654e9c87a8edaba3e57cb23",
+    "stdlib/bytes.wlt": "e693790368cb3519f372626cbe46acba58381c3b01fdac6721274bff76393ca5",
+    "stdlib/dict.wlt": "ad8b2e7b56b6eec043d9d486dc9d93e97c5b46061b660f3692f43d871c9cb652",
+    "stdlib/json-value.wlt": "aa4c7ada62184d95a4e89ea302072656f454d9d3b10f77850443eadb96d7d40f",
+    "stdlib/json.wlt": "5facbf8916b932010612b6235ed1eb057d1eaa8c33b2f4d19141381da220d01b",
+    "stdlib/list-builder.wlt": "6c7cfdd18f047d24a179e33662bca767f265abfae5d74dc8893e3dde79e53b11",
+    "stdlib/list.wlt": "2733d48dd396092e9127058a0dc9f7846cd847a1f63cad9b6e50da6adad10fa0",
+    "stdlib/string-view.wlt": "3c07a26b0700d26de79fa4b9d9855554fe36392036acca97c79b6e62680c92bb",
+    "stdlib/text.wlt": "4d823b7f5bc0fa9a847b7065957f0202d787b1cfa78e624d35e0d92131be3a26",
+    "stdlib/types.wlt": "84f40b8310c50828a3a849da20abdbe41e211806b0b68b38e387351dbb84804b"
+  }
+}

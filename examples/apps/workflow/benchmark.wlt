@@ -1,15 +1,24 @@
 (module
-  (%import "wlt:std"
-    (type $result)
-    (type $unit))
-  (%import "../../../stdlib/text.wlt" (func $string.u64))
-  (%include "compute.wlt")
-  (func $must (param $result (%inst $result $unit (ref $domain.Error)))
+  (%use "./domain.wlt" (type $Error $domain.Error))
+  (%use "./graph.wlt"
+    (func $add $graph.add)
+    (func $after $graph.after)
+    (func $at $graph.at)
+    (func $id $graph.id)
+    (func $new $graph.new)
+    (type $Graph $graph.Graph))
+  (%use "./planner.wlt" (func $makespan $planner.makespan) (func $run $planner.run))
+  (%use "wlt:core" (type $result) (type $unit))
+  (%use "../../../stdlib/text.wlt" (func $string.u64))
+  (func $must
+    (param $result (%inst $result $unit (ref $domain.Error)))
     (%match (local.get $result)
       (case ok () (nop))
       (case err ($e) (unreachable))))
 
-  (func $jobs (param $n i32) (result (ref $graph.Graph))
+  (func $jobs
+    (param $n i32)
+    (result (ref $graph.Graph))
     (%let $g (call $graph.new)
       (block
         (result (ref $graph.Graph))
@@ -24,7 +33,11 @@
               (i64.const 1000000))))
         (local.get $g))))
 
-  (func $chain (export "chain") (param $n i32) (param $rounds i32) (result i64)
+  (func $chain
+    (export "chain")
+    (param $n i32)
+    (param $rounds i32)
+    (result i64)
     (%effect reads writes allocates)
     (if
       (result i64)
@@ -70,7 +83,10 @@
             ))))
     ))
 
-  (func $edge-limit (export "edge-limit") (result i32) (%effect reads writes allocates)
+  (func $edge-limit
+    (export "edge-limit")
+    (result i32)
+    (%effect reads writes allocates)
     (%let $g (call $jobs (i32.const 257))
       (block
         (result i32)
@@ -89,8 +105,9 @@
                 (call $graph.id (call $graph.at (local.get $g) (local.get $j))))
             )))
         ;; Existing edges remain idempotent even after the capacity is reached.
-        (call $must (call $graph.after (local.get $g) (%text.lit "0") (%text.lit "0")))
-        (%match (call $graph.after (local.get $g) (%text.lit "256") (%text.lit "0"))
+        (call $must
+          (call $graph.after (local.get $g) (%string.lit "0") (%string.lit "0")))
+        (%match (call $graph.after (local.get $g) (%string.lit "256") (%string.lit "0"))
           (case ok () (i32.const 0))
           (case err ($e)
             (%match (local.get $e)

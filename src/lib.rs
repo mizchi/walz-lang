@@ -2,6 +2,7 @@
 
 mod aliases;
 pub mod analysis;
+pub mod benchmark;
 pub mod bindings;
 mod bounds;
 mod buffers;
@@ -13,11 +14,13 @@ pub mod flow;
 pub mod format;
 mod frontend;
 mod generics;
+mod harness;
 pub mod inspect;
 pub mod ir;
 mod link;
 mod lists;
 mod modules;
+mod naming;
 pub mod native;
 mod native_macros;
 mod newtypes;
@@ -33,6 +36,8 @@ mod sexpr;
 mod simd;
 pub mod source;
 mod standard;
+#[cfg(test)]
+mod standard_catalogue;
 mod standard_sources;
 mod syntax;
 mod type_syntax;
@@ -122,9 +127,10 @@ pub(crate) fn check_observed<T>(
     policy: &bindings::BindingPolicy,
     observe: impl FnOnce(&ir::Module, &generics::Expanded) -> T,
 ) -> Result<(ir::Module, T), Error> {
-    let standard = standard::prepare(source)?;
+    let root = sexpr::parse(source)?;
+    let standard = standard::prepare(source, &root)?;
+    let syntax = standard.syntax(root)?;
     let source = standard.source(source);
-    let syntax = sexpr::parse(source)?;
     let mut syntax = syntax::normalize(source, &syntax)?;
     standard.rewrite(&mut syntax);
     let syntax = modules::expand(source, &syntax).map_err(|e| standard.annotate(e))?;
@@ -141,6 +147,7 @@ pub(crate) fn check_observed<T>(
         bounds::check_effects(source, &module, &bounds)?;
         effects::validate(source, &module)?;
         ownership::validate(source, &module)?;
+        benchmark::validate(source, &module)?;
         let observation = observe(&module, &generics);
         Ok((module, observation))
     })();

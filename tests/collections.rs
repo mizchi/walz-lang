@@ -19,23 +19,23 @@ fn dictionary_and_list_builder_contracts_run_on_wasm_gc() {
 fn collection_bounds_effects_and_opaque_layouts_are_checked_before_dce() {
     for (source, expected) in [
         (
-            r#"(module (%import "wlt:std" (func $dict.new) (type $future)) (func $bad (drop (call (%inst $dict.new (%inst $future i64))))))"#,
+            r#"(module (%use "wlt:core" (func $dict.new) (type $future)) (func $bad (drop (call (%inst $dict.new (%inst $future i64))))))"#,
             "shared",
         ),
         (
-            r#"(module (%import "wlt:std" (func $list-builder.new) (type $unit)) (func $bad (drop (call (%inst $list-builder.new $unit)))))"#,
+            r#"(module (%use "wlt:core" (func $list-builder.new) (type $unit)) (func $bad (drop (call (%inst $list-builder.new $unit)))))"#,
             "nonunit",
         ),
         (
-            r#"(module (%import "wlt:std" (type $dict.Dict) (type $text) (type $option) (func $dict.get)) (func $bad (param $d (ref (%inst $dict.Dict i64))) (param $key $text) (result (%inst $option i64)) (%effect pure) (call (%inst $dict.get i64) (local.get $d) (local.get $key))))"#,
+            r#"(module (%use "wlt:core" (type $dict) (type $string) (type $option) (func $dict.get)) (func $bad (param $d (ref (%inst $dict i64))) (param $key $string) (result (%inst $option i64)) (%effect pure) (call (%inst $dict.get i64) (local.get $d) (local.get $key))))"#,
             "effect contract",
         ),
         (
-            r#"(module (%import "wlt:std" (type $dict.Dict)) (func $bad (param $d (ref (%inst $dict.Dict i64))) (result i32) (struct.get (%inst $dict.Dict i64) $size (local.get $d))))"#,
+            r#"(module (%use "wlt:core" (type $dict)) (func $bad (param $d (ref (%inst $dict i64))) (result i32) (struct.get (%inst $dict i64) $size (local.get $d))))"#,
             "opaque",
         ),
         (
-            r#"(module (%import "wlt:std" (type $list-builder.Builder)) (func $bad (param $b (ref (%inst $list-builder.Builder i64))) (result i32) (struct.get (%inst $list-builder.Builder i64) $length (local.get $b))))"#,
+            r#"(module (%use "wlt:core" (type $list-builder)) (func $bad (param $b (ref (%inst $list-builder i64))) (result i32) (struct.get (%inst $list-builder i64) $length (local.get $b))))"#,
             "opaque",
         ),
     ] {

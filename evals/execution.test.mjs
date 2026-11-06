@@ -8,6 +8,7 @@ import { verifyRun } from "./lib/runner.mjs";
 import { assertSnapshotIncludes, metrics, sourceIncludes, functionForms } from "./lib/source.mjs";
 
 test("source inspection ignores strings/nested comments but rejects live includes", () => {
+  assert.deepEqual(sourceIncludes('(module (%use "./lib.wlt" (func $f)) (%use "wlt:core" (type $result)) (import "./host.wlt" "f" (func $host)))'), ["./lib.wlt"]);
   assertSnapshotIncludes(String.raw`(module ;; (include "bad")
     (include "program.wlt") (func $f (text.lit "(include \"bad\")")))`);
   assertSnapshotIncludes(
@@ -59,7 +60,7 @@ test(
         (%effect reads writes allocates host suspends)
         (%result.let ($n) (call $main) (%result.ok (i64.extend_i32_u (local.get $n)))))\n`;
       const falsePositive = (candidate.slice(0, wideStart) + fakeWide + candidate.slice(formatStart))
-        .replace('(%result.ok (call $builder.finish (local.get $builder)))', '(%result.ok (%text.lit "count=42"))');
+        .replace('(%result.ok (call $string-builder.finish (local.get $builder)))', '(%result.ok (%string.lit "count=42"))');
       await writeFile(join(directory, "writer/candidate.wlt"), falsePositive);
       const rejected = await verifyRun(directory);
       assert.equal(rejected.passed, false);
@@ -86,7 +87,7 @@ test(
       await writeFile(join(directory, "verification.json"), '{"passed":true}');
       await writeFile(
         join(directory, "writer/candidate.wlt"),
-        '(module (include "program.wlt") (func $main (export "main") (result (result i32 i32)) (effects pure) (loop $spin (result (result i32 i32)) (recur $spin))))',
+        '(module (%use "wlt:core" (type $result)) (%include "program.wlt") (func $main (export "main") (result (%inst $result i32 i32)) (%effect pure) (%loop $spin (result (%inst $result i32 i32)) (%recur $spin))))',
       );
       const result = await verifyRun(directory, { timeoutMs: 5000 });
       assert.equal(result.passed, false);
@@ -99,7 +100,7 @@ test(
 
 test("prefixed syntax retains evaluation measurements and frozen include checks", () => {
   const old = '(module (include "program.wlt") (func $f (let ($x) (pair (ref $stock.State) i32) (match $V))))';
-  const modern = old.replaceAll('(include ', '(%include ').replaceAll('(let ', '(%let ').replaceAll('(pair ', '(%pair ').replaceAll('(match ', '(%match ');
+  const modern = old.replaceAll('(include ', '(%include ').replaceAll('(let ', '(%let ').replaceAll('(pair ', '(%tuple ').replaceAll('(match ', '(%match ');
   assertSnapshotIncludes(modern);
   assert.deepEqual(sourceIncludes(modern), ["program.wlt"]);
   assert.deepEqual(metrics(modern), metrics(old));
@@ -108,12 +109,15 @@ test("prefixed syntax retains evaluation measurements and frozen include checks"
 });
 
 test("standard type applications and grouped lets keep distinct lexical measurements", () => {
-  const source = '(module (%include "program.wlt") (%import "wlt:std" (type $pair)) (func $main (param $p (%inst $pair (ref $stock.State) i32)) (%let (($a (i32.const 0))) (%let ($x $y) (local.get $p) (nop)))))';
+  const source = '(module (%include "program.wlt") (%use "wlt:core" (type $tuple)) (func $main (param $p (%inst $tuple (ref $stock.State) i32)) (%let (($a (i32.const 0))) (%let ($x $y) (local.get $p) (nop)))))';
   assertSnapshotIncludes(source);
+  const historical = source.replace('wlt:core', 'wlt:std');
+  assert.throws(() => assertSnapshotIncludes(historical), /wlt:core/);
+  assertSnapshotIncludes(historical, 'wlt:std');
   const result=metrics(source);
   assert.equal(result.groupedLets, 1);
   assert.equal(result.patternLets, 1);
   assert.equal(result.stateTypeOccurrences, 1);
   assert.equal(functionForms(source, "$main")["let.group"], 1);
-  assert.throws(() => assertSnapshotIncludes('(module (%include "program.wlt") (%import "../live.wlt" (func $f)))'), /wlt:std/);
+  assert.throws(() => assertSnapshotIncludes('(module (%include "program.wlt") (%use "../live.wlt" (func $f)))'), /wlt:core/);
 });

@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $result))
   (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
   (func $main (export "main") (result i64) (%effect host suspends)

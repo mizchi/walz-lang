@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $option)
     (type $result))
   (func $lookup (export "lookup") (param $present i32)

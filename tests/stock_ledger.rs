@@ -5,16 +5,20 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
     let loaded = wlt::source::load("examples/apps/stock-ledger/main.wlt").unwrap();
     let compiled = wlt::compile(loaded.text()).unwrap();
     for (name, host, suspends) in [
-        ("$stock.add", false, false),
-        ("$stock.take", false, false),
-        ("$parse.command", false, false),
-        ("$app.process", true, true),
+        (".add", false, false),
+        (".take", false, false),
+        (".command", false, false),
+        (".process", true, true),
     ] {
         let summary = compiled
             .analysis
             .functions
             .iter()
-            .find(|f| f.name == name)
+            .find(|f| {
+                f.name
+                    .split_once('.')
+                    .is_some_and(|(_, member)| member == name.trim_start_matches('.'))
+            })
             .unwrap();
         assert_eq!(
             (
@@ -53,7 +57,7 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
         .to_owned()
         + r#"
       (func $bad-pure (param $s (ref $stock.State)) (result (%result i64 (ref $stock.Error))) (%effect pure)
-        (call $stock.add (local.get $s) (%text.lit "a") (i64.const 1))))"#;
+        (call $stock.add (local.get $s) (%string.lit "a") (i64.const 1))))"#;
     assert!(
         wlt::check(&pure)
             .unwrap_err()

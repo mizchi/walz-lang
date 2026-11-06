@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "file": "case-0.wasm",
+      "name": "input 64"
+    },
+    {
+      "file": "case-1.wasm",
+      "name": "string.concat 64"
+    },
+    {
+      "file": "case-2.wasm",
+      "name": "string.json ASCII 64"
+    },
+    {
+      "file": "case-3.wasm",
+      "name": "input 1024"
+    },
+    {
+      "file": "case-4.wasm",
+      "name": "string.concat 1024"
+    },
+    {
+      "file": "case-5.wasm",
+      "name": "string.json ASCII 1024"
+    },
+    {
+      "file": "case-6.wasm",
+      "name": "string.json Unicode"
+    },
+    {
+      "file": "case-7.wasm",
+      "name": "string.json escaped"
+    },
+    {
+      "file": "case-8.wasm",
+      "name": "bytes.concat 1024"
+    },
+    {
+      "file": "case-9.wasm",
+      "name": "builder 16x64"
+    },
+    {
+      "file": "case-10.wasm",
+      "name": "JSON parse long string"
+    }
+  ],
+  "schema": "wlt-bench-snapshot-v1",
+  "source": "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/benchmarks/std_tune_bench.wlt"
+}

@@ -4,9 +4,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
+mod cli_bench;
 mod cli_inspection;
 
-const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt check --json <file.wlt>\n       wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]";
+const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt check --json <file.wlt>\n       wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]\n       wlt bench [paths...] [--filter text] [--list] [--json]\n                 [--samples N] [--iterations N] [--warmup-ms N] [--sample-ms N] [--timeout-ms N]";
 
 fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
     let mut paths = Vec::new();
@@ -308,6 +309,9 @@ fn execute_source(
 
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    if args.first().is_some_and(|s| s == "bench") {
+        return cli_bench::command(&args[1..]);
+    }
     let json = args
         .iter()
         .position(|s| s == "--json")

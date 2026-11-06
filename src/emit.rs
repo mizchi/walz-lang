@@ -55,6 +55,63 @@ pub(crate) fn emit(module: &Module) -> String {
     emit_inner(module, None)
 }
 
+/// Runner-only instrumentation. The exported global makes each result
+/// observable without crossing the host boundary on every iteration. At most
+/// the final shared GC result is retained; owned results are rejected earlier.
+pub(crate) fn benchmark(module: &Module, export: &str) -> String {
+    let mut output = emit(module);
+    output.truncate(output.rfind(')').unwrap());
+    let function = module
+        .functions
+        .iter()
+        .find(|f| f.exports.iter().any(|e| e == export))
+        .unwrap();
+    let call = format!(
+        "(call {}{})",
+        function.name,
+        if function.params.is_empty() {
+            ""
+        } else {
+            " (local.get 1)"
+        }
+    );
+    let body = match &function.result {
+        Type::Unit | Type::Never => call,
+        result => {
+            let (storage, initial) = match result {
+                Type::Num(n) => (
+                    n.wat().into(),
+                    match n {
+                        NumType::V128 => "(v128.const i32x4 0 0 0 0)".into(),
+                        n => format!("({}.const 0)", n.wat()),
+                    },
+                ),
+                Type::Value(id) | Type::Ref { ty: id, .. } => {
+                    let name = &module.types[id.0].name;
+                    (format!("(ref null {name})"), format!("(ref.null {name})"))
+                }
+                _ => unreachable!("benchmark results are lowered shared storage types"),
+            };
+            // Typed Core emission has no globals. This anonymous global is
+            // index zero and cannot collide with user function/type names.
+            output.push_str(&format!(
+                "(global (export \"__wlt_bench_sink\") (mut {storage}) {initial})\n"
+            ));
+            format!("(global.set 0 {call})")
+        }
+    };
+    output.push_str(&format!(
+        "(func (export \"__wlt_bench_batch\") (param i32) (local i32)
+          (block (loop
+            (br_if 1 (i32.eqz (local.get 0)))
+            {body}
+            (local.set 1 (i32.add (local.get 1) (i32.const 1)))
+            (local.set 0 (i32.sub (local.get 0) (i32.const 1)))
+            (br 0))))\n)\n"
+    ));
+    output
+}
+
 pub(crate) fn emit_component(module: &Module, adapter: &crate::component::Adapter<'_>) -> String {
     emit_inner(module, Some(adapter))
 }

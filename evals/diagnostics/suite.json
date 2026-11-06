@@ -1,6 +1,6 @@
 {
   "id": "diagnostics",
-  "version": 2,
+  "version": 4,
   "axes": [
     "location",
     "cause",
@@ -74,7 +74,7 @@
     },
     {
       "id": "case-04",
-      "intent": "identity(value:i32)->i32 は value を返す。identity 内の own.new 1回と、対応する消費1回を保つ。",
+      "intent": "identity(value:i32)->i32 は value を返す。identity 内の %box.new 1回と、対応する消費1回を保つ。",
       "editable": [
         "program.wlt"
       ],
@@ -82,7 +82,7 @@
       "locations": [
         {
           "file": "program.wlt",
-          "marker": "(own.close (move $owner))\n        (local.get"
+          "marker": "(%box.close (%move $owner))\n        (local.get"
         }
       ],
       "terms": [
@@ -108,7 +108,7 @@
       "locations": [
         {
           "file": "program.wlt",
-          "marker": "(match $Choice"
+          "marker": "(%match $Choice"
         }
       ],
       "terms": [],
@@ -130,11 +130,11 @@
       "locations": [
         {
           "file": "aliases.wlt",
-          "marker": "(type.alias $Input"
+          "marker": "(%type.alias $Input"
         },
         {
           "file": "aliases.wlt",
-          "marker": "(type.alias $Output"
+          "marker": "(%type.alias $Output"
         }
       ],
       "terms": [
@@ -159,7 +159,7 @@
       "locations": [
         {
           "file": "program.wlt",
-          "marker": "(effects pure)"
+          "marker": "(%effect pure)"
         }
       ],
       "terms": [

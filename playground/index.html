@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WLT Playground</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header>
+    <div><span class="eyebrow">WAT + TYPES + WASM GC</span><h1>WLT Playground</h1></div>
+    <p>Compile WLT to WebAssembly in your browser.</p>
+    <a class="github-link" href="https://github.com/mizchi/wlt-lang" target="_blank" rel="noopener noreferrer" aria-label="WLT on GitHub">GitHub ↗</a>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label>Example <select id="samples" aria-label="Example"></select></label>
+      <label class="toggle"><input id="optimize" type="checkbox" checked> Optimize</label>
+      <button id="compile" type="button">Compile</button>
+      <button id="stop" type="button" disabled>Stop</button>
+      <span id="compile-status" data-testid="compile-status" role="status">Loading compiler…</span>
+    </div>
+    <aside class="sample-guide" aria-label="Language tour">
+      <strong id="sample-title"></strong>
+      <p id="sample-description" data-testid="sample-description"></p>
+      <span id="sample-outcome" data-testid="sample-outcome"></span>
+    </aside>
+    <div class="workspace">
+      <section class="editor-pane" aria-label="Source">
+        <div class="pane-title"><label for="source">WLT source</label><span>Ctrl / ⌘ + Enter to compile</span></div>
+        <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="source-help"></textarea>
+      </section>
+      <section class="output-pane" aria-label="Compilation output">
+        <div class="tabs" role="tablist" aria-label="Output format">
+          <button id="tab-wat" role="tab" aria-selected="true" aria-controls="wat" type="button">WAT</button>
+          <button id="tab-analysis" role="tab" aria-selected="false" aria-controls="analysis" tabindex="-1" type="button">Analysis</button>
+          <button id="tab-diagnostics" role="tab" aria-selected="false" aria-controls="diagnostics" tabindex="-1" type="button">Diagnostics</button>
+        </div>
+        <pre id="wat" data-testid="wat" role="tabpanel" aria-labelledby="tab-wat" tabindex="0"></pre>
+        <pre id="analysis" data-testid="analysis" role="tabpanel" aria-labelledby="tab-analysis" tabindex="0" hidden></pre>
+        <pre id="diagnostics" data-testid="diagnostics" role="tabpanel" aria-labelledby="tab-diagnostics" tabindex="0" hidden></pre>
+      </section>
+    </div>
+    <section class="execution" aria-label="Execution">
+      <div class="toolbar">
+        <label>Exported function <select id="exports" aria-label="Exported function" disabled></select></label>
+        <button id="run" type="button" disabled>Run</button>
+        <button id="download" type="button" disabled>Download Wasm</button>
+        <span class="hint">Run a function with no arguments · Each run uses a fresh instance</span>
+      </div>
+      <pre id="run-output" data-testid="run-output" role="status">Run output appears here</pre>
+    </section>
+    <p id="source-help" class="hint">Your source stays in this browser and is compiled by the Rust compiler running in WebAssembly. Supports single files, wlt:core and event-loop imports through WebAssembly JSPI. Use the CLI for other host imports or Lean verification.</p>
+  </main>
+  <footer>WLT / WebAssembly compiler playground</footer>
+  <script type="module" src="./main.mjs"></script>
+</body>
+</html>

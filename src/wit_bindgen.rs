@@ -137,7 +137,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
             .map(|name| format!(" (type {name})"))
             .collect::<String>();
         let start = source.find("(module\n").unwrap() + "(module\n".len();
-        source.insert_str(start, &format!("  (%import \"wlt:std\"{imports})\n"));
+        source.insert_str(start, &format!("  (%use \"wlt:core\"{imports})\n"));
     }
     let policy = serde_json::to_string_pretty(&policy).unwrap();
     BindingPolicy::parse(&policy)?;
@@ -166,6 +166,8 @@ fn shape(r: &Resolve, ty: Type, depth: usize, prefix: &str) -> Result<String, Er
         Type::S64 => "i64".into(),
         Type::F32 => "f32".into(),
         Type::F64 => "f64".into(),
+        // Source aliases are independent of the policy's stable `text` shape.
+        Type::String if prefix == "$" => "$string".into(),
         Type::String => format!("{prefix}text"),
         Type::Id(id) => match &r.types[id].kind {
             TypeDefKind::Type(t) => sub(*t)?,
@@ -189,7 +191,7 @@ fn shape(r: &Resolve, ty: Type, depth: usize, prefix: &str) -> Result<String, Er
             TypeDefKind::Tuple(t) if t.types.len() == 2 => {
                 format!(
                     "({} {} {})",
-                    constructor("pair"),
+                    constructor(if prefix.is_empty() { "pair" } else { "tuple" }),
                     sub(t.types[0])?,
                     sub(t.types[1])?
                 )

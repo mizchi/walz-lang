@@ -1,35 +1,58 @@
 (module
-  (%import "wlt:std"
-    (type $text))
-  (%include "compute.wlt")
-  (func $add (param $g (ref $graph.Graph)) (param $id $text) (param $duration i64)
+  (%use "./graph.wlt"
+    (func $add $graph.add)
+    (func $after $graph.after)
+    (func $at $graph.at)
+    (func $duration $graph.duration)
+    (func $new $graph.new)
+    (type $Graph $graph.Graph))
+  (%use "./parse.wlt" (func $command $parse.command))
+  (%use "./planner.wlt"
+    (func $makespan $planner.makespan)
+    (func $run $planner.run)
+    (func $start $planner.start)
+    (func $worker $planner.worker)
+    (type $Run $planner.Run))
+  (%use "wlt:core" (type $string))
+  (func $add
+    (param $g (ref $graph.Graph))
+    (param $id $string)
+    (param $duration i64)
     (%match (call $graph.add (local.get $g) (local.get $id) (local.get $duration))
       (case ok () (nop))
       (case err ($e) (unreachable))))
 
-  (func $after (param $g (ref $graph.Graph)) (param $id $text) (param $dependency $text)
+  (func $after
+    (param $g (ref $graph.Graph))
+    (param $id $string)
+    (param $dependency $string)
     (%match (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))
       (case ok () (nop))
       (case err ($e) (unreachable))))
 
-  (func $diamond (result (ref $graph.Graph))
+  (func $diamond
+    (result (ref $graph.Graph))
     (%let $g (call $graph.new)
       (block
         (result (ref $graph.Graph))
-        (call $add (local.get $g) (%text.lit "a") (i64.const 3))
-        (call $add (local.get $g) (%text.lit "b") (i64.const 3))
-        (call $add (local.get $g) (%text.lit "c") (i64.const 1))
-        (call $after (local.get $g) (%text.lit "c") (%text.lit "a"))
-        (call $after (local.get $g) (%text.lit "c") (%text.lit "b"))
+        (call $add (local.get $g) (%string.lit "a") (i64.const 3))
+        (call $add (local.get $g) (%string.lit "b") (i64.const 3))
+        (call $add (local.get $g) (%string.lit "c") (i64.const 1))
+        (call $after (local.get $g) (%string.lit "c") (%string.lit "a"))
+        (call $after (local.get $g) (%string.lit "c") (%string.lit "b"))
         (local.get $g))))
 
-  (func $run (param $g (ref $graph.Graph)) (param $workers i32)
+  (func $run
+    (param $g (ref $graph.Graph))
+    (param $workers i32)
     (result (ref $planner.Run))
     (%match (call $planner.run (local.get $g) (local.get $workers))
       (case ok ($r) (local.get $r))
       (case err ($e) (unreachable))))
 
-  (func $invalid (param $s $text) (result i32)
+  (func $invalid
+    (param $s $string)
+    (result i32)
     (%match (call $parse.command (local.get $s))
       (case skip () (i32.const 0))
       (case invalid () (i32.const 1))
@@ -60,8 +83,8 @@
     (%let $g (call $graph.new)
       (block
         (result i32)
-        (call $add (local.get $g) (%text.lit "a") (i64.const 2))
-        (%match (call $graph.add (local.get $g) (%text.lit "a") (i64.const 9))
+        (call $add (local.get $g) (%string.lit "a") (i64.const 2))
+        (%match (call $graph.add (local.get $g) (%string.lit "a") (i64.const 9))
           (case ok () (i32.const 0))
           (case err ($e)
             (i64.eq
@@ -70,7 +93,8 @@
       )))
   (%test "missing dependency does not mutate the graph"
     (%let $g (call $diamond)
-      (%match (call $graph.after (local.get $g) (%text.lit "a") (%text.lit "missing"))
+      (%match
+        (call $graph.after (local.get $g) (%string.lit "a") (%string.lit "missing"))
         (case ok () (i32.const 0))
         (case err ($e)
           (i64.eq
@@ -81,7 +105,7 @@
     (%let $g (call $diamond)
       (block
         (result i32)
-        (call $after (local.get $g) (%text.lit "c") (%text.lit "a"))
+        (call $after (local.get $g) (%string.lit "c") (%string.lit "a"))
         (i64.eq
           (call $planner.makespan (call $run (local.get $g) (i32.const 2)))
           (i64.const 4))))
@@ -90,8 +114,8 @@
     (%let $g (call $graph.new)
       (block
         (result i32)
-        (call $add (local.get $g) (%text.lit "self") (i64.const 0))
-        (call $after (local.get $g) (%text.lit "self") (%text.lit "self"))
+        (call $add (local.get $g) (%string.lit "self") (i64.const 0))
+        (call $after (local.get $g) (%string.lit "self") (%string.lit "self"))
         (%match (call $planner.run (local.get $g) (i32.const 2))
           (case ok ($r) (i32.const 0))
           (case err ($e)
@@ -106,25 +130,27 @@
     (%let $g (call $graph.new)
       (block
         (result i32)
-        (call $add (local.get $g) (%text.lit "a") (i64.const 0))
-        (call $add (local.get $g) (%text.lit "b") (i64.const 0))
-        (call $after (local.get $g) (%text.lit "b") (%text.lit "a"))
+        (call $add (local.get $g) (%string.lit "a") (i64.const 0))
+        (call $add (local.get $g) (%string.lit "b") (i64.const 0))
+        (call $after (local.get $g) (%string.lit "b") (%string.lit "a"))
         (i64.eq
           (call $planner.makespan (call $run (local.get $g) (i32.const 1)))
           (i64.const 0))))
   )
   (%test "invalid worker counts are rejected"
-    (i32.and (call $invalid (%text.lit "PLAN\t0")) (call $invalid (%text.lit "PLAN\t33"))))
+    (i32.and
+      (call $invalid (%string.lit "PLAN\t0"))
+      (call $invalid (%string.lit "PLAN\t33"))))
   (%test "extra fields are rejected"
     (i32.and
-      (call $invalid (%text.lit "PLAN\t2\textra"))
-      (call $invalid (%text.lit "AFTER\ta\tb\textra"))))
+      (call $invalid (%string.lit "PLAN\t2\textra"))
+      (call $invalid (%string.lit "AFTER\ta\tb\textra"))))
   (%test "invalid durations are rejected"
     (i32.and
-      (call $invalid (%text.lit "TASK\ta\t1000001"))
-      (call $invalid (%text.lit "TASK\ta\t-1"))))
+      (call $invalid (%string.lit "TASK\ta\t1000001"))
+      (call $invalid (%string.lit "TASK\ta\t-1"))))
   (%test "Unicode task id and maximum duration are accepted"
-    (%match (call $parse.command (%text.lit "TASK\t日本語🦀\t1000000"))
+    (%match (call $parse.command (%string.lit "TASK\t日本語🦀\t1000000"))
       (case skip () (i32.const 0))
       (case invalid () (i32.const 0))
       (case after ($id $dependency) (i32.const 0))

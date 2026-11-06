@@ -16,17 +16,17 @@ fn bound_error(source: &str, expected: &str) -> wlt::Error {
 #[test]
 fn shared_and_nonunit_bounds_check_even_an_unused_type_argument() {
     let declaration = "(func $accept (%type.params $T) (%where (shared $T) (nonunit $T)) (nop))";
-    for argument in ["i64", "%text", "(%option i64)", "(ref $Cell)", "$Cell"] {
+    for argument in ["i64", "%string", "(%option i64)", "(ref $Cell)", "$Cell"] {
         let source = format!(
             "(module (type $Cell (struct (field (mut i64)))) {declaration} (func $f (call (%inst $accept {argument}))))"
         );
         wlt::compile(&source).unwrap();
     }
     for argument in [
-        "(%own i64)",
-        "(%pair i32 (%future i64))",
-        "(%stream %text)",
-        "(%list (%own i64))",
+        "(%box i64)",
+        "(%tuple i32 (%future i64))",
+        "(%stream %string)",
+        "(%list (%box i64))",
     ] {
         bound_error(
             &format!("(module {declaration} (func $f (call (%inst $accept {argument}))))"),
@@ -54,7 +54,10 @@ fn callable_checks_nominal_closure_signature_before_the_template_body() {
     );
     wlt::compile(&source).unwrap();
     bound_error(
-        &source.replace("(%inst $apply i64 i64 $Id)", "(%inst $apply i64 %text $Id)"),
+        &source.replace(
+            "(%inst $apply i64 i64 $Id)",
+            "(%inst $apply i64 %string $Id)",
+        ),
         "signature",
     );
     let source = format!(
@@ -90,11 +93,11 @@ fn constraints_apply_to_types_aliases_and_generic_closures() {
       (func $empty (result (%inst $Numbers i64)) (%list.new i64)))"#;
     wlt::compile(source).unwrap();
     bound_error(
-        "(module (%type.alias $Unused (%type.params $T) (%where (shared $T)) i64) (%type.alias $Bad (%inst $Unused (%own i64))))",
+        "(module (%type.alias $Unused (%type.params $T) (%where (shared $T)) i64) (%type.alias $Bad (%inst $Unused (%box i64))))",
         "shared",
     );
     bound_error(
-        "(module (type $Unused (%type.params $T) (%where (shared $T)) (struct)) (func $f (result (ref (%inst $Unused (%own i64)))) (struct.new (%inst $Unused (%own i64)))))",
+        "(module (type $Unused (%type.params $T) (%where (shared $T)) (struct)) (func $f (result (ref (%inst $Unused (%box i64)))) (struct.new (%inst $Unused (%box i64)))))",
         "shared",
     );
 }
@@ -128,8 +131,8 @@ fn malformed_constraints_are_rejected_without_instantiation() {
 #[test]
 fn owned_closures_and_borrows_cannot_satisfy_shared_or_callable_bounds() {
     let source = r#"(module
-      (%closure $Once (%capture $owner (%own i64)) (result i64)
-        (%match (%own i64) (result i64) (%move $owner) (case own ($x) (local.get $x))))
+      (%closure $Once (%capture $owner (%box i64)) (result i64)
+        (%match (%box i64) (result i64) (%move $owner) (case own ($x) (local.get $x))))
       (func $require (%type.params $F) (%where (callable $F (param) (result i64))) (nop))
       (func $f (call (%inst $require $Once))))"#;
     bound_error(source, "reusable");
@@ -195,10 +198,10 @@ fn imported_constraints_use_concrete_aliases_and_report_both_source_files() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("api.wlt"), "(module\n (%export (func $require))\n (func $require (%type.params $T) (%where (shared $T)) (nop)))").unwrap();
     let main = dir.path().join("main.wlt");
-    std::fs::write(&main, "(module\n (%import \"api.wlt\" (func $require))\n (%type.alias $Count i64)\n (func $main (call (%inst $require $Count))))").unwrap();
+    std::fs::write(&main, "(module\n (%use \"./api.wlt\" (func $require))\n (%type.alias $Count i64)\n (func $main (call (%inst $require $Count))))").unwrap();
     let loaded = wlt::source::load(&main).unwrap();
     wlt::compile(loaded.text()).unwrap();
-    std::fs::write(&main, "(module\n (%import \"api.wlt\" (func $require))\n (func $main (call (%inst $require (%own i64)))))").unwrap();
+    std::fs::write(&main, "(module\n (%use \"./api.wlt\" (func $require))\n (func $main (call (%inst $require (%box i64)))))").unwrap();
     let loaded = wlt::source::load(&main).unwrap();
     let error = loaded.diagnostic(wlt::check(loaded.text()).unwrap_err());
     assert_eq!(error.diagnostic().code, "E_GENERIC_BOUND");
@@ -224,7 +227,7 @@ fn imported_constraints_use_concrete_aliases_and_report_both_source_files() {
 
 #[test]
 fn constraint_only_types_do_not_create_runtime_functions_or_abi_requirements() {
-    let bounded = "(module (func $require (%type.params $T) (%where (shared $T)) (nop)) (func $main (export \"main\") (call (%inst $require (%list (%pair i64 %text))))))";
+    let bounded = "(module (func $require (%type.params $T) (%where (shared $T)) (nop)) (func $main (export \"main\") (call (%inst $require (%list (%tuple i64 %string))))))";
     let plain = bounded.replace("(%where (shared $T))", "");
     let a = wlt::compile(bounded).unwrap();
     let b = wlt::compile(&plain).unwrap();

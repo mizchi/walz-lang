@@ -1,6 +1,6 @@
 (module
-  (%import "wlt:std" (type $text))
-  (type $User (struct (field $name $text) (field $age i32) (field $email $text)))
+  (%use "wlt:core" (type $string))
+  (type $User (struct (field $name $string) (field $age i32) (field $email $string)))
   (func $main
     (export "main")
     (result i32)
@@ -9,9 +9,9 @@
       (($alice (%$User::{:name "Alice" :age 30 :email "alice@example.com"}))
        ($bob
          (%struct.new $User
-           ($email (%text.lit "bob@example.com"))
+           ($email (%string.lit "bob@example.com"))
            ($age (i32.const 12))
-           ($name (%text.lit "Bob"))))
+           ($name (%string.lit "Bob"))))
       )
       (i32.add
         (struct.get $User $age (local.get $alice))

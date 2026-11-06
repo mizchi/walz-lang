@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use wlt::{CompileOptions, compile_with_options};
 
 fn run(source: &str, expected: &str) {
@@ -94,7 +95,7 @@ fn instantiated_bodies_are_checked_before_dce_and_owned_arguments_keep_their_con
         r#"(module
       (func $id (%type.params $T) (param $x $T) (result $T) (%move $x))
       (func $main (export "main") (result i64)
-        (%match (%own i64) (result i64) (call (%inst $id (%own i64)) (%own.new i64 (i64.const 42)))
+        (%match (%box i64) (result i64) (call (%inst $id (%box i64)) (%box.new i64 (i64.const 42)))
           (case own ($x) (local.get $x)))))"#,
         "42",
     );
@@ -105,12 +106,12 @@ fn instantiated_bodies_are_checked_before_dce_and_owned_arguments_keep_their_con
         let argument = if declaration.contains("i32.const") {
             "i64"
         } else {
-            "(%own i64)"
+            "(%box i64)"
         };
         let value = if argument == "i64" {
             "(i64.const 1)"
         } else {
-            "(%own.new i64 (i64.const 1))"
+            "(%box.new i64 (i64.const 1))"
         };
         let source = format!(
             "(module {declaration} (func $unused (result {argument}) (call (%inst $bad {argument}) {value})) (func $main (export \"main\") (nop)))"
@@ -169,8 +170,8 @@ fn file_imports_share_instances_and_can_export_a_concrete_application() {
     std::fs::write(
         &main,
         r#"(module
-      (%import "id.wlt" (func $id $a))
-      (%import "./id.wlt" (func $id $b))
+      (%use "./id.wlt" (func $id $a))
+      (%use "./id.wlt" (func $id $b))
       (%type.alias $Count i64)
       (export "id" (func (%inst $a $Count)))
       (func $main (export "main") (result i64) (call (%inst $b i64) (i64.const 42))))"#,
@@ -191,7 +192,7 @@ fn file_imports_share_instances_and_can_export_a_concrete_application() {
 
 #[test]
 fn generic_opaque_types_keep_their_template_namespace() {
-    let declarations = r#"(%namespace $lib
+    let declarations = r#"(%legacy.namespace $lib
       (%public (opaque $Box) (func $new) (func $get))
       (type $Box (%type.params $T) (struct (field $T)))
       (func $new (%type.params $T) (param $x $T) (result (ref (%inst $Box $T))) (struct.new (%inst $Box $T) (local.get $x)))

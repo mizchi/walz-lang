@@ -1,15 +1,12 @@
 (module
-  (%namespace $domain
-    (%import "wlt:std"
-      (type $text))
-    (%public (type $Command) (type $Error))
-    (type $Command
-      (%variant (skip) (invalid) (task $text i64) (after $text $text) (plan i32)))
-    (type $Error
-      (%variant
-        (invalid $text)
-        (duplicate $text)
-        (unknown $text)
-        (capacity $text)
-        (cycle $text))))
-)
+  (%use "wlt:core" (type $string))
+  (%export (type $Command) (type $Error))
+  (type $Command
+    (%variant (skip) (invalid) (task $string i64) (after $string $string) (plan i32)))
+  (type $Error
+    (%variant
+      (invalid $string)
+      (duplicate $string)
+      (unknown $string)
+      (capacity $string)
+      (cycle $string))))

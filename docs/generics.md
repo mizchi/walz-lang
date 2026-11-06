@@ -33,7 +33,7 @@
 透明な alias は引数の比較前に展開する。nominal 型や異なるクロージャ型の identity は保つ。
 同じファイルの import 別名・再公開から使っても具体化は重複しない。
 型の位置と nominal 参照だけを置換し、同名のローカル変数・束縛・ラベルを変えない。
-opaque な型の具体化にも、元の型を定義した namespace の制限を適用する。
+opaque な型の具体化にも、元の型を定義した ファイル の制限を適用する。
 
 具体化後に既存の型・effect・所有権・borrow 検査を行い、その後で最適化と DCE を行う。
 未使用の通常関数内にある適用も検査する。汎用テンプレートの宣言名・型パラメータ・
@@ -54,8 +54,8 @@ WIT と両 JS ABI に出るシグネチャは具体型だけになる。ホス�
 `stdlib/list.wlt` は named import で次の汎用関数を公開する。
 
 ```wat
-(%import "wlt:std" (func $list.map) (func $list.fold))
-(call (%inst $list.map i64 $text $Label) xs label-closure)
+(%use "wlt:core" (func $list.map) (func $list.fold))
+(call (%inst $list.map i64 $string $Label) xs label-closure)
 (call (%inst $list.fold i64 i64 $Sum) xs sum-closure initial)
 ```
 

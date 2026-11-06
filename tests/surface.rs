@@ -122,7 +122,7 @@ fn unprefixed_extension_entries_are_not_accepted_in_strict_mode() {
 #[test]
 fn native_wat_keeps_its_own_loop_import_export_and_multi_result_semantics() {
     let source = r#"(module
-      (func $pair (result i32 i64) i32.const 1 i64.const 2)
+      (func $tuple (result i32 i64) i32.const 1 i64.const 2)
       (func $main (export "main") (result i32) (local $n i32)
         i32.const 42 local.set $n
         (loop $done (br_if $done (i32.const 0)))
@@ -142,7 +142,7 @@ fn file_linking_is_explicit_and_never_interprets_a_wasm_type_import_as_a_path() 
     let main = dir.path().join("main.wlt");
     std::fs::write(
         &main,
-        "(module (%import \"lib.wlt\" (func $answer)) (export \"main\" (func $answer)))",
+        "(module (%use \"./lib.wlt\" (func $answer)) (export \"main\" (func $answer)))",
     )
     .unwrap();
     let loaded = wlt::source::load(&main).unwrap();
@@ -231,7 +231,7 @@ fn frozen_legacy_inputs_preserve_comments_strings_and_native_wat() {
     let loaded = wlt::source::load_legacy(&path).unwrap();
     assert!(loaded.text().contains(";; let text import"));
     assert!(loaded.text().contains("\"(let import)\""));
-    assert!(loaded.text().contains("(result %text)"));
+    assert!(loaded.text().contains("(result %string)"));
     wlt::check(loaded.text()).unwrap();
     assert_eq!(std::fs::read_to_string(&path).unwrap(), legacy);
     let native = r#"(module (func (result i32) (loop (result i32) (i32.const 42))))"#;
@@ -380,7 +380,7 @@ fn grouped_let_preserves_scope_types_ownership_and_expansion_limits() {
             "E_UNKNOWN_LOCAL",
         ),
         (
-            "(module (func $f (%let (($owner (%own.new i32 (i32.const 1))) ($next (%move $owner))) (block (%own.close (%move $next)) (%own.close (%move $owner))))))",
+            "(module (func $f (%let (($owner (%box.new i32 (i32.const 1))) ($next (%move $owner))) (block (%box.close (%move $next)) (%box.close (%move $owner))))))",
             "E_OWNERSHIP_MOVED",
         ),
         ("(module (func $f (%let () (nop))))", "E_LET_BINDINGS"),

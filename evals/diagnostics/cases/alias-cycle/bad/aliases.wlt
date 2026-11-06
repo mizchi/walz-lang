@@ -1,3 +1,3 @@
 (module
-  (type.alias $Input $Output)
-  (type.alias $Output $Input))
+  (%type.alias $Input $Output)
+  (%type.alias $Output $Input))

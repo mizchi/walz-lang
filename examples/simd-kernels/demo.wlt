@@ -1,5 +1,9 @@
 (module
-  (%include "kernels.wlt")
+  (%use "./kernels.wlt"
+    (func $new-i32 $simd.new-i32)
+    (func $pack-i32 $simd.pack-i32)
+    (func $set-i32 $simd.set-i32)
+    (func $sum-simd $simd.sum-simd))
   (func $main
     (export "main")
     (result i64)

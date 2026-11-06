@@ -1,13 +1,13 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $bytes)
     (type $result)
-    (type $own)
+    (type $box)
     (type $list)
     (type $future)
     (type $stream)
     (type $option)
-    (type $pair))
+    (type $tuple))
   (type $Id (%newtype i64))
   (tag $Failure)
   (func $step
@@ -62,7 +62,7 @@
     (param $flag i32)
     (result $bytes)
     (%effect pure)
-    (%let $owner (%own.new $bytes (local.get $data))
+    (%let $owner (%box.new $bytes (local.get $data))
       (%try
         (result $bytes)
         (do

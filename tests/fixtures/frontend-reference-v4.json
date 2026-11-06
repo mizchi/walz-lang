@@ -1,0 +1,91 @@
+{
+  "schema": "wlt-frontend-reference-v4",
+  "inputs": {
+    "version": 4,
+    "files": {
+      "json.wlt": "4ef70c7ad2ec0ef18facfeca0f7f1ad9edbf8efed574d05b735ad30ca90cc9af",
+      "let.wlt": "cba98f072d56809626b70692d73b0ad524b316b90c8c9ee4cf758e8118fbb3e1",
+      "native.wlt": "d0ffa083b37034668d173dbb42d68433195255cd719e2d85180b55a462e98fd3",
+      "std-string.wlt": "e23cebe4fbac51f123593178117a25cc7618e603cb09404a2cf9b09de130c65a",
+      "std-types.wlt": "d8c5f1798efe99c8d52fa9ae9887a02ad54d34ac0a3e07e08ad02984cf140971",
+      "stock-ledger.wlt": "7c874c6fa5bc69948072e9c58d41a528c18b05300055a433f8b3bc6dfbe96038",
+      "type-error.wlt": "7df94f634d04645e74b7245097849d602f57365c0d859fd571a23e18efceae3a",
+      "workflow.wlt": "b897dc6df74438b06cbf9e763accc73db36bfcfb39f9f225984190b824d5fbc9"
+    }
+  },
+  "cases": {
+    "json.wlt": {
+      "ir": "43c91fd6fdf0667fbb980407f9dcccbe3f6cd5ceb554e3cc3847fda253611690",
+      "analyze": "c0feb6662853d7722e7f20708cbab9d0ca5c48c34d90cad7a9b674f29a6eb47c",
+      "wat": "37ee25d5b1048fcb36072ef7892a97ea3097c14d518abcefe51b99d2c855843f"
+    },
+    "let.wlt": {
+      "ir": "2d8594beb70bd6e77b574d1f7c8729a2a59a25a0c93e3a7a593de0c22c0277e1",
+      "analyze": "90db0a6ee6b664c983e2cbc790d08adba918eb2b292ce34814178979acbba4fa",
+      "wat": "7409ea9b0af5623c983d3fc47d5b6925162c42fb15520a13637c5e57748262de"
+    },
+    "native.wlt": {
+      "ir": "ab0f7d47cad039f86b3931f7aa02957ff4e1021319bf7dbe34e863a1284e9248",
+      "analyze": "9a0194008680dee0e91096a2cbf073429e834e91312a562352b52979033031d4",
+      "wat": "d0ffa083b37034668d173dbb42d68433195255cd719e2d85180b55a462e98fd3"
+    },
+    "std-string.wlt": {
+      "ir": "1a3f2521f72d68ecfecda4ccb7442165ca7b5be846b97d5b1928382c01048318",
+      "analyze": "20dd9efea507250949fe2fafd2a7c8520fdd9a160b4bed82d7bab6044a7e208a",
+      "wat": "0e3896e5e12e7dae9025f1197af06e2fee36310ed002beb30153f030f84dd553"
+    },
+    "std-types.wlt": {
+      "ir": "822878c58e0497e6d1dfea11b2b6675193865911e8602ced9a540c02f2ed571e",
+      "analyze": "fa45c9c83fbb223fbe47290061e382b00a598381be3be4a5ac3c209624af02cc",
+      "wat": "efb87b3f2ff5a5770f230de4ae61f1fa4e7faeaa34548f0d7849f037f027eedd"
+    },
+    "stock-ledger.wlt": {
+      "ir": "90f6d8aa0fa8bb8998974449825bb607d2afd07c6f0572fb9cafb51d8a466c9a",
+      "analyze": "ac0f32774e5ca6c5d2208a4e837b3a503f6740a39b02c12789338e8390d7d458",
+      "wat": "4adaaef030934443e19f038e48cf73150bc11b9410135c84b88611589332ca57"
+    },
+    "workflow.wlt": {
+      "ir": "2d95b6768542d925645b488090697899844d85cdb9501b54e111581436b2f649",
+      "analyze": "c16d887415c3fe82b3648fbb3441e3d91bf44aa470c649fcd07468a39aea116e",
+      "wat": "1b0d47cdea2fad29e1880befd1957cd317975b7c7c0beba90eeea7ea24da98ab"
+    }
+  },
+  "diagnostic": {
+    "diagnostics": [
+      {
+        "code": "E_TYPE_MISMATCH",
+        "help": [],
+        "message": "type mismatch: expected i32, got i64",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 27,
+            "line": 3,
+            "path": "<repo>/benches/fixtures/frontend-v4/type-error.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 86,
+            "start": 73
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 14,
+              "line": 3,
+              "path": "<repo>/benches/fixtures/frontend-v4/type-error.wlt"
+            },
+            "message": "result of `$bad` declared as i32",
+            "span": {
+              "end": 72,
+              "start": 60
+            }
+          }
+        ]
+      }
+    ],
+    "ok": false,
+    "schema": "wlt-check-v1"
+  }
+}

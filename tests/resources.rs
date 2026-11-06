@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 const SOURCE: &str = r#"(module
   (type $File (%resource "file" $close))
   (import "files" "open" (func $open (result i32)))
@@ -73,7 +74,7 @@ fn using_closes_before_recurring_outside_its_scope() {
 #[test]
 fn resources_and_borrows_resolve_across_an_opaque_namespace() {
     let source = r#"(module
-      (%namespace $file (%export (opaque $File) (func $new) (func $read))
+      (%legacy.namespace $file (%export (opaque $File) (func $new) (func $read))
         (type $File (%resource "file" $drop))
         (import "files" "open" (func $open (result i32)))
         (import "files" "read" (func $read-host (param $id i32) (result i32)))

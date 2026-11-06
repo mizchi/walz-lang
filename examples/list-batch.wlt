@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $list))
   (type $Numbers (array (mut i64)))
   (func $sum (export "sum") (param $values (%inst $list i64)) (result i64) (%effect pure)

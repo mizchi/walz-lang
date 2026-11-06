@@ -3,7 +3,9 @@
 
 use crate::ir::FunctionKind;
 use crate::{Compilation, Error};
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 use std::io::Write;
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 use std::process::Command;
 
 pub const LEAN_VERSION: &str = "+v4.34.1";
@@ -27,7 +29,34 @@ pub(crate) fn verify_component(source: &str, module: &crate::ir::Module) -> Resu
     verify_policy(source, module, true)
 }
 
-fn verify_policy(source: &str, module: &crate::ir::Module, component: bool) -> Result<(), Error> {
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn verify_policy(_: &str, _: &crate::ir::Module, _: bool) -> Result<(), Error> {
+    Err(Error::message(
+        "Lean verification requires the native CLI and is unavailable in the browser".into(),
+    )
+    .with_code("E_HOST_UNAVAILABLE"))
+}
+
+// Browser code generation retains all Rust checks and boundary policy. It does
+// not claim independent kernel verification, and never accepts unchecked laws.
+pub(crate) fn check_browser_component(
+    source: &str,
+    module: &crate::ir::Module,
+) -> Result<(), Error> {
+    if !module.laws.is_empty() {
+        return Err(Error::message(
+            "Lean verification requires the native CLI and is unavailable in the browser".into(),
+        )
+        .with_code("E_HOST_UNAVAILABLE"));
+    }
+    check_policy(source, module, true).map(|_| ())
+}
+
+fn check_policy(
+    source: &str,
+    module: &crate::ir::Module,
+    component: bool,
+) -> Result<crate::ownership::Contracts, Error> {
     let kinds = crate::ownership::Kinds::new(module);
     for (index, function) in module.functions.iter().enumerate() {
         if matches!(function.kind, FunctionKind::Import { .. })
@@ -50,6 +79,7 @@ fn verify_policy(source: &str, module: &crate::ir::Module, component: bool) -> R
                 ));
             }
             if !module.tests.iter().any(|test| test.function.0 == index)
+                && !module.benches.iter().any(|bench| bench.function.0 == index)
                 && function.effect_contract.is_none()
             {
                 return Err(Error::message(format!(
@@ -59,7 +89,12 @@ fn verify_policy(source: &str, module: &crate::ir::Module, component: bool) -> R
             }
         }
     }
-    let contracts = crate::ownership::validate(source, module)?;
+    crate::ownership::validate(source, module)
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+fn verify_policy(source: &str, module: &crate::ir::Module, component: bool) -> Result<(), Error> {
+    let contracts = check_policy(source, module, component)?;
     let mut file = tempfile::Builder::new()
         .suffix(".json")
         .tempfile()

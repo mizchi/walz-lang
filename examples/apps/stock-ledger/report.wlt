@@ -1,66 +1,95 @@
 (module
-  (%namespace $report
-    (%import "wlt:std"
-      (type $future)
-      (type $result)
-      (type $text)
-      (type $unit))
-    (%import "../../../stdlib/json.wlt"
-      (type $json.Object)
-      (func $json.boolean)
-      (func $json.finish)
-      (func $json.new)
-      (func $json.string)
-      (func $json.u64))
-    (import "wlt:host/text-io@0.1.0" "write-line"
-      (func $write (param $line $text) (result (%inst $future (%inst $result $unit i32))))
-    )
-    (%public (func $success) (func $failure) (func $invalid))
-    (func $error-name (param $e (ref $stock.Error)) (result $text) (%effect pure)
-      (%match $stock.Error (result $text)
-        (local.get $e)
-        (case insufficient () (%text.lit "insufficient-stock"))
-        (case overflow () (%text.lit "quantity-overflow"))
-        (case capacity () (%text.lit "capacity"))))
+  (%use "./stock.wlt" (type $Error $stock.Error))
+  (%use "wlt:core" (type $future) (type $result) (type $string) (type $unit))
+  (%use "../../../stdlib/json.wlt"
+    (type $json-object)
+    (func $json.object-builder.boolean)
+    (func $json.object-builder.finish)
+    (func $json.object-builder.new)
+    (func $json.object-builder.string)
+    (func $json.object-builder.u64))
+  (import "wlt:host/text-io@0.1.0" "write-line"
+    (func $write
+      (param $line $string)
+      (result (%inst $future (%inst $result $unit i32))))
+  )
+  (%export (func $success) (func $failure) (func $invalid))
+  (func $error-name
+    (param $e (ref $stock.Error))
+    (result $string)
+    (%effect pure)
+    (%match $stock.Error (result $string)
+      (local.get $e)
+      (case insufficient () (%string.lit "insufficient-stock"))
+      (case overflow () (%string.lit "quantity-overflow"))
+      (case capacity () (%string.lit "capacity"))))
 
-    (func $base (param $op $text) (param $key $text) (result (ref $json.Object))
-      (%effect reads writes allocates)
-      (%let $o (call $json.new)
-        (block
-          (result (ref $json.Object))
-          (call $json.string (local.get $o) (%text.lit "op") (local.get $op))
-          (call $json.string (local.get $o) (%text.lit "key") (local.get $key))
-          (local.get $o))))
+  (func $base
+    (param $op $string)
+    (param $key $string)
+    (result (ref $json-object))
+    (%effect reads writes allocates)
+    (%let $o (call $json.object-builder.new)
+      (block
+        (result (ref $json-object))
+        (call $json.object-builder.string
+          (local.get $o)
+          (%string.lit "op")
+          (local.get $op))
+        (call $json.object-builder.string
+          (local.get $o)
+          (%string.lit "key")
+          (local.get $key))
+        (local.get $o))))
 
-    (func $success (param $op $text) (param $key $text) (param $quantity i64)
-      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
-      (%let $o (call $base (local.get $op) (local.get $key))
-        (block
-          (result (%inst $result $unit i32))
-          (call $json.boolean (local.get $o) (%text.lit "ok") (i32.const 1))
-          (call $json.u64 (local.get $o) (%text.lit "quantity") (local.get $quantity))
-          (%future.await
-            (%inst $result $unit i32)
-            (call $write (call $json.finish (local.get $o))))
-        )))
+  (func $success
+    (param $op $string)
+    (param $key $string)
+    (param $quantity i64)
+    (result (%inst $result $unit i32))
+    (%effect reads writes allocates host suspends)
+    (%let $o (call $base (local.get $op) (local.get $key))
+      (block
+        (result (%inst $result $unit i32))
+        (call $json.object-builder.boolean
+          (local.get $o)
+          (%string.lit "ok")
+          (i32.const 1))
+        (call $json.object-builder.u64
+          (local.get $o)
+          (%string.lit "quantity")
+          (local.get $quantity))
+        (%future.await
+          (%inst $result $unit i32)
+          (call $write (call $json.object-builder.finish (local.get $o))))
+      )))
 
-    (func $failure (param $op $text) (param $key $text) (param $error (ref $stock.Error))
-      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
-      (%let $o (call $base (local.get $op) (local.get $key))
-        (block
-          (result (%inst $result $unit i32))
-          (call $json.boolean (local.get $o) (%text.lit "ok") (i32.const 0))
-          (call $json.string
-            (local.get $o)
-            (%text.lit "error")
-            (call $error-name (local.get $error)))
-          (%future.await
-            (%inst $result $unit i32)
-            (call $write (call $json.finish (local.get $o))))
-        )))
+  (func $failure
+    (param $op $string)
+    (param $key $string)
+    (param $error (ref $stock.Error))
+    (result (%inst $result $unit i32))
+    (%effect reads writes allocates host suspends)
+    (%let $o (call $base (local.get $op) (local.get $key))
+      (block
+        (result (%inst $result $unit i32))
+        (call $json.object-builder.boolean
+          (local.get $o)
+          (%string.lit "ok")
+          (i32.const 0))
+        (call $json.object-builder.string
+          (local.get $o)
+          (%string.lit "error")
+          (call $error-name (local.get $error)))
+        (%future.await
+          (%inst $result $unit i32)
+          (call $write (call $json.object-builder.finish (local.get $o))))
+      )))
 
-    (func $invalid (result (%inst $result $unit i32)) (%effect host suspends)
-      (%future.await
-        (%inst $result $unit i32)
-        (call $write (%text.lit "{\"ok\":false,\"error\":\"invalid-command\"}"))))
-  ))
+  (func $invalid
+    (result (%inst $result $unit i32))
+    (%effect host suspends)
+    (%future.await
+      (%inst $result $unit i32)
+      (call $write (%string.lit "{\"ok\":false,\"error\":\"invalid-command\"}"))))
+)

@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use wlt::{Error, check};
 
 fn rejects(source: &str, code: &str) -> Error {
@@ -83,7 +84,7 @@ fn type_errors_explain_numeric_operand_parameter_and_declared_result_origins() {
 
 #[test]
 fn moved_value_diagnostic_identifies_binding_and_first_move() {
-    let source = "(module (func $f\n (%let $owner (%own.new i32 (i32.const 1))\n  (block\n   (%own.close (%move $owner))\n   (%own.close (%move $owner))))))";
+    let source = "(module (func $f\n (%let $owner (%box.new i32 (i32.const 1))\n  (block\n   (%box.close (%move $owner))\n   (%box.close (%move $owner))))))";
     let error = rejects(source, "E_OWNERSHIP_MOVED");
     assert!(error.to_string().contains("`$owner`"));
     assert_eq!(
@@ -130,10 +131,10 @@ fn effect_diagnostic_explains_declared_bound_and_transitive_cause() {
 
 #[test]
 fn opaque_diagnostic_identifies_type_owner_and_declaration() {
-    let source = "(module\n (%namespace $lib\n  (%public (opaque $State))\n  (type $State (struct (field $n i32))))\n (func $read (param $s (ref $lib.State)) (result i32)\n  (struct.get $lib.State $n (local.get $s))))";
+    let source = "(module\n (%legacy.namespace $lib\n  (%public (opaque $State))\n  (type $State (struct (field $n i32))))\n (func $read (param $s (ref $lib.State)) (result i32)\n  (struct.get $lib.State $n (local.get $s))))";
     let error = rejects(source, "E_OPAQUE_REPRESENTATION");
     assert!(error.to_string().contains("`$lib.State`"));
-    assert!(error.to_string().contains("namespace `$lib`"));
+    assert!(error.to_string().contains("module `$lib`"));
     assert!(
         error
             .diagnostic()
@@ -186,7 +187,7 @@ fn included_primary_and_related_spans_map_independently_with_unicode_columns() {
 
 #[test]
 fn branch_move_provenance_retains_each_reachable_origin() {
-    let source = "(module (func $f (param $flag i32)\n (%let $owner (%own.new i32 (i32.const 1))\n  (block\n   (if (local.get $flag)\n    (then (%own.close (%move $owner)))\n    (else (%own.close (%move $owner))))\n   (%own.close (%move $owner))))))";
+    let source = "(module (func $f (param $flag i32)\n (%let $owner (%box.new i32 (i32.const 1))\n  (block\n   (if (local.get $flag)\n    (then (%box.close (%move $owner)))\n    (else (%box.close (%move $owner))))\n   (%box.close (%move $owner))))))";
     let error = rejects(source, "E_OWNERSHIP_MOVED");
     let origins = error
         .diagnostic()
@@ -203,7 +204,7 @@ fn branch_move_provenance_retains_each_reachable_origin() {
     );
     assert!(origins.iter().all(|label| label.message.contains("branch")));
     // Removing only the final second use makes the branch join valid.
-    check(&source.replace("\n   (%own.close (%move $owner))", "\n   (nop)")).unwrap();
+    check(&source.replace("\n   (%box.close (%move $owner))", "\n   (nop)")).unwrap();
 }
 
 #[test]

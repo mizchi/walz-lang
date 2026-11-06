@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use std::process::Command;
 
 fn run(source: &str, expected: &str) {
@@ -178,10 +179,10 @@ fn numeric_elision_requires_a_known_scalar_type_and_valid_wat_literal() {
 #[test]
 fn shorthand_does_not_move_owned_values_or_skip_static_contracts() {
     for body in [
-        "(%own.close $x)",
-        "(%let $alias $x (%own.close (%move $alias)))",
+        "(%box.close $x)",
+        "(%let $alias $x (%box.close (%move $alias)))",
     ] {
-        let source = format!("(module (func $f (%let $x (%own.new i64 1) {body})))");
+        let source = format!("(module (func $f (%let $x (%box.new i64 1) {body})))");
         let error = wlt::compile(&source)
             .err()
             .expect("invalid source accepted");
@@ -189,8 +190,8 @@ fn shorthand_does_not_move_owned_values_or_skip_static_contracts() {
     }
     run(
         r#"(module (func $main (export "main") (result i64)
-      (%let $x (%own.new i64 42)
-        (%match (%own i64) (result i64) (%move $x) (case own ($n) $n)))))"#,
+      (%let $x (%box.new i64 42)
+        (%match (%box i64) (result i64) (%move $x) (case own ($n) $n)))))"#,
         "42",
     );
     let error = wlt::compile(
@@ -249,11 +250,11 @@ fn let_type_annotations_keep_aliases_generics_references_and_native_wat() {
 fn inferred_value_forms_do_not_confuse_local_atoms_with_types() {
     run(
         r#"(module
-      (%import "wlt:std" (type $pair) (type $option) (type $result))
+      (%use "wlt:core" (type $tuple) (type $option) (type $result))
       (%type.alias $N i64)
       (func $f (result (%inst $result i64 i32))
         (%let (($N (type i64) 40)
-               ($p (type (%inst $pair i64 i64)) (%pair.new $N 2))
+               ($p (type (%inst $tuple i64 i64)) (%tuple.new $N 2))
                ($o (type (%inst $option i64)) (%option.some $N))
                ($r (type (%inst $result i64 i32)) (%result.ok 2)))
           (%match $p
@@ -272,7 +273,7 @@ fn inferred_value_forms_do_not_confuse_local_atoms_with_types() {
 fn result_do_bound_locals_are_values_even_when_they_share_a_type_name() {
     run(
         r#"(module
-      (%import "wlt:std" (type $option) (type $result))
+      (%use "wlt:core" (type $option) (type $result))
       (%type.alias $N i64)
       (func $f (result (%inst $result (%inst $option i64) i32))
         (%result.do ($N (%result.ok i64 i32 40))
@@ -324,9 +325,9 @@ fn inspection_keeps_the_source_type_and_spans_of_short_expressions() {
 fn namespace_type_resolution_preserves_short_local_reads_and_explicit_type_operands() {
     run(
         r#"(module
-      (%import "wlt:std" (type $option))
-      (%namespace $n
-        (%import "wlt:std" (type $option))
+      (%use "wlt:core" (type $option))
+      (%legacy.namespace $n
+        (%use "wlt:core" (type $option))
         (%public (func $f))
         (%type.alias $N i64)
         (func $f (param $N i64) (result (%inst $option i64))
@@ -366,7 +367,7 @@ fn malformed_declarations_are_diagnostics_and_not_panics() {
 fn generic_constructor_type_operands_survive_parameter_renaming() {
     run(
         r#"(module
-      (%import "wlt:std" (type $option))
+      (%use "wlt:core" (type $option))
       (func $empty (%type.params $T) (%where (shared $T) (nonunit $T))
         (result (%inst $option $T)) (%option.none $T))
       (func $wrap (%type.params $T) (%where (shared $T) (nonunit $T))

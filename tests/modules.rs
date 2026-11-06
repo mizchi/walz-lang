@@ -1,13 +1,14 @@
+// Scope-flattening unit fixtures use private IR forms. CLI cases use file modules.
 #[test]
 fn static_namespaces_link_public_functions_types_and_aliases() {
     let source = r#"(module
-      (%namespace $math
+      (%legacy.namespace $math
         (%public (func $add) (type $Box))
         (type $Box (struct (field $n i32)))
         (func $private (param $n i32) (result i32) (local.get $n))
         (func $add (param $add i32) (result (ref $Box))
           (struct.new $Box (call $private (i32.add (local.get $add) (i32.const 2))))))
-      (%use $math (func $add $make) (type $Box))
+      (%file.use $math (func $add $make) (type $Box))
       (func $main (export "main") (result i32)
         (struct.get $Box $n (call $make (i32.const 40)))))"#;
     let compiled = wlt::compile(source).unwrap();
@@ -21,23 +22,23 @@ fn static_namespaces_link_public_functions_types_and_aliases() {
 fn namespace_visibility_is_checked_before_flattening() {
     for (source, message) in [
         (
-            "(module (%namespace $a (func $f (nop))) (func $g (call $a.f)))",
+            "(module (%legacy.namespace $a (func $f (nop))) (func $g (call $a.f)))",
             "private",
         ),
         (
-            "(module (%namespace $a (func $f (nop))) (%use $a (func $f)))",
+            "(module (%legacy.namespace $a (func $f (nop))) (%file.use $a (func $f)))",
             "private",
         ),
         (
-            "(module (%namespace $a (%public (func $missing))))",
+            "(module (%legacy.namespace $a (%public (func $missing))))",
             "unknown",
         ),
         (
-            "(module (%namespace $a (%public (func $f)) (func $f (nop))) (%use $a (func $f)) (func $f (nop)))",
+            "(module (%legacy.namespace $a (%public (func $f)) (func $f (nop))) (%file.use $a (func $f)) (func $f (nop)))",
             "duplicate",
         ),
         (
-            "(module (%namespace $a (func $f (export \"leak\") (nop))))",
+            "(module (%legacy.namespace $a (func $f (export \"leak\") (nop))))",
             "root",
         ),
     ] {
@@ -48,7 +49,7 @@ fn namespace_visibility_is_checked_before_flattening() {
 
 #[test]
 fn nested_modules_and_forward_uses_have_no_runtime_module_objects() {
-    let source = "(module (%use $a.b (func $f)) (func $main (export \"main\") (result i32) (call $f)) (%namespace $a (%namespace $b (%public (func $f)) (func $f (result i32) (i32.const 42)))))";
+    let source = "(module (%file.use $a.b (func $f)) (func $main (export \"main\") (result i32) (call $f)) (%legacy.namespace $a (%legacy.namespace $b (%public (func $f)) (func $f (result i32) (i32.const 42)))))";
     let compiled = wlt::compile(source).unwrap();
     assert!(compiled.wat.contains("call $a.b.f"));
     assert!(!compiled.wat.contains("namespace"));
@@ -59,9 +60,13 @@ fn file_includes_are_relative_static_and_cycle_checked() {
     use std::process::Command;
     let dir = tempfile::tempdir().unwrap();
     std::fs::create_dir(dir.path().join("lib")).unwrap();
-    std::fs::write(dir.path().join("lib/math.wlt"), "(module (%namespace $math (%public (func $answer)) (func $answer (result i32) (i32.const 42))))").unwrap();
+    std::fs::write(
+        dir.path().join("lib/math.wlt"),
+        "(module (%export (func $answer)) (func $answer (result i32) (i32.const 42)))",
+    )
+    .unwrap();
     let main = dir.path().join("main.wlt");
-    std::fs::write(&main,"(module (%include \"lib/math.wlt\") (%use $math (func $answer)) (func $main (export \"main\") (result i32) (call $answer)) (%test \"included answer\" (i32.eq (call $answer) (i32.const 42))))").unwrap();
+    std::fs::write(&main,"(module (%use \"./lib/math.wlt\" (func $answer)) (func $main (export \"main\") (result i32) (call $answer)) (%test \"included answer\" (i32.eq (call $answer) (i32.const 42))))").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("run")
         .arg(&main)
@@ -96,7 +101,11 @@ fn file_includes_are_relative_static_and_cycle_checked() {
         .unwrap();
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("include cycle"));
-    std::fs::write(dir.path().join("lib/math.wlt"),"(module (%namespace $math (%public (func $answer))\n (func $answer (result i32) (i64.const 42))))").unwrap();
+    std::fs::write(
+        dir.path().join("lib/math.wlt"),
+        "(module (%export (func $answer))\n (func $answer (result i32) (i64.const 42)))",
+    )
+    .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
         .arg("check")
         .arg(&main)
@@ -127,11 +136,11 @@ fn namespace_resolution_preserves_existing_type_effect_and_ownership_checks() {
             .strip_suffix(')')
             .unwrap();
         let source = format!(
-            "(module (%namespace $lib (%public (func $main)) {body}) (func $entry (export \"main\") (result i64) (call $lib.main)))"
+            "(module (%legacy.namespace $lib (%public (func $main)) {body}) (func $entry (export \"main\") (result i64) (call $lib.main)))"
         );
         wlt::compile(&source).unwrap_or_else(|e| panic!("{name}: {e}"));
     }
-    let source = "(module (%namespace $lib (%public (func $set)) (type $C (struct (field (mut i32)))) (func $set (param $c (ref $C)) (struct.set $C 0 (local.get $c) (i32.const 1)))) (func $bad (%effect pure) (call $lib.set (unreachable))))";
+    let source = "(module (%legacy.namespace $lib (%public (func $set)) (type $C (struct (field (mut i32)))) (func $set (param $c (ref $C)) (struct.set $C 0 (local.get $c) (i32.const 1)))) (func $bad (%effect pure) (call $lib.set (unreachable))))";
     assert!(
         wlt::check(source)
             .unwrap_err()
@@ -144,10 +153,10 @@ fn namespace_resolution_preserves_existing_type_effect_and_ownership_checks() {
 fn malformed_module_forms_report_errors_without_panicking() {
     for source in [
         "(module (%use))",
-        "(module (%namespace))",
-        "(module (%namespace $a) (%use $a))",
-        "(module (%namespace $a (%public ())))",
-        "(module (%namespace $a (func $f ())))",
+        "(module (%legacy.namespace))",
+        "(module (%legacy.namespace $a) (%file.use $a))",
+        "(module (%legacy.namespace $a (%public ())))",
+        "(module (%legacy.namespace $a (func $f ())))",
     ] {
         assert!(wlt::check(source).is_err(), "{source}");
     }
@@ -156,13 +165,13 @@ fn malformed_module_forms_report_errors_without_panicking() {
 #[test]
 fn namespace_value_aliases_qualify_only_type_positions_and_keep_privacy() {
     let source = r#"(module
-      (%use $data (type $Count $Count))
+      (%file.use $data (type $Count $Count))
       (func $identity (param $Count $Count) (result $Count) (local.get $Count))
-      (%namespace $data (%public (type $Count)) (%type.alias $Count i32)))"#;
+      (%legacy.namespace $data (%public (type $Count)) (%type.alias $Count i32)))"#;
     wlt::compile(source).unwrap();
     for source in [
-        "(module (%namespace $data (%type.alias $Hidden i32)) (func $f (param $n $data.Hidden) (nop)))",
-        "(module (%namespace $data (%public (opaque $Count)) (%type.alias $Count i32)))",
+        "(module (%legacy.namespace $data (%type.alias $Hidden i32)) (func $f (param $n $data.Hidden) (nop)))",
+        "(module (%legacy.namespace $data (%public (opaque $Count)) (%type.alias $Count i32)))",
         "(module (%type.alias $Same i32) (type $Same (struct)))",
     ] {
         assert!(wlt::check(source).is_err(), "{source}");

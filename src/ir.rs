@@ -447,6 +447,16 @@ pub struct TestDecl {
     pub export: String,
 }
 
+/// A benchmark body is a normal checked function, with an optional i32
+/// iteration parameter. The runner supplies timing and batching externally.
+#[derive(Clone, Debug, Serialize)]
+pub struct BenchDecl {
+    pub name: String,
+    pub span: Span,
+    pub function: FunctionId,
+    pub export: String,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct LawDecl {
     pub name: String,
@@ -468,6 +478,7 @@ pub struct Module {
     pub types: Vec<TypeDecl>,
     pub functions: Vec<Function>,
     pub tests: Vec<TestDecl>,
+    pub benches: Vec<BenchDecl>,
     pub laws: Vec<LawDecl>,
     pub tags: Vec<TagDecl>,
 }
@@ -492,10 +503,12 @@ impl Module {
             Type::Value(id) => match &self.types[id.0].kind {
                 TypeKind::Value(value) => {
                     let name = value.type_name(|ty| self.type_name(ty));
-                    if let Some(rest) = name.strip_prefix('(') {
-                        format!("(%{rest}")
+                    if let Some((head, rest)) =
+                        name.strip_prefix('(').and_then(|s| s.split_once(' '))
+                    {
+                        format!("(%{} {rest}", crate::naming::public(head))
                     } else {
-                        format!("%{name}")
+                        format!("%{}", crate::naming::public(&name))
                     }
                 }
                 _ => unreachable!("value type"),

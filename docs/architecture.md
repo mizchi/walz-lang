@@ -1,7 +1,7 @@
 # 実装
 
 ```text
-ファイル import / include → wlt:std の静的展開 → S 式・固定構文の正規化
+ファイル import / include → wlt:core の静的展開 → S 式・固定構文の正規化
   → 名前解決・単相化・型検査 → 型付き IR
                               ├─ 全ソースの解析・契約検査
                               └─ 到達性による宣言の除去 → WAT → Wasm
@@ -10,7 +10,9 @@
 - `src/ir.rs`: 型、ローカル・関数・ループの ID、閉じた式の列挙型。解析と出力の共通コントラクト。
 - `src/sexpr.rs`: 位置情報付きの S 式リーダー。`;;` と入れ子の `(; ;)` コメントに対応。
 - `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
-- [src/standard.rs](../src/standard.rs): 同梱する `wlt:std` の型 alias と標準関数を選択し、通常の静的モジュールへ展開。ファイル探索や実行時の初期化は行わない。
+- [src/standard.rs](../src/standard.rs): 同梱する `wlt:core` の型 alias と標準関数を選択し、通常の静的モジュールへ展開。ファイル探索や実行時の初期化は行わない。
+- `build.rs` / `src/standard_catalogue.rs`: 標準APIの公開名と型aliasの位置をビルド時に索引化する。`standard.rs` は必要な実装だけを読み、immutableな構文を共有する。[Rust側の計測](frontend-performance.md)を参照。
+- `crates/wlt-web` / `playground/`: 共通コンパイラをwasm-bindgenで公開し、コンパイルとゲスト実行を別のWeb Workerで動かす。[ブラウザー用ビルド](playground.md)を参照。
 - [src/syntax.rs](../src/syntax.rs): `%` で始まる入口の正規化と、複数束縛の `%let` から既存のネストした束縛への展開。
 - `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
 - `src/generics.rs`: 明示した型引数ごとの具体化、再利用、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
@@ -25,6 +27,8 @@
 - `src/native.rs`: 型付きコア外の標準 WAT の関数シグネチャ。
 - [src/native_macros.rs](../src/native_macros.rs): コア外の WAT と構文だけのマクロの混在。全体を Wasm validator で検証し、解析結果を opaque とする。
 - `src/runner.rs`: テスト探索、分離した実行、タイムアウト、構造化した結果。
+- `src/benchmark.rs`: bench の結果型検査、ケースごとのリンク、計測と統計。`src/harness.rs` はテストと共通の探索・プロセス管理。
+- `runtime/bench-runner.mjs`: 常駐する Wasm インスタンスのウォームアップ・バッチ校正・単調時計による計測。
 - `src/analysis.rs`: 副作用と呼び出しグラフの解析。文字列の WAT を再解析せず、型付き IR を走査します。
 - `src/regions.rs`: 対象別の読み書き、参照の流れ、割当て箇所と escape の解析。
 - `src/flow.rs`: 正常な制御フロー上の non-null、i32 区間と配列境界の解析。

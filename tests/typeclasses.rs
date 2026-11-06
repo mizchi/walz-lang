@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use std::process::Command;
 
 fn run(source: &str, expected: &str) {
@@ -125,7 +126,7 @@ fn integer_eq_and_ord_keep_operand_width_and_signed_order() {
 fn generic_add_eq_and_ord_constraints_resolve_after_monomorphization() {
     run(
         r#"(module
-      (%namespace $n
+      (%legacy.namespace $n
         (%public (func $choose))
         (func $choose (%type.params $T) (%where (Add $T) (Eq $T) (Ord $T))
           (param $a $T) (param $b $T) (result $T) (%effect pure)
@@ -146,7 +147,7 @@ fn generic_add_eq_and_ord_constraints_resolve_after_monomorphization() {
 #[test]
 fn unavailable_class_instances_are_rejected_before_dead_code_elimination() {
     for class in ["Add", "Eq", "Ord"] {
-        for argument in ["v128", "(ref $S)", "$N", "(%own i64)", "%text", "%unit"] {
+        for argument in ["v128", "(ref $S)", "$N", "(%box i64)", "%string", "%unit"] {
             let source = format!(
                 "(module (type $S (struct)) (type $N (%newtype i64))
               (func $require (%type.params $T) (%where ({class} $T)) (nop))
@@ -274,7 +275,7 @@ fn abrupt_operands_and_owned_values_retain_their_existing_static_contracts() {
         "E_EFFECT_CONTRACT",
         "effect contract",
     );
-    let source = "(module (func $f (%let $x (%own.new i64 1) (drop (= $x $x)))))";
+    let source = "(module (func $f (%let $x (%box.new i64 1) (drop (= $x $x)))))";
     assert!(wlt::compile(source).is_err());
 }
 

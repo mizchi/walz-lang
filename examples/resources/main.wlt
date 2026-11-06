@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $borrow)
     (type $result))
   (type $File (%resource "file" $close))

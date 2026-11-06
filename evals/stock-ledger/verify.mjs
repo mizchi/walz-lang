@@ -14,7 +14,10 @@ const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
 function inspectState(ir, name, counterType, text, groupedBindings) {
   const main = ir.functions.find((f) => f.name === name);
   assert.ok(main, `missing ${name}`);
-  const stateType = ir.types.findIndex((t) => t.name === "$stock.State");
+  const states = ir.types.filter((t) => /(?:^|\.)State$/.test(t.name));
+  assert.equal(states.length, 1, "one nominal stock State must exist");
+  const stateType = ir.types.indexOf(states[0]);
+  const constructor = states[0].name.replace(/State$/, "new");
   const pairType = ir.types.findIndex((t) => {
     const p = t.kind?.Value?.Pair;
     return (
@@ -35,7 +38,7 @@ function inspectState(ir, name, counterType, text, groupedBindings) {
     if (!node || typeof node !== "object") return;
     if (
       node.kind?.Call &&
-      ir.functions[node.kind.Call.function].name === "$stock.new"
+      ir.functions[node.kind.Call.function].name === constructor
     )
       calls.push({ inLoopBody, args: node.kind.Call.args });
     for (const [key, value] of Object.entries(node)) {
@@ -61,7 +64,7 @@ function inspectState(ir, name, counterType, text, groupedBindings) {
   if (groupedBindings) assert.ok(functionForms(text, name)?.["let.group"] > 0, "main initialization must use a grouped %let");
   return { pairType, stockNewCalls: calls.length, outsideLoopBody: true };
 }
-export async function verifyStock({ source, output, checkInputs, groupedBindings = false, extended = false }) {
+export async function verifyStock({ source, output, checkInputs, groupedBindings = false, extended = false, legacySyntax = false }) {
   const checks = [];
   const check = async (name, run) => {
     try {
@@ -75,14 +78,14 @@ export async function verifyStock({ source, output, checkInputs, groupedBindings
   if (!checks[0].passed) return { passed: false, checks };
   let runtime, checkedIr;
   await check("W1 type and Wasm validation", async () => {
-    await build(source, output, { legacySyntax: true });
+    await build(source, output, { legacySyntax });
     await instrument(output, "core");
     runtime = await import(pathToFileURL(join(output, "index.js")));
   });
   await check("W4 pair state and one initialization", async () => {
     const { stdout } = await exec(
       "cargo",
-      ["run", "--locked", "--quiet", "--", "--legacy-syntax", "ir", source],
+      ["run", "--locked", "--quiet", "--", ...(legacySyntax ? ["--legacy-syntax"] : []), "ir", source],
       { cwd: projectRoot, maxBuffer: 8 * 1024 * 1024 },
     );
     checkedIr = JSON.parse(stdout);

@@ -59,7 +59,7 @@ fn finite_stream_preserves_order_and_returns_an_owner_even_at_end() {
           (bind $stream (%stream i64)
             (%stream.cons i64 (i64.const 4) (%stream.cons i64 (i64.const 2) (%stream.empty i64))))
           (bind $sum i64 (i64.const 0)) (result i64)
-          (%match (%pair (%stream i64) (%option i64)) (result i64) (%stream.next i64 (%move $stream))
+          (%match (%tuple (%stream i64) (%option i64)) (result i64) (%stream.next i64 (%move $stream))
             (case pair ($next $item)
               (%match (%option i64) (result i64) (local.get $item)
                 (case none () (block (result i64) (%stream.close i64 (%move $next)) (local.get $sum)))
@@ -70,10 +70,10 @@ fn finite_stream_preserves_order_and_returns_an_owner_even_at_end() {
     assert_eq!(
         run(r#"(module
       (func $main (export "main") (result i32) (%effect suspends)
-        (%match (%pair (%stream %unit) (%option %unit)) (result i32)
+        (%match (%tuple (%stream %unit) (%option %unit)) (result i32)
           (%stream.next %unit (%stream.cons %unit (%stream.empty %unit)))
           (case pair ($next $event)
-            (%match (%pair (%stream %unit) (%option %unit)) (result i32) (%stream.next %unit (%move $next))
+            (%match (%tuple (%stream %unit) (%option %unit)) (result i32) (%stream.next %unit (%move $next))
               (case pair ($end $none)
                 (block (result i32)
                   (%stream.close %unit (%move $end))
@@ -92,11 +92,11 @@ fn stream_end_and_completion_error_remain_separate_values() {
         run(r#"(module
       (func $main (export "main") (result i32) (%effect suspends)
         (%let $io
-          (%pair.new (%stream i64) (%future (%result %unit i32))
+          (%tuple.new (%stream i64) (%future (%result %unit i32))
             (%stream.empty i64) (%future.ready (%result %unit i32) (%result.err %unit i32 (i32.const 42))))
-          (%match (%pair (%stream i64) (%future (%result %unit i32))) (result i32) (%move $io)
+          (%match (%tuple (%stream i64) (%future (%result %unit i32))) (result i32) (%move $io)
             (case pair ($stream $completion)
-              (%match (%pair (%stream i64) (%option i64)) (result i32) (%stream.next i64 (%move $stream))
+              (%match (%tuple (%stream i64) (%option i64)) (result i32) (%stream.next i64 (%move $stream))
                 (case pair ($end $item)
                   (block (result i32)
                     (%stream.close i64 (%move $end))
@@ -123,7 +123,7 @@ fn endpoints_are_opaque_owned_values_and_payloads_are_shared_for_now() {
             "shared GC storage",
         ),
         (
-            "(module (func $f (%future.close (%own i64) (%future.ready (%own i64) (%own.new i64 (i64.const 1))))))",
+            "(module (func $f (%future.close (%box i64) (%future.ready (%box i64) (%box.new i64 (i64.const 1))))))",
             "delivery payload must be shared",
         ),
         (

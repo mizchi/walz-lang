@@ -1,5 +1,7 @@
 # 言語内のテスト
 
+性能計測は `*_bench.wlt` の `%bench` と `wlt bench` を使う。[ベンチマーク](benchmarking.md) を参照。
+
 標準 API 資料は `just stdlib-docs` で生成する。`just test-stdlib-docs` は公開シグネチャ・制約・effect と資料の一致、および非公開な型表現を含まないことを検査する。
 
 モジュール直下に名前と `i32` の条件式を置きます。0 が失敗、それ以外が成功です。

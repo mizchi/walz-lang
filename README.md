@@ -2,33 +2,33 @@
 
 English | [日本語](README.ja.md)
 
-WLT is a small extension of WAT built around Wasm GC and static analysis. It accepts standard WAT and marks language extensions with `%`.
+WLT is a programming language that preserves WAT's S-expression syntax and remains a superset of standard WAT. Built for Wasm GC, it adds generics and higher-level operations to make WebAssembly programs easier to write while preserving Wasm semantics.
 
-- Immutable lexical bindings, enums and pattern matching, and explicit closure captures.
-- Explicit imports of standard types and functions from `wlt:std`, with monomorphized generics.
-- Type, effect, and ownership checking, with output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
+Its data abstractions are designed around `result`, `option`, `stream`, and `future` as used by [WASI 0.3](https://github.com/WebAssembly/WASI/releases/tag/v0.3.0), to ease interoperation through WIT and the Component Model. These types are explicitly imported from `wlt:core`. See the [runtime documentation](docs/runtime.md) for the current ABI and host support.
+
+`wlt:core` provides built-in data types and portable data operations. OS services and other I/O capabilities are supplied through explicit host imports.
+
+- `%`-prefixed extensions for immutable bindings, loops, enums and pattern matching, named struct construction, and explicit closure captures.
+- Monomorphized generics with explicit type arguments and constraints.
+- Type, effect, and ownership checking for the typed extension core.
+- Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
 
 ```wat
 (module
-  (%import "wlt:std" (type $result))
-  (func $main
-    (export "main")
-    (result i64)
-    (%effect pure)
-    (%let
-      (($a i64 (i64.const 40))
-       ($b (i64.const 2))
-       ($sum
-         (%inst $result i64 i32)
-         (%result.ok (i64.add (local.get $a) (local.get $b))))
-      )
-      (%match (local.get $sum)
-        (case ok ($value) (local.get $value))
-        (case err ($code) (i64.const 0))))
-  ))
+  (%use "wlt:core" (type $result))
+  (func $add (%type.params $T) (%where (Add $T))
+    (param $a $T) (param $b $T) (result $T) (%effect pure)
+    (+ $a $b))
+
+  (func $main (export "main") (result i64) (%effect pure)
+    (%let $answer (%inst $result i64 i32)
+      (%result.ok (call (%inst $add i64) 40 2))
+      (%match $answer
+        (case ok ($value) $value)
+        (case err ($code) 0)))))
 ```
 
-Grouped `%let` bindings initialize from left to right. Later initializers can refer to earlier bindings. The `main` function above returns 42.
+`%inst` supplies concrete type arguments, `%let` introduces an immutable binding, and `%match` handles both Result cases. The `main` function returns 42.
 
 ## Try it
 
@@ -44,15 +44,18 @@ just test
 
 JavaScript execution requires Node.js 24 or later and pnpm. Verified execution also uses Lean. See [Getting started](docs/getting-started.md) for setup and commands.
 
+For an interactive language tour, run `just playground` (requires wasm-pack). The [browser playground](docs/playground.md) compiles WLT locally using the Rust compiler built to Wasm.
+
 ## Documentation
 
 The detailed documentation linked below is in Japanese.
 
 | Topic | Documentation |
 | --- | --- |
+| Edit, compile and run in the browser | [Playground](docs/playground.md) |
 | Scalar instructions, Result sequencing, newtypes and early exits | [Core expressions](docs/core-expressions.md) |
 | Syntax overview | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) |
-| Standard types, Future, and grouped bindings | [Standard modules](docs/standard.md) |
+| Built-in types, Future, and grouped bindings | [Core module](docs/standard.md) |
 | Type parameters, bounds, and monomorphization | [Generics](docs/generics.md) |
 | Built-in type classes, short-circuit logic and bit operations | [Type classes](docs/typeclasses.md) |
 | v128 and vector operations | [SIMD](docs/simd.md) · [Kernels and benchmarks](docs/simd-kernels.md) |
@@ -61,7 +64,8 @@ The detailed documentation linked below is in Japanese.
 | Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
 | Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |
 | Async execution, ABI, and cancellation | [Runtime](docs/runtime.md) · [WIT bindings](docs/wit-bindings.md) |
-| Tests and first-time reader evaluations | [Testing](docs/testing.md) · [Evaluation harness](evals/README.md) |
+| Tests, benchmarks and first-time reader evaluations | [Testing](docs/testing.md) · [Benchmarking](docs/benchmarking.md) · [Evaluation harness](evals/README.md) |
+| Rust compiler benchmarks and profiling | [Frontend performance](docs/frontend-performance.md) |
 | Implementation structure | [Architecture](docs/architecture.md) |
 
 See the [example catalog](examples/catalog.json), [current limitations](ASSESSMENT.md), and [TODO](TODO.md).

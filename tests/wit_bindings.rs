@@ -21,10 +21,15 @@ fn generated_imports_require_separate_trusted_policy() {
     let generated = wlt::wit_bindgen::generate(&input, None, grants).unwrap();
     assert!(
         generated
-            .source
-            .contains("(%inst $pair i64 (%inst $option $text))")
+            .policy
+            .contains("(result (pair i64 (option text)) i32)")
     );
-    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (%result (%inst $pair i64 (%inst $option $text)) i32)) (%effect host) (call $service.echo (%text.lit \"日本語\")))", 1);
+    assert!(
+        generated
+            .source
+            .contains("(%inst $tuple i64 (%inst $option $string))")
+    );
+    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (%result (%inst $tuple i64 (%inst $option $string)) i32)) (%effect host) (call $service.echo (%string.lit \"日本語\")))", 1);
     assert!(wlt::component::compile(&source).is_err());
     let policy = BindingPolicy::parse(&generated.policy).unwrap();
     let module = wlt::check_with_policy(&source, &policy).unwrap();
@@ -79,7 +84,7 @@ fn generated_lists_resolve_aliases_and_reject_owned_elements_early() {
     assert!(
         generated
             .source
-            .contains("(%inst $list (%inst $result (%inst $pair i64 $text) i32))")
+            .contains("(%inst $list (%inst $result (%inst $tuple i64 $string) i32))")
     );
     std::fs::write(&input,"package example:lists; interface io { read: func() -> list<option<future<s64>>>; } world guest { import io; }").unwrap();
     assert!(

@@ -1,14 +1,14 @@
 (module
-  (%import "wlt:std"
-    (type $text))
-  (%import "../stdlib/text.wlt"
+  (%use "wlt:core" (func $json.stringify) (func $json.from-string))
+  (%use "wlt:core"
+    (type $string))
+  (%use "../stdlib/text.wlt"
     (func $string.concat)
-    (func $string.json)
     (func $string.s64)
     (func $string.u64))
-  (func $equal (param $a $text) (param $b $text) (result i32)
-    (%let $a (%text.bytes (local.get $a))
-      (%let $b (%text.bytes (local.get $b))
+  (func $equal (param $a $string) (param $b $string) (result i32)
+    (%let $a (%string.bytes (local.get $a))
+      (%let $b (%string.bytes (local.get $b))
         (if
           (result i32)
           (i32.ne (%bytes.len (local.get $a)) (%bytes.len (local.get $b)))
@@ -35,22 +35,22 @@
   (%test "concat preserves Unicode and empty text"
     (i32.and
       (call $equal
-        (call $string.concat (%text.lit "日本語") (%text.lit "🦀"))
-        (%text.lit "日本語🦀"))
-      (call $equal (call $string.concat (%text.lit "") (%text.lit "")) (%text.lit ""))))
+        (call $string.concat (%string.lit "日本語") (%string.lit "🦀"))
+        (%string.lit "日本語🦀"))
+      (call $equal (call $string.concat (%string.lit "") (%string.lit "")) (%string.lit ""))))
   (%test "decimal signed and unsigned boundaries"
     (i32.and
-      (call $equal (call $string.u64 (i64.const -1)) (%text.lit "18446744073709551615"))
+      (call $equal (call $string.u64 (i64.const -1)) (%string.lit "18446744073709551615"))
       (i32.and
         (call $equal
           (call $string.s64 (i64.const -9223372036854775808))
-          (%text.lit "-9223372036854775808"))
-        (call $equal (call $string.u64 (i64.const 0)) (%text.lit "0"))))
+          (%string.lit "-9223372036854775808"))
+        (call $equal (call $string.u64 (i64.const 0)) (%string.lit "0"))))
   )
   (%test "JSON escapes quotes, slashes and control bytes but preserves Unicode"
     (i32.and
       (call $equal
-        (call $string.json (%text.lit "\"\\\n\t日本語🦀"))
-        (%text.lit "\"\\\"\\\\\\u000a\\u0009日本語🦀\""))
-      (call $equal (call $string.json (%text.lit "")) (%text.lit "\"\""))))
+        (call $json.stringify (call $json.from-string (%string.lit "\"\\\n\t日本語🦀")))
+        (%string.lit "\"\\\"\\\\\\u000a\\u0009日本語🦀\""))
+      (call $equal (call $json.stringify (call $json.from-string (%string.lit ""))) (%string.lit "\"\""))))
 )

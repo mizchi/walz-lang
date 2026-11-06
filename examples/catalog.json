@@ -433,6 +433,11 @@
       "path": "examples/typeclasses.wlt",
       "pattern": "sealed scalar Add/Eq/Ord instances with statically resolved operators",
       "expected": "42"
+    },
+    {
+      "path": "examples/views.wlt",
+      "pattern": "zero-copy UTF-8 views with relative ranges and explicit ABI materialization",
+      "expected": "42"
     }
   ],
   "probes": [

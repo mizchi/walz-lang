@@ -6,7 +6,7 @@
 
 ## 最初に覚える規則
 
-- 式は `(操作 引数...)`。式位置の `$foo` は `(local.get $foo)`。数値は期待型が分かれば `42`、明示するなら `(i64.const 42)`。文字列は `(%text.lit "hello")` と書く。
+- 式は `(操作 引数...)`。式位置の `$foo` は `(local.get $foo)`。数値は期待型が分かれば `42`、明示するなら `(i64.const 42)`。文字列は `(%string.lit "hello")` と書く。
 - プログラムは `(module 宣言...)`。関数の本体は1つの式。複数の処理には block を使う。
 - `$name` は識別子、`"text"` は文字列、`;;` は行コメント、`(; ... ;)` は入れ子可能なコメント。
 - 引数と演算は左から右へ評価する。暗黙の数値変換・捕捉・ローカル再代入はない。
@@ -26,8 +26,8 @@
 | `(result i64)` / `(result i32 i64)` | 標準 WAT の結果型宣言。後者は標準 WAT の複数戻り値 |
 | `(%inst $result T E)` | 成功 T／エラー E を持つ WLT の値型。返す関数は `(result (%inst $result T E))` |
 | `(import "host" "member" ...)` / `(export "name" ...)` | Wasm のインスタンス化時の import／生成モジュールの export |
-| `(%import "file.wlt" ...)` / `(%export ...)` | WLT ソースの選択的な静的リンク／ソース API の公開 |
-| `(%import "wlt:std" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
+| `(%use "./file.wlt" ...)` / `(%export ...)` | WLT ソースの選択的な静的リンク／ソース API の公開 |
+| `(%use "wlt:core" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
 | `%closure`・`%capture`・`%effect`・`%type.params`・`%where` | WLT が追加した宣言・注釈 |
 
 `%` は拡張の入口に付ける。内部の `case`、`bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
@@ -36,31 +36,31 @@
 コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `%let` / `%loop` / `%for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`%effect pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
 型付きコアの戻り値は0個（unit）または1値。pair も1値として返す。標準 WAT の `(result i32 i64)` は標準 WAT 経路で扱い、型付きコアの pair 分解へは変換しない。
 
-## `wlt:std` と基本データ型
+## `wlt:core` と基本データ型
 
-WLT の基本型は `wlt:std` から明示的に import する。`i32` などの Wasm の型はそのまま使う。
+WLT の基本型は `wlt:core` から明示的に import する。`i32` などの Wasm の型はそのまま使う。
 
 ```text
-(%import "wlt:std"
+(%use "wlt:core"
   (type $result) (type $option) (type $future) (type $stream)
-  (type $pair) (type $list) (type $own)
-  (type $text) (type $bytes) (type $unit)
+  (type $tuple) (type $list) (type $box)
+  (type $string) (type $bytes) (type $unit)
   (func $string.u64 $format))
 
-(result (%inst $result $text i32))
-(param $pending (%inst $future (%inst $result $text i32)))
+(result (%inst $result $string i32))
+(param $pending (%inst $future (%inst $result $string i32)))
 (call $format (i64.const 42))
 ```
 
-型も汎用関数も `(%inst $name T...)` で適用する。`$text` / `$bytes` / `$unit` は型引数なしの alias なので、その名前で参照する。`(type $result $Outcome)` のような別名も使える。
-名前は import したスコープにだけ束縛される。暗黙の prelude はなく、別ファイルや namespace で使う名前もそこで import する。標準関数は `$string.*`、`$buffer.*`、`$list.map` / `$list.fold`、`$builder.*`、`$json.*`、`$json-value.*` から選ぶ。`wlt:std` はファイルパスやホスト import ではなく、通常のライブラリの静的リンクと DCE を使う。
-`%text.lit`・`%result.ok`・`%future.await` などは値を操作するコンパイラの固定構文。型の参照には import した名前と `%inst` を使う。
+型も汎用関数も `(%inst $name T...)` で適用する。`$string` / `$bytes` / `$unit` は型引数なしの alias なので、その名前で参照する。`(type $result $Outcome)` のような別名も使える。
+名前は import したスコープにだけ束縛される。暗黙の prelude はなく、別ファイル で使う名前もそこで import する。標準関数は `$string.*`、`$bytes.*`、`$list.map` / `$list.fold`、`$string-builder.*`、`$json.*` から選ぶ。`wlt:core` はファイルパスやホスト import ではなく、通常のライブラリの静的リンクと DCE を使う。
+`%string.lit`・`%result.ok`・`%future.await` などは値を操作するコンパイラの固定構文。型の参照には import した名前と `%inst` を使う。
 関数の完全な型・型制約・effect は、公開宣言から生成する [標準 API 一覧](docs/stdlib-api.md) を参照する。
 `$dict.*` はtextキーの汎用辞書、`$list-builder.*` は不変listの構築。どちらも共有可能・非unitの要素を明示的に型適用し、内部表現はopaqueにする。[コレクション](docs/collections.md) を参照。
 
 ```wat
 (module
-  (%import "wlt:std" (type $future))
+  (%use "wlt:core" (type $future))
   (func $main
     (export "main")
     (result i64)
@@ -72,6 +72,21 @@ WLT の基本型は `wlt:std` から明示的に import する。`i32` などの
       $answer))
   (%test "standard Future" (i64.eq (call $main) (i64.const 42))))
 ```
+
+## ゼロコピービュー
+
+標準型は小文字のkebab-case、関連関数は`$型名.操作名`。`$tuple`はWITの2要素tuple、`$box`はWITの`own<resource>`とは異なるowned GC box。[WITとの対応](docs/naming.md)。
+
+標準文字列型は`$string`。`wlt:core`の`$bytes-view` / `$string-view`は不透明なGC型で、`(ref $string-view)`のように参照する。
+`new`で全体、`slice`で相対的な`start,length`のビューを作る。データ本体は共有し、ビュー自身だけをGCに確保するため`allocates`を持つ。
+stringの範囲はUTF-8のバイト単位で、文字途中の境界と範囲外はtrap。`bytes`で同じ範囲のbytesビューを得られる。
+`to-bytes` / `to-string`は表示範囲をコピーし、元のバッファを切り離す。WITの境界にはこの変換後の値を渡す。
+詳細と実行例は[ビュー](docs/views.md)、[examples/views.wlt](examples/views.wlt)。
+
+GC配列には`(ref (%inst $array-view T $Array))`を使う。要素型Tと名前付き配列型を明示し、`wlt:core`から関数をimportする。
+`(call (%inst $array-view.new i64 $Numbers) $source)`で全体、`slice`で要素単位の相対範囲を共有し、`get`で読む。
+ビュー自体は読み取り専用だが、元の可変配列への変更は反映される。`get`はreads、`new`/`slice`はallocatesを持つ。
+`to-list`で表示範囲を不変listへ明示的にコピーできる。詳しい制約・GC保持・ABIの扱いは[ビュー](docs/views.md#任意のgc配列を共有するarray-view)を参照。
 
 ## 関数・型・束縛
 
@@ -98,11 +113,11 @@ WLT の基本型は `wlt:std` から明示的に import する。`i32` などの
 | `i32 i64 f32 f64` | Wasm の数値型。整数の加減乗算は折り返し、整数のゼロ除算等は trap。符号解釈は命令の `_s` / `_u` で指定 |
 | `v128` | Wasm の128ビット値。`v128.const`、splat、lane操作、算術・比較・shuffle等は標準命令名を使う。[SIMD](docs/simd.md) |
 | `(ref $T)` / `(ref null $T)` | GC の非 null／nullable 参照。型は nominal |
-| `$bytes` / `$text` | 不変なバイト列／妥当な UTF-8。内部参照の操作や比較はできない |
+| `$bytes` / `$string` | 不変なバイト列／妥当な UTF-8。内部参照の操作や比較はできない |
 | `(%inst $list T)` | 共有値を要素とする不変リスト |
 | `(%inst $option T)` / `(%inst $result T E)` | none/some、ok/err の値型 |
-| `(%inst $pair T U)` | 2成分の値。成分が共有値なら pair も共有値 |
-| `(%inst $own T)` / `(%inst $future T)` / `(%inst $stream T)` | 消費する所有値。GC 参照への排他的所有を意味しない |
+| `(%inst $tuple T U)` | 2成分の値。成分が共有値なら pair も共有値 |
+| `(%inst $box T)` / `(%inst $future T)` / `(%inst $stream T)` | 消費する所有値。GC 参照への排他的所有を意味しない |
 | `$unit` | 値のない結果。関数の引数・通常のフィールドには格納しない |
 
 ```text
@@ -189,9 +204,9 @@ pair の分解には既存の `(%let ($a $b) subject body)` を使う。どち�
 `{}`と裸リテラルは独立した糖衣で、型・effect・所有権の検査を保つ。[詳細](docs/struct-construction.md)。
 
 ```text
-(%struct.new $User ($name (%text.lit "Alice")) ($age (i32.const 30)))
+(%struct.new $User ($name (%string.lit "Alice")) ($age (i32.const 30)))
 (%struct.new $User ($name "Alice") ($age 30))
-(%struct.new $User {:name (%text.lit "Alice") :age (i32.const 30)})
+(%struct.new $User {:name (%string.lit "Alice") :age (i32.const 30)})
 (%$User::{:name "Alice" :age 30})
 (%struct.new (%inst $Box i64) {:value 42})
 ```
@@ -220,13 +235,13 @@ pair の分解には既存の `(%let ($a $b) subject body)` を使う。どち�
 (%option.some T value)
 (%result.ok T E value)
 (%result.err T E error)
-(%pair.new T U first second)
+(%tuple.new T U first second)
 
 (%match (%inst $option T) (result R) subject
   (case none () no-value) (case some ($value) with-value))
 (%match (%inst $result T E) (result R) subject
   (case ok ($value) success) (case err ($error) failure))
-(%match (%inst $pair T U) (result R) subject
+(%match (%inst $tuple T U) (result R) subject
   (case pair ($first $second) body))
 ```
 
@@ -238,22 +253,22 @@ pair の状態を Result で返す例。match の `(result (%inst $result ...))`
 
 ```wat
 (module
-  (%import "wlt:std" (type $pair) (type $result))
+  (%use "wlt:core" (type $tuple) (type $result))
   (func $increment
-    (param $state (%inst $pair i64 i32))
-    (result (%inst $result (%inst $pair i64 i32) i32))
+    (param $state (%inst $tuple i64 i32))
+    (result (%inst $result (%inst $tuple i64 i32) i32))
     (%effect pure)
-    (%match (%inst $pair i64 i32) (result (%inst $result (%inst $pair i64 i32) i32))
+    (%match (%inst $tuple i64 i32) (result (%inst $result (%inst $tuple i64 i32) i32))
       (local.get $state)
       (case pair ($id $count)
-        (%result.ok (%inst $pair i64 i32) i32
-          (%pair.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1))))
+        (%result.ok (%inst $tuple i64 i32) i32
+          (%tuple.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1))))
       )))
   (%test "pair state"
-    (%match (%inst $result (%inst $pair i64 i32) i32) (result i32)
-      (call $increment (%pair.new i64 i32 (i64.const 7) (i32.const 41)))
+    (%match (%inst $result (%inst $tuple i64 i32) i32) (result i32)
+      (call $increment (%tuple.new i64 i32 (i64.const 7) (i32.const 41)))
       (case ok ($state)
-        (%match (%inst $pair i64 i32) (result i32)
+        (%match (%inst $tuple i64 i32) (result i32)
           (local.get $state)
           (case pair ($id $count) (i32.eq (local.get $count) (i32.const 42))))
       )
@@ -286,7 +301,7 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
 
 ```wat
 (module
-  (%import "wlt:std" (type $result) (type $unit))
+  (%use "wlt:core" (type $result) (type $unit))
   (func $after-unit
     (param $input (%inst $result $unit i32))
     (result (%inst $result i64 i32))
@@ -307,7 +322,7 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
 
 ```wat
 (module
-  (%import "wlt:std" (type $result))
+  (%use "wlt:core" (type $result))
   (func $convert
     (param $input (%inst $result i64 i32))
     (result (%inst $result i32 i32))
@@ -365,26 +380,26 @@ task scope は言語のブロック構文ではなく JS ホスト側の実行�
 
 ## 型の alias と省略形
 
-`(%type.alias $State (%inst $pair i64 i32))` は透明な型の略記。型の位置に `$State` と書く。
+`(%type.alias $State (%inst $tuple i64 i32))` は透明な型の略記。型の位置に `$State` と書く。
 GC オブジェクトや nominal identity は増えない。`(ref $State)` のような heap 型名には使わない。
-forward 参照可、循環は禁止。namespace 内の公開は `(%public (type $State))`、use も type と同じ。
+forward 参照可、循環は禁止。ファイルの公開は `(%export (type $State))`、use も type と同じ。
 
 関数の結果、引数、明示した let 型などから期待型が決まれば、値の構築に型引数を繰り返さない。
 決まらない場合は型注釈を追加する。関数・if・block・明示形 match の結果宣言省略は従来どおり unit。
 
 ```wat
 (module
-  (%import "wlt:std" (type $pair) (type $result))
-  (%type.alias $State (%inst $pair i64 i32))
+  (%use "wlt:core" (type $tuple) (type $result))
+  (%type.alias $State (%inst $tuple i64 i32))
   (func $increment
     (param $state $State)
     (result (%inst $result $State i32))
     (%let ($id $count) (local.get $state)
       (%result.ok
-        (%pair.new (local.get $id) (i32.add (local.get $count) (i32.const 1))))
+        (%tuple.new (local.get $id) (i32.add (local.get $count) (i32.const 1))))
     ))
   (%test "short state"
-    (%match (call $increment (%pair.new (i64.const 7) (i32.const 41)))
+    (%match (call $increment (%tuple.new (i64.const 7) (i32.const 41)))
       (case ok ($state)
         (%let ($id $count) (local.get $state)
           (i32.eq (local.get $count) (i32.const 42))))
@@ -395,15 +410,15 @@ forward 参照可、循環は禁止。namespace 内の公開は `(%public (type 
 | 省略形 | 型の決め方 |
 |---|---|
 | `(%result.ok value)` / `(%result.err error)` | 期待する Result 型。unit payload の値引数は省略 |
-| `(%pair.new first second)` | 期待する pair 型。unit 成分の値引数は省略 |
-| `(%option.some value)` / `(%option.none)` / `(%own.new value)` | 期待する Option / Own 型 |
+| `(%tuple.new first second)` | 期待する pair 型。unit 成分の値引数は省略 |
+| `(%option.some value)` / `(%option.none)` / `(%box.new value)` | 期待する Option / Own 型 |
 | `(%let ($first $second) subject body)` | subject の pair を一度だけ評価して分解。unit 成分の名前は省略 |
 | `(%match subject (case ...)... )` | subject の型と期待する出力型。型付きの長い形も使用可 |
 | `(%result.let ($value) subject body)` | subject の T/E と、期待型または body で局所的に決まる U |
 | `(%stream.fold-result source initial ($state $item) body)` | source の T/E、initial または期待型の S。body は result<S,E> |
 
 省略しても評価順、消費義務、effect、opaque の検査は同じ。result.let の E は共有かつ入力と出力で同じ型。fold の E も共有値、S は共有できる非 unit に限る。
-pattern let で own 成分を含む pair を分解するときは `(%move $pair)` を使い、取り出した所有値も消費する。
+pattern let で own 成分を含む pair を分解するときは `(%move $tuple)` を使い、取り出した所有値も消費する。
 任意の型の穴や関数をまたぐ全域型推論、暗黙の move / capture は導入しない。
 
 ## 所有値・クロージャ・effect
@@ -438,9 +453,9 @@ effects を省略すれば effect の制限は課さない。未使用の適用�
 型引数の推論や型クラス・実装探索は行わない。型・effect・所有権は具体化した本体で検査し、未適用の汎用本体が任意の型引数で正しいという保証は与えない。
 
 ```text
-(%own.new T value)
+(%box.new T value)
 (%move $owner)                       ;; 所有値を消費する位置に渡す
-(%own.close (%move $owner))            ;; 包みを消費。OS resource の destructor ではない
+(%box.close (%move $owner))            ;; 包みを消費。OS resource の destructor ではない
 
 (%closure $Adder (%capture $base i64) (param $x i64) (result i64)
   (i64.add (local.get $base) (local.get $x)))
@@ -499,27 +514,28 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 
 ## モジュール・不透明な公開型
 
-```text
-(%include "relative.wlt")
-(%import "relative.wlt" (func $read $local) (type $State) (tag $Error))
-(import "host" "read" (func $host-read (result i32)))
-(export "main" (func $local))
-(%namespace $stock
+```wat
+;; stock.wlt: 1ファイルが1モジュール、宣言は既定で非公開
+(module
   (%export (opaque $State) (func $new) (func $get))
-  (type $State (struct ...))
-  (func $new ...)
-  (func $get ...))
-(%import $stock (type $State $Alias) (func $get))
-(call $stock.get argument)
+  (type $State (struct (field $n i32)))
+  (func $new (result (ref $State)) (struct.new $State (i32.const 42)))
+  (func $get (param $s (ref $State)) (result i32)
+    (struct.get $State $n (local.get $s))))
 ```
 
-namespace 内は既定で非公開。`(%export (type $T))` は表現も公開し、`(%export (opaque $T))` は型だけ公開する。
-opaque の構築・フィールド／配列操作・match は宣言 namespace 内だけ。別名経由も同じ。
-include は宣言を挿入し、参照元ファイルからの相対パスを使う。親 namespace の名前は暗黙に取り込まず、完全修飾名はルートから。
-`%public` と Wasm の `(export "main")` は別。ABI export はルートの関数に置く。
-`%export` の名前リストは `%public` と、namespace からの `%import` は `%use` と同じ意味。
-ファイル import は選んだ名前だけを束縛し、同じファイルの型・定義を共有する。import した別名も静的 export で再公開できる。
-ルートの `(export "name" (func $local))` で import した関数を ABI export にできる。使わない定義は生成時に落ちる。
+```wat
+;; main.wlt: 対象と別名を明示して選択
+(module
+  (%use "./stock.wlt" (type $State $Alias) (func $new) (func $get $read))
+  (func $main (export "main") (result i32) (call $read (call $new))))
+```
+
+`%namespace` はない。ファイルの `%use` は `./`・`../` で始まる相対パス、組み込みは `wlt:core` などのパッケージ名を使う。
+ドットは識別子の一部で、名前空間を探索しない。選んだ名前だけが束縛され、同じファイルの型・定義は共有する。別名も `%export` で再公開できる。
+`%export (type $T)` は表現も公開し、`%export (opaque $T)` は型だけを公開する。opaque の構築・フィールド／配列操作・match は宣言ファイル内だけ。別名経由も同じ。
+`%public` は `%export` の同義語。ネイティブWATの `(import "host" "member" ...)` と `(export "main" ...)` はWasm ABI用で、静的な `%use` / `%export` と区別する。
+`%include "relative.wlt"` は宣言のテキスト挿入で、スコープを作らない。使わない定義は検査後に生成時に落ちる。
 [境界・DCE・未対応範囲](docs/static-modules.md) を参照。
 
 ## bytes / text とライブラリ
@@ -530,44 +546,45 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
 | `(%bytes.from-array $Array array)` | 非 null の i32 配列をコピー。各要素0..255以外は trap |
 | `(%bytes.len b)` / `(%bytes.get b index)` | 長さ／0..255の要素。添字は符号なし、範囲外は trap |
 | `(%bytes.slice b start length)` | コピーした bytes。範囲外は trap |
-| `(%text.lit "日本語")` / `(%text.byte-len t)` | text／UTF-8 byte 長 |
-| `(%text.bytes t)` / `(%text.from-bytes b)` | bytes／option<text>。不正 UTF-8 は none |
+| `(%string.lit "日本語")` / `(%string.byte-len t)` | text／UTF-8 byte 長 |
+| `(%string.bytes t)` / `(%string.from-bytes b)` | bytes／option<text>。不正 UTF-8 は none |
 | `$string.concat(text,text)` | text の連結 |
 | `$string.u64(i64)` / `$string.s64(i64)` | ビットパターンの符号なし／符号付き十進数化 |
-| `$string.json(text)` | 引用符込みの JSON string |
+| `$json.from-string(text)` | JSONのstring値を構築（文書の解析は `$json.parse`） |
+| `$json.stringify(value)` | JSON値をJSONテキストとして出力 |
 
-標準ライブラリの利用入口は `wlt:std` に統一する。例えば `(%import "wlt:std" (type $text) (func $string.json))` で取り込み、通常の `(call $string.json ...)` で使う。内部の作業配列を扱う関数は reads/writes/allocates を持つ。
+標準ライブラリの利用入口は `wlt:core` に統一する。例えば `(%use "wlt:core" (type $string) (func $json.from-string) (func $json.stringify))` で取り込み、`(call $json.stringify (call $json.from-string text))` でJSON文字列リテラルを出力する。内部の作業配列を扱う関数は reads/writes/allocates を持つ。
 `stdlib/*.wlt` は同梱する実装のファイル。利用者の宣言群を挿入する `%include "program.wlt"` とは役割を分ける。`%include` は同じスコープへのテキスト挿入であり、暗黙に標準名を提供する仕組みではない。
 
-検索・分割・整数解析には `$buffer.find-byte`、`$string.find`、`$string.split-once`、`$string.parse-u64` / `$string.parse-s64` を使う。
+検索・分割・整数解析には `$bytes.find-byte`、`$string.find`、`$string.split-once`、`$string.parse-u64` / `$string.parse-s64` を使う。
 `parse-u64` は入力全体の ASCII 数字を検査し、符号なし64bitの範囲で some(i64) を返す。空・負数・`+`・空白・桁あふれは none。先頭ゼロは許す。成功値は i64 のビットパターンで、`string.u64` / `builder.u64` で符号なし十進数へ戻す。
-位置は UTF-8 byte 単位。`$buffer.parse-u64(bytes,start,length,limit)` でアプリ固有の上限も指定でき、不正な入力は none になる。
+位置は UTF-8 byte 単位。`$bytes.parse-u64(bytes,start,length,limit)` でアプリ固有の上限も指定でき、不正な入力は none になる。
 [全 API と境界の規約](stdlib/README.md) を参照。JSON object はキー・値・区切りを自動でエスケープ／出力できる。
 
 ```wat
 (module
-  (%import "wlt:std" (type $text))
-  (%import "wlt:std"
-    (func $json.new)
-    (func $json.string)
-    (func $json.u64)
-    (func $json.finish))
+  (%use "wlt:core" (type $string))
+  (%use "wlt:core"
+    (func $json.object-builder.new)
+    (func $json.object-builder.string)
+    (func $json.object-builder.u64)
+    (func $json.object-builder.finish))
   (func $record
     (export "record")
-    (param $name $text)
+    (param $name $string)
     (param $count i64)
-    (result $text)
+    (result $string)
     (%effect reads writes allocates)
-    (%let $o (call $json.new)
+    (%let $o (call $json.object-builder.new)
       (block
-        (result $text)
-        (call $json.string (local.get $o) (%text.lit "name") (local.get $name))
-        (call $json.u64 (local.get $o) (%text.lit "count") (local.get $count))
-        (call $json.finish (local.get $o))))
+        (result $string)
+        (call $json.object-builder.string (local.get $o) (%string.lit "name") (local.get $name))
+        (call $json.object-builder.u64 (local.get $o) (%string.lit "count") (local.get $count))
+        (call $json.object-builder.finish (local.get $o))))
   ))
 ```
 
-`$json.finish` は内容を返して空 object に戻す。text 断片を組む場合は `stdlib/builder.wlt` の `$builder.new` / `$builder.text` / `$builder.finish` を使う。
+`$json.object-builder.finish` は内容を返して空 object に戻す。text 断片を組む場合は `stdlib/builder.wlt` の `$string-builder.new` / `$string-builder.text` / `$string-builder.finish` を使う。
 
 ## 確認コマンド
 
@@ -607,6 +624,10 @@ JS
 この観測用スクリプトは Result を表示するだけで、err をプロセスの失敗終了へ変換しない。
 
 `(%test "name" i32-expr)` は0なら失敗、非0なら成功。`%law` は純粋な整数式の全入力を Lean で検査する別の契約。
+
+`*_bench.wlt` の `(%bench "name" (param $i i32) (result i64) (i64.extend_i32_u $i))` は
+`just bench` で計測する。paramとresultは省略可能で、省略時は引数なし・unit。
+`just list-benches` は一覧のみ。ウォームアップ・バッチ反復・JSON出力は[ベンチマーク](docs/benchmarking.md)を参照。
 実行用の stdin/stdout 接続は既存の text I/O capability。read-lines は stream<result<text,i32>>、write-line は future<result<unit,i32>> を返す。
 暗黙の型引数推論・trait、任意のマクロ定義、一般的な borrow/lifetime、汎用の WASI binding は含まない。
 
@@ -636,7 +657,7 @@ JS
 
 ```wat
 (module
-  (%import "wlt:std" (type $result))
+  (%use "wlt:core" (type $result))
   (type $Id (%newtype i32))
   (func $compute (result (%inst $result $Id i32)) (%effect pure)
     (%result.do

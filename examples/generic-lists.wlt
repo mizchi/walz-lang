@@ -1,15 +1,15 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $list)
-    (type $text))
-  (%import "../stdlib/list.wlt" (func $list.map) (func $list.fold))
+    (type $string))
+  (%use "../stdlib/list.wlt" (func $list.map) (func $list.fold))
   (%closure $Scale (%capture $factor i64) (param $x i64) (result i64)
     (i64.mul (local.get $factor) (local.get $x)))
 
   (%closure $Sum (param $state i64) (param $x i64) (result i64)
     (i64.add (local.get $state) (local.get $x)))
 
-  (%closure $Label (%capture $text $text) (param $x i64) (result $text) (local.get $text))
+  (%closure $Label (%capture $text $string) (param $x i64) (result $string) (local.get $text))
 
   (func $scale (export "scale") (param $xs (%inst $list i64)) (param $factor i64)
     (result (%inst $list i64)) (%effect reads writes allocates)
@@ -18,10 +18,10 @@
       (local.get $xs)
       (%closure.new $Scale (local.get $factor))))
 
-  (func $labels (export "labels") (param $xs (%inst $list i64)) (param $label $text)
-    (result (%inst $list $text)) (%effect reads writes allocates)
+  (func $labels (export "labels") (param $xs (%inst $list i64)) (param $label $string)
+    (result (%inst $list $string)) (%effect reads writes allocates)
     (call
-      (%inst $list.map i64 $text $Label)
+      (%inst $list.map i64 $string $Label)
       (local.get $xs)
       (%closure.new $Label (local.get $label))))
 
@@ -74,9 +74,9 @@
   (%test "map supports nondefaultable text elements"
     (i32.eq
       (%bytes.len
-        (%text.bytes
-          (%list.get $text
-            (call $labels (%list.new i64 (i64.const 1)) (%text.lit "abc"))
+        (%string.bytes
+          (%list.get $string
+            (call $labels (%list.new i64 (i64.const 1)) (%string.lit "abc"))
             (i32.const 0))))
       (i32.const 3)))
   (%test "map calls its concrete callback exactly once per element"

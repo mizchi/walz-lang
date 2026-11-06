@@ -58,7 +58,7 @@ letの型注釈は`(type T)`で表せる。単一の`(%let $x (type i32) 1 body)
 
 基底は `i32` / `i64` / `f32` / `f64` のいずれか。型の位置では `$UserId` と書く。同じ基底の別の newtype、基底の数値型とは区別し、変換を明示する。演算には unwrap し、必要なら結果を wrap する。newtype は shared/nonunit を満たし、GC フィールド、enum、標準の値型、単相化の型引数に使える。
 
-型・effect・所有権・opaque を検査した後に消去する。wrap/unwrap のための GC オブジェクトや実行時の型タグを作らない。`types` / `type-at` では nominal な型名を保持する。`opaque` で公開した型の wrap/unwrap は宣言した namespace 内だけで使える。
+型・effect・所有権・opaque を検査した後に消去する。wrap/unwrap のための GC オブジェクトや実行時の型タグを作らない。`types` / `type-at` では nominal な型名を保持する。`opaque` で公開した型の wrap/unwrap は宣言した ファイル 内だけで使える。
 
 Core＋JSPI と Component の境界では基底のスカラーとして渡す。list や Future の payload でも同じ。JavaScript/WIT の値に型名や brand は残らず、外部入力の値域制約を保証する仕組みではない。値域の検査は公開する生成関数で別に行う。GC 参照や v128 を基底とする newtype、暗黙の演算委譲は提供しない。
 

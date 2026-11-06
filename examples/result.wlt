@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $result))
   (func $divide (param $n i64) (param $d i64) (result (%inst $result i64 i32)) (%effect pure)
     (if (result (%inst $result i64 i32)) (i64.eqz (local.get $d))

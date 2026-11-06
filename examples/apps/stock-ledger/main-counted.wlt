@@ -1,14 +1,14 @@
 (module
-  (%import "wlt:std" (type $pair) (type $result) (type $text))
+  (%use "wlt:core" (type $tuple) (type $result) (type $string))
   (%include "program.wlt")
   ;; 透明なaliasで役割を区別する。カウントとI/Oエラーは検査上どちらもi32。
   ;; 状態は台帳参照と、I/O処理に成功した配送行数。i32で折り返す。
   (%type.alias $LineCount i32)
   (%type.alias $IoError i32)
-  (%type.alias $ScanState (%inst $pair (ref $stock.State) $LineCount))
+  (%type.alias $ScanState (%inst $tuple (ref $stock.State) $LineCount))
   (func $process-counted-line
     (param $scan-state $ScanState)
-    (param $line $text)
+    (param $line $string)
     (result (%inst $result $ScanState $IoError))
     (%effect reads writes allocates host suspends)
     (%let ($ledger $line-count) (local.get $scan-state)
@@ -16,7 +16,7 @@
       (%result.let ()
         (call $app.process (local.get $ledger) (local.get $line))
         (%result.ok
-          (%pair.new
+          (%tuple.new
             (local.get $ledger)
             (i32.add (local.get $line-count) (i32.const 1))))
       )))
@@ -27,7 +27,7 @@
     (%effect reads writes allocates host suspends)
     (%let
       (($ledger (call $stock.new (i32.const 4096)))
-       ($initial-scan-state $ScanState (%pair.new (local.get $ledger) (i32.const 0)))
+       ($initial-scan-state $ScanState (%tuple.new (local.get $ledger) (i32.const 0)))
        ($input (call $read-lines)))
       (%result.let ($final-scan-state)
         (%stream.fold-result

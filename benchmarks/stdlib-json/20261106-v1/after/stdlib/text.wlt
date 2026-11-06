@@ -1,0 +1,235 @@
+(module
+  (%import "wlt:std" (type $bytes) (type $option) (type $tuple) (type $string))
+  (%import "bytes.wlt"
+    (func $bytes.concat)
+    (func $bytes.find)
+    (func $bytes.parse-u64)
+    (func $bytes.split-once))
+  (%export
+    (func $string.concat)
+    (func $string.u64)
+    (func $string.s64)
+    (func $string.json)
+    (func $string.find)
+    (func $string.split-once)
+    (func $string.parse-u64)
+    (func $string.parse-s64))
+  (func $string.find
+    (param $s $string)
+    (param $needle $string)
+    (param $start i32)
+    (result (%inst $option i32))
+    (%effect pure)
+    (%let $b (%string.bytes $s)
+      (if
+        (result (%inst $option i32))
+        (i32.gt_u $start (%bytes.len $b))
+        (then (%option.none))
+        (else
+          (if
+            (result (%inst $option i32))
+            (if
+              (result i32)
+              (= $start (%bytes.len $b))
+              (then 0)
+              (else (= (& (%bytes.get $b $start) 192) 128)))
+            (then (%option.none))
+            (else (call $bytes.find $b (%string.bytes $needle) $start))))
+      )))
+
+  (func $string.split-once
+    (param $s $string)
+    (param $needle $string)
+    (result (%inst $option (%inst $tuple $string $string)))
+    (%effect pure)
+    (%match (call $bytes.split-once (%string.bytes $s) (%string.bytes $needle))
+      (case none () (%option.none))
+      (case some ($parts)
+        (%let ($a $b) $parts
+          (%option.some (%tuple.new (call $string.valid $a) (call $string.valid $b))))
+      )))
+
+  (func $string.parse-u64
+    (param $s $string)
+    (result (%inst $option i64))
+    (%effect pure)
+    (call $bytes.parse-u64 (%string.bytes $s) 0 (%bytes.len (%string.bytes $s)) -1))
+
+  (func $string.parse-s64
+    (param $s $string)
+    (result (%inst $option i64))
+    (%effect pure)
+    (%let $b (%string.bytes $s)
+      (if
+        (result (%inst $option i64))
+        (i32.eqz (%bytes.len $b))
+        (then (%option.none))
+        (else
+          (%let $negative (= (%bytes.get $b 0) 45)
+            (%match
+              (call $bytes.parse-u64 $b $negative
+                (- (%bytes.len $b) $negative)
+                ;; The negative magnitude may reach 2^63; a positive value may not.
+                (if
+                  (result i64)
+                  $negative
+                  (then -9223372036854775808)
+                  (else 9223372036854775807)))
+              (case none () (%option.none))
+              (case some ($n)
+                (%option.some (if (result i64) $negative (then (- 0 $n)) (else $n))))
+            ))))
+    ))
+  (type $Array (array (mut i32)))
+  (func $string.valid
+    (param $b $bytes)
+    (result $string)
+    (%effect pure)
+    (%match (%string.from-bytes $b)
+      (case none () (unreachable))
+      (case some ($s) $s)))
+
+  (func $string.concat
+    (param $a $string)
+    (param $b $string)
+    (result $string)
+    (%effect reads writes allocates)
+    (call $string.valid (call $bytes.concat (%string.bytes $a) (%string.bytes $b))))
+
+  (func $string.u64
+    (param $n i64)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let $out (array.new $Array 48 20)
+      (%loop $digits
+        (bind $n i64 $n)
+        (bind $i i32 19)
+        (result $string)
+        (block
+          (result $string)
+          (array.set $Array $out $i (+ 48 (i32.wrap_i64 (i64.rem_u $n 10))))
+          (if
+            (result $string)
+            (i64.lt_u $n 10)
+            (then
+              (call $string.valid
+                (%bytes.slice (%bytes.from-array $Array $out) $i (- 20 $i))))
+            (else (%recur $digits (i64.div_u $n 10) (- $i 1))))
+        ))))
+
+  (func $string.s64
+    (param $n i64)
+    (result $string)
+    (%effect reads writes allocates)
+    (if
+      (result $string)
+      (< $n 0)
+      (then (call $string.concat (%string.lit "-") (call $string.u64 (- 0 $n))))
+      (else (call $string.u64 $n))))
+
+  (func $string.width
+    (param $b i32)
+    (result i32)
+    (%effect pure)
+    (if (result i32) (i32.lt_u $b 32)
+      (then 6)
+      (else (if (result i32) (| (= $b 34) (= $b 92)) (then 2) (else 1)))))
+
+  (func $string.hex
+    (param $n i32)
+    (result i32)
+    (%effect pure)
+    (if (result i32) (i32.lt_u $n 10) (then (+ $n 48)) (else (+ $n 87))))
+
+  (func $string.put
+    (param $out (ref $Array))
+    (param $i i32)
+    (param $b i32)
+    (result i32)
+    (%effect writes)
+    (%let $w (call $string.width $b)
+      (block
+        (result i32)
+        (if
+          (= $w 1)
+          (then (array.set $Array $out $i $b))
+          (else
+            (block
+              (array.set $Array $out $i 92)
+              (if
+                (= $w 2)
+                (then (array.set $Array $out (+ $i 1) $b))
+                (else
+                  (block
+                    (array.set $Array $out (+ $i 1) 117)
+                    (array.set $Array $out (+ $i 2) 48)
+                    (array.set $Array $out (+ $i 3) 48)
+                    (array.set $Array $out (+ $i 4) (call $string.hex (>>> $b 4)))
+                    (array.set $Array $out (+ $i 5) (call $string.hex (& $b 15))))
+                ))))
+        )
+        (+ $i $w))))
+
+  ;; Prefix bytes before first are already known not to expand. Continue the
+  ;; original sizing algorithm there, so late escapes do not rescan the prefix.
+  (func $string.json-escaped
+    (param $b $bytes)
+    (param $first i32)
+    (param $length i32)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let
+      (($size
+        (%loop $size
+          (bind $i i32 $first)
+          (bind $n i32 (+ $first 2))
+          (result i32)
+          (if (result i32) (= $i $length)
+            (then $n)
+            (else
+              (%let $w (call $string.width (%bytes.get $b $i))
+                (if (result i32) (i32.gt_u $n (- -1 $w))
+                  (then (unreachable))
+                  (else (%recur $size (+ $i 1) (+ $n $w)))))))))
+       ($out (array.new $Array 34 $size)))
+      (%loop $copy
+        (bind $i i32 0)
+        (bind $p i32 1)
+        (result $string)
+        (if (result $string) (= $i $length)
+          (then (call $string.valid (%bytes.from-array $Array $out)))
+          (else (%recur $copy (+ $i 1) (call $string.put $out $p (%bytes.get $b $i))))))))
+
+  (func $string.json
+    (param $s $string)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let (($b (%string.bytes $s)) ($length (%bytes.len $b)))
+      (if (result $string) (i32.gt_u $length -3)
+        (then (unreachable))
+        (else
+          (%let $first
+            (%loop $scan
+              (bind $i i32 0)
+              (result i32)
+              (if (result i32) (= $i $length)
+                (then $i)
+                (else
+                  (%let $byte (%bytes.get $b $i)
+                    (if (result i32)
+                      (| (i32.lt_u $byte 32) (| (= $byte 34) (= $byte 92)))
+                      (then $i)
+                      (else (%recur $scan (+ $i 1))))))))
+            (if (result $string) (!= $first $length)
+              (then (call $string.json-escaped $b $first $length))
+              ;; No escape expansion: copy directly, without width/put calls.
+              (else
+                (%let $out (array.new $Array 34 (+ $length 2))
+                  (block (result $string)
+                    (%for $copy
+                      (bind $i i32 0)
+                      (while (i32.lt_u $i $length))
+                      (step (+ $i 1))
+                      (array.set $Array $out (+ $i 1) (%bytes.get $b $i)))
+                    (call $string.valid (%bytes.from-array $Array $out)))))))))))
+)

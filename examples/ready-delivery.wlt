@@ -1,8 +1,8 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $future)
     (type $option)
-    (type $pair)
+    (type $tuple)
     (type $result)
     (type $stream)
     (type $unit))
@@ -11,7 +11,7 @@
     (%loop $read
       (bind $stream (%inst $stream i64) (%move $input))
       (bind $sum i64 (i64.const 0)) (result i64)
-      (%match (%inst $pair (%inst $stream i64) (%inst $option i64)) (result i64)
+      (%match (%inst $tuple (%inst $stream i64) (%inst $option i64)) (result i64)
         (%stream.next i64 (%move $stream))
         (case pair ($next $item)
           (%match (%inst $option i64) (result i64) (local.get $item)
@@ -24,11 +24,11 @@
 
   (func $main (export "main") (result i64) (%effect suspends)
     (%let $transfer
-      (%pair.new (%inst $stream i64) (%inst $future (%inst $result $unit i32))
+      (%tuple.new (%inst $stream i64) (%inst $future (%inst $result $unit i32))
         (%stream.cons i64 (i64.const 40)
           (%stream.cons i64 (i64.const 2) (%stream.empty i64)))
         (%future.ready (%inst $result $unit i32) (%result.ok $unit i32)))
-      (%match (%inst $pair (%inst $stream i64) (%inst $future (%inst $result $unit i32))) (result i64) (%move $transfer)
+      (%match (%inst $tuple (%inst $stream i64) (%inst $future (%inst $result $unit i32))) (result i64) (%move $transfer)
         (case pair ($stream $completion)
           (%let $total (call $sum (%move $stream))
             (%match (%inst $result $unit i32) (result i64)

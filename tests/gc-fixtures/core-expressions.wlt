@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std" (type $own) (type $result))
+  (%use "wlt:core" (type $box) (type $result))
   (type $Id (%newtype i32))
   (type $Data (array i64))
   (type $Box (struct (field $id $Id) (field $data (ref $Data))))
@@ -57,7 +57,7 @@
     (param $fail i32)
     (result i32)
     (%effect pure)
-    (%let $owner (%own.new (ref $Box) (local.get $box))
+    (%let $owner (%box.new (ref $Box) (local.get $box))
       (%try
         (result i32)
         (do
@@ -74,7 +74,7 @@
         ))))
 
   (%closure $Inspect
-    (%capture $owner (%inst $own (ref $Box)))
+    (%capture $owner (%inst $box (ref $Box)))
     (result i32)
     (%effect pure)
     (%match (%move $owner)
@@ -126,7 +126,7 @@
                           (i32.and (local.get $mode) (i32.const 1))))
                       (else
                         (%closure.call $Inspect
-                          (%closure.new $Inspect (%own.new (ref $Box) (local.get $box))))
+                          (%closure.new $Inspect (%box.new (ref $Box) (local.get $box))))
                       ))))
               ))))
       ))))

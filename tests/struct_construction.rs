@@ -1,3 +1,4 @@
+// Compiler scope fixtures use private expanded forms; public files use %use paths.
 use std::process::Command;
 
 fn run(source: &str, expected: &str) {
@@ -77,19 +78,19 @@ fn initializers_keep_source_order_and_evaluate_once_without_capturing_locals() {
 fn generic_types_namespaces_and_nested_text_values_use_existing_resolution() {
     run(
         r#"(module
-      (%import "wlt:std" (type $text))
-      (%namespace $model
-        (%import "wlt:std" (type $text))
+      (%use "wlt:core" (type $string))
+      (%legacy.namespace $model
+        (%use "wlt:core" (type $string))
         (%public (type $Box) (type $User))
         (type $Box (%type.params $T) (%where (shared $T) (nonunit $T))
           (struct (field $value $T)))
-        (type $User (struct (field $name $text) (field $age i32) (field $email $text))))
+        (type $User (struct (field $name $string) (field $age i32) (field $email $string))))
       (func $main (export "main") (result i32)
         (%let $boxed (%struct.new (%inst $model.Box (ref $model.User))
           {:value (%$model.User::{:email "alice@example.com" :age 30 :name "Alice"})})
           (%let $u (struct.get (%inst $model.Box (ref $model.User)) $value (local.get $boxed))
             (i32.add (struct.get $model.User $age (local.get $u))
-              (i32.add (%text.byte-len (struct.get $model.User $name (local.get $u)))
+              (i32.add (%string.byte-len (struct.get $model.User $name (local.get $u)))
                 (i32.const 7)))))))"#,
         "42",
     );
@@ -134,7 +135,7 @@ fn abrupt_initializers_stop_before_later_values() {
 fn opaque_types_effects_and_anonymous_fields_keep_their_contracts() {
     for (source, message) in [
         (
-            r#"(module (%namespace $n (%public (opaque $S)) (type $S (struct (field $x i32))))
+            r#"(module (%legacy.namespace $n (%public (opaque $S)) (type $S (struct (field $x i32))))
           (func $f (result (ref $n.S)) (%$n.S::{:x 1})))"#,
             "opaque",
         ),
@@ -177,9 +178,9 @@ fn named_construction_preserves_gc_identity_and_literal_string_contents() {
         "0",
     );
     run(
-        r#"(module (%import "wlt:std" (type $text)) (type $S (struct (field $x $text)))
+        r#"(module (%use "wlt:core" (type $string)) (type $S (struct (field $x $string)))
       (func $main (export "main") (result i32)
-        (i32.add (i32.const 38) (%text.byte-len (struct.get $S $x (%$S::{:x "{::}"}))))))"#,
+        (i32.add (i32.const 38) (%string.byte-len (struct.get $S $x (%$S::{:x "{::}"}))))))"#,
         "42",
     );
 }
@@ -235,8 +236,8 @@ fn numeric_literals_follow_the_declared_wasm_type_without_conversion() {
 fn short_literals_do_not_add_defaults_or_implicit_wraps_and_coercions() {
     for source in [
         r#"(module (type $Id (%newtype i32)) (type $S (struct (field $x $Id))) (func $f (result (ref $S)) (%$S::{:x 1})))"#,
-        r#"(module (%import "wlt:std" (type $bytes)) (type $S (struct (field $x $bytes))) (func $f (result (ref $S)) (%$S::{:x "a"})))"#,
-        r#"(module (%import "wlt:std" (type $text)) (type $S (struct (field $x $text))) (func $f (result (ref $S)) (%$S::{:x "\ff"})))"#,
+        r#"(module (%use "wlt:core" (type $bytes)) (type $S (struct (field $x $bytes))) (func $f (result (ref $S)) (%$S::{:x "a"})))"#,
+        r#"(module (%use "wlt:core" (type $string)) (type $S (struct (field $x $string))) (func $f (result (ref $S)) (%$S::{:x "\ff"})))"#,
         r#"(module (type $S (struct (field $x v128))) (func $f (result (ref $S)) (%$S::{:x 1})))"#,
         r#"(module (type $S (struct (field $x (ref null $S)))) (func $f (result (ref $S)) (%$S::{})))"#,
         r#"(module (type $S (struct (field $x i32))) (func $f (result (ref $S)) (%$S::{:x null})))"#,
@@ -284,19 +285,19 @@ fn initializer_exceptions_keep_the_existing_ownership_proof_contract() {
       (func $fail (param $flag i32) (result i32) (%effect (throws $E))
         (if (result i32) (local.get $flag) (then (throw $E)) (else (i32.const 0))))
       (func $run (param $flag i32) (result i32) (%effect allocates)
-        (%let $owner (%own.new i32 (i32.const 42))
+        (%let $owner (%box.new i32 (i32.const 42))
           (%try (result i32)
             (do (%let $p (%$Pair::{:right (call $fail (local.get $flag))
-              :left (%match (%own i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))})
+              :left (%match (%box i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))})
               (i32.add (struct.get $Pair $left (local.get $p)) (struct.get $Pair $right (local.get $p)))))
-            (catch $E () (%match (%own i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))))))
+            (catch $E () (%match (%box i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))))))
       (func $main (export "main") (result i32) (%effect allocates)
         (i32.add (call $run (i32.const 0)) (call $run (i32.const 1)))))"#;
     run(source, "84");
     wlt::verified::compile(source).unwrap();
     let invalid = source.replace(
-        ":right (call $fail (local.get $flag))\n              :left (%match (%own i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))",
-        ":left (%match (%own i32) (result i32) (%move $owner) (case own ($x) (local.get $x))) :right (call $fail (local.get $flag))",
+        ":right (call $fail (local.get $flag))\n              :left (%match (%box i32) (result i32) (%move $owner) (case own ($x) (local.get $x)))",
+        ":left (%match (%box i32) (result i32) (%move $owner) (case own ($x) (local.get $x))) :right (call $fail (local.get $flag))",
     );
     assert_ne!(invalid, source);
     assert!(wlt::check(&invalid).is_err());
@@ -316,8 +317,8 @@ fn unreachable_initializers_still_undergo_effect_validation() {
 fn adjacent_reserved_string_tokens_are_not_silently_coerced_or_split_by_formatting() {
     for value in [r#""a""b""#, r#""a"suffix"#, r#""a":next"#] {
         let source = format!(
-            r#"(module (%import "wlt:std" (type $text))
-          (type $S (struct (field $x $text)))
+            r#"(module (%use "wlt:core" (type $string))
+          (type $S (struct (field $x $string)))
           (func $f (result (ref $S)) (%$S::{{:x {value}}})))"#
         );
         for input in [source.clone(), wlt::format::source(&source).unwrap()] {
@@ -334,10 +335,10 @@ fn adjacent_reserved_string_tokens_are_not_silently_coerced_or_split_by_formatti
 fn generic_functions_and_import_aliases_do_not_rewrite_field_labels() {
     run(
         r#"(module
-      (%namespace $m
+      (%legacy.namespace $m
         (%public (type $Box))
         (type $Box (%type.params $T) (%where (shared $T) (nonunit $T)) (struct (field $T $T))))
-      (%use $m (type $Box $Alias))
+      (%file.use $m (type $Box $Alias))
       (func $box (%type.params $T) (%where (shared $T) (nonunit $T))
         (param $value $T) (result (ref (%inst $Alias $T))) (%effect allocates)
         (%struct.new (%inst $Alias $T) ($T (local.get $value))))

@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std" (type $result))
+  (%use "wlt:core" (type $result))
   (%include "program.wlt")
   ;; 成功値は0。I/O errは伝播し、取消しの終了確認はtask scopeが担当する。
   (func $main

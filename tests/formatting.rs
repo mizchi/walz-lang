@@ -4,7 +4,7 @@ use std::process::Command;
 fn formatter_preserves_native_tokens_comments_and_is_idempotent() {
     for source in [
         "(module ;; keep 日本語\n(memory 1)(data(i32.const 0)\"\\00\\ff(;not a comment;)\") (func(export \"main\")(result i32) i32.const 42))",
-        "(module (;outer (;nested;) ;) (func $main (export \"main\") (result %text) (%text.lit \"日本語🦀\\n\")))",
+        "(module (;outer (;nested;) ;) (func $main (export \"main\") (result %string) (%string.lit \"日本語🦀\\n\")))",
     ] {
         let formatted = wlt::format::source(source).unwrap();
         assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
@@ -143,7 +143,7 @@ fn formatter_keeps_short_macro_inputs_out_of_the_header() {
 
 #[test]
 fn formatter_exposes_pattern_let_continuation_even_when_it_fits_one_line() {
-    let source = "(module (func $f (param $p (%pair i32 i32)) (result i32) (%let ($a $b) (local.get $p) (local.get $b))))";
+    let source = "(module (func $f (param $p (%tuple i32 i32)) (result i32) (%let ($a $b) (local.get $p) (local.get $b))))";
     let formatted = wlt::format::source(source).unwrap();
     assert!(
         formatted.contains("(%let ($a $b) (local.get $p)\n"),

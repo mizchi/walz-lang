@@ -15,9 +15,9 @@ fn lists_are_shared_values_with_portable_nested_shapes() {
 #[test]
 fn list_representation_and_owned_elements_are_rejected() {
     for source in [
-        "(module (func $f (param $xs (%list (%own i64))) (nop)))",
+        "(module (func $f (param $xs (%list (%box i64))) (nop)))",
         "(module (func $f (param $xs (%list (%future i64))) (nop)))",
-        "(module (func $f (param $xs (%list (%pair i32 (%stream i64)))) (nop)))",
+        "(module (func $f (param $xs (%list (%tuple i32 (%stream i64)))) (nop)))",
         "(module (func $f (param $xs (%list i32)) (result i32) (array.len (local.get $xs))))",
         "(module (func $f (param $xs (%list i32)) (result i32) (ref.eq (local.get $xs) (local.get $xs))))",
         "(module (func $f (param $xs (%list i32)) (result i64) (%list.get i64 (local.get $xs) (i32.const 0))))",

@@ -1,5 +1,20 @@
 (module
-  (%include "kernels.wlt")
+  (%use "./kernels.wlt"
+    (func $bitmap-scalar $simd.bitmap-scalar)
+    (func $bitmap-simd $simd.bitmap-simd)
+    (func $bytes-scalar $simd.bytes-scalar)
+    (func $bytes-simd $simd.bytes-simd)
+    (func $dot-scalar $simd.dot-scalar)
+    (func $dot-simd $simd.dot-simd)
+    (func $new-f32 $simd.new-f32)
+    (func $new-i32 $simd.new-i32)
+    (func $pack-bytes $simd.pack-bytes)
+    (func $pack-f32 $simd.pack-f32)
+    (func $pack-i32 $simd.pack-i32)
+    (func $set-f32 $simd.set-f32)
+    (func $set-i32 $simd.set-i32)
+    (func $sum-scalar $simd.sum-scalar)
+    (func $sum-simd $simd.sum-simd))
   ;; Core Wasm's opaque GC objects let JS retain these arrays without a WIT ABI.
   ;; These exports are deliberately separate from the portable value interface.
   (export "i32-new" (func $simd.new-i32))

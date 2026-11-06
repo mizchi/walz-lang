@@ -1,7 +1,7 @@
-# Named import / export と DCE
+# ファイルモジュール・%use / %export と DCE
 
 `%include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
-関数・型・tag を選んで使うときは、相対パスの named import を使います。
+関数・型・tag を選んで使うときは、明示的な相対パスの `%use` を使います。
 
 `math.wlt`:
 
@@ -17,7 +17,7 @@
 
 ```wat
 (module
-  (%import "math.wlt" (func $answer $chosen))
+  (%use "./math.wlt" (func $answer $chosen))
   (export "main" (func $chosen)))
 ```
 
@@ -31,21 +31,21 @@
 | --- | --- |
 | `(%export (func $f) (type $T) (tag $Error))` | 静的に公開する名前。`%public` も互換で受理 |
 | `(%export (opaque $State))` | 型を公開し、その表現を宣言スコープに閉じる |
-| `(%import "file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
-| `(%import "wlt:std" (func $string.u64 $unsigned))` | ファイル内 namespace の公開パスを選択 |
-| `(%import $math (func $f $local))` | 同じコンパイル単位の namespace から選択。`%use` も互換で受理 |
+| `(%use "./file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
+| `(%use "wlt:core" (func $string.u64 $unsigned))` | 組み込みコアから公開された識別子を選択 |
 | `(export "name" (func $local))` | ルートから Wasm / Component API に公開。静的 import の関数も指定可能 |
 | 関数内の `(export "name")` | 従来どおりの Wasm ABI export |
 | `(import "host" "member" (func ...))` | 従来どおりの Wasm / WIT ホスト import |
 
-ファイルは独立した静的スコープです。読み込んだファイルの関数や namespace は呼出し元に流入しません。
+ファイルは独立した静的スコープです。読み込んだファイルの宣言 は呼出し元に流入しません。
 依存側が import した名前も、export しなければ外へ出ません。
 同じ canonical path は1つの定義集合を共有します。別名・`./`・複数の経路でも型を作り直しません。
 opaque 型の所有スコープも維持します。絶対パスと循環 import は拒否し、include と合わせて深さ64・展開後16MiBの上限を適用します。
 ファイル名の解決・診断の元ファイルへの対応は `source::load` が担当し、文字列 API の check/compile はファイル I/O を行いません。
 
-再公開は `(%import "source.wlt" (func $original $renamed))` と `(%export (func $renamed))` を組み合わせます。
-namespace 内では従来の完全修飾参照も使えますが、別ファイルの定義へは named import が必要です。
+再公開は `(%use "./source.wlt" (func $original $renamed))` と `(%export (func $renamed))` を組み合わせます。
+`%namespace` は廃止しました。1ファイルが1モジュールです。`%use` の対象は `wlt:core` などの登録済みパッケージか、`./`・`../` で始まるファイルパスです。
+ドットは識別子の一部なので、`$stock.get` も明示的に束縛しなければ使えません。ファイル内に宣言した namespace を探索する規則はありません。
 変数の再代入、トップレベル実行、start、メモリ初期化などをこの静的ファイルモジュールに追加していません。
 wildcard・default import/export・dynamic import・循環モジュールは未対応です。
 取り込むライブラリ内の `%test` も拒否します。テストは別の入口ファイルから API を import して書き、生成物の根に意図せず追加されることを防ぎます。
@@ -73,7 +73,7 @@ WLT はこの名前の明示的な束縛を採用し、初期化を持たない�
 
 ## 標準ライブラリの生成サイズ
 
-標準ライブラリと3つのアプリを named import に移行しました。
+以下は旧入力に対する named import 導入時の記録です。現在のソース・構文に対する測定値ではありません。
 JSON builder 共通化後の保存済み成果物と、今回の成果物を同じ入力・期待値で比較しています。
 [入力・ソース・生成物のハッシュと比較結果](stdlib/20261105-imports-dce.json) を保存しました。
 すべての呼出しで JSON 出力・入力終了1回・ABI の未解放数0を照合しています。

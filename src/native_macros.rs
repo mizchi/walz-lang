@@ -471,9 +471,10 @@ impl Lower<'_> {
 }
 
 pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
-    let standard = crate::standard::prepare(source)?;
+    let root = crate::sexpr::parse(source)?;
+    let standard = crate::standard::prepare(source, &root)?;
+    let raw = standard.syntax(root)?;
     let source = standard.source(source);
-    let raw = crate::sexpr::parse(source)?;
     let mut pending = vec![&raw];
     let mut found = false;
     let mut names = BTreeSet::new();

@@ -1,31 +1,31 @@
 (module
-  (%import "wlt:std"
-    (type $text)
+  (%use "wlt:core"
+    (type $string)
     (type $result)
-    (func $json-value.parse)
-    (func $json-value.stringify))
+    (func $json.parse)
+    (func $json.stringify))
   (func $input-length
     (export "input-length")
-    (param $source $text)
+    (param $source $string)
     (result i32)
     (%effect pure)
-    (%text.byte-len (local.get $source)))
+    (%string.byte-len (local.get $source)))
 
   (func $parse-status
     (export "parse-status")
-    (param $source $text)
+    (param $source $string)
     (result i32)
     (%effect allocates reads writes)
-    (%match (call $json-value.parse (local.get $source))
+    (%match (call $json.parse (local.get $source))
       (case ok ($value) (i32.const 1))
       (case err ($offset) (i32.const 0))))
 
   (func $normalize
     (export "normalize")
-    (param $source $text)
-    (result (%inst $result $text i32))
+    (param $source $string)
+    (result (%inst $result $string i32))
     (%effect allocates reads writes)
     (%result.do
-      ($value (call $json-value.parse (local.get $source)))
-      (%result.ok (call $json-value.stringify (local.get $value))))
+      ($value (call $json.parse (local.get $source)))
+      (%result.ok (call $json.stringify (local.get $value))))
   ))

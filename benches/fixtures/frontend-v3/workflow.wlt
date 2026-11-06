@@ -1,0 +1,2916 @@
+(module
+  (%use "wlt:core"
+    (type $result))
+  
+
+  (%use "wlt:core"
+    (type $result)
+    (type $stream)
+    (type $string))
+  
+
+  
+
+  (%namespace $domain
+    (%use "wlt:core"
+      (type $string))
+    (%public (type $Command) (type $Error))
+    (type $Command
+      (%variant (skip) (invalid) (task $string i64) (after $string $string) (plan i32)))
+    (type $Error
+      (%variant
+        (invalid $string)
+        (duplicate $string)
+        (unknown $string)
+        (capacity $string)
+        (cycle $string))))
+
+
+  
+
+  (%namespace $lex
+    (%use "wlt:core"
+      (type $bytes)
+      (type $option)
+      (type $string))
+    
+(%file.use $wlt-file-0 (func $bytes.equal)
+      (func $bytes.find-byte)
+      (func $bytes.parse-u64))
+
+    (%public (func $equal) (func $tab) (func $key) (func $number))
+    (func $equal (param $a $bytes) (param $b $bytes) (result i32) (%effect pure)
+      (call $bytes.equal (local.get $a) (local.get $b)))
+
+    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effect pure)
+      (call $bytes.find-byte (local.get $b) (local.get $start) (i32.const 9)))
+
+    (func $key (param $b $bytes) (param $start i32) (param $end i32)
+      (result (%inst $option $string)) (%effect pure)
+      (%let $n (i32.sub (local.get $end) (local.get $start))
+        (if
+          (result (%inst $option $string))
+          (i32.or (i32.eqz (local.get $n)) (i32.gt_u (local.get $n) (i32.const 128)))
+          (then (%option.none))
+          (else
+            (%string.from-bytes
+              (%bytes.slice (local.get $b) (local.get $start) (local.get $n))))
+        )))
+
+    (func $number (param $b $bytes) (param $start i32) (result (%inst $option i64))
+      (%effect pure)
+      (call $bytes.parse-u64
+        (local.get $b)
+        (local.get $start)
+        (i32.sub (%bytes.len (local.get $b)) (local.get $start))
+        (i64.const 1000000))))
+  (%namespace $parse
+    (%use "wlt:core"
+      (type $bytes)
+      (type $option)
+      (type $string))
+    (%public (func $command))
+    (func $fields (param $b $bytes) (result (ref $domain.Command)) (%effect allocates)
+      (%let $first (call $lex.tab (local.get $b) (i32.const 0))
+        (%let $op (%bytes.slice (local.get $b) (i32.const 0) (local.get $first))
+          (%let $start (i32.add (local.get $first) (i32.const 1))
+            (if
+              (result (ref $domain.Command))
+              (call $lex.equal (local.get $op) (%string.bytes (%string.lit "PLAN")))
+              (then
+                (%match (%inst $option i64) (result (ref $domain.Command))
+                  (call $lex.number (local.get $b) (local.get $start))
+                  (case none () (%variant.new $domain.Command invalid))
+                  (case some ($workers)
+                    (if
+                      (result (ref $domain.Command))
+                      (i32.or
+                        (i64.eqz (local.get $workers))
+                        (i64.gt_u (local.get $workers) (i64.const 32)))
+                      (then (%variant.new $domain.Command invalid))
+                      (else
+                        (%variant.new $domain.Command plan
+                          (i32.wrap_i64 (local.get $workers))))
+                    ))))
+              (else
+                (%let $second (call $lex.tab (local.get $b) (local.get $start))
+                  (%match (%inst $option $string) (result (ref $domain.Command))
+                    (call $lex.key
+                      (local.get $b)
+                      (local.get $start)
+                      (local.get $second))
+                    (case none () (%variant.new $domain.Command invalid))
+                    (case some ($id)
+                      (if
+                        (result (ref $domain.Command))
+                        (call $lex.equal (local.get $op) (%string.bytes (%string.lit "TASK")))
+                        (then
+                          (%match (%inst $option i64) (result (ref $domain.Command))
+                            (call $lex.number
+                              (local.get $b)
+                              (i32.add (local.get $second) (i32.const 1)))
+                            (case none () (%variant.new $domain.Command invalid))
+                            (case some ($duration)
+                              (%variant.new $domain.Command task
+                                (local.get $id)
+                                (local.get $duration))))
+                        )
+                        (else
+                          (if
+                            (result (ref $domain.Command))
+                            (i32.and
+                              (call $lex.equal
+                                (local.get $op)
+                                (%string.bytes (%string.lit "AFTER")))
+                              (i32.eq
+                                (call $lex.tab
+                                  (local.get $b)
+                                  (i32.add (local.get $second) (i32.const 1)))
+                                (%bytes.len (local.get $b))))
+                            (then
+                              (%match (%inst $option $string) (result (ref $domain.Command))
+                                (call $lex.key
+                                  (local.get $b)
+                                  (i32.add (local.get $second) (i32.const 1))
+                                  (%bytes.len (local.get $b)))
+                                (case none () (%variant.new $domain.Command invalid))
+                                (case some ($dependency)
+                                  (%variant.new $domain.Command after
+                                    (local.get $id)
+                                    (local.get $dependency))))
+                            )
+                            (else (%variant.new $domain.Command invalid))))
+                      ))))
+              ))))
+      ))
+
+    (func $command (param $line $string) (result (ref $domain.Command)) (%effect allocates)
+      (%let $b (%string.bytes (local.get $line))
+        (if
+          (result (ref $domain.Command))
+          (i32.eqz (%bytes.len (local.get $b)))
+          (then (%variant.new $domain.Command skip))
+          (else
+            (if
+              (result (ref $domain.Command))
+              (i32.eq (%bytes.get (local.get $b) (i32.const 0)) (i32.const 35))
+              (then (%variant.new $domain.Command skip))
+              (else (call $fields (local.get $b))))
+          ))))
+  )
+
+  
+
+  (%namespace $graph
+    (%use "wlt:core"
+      (type $bytes)
+      (type $option)
+      (type $result)
+      (type $string)
+      (type $unit))
+    (%public
+      (opaque $Graph)
+      (opaque $Job)
+      (opaque $Link)
+      (func $new)
+      (func $size)
+      (func $at)
+      (func $id)
+      (func $index)
+      (func $duration)
+      (func $dependencies)
+      (func $edge-job)
+      (func $edge-next)
+      (func $add)
+      (func $after))
+    (type $Job
+      (struct
+        (field $id $string)
+        (field $key $bytes)
+        (field $index i32)
+        (field $duration i64)
+        (field $deps (mut (ref null $Link))))
+    )
+    (type $Link (struct (field $job (ref $Job)) (field $next (ref null $Link))))
+    (type $Jobs (array (mut (ref null $Job))))
+    ;; Lookup links are not fields of Job: retaining a public Job reference
+    ;; must not retain unrelated jobs just because their hash values collide.
+    (type $Entry (struct (field $job (ref $Job)) (field $next (ref null $Entry))))
+    (type $Buckets (array (mut (ref null $Entry))))
+    (type $Graph
+      (struct
+        (field $jobs (mut (ref $Jobs)))
+        (field $buckets (mut (ref $Buckets)))
+        (field $size (mut i32))
+        (field $edges (mut i32))))
+    (func $new (result (ref $Graph)) (%effect allocates)
+      (struct.new $Graph
+        (array.new $Jobs (ref.null $Job) (i32.const 8))
+        (array.new $Buckets (ref.null $Entry) (i32.const 64))
+        (i32.const 0)
+        (i32.const 0)))
+
+    (func $size (param $g (ref $Graph)) (result i32) (%effect reads)
+      (struct.get $Graph $size (local.get $g)))
+
+    (func $at (param $g (ref $Graph)) (param $i i32) (result (ref $Job)) (%effect reads)
+      (ref.as_non_null
+        (array.get $Jobs (struct.get $Graph $jobs (local.get $g)) (local.get $i))))
+
+    (func $id (param $j (ref $Job)) (result $string) (%effect pure)
+      (struct.get $Job $id (local.get $j)))
+
+    (func $index (param $j (ref $Job)) (result i32) (%effect pure)
+      (struct.get $Job $index (local.get $j)))
+
+    (func $duration (param $j (ref $Job)) (result i64) (%effect pure)
+      (struct.get $Job $duration (local.get $j)))
+
+    (func $dependencies (param $j (ref $Job)) (result (ref null $Link)) (%effect reads)
+      (struct.get $Job $deps (local.get $j)))
+
+    (func $edge-job (param $l (ref $Link)) (result (ref $Job)) (%effect pure)
+      (struct.get $Link $job (local.get $l)))
+
+    (func $edge-next (param $l (ref $Link)) (result (ref null $Link)) (%effect pure)
+      (struct.get $Link $next (local.get $l)))
+
+    (func $hash (param $key $bytes) (result i32) (%effect pure)
+      (%loop $bytes
+        (bind $i i32 (i32.const 0))
+        (bind $h i32 (i32.const 0))
+        (result i32)
+        (if
+          (result i32)
+          (i32.eq (local.get $i) (%bytes.len (local.get $key)))
+          (then (local.get $h))
+          (else
+            (%recur $bytes
+              (i32.add (local.get $i) (i32.const 1))
+              (i32.add
+                (i32.mul (local.get $h) (i32.const 31))
+                (%bytes.get (local.get $key) (local.get $i))))
+          ))))
+
+    (func $bucket (param $buckets (ref $Buckets)) (param $key $bytes) (result i32)
+      (%effect pure)
+      (i32.and
+        (call $hash (local.get $key))
+        (i32.sub (array.len (local.get $buckets)) (i32.const 1))))
+
+    (func $find (param $g (ref $Graph)) (param $key $bytes) (result (%inst $option (ref $Job)))
+      (%effect reads)
+      (%let $buckets (struct.get $Graph $buckets (local.get $g))
+        (%loop $search
+          (bind $entry
+            (ref null $Entry)
+            (array.get $Buckets
+              (local.get $buckets)
+              (call $bucket (local.get $buckets) (local.get $key))))
+          (result (%inst $option (ref $Job)))
+          (if
+            (result (%inst $option (ref $Job)))
+            (ref.is_null (local.get $entry))
+            (then (%option.none))
+            (else
+              (%let $node (ref.as_non_null (local.get $entry))
+                (%let $job (struct.get $Entry $job (local.get $node))
+                  (if
+                    (result (%inst $option (ref $Job)))
+                    (call $lex.equal
+                      (struct.get $Job $key (local.get $job))
+                      (local.get $key))
+                    (then (%option.some (local.get $job)))
+                    (else (%recur $search (struct.get $Entry $next (local.get $node))))
+                  ))))
+          ))))
+
+    (func $rehash (param $g (ref $Graph)) (%effect reads writes allocates)
+      (%let $old (struct.get $Graph $buckets (local.get $g))
+        (if
+          (i32.eq (call $size (local.get $g)) (array.len (local.get $old)))
+          (then
+            (%let $next
+              (array.new $Buckets (ref.null $Entry) (i32.mul (array.len (local.get $old)) (i32.const 2)))
+              (block
+                (%for $relink
+                  (bind $i i32 (i32.const 0))
+                  (while (i32.lt_u (local.get $i) (call $size (local.get $g))))
+                  (step (i32.add (local.get $i) (i32.const 1)))
+                  (%let $job (call $at (local.get $g) (local.get $i))
+                    (%let $bucket
+                      (call $bucket (local.get $next) (struct.get $Job $key (local.get $job)))
+                      (array.set $Buckets
+                        (local.get $next)
+                        (local.get $bucket)
+                        (struct.new $Entry
+                          (local.get $job)
+                          (array.get $Buckets (local.get $next) (local.get $bucket))))
+                    )))
+                (struct.set $Graph $buckets (local.get $g) (local.get $next))))
+          )
+          (else (nop))))
+    )
+
+    (func $grow (param $g (ref $Graph)) (%effect reads writes allocates)
+      (%let $old (struct.get $Graph $jobs (local.get $g))
+        (if
+          (i32.eq (call $size (local.get $g)) (array.len (local.get $old)))
+          (then
+            (%let $next
+              (array.new $Jobs (ref.null $Job) (i32.mul (array.len (local.get $old)) (i32.const 2)))
+              (block
+                (%for $copy
+                  (bind $i i32 (i32.const 0))
+                  (while (i32.lt_u (local.get $i) (array.len (local.get $old))))
+                  (step (i32.add (local.get $i) (i32.const 1)))
+                  (array.set $Jobs
+                    (local.get $next)
+                    (local.get $i)
+                    (array.get $Jobs (local.get $old) (local.get $i))))
+                (struct.set $Graph $jobs (local.get $g) (local.get $next))))
+          )
+          (else (nop))))
+    )
+
+    (func $add (param $g (ref $Graph)) (param $id $string) (param $duration i64)
+      (result (%inst $result $unit (ref $domain.Error))) (%effect reads writes allocates)
+      (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
+        (call $find (local.get $g) (%string.bytes (local.get $id)))
+        (case some ($existing)
+          (%result.err (%variant.new $domain.Error duplicate (local.get $id))))
+        (case none ()
+          (if
+            (result (%inst $result $unit (ref $domain.Error)))
+            (i32.ge_u (call $size (local.get $g)) (i32.const 4096))
+            (then (%result.err (%variant.new $domain.Error capacity (%string.lit "tasks"))))
+            (else
+              (if
+                (result (%inst $result $unit (ref $domain.Error)))
+                (i32.or
+                  (i64.gt_u (local.get $duration) (i64.const 1000000))
+                  (i32.or
+                    (i32.eqz (%string.byte-len (local.get $id)))
+                    (i32.gt_u (%string.byte-len (local.get $id)) (i32.const 128))))
+                (then
+                  (%result.err (%variant.new $domain.Error invalid (%string.lit "format"))))
+                (else
+                  (%let $i (call $size (local.get $g))
+                    (block
+                      (result (%inst $result $unit (ref $domain.Error)))
+                      (call $grow (local.get $g))
+                      (call $rehash (local.get $g))
+                      (%let $buckets (struct.get $Graph $buckets (local.get $g))
+                        (%let $bucket
+                          (call $bucket (local.get $buckets) (%string.bytes (local.get $id)))
+                          (%let $job
+                            (struct.new $Job (local.get $id) (%string.bytes (local.get $id)) (local.get $i) (local.get $duration) (ref.null $Link))
+                            (block
+                              (array.set $Jobs
+                                (struct.get $Graph $jobs (local.get $g))
+                                (local.get $i)
+                                (local.get $job))
+                              (array.set $Buckets
+                                (local.get $buckets)
+                                (local.get $bucket)
+                                (struct.new $Entry
+                                  (local.get $job)
+                                  (array.get $Buckets
+                                    (local.get $buckets)
+                                    (local.get $bucket))))
+                            ))))
+                      (struct.set $Graph $size
+                        (local.get $g)
+                        (i32.add (local.get $i) (i32.const 1)))
+                      (%result.ok))))
+              ))))
+      ))
+
+    (func $contains (param $head (ref null $Link)) (param $job (ref $Job)) (result i32)
+      (%effect pure)
+      (%loop $walk
+        (bind $link (ref null $Link) (local.get $head))
+        (result i32)
+        (if
+          (result i32)
+          (ref.is_null (local.get $link))
+          (then (i32.const 0))
+          (else
+            (%let $edge (ref.as_non_null (local.get $link))
+              (if
+                (result i32)
+                (ref.eq (call $edge-job (local.get $edge)) (local.get $job))
+                (then (i32.const 1))
+                (else (%recur $walk (call $edge-next (local.get $edge))))
+              ))))
+      ))
+
+    (func $after (param $g (ref $Graph)) (param $id $string) (param $dependency $string)
+      (result (%inst $result $unit (ref $domain.Error))) (%effect reads writes allocates)
+      (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
+        (call $find (local.get $g) (%string.bytes (local.get $id)))
+        (case none () (%result.err (%variant.new $domain.Error unknown (local.get $id))))
+        (case some ($job)
+          (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
+            (call $find (local.get $g) (%string.bytes (local.get $dependency)))
+            (case none ()
+              (%result.err (%variant.new $domain.Error unknown (local.get $dependency))))
+            (case some ($prerequisite)
+              (%let $head (call $dependencies (local.get $job))
+                (if
+                  (result (%inst $result $unit (ref $domain.Error)))
+                  (call $contains (local.get $head) (local.get $prerequisite))
+                  (then (%result.ok))
+                  (else
+                    (if
+                      (result (%inst $result $unit (ref $domain.Error)))
+                      (i32.ge_u
+                        (struct.get $Graph $edges (local.get $g))
+                        (i32.const 65536))
+                      (then
+                        (%result.err
+                          (%variant.new $domain.Error capacity (%string.lit "dependencies"))))
+                      (else
+                        (block
+                          (result (%inst $result $unit (ref $domain.Error)))
+                          (struct.set $Job $deps
+                            (local.get $job)
+                            (struct.new $Link
+                              (local.get $prerequisite)
+                              (local.get $head)))
+                          (struct.set $Graph $edges
+                            (local.get $g)
+                            (i32.add
+                              (struct.get $Graph $edges (local.get $g))
+                              (i32.const 1)))
+                          (%result.ok))))
+                  ))))
+          ))))
+  )
+
+  
+
+  (%namespace $queue
+    (%public (opaque $Heap) (func $new) (func $push) (func $pop))
+    ;; Non-negative job indices. Push requires available capacity; empty pop
+    ;; returns -1. The planner enqueues each job exactly once.
+    (type $Ints (array (mut i32)))
+    (type $Heap (struct (field $values (ref $Ints)) (field $size (mut i32))))
+    (func $new (param $capacity i32) (result (ref $Heap)) (%effect allocates)
+      (struct.new $Heap
+        (array.new $Ints (i32.const 0) (local.get $capacity))
+        (i32.const 0)))
+
+    (func $push (param $q (ref $Heap)) (param $value i32) (%effect reads writes)
+      (%let $a (struct.get $Heap $values (local.get $q))
+        (%let $size (struct.get $Heap $size (local.get $q))
+          (block
+            (struct.set $Heap $size
+              (local.get $q)
+              (i32.add (local.get $size) (i32.const 1)))
+            (%loop $up
+              (bind $i i32 (local.get $size))
+              (if
+                (i32.eqz (local.get $i))
+                (then
+                  (array.set $Ints (local.get $a) (local.get $i) (local.get $value)))
+                (else
+                  (%let $parent
+                    (i32.shr_u (i32.sub (local.get $i) (i32.const 1)) (i32.const 1))
+                    (%let $above (array.get $Ints (local.get $a) (local.get $parent))
+                      (if
+                        (i32.le_u (local.get $above) (local.get $value))
+                        (then
+                          (array.set $Ints
+                            (local.get $a)
+                            (local.get $i)
+                            (local.get $value)))
+                        (else
+                          (block
+                            (array.set $Ints
+                              (local.get $a)
+                              (local.get $i)
+                              (local.get $above))
+                            (%recur $up (local.get $parent))))
+                      ))))
+              ))))
+      ))
+
+    (func $pop (param $q (ref $Heap)) (result i32) (%effect reads writes)
+      (%let $size (struct.get $Heap $size (local.get $q))
+        (if
+          (result i32)
+          (i32.eqz (local.get $size))
+          (then (i32.const -1))
+          (else
+            (%let $a (struct.get $Heap $values (local.get $q))
+              (%let $first (array.get $Ints (local.get $a) (i32.const 0))
+                (%let $n (i32.sub (local.get $size) (i32.const 1))
+                  (%let $last (array.get $Ints (local.get $a) (local.get $n))
+                    (block
+                      (result i32)
+                      (struct.set $Heap $size (local.get $q) (local.get $n))
+                      (if
+                        (local.get $n)
+                        (then
+                          (%loop $down
+                            (bind $i i32 (i32.const 0))
+                            (%let $left
+                              (i32.add (i32.mul (local.get $i) (i32.const 2)) (i32.const 1))
+                              (if
+                                (i32.ge_u (local.get $left) (local.get $n))
+                                (then
+                                  (array.set $Ints
+                                    (local.get $a)
+                                    (local.get $i)
+                                    (local.get $last)))
+                                (else
+                                  (%let $right (i32.add (local.get $left) (i32.const 1))
+                                    (%let $child
+                                      (if (result i32) (i32.lt_u (local.get $right) (local.get $n)) (then (if (result i32) (i32.lt_u (array.get $Ints (local.get $a) (local.get $right)) (array.get $Ints (local.get $a) (local.get $left))) (then (local.get $right)) (else (local.get $left)))) (else (local.get $left)))
+                                      (%let $value
+                                        (array.get $Ints (local.get $a) (local.get $child))
+                                        (if
+                                          (i32.le_u
+                                            (local.get $last)
+                                            (local.get $value))
+                                          (then
+                                            (array.set $Ints
+                                              (local.get $a)
+                                              (local.get $i)
+                                              (local.get $last)))
+                                          (else
+                                            (block
+                                              (array.set $Ints
+                                                (local.get $a)
+                                                (local.get $i)
+                                                (local.get $value))
+                                              (%recur $down (local.get $child))))
+                                        ))))
+                                ))))
+                        )
+                        (else (nop)))
+                      (local.get $first))))
+              ))))
+      )))
+
+  
+
+  (%namespace $planner
+    (%use "wlt:core"
+      (type $result)
+      (type $string))
+    (%public
+      (opaque $Run)
+      (func $run)
+      (func $count)
+      (func $makespan)
+      (func $start)
+      (func $finish)
+      (func $worker))
+    ;; A separate run never changes the graph, so PLAN can be repeated safely.
+    (type $Phase (%variant (pending) (running i64 i64 i32) (done i64 i64 i32)))
+    (type $Phases (array (mut (ref $Phase))))
+    (type $Workers (array (mut i32)))
+    (type $Run
+      (struct
+        (field $phases (ref $Phases))
+        (field $workers (ref $Workers))
+        (field $span (mut i64))))
+    (func $entry (param $r (ref $Run)) (param $i i32) (result (ref $Phase))
+      (%effect reads)
+      (array.get $Phases (struct.get $Run $phases (local.get $r)) (local.get $i)))
+
+    (func $count (param $r (ref $Run)) (result i32) (%effect pure)
+      (array.len (struct.get $Run $phases (local.get $r))))
+
+    (func $makespan (param $r (ref $Run)) (result i64) (%effect reads)
+      (struct.get $Run $span (local.get $r)))
+
+    (func $pending (param $p (ref $Phase)) (result i32) (%effect pure)
+      (%match (local.get $p)
+        (case pending () (i32.const 1))
+        (case running ($s $f $w) (i32.const 0))
+        (case done ($s $f $w) (i32.const 0))))
+
+    (func $due (param $p (ref $Phase)) (result i64) (%effect pure)
+      (%match (local.get $p)
+        (case pending () (i64.const -1))
+        (case running ($s $f $w) (local.get $f))
+        (case done ($s $f $w) (i64.const -1))))
+
+    (func $start (param $r (ref $Run)) (param $i i32) (result i64) (%effect reads)
+      (%match (call $entry (local.get $r) (local.get $i))
+        (case pending () (unreachable))
+        (case running ($s $f $w) (unreachable))
+        (case done ($s $f $w) (local.get $s))))
+
+    (func $finish (param $r (ref $Run)) (param $i i32) (result i64) (%effect reads)
+      (%match (call $entry (local.get $r) (local.get $i))
+        (case pending () (unreachable))
+        (case running ($s $f $w) (unreachable))
+        (case done ($s $f $w) (local.get $f))))
+
+    (func $worker (param $r (ref $Run)) (param $i i32) (result i32) (%effect reads)
+      (%match (call $entry (local.get $r) (local.get $i))
+        (case pending () (unreachable))
+        (case running ($s $f $w) (unreachable))
+        (case done ($s $f $w) (local.get $w))))
+    ;; The work graph points to the result, never the other way round. Reverse
+    ;; adjacency, indegrees and the heap become unreachable after planning.
+    (type $Ints (array (mut i32)))
+    (type $Work
+      (struct
+        (field $result (ref $Run))
+        (field $remaining (ref $Ints))
+        (field $starts (ref $Ints))
+        (field $edges (ref $Ints))
+        (field $ready (ref $queue.Heap))))
+    (func $count-edges (param $g (ref $graph.Graph)) (param $remaining (ref $Ints))
+      (param $starts (ref $Ints)) (result i32) (%effect reads writes)
+      (%loop $jobs
+        (bind $i i32 (i32.const 0))
+        (bind $total i32 (i32.const 0))
+        (result i32)
+        (if
+          (result i32)
+          (i32.eq (local.get $i) (call $graph.size (local.get $g)))
+          (then (local.get $total))
+          (else
+            (%let $count
+              (%loop $deps
+                (bind $link
+                  (ref null $graph.Link)
+                  (call $graph.dependencies
+                    (call $graph.at (local.get $g) (local.get $i))))
+                (bind $n i32 (i32.const 0))
+                (result i32)
+                (if
+                  (result i32)
+                  (ref.is_null (local.get $link))
+                  (then (local.get $n))
+                  (else
+                    (%let $edge (ref.as_non_null (local.get $link))
+                      (%let $slot
+                        (i32.add (call $graph.index (call $graph.edge-job (local.get $edge))) (i32.const 1))
+                        (block
+                          (result i32)
+                          (array.set $Ints
+                            (local.get $starts)
+                            (local.get $slot)
+                            (i32.add
+                              (array.get $Ints (local.get $starts) (local.get $slot))
+                              (i32.const 1)))
+                          (%recur $deps
+                            (call $graph.edge-next (local.get $edge))
+                            (i32.add (local.get $n) (i32.const 1))))
+                      ))))
+              )
+              (block
+                (result i32)
+                (array.set $Ints
+                  (local.get $remaining)
+                  (local.get $i)
+                  (local.get $count))
+                (%recur $jobs
+                  (i32.add (local.get $i) (i32.const 1))
+                  (i32.add (local.get $total) (local.get $count))))
+            ))))
+    )
+
+    (func $prepare (param $g (ref $graph.Graph)) (param $workers i32)
+      (result (ref $Work)) (%effect reads writes allocates)
+      (%let $n (call $graph.size (local.get $g))
+        (%let $remaining (array.new $Ints (i32.const 0) (local.get $n))
+          (%let $starts
+            (array.new $Ints (i32.const 0) (i32.add (local.get $n) (i32.const 1)))
+            (%let $count
+              (call $count-edges (local.get $g) (local.get $remaining) (local.get $starts))
+              (%let $edges (array.new $Ints (i32.const 0) (local.get $count))
+                (%let $cursor (array.new $Ints (i32.const 0) (local.get $n))
+                  (block
+                    (result (ref $Work))
+                    (%for $prefix
+                      (bind $i i32 (i32.const 0))
+                      (while (i32.lt_u (local.get $i) (local.get $n)))
+                      (step (i32.add (local.get $i) (i32.const 1)))
+                      (block
+                        (array.set $Ints
+                          (local.get $starts)
+                          (i32.add (local.get $i) (i32.const 1))
+                          (i32.add
+                            (array.get $Ints (local.get $starts) (local.get $i))
+                            (array.get $Ints
+                              (local.get $starts)
+                              (i32.add (local.get $i) (i32.const 1))))
+                        )
+                        (array.set $Ints
+                          (local.get $cursor)
+                          (local.get $i)
+                          (array.get $Ints (local.get $starts) (local.get $i))))
+                    )
+                    (%for $links
+                      (bind $i i32 (i32.const 0))
+                      (while (i32.lt_u (local.get $i) (local.get $n)))
+                      (step (i32.add (local.get $i) (i32.const 1)))
+                      (%loop $deps
+                        (bind $link
+                          (ref null $graph.Link)
+                          (call $graph.dependencies
+                            (call $graph.at (local.get $g) (local.get $i))))
+                        (if
+                          (ref.is_null (local.get $link))
+                          (then (nop))
+                          (else
+                            (%let $edge (ref.as_non_null (local.get $link))
+                              (%let $parent
+                                (call $graph.index (call $graph.edge-job (local.get $edge)))
+                                (%let $slot
+                                  (array.get $Ints (local.get $cursor) (local.get $parent))
+                                  (block
+                                    (array.set $Ints
+                                      (local.get $edges)
+                                      (local.get $slot)
+                                      (local.get $i))
+                                    (array.set $Ints
+                                      (local.get $cursor)
+                                      (local.get $parent)
+                                      (i32.add (local.get $slot) (i32.const 1)))
+                                    (%recur $deps
+                                      (call $graph.edge-next (local.get $edge))))
+                                ))))
+                        )))
+                    (%let $heap (call $queue.new (local.get $n))
+                      (%let $work
+                        (struct.new $Work (struct.new $Run (array.new $Phases (%variant.new $Phase pending) (local.get $n)) (array.new $Workers (i32.const -1) (local.get $workers)) (i64.const 0)) (local.get $remaining) (local.get $starts) (local.get $edges) (local.get $heap))
+                        (block
+                          (result (ref $Work))
+                          (%for $initial
+                            (bind $i i32 (i32.const 0))
+                            (while (i32.lt_u (local.get $i) (local.get $n)))
+                            (step (i32.add (local.get $i) (i32.const 1)))
+                            (if
+                              (i32.eqz
+                                (array.get $Ints (local.get $remaining) (local.get $i)))
+                              (then (call $queue.push (local.get $heap) (local.get $i)))
+                              (else (nop))))
+                          (local.get $work))))
+                  ))))
+          ))))
+
+    (func $release (param $work (ref $Work)) (param $job i32) (%effect reads writes)
+      (%let $starts (struct.get $Work $starts (local.get $work))
+        (%let $remaining (struct.get $Work $remaining (local.get $work))
+          (%for $children
+            (bind $p i32 (array.get $Ints (local.get $starts) (local.get $job)))
+            (while
+              (i32.lt_u
+                (local.get $p)
+                (array.get $Ints
+                  (local.get $starts)
+                  (i32.add (local.get $job) (i32.const 1))))
+            )
+            (step (i32.add (local.get $p) (i32.const 1)))
+            (%let $child
+              (array.get $Ints (struct.get $Work $edges (local.get $work)) (local.get $p))
+              (%let $left
+                (i32.sub (array.get $Ints (local.get $remaining) (local.get $child)) (i32.const 1))
+                (block
+                  (array.set $Ints
+                    (local.get $remaining)
+                    (local.get $child)
+                    (local.get $left))
+                  (if
+                    (i32.eqz (local.get $left))
+                    (then
+                      (call $queue.push
+                        (struct.get $Work $ready (local.get $work))
+                        (local.get $child)))
+                    (else (nop))))
+              ))))
+      ))
+
+    (func $blocked (param $r (ref $Run)) (param $g (ref $graph.Graph)) (result $string)
+      (%effect reads)
+      (%loop $scan
+        (bind $i i32 (i32.const 0))
+        (result $string)
+        (if
+          (result $string)
+          (call $pending (call $entry (local.get $r) (local.get $i)))
+          (then (call $graph.id (call $graph.at (local.get $g) (local.get $i))))
+          (else (%recur $scan (i32.add (local.get $i) (i32.const 1))))
+        )))
+
+    (func $fill (param $work (ref $Work)) (param $g (ref $graph.Graph)) (param $now i64)
+      (%effect reads writes allocates)
+      (%let $r (struct.get $Work $result (local.get $work))
+        (%let $workers (struct.get $Run $workers (local.get $r))
+          (%for $assign
+            (bind $w i32 (i32.const 0))
+            (while (i32.lt_u (local.get $w) (array.len (local.get $workers))))
+            (step (i32.add (local.get $w) (i32.const 1)))
+            (if
+              (i32.eq
+                (array.get $Workers (local.get $workers) (local.get $w))
+                (i32.const -1))
+              (then
+                (%let $i (call $queue.pop (struct.get $Work $ready (local.get $work)))
+                  (if
+                    (i32.ge_s (local.get $i) (i32.const 0))
+                    (then
+                      (block
+                        (array.set $Workers
+                          (local.get $workers)
+                          (local.get $w)
+                          (local.get $i))
+                        (array.set $Phases
+                          (struct.get $Run $phases (local.get $r))
+                          (local.get $i)
+                          (%variant.new $Phase running
+                            (local.get $now)
+                            (i64.add
+                              (local.get $now)
+                              (call $graph.duration
+                                (call $graph.at (local.get $g) (local.get $i))))
+                            (local.get $w))))
+                    )
+                    (else (nop))))
+              )
+              (else (nop))))
+        )))
+
+    (func $next-time (param $r (ref $Run)) (result i64) (%effect reads)
+      (%let $workers (struct.get $Run $workers (local.get $r))
+        (%loop $scan
+          (bind $w i32 (i32.const 0))
+          (bind $next i64 (i64.const -1))
+          (result i64)
+          (if
+            (result i64)
+            (i32.eq (local.get $w) (array.len (local.get $workers)))
+            (then (local.get $next))
+            (else
+              (%let $i (array.get $Workers (local.get $workers) (local.get $w))
+                (%let $candidate
+                  (if
+                    (result i64)
+                    (i32.lt_s (local.get $i) (i32.const 0))
+                    (then (i64.const -1))
+                    (else (call $due (call $entry (local.get $r) (local.get $i))))
+                  )
+                  (%recur $scan
+                    (i32.add (local.get $w) (i32.const 1))
+                    (if
+                      (result i64)
+                      (i64.lt_u (local.get $candidate) (local.get $next))
+                      (then (local.get $candidate))
+                      (else (local.get $next))))
+                ))))
+        )))
+
+    (func $complete (param $work (ref $Work)) (param $now i64) (result i32)
+      (%effect reads writes allocates)
+      (%let $r (struct.get $Work $result (local.get $work))
+        (%let $workers (struct.get $Run $workers (local.get $r))
+          (%loop $finish
+            (bind $w i32 (i32.const 0))
+            (bind $count i32 (i32.const 0))
+            (result i32)
+            (if
+              (result i32)
+              (i32.eq (local.get $w) (array.len (local.get $workers)))
+              (then (local.get $count))
+              (else
+                (%let $i (array.get $Workers (local.get $workers) (local.get $w))
+                  (if
+                    (result i32)
+                    (i32.lt_s (local.get $i) (i32.const 0))
+                    (then
+                      (%recur $finish
+                        (i32.add (local.get $w) (i32.const 1))
+                        (local.get $count)))
+                    (else
+                      (%match (call $entry (local.get $r) (local.get $i))
+                        (case pending () (unreachable))
+                        (case done ($s $f $worker) (unreachable))
+                        (case running ($s $f $worker)
+                          (if
+                            (result i32)
+                            (i64.eq (local.get $f) (local.get $now))
+                            (then
+                              (block
+                                (result i32)
+                                (array.set $Phases
+                                  (struct.get $Run $phases (local.get $r))
+                                  (local.get $i)
+                                  (%variant.new $Phase done
+                                    (local.get $s)
+                                    (local.get $f)
+                                    (local.get $worker)))
+                                (array.set $Workers
+                                  (local.get $workers)
+                                  (local.get $w)
+                                  (i32.const -1))
+                                (call $release (local.get $work) (local.get $i))
+                                (%recur $finish
+                                  (i32.add (local.get $w) (i32.const 1))
+                                  (i32.add (local.get $count) (i32.const 1))))
+                            )
+                            (else
+                              (%recur $finish
+                                (i32.add (local.get $w) (i32.const 1))
+                                (local.get $count))))
+                        ))))
+                ))))
+        )))
+
+    (func $run (param $g (ref $graph.Graph)) (param $workers i32)
+      (result (%inst $result (ref $Run) (ref $domain.Error))) (%effect reads writes allocates)
+      (if
+        (result (%inst $result (ref $Run) (ref $domain.Error)))
+        (i32.or
+          (i32.eqz (local.get $workers))
+          (i32.gt_u (local.get $workers) (i32.const 32)))
+        (then (%result.err (%variant.new $domain.Error invalid (%string.lit "format"))))
+        (else
+          (%let $work (call $prepare (local.get $g) (local.get $workers))
+            (%let $run (struct.get $Work $result (local.get $work))
+              (%loop $events
+                (bind $now i64 (i64.const 0))
+                (bind $done i32 (i32.const 0))
+                (result (%inst $result (ref $Run) (ref $domain.Error)))
+                (if
+                  (result (%inst $result (ref $Run) (ref $domain.Error)))
+                  (i32.eq (local.get $done) (call $graph.size (local.get $g)))
+                  (then
+                    (block
+                      (result (%inst $result (ref $Run) (ref $domain.Error)))
+                      (struct.set $Run $span (local.get $run) (local.get $now))
+                      (%result.ok (local.get $run))))
+                  (else
+                    (block
+                      (result (%inst $result (ref $Run) (ref $domain.Error)))
+                      (call $fill (local.get $work) (local.get $g) (local.get $now))
+                      (%let $next (call $next-time (local.get $run))
+                        (if
+                          (result (%inst $result (ref $Run) (ref $domain.Error)))
+                          (i64.eq (local.get $next) (i64.const -1))
+                          (then
+                            (%result.err
+                              (%variant.new $domain.Error cycle
+                                (call $blocked (local.get $run) (local.get $g))))
+                          )
+                          (else
+                            (%let $count
+                              (call $complete (local.get $work) (local.get $next))
+                              (%recur $events
+                                (local.get $next)
+                                (i32.add (local.get $done) (local.get $count))))
+                          ))))
+                  ))))
+          ))))
+  )
+
+
+  
+
+  (%namespace $report
+    (%use "wlt:core"
+      (type $future)
+      (type $result)
+      (type $string)
+      (type $unit))
+    
+(%file.use $wlt-file-5 (type $json-object)
+      (func $json.object-builder.boolean)
+      (func $json.object-builder.finish)
+      (func $json.object-builder.new)
+      (func $json.object-builder.string)
+      (func $json.object-builder.u64))
+
+    (%public (func $failure) (func $plan))
+    (import "wlt:host/text-io@0.1.0" "write-line"
+      (func $write (param $line $string) (result (%inst $future (%inst $result $unit i32))))
+    )
+    (func $base (param $n i32) (result (ref $json-object))
+      (%effect reads writes allocates)
+      (%let $o (call $json.object-builder.new)
+        (block
+          (result (ref $json-object))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "line")
+            (i64.extend_i32_u (local.get $n)))
+          (local.get $o))))
+
+    (func $error (param $n i32) (param $name $string) (param $detail $string) (result $string)
+      (%effect reads writes allocates)
+      (%let $o (call $base (local.get $n))
+        (block
+          (result $string)
+          (call $json.object-builder.boolean (local.get $o) (%string.lit "ok") (i32.const 0))
+          (call $json.object-builder.string (local.get $o) (%string.lit "error") (local.get $name))
+          (call $json.object-builder.string (local.get $o) (%string.lit "detail") (local.get $detail))
+          (call $json.object-builder.finish (local.get $o))))
+    )
+
+    (func $failure (param $n i32) (param $e (ref $domain.Error))
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
+      (%future.await
+        (%inst $result $unit i32)
+        (call $write
+          (%match $domain.Error (result $string)
+            (local.get $e)
+            (case invalid ($detail)
+              (call $error
+                (local.get $n)
+                (%string.lit "invalid-command")
+                (local.get $detail)))
+            (case duplicate ($detail)
+              (call $error
+                (local.get $n)
+                (%string.lit "duplicate-task")
+                (local.get $detail)))
+            (case unknown ($detail)
+              (call $error (local.get $n) (%string.lit "unknown-task") (local.get $detail)))
+            (case capacity ($detail)
+              (call $error (local.get $n) (%string.lit "capacity") (local.get $detail)))
+            (case cycle ($detail)
+              (call $error (local.get $n) (%string.lit "cycle") (local.get $detail))))
+        )))
+
+    (func $header (param $n i32) (param $r (ref $planner.Run)) (param $workers i32)
+      (result $string) (%effect reads writes allocates)
+      (%let $o (call $base (local.get $n))
+        (block
+          (result $string)
+          (call $json.object-builder.boolean (local.get $o) (%string.lit "ok") (i32.const 1))
+          (call $json.object-builder.string (local.get $o) (%string.lit "kind") (%string.lit "plan"))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "workers")
+            (i64.extend_i32_u (local.get $workers)))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "tasks")
+            (i64.extend_i32_u (call $planner.count (local.get $r))))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "makespan")
+            (call $planner.makespan (local.get $r)))
+          (call $json.object-builder.finish (local.get $o))))
+    )
+
+    (func $job (param $n i32) (param $g (ref $graph.Graph))
+      (param $r (ref $planner.Run)) (param $i i32) (result $string)
+      (%effect reads writes allocates)
+      (%let $o (call $base (local.get $n))
+        (block
+          (result $string)
+          (call $json.object-builder.string (local.get $o) (%string.lit "kind") (%string.lit "job"))
+          (call $json.object-builder.string
+            (local.get $o)
+            (%string.lit "id")
+            (call $graph.id (call $graph.at (local.get $g) (local.get $i))))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "worker")
+            (i64.extend_i32_u (call $planner.worker (local.get $r) (local.get $i))))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "start")
+            (call $planner.start (local.get $r) (local.get $i)))
+          (call $json.object-builder.u64
+            (local.get $o)
+            (%string.lit "finish")
+            (call $planner.finish (local.get $r) (local.get $i)))
+          (call $json.object-builder.finish (local.get $o))))
+    )
+
+    (func $plan (param $n i32) (param $g (ref $graph.Graph))
+      (param $r (ref $planner.Run)) (param $workers i32) (result (%inst $result $unit i32))
+      (%effect reads writes allocates host suspends)
+      (%result.let () (%inst $result $unit i32) $unit
+        (%future.await
+          (%inst $result $unit i32)
+          (call $write
+            (call $header (local.get $n) (local.get $r) (local.get $workers))))
+        (%loop $emit
+          (bind $i i32 (i32.const 0))
+          (result (%inst $result $unit i32))
+          (if
+            (result (%inst $result $unit i32))
+            (i32.eq (local.get $i) (call $planner.count (local.get $r)))
+            (then (%result.ok))
+            (else
+              (%result.let () (%inst $result $unit i32) $unit
+                (%future.await
+                  (%inst $result $unit i32)
+                  (call $write
+                    (call $job
+                      (local.get $n)
+                      (local.get $g)
+                      (local.get $r)
+                      (local.get $i))))
+                (%recur $emit (i32.add (local.get $i) (i32.const 1))))
+            ))))
+    ))
+
+  (import "wlt:host/text-io@0.1.0" "read-lines"
+    (func $read-lines (result (%inst $stream (%inst $result $string i32))))
+  )
+  (%namespace $app
+    (%use "wlt:core"
+      (type $tuple)
+      (type $result)
+      (type $string)
+      (type $unit))
+    (%public (type $State) (func $advance))
+    (%type.alias $State (%inst $tuple (ref $graph.Graph) i32))
+    (func $mutation (param $n i32) (param $result (%inst $result $unit (ref $domain.Error)))
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
+      (%match (local.get $result)
+        (case ok () (%result.ok))
+        (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+    )
+
+    (func $process (param $g (ref $graph.Graph)) (param $n i32) (param $line $string)
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
+      (%match (call $parse.command (local.get $line))
+        (case skip () (%result.ok))
+        (case invalid ()
+          (call $report.failure
+            (local.get $n)
+            (%variant.new $domain.Error invalid (%string.lit "format"))))
+        (case task ($id $duration)
+          (call $mutation
+            (local.get $n)
+            (call $graph.add (local.get $g) (local.get $id) (local.get $duration))))
+        (case after ($id $dependency)
+          (call $mutation
+            (local.get $n)
+            (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))))
+        (case plan ($workers)
+          (%match (call $planner.run (local.get $g) (local.get $workers))
+            (case ok ($run)
+              (call $report.plan
+                (local.get $n)
+                (local.get $g)
+                (local.get $run)
+                (local.get $workers)))
+            (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+        )))
+
+    (func $advance (param $state $State) (param $line $string) (result (%inst $result $State i32))
+      (%effect reads writes allocates host suspends)
+      (%let ($g $previous) (local.get $state)
+        (%let $n (i32.add (local.get $previous) (i32.const 1))
+          (%result.let ()
+            (call $process (local.get $g) (local.get $n) (local.get $line))
+            (%result.ok (%tuple.new (local.get $g) (local.get $n))))
+        ))))
+
+
+  (func $main (export "main") (result (%inst $result i32 i32))
+    (%effect reads writes allocates host suspends)
+    (%result.let ($final)
+      (%stream.fold-result
+        (call $read-lines)
+        (%tuple.new (ref $graph.Graph) i32 (call $graph.new) (i32.const 0))
+        ($state $line)
+        (call $app.advance (local.get $state) (local.get $line)))
+      (%let ($g $lines) (local.get $final)
+        (%result.ok (local.get $lines))))
+  )
+(%file.namespace $wlt-file-0
+
+  (%use "wlt:core" (type $bytes) (type $option) (type $tuple))
+  (%export
+    (func $bytes.concat)
+    (func $bytes.equal)
+    (func $bytes.find-byte)
+    (func $bytes.find)
+    (func $bytes.split-once)
+    (func $bytes.parse-u64))
+  (func $bytes.equal
+    (param $a $bytes)
+    (param $b $bytes)
+    (result i32)
+    (%effect pure)
+    (if
+      (result i32)
+      (!= (%bytes.len $a) (%bytes.len $b))
+      (then 0)
+      (else
+        (%loop $compare
+          (bind $i i32 0)
+          (result i32)
+          (if
+            (result i32)
+            (= $i (%bytes.len $a))
+            (then 1)
+            (else
+              (if
+                (result i32)
+                (!= (%bytes.get $a $i) (%bytes.get $b $i))
+                (then 0)
+                (else (%recur $compare (+ $i 1))))
+            ))))
+    ))
+  ;; Return the length when absent or start is out of range. byte is unsigned.
+  (func $bytes.find-byte
+    (param $b $bytes)
+    (param $start i32)
+    (param $byte i32)
+    (result i32)
+    (%effect pure)
+    (%loop $scan
+      (bind $i i32 $start)
+      (result i32)
+      (if
+        (result i32)
+        (i32.ge_u $i (%bytes.len $b))
+        (then (%bytes.len $b))
+        (else
+          (if
+            (result i32)
+            (= (%bytes.get $b $i) $byte)
+            (then $i)
+            (else (%recur $scan (+ $i 1))))
+        ))))
+
+  (func $bytes.matches
+    (param $b $bytes)
+    (param $needle $bytes)
+    (param $start i32)
+    (result i32)
+    (%effect pure)
+    (%loop $scan
+      (bind $i i32 0)
+      (result i32)
+      (if
+        (result i32)
+        (= $i (%bytes.len $needle))
+        (then 1)
+        (else
+          (if
+            (result i32)
+            (!= (%bytes.get $b (+ $start $i)) (%bytes.get $needle $i))
+            (then 0)
+            (else (%recur $scan (+ $i 1))))
+        ))))
+
+  (func $bytes.find
+    (param $b $bytes)
+    (param $needle $bytes)
+    (param $start i32)
+    (result (%inst $option i32))
+    (%effect pure)
+    (if
+      (result (%inst $option i32))
+      (i32.gt_u $start (%bytes.len $b))
+      (then (%option.none))
+      (else
+        (if
+          (result (%inst $option i32))
+          (i32.gt_u (%bytes.len $needle) (- (%bytes.len $b) $start))
+          (then (%option.none))
+          (else
+            (%let $last (- (%bytes.len $b) (%bytes.len $needle))
+              (%loop $scan
+                (bind $i i32 $start)
+                (result (%inst $option i32))
+                (if
+                  (result (%inst $option i32))
+                  (call $bytes.matches $b $needle $i)
+                  (then (%option.some $i))
+                  (else
+                    (if
+                      (result (%inst $option i32))
+                      (= $i $last)
+                      (then (%option.none))
+                      (else (%recur $scan (+ $i 1))))
+                  ))))
+          ))))
+  )
+
+  (func $bytes.split-once
+    (param $b $bytes)
+    (param $needle $bytes)
+    (result (%inst $option (%inst $tuple $bytes $bytes)))
+    (%effect pure)
+    (%match (call $bytes.find $b $needle 0)
+      (case none () (%option.none))
+      (case some ($i)
+        (%let $next (+ $i (%bytes.len $needle))
+          (%option.some
+            (%tuple.new
+              (%bytes.slice $b 0 $i)
+              (%bytes.slice $b $next (- (%bytes.len $b) $next))))
+        ))))
+  ;; ASCII decimal over a checked range; test the cutoff before multiplication.
+  (func $bytes.parse-u64
+    (param $b $bytes)
+    (param $start i32)
+    (param $length i32)
+    (param $limit i64)
+    (result (%inst $option i64))
+    (%effect pure)
+    (if
+      (result (%inst $option i64))
+      (| (i32.eqz $length) (i32.gt_u $start (%bytes.len $b)))
+      (then (%option.none))
+      (else
+        (if
+          (result (%inst $option i64))
+          (i32.gt_u $length (- (%bytes.len $b) $start))
+          (then (%option.none))
+          (else
+            (%let
+              (($cutoff (i64.div_u $limit 10))
+               ($last (i32.wrap_i64 (i64.rem_u $limit 10)))
+               ($end (+ $start $length)))
+              (%loop $digits
+                (bind $i i32 $start)
+                (bind $n i64 0)
+                (result (%inst $option i64))
+                (if
+                  (result (%inst $option i64))
+                  (= $i $end)
+                  (then (%option.some $n))
+                  (else
+                    (%let $d (- (%bytes.get $b $i) 48)
+                      (if
+                        (result (%inst $option i64))
+                        (|
+                          (i32.gt_u $d 9)
+                          (|
+                            (i64.gt_u $n $cutoff)
+                            (& (= $n $cutoff) (i32.gt_u $d $last))))
+                        (then (%option.none))
+                        (else
+                          (%recur $digits (+ $i 1) (+ (* $n 10) (i64.extend_i32_u $d))))
+                      ))))
+              ))))
+      )))
+  (type $Array (array (mut i32)))
+  (func $bytes.concat
+    (param $a $bytes)
+    (param $b $bytes)
+    (result $bytes)
+    (%effect reads writes allocates)
+    (%let $n (+ (%bytes.len $a) (%bytes.len $b))
+      (if
+        (result $bytes)
+        (i32.lt_u $n (%bytes.len $a))
+        (then (unreachable))
+        (else
+          (%let $out (array.new $Array 0 $n)
+            (%loop $copy
+              (bind $i i32 0)
+              (result $bytes)
+              (if
+                (result $bytes)
+                (= $i $n)
+                (then (%bytes.from-array $Array $out))
+                (else
+                  (block
+                    (result $bytes)
+                    (array.set $Array $out $i
+                      (if
+                        (result i32)
+                        (i32.lt_u $i (%bytes.len $a))
+                        (then (%bytes.get $a $i))
+                        (else (%bytes.get $b (- $i (%bytes.len $a))))
+                      ))
+                    (%recur $copy (+ $i 1))))
+              ))))
+      )))
+)
+
+(%file.namespace $wlt-file-1
+
+  (%use "wlt:core" (type $string) (type $bytes))
+  (%export (func $json-string.quote))
+  (type $Array (array (mut i32)))
+  (func $json-string.valid (param $bytes $bytes) (result $string) (%effect pure)
+    (%match (%string.from-bytes $bytes)
+      (case none () (unreachable))
+      (case some ($text) $text)))
+  (func $json-string.width
+    (param $b i32)
+    (result i32)
+    (%effect pure)
+    (if (result i32) (i32.lt_u $b 32)
+      (then 6)
+      (else (if (result i32) (| (= $b 34) (= $b 92)) (then 2) (else 1)))))
+
+  (func $json-string.hex
+    (param $n i32)
+    (result i32)
+    (%effect pure)
+    (if (result i32) (i32.lt_u $n 10) (then (+ $n 48)) (else (+ $n 87))))
+
+  (func $json-string.put
+    (param $out (ref $Array))
+    (param $i i32)
+    (param $b i32)
+    (result i32)
+    (%effect writes)
+    (%let $w (call $json-string.width $b)
+      (block
+        (result i32)
+        (if
+          (= $w 1)
+          (then (array.set $Array $out $i $b))
+          (else
+            (block
+              (array.set $Array $out $i 92)
+              (if
+                (= $w 2)
+                (then (array.set $Array $out (+ $i 1) $b))
+                (else
+                  (block
+                    (array.set $Array $out (+ $i 1) 117)
+                    (array.set $Array $out (+ $i 2) 48)
+                    (array.set $Array $out (+ $i 3) 48)
+                    (array.set $Array $out (+ $i 4) (call $json-string.hex (>>> $b 4)))
+                    (array.set $Array $out (+ $i 5) (call $json-string.hex (& $b 15))))
+                ))))
+        )
+        (+ $i $w))))
+
+  ;; Prefix bytes before first are already known not to expand. Continue the
+  ;; original sizing algorithm there, so late escapes do not rescan the prefix.
+  (func $json-string.quote-escaped
+    (param $b $bytes)
+    (param $first i32)
+    (param $length i32)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let
+      (($size
+        (%loop $size
+          (bind $i i32 $first)
+          (bind $n i32 (+ $first 2))
+          (result i32)
+          (if (result i32) (= $i $length)
+            (then $n)
+            (else
+              (%let $w (call $json-string.width (%bytes.get $b $i))
+                (if (result i32) (i32.gt_u $n (- -1 $w))
+                  (then (unreachable))
+                  (else (%recur $size (+ $i 1) (+ $n $w)))))))))
+       ($out (array.new $Array 34 $size)))
+      (%loop $copy
+        (bind $i i32 0)
+        (bind $p i32 1)
+        (result $string)
+        (if (result $string) (= $i $length)
+          (then (call $json-string.valid (%bytes.from-array $Array $out)))
+          (else (%recur $copy (+ $i 1) (call $json-string.put $out $p (%bytes.get $b $i))))))))
+
+  (func $json-string.quote
+    (param $s $string)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let (($b (%string.bytes $s)) ($length (%bytes.len $b)))
+      (if (result $string) (i32.gt_u $length -3)
+        (then (unreachable))
+        (else
+          (%let $first
+            (%loop $scan
+              (bind $i i32 0)
+              (result i32)
+              (if (result i32) (= $i $length)
+                (then $i)
+                (else
+                  (%let $byte (%bytes.get $b $i)
+                    (if (result i32)
+                      (| (i32.lt_u $byte 32) (| (= $byte 34) (= $byte 92)))
+                      (then $i)
+                      (else (%recur $scan (+ $i 1))))))))
+            (if (result $string) (!= $first $length)
+              (then (call $json-string.quote-escaped $b $first $length))
+              ;; No escape expansion: copy directly, without width/put calls.
+              (else
+                (%let $out (array.new $Array 34 (+ $length 2))
+                  (block (result $string)
+                    (%for $copy
+                      (bind $i i32 0)
+                      (while (i32.lt_u $i $length))
+                      (step (+ $i 1))
+                      (array.set $Array $out (+ $i 1) (%bytes.get $b $i)))
+                    (call $json-string.valid (%bytes.from-array $Array $out)))))))))))
+
+)
+
+(%file.namespace $wlt-file-2
+
+  (%use "wlt:core" (type $bytes) (type $option) (type $tuple) (type $string))
+  
+(%file.use $wlt-file-0 (func $bytes.concat)
+    (func $bytes.find)
+    (func $bytes.parse-u64)
+    (func $bytes.split-once))
+
+  (%export
+    (func $string.concat)
+    (func $string.u64)
+    (func $string.s64)
+    (func $string.find)
+    (func $string.split-once)
+    (func $string.parse-u64)
+    (func $string.parse-s64))
+  (func $string.find
+    (param $s $string)
+    (param $needle $string)
+    (param $start i32)
+    (result (%inst $option i32))
+    (%effect pure)
+    (%let $b (%string.bytes $s)
+      (if
+        (result (%inst $option i32))
+        (i32.gt_u $start (%bytes.len $b))
+        (then (%option.none))
+        (else
+          (if
+            (result (%inst $option i32))
+            (if
+              (result i32)
+              (= $start (%bytes.len $b))
+              (then 0)
+              (else (= (& (%bytes.get $b $start) 192) 128)))
+            (then (%option.none))
+            (else (call $bytes.find $b (%string.bytes $needle) $start))))
+      )))
+
+  (func $string.split-once
+    (param $s $string)
+    (param $needle $string)
+    (result (%inst $option (%inst $tuple $string $string)))
+    (%effect pure)
+    (%match (call $bytes.split-once (%string.bytes $s) (%string.bytes $needle))
+      (case none () (%option.none))
+      (case some ($parts)
+        (%let ($a $b) $parts
+          (%option.some (%tuple.new (call $string.valid $a) (call $string.valid $b))))
+      )))
+
+  (func $string.parse-u64
+    (param $s $string)
+    (result (%inst $option i64))
+    (%effect pure)
+    (call $bytes.parse-u64 (%string.bytes $s) 0 (%bytes.len (%string.bytes $s)) -1))
+
+  (func $string.parse-s64
+    (param $s $string)
+    (result (%inst $option i64))
+    (%effect pure)
+    (%let $b (%string.bytes $s)
+      (if
+        (result (%inst $option i64))
+        (i32.eqz (%bytes.len $b))
+        (then (%option.none))
+        (else
+          (%let $negative (= (%bytes.get $b 0) 45)
+            (%match
+              (call $bytes.parse-u64 $b $negative
+                (- (%bytes.len $b) $negative)
+                ;; The negative magnitude may reach 2^63; a positive value may not.
+                (if
+                  (result i64)
+                  $negative
+                  (then -9223372036854775808)
+                  (else 9223372036854775807)))
+              (case none () (%option.none))
+              (case some ($n)
+                (%option.some (if (result i64) $negative (then (- 0 $n)) (else $n))))
+            ))))
+    ))
+  (type $Array (array (mut i32)))
+  (func $string.valid
+    (param $b $bytes)
+    (result $string)
+    (%effect pure)
+    (%match (%string.from-bytes $b)
+      (case none () (unreachable))
+      (case some ($s) $s)))
+
+  (func $string.concat
+    (param $a $string)
+    (param $b $string)
+    (result $string)
+    (%effect reads writes allocates)
+    (call $string.valid (call $bytes.concat (%string.bytes $a) (%string.bytes $b))))
+
+  (func $string.u64
+    (param $n i64)
+    (result $string)
+    (%effect reads writes allocates)
+    (%let $out (array.new $Array 48 20)
+      (%loop $digits
+        (bind $n i64 $n)
+        (bind $i i32 19)
+        (result $string)
+        (block
+          (result $string)
+          (array.set $Array $out $i (+ 48 (i32.wrap_i64 (i64.rem_u $n 10))))
+          (if
+            (result $string)
+            (i64.lt_u $n 10)
+            (then
+              (call $string.valid
+                (%bytes.slice (%bytes.from-array $Array $out) $i (- 20 $i))))
+            (else (%recur $digits (i64.div_u $n 10) (- $i 1))))
+        ))))
+
+  (func $string.s64
+    (param $n i64)
+    (result $string)
+    (%effect reads writes allocates)
+    (if
+      (result $string)
+      (< $n 0)
+      (then (call $string.concat (%string.lit "-") (call $string.u64 (- 0 $n))))
+      (else (call $string.u64 $n))))
+
+
+)
+
+(%file.namespace $wlt-file-3
+
+  (%use "wlt:core" (type $string))
+  
+(%file.use $wlt-file-2 (func $string.s64) (func $string.u64))
+
+  (%export
+    (opaque $string-builder)
+    (func $string-builder.new)
+    (func $string-builder.text)
+    (func $string-builder.u64)
+    (func $string-builder.s64)
+    (func $string-builder.finish))
+  (type $Chunk (struct (field $text $string) (field $previous (ref null $Chunk))))
+  (type $string-builder
+    (struct (field $head (mut (ref null $Chunk))) (field $length (mut i32))))
+  (type $Array (array (mut i32)))
+  (func $string-builder.new
+    (result (ref $string-builder))
+    (%effect allocates)
+    (struct.new $string-builder (ref.null $Chunk) 0))
+
+  (func $string-builder.text
+    (param $b (ref $string-builder))
+    (param $s $string)
+    (%effect reads writes allocates)
+    (%let $n (%bytes.len (%string.bytes $s))
+      (if $n
+        (then
+          (%let $previous (struct.get $string-builder $length $b)
+            (if
+              (i32.gt_u $n (- -1 $previous))
+              (then (unreachable))
+              (else
+                (block
+                  (struct.set $string-builder $head $b
+                    (struct.new $Chunk $s (struct.get $string-builder $head $b)))
+                  (struct.set $string-builder $length $b (+ $previous $n))))
+            )))
+        (else (block))))
+  )
+
+  (func $string-builder.u64
+    (param $b (ref $string-builder))
+    (param $n i64)
+    (%effect reads writes allocates)
+    (call $string-builder.text $b (call $string.u64 $n)))
+
+  (func $string-builder.s64
+    (param $b (ref $string-builder))
+    (param $n i64)
+    (%effect reads writes allocates)
+    (call $string-builder.text $b (call $string.s64 $n)))
+  ;; Traverse backwards, placing each fragment at its final offset. No recursion.
+  (func $string-builder.finish
+    (param $b (ref $string-builder))
+    (result $string)
+    (%effect reads writes allocates)
+    (%let
+      (($length (struct.get $string-builder $length $b))
+       ($out (array.new $Array 0 $length)))
+      (block
+        (result $string)
+        (%loop $chunks
+          (bind $chunk (ref null $Chunk) (struct.get $string-builder $head $b))
+          (bind $end i32 $length)
+          (if
+            (ref.is_null $chunk)
+            (then (block))
+            (else
+              (%let
+                (($chunk (ref.as_non_null $chunk))
+                 ($bytes (%string.bytes (struct.get $Chunk $text $chunk)))
+                 ($start (- $end (%bytes.len $bytes))))
+                (block
+                  (%for $copy
+                    (bind $i i32 0)
+                    (while (i32.lt_u $i (%bytes.len $bytes)))
+                    (step (+ $i 1))
+                    (array.set $Array $out (+ $start $i) (%bytes.get $bytes $i)))
+                  (%recur $chunks (struct.get $Chunk $previous $chunk) $start))))
+          ))
+        (struct.set $string-builder $head $b (ref.null $Chunk))
+        (struct.set $string-builder $length $b 0)
+        (%match (%string.from-bytes (%bytes.from-array $Array $out))
+          (case none () (unreachable))
+          (case some ($s) $s))))
+  )
+)
+
+(%file.namespace $wlt-file-4
+
+  
+(%file.use $wlt-file-1 (func $json-string.quote))
+
+  (%use "wlt:core"
+    (type $bytes)
+    (type $option)
+    (type $tuple)
+    (type $result)
+    (type $string))
+  
+(%file.use $wlt-file-3 (type $string-builder)
+    (func $string-builder.new)
+    (func $string-builder.text)
+    (func $string-builder.finish))
+
+  
+(%file.use $wlt-file-0 (func $bytes.equal))
+
+  (%export
+    (opaque $json-value)
+    (type $json-kind)
+    (func $json.parse)
+    (func $json.stringify)
+    (func $json.kind)
+    (func $json.null)
+    (func $json.boolean)
+    (func $json.number)
+    (func $json.from-string)
+    (func $json.array)
+    (func $json.object)
+    (func $json.prepend)
+    (func $json.set)
+    (func $json.get)
+    (func $json.at)
+    (func $json.as-boolean)
+    (func $json.as-number)
+    (func $json.as-string))
+  (type $json-kind (%variant (null) (boolean) (number) (string) (array) (object)))
+  (type $json-value
+    (%variant
+      (null)
+      (boolean i32)
+      (number $string)
+      (string $string)
+      (array (ref null $Items))
+      (object (ref null $Members))))
+  (type $Items
+    (struct (field $value (ref $json-value)) (field $next (ref null $Items))))
+  (type $Members
+    (struct
+      (field $key $string)
+      (field $value (ref $json-value))
+      (field $next (ref null $Members))))
+  ;; Result aliases keep cursor movement separate from AST construction.
+  (%type.alias $Parsed (%inst $tuple (ref $json-value) i32))
+  (%type.alias $ParseResult (%inst $result $Parsed i32))
+  (%type.alias $OffsetResult (%inst $result i32 i32))
+  (%type.alias $StringResult (%inst $result (%inst $tuple $string i32) i32))
+  (func $json.peek
+    (param $b $bytes)
+    (param $p i32)
+    (result i32)
+    (%effect reads writes allocates)
+    (if
+      (result i32)
+      (i32.lt_u $p (call $json.bytes-len $b))
+      (then (%bytes.get $b $p))
+      (else -1)))
+
+  (func $json.bytes-len
+    (param $b $bytes)
+    (result i32)
+    (%effect reads writes allocates)
+    (%bytes.len $b))
+  ;; Eager predicate masks keep the tuned scans branchless.
+  ;; Unsigned comparisons also preserve the -1 sentinel returned by peek.
+  (func $json.space
+    (param $b $bytes)
+    (param $start i32)
+    (result i32)
+    (%effect reads writes allocates)
+    (%let $length (%bytes.len $b)
+      (%loop $ws
+        (bind $p i32 $start)
+        (result i32)
+        (block
+          (result i32)
+          (if (i32.ge_u $p $length) (then (return $p)) (else (nop)))
+          (%let $c (%bytes.get $b $p)
+            (if
+              (result i32)
+              (| (= $c 32) (| (= $c 9) (| (= $c 10) (= $c 13))))
+              (then (%recur $ws (+ $p 1)))
+              (else $p))))
+      )))
+
+  (func $json.digits
+    (param $b $bytes)
+    (param $start i32)
+    (result i32)
+    (%effect reads writes allocates)
+    (%let $length (%bytes.len $b)
+      (%loop $digits
+        (bind $p i32 $start)
+        (result i32)
+        (block
+          (result i32)
+          (if (i32.ge_u $p $length) (then (return $p)) (else (nop)))
+          (%let $c (%bytes.get $b $p)
+            (if
+              (result i32)
+              (i32.le_u (- $c 48) 9)
+              (then (%recur $digits (+ $p 1)))
+              (else $p))))
+      )))
+
+  (func $json.slice-text
+    (param $b $bytes)
+    (param $start i32)
+    (param $end i32)
+    (result $string)
+    (%effect reads writes allocates)
+    (%match (%string.from-bytes (%bytes.slice $b $start (- $end $start)))
+      (case some ($s) $s)
+      (case none () (unreachable))))
+
+  (func $json.hex-digit
+    (param $x i32)
+    (result i32)
+    (%effect reads writes allocates)
+    (if
+      (result i32)
+      (& (i32.ge_u $x 48) (i32.le_u $x 57))
+      (then (- $x 48))
+      (else
+        (if
+          (result i32)
+          (& (i32.ge_u $x 65) (i32.le_u $x 70))
+          (then (- $x 55))
+          (else
+            (if
+              (result i32)
+              (& (i32.ge_u $x 97) (i32.le_u $x 102))
+              (then (- $x 87))
+              (else -1))))
+      )))
+
+  (func $json.hex4
+    (param $b $bytes)
+    (param $start i32)
+    (result (%inst $result i32 i32))
+    (%effect reads writes allocates)
+    (%loop $hex
+      (bind $p i32 $start)
+      (bind $n i32 0)
+      (result (%inst $result i32 i32))
+      (if
+        (result (%inst $result i32 i32))
+        (= $p (+ $start 4))
+        (then (%result.ok $n))
+        (else
+          (%let $d (call $json.hex-digit (call $json.peek $b $p))
+            (if
+              (result (%inst $result i32 i32))
+              (< $d 0)
+              (then (%result.err $p))
+              (else (%recur $hex (+ $p 1) (+ (* $n 16) $d))))
+          ))))
+  )
+
+  (func $json.codepoint
+    (param $n i32)
+    (result $string)
+    (%effect reads writes allocates)
+    (%match
+      (%string.from-bytes
+        (if
+          (result $bytes)
+          (i32.lt_u $n 128)
+          (then (%bytes.new $n))
+          (else
+            (if
+              (result $bytes)
+              (i32.lt_u $n 2048)
+              (then (%bytes.new (| 192 (>>> $n 6)) (| 128 (& (>>> $n 0) 63))))
+              (else
+                (if
+                  (result $bytes)
+                  (i32.lt_u $n 65536)
+                  (then
+                    (%bytes.new
+                      (| 224 (>>> $n 12))
+                      (| 128 (& (>>> $n 6) 63))
+                      (| 128 (& (>>> $n 0) 63))))
+                  (else
+                    (%bytes.new
+                      (| 240 (>>> $n 18))
+                      (| 128 (& (>>> $n 12) 63))
+                      (| 128 (& (>>> $n 6) 63))
+                      (| 128 (& (>>> $n 0) 63))))
+                ))))
+        ))
+      (case some ($s) $s)
+      (case none () (unreachable))))
+
+  (func $json.escape-code
+    (param $c i32)
+    (result i32)
+    (%effect pure)
+    (block
+      (result i32)
+      (if (= $c 116) (then (return 9)) (else (nop)))
+      (if (= $c 114) (then (return 13)) (else (nop)))
+      (if (= $c 110) (then (return 10)) (else (nop)))
+      (if (= $c 102) (then (return 12)) (else (nop)))
+      (if (= $c 98) (then (return 8)) (else (nop)))
+      (if (| (= $c 47) (| (= $c 92) (= $c 34))) (then (return $c)) (else (nop)))
+      -1))
+
+  (func $json.escape-unicode
+    (param $b $bytes)
+    (param $p i32)
+    (result $StringResult)
+    (%effect reads writes allocates)
+    (%result.do
+      ($high (call $json.hex4 $b (+ $p 2)))
+      (block
+        (result $StringResult)
+        (if
+          (& (i32.ge_u $high 56320) (i32.le_u $high 57343))
+          (then (return (%result.err $p)))
+          (else (nop)))
+        (if
+          (| (i32.lt_u $high 55296) (i32.gt_u $high 56319))
+          (then
+            (return
+              (%result.ok (%tuple.new (call $json.codepoint $high) (+ $p 6))))
+          )
+          (else (nop)))
+        (if
+          (|
+            (!= (call $json.peek $b (+ $p 6)) 92)
+            (!= (call $json.peek $b (+ $p 7)) 117))
+          (then (return (%result.err $p)))
+          (else (nop)))
+        (%result.do
+          ($low (call $json.hex4 $b (+ $p 8)))
+          (if
+            (result $StringResult)
+            (& (i32.ge_u $low 56320) (i32.le_u $low 57343))
+            (then
+              (%result.ok
+                (%tuple.new
+                  (call $json.codepoint
+                    (+ 65536 (+ (* (- $high 55296) 1024) (- $low 56320))))
+                  (+ $p 12))))
+            (else (%result.err $p))))
+      )))
+
+  (func $json.escape
+    (param $b $bytes)
+    (param $p i32)
+    (result $StringResult)
+    (%effect reads writes allocates)
+    (%let $c (call $json.peek $b (+ $p 1))
+      (block
+        (result $StringResult)
+        (if
+          (= $c 117)
+          (then (return (call $json.escape-unicode $b $p)))
+          (else (nop)))
+        (%let $code (call $json.escape-code $c)
+          (if
+            (result $StringResult)
+            (< $code 0)
+            (then (%result.err $p))
+            (else (%result.ok (%tuple.new (call $json.codepoint $code) (+ $p 2))))
+          ))))
+  )
+  ;; Scan up to eight bytes per iteration. Each load is in bounds;
+  ;; return at the first quote, escape or control byte.
+  (func $json.string-end
+    (param $b $bytes)
+    (param $start i32)
+    (result i32)
+    (%effect reads writes allocates)
+    (%let $length (%bytes.len $b)
+      (%loop $scan
+        (bind $p i32 $start)
+        (result i32)
+        (block
+          (result i32)
+          (if (i32.ge_u $p $length) (then (return $p)) (else (nop)))
+          (if
+            (result i32)
+            (i32.ge_u (- $length $p) 8)
+            (then
+              (block
+                (result i32)
+                (%let $c (%bytes.get $b $p)
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return $p))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 1))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 1)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 2))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 2)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 3))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 3)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 4))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 4)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 5))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 5)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 6))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 6)))
+                    (else (nop))))
+                (%let $c (%bytes.get $b (+ $p 7))
+                  (if
+                    (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                    (then (return (+ $p 7)))
+                    (else (nop))))
+                (%recur $scan (+ $p 8))))
+            (else
+              (%let $c (%bytes.get $b $p)
+                (if
+                  (result i32)
+                  (| (i32.lt_u $c 32) (| (= $c 34) (= $c 92)))
+                  (then $p)
+                  (else (%recur $scan (+ $p 1))))
+              ))))
+      )))
+
+  (func $json.parse-string
+    (param $b $bytes)
+    (param $quote i32)
+    (result $StringResult)
+    (%effect reads writes allocates)
+    ;; Most strings never need an escape builder or its second copy.
+    (%loop $string
+      (bind $start i32 (+ $quote 1))
+      (bind $out (ref null $string-builder) (ref.null $string-builder))
+      (result $StringResult)
+      (%let
+        (($end (call $json.string-end $b $start))
+         ($c (call $json.peek $b $end)))
+        (block
+          (result $StringResult)
+          (if
+            (| (= $c -1) (i32.lt_u $c 32))
+            (then (return (%result.err $end)))
+            (else (nop)))
+          (if
+            (= $c 34)
+            (then
+              (return
+                (%result.ok
+                  (%tuple.new
+                    (if
+                      (result $string)
+                      (ref.is_null $out)
+                      (then (call $json.slice-text $b $start $end))
+                      (else
+                        (%let $builder (ref.as_non_null $out)
+                          (block
+                            (result $string)
+                            (call $string-builder.text $builder
+                              (call $json.slice-text $b $start $end))
+                            (call $string-builder.finish $builder))))
+                    )
+                    (+ $end 1))))
+            )
+            (else (nop)))
+          (%result.do
+            ($escaped (call $json.escape $b $end))
+            (%let ($text $next) $escaped
+              (%let $builder
+                (if (result (ref $string-builder)) (ref.is_null $out) (then (call $string-builder.new)) (else (ref.as_non_null $out)))
+                (block
+                  (result $StringResult)
+                  (call $string-builder.text $builder
+                    (call $json.slice-text $b $start $end))
+                  (call $string-builder.text $builder $text)
+                  (%recur $string $next $builder))))
+          ))))
+  )
+
+  (func $json.required-digits
+    (param $b $bytes)
+    (param $start i32)
+    (result $OffsetResult)
+    (%effect reads writes allocates)
+    (%let $c (call $json.peek $b $start)
+      (if
+        (result $OffsetResult)
+        (& (i32.ge_u $c 48) (i32.le_u $c 57))
+        (then (%result.ok (call $json.digits $b $start)))
+        (else (%result.err $start))))
+  )
+
+  (func $json.integer-end
+    (param $b $bytes)
+    (param $start i32)
+    (result $OffsetResult)
+    (%effect reads writes allocates)
+    (if
+      (result $OffsetResult)
+      (= (call $json.peek $b $start) 48)
+      (then (%result.ok (+ $start 1)))
+      (else (call $json.required-digits $b $start))))
+
+  (func $json.fraction-end
+    (param $b $bytes)
+    (param $start i32)
+    (result $OffsetResult)
+    (%effect reads writes allocates)
+    (if
+      (result $OffsetResult)
+      (= (call $json.peek $b $start) 46)
+      (then (call $json.required-digits $b (+ $start 1)))
+      (else (%result.ok $start))))
+
+  (func $json.exponent-end
+    (param $b $bytes)
+    (param $start i32)
+    (result $OffsetResult)
+    (%effect reads writes allocates)
+    (%let $c (call $json.peek $b $start)
+      (block
+        (result $OffsetResult)
+        (if
+          (i32.eqz (| (= $c 101) (= $c 69)))
+          (then (return (%result.ok $start)))
+          (else (nop)))
+        (%let
+          (($sign (+ $start 1))
+           ($c (call $json.peek $b $sign))
+           ($digits
+             (if (result i32) (| (= $c 43) (= $c 45)) (then (+ $sign 1)) (else $sign))))
+          (call $json.required-digits $b $digits))))
+  )
+
+  (func $json.parse-number
+    (param $b $bytes)
+    (param $start i32)
+    (result $ParseResult)
+    (%effect reads writes allocates)
+    (%let $sign
+      (if (result i32) (= (call $json.peek $b $start) 45) (then (+ $start 1)) (else $start))
+      (%result.do
+        ($integer (call $json.integer-end $b $sign))
+        ($fraction (call $json.fraction-end $b $integer))
+        ($end (call $json.exponent-end $b $fraction))
+        (%result.ok
+          (%tuple.new
+            (%variant.new $json-value number
+              (call $json.slice-text $b $start $end))
+            $end))))
+  )
+
+  (func $json.literal
+    (param $b $bytes)
+    (param $p i32)
+    (param $literal $string)
+    (result (%inst $result i32 i32))
+    (%effect reads writes allocates)
+    (%let
+      (($word (%string.bytes $literal))
+       ($n (%bytes.len $word)))
+      (if
+        (result (%inst $result i32 i32))
+        (i32.le_u $n (- (%bytes.len $b) $p))
+        (then
+          (if
+            (result (%inst $result i32 i32))
+            (call $bytes.equal (%bytes.slice $b $p $n) $word)
+            (then (%result.ok (+ $p $n)))
+            (else (%result.err $p))))
+        (else (%result.err $p))))
+  )
+
+  (func $json.reverse-items
+    (param $head (ref null $Items))
+    (param $tail (ref null $Items))
+    (result (ref null $Items))
+    (%effect reads writes allocates)
+    (%loop $reverse
+      (bind $input (ref null $Items) $head)
+      (bind $out (ref null $Items) $tail)
+      (result (ref null $Items))
+      (if
+        (result (ref null $Items))
+        (ref.is_null $input)
+        (then $out)
+        (else
+          (%let $node (ref.as_non_null $input)
+            (%recur $reverse
+              (struct.get $Items $next $node)
+              (struct.new $Items (struct.get $Items $value $node) $out))))
+      )))
+
+  (func $json.reverse-members
+    (param $head (ref null $Members))
+    (param $tail (ref null $Members))
+    (result (ref null $Members))
+    (%effect reads writes allocates)
+    (%loop $reverse
+      (bind $input (ref null $Members) $head)
+      (bind $out (ref null $Members) $tail)
+      (result (ref null $Members))
+      (if
+        (result (ref null $Members))
+        (ref.is_null $input)
+        (then $out)
+        (else
+          (%let $node (ref.as_non_null $input)
+            (%recur $reverse
+              (struct.get $Members $next $node)
+              (struct.new $Members
+                (struct.get $Members $key $node)
+                (struct.get $Members $value $node)
+                $out))))
+      )))
+
+  (func $json.parse-array
+    (param $b $bytes)
+    (param $open i32)
+    (param $depth i32)
+    (result $ParseResult)
+    (%effect reads writes allocates)
+    (%let $start (call $json.space $b (+ $open 1))
+      (block
+        (result $ParseResult)
+        (if
+          (= (call $json.peek $b $start) 93)
+          (then
+            (return
+              (%result.ok
+                (%tuple.new
+                  (%variant.new $json-value array (ref.null $Items))
+                  (+ $start 1))))
+          )
+          (else (nop)))
+        ;; Siblings are iterative. Recursion follows nested values only.
+        (%loop $read-array
+          (bind $p i32 $start)
+          (bind $head (ref null $Items) (ref.null $Items))
+          (result $ParseResult)
+          (%result.do
+            ($parsed (call $json.parse-value $b $p (+ $depth 1)))
+            (%let ($item $next) $parsed
+              (%let
+                (($head (struct.new $Items $item $head))
+                 ($end (call $json.space $b $next))
+                 ($c (call $json.peek $b $end)))
+                (block
+                  (result $ParseResult)
+                  (if
+                    (= $c 93)
+                    (then
+                      (return
+                        (%result.ok
+                          (%tuple.new
+                            (%variant.new $json-value array
+                              (call $json.reverse-items $head (ref.null $Items)))
+                            (+ $end 1))))
+                    )
+                    (else (nop)))
+                  (if (!= $c 44) (then (return (%result.err $end))) (else (nop)))
+                  (%recur $read-array (call $json.space $b (+ $end 1)) $head))))
+          ))))
+  )
+
+  (func $json.parse-object
+    (param $b $bytes)
+    (param $open i32)
+    (param $depth i32)
+    (result $ParseResult)
+    (%effect reads writes allocates)
+    (%let $start (call $json.space $b (+ $open 1))
+      (block
+        (result $ParseResult)
+        (if
+          (= (call $json.peek $b $start) 125)
+          (then
+            (return
+              (%result.ok
+                (%tuple.new
+                  (%variant.new $json-value object (ref.null $Members))
+                  (+ $start 1))))
+          )
+          (else (nop)))
+        (%loop $read-object
+          (bind $p i32 $start)
+          (bind $head (ref null $Members) (ref.null $Members))
+          (result $ParseResult)
+          (block
+            (result $ParseResult)
+            (if
+              (!= (call $json.peek $b $p) 34)
+              (then (return (%result.err $p)))
+              (else (nop)))
+            (%result.do
+              ($parsed-key (call $json.parse-string $b $p))
+              (%let ($key $after-key) $parsed-key
+                (%let $colon (call $json.space $b $after-key)
+                  (block
+                    (result $ParseResult)
+                    (if
+                      (!= (call $json.peek $b $colon) 58)
+                      (then (return (%result.err $colon)))
+                      (else (nop)))
+                    (%result.do
+                      ($parsed
+                        (call $json.parse-value $b
+                          (call $json.space $b (+ $colon 1))
+                          (+ $depth 1)))
+                      (%let ($item $next) $parsed
+                        (%let
+                          (($head (struct.new $Members $key $item $head))
+                           ($end (call $json.space $b $next))
+                           ($c (call $json.peek $b $end)))
+                          (block
+                            (result $ParseResult)
+                            (if
+                              (= $c 125)
+                              (then
+                                (return
+                                  (%result.ok
+                                    (%tuple.new
+                                      (%variant.new $json-value object
+                                        (call $json.reverse-members $head
+                                          (ref.null $Members)))
+                                      (+ $end 1))))
+                              )
+                              (else (nop)))
+                            (if
+                              (!= $c 44)
+                              (then (return (%result.err $end)))
+                              (else (nop)))
+                            (%recur $read-object
+                              (call $json.space $b (+ $end 1))
+                              $head))))
+                    ))))
+            ))))
+    ))
+
+  (func $json.parse-value
+    (param $b $bytes)
+    (param $p i32)
+    (param $depth i32)
+    (result $ParseResult)
+    (%effect reads writes allocates)
+    (%let $c (call $json.peek $b $p)
+      (block
+        (result $ParseResult)
+        ;; Depth counts containers, so an empty container cannot bypass it.
+        (if
+          (| (i32.gt_u $depth 128) (& (= $depth 128) (| (= $c 123) (= $c 91))))
+          (then (return (%result.err $p)))
+          (else (nop)))
+        (if
+          (= $c 123)
+          (then (return (call $json.parse-object $b $p $depth)))
+          (else (nop)))
+        (if
+          (= $c 91)
+          (then (return (call $json.parse-array $b $p $depth)))
+          (else (nop)))
+        (if
+          (= $c 34)
+          (then
+            (return
+              (%result.do
+                ($s (call $json.parse-string $b $p))
+                (%let ($text $next) $s
+                  (%result.ok
+                    (%tuple.new (%variant.new $json-value string $text) $next))))
+            ))
+          (else (nop)))
+        (if
+          (= $c 102)
+          (then
+            (return
+              (%result.do
+                ($next (call $json.literal $b $p (%string.lit "false")))
+                (%result.ok (%tuple.new (%variant.new $json-value boolean 0) $next))))
+          )
+          (else (nop)))
+        (if
+          (= $c 116)
+          (then
+            (return
+              (%result.do
+                ($next (call $json.literal $b $p (%string.lit "true")))
+                (%result.ok (%tuple.new (%variant.new $json-value boolean 1) $next))))
+          )
+          (else (nop)))
+        (if
+          (= $c 110)
+          (then
+            (return
+              (%result.do
+                ($next (call $json.literal $b $p (%string.lit "null")))
+                (%result.ok (%tuple.new (%variant.new $json-value null) $next))))
+          )
+          (else (nop)))
+        (call $json.parse-number $b $p))))
+
+  (func $json.parse
+    (param $source $string)
+    (result (%inst $result (ref $json-value) i32))
+    (%effect reads writes allocates)
+    (%let $b (%string.bytes $source)
+      (block
+        (result (%inst $result (ref $json-value) i32))
+        (if
+          (i32.gt_u (%bytes.len $b) 65536)
+          (then (return (%result.err 65536)))
+          (else (nop)))
+        (%result.do
+          ($parsed (call $json.parse-value $b (call $json.space $b 0) 0))
+          (%let ($value $next) $parsed
+            (%let $end (call $json.space $b $next)
+              (if
+                (result (%inst $result (ref $json-value) i32))
+                (= $end (%bytes.len $b))
+                (then (%result.ok $value))
+                (else (%result.err $end))))
+          ))))
+  )
+
+  (func $json.null
+    (result (ref $json-value))
+    (%effect reads writes allocates)
+    (%variant.new $json-value null))
+
+  (func $json.boolean
+    (param $value i32)
+    (result (ref $json-value))
+    (%effect reads writes allocates)
+    (%variant.new $json-value boolean (!= $value 0)))
+
+  (func $json.from-string
+    (param $value $string)
+    (result (ref $json-value))
+    (%effect reads writes allocates)
+    (%variant.new $json-value string $value))
+
+  (func $json.array
+    (result (ref $json-value))
+    (%effect reads writes allocates)
+    (%variant.new $json-value array (ref.null $Items)))
+
+  (func $json.object
+    (result (ref $json-value))
+    (%effect reads writes allocates)
+    (%variant.new $json-value object (ref.null $Members)))
+
+  (func $json.number
+    (param $lexeme $string)
+    (result (%inst $result (ref $json-value) i32))
+    (%effect reads writes allocates)
+    (%result.let ($value)
+      (call $json.parse $lexeme)
+      (%match $value
+        (case null () (%result.err 0))
+        (case boolean ($x) (%result.err 0))
+        (case number ($x) (%result.ok $value))
+        (case string ($x) (%result.err 0))
+        (case array ($x) (%result.err 0))
+        (case object ($x) (%result.err 0))))
+  )
+
+  (func $json.kind
+    (param $value (ref $json-value))
+    (result (ref $json-kind))
+    (%effect reads writes allocates)
+    (%match $value
+      (case null () (%variant.new $json-kind null))
+      (case boolean ($x) (%variant.new $json-kind boolean))
+      (case number ($x) (%variant.new $json-kind number))
+      (case string ($x) (%variant.new $json-kind string))
+      (case array ($x) (%variant.new $json-kind array))
+      (case object ($x) (%variant.new $json-kind object))))
+
+  (func $json.as-boolean
+    (param $value (ref $json-value))
+    (result (%inst $option i32))
+    (%effect reads writes allocates)
+    (%match $value
+      (case null () (%option.none))
+      (case boolean ($x) (%option.some $x))
+      (case number ($x) (%option.none))
+      (case string ($x) (%option.none))
+      (case array ($x) (%option.none))
+      (case object ($x) (%option.none))))
+
+  (func $json.as-number
+    (param $value (ref $json-value))
+    (result (%inst $option $string))
+    (%effect reads writes allocates)
+    (%match $value
+      (case null () (%option.none))
+      (case boolean ($x) (%option.none))
+      (case number ($x) (%option.some $x))
+      (case string ($x) (%option.none))
+      (case array ($x) (%option.none))
+      (case object ($x) (%option.none))))
+
+  (func $json.as-string
+    (param $value (ref $json-value))
+    (result (%inst $option $string))
+    (%effect reads writes allocates)
+    (%match $value
+      (case null () (%option.none))
+      (case boolean ($x) (%option.none))
+      (case number ($x) (%option.none))
+      (case string ($x) (%option.some $x))
+      (case array ($x) (%option.none))
+      (case object ($x) (%option.none))))
+
+  (func $json.prepend
+    (param $array (ref $json-value))
+    (param $item (ref $json-value))
+    (result (%inst $result (ref $json-value) i32))
+    (%effect reads writes allocates)
+    (%match $array
+      (case null () (%result.err 0))
+      (case boolean ($x) (%result.err 0))
+      (case number ($x) (%result.err 0))
+      (case string ($x) (%result.err 0))
+      (case array ($x)
+        (%result.ok (%variant.new $json-value array (struct.new $Items $item $x))))
+      (case object ($x) (%result.err 0))))
+
+  (func $json.set
+    (param $object (ref $json-value))
+    (param $key $string)
+    (param $item (ref $json-value))
+    (result (%inst $result (ref $json-value) i32))
+    (%effect reads writes allocates)
+    (%match $object
+      (case null () (%result.err 0))
+      (case boolean ($x) (%result.err 0))
+      (case number ($x) (%result.err 0))
+      (case string ($x) (%result.err 0))
+      (case array ($x) (%result.err 0))
+      (case object ($x)
+        (%let $reverse (call $json.reverse-members $x (ref.null $Members))
+          (%result.ok
+            (%variant.new $json-value object
+              (call $json.reverse-members $reverse
+                (struct.new $Members $key $item (ref.null $Members))))
+          ))))
+  )
+
+  (func $json.get
+    (param $object (ref $json-value))
+    (param $key $string)
+    (result (%inst $option (ref $json-value)))
+    (%effect reads writes allocates)
+    (%match $object
+      (case null () (%option.none))
+      (case boolean ($x) (%option.none))
+      (case number ($x) (%option.none))
+      (case string ($x) (%option.none))
+      (case array ($x) (%option.none))
+      (case object ($x)
+        (%loop $get
+          (bind $head (ref null $Members) $x)
+          (bind $found (%inst $option (ref $json-value)) (%option.none))
+          (result (%inst $option (ref $json-value)))
+          (if
+            (result (%inst $option (ref $json-value)))
+            (ref.is_null $head)
+            (then $found)
+            (else
+              (%let $node (ref.as_non_null $head)
+                (%recur $get
+                  (struct.get $Members $next $node)
+                  (if
+                    (result (%inst $option (ref $json-value)))
+                    (call $bytes.equal
+                      (%string.bytes $key)
+                      (%string.bytes (struct.get $Members $key $node)))
+                    (then (%option.some (struct.get $Members $value $node)))
+                    (else $found))))
+            ))))
+    ))
+
+  (func $json.at
+    (param $array (ref $json-value))
+    (param $index i32)
+    (result (%inst $option (ref $json-value)))
+    (%effect reads writes allocates)
+    (%match $array
+      (case null () (%option.none))
+      (case boolean ($x) (%option.none))
+      (case number ($x) (%option.none))
+      (case string ($x) (%option.none))
+      (case array ($x)
+        (%loop $at
+          (bind $head (ref null $Items) $x)
+          (bind $index i32 $index)
+          (result (%inst $option (ref $json-value)))
+          (if
+            (result (%inst $option (ref $json-value)))
+            (ref.is_null $head)
+            (then (%option.none))
+            (else
+              (%let $node (ref.as_non_null $head)
+                (if
+                  (result (%inst $option (ref $json-value)))
+                  (= $index 0)
+                  (then (%option.some (struct.get $Items $value $node)))
+                  (else (%recur $at (struct.get $Items $next $node) (- $index 1))))
+              ))))
+      )
+      (case object ($x) (%option.none))))
+
+  (func $json.write
+    (param $value (ref $json-value))
+    (param $out (ref $string-builder))
+    (%effect reads writes allocates)
+    (%match $value
+      (case null () (call $string-builder.text $out (%string.lit "null")))
+      (case boolean ($x)
+        (call $string-builder.text $out
+          (if
+            (result $string)
+            $x
+            (then (%string.lit "true"))
+            (else (%string.lit "false"))))
+      )
+      (case number ($x) (call $string-builder.text $out $x))
+      (case string ($x) (call $string-builder.text $out (call $json-string.quote $x)))
+      (case array ($x)
+        (block
+          (call $string-builder.text $out (%string.lit "["))
+          (%loop $write-array
+            (bind $head (ref null $Items) $x)
+            (bind $first i32 1)
+            (if
+              (ref.is_null $head)
+              (then (nop))
+              (else
+                (%let $node (ref.as_non_null $head)
+                  (block
+                    (if
+                      (= $first 0)
+                      (then (call $string-builder.text $out (%string.lit ",")))
+                      (else (nop)))
+                    (call $json.write (struct.get $Items $value $node) $out)
+                    (%recur $write-array (struct.get $Items $next $node) 0))))
+            ))
+          (call $string-builder.text $out (%string.lit "]"))))
+      (case object ($x)
+        (block
+          (call $string-builder.text $out (%string.lit "{"))
+          (%loop $write-object
+            (bind $head (ref null $Members) $x)
+            (bind $first i32 1)
+            (if
+              (ref.is_null $head)
+              (then (nop))
+              (else
+                (%let $node (ref.as_non_null $head)
+                  (block
+                    (if
+                      (= $first 0)
+                      (then (call $string-builder.text $out (%string.lit ",")))
+                      (else (nop)))
+                    (call $string-builder.text $out (call $json-string.quote (struct.get $Members $key $node)))
+                    (call $string-builder.text $out (%string.lit ":"))
+                    (call $json.write (struct.get $Members $value $node) $out)
+                    (%recur $write-object (struct.get $Members $next $node) 0))))
+            ))
+          (call $string-builder.text $out (%string.lit "}"))))
+    ))
+
+  (func $json.stringify
+    (param $value (ref $json-value))
+    (result $string)
+    (%effect reads writes allocates)
+    (block (result $string)
+      ;; A standalone JSON string needs no intermediate builder or second copy.
+      (%match $value
+        (case null () (nop))
+        (case boolean ($x) (nop))
+        (case number ($x) (nop))
+        (case string ($x) (return (call $json-string.quote $x)))
+        (case array ($x) (nop))
+        (case object ($x) (nop)))
+      (%let $out (call $string-builder.new)
+        (block (result $string)
+          (call $json.write $value $out)
+          (call $string-builder.finish $out)))))
+
+)
+
+(%file.namespace $wlt-file-5
+
+  
+(%file.use $wlt-file-1 (func $json-string.quote))
+
+  (%use "wlt:core" (type $result) (type $string) (type $unit))
+  
+(%file.use $wlt-file-4 (type $json-value)
+    (func $json.number)
+    (func $json.stringify))
+
+  
+(%file.use $wlt-file-3 (type $string-builder)
+    (func $string-builder.finish)
+    (func $string-builder.new)
+    (func $string-builder.s64)
+    (func $string-builder.text)
+    (func $string-builder.u64))
+
+  (%export
+    (opaque $json-object)
+    (func $json.object-builder.new)
+    (func $json.object-builder.string)
+    (func $json.object-builder.u64)
+    (func $json.object-builder.s64)
+    (func $json.object-builder.boolean)
+    (func $json.object-builder.object)
+    (func $json.object-builder.null)
+    (func $json.object-builder.number)
+    (func $json.object-builder.value)
+    (func $json.object-builder.finish))
+  (type $json-object
+    (struct (field $builder (ref $string-builder)) (field $first (mut i32))))
+  (func $json.object-builder.new
+    (result (ref $json-object))
+    (%effect reads writes allocates)
+    (%let $b (call $string-builder.new)
+      (block
+        (result (ref $json-object))
+        (call $string-builder.text $b (%string.lit "{"))
+        (struct.new $json-object $b 1))))
+
+  (func $json.object-builder.key
+    (param $o (ref $json-object))
+    (param $key $string)
+    (%effect reads writes allocates)
+    (block
+      (if
+        (i32.eqz (struct.get $json-object $first $o))
+        (then
+          (call $string-builder.text
+            (struct.get $json-object $builder $o)
+            (%string.lit ",")))
+        (else (block)))
+      (struct.set $json-object $first $o 0)
+      (call $string-builder.text (struct.get $json-object $builder $o) (call $json-string.quote $key))
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
+        (%string.lit ":"))))
+
+  (func $json.object-builder.string
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value $string)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text (struct.get $json-object $builder $o) (call $json-string.quote $value))))
+
+  (func $json.object-builder.u64
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i64)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.u64 (struct.get $json-object $builder $o) $value)))
+
+  (func $json.object-builder.s64
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i64)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.s64 (struct.get $json-object $builder $o) $value)))
+
+  (func $json.object-builder.boolean
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i32)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
+        (if
+          (result $string)
+          $value
+          (then (%string.lit "true"))
+          (else (%string.lit "false"))))
+    ))
+
+  (func $json.object-builder.finish
+    (param $o (ref $json-object))
+    (result $string)
+    (%effect reads writes allocates)
+    (%let $b (struct.get $json-object $builder $o)
+      (block
+        (result $string)
+        (call $string-builder.text $b (%string.lit "}"))
+        (%let $result (call $string-builder.finish $b)
+          (block
+            (result $string)
+            (call $string-builder.text $b (%string.lit "{"))
+            (struct.set $json-object $first $o 1)
+            $result))))
+  )
+
+  (func $json.object-builder.object
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value (ref $json-object))
+    (%effect reads writes allocates)
+    ;; Drain the child before touching the parent: aliases cannot form cycles.
+    (%let $value (call $json.object-builder.finish $value)
+      (block
+        (call $json.object-builder.key $o $key)
+        (call $string-builder.text (struct.get $json-object $builder $o) $value))))
+
+  (func $json.object-builder.null
+    (param $o (ref $json-object))
+    (param $key $string)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
+        (%string.lit "null"))))
+
+  (func $json.object-builder.value
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value (ref $json-value))
+    (%effect reads writes allocates)
+    (%let $text (call $json.stringify $value)
+      (block
+        (call $json.object-builder.key $o $key)
+        (call $string-builder.text (struct.get $json-object $builder $o) $text))))
+
+  (func $json.object-builder.number
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $lexeme $string)
+    (result (%inst $result $unit i32))
+    (%effect reads writes allocates)
+    (%result.let ($value)
+      (call $json.number $lexeme)
+      (block
+        (result (%inst $result $unit i32))
+        (call $json.object-builder.value $o $key $value)
+        (%result.ok))))
+
+)
+)

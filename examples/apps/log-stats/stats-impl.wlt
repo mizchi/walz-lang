@@ -1,4 +1,5 @@
 (module
+  (%use "./parse.wlt" (type $Level $parse.Level) (type $Line $parse.Line))
   (%public
     (opaque $State)
     (func $new)
@@ -8,11 +9,9 @@
     (func $ignored)
     (func $count)
     (func $total)
-    (func $maximum)
-  )
+    (func $maximum))
   (type $Bucket
-    (struct (field $count (mut i64)) (field $total (mut i64)) (field $max (mut i64)))
-  )
+    (struct (field $count (mut i64)) (field $total (mut i64)) (field $max (mut i64))))
   (type $State
     (struct
       (field $accepted (mut i64))
@@ -20,9 +19,7 @@
       (field $ignored (mut i64))
       (field $info (ref $Bucket))
       (field $warn (ref $Bucket))
-      (field $error (ref $Bucket))
-    )
-  )
+      (field $error (ref $Bucket))))
   (func $new
     (result (ref $State))
     (%effect allocates)
@@ -32,71 +29,67 @@
       (i64.const 0)
       (struct.new $Bucket (i64.const 0) (i64.const 0) (i64.const 0))
       (struct.new $Bucket (i64.const 0) (i64.const 0) (i64.const 0))
-      (struct.new $Bucket (i64.const 0) (i64.const 0) (i64.const 0))
-    )
-  )
+      (struct.new $Bucket (i64.const 0) (i64.const 0) (i64.const 0))))
+
   (func $accepted
     (param $s (ref $State))
     (result i64)
     (%effect reads)
-    (struct.get $State $accepted (local.get $s))
-  )
+    (struct.get $State $accepted (local.get $s)))
+
   (func $rejected
     (param $s (ref $State))
     (result i64)
     (%effect reads)
-    (struct.get $State $rejected (local.get $s))
-  )
+    (struct.get $State $rejected (local.get $s)))
+
   (func $ignored
     (param $s (ref $State))
     (result i64)
     (%effect reads)
-    (struct.get $State $ignored (local.get $s))
-  )
+    (struct.get $State $ignored (local.get $s)))
+
   (func $bucket
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result (ref $Bucket))
     (%effect pure)
-    (%match $parse.Level
-      (result (ref $Bucket))
+    (%match $parse.Level (result (ref $Bucket))
       (local.get $level)
       (case info () (struct.get $State $info (local.get $s)))
       (case warn () (struct.get $State $warn (local.get $s)))
-      (case error () (struct.get $State $error (local.get $s)))
-    )
+      (case error () (struct.get $State $error (local.get $s))))
   )
+
   (func $count
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
     (%effect reads)
-    (struct.get $Bucket $count (call $bucket (local.get $s) (local.get $level)))
-  )
+    (struct.get $Bucket $count (call $bucket (local.get $s) (local.get $level))))
+
   (func $total
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
     (%effect reads)
-    (struct.get $Bucket $total (call $bucket (local.get $s) (local.get $level)))
-  )
+    (struct.get $Bucket $total (call $bucket (local.get $s) (local.get $level))))
+
   (func $maximum
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
     (%effect reads)
-    (struct.get $Bucket $max (call $bucket (local.get $s) (local.get $level)))
-  )
+    (struct.get $Bucket $max (call $bucket (local.get $s) (local.get $level))))
+
   (func $consume
     (param $s (ref $State))
     (param $line (ref $parse.Line))
     (result i32)
     (%effect reads writes)
-    (%match $parse.Line
-      (result i32)
+    (%match $parse.Line (result i32)
       (local.get $line)
-      (case skip
-        ()
+      (case skip ()
         (if
           (result i32)
           (i64.eq (call $ignored (local.get $s)) (i64.const -1))
@@ -106,15 +99,10 @@
               (result i32)
               (struct.set $State $ignored
                 (local.get $s)
-                (i64.add (call $ignored (local.get $s)) (i64.const 1))
-              )
-              (i32.const 1)
-            )
-          )
-        )
+                (i64.add (call $ignored (local.get $s)) (i64.const 1)))
+              (i32.const 1))))
       )
-      (case invalid
-        ()
+      (case invalid ()
         (if
           (result i32)
           (i64.eq (call $rejected (local.get $s)) (i64.const -1))
@@ -124,78 +112,53 @@
               (result i32)
               (struct.set $State $rejected
                 (local.get $s)
-                (i64.add (call $rejected (local.get $s)) (i64.const 1))
-              )
-              (i32.const 1)
-            )
-          )
-        )
+                (i64.add (call $rejected (local.get $s)) (i64.const 1)))
+              (i32.const 1))))
       )
-      (case info
-        ($ms)
+      (case info ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $info (local.get $s))
-          (local.get $ms)
-        )
-      )
-      (case warn
-        ($ms)
+          (local.get $ms)))
+      (case warn ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $warn (local.get $s))
-          (local.get $ms)
-        )
-      )
-      (case error
-        ($ms)
+          (local.get $ms)))
+      (case error ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $error (local.get $s))
-          (local.get $ms)
-        )
-      )
-    )
+          (local.get $ms))))
   )
+
   (func $accept
     (param $s (ref $State))
     (param $b (ref $Bucket))
     (param $ms i64)
     (result i32)
     (%effect reads writes)
-    (%let $before
-      (struct.get $Bucket $total (local.get $b))
-      (%let $sum
-        (i64.add (local.get $before) (local.get $ms))
+    (%let $before (struct.get $Bucket $total (local.get $b))
+      (%let $sum (i64.add (local.get $before) (local.get $ms))
         (if
           (result i32)
           (i32.or
             (i64.eq (call $accepted (local.get $s)) (i64.const -1))
-            (i64.lt_u (local.get $sum) (local.get $before))
-          )
+            (i64.lt_u (local.get $sum) (local.get $before)))
           (then (i32.const 0))
           (else
             (block
               (result i32)
               (struct.set $State $accepted
                 (local.get $s)
-                (i64.add (call $accepted (local.get $s)) (i64.const 1))
-              )
+                (i64.add (call $accepted (local.get $s)) (i64.const 1)))
               (struct.set $Bucket $count
                 (local.get $b)
-                (i64.add (struct.get $Bucket $count (local.get $b)) (i64.const 1))
-              )
+                (i64.add (struct.get $Bucket $count (local.get $b)) (i64.const 1)))
               (struct.set $Bucket $total (local.get $b) (local.get $sum))
               (if
                 (i64.gt_u (local.get $ms) (struct.get $Bucket $max (local.get $b)))
                 (then (struct.set $Bucket $max (local.get $b) (local.get $ms)))
-                (else (nop))
-              )
-              (i32.const 1)
-            )
-          )
-        )
-      )
-    )
-  )
-)
+                (else (nop)))
+              (i32.const 1))))
+      ))))

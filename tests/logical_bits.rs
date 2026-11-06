@@ -272,15 +272,15 @@ fn conditional_rhs_cannot_consume_an_outer_owner_on_only_one_path() {
     for op in ["&&", "||"] {
         let source = format!(
             "(module (func $f (param $flag i32)
-          (%let $x (%own.new i32 42)
-            (block (drop ({op} $flag (block (result i32) (%own.close (%move $x)) 1)))
-              (%own.close (%move $x))))))"
+          (%let $x (%box.new i32 42)
+            (block (drop ({op} $flag (block (result i32) (%box.close (%move $x)) 1)))
+              (%box.close (%move $x))))))"
         );
         let diagnostic = wlt::check(&source).unwrap_err();
         assert!(diagnostic.to_string().contains("ownership"), "{diagnostic}");
     }
     let source = r#"(module (func $main (export "main") (result i32) (%effect pure)
-      (&& 1 (%let $x (%own.new i32 42) (block (result i32) (%own.close (%move $x)) 9)))))"#;
+      (&& 1 (%let $x (%box.new i32 42) (block (result i32) (%box.close (%move $x)) 9)))))"#;
     wlt::verified::compile(source).unwrap();
     run(source, "1");
 }

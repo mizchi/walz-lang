@@ -1,55 +1,138 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $bytes)
     (type $future)
     (type $option)
-    (type $pair)
+    (type $tuple)
     (type $result)
     (type $stream)
-    (type $text))
-  (%namespace $identity
-    (%import "wlt:std"
-      (type $bytes)
-      (type $text))
-    (%public (func $bytes) (func $text))
-    (func $bytes (param $value $bytes) (result $bytes) (%effect pure) (local.get $value))
-    (func $text (param $value $text) (result $text) (%effect pure) (local.get $value)))
-  (%use $identity (func $bytes $id-bytes) (func $text $id-text))
-  (func $bytes (export "bytes") (param $b $bytes) (result $bytes) (%effect pure)
+    (type $string))
+  (%use "./identity.wlt" (func $bytes $id-bytes) (func $text $id-text))
+  (func $bytes
+    (export "bytes")
+    (param $b $bytes)
+    (result $bytes)
+    (%effect pure)
     (call $id-bytes (local.get $b)))
-  (func $text (export "text") (param $t $text) (result $text) (%effect pure)
-    (call $id-text (local.get $t)))
-  (func $literal (export "literal") (result $text) (%effect pure) (%text.lit "日本語🦀"))
-  (func $decode (export "decode") (param $b $bytes) (result (%inst $option $text)) (%effect pure)
-    (%text.from-bytes (local.get $b)))
-  (func $encode (export "encode") (param $t $text) (result $bytes) (%effect pure)
-    (%text.bytes (local.get $t)))
-  (func $slice (export "slice") (param $b $bytes) (param $start i32) (param $len i32)
-    (result $bytes) (%effect pure) (%bytes.slice (local.get $b) (local.get $start) (local.get $len)))
-  (func $get (export "get") (param $b $bytes) (param $i i32) (result i32) (%effect pure)
-    (%bytes.get (local.get $b) (local.get $i)))
-  (func $len (export "length") (param $t $text) (result i32) (%effect pure)
-    (%text.byte-len (local.get $t)))
-  (func $new (export "new-bytes") (result $bytes) (%effect pure)
-    (%bytes.new (i32.const 0) (i32.const 255) (i32.const 256) (i32.const -1)))
-  (func $nested (export "nested") (param $v (%inst $option (%inst $pair $text $bytes)))
-    (result (%inst $option (%inst $pair $text $bytes))) (%effect pure) (local.get $v))
-  (func $ready (export "ready") (param $t $text) (result (%inst $future $text)) (%effect pure)
-    (%future.ready $text (local.get $t)))
-  (func $await (export "await") (param $f (%inst $future $text)) (result $text) (%effect suspends)
-    (%future.await $text (%move $f)))
-  (func $stream (export "stream") (param $b $bytes) (result (%inst $stream $bytes)) (%effect pure)
-    (%stream.cons $bytes (local.get $b) (%stream.empty $bytes)))
-  (func $first (export "first") (param $s (%inst $stream $bytes)) (result (%inst $option $bytes)) (%effect suspends)
-    (%match (%inst $pair (%inst $stream $bytes) (%inst $option $bytes)) (result (%inst $option $bytes)) (%stream.next $bytes (%move $s))
-      (case pair ($next $item)
-        (block (result (%inst $option $bytes)) (%stream.close $bytes (%move $next)) (local.get $item)))))
 
-  (func $variant (export "variant") (param $v (%inst $option (%inst $result $text $bytes)))
-    (result (%inst $option (%inst $result $text $bytes))) (%effect pure) (local.get $v))
-  (func $wide (export "wide")
-    (param $a0 $text) (param $a1 $text) (param $a2 $text)
-    (param $a3 $text) (param $a4 $text) (param $a5 $text)
-    (param $a6 $text) (param $a7 $text) (param $a8 $text)
-    (result $text) (%effect pure) (local.get $a8))
-)
+  (func $text
+    (export "text")
+    (param $t $string)
+    (result $string)
+    (%effect pure)
+    (call $id-text (local.get $t)))
+
+  (func $literal
+    (export "literal")
+    (result $string)
+    (%effect pure)
+    (%string.lit "日本語🦀"))
+
+  (func $decode
+    (export "decode")
+    (param $b $bytes)
+    (result (%inst $option $string))
+    (%effect pure)
+    (%string.from-bytes (local.get $b)))
+
+  (func $encode
+    (export "encode")
+    (param $t $string)
+    (result $bytes)
+    (%effect pure)
+    (%string.bytes (local.get $t)))
+
+  (func $slice
+    (export "slice")
+    (param $b $bytes)
+    (param $start i32)
+    (param $len i32)
+    (result $bytes)
+    (%effect pure)
+    (%bytes.slice (local.get $b) (local.get $start) (local.get $len)))
+
+  (func $get
+    (export "get")
+    (param $b $bytes)
+    (param $i i32)
+    (result i32)
+    (%effect pure)
+    (%bytes.get (local.get $b) (local.get $i)))
+
+  (func $len
+    (export "length")
+    (param $t $string)
+    (result i32)
+    (%effect pure)
+    (%string.byte-len (local.get $t)))
+
+  (func $new
+    (export "new-bytes")
+    (result $bytes)
+    (%effect pure)
+    (%bytes.new (i32.const 0) (i32.const 255) (i32.const 256) (i32.const -1)))
+
+  (func $nested
+    (export "nested")
+    (param $v (%inst $option (%inst $tuple $string $bytes)))
+    (result (%inst $option (%inst $tuple $string $bytes)))
+    (%effect pure)
+    (local.get $v))
+
+  (func $ready
+    (export "ready")
+    (param $t $string)
+    (result (%inst $future $string))
+    (%effect pure)
+    (%future.ready $string (local.get $t)))
+
+  (func $await
+    (export "await")
+    (param $f (%inst $future $string))
+    (result $string)
+    (%effect suspends)
+    (%future.await $string (%move $f)))
+
+  (func $stream
+    (export "stream")
+    (param $b $bytes)
+    (result (%inst $stream $bytes))
+    (%effect pure)
+    (%stream.cons $bytes (local.get $b) (%stream.empty $bytes)))
+
+  (func $first
+    (export "first")
+    (param $s (%inst $stream $bytes))
+    (result (%inst $option $bytes))
+    (%effect suspends)
+    (%match (%inst $tuple (%inst $stream $bytes) (%inst $option $bytes))
+      (result (%inst $option $bytes))
+      (%stream.next $bytes (%move $s))
+      (case pair ($next $item)
+        (block
+          (result (%inst $option $bytes))
+          (%stream.close $bytes (%move $next))
+          (local.get $item))))
+  )
+
+  (func $variant
+    (export "variant")
+    (param $v (%inst $option (%inst $result $string $bytes)))
+    (result (%inst $option (%inst $result $string $bytes)))
+    (%effect pure)
+    (local.get $v))
+
+  (func $wide
+    (export "wide")
+    (param $a0 $string)
+    (param $a1 $string)
+    (param $a2 $string)
+    (param $a3 $string)
+    (param $a4 $string)
+    (param $a5 $string)
+    (param $a6 $string)
+    (param $a7 $string)
+    (param $a8 $string)
+    (result $string)
+    (%effect pure)
+    (local.get $a8)))

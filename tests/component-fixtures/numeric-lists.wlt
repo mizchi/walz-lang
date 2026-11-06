@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std" (type $list) (type $future) (type $stream) (type $option) (type $pair))
+  (%use "wlt:core" (type $list) (type $future) (type $stream) (type $option) (type $tuple))
   (func $ints (export "ints") (param $xs (%inst $list i32)) (result (%inst $list i32)) (%effect pure) (local.get $xs))
   (func $longs (export "longs") (param $xs (%inst $list i64)) (result (%inst $list i64)) (%effect pure) (local.get $xs))
   (func $floats (export "floats") (param $xs (%inst $list f32)) (result (%inst $list f32)) (%effect pure) (local.get $xs))

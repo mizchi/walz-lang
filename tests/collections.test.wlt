@@ -1,11 +1,11 @@
 (module
-  (%import "wlt:std"
-    (type $text)
+  (%use "wlt:core"
+    (type $string)
     (type $option)
-    (type $pair)
+    (type $tuple)
     (type $list)
     (func $string.u64)
-    (func $buffer.equal)
+    (func $bytes.equal)
     (func $dict.new)
     (func $dict.len)
     (func $dict.get)
@@ -27,24 +27,24 @@
       (case some ($n) (local.get $n))))
 
   (func $equal
-    (param $a $text)
-    (param $b $text)
+    (param $a $string)
+    (param $b $string)
     (result i32)
     (%effect pure)
-    (call $buffer.equal (%text.bytes (local.get $a)) (%text.bytes (local.get $b))))
+    (call $bytes.equal (%string.bytes (local.get $a)) (%string.bytes (local.get $b))))
   (%test "dict collision, replacement, unlink and clear"
     (%let
       (($d (call (%inst $dict.new i64)))
-       ($missing (call (%inst $dict.get i64) (local.get $d) (%text.lit "a")))
-       ($a (call (%inst $dict.set i64) (local.get $d) (%text.lit "a") (i64.const 10)))
-       ($q (call (%inst $dict.set i64) (local.get $d) (%text.lit "q") (i64.const 20)))
+       ($missing (call (%inst $dict.get i64) (local.get $d) (%string.lit "a")))
+       ($a (call (%inst $dict.set i64) (local.get $d) (%string.lit "a") (i64.const 10)))
+       ($q (call (%inst $dict.set i64) (local.get $d) (%string.lit "q") (i64.const 20)))
        ($bang
-         (call (%inst $dict.set i64) (local.get $d) (%text.lit "!") (i64.const 30)))
-       ($old (call (%inst $dict.set i64) (local.get $d) (%text.lit "q") (i64.const 21)))
+         (call (%inst $dict.set i64) (local.get $d) (%string.lit "!") (i64.const 30)))
+       ($old (call (%inst $dict.set i64) (local.get $d) (%string.lit "q") (i64.const 21)))
        ($size (call (%inst $dict.len i64) (local.get $d)))
-       ($middle (call (%inst $dict.remove i64) (local.get $d) (%text.lit "q")))
-       ($head (call (%inst $dict.remove i64) (local.get $d) (%text.lit "!")))
-       ($tail (call (%inst $dict.remove i64) (local.get $d) (%text.lit "a"))))
+       ($middle (call (%inst $dict.remove i64) (local.get $d) (%string.lit "q")))
+       ($head (call (%inst $dict.remove i64) (local.get $d) (%string.lit "!")))
+       ($tail (call (%inst $dict.remove i64) (local.get $d) (%string.lit "a"))))
       (i32.and
         (i64.eq (call $value (local.get $missing)) (i64.const -999))
         (i32.and
@@ -63,7 +63,7 @@
                       (call
                         (%inst $dict.set i64)
                         (local.get $d)
-                        (%text.lit "again")
+                        (%string.lit "again")
                         (i64.const 1)))
                     (call (%inst $dict.clear i64) (local.get $d))
                     (i32.eqz (call (%inst $dict.len i64) (local.get $d))))
@@ -126,40 +126,40 @@
           ))))
   )
   (%test "dict Unicode and nested option distinguish missing from stored none"
-    (%let $d (call (%inst $dict.new (%inst $option $text)))
+    (%let $d (call (%inst $dict.new (%inst $option $string)))
       (block
         (result i32)
         (drop
           (call
-            (%inst $dict.set (%inst $option $text))
+            (%inst $dict.set (%inst $option $string))
             (local.get $d)
-            (%text.lit "日本語🦀\00")
-            (%option.none $text)))
+            (%string.lit "日本語🦀\00")
+            (%option.none $string)))
         (drop
           (call
-            (%inst $dict.set (%inst $option $text))
+            (%inst $dict.set (%inst $option $string))
             (local.get $d)
-            (%text.lit "")
-            (%option.some (%text.lit "empty"))))
+            (%string.lit "")
+            (%option.some (%string.lit "empty"))))
         (i32.and
-          (%match (%inst $option (%inst $option $text)) (result i32)
+          (%match (%inst $option (%inst $option $string)) (result i32)
             (call
-              (%inst $dict.get (%inst $option $text))
+              (%inst $dict.get (%inst $option $string))
               (local.get $d)
-              (%text.lit "日本語🦀\00"))
+              (%string.lit "日本語🦀\00"))
             (case none () (i32.const 0))
             (case some ($inner)
               (%match (local.get $inner)
                 (case none () (i32.const 1))
                 (case some ($s) (i32.const 0))))
           )
-          (%match (%inst $option (%inst $option $text)) (result i32)
-            (call (%inst $dict.get (%inst $option $text)) (local.get $d) (%text.lit ""))
+          (%match (%inst $option (%inst $option $string)) (result i32)
+            (call (%inst $dict.get (%inst $option $string)) (local.get $d) (%string.lit ""))
             (case none () (i32.const 0))
             (case some ($inner)
               (%match (local.get $inner)
                 (case none () (i32.const 0))
-                (case some ($s) (call $equal (local.get $s) (%text.lit "empty"))))
+                (case some ($s) (call $equal (local.get $s) (%string.lit "empty"))))
             ))))
     ))
   (%test "list builder empty, order, snapshots, extend and reuse"
@@ -203,7 +203,7 @@
           (call
             (%inst $dict.set (ref $Cell))
             (local.get $dict)
-            (%text.lit "cell")
+            (%string.lit "cell")
             (local.get $cell)))
         (call
           (%inst $list-builder.push (ref $Cell))
@@ -215,7 +215,7 @@
             (result i32)
             (struct.set $Cell $value (local.get $cell) (i64.const 42))
             (%match
-              (call (%inst $dict.get (ref $Cell)) (local.get $dict) (%text.lit "cell"))
+              (call (%inst $dict.get (ref $Cell)) (local.get $dict) (%string.lit "cell"))
               (case none () (i32.const 0))
               (case some ($stored)
                 (i32.and
@@ -230,17 +230,17 @@
       (block
         (result i32)
         (drop
-          (call (%inst $dict.set i64) (local.get $d) (%text.lit "a") (i64.const 40)))
-        (drop (call (%inst $dict.set i64) (local.get $d) (%text.lit "b") (i64.const 2)))
+          (call (%inst $dict.set i64) (local.get $d) (%string.lit "a") (i64.const 40)))
+        (drop (call (%inst $dict.set i64) (local.get $d) (%string.lit "b") (i64.const 2)))
         (%let $snapshot (call (%inst $dict.entries i64) (local.get $d))
           (block
             (result i32)
             (drop
-              (call (%inst $dict.set i64) (local.get $d) (%text.lit "a") (i64.const -1)))
+              (call (%inst $dict.set i64) (local.get $d) (%string.lit "a") (i64.const -1)))
             (call (%inst $dict.clear i64) (local.get $d))
             (i32.and
               (i32.eq
-                (%list.len (%inst $pair $text i64) (local.get $snapshot))
+                (%list.len (%inst $tuple $string i64) (local.get $snapshot))
                 (i32.const 2))
               (i64.eq
                 (%loop $sum
@@ -251,11 +251,11 @@
                     (result i64)
                     (i32.eq
                       (local.get $i)
-                      (%list.len (%inst $pair $text i64) (local.get $snapshot)))
+                      (%list.len (%inst $tuple $string i64) (local.get $snapshot)))
                     (then (local.get $sum))
                     (else
                       (%let ($key $value)
-                        (%list.get (%inst $pair $text i64) (local.get $snapshot) (local.get $i))
+                        (%list.get (%inst $tuple $string i64) (local.get $snapshot) (local.get $i))
                         (%recur $sum
                           (i32.add (local.get $i) (i32.const 1))
                           (i64.add (local.get $sum) (local.get $value))))

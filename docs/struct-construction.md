@@ -5,15 +5,15 @@
 
 ```wat
 (type $User
-  (struct (field $name $text) (field $age i32) (field $email $text)))
+  (struct (field $name $string) (field $age i32) (field $email $string)))
 
 (%struct.new $User
-  ($name (%text.lit "Alice"))
+  ($name (%string.lit "Alice"))
   ($age (i32.const 30))
-  ($email (%text.lit "alice@example.com")))
+  ($email (%string.lit "alice@example.com")))
 ```
 
-`$text`は通常どおり`(%import "wlt:std" (type $text))`で取り込む。
+`$string`は通常どおり`(%use "wlt:core" (type $string))`で取り込む。
 フィールドの記述順は任意。重複、未知のフィールド、欠落を静的エラーにする。nullableやmutableでも省略はできない。
 ラベルは変数の束縛ではない。初期値では`$foo`または`(local.get $foo)`で既存のローカル変数を読む。
 
@@ -23,9 +23,9 @@
 
 ```wat
 (%struct.new $User {
-  :name (%text.lit "Alice")
+  :name (%string.lit "Alice")
   :age (i32.const 30)
-  :email (%text.lit "alice@example.com")
+  :email (%string.lit "alice@example.com")
 })
 ```
 
@@ -50,7 +50,7 @@
 リテラルの値から整数幅を決めたり、後続の使用箇所から型を探索したりはしない。型の確定には既存の宣言・命令の署名・明示的な型適用を使う。
 明示的に`(i32.const 30)`と書いた値をi64フィールドへ渡すと型エラーになり、暗黙に拡張しない。
 範囲・符号・16進数・浮動小数点・NaN/InfはWATの該当型の定数規則に従う。例えばi32フィールドの`4294967295`は全bitが1のi32となる。
-裸文字列は`$text`に対する`%text.lit`と同じUTF-8規則を使う。文字列escapeもWATの規則。
+裸文字列は`$string`に対する`%string.lit`と同じUTF-8規則を使う。文字列escapeもWATの規則。
 数値の既定幅や暗黙変換、newtypeの自動wrap、boolean/nullの別名は追加しない。
 bytes、参照、v128、newtype、Option/Resultなどには従来の明示式を使う。
 文字列の省略は名前付き構築の初期値の直下に限る。数値とローカル参照は、[期待型が分かる一般の式位置](core-expressions.md#ローカル参照と数値の省略形)でも省略できる。
@@ -69,7 +69,7 @@ bytes、参照、v128、newtype、Option/Resultなどには従来の明示式を
 ```
 
 型引数を指定する場合は`%struct.new`の型オペランドに`(%inst ...)`を置く。型引数の推論は追加しない。
-importした型の別名やnamespaceの型も同じ規則で解決する。opaque型の外部からの構築は認めない。
+%useした型の別名も同じ規則で解決する。opaque型の外部からの構築は認めない。
 匿名フィールドを含む型には従来の位置引数構築を使う。
 
 ## 評価順と静的解析

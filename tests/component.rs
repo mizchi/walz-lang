@@ -78,9 +78,10 @@ fn trusted_event_loop_contracts_are_fixed_and_ownership_still_applies() {
 
 #[test]
 fn imported_and_exported_interface_aliases_roundtrip_as_wit() {
+    let buffers = wlt::source::load("tests/component-fixtures/buffers.wlt").unwrap();
     for source in [
         include_str!("component-fixtures/values.wlt"),
-        include_str!("component-fixtures/buffers.wlt"),
+        buffers.text(),
         include_str!("component-fixtures/event-loop.wlt"),
         // Generated type names must not collide with public function names.
         r#"(module

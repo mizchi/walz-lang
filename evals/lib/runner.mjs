@@ -84,13 +84,14 @@ async function worker(directory) {
       ["candidate", "writer/candidate.wlt"],
     ]) {
       const source = join(directory, path);
-      assertSnapshotIncludes(await readFile(source, "utf8"));
+      assertSnapshotIncludes(await readFile(source, "utf8"), manifest.suite.version >= 13 ? 'wlt:core' : 'wlt:std');
       subjects[name] = await verifyStock({
         source,
         output: join(directory, "work", name),
         checkInputs: () => checkInputs(directory),
         groupedBindings: manifest.suite.version >= 7,
         extended: name === "candidate" && manifest.suite.version >= 8,
+        legacySyntax: manifest.suite.version < 14,
       });
     }
     if (
@@ -159,6 +160,7 @@ if (process.argv[1] && resolve(process.argv[1]) === self) {
     const source = sourceOverride ?? join(directory, "writer/candidate.gwat");
     const result = await verifyStock({
       source,
+      legacySyntax: true,
       output: join(
         projectRoot,
         "target/evals/legacy",

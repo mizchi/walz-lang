@@ -14,8 +14,8 @@ fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output
 
 const GOOD: &str = r#"(module
   (func $main (export "main") (result i64) (%effect pure)
-    (%let $x (%own.new i64 (i64.const 42))
-      (%match (%own i64) (result i64) (%move $x) (case own ($n) (local.get $n))))))"#;
+    (%let $x (%box.new i64 (i64.const 42))
+      (%match (%box i64) (result i64) (%move $x) (case own ($n) (local.get $n))))))"#;
 
 #[test]
 fn contracts_are_inspectable_and_verified_execution_uses_the_checked_ir() {
@@ -60,7 +60,7 @@ fn verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel() {
             "effect contract",
         ),
         (
-            "(module (func $main (export \"main\") (param $x (%own i64)) (%effect pure) (%own.close (%move $x))))",
+            "(module (func $main (export \"main\") (param $x (%box i64)) (%effect pure) (%box.close (%move $x))))",
             "owned exports",
         ),
     ] {

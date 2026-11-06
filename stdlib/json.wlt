@@ -1,152 +1,158 @@
 (module
-  (%namespace $json
-    (%import "wlt:std" (type $result) (type $text) (type $unit))
-    (%import "json-value.wlt"
-      (type $json-value.Value)
-      (func $json-value.number)
-      (func $json-value.stringify))
-    (%import "builder.wlt"
-      (type $builder.Builder)
-      (func $builder.finish)
-      (func $builder.json)
-      (func $builder.new)
-      (func $builder.s64)
-      (func $builder.text)
-      (func $builder.u64))
-    (%export
-      (opaque $Object)
-      (func $new)
-      (func $string)
-      (func $u64)
-      (func $s64)
-      (func $boolean)
-      (func $object)
-      (func $null)
-      (func $number)
-      (func $value)
-      (func $finish))
-    (type $Object
-      (struct (field $builder (ref $builder.Builder)) (field $first (mut i32))))
-    (func $new
-      (result (ref $Object))
-      (%effect reads writes allocates)
-      (%let $b (call $builder.new)
-        (block
-          (result (ref $Object))
-          (call $builder.text $b (%text.lit "{"))
-          (struct.new $Object $b 1))))
-
-    (func $key
-      (param $o (ref $Object))
-      (param $key $text)
-      (%effect reads writes allocates)
+  (%use "./json-string.wlt" (func $json-string.quote))
+  (%use "wlt:core" (type $result) (type $string) (type $unit))
+  (%use "./json-value.wlt"
+    (type $json-value)
+    (func $json.number)
+    (func $json.stringify))
+  (%use "./builder.wlt"
+    (type $string-builder)
+    (func $string-builder.finish)
+    (func $string-builder.new)
+    (func $string-builder.s64)
+    (func $string-builder.text)
+    (func $string-builder.u64))
+  (%export
+    (opaque $json-object)
+    (func $json.object-builder.new)
+    (func $json.object-builder.string)
+    (func $json.object-builder.u64)
+    (func $json.object-builder.s64)
+    (func $json.object-builder.boolean)
+    (func $json.object-builder.object)
+    (func $json.object-builder.null)
+    (func $json.object-builder.number)
+    (func $json.object-builder.value)
+    (func $json.object-builder.finish))
+  (type $json-object
+    (struct (field $builder (ref $string-builder)) (field $first (mut i32))))
+  (func $json.object-builder.new
+    (result (ref $json-object))
+    (%effect reads writes allocates)
+    (%let $b (call $string-builder.new)
       (block
+        (result (ref $json-object))
+        (call $string-builder.text $b (%string.lit "{"))
+        (struct.new $json-object $b 1))))
+
+  (func $json.object-builder.key
+    (param $o (ref $json-object))
+    (param $key $string)
+    (%effect reads writes allocates)
+    (block
+      (if
+        (i32.eqz (struct.get $json-object $first $o))
+        (then
+          (call $string-builder.text
+            (struct.get $json-object $builder $o)
+            (%string.lit ",")))
+        (else (block)))
+      (struct.set $json-object $first $o 0)
+      (call $string-builder.text (struct.get $json-object $builder $o) (call $json-string.quote $key))
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
+        (%string.lit ":"))))
+
+  (func $json.object-builder.string
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value $string)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text (struct.get $json-object $builder $o) (call $json-string.quote $value))))
+
+  (func $json.object-builder.u64
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i64)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.u64 (struct.get $json-object $builder $o) $value)))
+
+  (func $json.object-builder.s64
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i64)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.s64 (struct.get $json-object $builder $o) $value)))
+
+  (func $json.object-builder.boolean
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value i32)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
         (if
-          (i32.eqz (struct.get $Object $first $o))
-          (then (call $builder.text (struct.get $Object $builder $o) (%text.lit ",")))
-          (else (block)))
-        (struct.set $Object $first $o 0)
-        (call $builder.json (struct.get $Object $builder $o) $key)
-        (call $builder.text (struct.get $Object $builder $o) (%text.lit ":"))))
+          (result $string)
+          $value
+          (then (%string.lit "true"))
+          (else (%string.lit "false"))))
+    ))
 
-    (func $string
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value $text)
-      (%effect reads writes allocates)
+  (func $json.object-builder.finish
+    (param $o (ref $json-object))
+    (result $string)
+    (%effect reads writes allocates)
+    (%let $b (struct.get $json-object $builder $o)
       (block
-        (call $key $o $key)
-        (call $builder.json (struct.get $Object $builder $o) $value)))
+        (result $string)
+        (call $string-builder.text $b (%string.lit "}"))
+        (%let $result (call $string-builder.finish $b)
+          (block
+            (result $string)
+            (call $string-builder.text $b (%string.lit "{"))
+            (struct.set $json-object $first $o 1)
+            $result))))
+  )
 
-    (func $u64
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value i64)
-      (%effect reads writes allocates)
+  (func $json.object-builder.object
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value (ref $json-object))
+    (%effect reads writes allocates)
+    ;; Drain the child before touching the parent: aliases cannot form cycles.
+    (%let $value (call $json.object-builder.finish $value)
       (block
-        (call $key $o $key)
-        (call $builder.u64 (struct.get $Object $builder $o) $value)))
+        (call $json.object-builder.key $o $key)
+        (call $string-builder.text (struct.get $json-object $builder $o) $value))))
 
-    (func $s64
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value i64)
-      (%effect reads writes allocates)
+  (func $json.object-builder.null
+    (param $o (ref $json-object))
+    (param $key $string)
+    (%effect reads writes allocates)
+    (block
+      (call $json.object-builder.key $o $key)
+      (call $string-builder.text
+        (struct.get $json-object $builder $o)
+        (%string.lit "null"))))
+
+  (func $json.object-builder.value
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $value (ref $json-value))
+    (%effect reads writes allocates)
+    (%let $text (call $json.stringify $value)
       (block
-        (call $key $o $key)
-        (call $builder.s64 (struct.get $Object $builder $o) $value)))
+        (call $json.object-builder.key $o $key)
+        (call $string-builder.text (struct.get $json-object $builder $o) $text))))
 
-    (func $boolean
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value i32)
-      (%effect reads writes allocates)
+  (func $json.object-builder.number
+    (param $o (ref $json-object))
+    (param $key $string)
+    (param $lexeme $string)
+    (result (%inst $result $unit i32))
+    (%effect reads writes allocates)
+    (%result.let ($value)
+      (call $json.number $lexeme)
       (block
-        (call $key $o $key)
-        (call $builder.text
-          (struct.get $Object $builder $o)
-          (if
-            (result $text)
-            $value
-            (then (%text.lit "true"))
-            (else (%text.lit "false"))))
-      ))
-
-    (func $finish
-      (param $o (ref $Object))
-      (result $text)
-      (%effect reads writes allocates)
-      (%let $b (struct.get $Object $builder $o)
-        (block
-          (result $text)
-          (call $builder.text $b (%text.lit "}"))
-          (%let $result (call $builder.finish $b)
-            (block
-              (result $text)
-              (call $builder.text $b (%text.lit "{"))
-              (struct.set $Object $first $o 1)
-              $result))))
-    )
-
-    (func $object
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value (ref $Object))
-      (%effect reads writes allocates)
-      ;; Drain the child before touching the parent: aliases cannot form cycles.
-      (%let $value (call $finish $value)
-        (block
-          (call $key $o $key)
-          (call $builder.text (struct.get $Object $builder $o) $value))))
-
-    (func $null
-      (param $o (ref $Object))
-      (param $key $text)
-      (%effect reads writes allocates)
-      (block
-        (call $key $o $key)
-        (call $builder.text (struct.get $Object $builder $o) (%text.lit "null"))))
-
-    (func $value
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $value (ref $json-value.Value))
-      (%effect reads writes allocates)
-      (%let $text (call $json-value.stringify $value)
-        (block
-          (call $key $o $key)
-          (call $builder.text (struct.get $Object $builder $o) $text))))
-
-    (func $number
-      (param $o (ref $Object))
-      (param $key $text)
-      (param $lexeme $text)
-      (result (%inst $result $unit i32))
-      (%effect reads writes allocates)
-      (%result.let ($value)
-        (call $json-value.number $lexeme)
-        (block
-          (result (%inst $result $unit i32))
-          (call $value $o $key $value)
-          (%result.ok))))
-  ))
+        (result (%inst $result $unit i32))
+        (call $json.object-builder.value $o $key $value)
+        (%result.ok))))
+)

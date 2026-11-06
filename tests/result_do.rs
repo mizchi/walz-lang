@@ -5,7 +5,7 @@ fn result_do_evaluates_once_left_to_right_and_stops_at_the_first_error() {
     for (first, second, expected) in [(0, 0, "42"), (1, 0, "101"), (0, 2, "202")] {
         let source = format!(
             r#"(module
-          (%import "wlt:std" (type $result))
+          (%use "wlt:core" (type $result))
           (type $Cell (struct (field $n (mut i32))))
           (func $step (param $c (ref $Cell)) (param $n i32) (param $error i32) (result (%inst $result i32 i32)) (%effect reads writes)
             (block (result (%inst $result i32 i32))
@@ -50,7 +50,7 @@ fn result_do_evaluates_once_left_to_right_and_stops_at_the_first_error() {
 #[test]
 fn result_do_preserves_error_types_unit_payloads_and_ownership() {
     let source = r#"(module
-      (%import "wlt:std" (type $result) (type $unit))
+      (%use "wlt:core" (type $result) (type $unit))
       (func $unit (result (%inst $result $unit i32)) (%effect pure) (%result.ok))
       (func $f (result (%inst $result i32 i32)) (%effect pure)
         (%result.do (() (call $unit)) (%result.ok (i32.const 42)))))"#;
@@ -64,8 +64,8 @@ fn result_do_preserves_error_types_unit_payloads_and_ownership() {
         .is_err()
     );
     let owned = r#"(module
-      (%import "wlt:std" (type $result) (type $own))
-      (func $f (param $x (%inst $own i32)) (param $r (%inst $result i32 i32)) (result (%inst $result i32 i32))
-        (%result.do ($a (local.get $r)) (block (result (%inst $result i32 i32)) (%own.close (%move $x)) (%result.ok (local.get $a))))))"#;
+      (%use "wlt:core" (type $result) (type $box))
+      (func $f (param $x (%inst $box i32)) (param $r (%inst $result i32 i32)) (result (%inst $result i32 i32))
+        (%result.do ($a (local.get $r)) (block (result (%inst $result i32 i32)) (%box.close (%move $x)) (%result.ok (local.get $a))))))"#;
     assert!(wlt::check(owned).is_err());
 }

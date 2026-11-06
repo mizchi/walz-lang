@@ -6,7 +6,7 @@ GC グラフ・状態 enum・複数ワーカーへの割当て・循環検出・
 関数の引数・戻り値などの注釈を境界にして、各式の型、`%let` の束縛型、`case` の payload の型を求めます。
 `%let` にも `(%let $answer i64 (i64.const 42) body)` と任意の型注釈を書けます。暗黙の数値型変換は行いません。
 型エラーは位置とソース上の型名で表示し、例えば `type mismatch: expected i64, got i32` となります。
-引数数、名前候補、型の期待値の根拠、先行する move、effect の原因、opaque の所有 namespace も診断します。
+引数数、名前候補、型の期待値の根拠、先行する move、effect の原因、opaque の所有 ファイル も診断します。
 Rust API の `Error::diagnostic()` では分類・主範囲・関連位置・補足・修正方針を取得できます。[診断のデータ契約](diagnostics.md)を参照してください。
 CLIの `check --json` と、元ファイルの行・列を指定する `type-at` は [外部ツール向けの検査](tooling.md) を参照してください。
 

@@ -13,10 +13,15 @@ fn counted_ledger_compiles_without_repeated_state_types() {
             .count(),
         1
     );
+    let state = module
+        .types
+        .iter()
+        .find(|t| t.name.ends_with(".State"))
+        .unwrap();
     assert!(
         main.locals
             .iter()
-            .any(|l| module.type_name(&l.ty) == "(%pair (ref $stock.State) i32)")
+            .any(|l| module.type_name(&l.ty) == format!("(%tuple (ref {}) i32)", state.name))
     );
     for alias in ["$ScanState", "$LineCount", "$IoError"] {
         assert!(!module.types.iter().any(|t| t.name == alias));

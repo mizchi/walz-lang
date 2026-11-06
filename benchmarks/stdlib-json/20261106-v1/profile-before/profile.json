@@ -1,0 +1,157 @@
+{
+  "schema": "wlt-bench-profile-v1",
+  "snapshot": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/std-tune/v1-before",
+  "host": {
+    "node": "v24.21.0",
+    "v8": "13.6.233.17-node.53",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M5"
+  },
+  "wasmtime": "wasmtime 42.0.1 (6844a83b5 2026-02-25)",
+  "guest_iterations": 200000,
+  "cases": [
+    {
+      "name": "string.json ASCII 1024",
+      "file": "case-5.wasm",
+      "node": {
+        "samples": 810,
+        "self": [
+          {
+            "name": "wlt-std-0-text.string.json",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 656
+          },
+          {
+            "name": "__utf8",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 83
+          },
+          {
+            "name": "input1024",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 45
+          },
+          {
+            "name": "(garbage collector)",
+            "url": "",
+            "samples": 20
+          },
+          {
+            "name": "wasm-function[12]",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 2
+          },
+          {
+            "name": "post",
+            "url": "node:inspector",
+            "samples": 1
+          },
+          {
+            "name": "wlt-std-0-text.string.json",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 1
+          },
+          {
+            "name": "input1024",
+            "url": "wasm://wasm/c09648d6",
+            "samples": 1
+          },
+          {
+            "name": "(program)",
+            "url": "",
+            "samples": 1
+          }
+        ]
+      },
+      "guest": {
+        "samples": 1734,
+        "intervalMs": 1,
+        "self": [
+          {
+            "name": "::wlt-std-0-text.string.json",
+            "samples": 848,
+            "percent": 48.904267589388695
+          },
+          {
+            "name": "::wlt-std-0-text.string.width",
+            "samples": 320,
+            "percent": 18.45444059976932
+          },
+          {
+            "name": "::__bytes_from_array_0",
+            "samples": 292,
+            "percent": 16.839677047289506
+          },
+          {
+            "name": "::wlt-std-0-text.string.put",
+            "samples": 154,
+            "percent": 8.881199538638985
+          },
+          {
+            "name": "::__utf8",
+            "samples": 91,
+            "percent": 5.2479815455594006
+          },
+          {
+            "name": "::<wasm function 12>",
+            "samples": 22,
+            "percent": 1.2687427912341407
+          },
+          {
+            "name": "::wlt-std-0-text.string.valid",
+            "samples": 7,
+            "percent": 0.40369088811995385
+          }
+        ],
+        "inclusive": [
+          {
+            "name": "::<wasm function 12>",
+            "samples": 1734,
+            "percent": 100
+          },
+          {
+            "name": "::wlt-std-0-text.string.json",
+            "samples": 1712,
+            "percent": 98.73125720876585
+          },
+          {
+            "name": "::__bench5",
+            "samples": 1712,
+            "percent": 98.73125720876585
+          },
+          {
+            "name": "::wlt-std-0-text.string.width",
+            "samples": 320,
+            "percent": 18.45444059976932
+          },
+          {
+            "name": "::__bytes_from_array_0",
+            "samples": 292,
+            "percent": 16.839677047289506
+          },
+          {
+            "name": "::wlt-std-0-text.string.put",
+            "samples": 205,
+            "percent": 11.82237600922722
+          },
+          {
+            "name": "::wlt-std-0-text.string.valid",
+            "samples": 98,
+            "percent": 5.651672433679354
+          },
+          {
+            "name": "::__utf8",
+            "samples": 91,
+            "percent": 5.2479815455594006
+          },
+          {
+            "name": "::__text_decode",
+            "samples": 91,
+            "percent": 5.2479815455594006
+          }
+        ]
+      }
+    }
+  ]
+}

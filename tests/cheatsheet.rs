@@ -3,6 +3,7 @@ use std::process::Command;
 #[test]
 fn cheatsheet_complete_modules_compile_and_their_tests_execute() {
     let guide = include_str!("../CHEATSHEET.md");
+    let modules = tempfile::tempdir().unwrap();
     let mut examples = 0;
     for block in guide.split("```wat\n").skip(1) {
         let source = block.split("```").next().unwrap();
@@ -12,8 +13,15 @@ fn cheatsheet_complete_modules_compile_and_their_tests_execute() {
             .suffix(".wlt")
             .tempfile_in(env!("CARGO_MANIFEST_DIR"))
             .unwrap();
-        std::fs::write(input.path(), source).unwrap();
-        let loaded = wlt::source::load(input.path()).unwrap();
+        let named = source.lines().next().and_then(|line| {
+            line.strip_prefix(";; ")
+                .and_then(|line| line.split(':').next())
+                .filter(|name| name.ends_with(".wlt"))
+        });
+        let named_path = named.map(|name| modules.path().join(name));
+        let path = named_path.as_deref().unwrap_or(input.path());
+        std::fs::write(path, source).unwrap();
+        let loaded = wlt::source::load(path).unwrap();
         let compiled = wlt::compile(loaded.text())
             .unwrap_or_else(|e| panic!("cheatsheet example {}: {e}", examples + 1));
         let directory = tempfile::tempdir().unwrap();

@@ -4,27 +4,44 @@ use super::Adapter;
 use super::abi::{align, type_key};
 use crate::Error;
 use crate::ir::*;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
+
+#[derive(serde::Serialize)]
+pub struct Export {
+    pub js_name: String,
+    pub arity: usize,
+}
 
 mod values;
 use values::{codec, read, write};
 
+#[derive(serde::Serialize)]
 pub struct CoreJs {
     pub wasm: Vec<u8>,
     pub memory: Vec<u8>,
     pub bindings: String,
     pub manifest: serde_json::Value,
+    pub exports: BTreeMap<String, Export>,
 }
 
 pub fn compile(source: &str) -> Result<CoreJs, Error> {
     compile_with_policy(source, &crate::bindings::BindingPolicy::default())
 }
 
+/// Pure browser code generation: Rust type/effect/ownership and ABI checks,
+/// with laws rejected because the external Lean kernel is unavailable.
+pub fn compile_for_browser(source: &str, options: crate::CompileOptions) -> Result<CoreJs, Error> {
+    compile_module(super::checked_browser_module(source, options.optimize)?)
+}
+
 pub fn compile_with_policy(
     source: &str,
     policy: &crate::bindings::BindingPolicy,
 ) -> Result<CoreJs, Error> {
-    let module = super::checked_module_with_policy(source, policy)?;
+    compile_module(super::checked_module_with_policy(source, policy)?)
+}
+
+fn compile_module(module: Module) -> Result<CoreJs, Error> {
     let mut adapter = Adapter::new(&module);
     adapter.memory_exports = true;
     // Only boundary types and endpoint payloads need lifting/lowering helpers.
@@ -49,11 +66,29 @@ pub fn compile_with_policy(
         include_str!("../component-memory.wat")
     ))?;
     let bindings = bindings(&adapter);
+    let exports = module
+        .functions
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !module.tests.iter().any(|t| t.function.0 == *i))
+        .flat_map(|(_, f)| {
+            f.exports.iter().map(|name| {
+                (
+                    name.clone(),
+                    Export {
+                        js_name: crate::bindings::js_name(name),
+                        arity: f.params.len(),
+                    },
+                )
+            })
+        })
+        .collect();
     Ok(CoreJs {
         wasm,
         memory,
         bindings,
         manifest: serde_json::json!({"abi":"wlt-core-js-v2","imports":crate::bindings::manifest(&module)}),
+        exports,
     })
 }
 

@@ -4,7 +4,7 @@
 使い回す課題、ルーブリック、外部契約、検証器をここへ分離した。過去の点数や回答を新しい評価役に渡さない。
 suite は [stock-ledger](stock-ledger/suite.json) と [diagnostics](diagnostics/README.md)。以下は既定の在庫台帳評価の手順。エラーメッセージは `just eval-diagnostics-prepare ID` で準備し、同じ review/verify/score/compare を使う。
 struct構築表記を比較する独立した読解課題は [struct-literals](struct-literals/README.md)。名前付け・波括弧・期待型リテラルを分けて評価する。
-在庫台帳の v7 は、制御・所有性の読解とコード変更に加え、標準 WAT と `%` 拡張の区別、`wlt:std` の基本型、単相化、複数束縛の `%let`、解析の境界を質問する。必須回答は各 run の suite.answerKeys に固定する。5軸のルーブリックと各14件の実行検証は維持し、異なる suite 版の点差は比較しない。
+現在の在庫台帳suiteは、制御・所有性の読解とコード変更に加え、標準 WAT と `%` 拡張の区別、`wlt:core` の基本型、単相化、複数束縛の `%let`、解析の境界を質問する。必須回答は各 run の suite.answerKeys に固定する。5軸のルーブリックと各14件の実行検証は維持し、異なる suite 版の点差は比較しない。
 以前の記録は [文法評価](../docs/grammar-eval/REPORT.md)、[可読性](../docs/readability/REPORT.md)、[文法改良後](../docs/readability/implemented/REPORT.md) に残す。
 
 ## 1. 新しい評価回を作る
@@ -21,6 +21,10 @@ node evals/run.mjs prepare trial-02 --output /tmp/wlt-eval-trial-02
 現在の CHEATSHEET、main、行数付き版、契約、基準、課題に加えて依存する .wlt を support へコピーする。
 suite v8 以降は生成済み標準API資料から必要な公開名の型・制約・effectを抜粋し、両役の `api.md` として固定する。
 v9 は effect 契約の表記を `%effect` に統一する。既存の run の入力・回答・記録は変更しない。
+v10 は標準型名を `$string` に揃える。課題と検査項目は v9 を維持し、新しい run へ入力を固定する。
+v11 はWITに沿う標準型・関連関数と `%string` / `%tuple` / `%box` の語彙を使う。
+v12 はJSON操作を `$json.*` にまとめる。課題の実行契約は維持し、過去の入力・結果は変更しない。
+v14 は`wlt:core`からの`%use`と相対ファイルモジュールに統一する。`%namespace`は使わない。旧suiteの配布物と改名前の入力アーカイブは変更しない。
 main の include はコピー先の program.wlt から support を参照するため、後のライブラリ変更で評価コードが変わらない。
 依存ファイルを増やしたら suite.json の support も更新する。
 
@@ -72,7 +76,7 @@ verify は reader の counted と writer の candidate をそれぞれ独立に�
 
 同期 Wasm の無限ループも止めるため子プロセス全体を既定30秒で終了させる。環境に応じて `verify RUN --timeout-ms 120000` と変更できる。
 ビルド生成物は work/、検証結果は verification.json。使用した実装の fingerprint と prepare 後の変更有無も記録する。
-`wlt:std` の同梱ソースも実装の一部として fingerprint に含める。v7 の変更候補は main の初期化に複数束縛の `%let` があることも既存の W4 内で確認する。
+`wlt:core` の同梱ソースも実装の一部として fingerprint に含める。v7 の変更候補は main の初期化に複数束縛の `%let` があることも既存の W4 内で確認する。
 v8 は候補に W5（i64のfold状態と実行）と W6（標準API、整数上限、不正入力、ABI live=0）を追加し、サンプル14件・候補16件を検査する。最終値だけi64へ変換する実装や固定のtextを返す実装を、ハーネスの負例で拒否する。
 コンパイラ/ランタイム自体はコピーしないので、厳密な再現には記録した実装とツールチェーンを用意する。現在の実装で過去のソースを再検証することも可能。
 

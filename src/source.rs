@@ -191,7 +191,7 @@ impl Source {
     }
 }
 fn file_import(node: &Sexp) -> bool {
-    matches!(node.head(), Some("import" | "%import"))
+    matches!(node.head(), Some("import" | "%import" | "use" | "%use"))
         && node
             .list()
             .and_then(|p| p.get(1))
@@ -210,16 +210,48 @@ fn includes<'a>(
     legacy: bool,
 ) -> Result<(), Error> {
     if !legacy
-        && (node.head() == Some("include") || node.head() == Some("import") && file_import(node))
+        && matches!(
+            node.head(),
+            Some(
+                "namespace"
+                    | "%namespace"
+                    | "%import"
+                    | "%file.namespace"
+                    | "%file.use"
+                    | "%legacy.namespace"
+            )
+        )
     {
         return Err(Error::at(
             source,
             node.span,
-            "file linking requires %include or %import",
+            "use files as modules and select their exports with %use",
         )
-        .with_code("E_WLT_PREFIX"));
+        .with_code("E_WLT_EXTENSION"));
     }
-    if node.head() == Some("%import")
+    if !legacy && node.head() == Some("%use") {
+        let path = node.list().and_then(|p| p.get(1)).and_then(Sexp::text);
+        if !path.is_some_and(|path| {
+            path.starts_with("wlt:") || path.starts_with("./") || path.starts_with("../")
+        }) {
+            return Err(Error::at(
+                source,
+                node.span,
+                "%use requires a package name or an explicit relative path such as ./module.wlt",
+            )
+            .with_code("E_USE_PATH"));
+        }
+    }
+    if !legacy
+        && (node.head() == Some("include")
+            || matches!(node.head(), Some("import" | "use")) && file_import(node))
+    {
+        return Err(
+            Error::at(source, node.span, "file linking requires %include or %use")
+                .with_code("E_WLT_PREFIX"),
+        );
+    }
+    if (node.head() == Some("%use") || legacy && file_import(node))
         && node
             .list()
             .and_then(|p| p.get(1))
@@ -325,9 +357,9 @@ fn expand(
             return Err(Error::at(
                 &original,
                 node.span,
-                "standard modules require %import, not %include",
+                "standard modules require %use, not %include",
             )
-            .with_code("E_STD_MODULE")
+            .with_code("E_CORE_MODULE")
             .with_path(&canonical));
         }
         if Path::new(relative).is_absolute() {
@@ -375,7 +407,7 @@ fn expand(
                 name
             };
             output.append(
-                &format!("(%use {name} "),
+                &format!("(%file.use {name} "),
                 node.span.start,
                 &canonical,
                 &original,

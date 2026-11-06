@@ -52,6 +52,7 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 - [x] UTF-8 の厳密な検証、バイト長・符号なし添字・開始位置と長さによるスライス。
 - [x] 検査付き bytes.from-array と、連結・整数変換・JSON string の標準ライブラリ初版。
 - [x] bytes/text の検索・最初の区切りでの分割と、断片をためる text/JSON object builder。
+- [x] 不変bytes/stringのゼロコピービュー。相対範囲・UTF-8境界・opaqueとeffectを検査し、GCでの共有・回収と両ABIを確認する。標準型名は`$string`に統一する。[規約](docs/views.md)。
 - [ ] Unicode の文字数・書記素・正規化などの操作。
 
 ## 2. 汎用 WIT binding と実用 I/O

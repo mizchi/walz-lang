@@ -1,45 +1,46 @@
-# 標準ライブラリ
+# 組み込みコアライブラリ `wlt:core`
 
 基本型は既存の基底型への透明な alias、標準関数は通常の WLT 関数です。ライブラリごとの追加ランタイムは持ちません。
-必要な関数・型を列挙して、`wlt:std` から import します。コンパイラが同梱したソースを静的にリンクするため、呼出し元の場所やインストール先のパスに依存しません。
+必要な関数・型を列挙して、`wlt:core` から import します。コンパイラが同梱したソースを静的にリンクするため、呼出し元の場所やインストール先のパスに依存しません。
 完全な型・型制約・effect は [生成した標準 API 一覧](../docs/stdlib-api.md) を参照してください。`just stdlib-docs` で公開宣言から更新し、`just check-stdlib-docs` でソースとの一致を確認します。
+標準文字列型は `$string` です。`bytes-view.wlt` / `string-view.wlt` は [ゼロコピービュー](../docs/views.md) を提供し、部分範囲の共有と明示的なコピーを使い分けます。
 `dict.wlt` はtextキーの汎用辞書、`list-builder.wlt` は不変listの構築を提供します。型制約・変更とスナップショットの契約は [コレクション](../docs/collections.md) を参照してください。
 
 ```wat
 (module
-  (%import "wlt:std" (type $text) (func $string.u64 $unsigned))
-  (func $answer (export "answer") (result $text) (%effect reads writes allocates)
+  (%use "wlt:core" (type $string) (func $string.u64 $unsigned))
+  (func $answer (export "answer") (result $string) (%effect reads writes allocates)
     (call $unsigned (i64.const 42))))
 ```
 
-各ファイルの namespace 内にある `%export` が API を定義します。`$string.u64` のような公開パスを選び、任意のローカル名へ束縛できます。
+各ファイルの `%export` が API を定義します。型名は `$string-view` のような小文字のkebab-case、関連関数は `$string-view.new` のような `型名.操作名` に揃えます。公開名を選び、任意のローカル名へ束縛できます。[WITとの命名対応](../docs/naming.md)を参照してください。
 `json.wlt` → `builder.wlt` → `text.wlt` → `bytes.wlt` の依存も named import です。同じファイルはコンパイル単位内で一度だけ読み込まれ、型と定義を共有します。
 選ばなかった名前は呼出し元に束縛されません。生成する Wasm は実際の ABI export・テスト・law から到達する宣言だけを保持します。
 詳細は [静的モジュールと DCE](../docs/static-modules.md) を参照してください。`include` は従来のテキスト挿入として残します。
 
 | import 元 | 関数 | 結果・契約 |
 | --- | --- | --- |
-| bytes.wlt | `$buffer.equal(a,b)` | bytes の内容一致。i32 の0/1 |
-| bytes.wlt | `$buffer.find-byte(b,start,byte)` | 最初の位置、なければ b の長さ。範囲外の start でも長さ。byte は0–255、他の値は一致しない |
-| bytes.wlt | `$buffer.find(b,needle,start)` | option<i32>。start 以降の最初の一致。範囲外は none。空 needle は有効な start に一致 |
-| bytes.wlt | `$buffer.split-once(b,needle)` | option<pair<bytes,bytes>>。最初の区切りを取り除く。見つからなければ none |
-| bytes.wlt | `$buffer.parse-u64(b,start,length,limit)` | 範囲内の ASCII 十進数全体を読む。上限は符号なし i64。空・不正範囲・不正文字・桁あふれは none |
-| bytes.wlt | `$buffer.concat(a,b)` | 連結した bytes |
+| bytes.wlt | `$bytes.equal(a,b)` | bytes の内容一致。i32 の0/1 |
+| bytes.wlt | `$bytes.find-byte(b,start,byte)` | 最初の位置、なければ b の長さ。範囲外の start でも長さ。byte は0–255、他の値は一致しない |
+| bytes.wlt | `$bytes.find(b,needle,start)` | option<i32>。start 以降の最初の一致。範囲外は none。空 needle は有効な start に一致 |
+| bytes.wlt | `$bytes.split-once(b,needle)` | option<pair<bytes,bytes>>。最初の区切りを取り除く。見つからなければ none |
+| bytes.wlt | `$bytes.parse-u64(b,start,length,limit)` | 範囲内の ASCII 十進数全体を読む。上限は符号なし i64。空・不正範囲・不正文字・桁あふれは none |
+| bytes.wlt | `$bytes.concat(a,b)` | 連結した bytes |
 | text.wlt | `$string.find(s,needle,start)` | option<i32>。UTF-8 の byte 位置。start が文字の途中または範囲外なら none |
 | text.wlt | `$string.split-once(s,needle)` | option<pair<text,text>>。空の前後フィールドを保持し、残りの区切りは分割しない |
 | text.wlt | `$string.parse-u64(s)` / `$string.parse-s64(s)` | option<i64>。u64 全域／s64 全域。signed だけ先頭の `-` を許す |
 | text.wlt | `$string.concat(a,b)` | text の連結 |
 | text.wlt | `$string.u64(n)` / `$string.s64(n)` | 符号なし／符号付き十進数の text |
-| text.wlt | `$string.json(s)` | 引用符込みの JSON string |
-| builder.wlt | `$builder.new()` | 不透明な可変 GC 型 `(ref $builder.Builder)` |
-| builder.wlt | `$builder.text(b,s)` / `$builder.json(b,s)` | text をそのまま／JSON string にして追加。戻り値は unit |
-| builder.wlt | `$builder.u64(b,n)` / `$builder.s64(b,n)` | 十進数を追加。戻り値は unit |
-| builder.wlt | `$builder.finish(b)` | 結合した不変 text を返して空に戻す。繰り返すと空 text |
-| json.wlt | `$json.new()` | 不透明な可変 GC 型 `(ref $json.Object)`。空 object |
-| json.wlt | `$json.string(o,key,value)` / `$json.u64(o,key,n)` / `$json.s64(o,key,n)` | 型に合うフィールドを追加。キーもエスケープする。戻り値は unit |
-| json.wlt | `$json.boolean(o,key,n)` | 0 は false、それ以外は true。戻り値は unit |
-| json.wlt | `$json.object(o,key,child)` | child を finish して、その JSON object を値として追加 |
-| json.wlt | `$json.finish(o)` | JSON object の text を返し、空 object へ戻す。繰り返すと `{}` |
+| json-value.wlt | `$json.from-string(s)` / `$json.stringify(value)` | JSONのstring値を構築／JSONテキストを生成 |
+| builder.wlt | `$string-builder.new()` | 不透明な可変 GC 型 `(ref $string-builder)` |
+| builder.wlt | `$string-builder.text(b,s)` | text をそのまま追加。戻り値は unit。JSONは `$json.stringify` と組み合わせる |
+| builder.wlt | `$string-builder.u64(b,n)` / `$string-builder.s64(b,n)` | 十進数を追加。戻り値は unit |
+| builder.wlt | `$string-builder.finish(b)` | 結合した不変 text を返して空に戻す。繰り返すと空 text |
+| json.wlt | `$json.object-builder.new()` | 不透明な可変 GC 型 `(ref $json-object)`。空 object |
+| json.wlt | `$json.object-builder.string(o,key,value)` / `$json.object-builder.u64(o,key,n)` / `$json.object-builder.s64(o,key,n)` | 型に合うフィールドを追加。キーもエスケープする。戻り値は unit |
+| json.wlt | `$json.object-builder.boolean(o,key,n)` | 0 は false、それ以外は true。戻り値は unit |
+| json.wlt | `$json.object-builder.object(o,key,child)` | child を finish して、その JSON object を値として追加 |
+| json.wlt | `$json.object-builder.finish(o)` | JSON object の text を返し、空 object へ戻す。繰り返すと `{}` |
 
 検索・分割・整数解析は semantic effect が `pure` です。値を格納する物理的な GC 割当てはあり得ます。
 位置・長さは i32 の符号なしビットパターンとして扱います。`-1` は最大値となり、解析では不正な範囲です。
@@ -57,7 +58,7 @@ finish 済みの text は以後の変更と独立し、builder は以前の断�
 合計長の u32 桁あふれや GC 配列の確保失敗は Wasm の trap です。
 
 JSON のフィールドは追加順に並びます。同名のキーはそのまま出力します。外部の JSON text を未検査で埋め込む API は用意していません。
-`$json.object` は child を空へ戻します。parent と child が同じ別名でも、変更前の内容を有限の値として取り込んでからフィールドを追加するので循環を作りません。
+`$json.object-builder.object` は child を空へ戻します。parent と child が同じ別名でも、変更前の内容を有限の値として取り込んでからフィールドを追加するので循環を作りません。
 object・string・整数・boolean に加え、検査付き number、null、JSON 値を追加できます。JSON の数値は text として保持します。
 
 `just test-stdlib` で Wasmtime と Core / Component の実行を確認します。ブラウザは `just test-e2e` に含まれます。

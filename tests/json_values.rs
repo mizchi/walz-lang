@@ -12,14 +12,14 @@ fn json_parser_is_a_checked_library_without_new_language_primitives() {
 fn published_json_values_remain_immutable_for_effect_analysis() {
     wlt::compile(
         r#"(module
-          (%import "wlt:std" (type $json-value.Value $Value) (type $option)
-            (func $json-value.get) (func $json-value.at))
+          (%use "wlt:core" (type $json-value $Value) (type $option)
+            (func $json.get) (func $json.at))
           (func $get (param $value (ref $Value))
             (result (%inst $option (ref $Value))) (%effect pure)
-            (call $json-value.get (local.get $value) (%text.lit "key")))
+            (call $json.get (local.get $value) (%string.lit "key")))
           (func $at (param $value (ref $Value))
             (result (%inst $option (ref $Value))) (%effect pure)
-            (call $json-value.at (local.get $value) (i32.const 0))))"#,
+            (call $json.at (local.get $value) (i32.const 0))))"#,
     )
     .unwrap();
 }
@@ -46,7 +46,7 @@ fn parser_boundaries_and_unicode_execute_in_native_wasm() {
     ] {
         tests.push(format!(
             r#"(func $case{} (export "case{}") (result i32)
-          (%match (call $json-value.parse (%text.lit "{}"))
+          (%match (call $json.parse (%string.lit "{}"))
             (case ok ($value) (i32.const {}))
             (case err ($offset) (i32.const {}))))"#,
             tests.len(),
@@ -57,7 +57,7 @@ fn parser_boundaries_and_unicode_execute_in_native_wasm() {
         ));
     }
     let source = format!(
-        "(module (%import \"wlt:std\" (func $json-value.parse)) {})",
+        "(module (%use \"wlt:core\" (func $json.parse)) {})",
         tests.join("\n")
     );
     let compiled = wlt::compile(&source).unwrap();

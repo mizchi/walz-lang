@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std" (type $list) (type $future) (type $stream))
+  (%use "wlt:core" (type $list) (type $future) (type $stream))
   (import "wlt:host/event-loop@0.1.0" "yield" (func $yield))
   (func $pack (param $xs (%inst $list i32)) (result v128) (%effect pure)
     (i32x4.replace_lane 3

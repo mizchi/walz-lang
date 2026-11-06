@@ -1,5 +1,5 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $result)
     (type $unit))
   (%include "../../examples/apps/stock-ledger/program.wlt")
@@ -12,7 +12,7 @@
       (%match
         (%inst $result i64 (ref $stock.Error))
         (result (%inst $result i32 i32))
-        (call $stock.add (local.get $state) (%text.lit "max") (i64.const -1))
+        (call $stock.add (local.get $state) (%string.lit "max") (i64.const -1))
         (case err ($error) (%result.err i32 i32 (i32.const 999)))
         (case ok
           ($n)
@@ -20,12 +20,12 @@
             ()
             (%inst $result $unit i32)
             i32
-            (call $app.process (local.get $state) (%text.lit "ADD\tmax\t1"))
+            (call $app.process (local.get $state) (%string.lit "ADD\tmax\t1"))
             (%result.let
               ()
               (%inst $result $unit i32)
               i32
-              (call $app.process (local.get $state) (%text.lit "ADD\tnew\t1"))
+              (call $app.process (local.get $state) (%string.lit "ADD\tnew\t1"))
               (%result.ok i32 i32 (i32.const 0))
             )
           )

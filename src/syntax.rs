@@ -20,6 +20,8 @@ fn entry(name: &str) -> bool {
             | "effect"
             | "namespace"
             | "file.namespace"
+            | "file.use"
+            | "legacy.namespace"
             | "public"
             | "use"
             | "include"
@@ -27,6 +29,7 @@ fn entry(name: &str) -> bool {
             | "type.params"
             | "where"
             | "test"
+            | "bench"
             | "law"
             | "move"
             | "using"
@@ -68,11 +71,11 @@ fn prefix_error(source: &str, node: &Sexp, name: &str) -> Error {
     .help(format!("write `%{name}` for this WLT extension"))
 }
 
-/// Insertions and same-width legacy keyword replacements preserve source offsets.
+/// Historical spelling edits retain a mapping to the original source offsets.
 pub(crate) struct Migration {
     text: String,
     original: String,
-    insertions: Vec<(usize, usize)>,
+    changes: Vec<(Span, usize)>,
 }
 impl Migration {
     pub(crate) fn text(&self) -> &str {
@@ -82,18 +85,20 @@ impl Migration {
         &self.original
     }
     pub(crate) fn original_offset(&self, offset: usize) -> usize {
-        let mut added = 0;
-        for &(start, len) in &self.insertions {
-            let new_start = start + added;
+        let mut original_cursor = 0;
+        let mut new_cursor = 0;
+        for &(span, len) in &self.changes {
+            let new_start = new_cursor + span.start - original_cursor;
             if offset < new_start {
-                break;
+                return original_cursor + offset - new_cursor;
             }
             if offset < new_start + len {
-                return start;
+                return span.start + (offset - new_start).min(span.end - span.start);
             }
-            added += len;
+            original_cursor = span.end;
+            new_cursor = new_start + len;
         }
-        offset - added
+        original_cursor + offset - new_cursor
     }
 }
 
@@ -140,32 +145,47 @@ pub(crate) fn convert_legacy(source: &str) -> Result<Migration, Error> {
         return Ok(Migration {
             text: source.into(),
             original: source.into(),
-            insertions: vec![],
+            changes: vec![],
         });
     }
     let mut root = crate::sexpr::parse(source)?;
     let mut plan = Plan::new(source, true);
+    let mut pending = vec![&root];
+    while let Some(node) = pending.pop() {
+        if matches!(node.atom(), Some("$json.Object" | "$json.new"))
+            || matches!(node.head(), Some("namespace" | "%namespace"))
+                && node.list().and_then(|p| p.get(1)).and_then(Sexp::atom) == Some("$json")
+        {
+            plan.old_json_object = true;
+            break;
+        }
+        if let Some(items) = node.list() {
+            pending.extend(items);
+        }
+    }
     plan.walk(&mut root, false, 0)?;
     plan.types(&mut root)?;
-    // A space replaces the final ASCII `s`, keeping all original offsets valid.
-    let mut canonical = source.to_owned();
-    for offset in plan.effect_renames {
-        canonical.replace_range(offset..offset + 1, " ");
-    }
+    let mut edits = plan
+        .edits
+        .into_iter()
+        .map(|(start, value)| (Span { start, end: start }, value))
+        .chain(plan.replacements)
+        .collect::<Vec<_>>();
+    edits.sort_by_key(|(span, _)| *span);
     let mut text = String::new();
     let mut cursor = 0;
-    let mut insertions = vec![];
-    for (offset, value) in plan.edits {
-        text.push_str(&canonical[cursor..offset]);
+    let mut changes = vec![];
+    for (span, value) in edits {
+        text.push_str(&source[cursor..span.start]);
         text.push_str(&value);
-        insertions.push((offset, value.len()));
-        cursor = offset;
+        changes.push((span, value.len()));
+        cursor = span.end;
     }
-    text.push_str(&canonical[cursor..]);
+    text.push_str(&source[cursor..]);
     Ok(Migration {
         text,
         original: source.into(),
-        insertions,
+        changes,
     })
 }
 
@@ -245,18 +265,20 @@ fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
 struct Plan<'a> {
     source: &'a str,
     legacy: bool,
+    old_json_object: bool,
     marked: BTreeSet<Span>,
     edits: BTreeMap<usize, String>,
-    effect_renames: Vec<usize>,
+    replacements: BTreeMap<Span, String>,
 }
 impl<'a> Plan<'a> {
     fn new(source: &'a str, legacy: bool) -> Self {
         Self {
             source,
             legacy,
+            old_json_object: false,
             marked: BTreeSet::new(),
             edits: BTreeMap::new(),
-            effect_renames: vec![],
+            replacements: BTreeMap::new(),
         }
     }
     fn require(&mut self, node: &Sexp, name: &str) -> Result<(), Error> {
@@ -276,9 +298,16 @@ impl<'a> Plan<'a> {
         crate::type_syntax::map_types(root, &mut |node| {
             if let Some(name) = node
                 .atom()
-                .filter(|n| matches!(*n, "text" | "bytes" | "unit"))
+                .filter(|n| matches!(*n, "text" | "string" | "bytes" | "unit"))
             {
-                self.require(node, name)?;
+                let core = crate::naming::core(name).into_owned();
+                let public = crate::naming::public(&core);
+                let prefixed = self.marked.contains(&node.span);
+                self.require(node, &public)?;
+                if self.legacy && !prefixed && name != public {
+                    self.replacements.insert(node.span, public.into_owned());
+                }
+                node.kind = Kind::Atom(core);
             } else if node.head() == Some("result") {
                 let first = &node.list().unwrap()[0];
                 self.require(first, "result")?;
@@ -314,7 +343,11 @@ impl<'a> Plan<'a> {
         }
         if let Kind::Atom(name) = &mut node.kind {
             if let Some(bare) = name.strip_prefix('%') {
-                if !matches!(bare, "text" | "bytes" | "unit") {
+                let core = crate::naming::core(bare);
+                let public = crate::naming::public(&core);
+                if !matches!(core.as_ref(), "text" | "bytes" | "unit")
+                    || !self.legacy && bare != public
+                {
                     return Err(Error::at(
                         self.source,
                         node.span,
@@ -322,8 +355,11 @@ impl<'a> Plan<'a> {
                     )
                     .with_code("E_WLT_EXTENSION"));
                 }
+                if self.legacy && bare != public {
+                    self.replacements.insert(node.span, format!("%{public}"));
+                }
                 self.marked.insert(node.span);
-                *name = bare.into();
+                *name = core.into_owned();
             }
             return Ok(());
         }
@@ -348,10 +384,86 @@ impl<'a> Plan<'a> {
         let Kind::List(items) = &mut node.kind else {
             return Ok(());
         };
-        if self.legacy && matches!(head.as_str(), "effects" | "%effects") {
-            self.effect_renames.push(items[0].span.end - 1);
-            head.pop();
-            items[0].kind = Kind::Atom(head.clone());
+        if !self.legacy && matches!(head.as_str(), "namespace" | "%namespace" | "%import") {
+            return Err(Error::at(
+                self.source,
+                items[0].span,
+                if head == "%import" {
+                    "static source imports use %use"
+                } else {
+                    "namespace declarations are removed; put the module in a file"
+                },
+            )
+            .with_code("E_WLT_EXTENSION")
+            .help("use (%use \"./module.wlt\" (func $member)) to select file exports"));
+        }
+        if !self.legacy && head == "%use" {
+            let path = items.get(1).and_then(Sexp::text);
+            if !path.is_some_and(|path| {
+                path.starts_with("wlt:") || path.starts_with("./") || path.starts_with("../")
+            }) {
+                return Err(Error::at(self.source, node.span,
+                    "%use requires a package name or an explicit relative path such as ./module.wlt")
+                    .with_code("E_USE_PATH"));
+            }
+        }
+        if self.legacy {
+            if matches!(head.as_str(), "namespace" | "%namespace") {
+                head = "%legacy.namespace".into();
+                self.replacements.insert(items[0].span, head.clone());
+                items[0].kind = Kind::Atom(head.clone());
+            } else if matches!(head.as_str(), "import" | "%import" | "use" | "%use")
+                && items.get(2).and_then(Sexp::text).is_none()
+            {
+                head = if items.get(1).and_then(Sexp::atom).is_some() {
+                    "%file.use"
+                } else {
+                    "%use"
+                }
+                .into();
+                self.replacements.insert(items[0].span, head.clone());
+                items[0].kind = Kind::Atom(head.clone());
+            }
+            let bare = head.trim_start_matches('%');
+            let public = if bare == "effects" {
+                "effect".into()
+            } else {
+                crate::naming::public(bare).into_owned()
+            };
+            let renamed = format!("{}{public}", if head.starts_with('%') { "%" } else { "" });
+            if renamed != head {
+                head = renamed;
+                self.replacements.insert(items[0].span, head.clone());
+                items[0].kind = Kind::Atom(head.clone());
+            }
+        }
+        if self.legacy
+            && matches!(head.as_str(), "import" | "%import" | "%use")
+            && matches!(
+                items.get(1).and_then(Sexp::text),
+                Some("wlt:std" | "wlt:core")
+            )
+            && items.get(2).and_then(Sexp::text).is_none()
+        {
+            if items[1].text() == Some("wlt:std") {
+                self.replacements
+                    .insert(items[1].span, "\"wlt:core\"".into());
+                items[1].kind = Kind::Text("wlt:core".into());
+            }
+            for binding in &items[2..] {
+                if let Some(kind @ ("type" | "func")) = binding.head()
+                    && let Some(fields) = binding.list()
+                    && let Some(old) = fields.get(1).and_then(Sexp::atom)
+                {
+                    let new = crate::naming::legacy_member(kind, old, self.old_json_object);
+                    if new != old {
+                        self.replacements.insert(fields[1].span, new.into_owned());
+                        if fields.len() == 2 {
+                            self.edits.insert(fields[1].span.end, format!(" {old}"));
+                        }
+                    }
+                }
+            }
         }
         if head == "%inst" {
             if items.len() < 2 || !items[1].atom().is_some_and(|n| n.starts_with('$')) {
@@ -362,11 +474,10 @@ impl<'a> Plan<'a> {
             }
             items.remove(0);
         } else if let Some(bare) = head.strip_prefix('%') {
-            if !entry(bare)
-                && !matches!(
-                    bare,
-                    "import" | "export" | "loop" | "try" | "result" | "struct.new"
-                )
+            let core = crate::naming::core(bare);
+            if crate::naming::public(&core) != bare
+                || !entry(&core)
+                    && !matches!(bare, "export" | "loop" | "try" | "result" | "struct.new")
             {
                 return Err(Error::at(
                     self.source,
@@ -377,10 +488,14 @@ impl<'a> Plan<'a> {
             }
             self.marked.insert(items[0].span);
             items[0].kind = Kind::Atom(
-                if bare == "struct.new" {
+                if bare == "file.use" {
+                    "use"
+                } else if bare == "legacy.namespace" {
+                    "namespace"
+                } else if bare == "struct.new" {
                     "struct.named"
                 } else {
-                    bare
+                    core.as_ref()
                 }
                 .into(),
             );
@@ -391,10 +506,12 @@ impl<'a> Plan<'a> {
             self.edits
                 .entry(items[0].span.start)
                 .or_insert_with(|| "%inst ".into());
-        } else if entry(&head) {
-            self.require(&items[0], &head)?;
+        } else if entry(&crate::naming::core(&head)) {
+            let core = crate::naming::core(&head);
+            self.require(&items[0], &crate::naming::public(&core))?;
+            items[0].kind = Kind::Atom(core.into_owned());
         } else if head == "import" && items.get(2).and_then(Sexp::text).is_none() {
-            self.require(&items[0], "import")?;
+            self.require(&items[0], "use")?;
         } else if head == "export" && items.get(1).and_then(Sexp::list).is_some() {
             self.require(&items[0], "export")?;
         } else if matches!(head.as_str(), "loop" | "try") {

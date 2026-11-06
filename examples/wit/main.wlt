@@ -1,12 +1,12 @@
 (module
-  (%import "wlt:std"
+  (%use "wlt:core"
     (type $option)
-    (type $pair)
+    (type $tuple)
     (type $result)
-    (type $text))
-  (%import "generated/bindings.wlt" (func $service.echo) (func $service.wait))
-  (func $echo (export "echo") (param $value (%inst $result (%inst $pair i64 (%inst $option $text)) i32))
-    (result (%inst $result (%inst $pair i64 (%inst $option $text)) i32)) (%effect host)
+    (type $string))
+  (%use "./generated/bindings.wlt" (func $service.echo) (func $service.wait))
+  (func $echo (export "echo") (param $value (%inst $result (%inst $tuple i64 (%inst $option $string)) i32))
+    (result (%inst $result (%inst $tuple i64 (%inst $option $string)) i32)) (%effect host)
     (call $service.echo (local.get $value)))
-  (func $wait (export "wait") (result $text) (%effect host suspends)
+  (func $wait (export "wait") (result $string) (%effect host suspends)
     (call $service.wait)))

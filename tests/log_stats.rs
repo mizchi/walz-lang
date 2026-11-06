@@ -6,15 +6,19 @@ fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests(
     let compiled = wlt::compile(loaded.text()).unwrap();
     assert!(!compiled.analysis.opaque);
     for (name, reads, writes, host, suspends) in [
-        ("$parse.line", false, false, false, false),
-        ("$stats.consume", true, true, false, false),
-        ("$report.write", true, true, true, true),
+        (".line", false, false, false, false),
+        (".consume", true, true, false, false),
+        (".write", true, true, true, true),
     ] {
         let effects = &compiled
             .analysis
             .functions
             .iter()
-            .find(|f| f.name == name)
+            .find(|f| {
+                f.name
+                    .split_once('.')
+                    .is_some_and(|(_, member)| member == name.trim_start_matches('.'))
+            })
             .unwrap()
             .semantic_effects;
         assert_eq!(
