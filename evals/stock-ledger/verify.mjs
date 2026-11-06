@@ -8,9 +8,60 @@ import { promisify } from "node:util";
 import { build } from "../../runtime/build-core.mjs";
 import { instrument } from "../../runtime/testing/memory.mjs";
 import { createTextIO, TEXT_IO, IOError } from "../../runtime/text-io.mjs";
+import { functionForms } from "../lib/source.mjs";
 const exec = promisify(rawExec);
 const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
-export async function verifyStock({ source, output, checkInputs }) {
+function inspectState(ir, name, counterType, text, groupedBindings) {
+  const main = ir.functions.find((f) => f.name === name);
+  assert.ok(main, `missing ${name}`);
+  const stateType = ir.types.findIndex((t) => t.name === "$stock.State");
+  const pairType = ir.types.findIndex((t) => {
+    const p = t.kind?.Value?.Pair;
+    return (
+      p?.first?.Ref?.ty === stateType &&
+      p.first.Ref.nullable === false &&
+      p.second?.Num === counterType
+    );
+  });
+  assert.notEqual(pairType, -1, `pair<ref State,${counterType}> must exist`);
+  assert.ok(
+    main.locals.some(
+      (l) => l.kind?.Loop !== undefined && l.ty?.Value === pairType,
+    ),
+    "pair must be a fold loop binding",
+  );
+  const calls = [];
+  const walk = (node, inLoopBody = false) => {
+    if (!node || typeof node !== "object") return;
+    if (
+      node.kind?.Call &&
+      ir.functions[node.kind.Call.function].name === "$stock.new"
+    )
+      calls.push({ inLoopBody, args: node.kind.Call.args });
+    for (const [key, value] of Object.entries(node)) {
+      if (key === "Loop" && value?.body) {
+        walk(value.bindings, inLoopBody);
+        walk(value.body, true);
+      } else if (Array.isArray(value))
+        value.forEach((v) => walk(v, inLoopBody));
+      else walk(value, inLoopBody);
+    }
+  };
+  walk(main.body);
+  assert.equal(calls.length, 1, "one stock.new call in main");
+  assert.equal(
+    calls[0].inLoopBody,
+    false,
+    "initialization must be outside the loop body",
+  );
+  assert.equal(calls[0].args[0].kind.Const.literal, "4096");
+
+  assert.match(text, /\(%?stream\.fold-result\s/);
+  assert.match(text, /\(%?result\.let\s/);
+  if (groupedBindings) assert.ok(functionForms(text, name)?.["let.group"] > 0, "main initialization must use a grouped %let");
+  return { pairType, stockNewCalls: calls.length, outsideLoopBody: true };
+}
+export async function verifyStock({ source, output, checkInputs, groupedBindings = false, extended = false }) {
   const checks = [];
   const check = async (name, run) => {
     try {
@@ -22,7 +73,7 @@ export async function verifyStock({ source, output, checkInputs }) {
   };
   await check("frozen inputs", checkInputs);
   if (!checks[0].passed) return { passed: false, checks };
-  let runtime;
+  let runtime, checkedIr;
   await check("W1 type and Wasm validation", async () => {
     await build(source, output, { legacySyntax: true });
     await instrument(output, "core");
@@ -34,53 +85,8 @@ export async function verifyStock({ source, output, checkInputs }) {
       ["run", "--locked", "--quiet", "--", "--legacy-syntax", "ir", source],
       { cwd: projectRoot, maxBuffer: 8 * 1024 * 1024 },
     );
-    const ir = JSON.parse(stdout),
-      main = ir.functions.find((f) => f.name === "$main");
-    const stateType = ir.types.findIndex((t) => t.name === "$stock.State");
-    const pairType = ir.types.findIndex((t) => {
-      const p = t.kind?.Value?.Pair;
-      return (
-        p?.first?.Ref?.ty === stateType &&
-        p.first.Ref.nullable === false &&
-        p.second?.Num === "i32"
-      );
-    });
-    assert.notEqual(pairType, -1, "pair<ref State,i32> must exist");
-    assert.ok(
-      main.locals.some(
-        (l) => l.kind?.Loop !== undefined && l.ty?.Value === pairType,
-      ),
-      "pair must be a fold loop binding",
-    );
-    const calls = [];
-    const walk = (node, inLoopBody = false) => {
-      if (!node || typeof node !== "object") return;
-      if (
-        node.kind?.Call &&
-        ir.functions[node.kind.Call.function].name === "$stock.new"
-      )
-        calls.push({ inLoopBody, args: node.kind.Call.args });
-      for (const [key, value] of Object.entries(node)) {
-        if (key === "Loop" && value?.body) {
-          walk(value.bindings, inLoopBody);
-          walk(value.body, true);
-        } else if (Array.isArray(value))
-          value.forEach((v) => walk(v, inLoopBody));
-        else walk(value, inLoopBody);
-      }
-    };
-    walk(main.body);
-    assert.equal(calls.length, 1, "one stock.new call in main");
-    assert.equal(
-      calls[0].inLoopBody,
-      false,
-      "initialization must be outside the loop body",
-    );
-    assert.equal(calls[0].args[0].kind.Const.literal, "4096");
-    const text = await readFile(source, "utf8");
-    assert.match(text, /\(%?stream\.fold-result\s/);
-    assert.match(text, /\(%?result\.let\s/);
-    return { pairType, stockNewCalls: calls.length, outsideLoopBody: true };
+    checkedIr = JSON.parse(stdout);
+    return inspectState(checkedIr, "$main", "i32", await readFile(source, "utf8"), groupedBindings);
   });
   const encode = (s) => new TextEncoder().encode(s);
   const open = async (input, write) => {
@@ -169,6 +175,38 @@ export async function verifyStock({ source, output, checkInputs }) {
         assert.deepEqual(result, { tag: "ok", val: count });
         return { result, json: lines, closed, handles: 0, arenaLive: 0 };
       });
+    if (extended) {
+      await check("W5 i64 state, arithmetic and public result", async () => {
+        const text = await readFile(source, "utf8");
+        const state = inspectState(checkedIr, "$count64", "i64", text, true);
+        const evidence = [];
+        for (const [name, text, count, expected] of cases) {
+          const lines = [];
+          const program = await open((async function* () { yield encode(text); })(), async (b) => lines.push(JSON.parse(new TextDecoder().decode(b))));
+          const result = await program.api.count64();
+          assert.deepEqual(result, {tag: "ok", val: BigInt(count)});
+          assert.deepEqual(lines, expected);
+          program.clean();
+          evidence.push({name, count, resultType: typeof result.val});
+        }
+        const program = await open((async function* () { yield new Uint8Array([255, 10]); })(), async () => assert.fail("no output after invalid UTF-8"));
+        assert.deepEqual(await program.api.count64(), {tag: "err", val: 1});
+        program.clean();
+        return {state, cases: evidence, errorType: "i32", arenaLive: 0};
+      });
+      await check("W6 selected standard APIs and unsigned boundaries", async () => {
+        const program = await open((async function* () {})(), async () => assert.fail("format-count must not write output"));
+        const cases = [
+          ["0", "count=0"], ["00042", "count=42"], ["18446744073709551615", "count=18446744073709551615"],
+          ["", null], ["-1", null], ["+1", null], [" 1", null], ["1x", null], ["18446744073709551616", null],
+        ];
+        for (const [input, expected] of cases) {
+          assert.deepEqual(await program.api.formatCount(input), expected === null ? {tag: "err", val: 1} : {tag: "ok", val: expected});
+          program.clean();
+        }
+        return {cases: cases.length, arenaLive: 0};
+      });
+    }
     for (const phase of ["utf8", "read", "write"])
       await check(`W3 ${phase} failure`, async () => {
         let closed = 0,

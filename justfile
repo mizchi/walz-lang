@@ -36,6 +36,37 @@ run-verified file="examples/verified-laws.wlt":
 types file="examples/variants.wlt":
     cargo run --locked --quiet -- types {{quote(file)}}
 
+check-json file="examples/result.wlt":
+    cargo run --locked --quiet -- check --json {{quote(file)}}
+
+type-at file line column:
+    cargo run --locked --quiet -- type-at {{quote(file)}} {{quote(line)}} {{quote(column)}}
+
+test-inspection:
+    cargo test --locked --test inspection --test typing --test diagnostics
+
+test-collections:
+    cargo test --locked --test collections
+    node --expose-gc --test runtime/collections.test.mjs
+
+test-simd:
+    cargo test --locked --lib simd
+    cargo test --locked --test simd
+    node --expose-gc --test runtime/simd.test.mjs
+
+test-simd-kernels:
+    cargo test --locked --test simd_kernels --test simd
+    node --expose-gc --test runtime/simd-kernels.test.mjs runtime/simd-kernels-bench.test.mjs
+
+simd-kernels-capture output="target/simd-kernels/current" jsimd="../jsimd":
+    node runtime/simd-kernels-bench.mjs capture {{quote(output)}} {{quote(jsimd)}}
+
+simd-kernels-bench snapshot="target/simd-kernels/current" rounds="9" sizes="16,1024,4096,16384,262144":
+    node --expose-gc runtime/simd-kernels-bench.mjs run {{quote(snapshot)}} {{quote(rounds)}} {{quote(sizes)}}
+
+simd-kernels-compare before after output rounds="9" sizes="4096,16384,262144":
+    node --expose-gc runtime/simd-kernels-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(output)}} {{quote(rounds)}} {{quote(sizes)}}
+
 wit file="examples/value-types.wlt":
     cargo run --locked --quiet -- wit {{quote(file)}}
 
@@ -160,6 +191,16 @@ test-stdlib:
     cargo test --locked --test library
     node --expose-gc --test runtime/library.test.mjs
 
+# Generate public standard signatures from the compiler's embedded catalogue.
+stdlib-docs:
+    cargo run --locked --quiet --example stdlib-docs
+
+check-stdlib-docs:
+    cargo run --locked --quiet --example stdlib-docs -- --check
+
+test-stdlib-docs:
+    cargo test --locked --example stdlib-docs
+
 test-modules:
     cargo test --locked --test modules --test static_imports --test dce
     node --test runtime/modules.test.mjs
@@ -226,7 +267,7 @@ samples:
 probes:
     cargo test --locked --test examples capability_probes_record_reproducible_language_limits -- --nocapture
 
-check:
+check: check-stdlib-docs
     cargo fmt -- --check
     cargo clippy --locked --all-targets -- -D warnings
 
@@ -261,17 +302,18 @@ test-json:
 
 test-lists:
     cargo test --locked --test lists --test wit_bindings --test differential
-    node --expose-gc --test runtime/lists.test.mjs runtime/list-bindings.test.mjs
+    node --expose-gc --test runtime/lists.test.mjs runtime/list-bindings.test.mjs runtime/numeric-lists.test.mjs
 
 test-generics:
     cargo test --locked --test generics --test generic_bounds
     cargo run --locked --quiet -- test examples/generic-lists.wlt
     node --expose-gc --test runtime/generics.test.mjs
 
-# Inspect explicit % extension syntax, migration and native WAT boundaries.
+# Inspect explicit % extension syntax and native WAT boundaries.
 test-syntax:
     cargo test --locked --test surface
 
-# Print a migration preview; pass --write through the CLI to update one file.
-migrate file:
-    cargo run --locked --quiet -- migrate {{quote(file)}}
+# Embedded standard modules, explicit data type imports and grouped lets.
+test-standard:
+    cargo test --locked --test standard --test surface
+    node --expose-gc --test runtime/standard.test.mjs

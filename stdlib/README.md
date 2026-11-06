@@ -1,16 +1,18 @@
 # 標準ライブラリ
 
-すべて通常の WLT 関数です。コンパイラの命令・型・ランタイムは追加しません。
-必要な関数・型を列挙して、ファイルから import します。パスは呼出し元からの相対位置です。
+基本型は既存の基底型への透明な alias、標準関数は通常の WLT 関数です。ライブラリごとの追加ランタイムは持ちません。
+必要な関数・型を列挙して、`wlt:std` から import します。コンパイラが同梱したソースを静的にリンクするため、呼出し元の場所やインストール先のパスに依存しません。
+完全な型・型制約・effect は [生成した標準 API 一覧](../docs/stdlib-api.md) を参照してください。`just stdlib-docs` で公開宣言から更新し、`just check-stdlib-docs` でソースとの一致を確認します。
+`dict.wlt` はtextキーの汎用辞書、`list-builder.wlt` は不変listの構築を提供します。型制約・変更とスナップショットの契約は [コレクション](../docs/collections.md) を参照してください。
 
 ```wat
 (module
-  (import "stdlib/text.wlt" (func $string.u64 $unsigned))
-  (func $answer (export "answer") (result text) (effects reads writes allocates)
+  (%import "wlt:std" (type $text) (func $string.u64 $unsigned))
+  (func $answer (export "answer") (result $text) (%effects reads writes allocates)
     (call $unsigned (i64.const 42))))
 ```
 
-各ファイルの namespace 内にある `export` が API を定義します。`$string.u64` のような公開パスを選び、任意のローカル名へ束縛できます。
+各ファイルの namespace 内にある `%export` が API を定義します。`$string.u64` のような公開パスを選び、任意のローカル名へ束縛できます。
 `json.wlt` → `builder.wlt` → `text.wlt` → `bytes.wlt` の依存も named import です。同じファイルはコンパイル単位内で一度だけ読み込まれ、型と定義を共有します。
 選ばなかった名前は呼出し元に束縛されません。生成する Wasm は実際の ABI export・テスト・law から到達する宣言だけを保持します。
 詳細は [静的モジュールと DCE](../docs/static-modules.md) を参照してください。`include` は従来のテキスト挿入として残します。
@@ -56,7 +58,7 @@ finish 済みの text は以後の変更と独立し、builder は以前の断�
 
 JSON のフィールドは追加順に並びます。同名のキーはそのまま出力します。外部の JSON text を未検査で埋め込む API は用意していません。
 `$json.object` は child を空へ戻します。parent と child が同じ別名でも、変更前の内容を有限の値として取り込んでからフィールドを追加するので循環を作りません。
-初版は object・string・整数・boolean が対象です。配列・浮動小数点・null の値 API は未実装です。
+object・string・整数・boolean に加え、検査付き number、null、JSON 値を追加できます。JSON の数値は text として保持します。
 
 `just test-stdlib` で Wasmtime と Core / Component の実行を確認します。ブラウザは `just test-e2e` に含まれます。
 `just stdlib-capture DIRECTORY` で3アプリの生成物と入力・期待値・ソースのハッシュを固定し、変更後に別名で capture します。

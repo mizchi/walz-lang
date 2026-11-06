@@ -471,6 +471,8 @@ impl Lower<'_> {
 }
 
 pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
+    let standard = crate::standard::prepare(source)?;
+    let source = standard.source(source);
     let raw = crate::sexpr::parse(source)?;
     let mut pending = vec![&raw];
     let mut found = false;
@@ -517,7 +519,8 @@ pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
     if !found {
         return Ok(None);
     }
-    let normalized = crate::syntax::normalize(source, &raw)?;
+    let mut normalized = crate::syntax::normalize(source, &raw)?;
+    standard.rewrite(&mut normalized);
     let modules = crate::modules::expand(source, &normalized)?;
     let generic = crate::generics::expand(source, &modules.syntax)?;
     let aliases = crate::aliases::expand(source, &generic.syntax)?;

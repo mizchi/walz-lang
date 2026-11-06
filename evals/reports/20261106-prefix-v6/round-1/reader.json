@@ -1,0 +1,70 @@
+{
+  "answers": {
+    "flow": "main.wlt:5 で最大4096品目の空の台帳を作り、$initial に束縛する。次に7–13行の fold が8行の read-lines、9行の初期状態の順にそれぞれ一度評価する。入力の成功行ごとに $state と $line を束縛し、12行で app.process を呼ぶ。その結果が ok(unit) のときだけ13行で同じ台帳参照を ok に包んで次の状態にする。EOF なら fold が入力端点を close して最終状態を返し、6行の result.let の成功分岐で14行の ok(0) を返す。counted.wlt は17–18行で台帳参照と0の pair を作り、20–24行で各行を advance に渡す。advance:7–12 で状態を分解し、app.process が成功した場合に行数を1増やした pair を返す。EOF 後は25–26行で最終 pair を分解し、行数を main の成功 payload として返す。",
+    "state": "counted.wlt:4 の $ScanState は (%pair (ref $stock.State) i32)。第1成分は opaque な台帳の非 null GC 参照、第2成分は行数である。両成分は共有できるので、pair は fold の共有・非 unit 状態 S の条件を満たす。advance:6 の成功型は $ScanState、エラー型は i32。main:15 の成功型とエラー型はともに i32 だが、成功値は最終行数、エラー値は I/O エラーコードで役割が違う。初期値は18行の0、更新は12行の i32.add であり、contract.md:19 のとおり Wasm i32 の折り返し規則に従う。空行、# 行、業務エラーの行も app.process の I/O が成功すれば数える（counted.wlt:8–12、contract.md:14–16）。この成功 payload は text-cli の exit code ではない（contract.md:23、cheatsheet.md:399–400）。具体的な入力はないため数値の実行結果は推測しない。",
+    "alias": "counted.wlt:4 の %type.alias は pair 型の透明な略記であり、新しい GC オブジェクトや nominal identity を作らない（cheatsheet.md:207–209）。型位置に $ScanState を書けるが、(ref $ScanState) という heap 型名には使わない。中に保持する既存の $stock.State 参照と、alias 自身の identity の有無は別である。alias 宣言によって台帳参照が複製されたり別の台帳になったりするわけではない。",
+    "ownership": "counted.wlt:7 と25 の pattern let は subject の pair を一度評価して成分を束縛する（cheatsheet.md:232）。この pair の台帳参照と i32 は共有値なので、local.get で読め、%move は不要である。分解そのものは台帳のフィールドを更新せず、12行の pair.new が同じ台帳参照と新しい数値を次の状態として構築する。共有参照であることは台帳の不変性を意味せず、app.process の writes は契約に明記されている。own 成分を含む pair なら pair 全体も所有値になり、pattern let の subject に (%move $pair) を使い、取り出した所有成分も消費する必要がある（cheatsheet.md:238、275）。入力 Stream は所有値だが、ここでは fold が受け取り、EOF や Result の err に際して close する。状態 pair の分解と Stream の消費を混同しない。",
+    "errors": "在庫不足・容量超過・構文不正は業務エラーであり、app.process が JSON のエラーレコードを出し、I/O が成功すれば ok(unit) を返す（contract.md:13–16）。したがって counted.wlt:9–12 はこれらの行も数える。read-lines が配送する入力 err と app.process の err は I/O 失敗で、fold が close して同じ i32 エラーを返し、外側の result.let もその err を結果にする。app.process が err になった行では加算の body は評価されない。EOF は失敗ではなく、close 後に最終状態の ok となる（cheatsheet.md:199–203）。取消しは main の通常の Result と別の task scope が終了確認を担当する（contract.md:18）。fold は任意の throw に対する finally ではなく、これらの説明から trap や任意例外の終了処理まで保証されるとは読めない。",
+    "scope": "result.let は関数からの暗黙 return ではない。subject が err なら body を評価せず、その result.let 式の結果を同じエラー型の err にする（cheatsheet.md:154–165）。このコードで main の戻り値になるのは、外側の result.let が関数本体の結果位置にあるためである。main.wlt:6 の $final は14行の body 内だけで使えるが、実際には未使用。11行の () は成功 payload が unit のため束縛名がない。counted.wlt:7 の $ledger/$count は9–12行、19行の $final-state は25–26行、25行の $final-ledger/$final-count は26行の body がスコープである。$final-ledger は未使用。fold の $progress/$line は23–24行の反復 body に属し、advance の同名に似た引数は別の関数の束縛である。",
+    "changes": "カウンタの更新規則を変える中心は counted.wlt:9–12 の advance。app.process の成功後という条件は result.let の body の位置が決め、加算式自体は12行にある。初期値は17–18行、最終成功値への取り出しは25–26行、状態型は4行を見る。カウンタ型を仮に変更するなら4行の pair 第2成分、12行の加算命令と定数型、18行の初期定数、15行の main の Result 成功型を対応させる。6行の advance は alias 経由なので pair の型を書き直す場所ではないが、返す値が契約と合うことは確認する。15行の Result のエラー側 i32、18行の stock.new の容量4096はカウンタとは別なので連動して変えない。7行と25行の分解、20–24行の fold は型と値の流れを確認する箇所である。なお現在の課題は contract.md:19 が i32 の折り返しを指定しているため、別の整数型への変更は課題の契約変更を伴う。3行と8行の説明も集計対象を変えるなら更新する。",
+    "syntax": "以下は cheatsheet.md だけを根拠とする。\n1. 接頭辞：20–35行『標準 WAT と % 拡張の境界』により、標準 WAT の if、func、result、block、call には % を付けず、拡張入口の %let、%match、%loop などには付ける。内部の case、bind、while、step、do、catch、制約 shared/nonunit/callable は入口に属する構文なので付けない。例は99–101行の %match/case、304–307行の %loop/bind。\n2. result：13–14行、26–27行、125–126行より、(result i64) は単一の結果型宣言、(result i32 i64) は標準 WAT の複数戻り値宣言。(%result i32 i64) は成功 i32／エラー i64 の WLT 値型であり、2個の値を返す指定ではない。(result (%result i32 i64)) はその Result 値を関数などの結果型として宣言する。結果宣言の省略は unit であり、本体からの結果型推論の指定ではない。\n3. import/export：28–29行および320–342行『モジュール・不透明な公開型』より、import は Wasm のインスタンス化時の外部取込み、export は生成 Wasm モジュールの公開。%import は WLT ソースの選択的な静的リンク、%export はソース API の公開である。ファイルパスを持つ入口は (%include \"relative.wlt\") と (%import \"relative.wlt\" ...)（323–324行）。include は宣言挿入、ファイル import は選んだ名前を束縛し同じファイルの型・定義を共有する。パスは参照元ファイルからの相対パス（338行）。(%import $stock ...) は namespace からの取込みでファイルパスではない（332、340行）。標準 import の \"host\" \"read\" はこの静的ファイル取込みの入口ではない（325行）。%export の type は表現も公開し、opaque は型だけを公開する（336–337行）。\n4. 汎用：243–262行『所有値・クロージャ・effect』より、%type.params は関数・型・alias・クロージャの名前直後で型変数を宣言し、直後の %where は具体化する型引数の shared、nonunit、callable などの条件を指定する。%inst は明示した型引数で具体化する。関数適用は (call (%inst $identity i64) value)、汎用型は (ref (%inst $Box i64))、汎用 alias は型位置の (%inst $Values i64)（261行）。型引数推論や実装探索はない。型・effect・所有権は具体化した本体で検査され、未適用の汎用本体がすべての型引数で正しいという保証はない（262行）。未使用の適用も DCE 前に検査する（260行）。callable の場合は引数・戻り値が一致する共有・再呼出し可能なクロージャに限定し、effect は本体から推論する。callable の effects 省略時は effect 制限を課さない（258–260行）。\n5. shared/pure：256–260行は shared が不変性を意味しないと明記している。可変 GC データの読み書きは reads/writes として検査される（291–299行の effect 表）。%effects pure は semantic effect が空という上限であり、停止、無 trap、物理的割当てなしを証明しない（293行）。effect 注釈は実際の本体から検査する上限で、省略時は推論する（299行）。\n6. 保証の境界：3–4行と34–35行より、標準 WAT 単体はそのまま検証・コンパイルされる。型付きコアでは型・effect・所有権を検査する。コア外の WAT 命令と構文マクロを混在させる経路は %let/%loop/%for など構文だけで展開できるものに限り、生成 Wasm 全体を検証するが analysis.opaque=true と保守的 effect を返す。%effects pure を付けても詳細な解析や所有権保証は得られず、検査が必要な拡張との併用は受理されない。標準 WAT が受理されるという説明を、すべての混在コードで型付きコアの保証を得られるという意味には読めない。"
+  },
+  "scores": {
+    "flow": {
+      "score": 3,
+      "evidence": "main.wlt:5→7–13→14 の順で初期化・行処理・成功値を追える。counted.wlt:17–26 も同じ骨格で、24行の advance の本体は5–12行を一度参照すれば分かる。8行のコメントが集計対象を補助する。ただし main.wlt:6–14 の二重の result.let の役割と EOF 時の動きは cheatsheet.md:165、201 の小さな確認が必要で、局所だけでほぼ迷わない4にはしない。"
+    },
+    "types": {
+      "score": 3,
+      "evidence": "counted.wlt:4 の alias に pair の構成が一度だけ現れ、5–6行と17行では $ScanState と書かれるため複合型の反復は少ない。15行の (result (%result i32 i32)) は外側の宣言と内側の値型を接頭辞で区別できる。一方、11–12行の省略された構築型は6行の成功型へ、20–24行の fold は4行と17行へ戻って確認する必要がある。確認は局所的だが省略だけを満点の理由にはしない。"
+    },
+    "scope": {
+      "score": 3,
+      "evidence": "counted.wlt:7 の $ledger/$count と12行、23行の $progress/$line と24行、25行の $final-count と26行の対応は近い。advance を独立させたことで main 内の入れ子が抑えられている。ただし19–26行は fold の反復スコープと最終状態の分解スコープが続き、25行の未使用 $final-ledger も含め束縛の役割を確認する小さな負担がある。"
+    },
+    "layout": {
+      "score": 2,
+      "evidence": "counted.wlt:3–4 の状態説明と alias、15–16行の main の契約はまとまっている。一方、6行は複合の結果型と全 effect を同じ行に置き、12行は pair 構築・加算・複数の閉じ括弧が集中する。さらに13行と27行の独立した )))、main.wlt:15 の )) は、どの式が終わるかを開始位置まで戻って数える負担を生む。省略形で型が読めることとは別に、式の区切りの視認性には目立つ負担が残る。"
+    },
+    "changes": {
+      "score": 3,
+      "evidence": "counted.wlt:4 に状態型、12行に加算、18行に初期値、25–26行に最終値の抽出が現れる。advance:5–12 が行処理と加算をまとめ、長い pair 型を各更新箇所で書き直す必要がない。カウンタ型を変える場合は15行の成功型まで確認が必要だが、型注釈の探索に強く妨げられる構造ではない。12行の長い構築式と9行の成功条件は一度確認する必要があるため4にはしない。"
+    }
+  },
+  "issues": [
+    {
+      "priority": 3,
+      "kind": "syntax",
+      "location": "counted.wlt:19–26、cheatsheet.md:234",
+      "problem": "省略形 result.let は subject と成功時 body を位置だけで区別するため、fold のような複数行 subject の後で body が始まる境界を括弧で確認する必要がある。",
+      "fix": "省略形と併存する案として、subject と成功時 body の境界を見出し語で明示できる構文を検討する。導入する場合も現在の評価順・式の結果・非 return の意味を保つ。"
+    },
+    {
+      "priority": 2,
+      "kind": "format",
+      "location": "counted.wlt:6、12–13、27、main.wlt:15",
+      "problem": "結果型と effect の同居、長い pair 更新式、孤立した閉じ括弧の行によって契約と式の終端を追い直す負担がある。",
+      "fix": "advance の結果型と effect を別行にし、pair の成分と加算式を読みやすく改行する。閉じ括弧は対応する末尾の式に寄せるなど、関数と module の終端が一貫して分かる整形にする。"
+    },
+    {
+      "priority": 3,
+      "kind": "naming",
+      "location": "counted.wlt:5、24",
+      "problem": "advance という名前だけでは台帳処理という I/O を行うことと、成功時に行数を増やすことの両方が伝わりにくい。呼出し箇所から本体へ戻る必要がある。",
+      "fix": "process-counted-line のように、行処理と集計を示す名前を検討する。"
+    },
+    {
+      "priority": 3,
+      "kind": "docs",
+      "location": "counted.wlt:3、8、15–26",
+      "problem": "3行の delivered lines だけでは、配送後に app.process が I/O 失敗した行もカウントするように一瞬読める。8行が条件を補う一方、EOF・取消し・成功 payload の意味は外部資料に分かれている。",
+      "fix": "状態のコメントを『I/O 処理に成功した配送行数。空行・コメント・業務エラーを含み i32 で折り返す』と明確にする。main 付近に成功値が最終行数、I/O err は伝播、取消しは task scope という短い契約説明を添える。"
+    }
+  ],
+  "limitations": [
+    "task.md で許可された cheatsheet.md、contract.md、rubric.md、main.wlt、counted.wlt だけを読んだ。リンク先、program.wlt や依存実装、他の役、過去の評価は参照していない。",
+    "コンパイラ、対象プログラム、実行検証ツールは起動していない。説明は配布コードと契約からの読解であり、実行結果・読了時間・コンパイル成功を主張しない。",
+    "このコードに現れる構文は配布チートシートで説明されており、未解決の未知構文はない。I/O エラーコードの個別の意味、取消し時の具体的な task scope の実装は配布資料にないため説明しない。",
+    "可読性の点数はルーブリックに沿った主観評価であり、正しい説明ができたことや型省略そのものを読みやすさの加点根拠にしていない。"
+  ]
+}

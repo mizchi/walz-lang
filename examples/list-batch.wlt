@@ -1,6 +1,8 @@
 (module
+  (%import "wlt:std"
+    (type $list))
   (type $Numbers (array (mut i64)))
-  (func $sum (export "sum") (param $values (%list i64)) (result i64) (%effects pure)
+  (func $sum (export "sum") (param $values (%inst $list i64)) (result i64) (%effects pure)
     (%loop $sum
       (bind $i i32 (i32.const 0))
       (bind $total i64 (i64.const 0))
@@ -17,12 +19,12 @@
               (%list.get i64 (local.get $values) (local.get $i))))
         ))))
 
-  (func $double (export "double") (param $values (%list i64)) (result (%list i64))
+  (func $double (export "double") (param $values (%inst $list i64)) (result (%inst $list i64))
     (%effects reads writes allocates)
     (%let $length (%list.len i64 (local.get $values))
       (%let $out (array.new $Numbers (i64.const 0) (local.get $length))
         (block
-          (result (%list i64))
+          (result (%inst $list i64))
           (%loop $map
             (bind $i i32 (i32.const 0))
             (if

@@ -1,0 +1,72 @@
+{
+  "answers": {
+    "flow": "main.wlt:11–12 の複数束縛で stock.new(4096) を一度呼び、次に read-lines を一度呼ぶ。13–20 の外側 result.let の subject が fold-result。fold は source の move(input)、initial の initial 参照の順に一度ずつ評価し、入力の成功行ごとに state と line を束縛する。19 の app.process が ok(unit) なら内側 result.let の body で同じ台帳参照を ok に包み、次の反復へ渡す。EOF では端点を閉じて最終 state を ok として返す。外側 result.let は成功した state を unused-state に束縛し、21 で ok(0) に変換する。入力または処理の err ならこの成功側の式は評価されない。counted.wlt の main も初期化、入力取得、fold、成功値の変換という順で、行処理だけが process-counted-line に分かれている。これはソースから読んだ制御順であり、実行結果は確認していない。",
+    "state": "main.wlt の fold 状態は contract.md:7–8 の共有できる非 null の台帳参照 (ref $stock.State)。counted.wlt:9 の ScanState は pair<(ref $stock.State), i32> で、台帳参照と、app.process の I/O が成功した配送行数を持つ。30–33 で台帳と0の pairを作る。16 で状態を分解し、19 の処理が成功した場合に限って20–23で同じ台帳参照と line-count+1 の新しい pair を返す。加算は i32 の折り返し。空行、コメント、業務エラーの行も I/O 成功なら数える。fold 成功後は42–43で pair を分解し、最終行数を main の Result<i32,i32> の成功 payload にする。途中の I/O 失敗時は err(code) で、途中の行数を成功値として返さない。成功値は text-cli の exit code ではない。根拠は contract.md:14–19,23 と cheatsheet.md:235–245,447。",
+    "alias": "counted.wlt:9 の %type.alias は透明な型の略記であり、ScanState という別の実行時オブジェクトや nominal identity を増やさない。型の位置に $ScanState と書けるが、(ref $ScanState) として heap 型名には使わない。pair を作り直しても、22 の ledger はもとの GC 台帳参照をそのまま渡している。台帳自体の参照同一性と、alias が identity を追加しないことは別の話。根拠は cheatsheet.md:247–250,129 と counted.wlt:16–23。",
+    "ownership": "配布コードの ScanState の2成分は共有値なので、pair も共有値。counted.wlt:16,42 の pattern let は subject を一度評価して2成分を束縛でき、local.get でよい。pair の分解自体は暗黙の move ではない。own 成分を含む pair なら全体も所有値となるため、分解時に (%move $pair) と書き、取り出した所有成分も消費する必要がある。配布コードで消費するのは read-lines が返す Stream で、main.wlt:15／counted.wlt:36 の move が fold に所有を渡す。fold は EOF と入力・body の err で端点を閉じる。共有台帳参照や i32 を捨てることと Stream を放置することは同じではない。cheatsheet.md:88–89,109–110,227–245,277,283,320–321 が根拠。",
+    "errors": "業務エラーは app.process が JSON エラーレコードとして出力し、その I/O に成功すれば ok(unit) になる。在庫不足・容量超過・構文不正の件数が Result の err になるわけではない。app.process の err(i32) と read-lines の入力 err は I/O 失敗で、fold が端点を閉じて err を返し、外側 result.let もその err を式の結果として返す。EOF は失敗ではなく、close 後に ok(state)。取消しの終了確認は通常の main の Result とは別の task scope の担当。fold は任意の throw に対する finally ではなく、trap の捕捉や取消しの詳細をこのコードから補うことはできない。根拠は contract.md:10–18、cheatsheet.md:205,231,241–245,362。",
+    "scope": "result.let は関数からの暗黙 return ではない。subject が ok の場合だけその payload 名を body 内に束縛し、body の Result を式全体の結果にする。err なら body を評価せず同じエラー型の err を式の結果にする。配布コードでは関数本体の末尾側に置かれているため、結果的に main の返す値に伝わる。main.wlt:13 の unused-state は21の成功 body の範囲、17の state/line は fold body の範囲で、18の () は成功型unitに束縛する値がないことを示す。counted.wlt:34 の final-state は42–43の成功 body だけ、38の progress/line は39–41の fold body だけ。helper の progress/line は別の関数引数であり、main 側から明示的に渡している。根拠は cheatsheet.md:188–205,244,284。",
+    "changes": "行数の増やし方を変えるなら counted.wlt:17–23 の成功時の更新を追う。何を数えるかは app.process が ok を返す条件にも依存するため、contract.md:13–16 を併せて確認する。初期値は31–32、状態型は9、helper の入出力契約は12–14、fold への投入と更新関数の呼出しは35–41、最終成功値の取り出しは42–43、外部への成功型は28。将来カウンタ型を変更するなら9のpair第2成分、23の加算命令と定数、32の初期定数、28のResult成功型を対応させる。14 の成功型は alias を使うため型の成分を重複修正せずに済み、pair.new と分解の型も期待型・subjectから決まる。エラー型 i32 と成功のカウンタ型を混同して変更しない。今回の契約では i32 折り返しを維持する指定があるため、型変更は実施すべき変更ではなく変更影響の説明である。",
+    "syntax": "接頭辞: cheatsheet.md『標準 WAT と % 拡張の境界』24–33 により、if は標準 WAT なので % を付けず、%let はWLTの入口なので付ける。case は %match、bind は %loop/%for の内部構文なので接頭辞を付けない。349–352 に bind の形がある。結果:26–27,163 により (result i64) は単一の戻り型宣言、(result i32 i64) は標準WATの複数戻り型宣言、(%inst $result i32 i64) は成功i32・エラーi64の単一のResult値型、(result (%inst $result i32 i64)) はそのResult値を返す宣言。$result は明示importした型名である。モジュール:28–30 と『モジュール・不透明な公開型』368–387 により import/export はWasmインスタンス化時の取込み／生成モジュールの公開、%import/%export はソースの選択的静的リンク／ソースAPI公開。ファイルパスを持つ入口は %include \"relative.wlt\" と %import \"relative.wlt\" で、%includeは宣言挿入、ファイル%importは選択した名前の束縛。標準 import の2文字列はhost/memberでありソースファイルの指定ではない。%import は namespace名や特別な wlt:std も取る。ジェネリクス:『所有値・クロージャ・effect』288–307 により、%type.params は関数・型・alias・closure名の直後で型パラメータを宣言し、その直後の %where は shared/nonunit/callable 等で具体化する型引数を制約する。%inst で型引数を明示して具体化し、具体化した本体で型・effect・所有権を検査する。未使用の適用もDCE前に検査するが、未適用の汎用本体が全型引数で正しいことは保証しない。関数は (call (%inst $identity i64) value)、汎用GC型は (ref (%inst $Box i64))、汎用aliasは型位置の (%inst $Values i64)。型引数推論や型クラス・実装探索はない。共有とeffect:302 と336–344 によりsharedは不変性を意味せず、pureは列挙されたsemantic effectが空という上限の検査であって、停止、無trap、物理的割当てなしの証明ではない。解析範囲:『標準 WAT と % 拡張の境界』35–36 により、標準WAT単体はそのまま検証・コンパイルし、型付きコアでは型・effect・所有権を検査する。コア外WATと混在できる拡張は構文だけで展開できる %let/%loop/%for 等に限り、その経路はWasm全体の検証、analysis.opaque=true、保守的effectとなる。pureを付けても詳細解析や所有権保証は得られず、検査が必要な拡張との併用は受理しない。リンク先の詳細は参照していない。",
+    "bindings": "main.wlt:11–12 の複数束縛は initial の stock.new、input の read-lines の順に各一度だけ初期値を評価し、bodyから両方を使える。counted.wlt:30–33 は ledger の stock.new、initial-state の pair.new、input の read-lines の順に各一度。initial-state の初期値から前の ledger を参照しており、bodyは全束縛を参照できる。前の初期値から後の input 等を先行参照することはできない。配布の同じ複数束縛リスト内に同名再束縛はないが、一般則では同名の新しい束縛は自分の初期値を評価した後から古い名前を隠すため、初期値中は以前の名前を参照できる。個々の型注釈は省略でき、countedのinitial-stateだけはScanStateを明記している。これは順次ネストしたletと同じで、各初期値が作る束縛を並べる構文である。counted.wlt:16,42 の (%let ($a $b) subject body) は単一pair値を一度評価して分解する別の形。いずれも (result i32 i64) のようなWasm複数戻り値を分解する指定ではない。所有値も検査し、inputはmoveしてfoldに消費させる。letが暗黙に所有値を複製・消費することはなく、move後の再利用は不可。ここでのledger/pair/i32は共有値なのでlocal.getできる。根拠はcheatsheet.md『関数・型・束縛』94–110、『型のaliasと省略形』277,282–284、『所有値・クロージャ・effect』320。",
+    "standard": "cheatsheet.md『wlt:std と基本データ型』40–56 によれば、wlt:stdはコンパイラ同梱の標準型・標準関数を選んで取り込む入口で、ファイルパスでもホストimportでもなく、通常のライブラリと同じ静的リンクとDCEを使う。暗黙のpreludeはなく、名前はimportしたスコープだけに束縛され、別ファイルやnamespaceでもそこでimportが要る。配布mainはresult、countedはpair/result/textをimportする。元の名前と局所名を変える例は (type $result $Outcome)、(func $string.u64 $format) で、後者は(call $format ...)に対応する。Result/Option/Futureの型はimportした名前に対して (%inst $result T E)、(%inst $option T)、(%inst $future T) と適用し、futureのpayloadをResultにする例は (%inst $future (%inst $result $text i32))。$text/$bytes/$unitは引数なしaliasなのでその名前で参照し、(%inst $text)等を必要としない。i32等のWasm型はそのまま使える。標準関数は必要な操作に応じて $string.*、$buffer.*、$list.map/$list.fold、$builder.*、$json.*、$json-value.* から選び、必要な名前をfuncとしてimportしてcallする。390–408の表では数値文字列化はstring.u64/string.s64、検索・分割・解析はbuffer.find-byte/string.find/string.split-once/string.parse-u64等、411–426ではJSON構築とbuilderの例がある。%future.await、%text.lit、%result.ok等は値を扱うコンパイラ固定構文であり、型名の参照・具体化とは区別する。main/ countedに出るstock/read-lines/appの実際の宣言やprogram.wltのimport構成は配布されていないため、契約以上には断定できない。チートシート404–405には旧来にも見えるstdlib/text.wltのincludeによるライブラリ使用説明も併記されており、wlt:stdとの推奨上の関係はこの配布物だけでは明確でない。"
+  },
+  "scores": {
+    "flow": {
+      "score": 3,
+      "evidence": "main.wlt:11–12で初期化が順番に並び、19が行処理、21が成功値なので流れは追える。counted.wlt:30–43も同じ形で、39のhelper名から行単位の処理を特定できる。ただしmain.wlt:13–20の二重result.letとfoldの組合せでは、どの成功継続が行ごとか全体かを一度確認する必要がある。4の局所的な即読までは付けない。"
+    },
+    "types": {
+      "score": 3,
+      "evidence": "counted.wlt:9でpairの構成を一度示し、12,14,31でScanStateを使うため、複合型を毎回たどる負担は小さい。16と42は値の分解として視認できる。一方14,28のresultと%inst $resultの二重構造、unit成功を示す18の空括弧はチートシートで意味を確認した。長い型反復は抑えられているが、記号の役割が完全に局所化されているわけではない。"
+    },
+    "scope": {
+      "score": 3,
+      "evidence": "counted.wlt:30–33は順次束縛を同じ段に並べ、ledgerからinitial-stateへの参照を近くで追える。16–23のledger/line-countも利用が近い。34のfinal-stateと38のprogress/lineは42と39–41に対応するが、foldとresult.letのbody境界を閉じ括弧で確認する箇所が残る。main.wlt:13のunused-stateという名前は捨てる成功値を識別しやすい。"
+    },
+    "layout": {
+      "score": 3,
+      "evidence": "counted.wlt:11–15,26–29はparam/result/effectsが独立行にまとまり、関数契約を拾いやすい。35–41はsource、initial、束縛、bodyのまとまりを行で区切っている。ただし34–43のresult.let/fold/pattern letの切替えと最後の連続閉じ括弧には小さな確認が要る。main.wlt:18–21も継続bodyの始まりが括弧と字下げに依存する。"
+    },
+    "changes": {
+      "score": 3,
+      "evidence": "counted.wlt:9の状態型、17–23の増分処理、31–32の初期値、42–43の最終値がそれぞれ明確で、helperへの分離により行ごとの変更は局所的に読める。型を変える場合は28のmain成功型にも戻る必要があり、同じi32が成功型とエラー型の両方に出るため対応の確認が要る。型省略だけを加点理由にはしていない。"
+    }
+  },
+  "issues": [
+    {
+      "priority": 3,
+      "kind": "syntax",
+      "location": "main.wlt:18 / counted.wlt:18 / cheatsheet.md:188–205",
+      "problem": "unit成功を受けるresult.letの空の()は短いが、初見では何を省略したものかが式だけで分からず、通常のpayload束縛との対応を資料で確認した。",
+      "fix": "構文改善の候補として、unit成功の継続を名前で識別できる専用形を検討する。現行構文を維持するなら、チートシートのresult.let節にunit入力の完全な短い例を追加する。専用形が現行で使えるという主張ではない。"
+    },
+    {
+      "priority": 3,
+      "kind": "format",
+      "location": "main.wlt:13–21 / counted.wlt:34–43",
+      "problem": "fold終了後の成功継続へ移る位置が、長めの入れ子の閉じ括弧と字下げだけで示されている。",
+      "fix": "foldのsubjectと、その後の成功bodyの間に空行を置く、または『全入力成功後』の短いコメントを置き、行処理と全体の成功処理の境界を見せる。"
+    },
+    {
+      "priority": 3,
+      "kind": "naming",
+      "location": "counted.wlt:9,12,16,31,38–40",
+      "problem": "同じ状態にScanState、progress、initial-stateという複数の語を使い、helper引数とfold状態の対応に小さな読み替えがある。",
+      "fix": "例えばhelper引数とfold束縛をscan-stateにそろえ、initial-scan-state/final-scan-stateと対応づける。現在の名前でも追えるため優先度は低い。"
+    },
+    {
+      "priority": 2,
+      "kind": "docs",
+      "location": "contract.md:10–11 / cheatsheet.md:38–56,404–405",
+      "problem": "契約表は%stream/%result/%text/%unitの型表記を使う一方、チートシートはimport名と%instに統一している。また標準ライブラリの説明にwlt:stdの明示importとstdlib/text.wltのincludeが併記され、どちらを選ぶかの説明がない。",
+      "fix": "契約表の型を(%inst $stream (%inst $result $text i32))等の現行表記へ合わせる。ライブラリ節ではwlt:std経由の選択import例を基本にするか、ファイルincludeを使う場合との関係を明示する。"
+    }
+  ],
+  "limitations": [
+    "参照したのは許可されたtask.md、cheatsheet.md、contract.md、rubric.md、main.wlt、counted.wltのみ。リンク先、依存実装、他の役、過去の結果は参照せず、コンパイラやプログラムは実行していない。読了時間や実行結果は推測していない。",
+    "配布コードの構文には未説明のまま推測で補ったものはない。program.wltの内部や取消しのtask scopeの具体的処理は配布物からは分からず、外部契約の範囲で説明した。",
+    "標準関数の全APIや各関数の完全な型は配布チートシートにはない。掲載された選択肢と例を超える関数選択は評価していない。",
+    "契約表の旧形に見える型表記と、チートシートのライブラリinclude説明の位置づけは資料上の曖昧さとして残る。"
+  ]
+}

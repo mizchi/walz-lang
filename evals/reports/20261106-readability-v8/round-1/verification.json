@@ -1,0 +1,714 @@
+{
+  "schema": "wlt-eval-verification-v1",
+  "passed": true,
+  "inputsFingerprint": "958e199ca869f534489c9ceeec720c5eeb936711bc630b4a8365a039ff0b34f6",
+  "candidateSha256": "c7bb252b4545eb718bddfe8a7c31ae2f07131a0e16908df0df611715f4cd308d",
+  "sampleSha256": "ee14b7c10ed07be8ed57a3f195f5b674e7a9f648484e530e507269b1ca714499",
+  "subjects": {
+    "sample": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "frozen inputs",
+          "passed": true,
+          "evidence": "958e199ca869f534489c9ceeec720c5eeb936711bc630b4a8365a039ff0b34f6"
+        },
+        {
+          "name": "W1 type and Wasm validation",
+          "passed": true
+        },
+        {
+          "name": "W4 pair state and one initialization",
+          "passed": true,
+          "evidence": {
+            "pairType": 21,
+            "stockNewCalls": 1,
+            "outsideLoopBody": true
+          }
+        },
+        {
+          "name": "W2 empty",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 0
+            },
+            "json": [],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 blank and comment",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 mixed",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 3
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "op": "SHOW",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "ok": false,
+                "error": "invalid-command"
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 state reuse, no trailing LF",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 3
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 3
+              },
+              {
+                "op": "SHOW",
+                "key": "a",
+                "ok": true,
+                "quantity": 3
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 business failure continues",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [
+              {
+                "op": "TAKE",
+                "key": "missing",
+                "ok": false,
+                "error": "insufficient-stock"
+              },
+              {
+                "op": "SHOW",
+                "key": "missing",
+                "ok": true,
+                "quantity": 0
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 unicode and CRLF",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "日本語🦀",
+                "ok": true,
+                "quantity": 2
+              },
+              {
+                "op": "SHOW",
+                "key": "日本語🦀",
+                "ok": true,
+                "quantity": 2
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 utf8 failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 1
+            },
+            "closed": 1,
+            "writes": 0,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 read failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 2
+            },
+            "closed": 1,
+            "writes": 0,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 write failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 3
+            },
+            "closed": 1,
+            "writes": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 read cancellation",
+          "passed": true,
+          "evidence": {
+            "closed": 1,
+            "acknowledgedAfterCleanup": true,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 write cancellation",
+          "passed": true,
+          "evidence": {
+            "closed": 1,
+            "acknowledgedAfterCleanup": true,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        }
+      ]
+    },
+    "candidate": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "frozen inputs",
+          "passed": true,
+          "evidence": "958e199ca869f534489c9ceeec720c5eeb936711bc630b4a8365a039ff0b34f6"
+        },
+        {
+          "name": "W1 type and Wasm validation",
+          "passed": true
+        },
+        {
+          "name": "W4 pair state and one initialization",
+          "passed": true,
+          "evidence": {
+            "pairType": 27,
+            "stockNewCalls": 1,
+            "outsideLoopBody": true
+          }
+        },
+        {
+          "name": "W2 empty",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 0
+            },
+            "json": [],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 blank and comment",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 mixed",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 3
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "op": "SHOW",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "ok": false,
+                "error": "invalid-command"
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 state reuse, no trailing LF",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 3
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 1
+              },
+              {
+                "op": "ADD",
+                "key": "a",
+                "ok": true,
+                "quantity": 3
+              },
+              {
+                "op": "SHOW",
+                "key": "a",
+                "ok": true,
+                "quantity": 3
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 business failure continues",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [
+              {
+                "op": "TAKE",
+                "key": "missing",
+                "ok": false,
+                "error": "insufficient-stock"
+              },
+              {
+                "op": "SHOW",
+                "key": "missing",
+                "ok": true,
+                "quantity": 0
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W2 unicode and CRLF",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "ok",
+              "val": 2
+            },
+            "json": [
+              {
+                "op": "ADD",
+                "key": "日本語🦀",
+                "ok": true,
+                "quantity": 2
+              },
+              {
+                "op": "SHOW",
+                "key": "日本語🦀",
+                "ok": true,
+                "quantity": 2
+              }
+            ],
+            "closed": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W5 i64 state, arithmetic and public result",
+          "passed": true,
+          "evidence": {
+            "state": {
+              "pairType": 31,
+              "stockNewCalls": 1,
+              "outsideLoopBody": true
+            },
+            "cases": [
+              {
+                "name": "empty",
+                "count": 0,
+                "resultType": "bigint"
+              },
+              {
+                "name": "blank and comment",
+                "count": 2,
+                "resultType": "bigint"
+              },
+              {
+                "name": "mixed",
+                "count": 3,
+                "resultType": "bigint"
+              },
+              {
+                "name": "state reuse, no trailing LF",
+                "count": 3,
+                "resultType": "bigint"
+              },
+              {
+                "name": "business failure continues",
+                "count": 2,
+                "resultType": "bigint"
+              },
+              {
+                "name": "unicode and CRLF",
+                "count": 2,
+                "resultType": "bigint"
+              }
+            ],
+            "errorType": "i32",
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W6 selected standard APIs and unsigned boundaries",
+          "passed": true,
+          "evidence": {
+            "cases": 9,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 utf8 failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 1
+            },
+            "closed": 1,
+            "writes": 0,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 read failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 2
+            },
+            "closed": 1,
+            "writes": 0,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 write failure",
+          "passed": true,
+          "evidence": {
+            "result": {
+              "tag": "err",
+              "val": 3
+            },
+            "closed": 1,
+            "writes": 1,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 read cancellation",
+          "passed": true,
+          "evidence": {
+            "closed": 1,
+            "acknowledgedAfterCleanup": true,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        },
+        {
+          "name": "W3 write cancellation",
+          "passed": true,
+          "evidence": {
+            "closed": 1,
+            "acknowledgedAfterCleanup": true,
+            "handles": 0,
+            "arenaLive": 0
+          }
+        }
+      ]
+    }
+  },
+  "implementation": {
+    "sha256": "76e9e5f20936a638cbed81a35885d0004e6493ba96732ba2468baf28215d453c",
+    "files": {
+      "src/aliases.rs": "1a6cdb795c48305a0584e5b8a289c7ef27d6304d3abdefc6bf02b03c7be647bd",
+      "src/analysis.rs": "ab6f9d4fbd708992ff540a553ad5f9c7f05258178a8c7c9c9f74446a49731114",
+      "src/bindings.rs": "44d5e445067f5087f382e97678c6b20d323b0f69533f86017927adf27d847f1a",
+      "src/bounds.rs": "1c2f16824f92b17131b28fcb7b333e568c6f3ba75e9a9bae88dddda0140444ce",
+      "src/buffers.rs": "eea60b428103d43bf76ebb941ad9116724b6c25ed0192fe656e8e38be72936c9",
+      "src/component.rs": "9e1ecc137f70ac2e80132aeaf92740bd135c305ecaacfb0d844de95ed8b44678",
+      "src/component/abi.rs": "1e0d601d8eade31389c70c1c1daac95f29c8e120ed6d13a9f9faa70eaa3dc302",
+      "src/component/core_js.rs": "72e92ee5df7d7f5d7a9377b2c389abd354a190c1638e0e29f325fc4899db18f7",
+      "src/component/core_js/values.rs": "887c8bf2b6040047fccf7d53be07bac6af9e29e26f0dae587cf5f78e14eae636",
+      "src/component/endpoints.rs": "bc54642a3c6658363a2fc2e78414f1ac416051246d465f5da1a41aaec998e903",
+      "src/component/functions.rs": "b89a46aeec746601314d0c74ee174858719a00b21298e8a34997ca941b8eaa28",
+      "src/component/imports.rs": "0cb29be8ee199547bcdaa9ea41f10f5c598257a73bcd2bf126251ad317360b43",
+      "src/component/lists.rs": "408cc0b78c8a3921bd3d29548d9e3d1b8f7b9c3c8328c01208e504347f42b8f5",
+      "src/component/profiling.rs": "d21076721766286680d0a89a6406f63531e05c5a6a70ec47b52cfecb2493a743",
+      "src/component/values.rs": "9442d60b36cb17406ab1a54981fc09226e273904cc361183af072186817dedce",
+      "src/diagnostic.rs": "29ad4c627f24e47ce3c201e0b906baf773b296e7fe730555d2fd5ba9c6130021",
+      "src/effects.rs": "45f75d6eb8c601ee29b0acbd77c42b010c3835c21773b188ef2b2b9c2831db74",
+      "src/emit.rs": "c8fa46f66b82f750b255dc871e3e29b9a601b5f6064dfa420104f7d98b1a3da8",
+      "src/flow.rs": "0fd43d85c2f85ec2d8f7d45bf7383d0caedc10af3b510da78baee0d6c0fc1eca",
+      "src/format.rs": "d84eefc1f053ef09618160c70f2200ba9078ae2fff6b426a7236e0fcdd9d19a3",
+      "src/frontend.rs": "b986522bd9147f8ca1f43f3ec70878973068759f1a743258cb79b930f0aaac64",
+      "src/generics.rs": "2571b858d4768c35bca9baafc24b3ae82d5c69f8b476b6a4fc1865f95b7ce2d5",
+      "src/ir.rs": "8ece7527b7a415952b7ea39eab90535bb236e50b0337897b61bdd441382bc828",
+      "src/lib.rs": "ad76d81ee93b663e5824058e27ef2a787106522052cd52d42deb7fe2e5dfed11",
+      "src/link.rs": "548f5a4a6c1627c462dc89deeb8718976366dcc25adc7da6686ae994912a88a5",
+      "src/lists.rs": "1e3cb2f8b8b26a2218ab967cf3cf2cf452ddde04803ad8c4054846bf02eb2f82",
+      "src/main.rs": "26c4d1a2fdd387c8c600b7b88697881ee51b7efd39a8b0ea7b1f2104e800d5a2",
+      "src/modules.rs": "5ef2ad9336448197dd03d64c32b2296d15497dc1b7178f0b17910e5bcb44e13f",
+      "src/native.rs": "5561af057e69aff58e2dc740d2f2b7e1670e63df0e86c1a8669b3647fca2a788",
+      "src/native_macros.rs": "5637f3b1593a2ddd402da30e1fc5d623cd2f08ffff4bde24859134b69ccf47bb",
+      "src/optimize.rs": "2c0c991e46b1f926bb8aff052443b96664e308c13a66d7b4bf20d4a2638d3ac5",
+      "src/ownership.rs": "19b3a8201107587d2a709071eaa8748fd795b7808ef3fd98711768c14fd78e76",
+      "src/proof.rs": "9bdd397a9ec24869c06033938437e2e6a844b30524f6127960c022f318546559",
+      "src/regions.rs": "f69b08dfd598dc4c77849f29c63a858bd9ee8147c1aa7c2b607f828cb53cbdae",
+      "src/resources.rs": "7fec9daa51f191088ab64dfb8274c2fee92e38eaa961a5de5e48149c1e3eea98",
+      "src/runner.rs": "fe6adfc8d312d5a63f779dea5d32052c9b2f0154dcc45ff6ec030cf4c822cb20",
+      "src/scoped.rs": "0d0aa6db6b59a6fdee1e3fc7a4ceea8593b503d65b71049a2f76d14c05c794ee",
+      "src/sexpr.rs": "18691641d6e41f88bfdf297facdbb300122107aeadaca9ec8cf3c07fe4260ec3",
+      "src/source.rs": "daa5fdbc872a8b3ac13414f3bf556c6968bdf76dd175b9d90a4cc7e934f2f975",
+      "src/standard.rs": "31afc7bcd6e8197807a2ef45173cde84e4b346feab98b39a147b89cdbfcf1a0f",
+      "src/standard_sources.rs": "c9f229b118e6a1191e1644706aa5d2b9c790415e0c6e78fc153dce9358bda934",
+      "src/syntax.rs": "b0aa65edab87c30d0822324b396309bc6ba9aecfdb51eb67fc636be4bd375a58",
+      "src/type_syntax.rs": "bd420c4f08bfd29c48a23548f202786995d80c81444e9780ce93d764646e0413",
+      "src/typing.rs": "7f08a3ed79521ad313b2e1d36dc5272b80f83d20b7ff9eb3185beacb17b3f723",
+      "src/verified.rs": "517aae360bae080f8199298fa574f59a000cd39c422025cdfbfcb1692dd68d1b",
+      "src/wit.rs": "56ca9b18d1d8a05b2da355ce7da16d9c9989bde8c06b399934170416480166d8",
+      "src/wit_bindgen.rs": "0cf550159ce5b8e53fc7972f755557fad96debd4994eaa01ada9d888c19c8615",
+      "runtime/async-abi.test.mjs": "af639bdf920618a30cf3f149525f7352cfe53feb95ef740542fa0c1727b0160b",
+      "runtime/build-core.mjs": "11c0f6ef408fb107929f3065f96559a493a8fed9a05ff4d33e7abc429561d2cf",
+      "runtime/build.mjs": "8280eb74c27c464ac5c0dada5cb955709b2c13c3def0451ab2c6a77afd2f01c3",
+      "runtime/core.mjs": "61fb51e0f85a40b05011aa0128eec7d92510dc85ef47e5b75185b27299a6025f",
+      "runtime/core.test.mjs": "0195f906397c0cc1ce37350ed27ae0b378ea09ca08dba15eb11d6fb6e5565322",
+      "runtime/e2e/async-abi.spec.mjs": "e5ee22cf2206dd7f9f09b093df50b5f9159e9d4364bf8a6c93beebdd46661bfd",
+      "runtime/e2e/json-value.spec.mjs": "749adab2850c905a3a9d615ab44a6653a432680332d2bdca9c0a33df5b82d637",
+      "runtime/e2e/jspi.spec.mjs": "64a56e436c728dd3e28cf666c0820a7274a4655edbc29551c912293d79dcc4d8",
+      "runtime/e2e/library.spec.mjs": "4964c88ec6d69af2d6c4f120b6f3819b6652c035ad37556c3ff25c3ba835fb2f",
+      "runtime/e2e/lists.spec.mjs": "235daf0e8c749eac28d1f6a8185880071b0183561ef98d245b7cac584a6d9a56",
+      "runtime/e2e/log-stats.spec.mjs": "407873c5ae6e77bfade86c15ad92f5294d2d96485794092994c3a97424e080d6",
+      "runtime/e2e/modules.spec.mjs": "47cbe0061fb71fe250bd313e607eaf85291ae45b00ecb1d9b75054fb4f00727a",
+      "runtime/e2e/resources.spec.mjs": "b0a0cb1c93a191f1e4a83e95a61bf67fc8402edecfbdb6c8be1b06c59d4ae7ad",
+      "runtime/e2e/standard.spec.mjs": "683f88426939fffb2c071b159f0f6706180ee262826bee020d67500388b2e69e",
+      "runtime/e2e/stock-ledger.spec.mjs": "509f06cd625b00673125befb0164ec4bdae81f0762781110152825f35b0b809c",
+      "runtime/e2e/text-io.spec.mjs": "a0b6d5b5525ebefdf7dfefaa11fc67514c7437a0afc08dd63f5bd9408eb2c00a",
+      "runtime/e2e/wit-bindings.spec.mjs": "998342967d45f9624050dc36414a729be098225cc999e67dc5de13da0aa1106a",
+      "runtime/e2e/workflow.spec.mjs": "11bb366c875185bd79620d1d406d74eec53fdf49c7a5dc1b4e05d1e1b340ae8a",
+      "runtime/fuzz.test.mjs": "8d233aaf202d69d02b5f2f8d937a0f7c6d0a3d9ad706d98c224de8a5d8cab774",
+      "runtime/generics.test.mjs": "001c366b275b8248cb40bee66a8852019ab6ab7ebae63951bc096fbb3c3d4e02",
+      "runtime/grammar-eval-prepare.mjs": "f7dccc78bd310018aff8cc2b76381ac9e1fcd7a12766361af48b344f77a00421",
+      "runtime/grammar-eval-verify.mjs": "b4a6abd0f6d89c331d3df526c9b407742b21568f56ed5810caed36c7dfe2d4ff",
+      "runtime/host.mjs": "38b481aa29a2fcae3955a4ab57315ddc6b3ce56c4c242a28ee46bd505eaf9e1a",
+      "runtime/jco-compat.mjs": "550bf71a67d0375b23a0512b6c526f19a640e9824d3e18f6e634d3b98aef2a83",
+      "runtime/jco-lifetime.mjs": "2c5a16a0489dde1b76d493c937392354527e428e46823cfa5107d4f7677faa47",
+      "runtime/jco-scheduler.mjs": "81c129fd0ed8f950785b082c9ababdee91a90c044507231858c8787415c7fc2c",
+      "runtime/jco-scheduler.test.mjs": "a06cf2d250040ff87bd20e50934852931c9b5423d3cc19afdf41b8ce27f65833",
+      "runtime/json-value.test.mjs": "fe810a2659405da3f6a2bea9032762f8481b77a172d64dd71462d0e9cf4c23a3",
+      "runtime/library.test.mjs": "b8877215f4360fd64b23a3ad1356429a54e5780dd4f521ae10a27ff290983d0e",
+      "runtime/list-bindings.test.mjs": "635aac39db51fa52a11deb83b95274e00ad1eb7f60d806ecc41a77ee8f039b33",
+      "runtime/lists.test.mjs": "7a9ea115b63fb0787824060ca316bf11800bbe1ed3dc8d5d9183efd815ae5085",
+      "runtime/log-stats-bench.mjs": "2c2de850b0dfc966a18aa8c857b96783cfd28e1bd693325451ecc3d76c7ef4c7",
+      "runtime/log-stats-profile.mjs": "1f11bbd2aa4bcea977ea92fd688da78e0c94bba5845db869f34f4135f9c45772",
+      "runtime/log-stats.test.mjs": "69f30e194816ebe07f25872c5e1801a7c8dae2d186991bb5c32be2da1da15b1e",
+      "runtime/memory-audit.mjs": "21b90720012e063d324b3187fbc931c799099ab03e731dcdf8317358f3bcd7b9",
+      "runtime/memory.test.mjs": "8364317e6124344c85494c3a095b766ed5a15efee5b2a2160611af495c63514b",
+      "runtime/modules.test.mjs": "a8d1770cb8f8533a966ab433b45587e4f69ff3eab643b510b21fa1485782f01d",
+      "runtime/node-io.mjs": "58a50b4fa2c681517a25f8a190a1b8d1ef3040489610d82295b068bef0dab18c",
+      "runtime/node-io.test.mjs": "52dbec0ae085e76da28788c75fa5e343bd5f4b60a6379d36bbcb66cd96117738",
+      "runtime/profile-node.mjs": "d87946effb97299b468bd0b0b333009f4490d97360bac90d811466f3a4623cd2",
+      "runtime/profile-summary.mjs": "d07c01cdbbc40ae9bc84a7a7a3b2378eb011415c892eb66538129a5d047ce57d",
+      "runtime/profile-summary.test.mjs": "89eda66260aaf33655dea8311b378734d87fb559932e9c27bcc3de34b0791b9f",
+      "runtime/profile.mjs": "96b81d9424f3c8bb6a95827a8efb169e2c6ae4286ba87160ad73dde4557d3179",
+      "runtime/resources.mjs": "24d238d0865eabae5ccf6bffa386d1dd606a6cd7f503ad382638bb6f6145eb02",
+      "runtime/resources.test.mjs": "969dc37b76cbc09d09930d1edc96dc8054944f402d77060a3032f71232ac9058",
+      "runtime/retention.test.mjs": "39d4c986b161a90fa2c00ae421e05fb3be19fb09d58d927240d03bf883b728d1",
+      "runtime/run.mjs": "b48a00a4d604265795850da9202b0783a94c36d279ca1039cc192db4e38e0ab6",
+      "runtime/runtime.test.mjs": "2aed6cd4862f0127f27f5c7889e3a58b7a95a070407d0d54ec9dc64177f8a124",
+      "runtime/serve.mjs": "ab5014908342c2338b6ce09f2c66b219ea69c68ce4a67aba0e4ff9008fee1cf6",
+      "runtime/standard.test.mjs": "334e4a98420c67c20d1401f0ce317067251cbd7cb70a1f47e5969c0692162461",
+      "runtime/stdlib-bench.mjs": "10b025d405b2de6094f933b46da4546c20b509acba68eac20582cf095ff477a3",
+      "runtime/stock-ledger-audit.mjs": "a6c026e351a11600a69d57dcc9cc7161d04a2dabd55a3bbe1b5efe43e84cbda9",
+      "runtime/stock-ledger.test.mjs": "bc69675745d5464482e81eb162f2cb137413a9d4d3c482f565e279b7c02827c5",
+      "runtime/tasks.mjs": "11029c104d72f8f9247aa8dcb34593af8235f23e8dde547fbac7dd76aee49571",
+      "runtime/tasks.test.mjs": "75dc5b47f2205be3429c67cfad7419a0fb42f1b7cfc96b84aa82d6847cf349fb",
+      "runtime/testing/memory.mjs": "c04314cf16feb34dd67745fb8b404926353450b1b9badb846dd66a7a56374de2",
+      "runtime/text-cli.mjs": "5656a00ee8f729e2d899983c487bdb5ba393f71066a6f5a62a70b3f3237d1833",
+      "runtime/text-io.mjs": "471f61e9a30d6d8b227a0dd21e6328bac66aaf8a28f618e9902246e8e1b6d94f",
+      "runtime/text-io.test.mjs": "c0592ec42670d90224ff7cf65ec57fb15fc582645a1b6e541f6b28a52e867825",
+      "runtime/text-program.test.mjs": "866fff83555070c140c17d84a65c5df42e452a7512b156115d4b7722d78d0dc2",
+      "runtime/wit-bindings.test.mjs": "65ced8863b9bd60db76f2b7a1246a20b1c1fb7dcdc8372514b5d9571cee9bc37",
+      "runtime/workflow-bench.mjs": "b301f853cb8581b2830d4c4b62af81a25e8176a92972ca78cf2685e1e0db5b69",
+      "runtime/workflow-oracle.mjs": "2de87e61e258970c38a834ab835e625c6e7deb3c454f27710de3f87decaae56a",
+      "runtime/workflow.test.mjs": "a38296c05b7879e730d858fb4e9cae73fd454f62abefadb8bbb09b602b23a69a",
+      "stdlib/README.md": "70e0c21e4f1212103b883bf75cc27e8f1680c0b38fc28e9b65fa198679771527",
+      "stdlib/builder.wlt": "57a805e034f4616bf814fd9e0cb0c7e1af581ea25c025662131f70db85b986bd",
+      "stdlib/bytes.wlt": "73b3f9ffaf67266c2173050a6bada892d64a2220def1d1bdc76dc0b5b675003f",
+      "stdlib/json-value.wlt": "dde715a93772476eca2d04af3e87ff754523da8861b9d9a454a1b0f5b45b53bc",
+      "stdlib/json.wlt": "62155c7cf2523495e3ca48f4600308ed5a47e4df5622a866ad16a1951bca9c83",
+      "stdlib/list.wlt": "1d686144250a535846f747c2b8f478de53d5aab8fb17ab77044509f665931b38",
+      "stdlib/text.wlt": "857d650017713031ad5a8314bbfa941dbc7acd49ef4461c03664194edd3e4905",
+      "stdlib/types.wlt": "358d6e63686e9a0be8d83c5435c3b6417a49c21b57a1024c1bc749716bda5bd4",
+      "Cargo.toml": "a7d2e24515d5413c1eabb2f89f3450251d4d9bc719379f5d09785e8b93284bdb",
+      "Cargo.lock": "83529b177042b54cf44dd7b74cd8bf731171b4cffc452a039b3ce7e08c34f278",
+      "package.json": "77dfe5dc0a3b2a9a87e6e4423d4a73fee15622a5598adf76294c75d085688e45",
+      "pnpm-lock.yaml": "2ed45abf3642c3f79b9f1c883e46ecf4cf9615052619bff1f44c190c322fc26d",
+      "evals/lib/runner.mjs": "e20ccd9a535ee9c7e82fcff9dc3dfbc07a83fca380cbd8847cb1d4ff01688f58",
+      "evals/lib/runs.mjs": "a70a388eb26beeb66885083e90d504d1bc701f5a374eaf7b187ddefac27ba1ad",
+      "evals/lib/source.mjs": "6fe22c6f715262940dbe30a7892df17dd4a4bdeee46e7e725ab7ef9854ec3693",
+      "evals/stock-ledger/contract.md": "965cbb65244281b425ef0dc17488f85de113438141e1d3b857c932408f59f845",
+      "evals/stock-ledger/extra-control.wlt": "11047c50fc91f86811beca0cb939a78447fa32a57a68f690206f6657e8f3a646",
+      "evals/stock-ledger/rubric.md": "34106d151221fef4d131e91fcaa84853f47e0bda7f8b4559aa45264ee766353b",
+      "evals/stock-ledger/suite.json": "8c425854a51537daa9992bf25c94e5c80088fd2111cf7a0a0e86ed3772188008",
+      "evals/stock-ledger/verify.mjs": "7219725cc3b5299359276d1e44ef80b759b7990b2f79ab9958521a7ff8ece39e",
+      "evals/diagnostics/README.md": "bc7a75b43a1800a1b6192c67abb20b87e1ff4c7c74244caf0a9cd3de6b7790eb",
+      "evals/diagnostics/cases/alias-cycle/bad/aliases.wlt": "1633713a3aac3f8576a50b5ffda078b246320e2c93a0f91be5f312817c2692bc",
+      "evals/diagnostics/cases/alias-cycle/bad/program.wlt": "b9f7a6c1f228e7e1ef95c380d04fded2e5851da435e08e84727b10d476eb1da5",
+      "evals/diagnostics/cases/alias-cycle/fixed/aliases.wlt": "2fce00a9ffaf97617c11df0d211f99672ceeb43228384a42b619fbfbb3210ddc",
+      "evals/diagnostics/cases/alias-cycle/fixed/program.wlt": "b9f7a6c1f228e7e1ef95c380d04fded2e5851da435e08e84727b10d476eb1da5",
+      "evals/diagnostics/cases/alias-cycle/tests.wlt": "60265a14e57e91224d0d6f746a6c36234435658f82e39e30c7c26dc95bc198af",
+      "evals/diagnostics/cases/call-arity/bad/program.wlt": "6d22ffe6c5bdccca34418aa24b6f3705a636afd8f6a344ab6abe332c0512d58c",
+      "evals/diagnostics/cases/call-arity/fixed/program.wlt": "6724fc3f7ff90ed37ab8688bcf4cf431cea0db14582d7e52f6bc35b1c3ce3ed7",
+      "evals/diagnostics/cases/call-arity/tests.wlt": "3235920b6dddf2dd723b23457e2fa9f08846fedb195ae111356b1573b66c88ef",
+      "evals/diagnostics/cases/effect-contract/bad/program.wlt": "a0494d94bc71cdeeb7afc72fa834dd74ed90fadc769e9f7e21ee80ff1e0f24a4",
+      "evals/diagnostics/cases/effect-contract/fixed/program.wlt": "a10926bc47976604929aa8b9a792f07b5767072165c7b459d79430e48bc97380",
+      "evals/diagnostics/cases/effect-contract/tests.wlt": "906f136d90a6a150ecc720e24cb768b18dd2543f45b9439b468959dce9f01253",
+      "evals/diagnostics/cases/include-location/bad/math.wlt": "4d8fc51e37eee6b8f8798ea7bec38540fe05beccd7fe39dce2ef48fe7d507eaa",
+      "evals/diagnostics/cases/include-location/bad/program.wlt": "85060a7292400cd9202a0ef2e0e5ef3b03f22165be30c3f42fff469d3c5f299f",
+      "evals/diagnostics/cases/include-location/fixed/math.wlt": "895d32444df5d939ac702fef2ad8f5b9f77a68330d668578a2f99c543cc7e734",
+      "evals/diagnostics/cases/include-location/fixed/program.wlt": "85060a7292400cd9202a0ef2e0e5ef3b03f22165be30c3f42fff469d3c5f299f",
+      "evals/diagnostics/cases/include-location/tests.wlt": "834927c87b2305f9e305572f8ad09589c790efdeec192f55606b56923751ad74",
+      "evals/diagnostics/cases/match-exhaustiveness/bad/program.wlt": "57be2af51791dfed6f71de2be24dc271a03a64733232de046c34c4c529088a1c",
+      "evals/diagnostics/cases/match-exhaustiveness/fixed/program.wlt": "fcdd3bd998bfb12026ddf406d7e214d2249134a5d9753e8c8cb1bea9e4b9479b",
+      "evals/diagnostics/cases/match-exhaustiveness/tests.wlt": "bfc87b8ab80ca5bba02b16d455a8ef4dd33872ebd75f74e1e063331d765fc8a9",
+      "evals/diagnostics/cases/opaque-representation/bad/lib.wlt": "a603ba0b5d7fc58f34a4efa71ebe8ffbcff3c58c9f8d1205aa445c757cf6c6d2",
+      "evals/diagnostics/cases/opaque-representation/bad/program.wlt": "c97e0027e6373b76fc815d46220662849b049d4441d3930790835ea900773913",
+      "evals/diagnostics/cases/opaque-representation/fixed/lib.wlt": "a603ba0b5d7fc58f34a4efa71ebe8ffbcff3c58c9f8d1205aa445c757cf6c6d2",
+      "evals/diagnostics/cases/opaque-representation/fixed/program.wlt": "bc07c7f53bc4f30a2d0e8248e4f66068808e6ecc898bc30516980f38824c4600",
+      "evals/diagnostics/cases/opaque-representation/tests.wlt": "02792c480e6ee4b39e428cb9cae5ce6523ca192c46129d583053deafc1421f2e",
+      "evals/diagnostics/cases/type-mismatch/bad/program.wlt": "e8adc90d7bb410cf7a27ddfa69384e1da7a65b66ec5ee2f7ae97d5caad15d632",
+      "evals/diagnostics/cases/type-mismatch/fixed/program.wlt": "895d32444df5d939ac702fef2ad8f5b9f77a68330d668578a2f99c543cc7e734",
+      "evals/diagnostics/cases/type-mismatch/tests.wlt": "834927c87b2305f9e305572f8ad09589c790efdeec192f55606b56923751ad74",
+      "evals/diagnostics/cases/unclosed-delimiter/bad/program.wlt": "9329b51ec87e03c865f81dd743ac2fc01a1386eab5c44c6a741860da97fe2190",
+      "evals/diagnostics/cases/unclosed-delimiter/fixed/program.wlt": "895d32444df5d939ac702fef2ad8f5b9f77a68330d668578a2f99c543cc7e734",
+      "evals/diagnostics/cases/unclosed-delimiter/tests.wlt": "834927c87b2305f9e305572f8ad09589c790efdeec192f55606b56923751ad74",
+      "evals/diagnostics/cases/unknown-local/bad/program.wlt": "548b9dba0bc4cbcfa4f431ae5727017dd1df0011e98d7835a10e0b3e9f32fd79",
+      "evals/diagnostics/cases/unknown-local/fixed/program.wlt": "895d32444df5d939ac702fef2ad8f5b9f77a68330d668578a2f99c543cc7e734",
+      "evals/diagnostics/cases/unknown-local/tests.wlt": "834927c87b2305f9e305572f8ad09589c790efdeec192f55606b56923751ad74",
+      "evals/diagnostics/cases/use-after-move/bad/program.wlt": "ddef2b8a9c874b0ee5373c974c3b3c98b6748416a50d9add3b8f2d8621a0d39f",
+      "evals/diagnostics/cases/use-after-move/fixed/program.wlt": "24506c6daa51ed6687a1f1322718285b94bb51380bdf75a94058717ac57695f0",
+      "evals/diagnostics/cases/use-after-move/tests.wlt": "94bbb6c4befc429bb1f96898a66ef92b8d005c9fb1c7106e47a3dcdfe55398ad",
+      "evals/diagnostics/reader.md": "375e8bae4bfe6ccbb2dcb9b979b619a977d19c996561622de14829a6aac32510",
+      "evals/diagnostics/reviewer.md": "4b3a28c848ffb427909acefbcb23cec6f3d9407999914b7e49cda695a78c9bff",
+      "evals/diagnostics/rubric.md": "caa0428ad85ee38ac70c27027bf04227a025d59f3ad7ac4fc9f08bde681a1831",
+      "evals/diagnostics/runs.mjs": "8f763f832cf0ff0139045e2b32fb0dcaeb83cfba40a5d6ed9a9e3460a99d78e3",
+      "evals/diagnostics/suite.json": "c516cebff429f4a6c6947cc87d9dca7c57406e969f21c5baf5f0cb0a3740a814",
+      "evals/diagnostics/writer.md": "0722e8c12560a96ca4a2bf5fd5733f62594907ff2fd91fcab34f82949dca062c",
+      "evals/templates/reader.md": "06f65eda8f3a688690f9b71e486c766b3117765ced637ca68e08d205e87a49f9",
+      "evals/templates/reviewer.md": "71111d2339d4f2c33e250804b72bae8ce3c5ab3c877e008c3a9d7d5816732077",
+      "evals/templates/writer.md": "8413e40a2bee36197829c2dcc0ccbf6bb5d047a1c1765c8c4cab900c7153d70d",
+      "evals/run.mjs": "8ca71bca1157fb2b636011fd8193cb70e5193355a09ba4d38ba47c1802a1bdca"
+    }
+  },
+  "toolchain": {
+    "node": "v24.21.0",
+    "cargo": "cargo 1.98.0 (797e8a9bc 2026-08-05)",
+    "wasmtime": "wasmtime 42.0.1 (6844a83b5 2026-02-25)"
+  },
+  "implementationChangedSincePrepare": false,
+  "node": "v24.21.0"
+}

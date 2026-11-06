@@ -1,15 +1,19 @@
 (module
   (%namespace $parse
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $text))
     (%import "../../../stdlib/bytes.wlt"
       (func $buffer.find-byte)
       (func $buffer.parse-u64))
     (%public (type $Line) (type $Level) (func $line))
     (type $Level (%variant (info) (warn) (error)))
     (type $Line (%variant (skip) (invalid) (info i64) (warn i64) (error i64)))
-    (func $tab (param $s %bytes) (param $start i32) (result i32) (%effects pure)
+    (func $tab (param $s $bytes) (param $start i32) (result i32) (%effects pure)
       (call $buffer.find-byte (local.get $s) (local.get $start) (i32.const 9)))
 
-    (func $level (param $s %bytes) (param $end i32) (result i32) (%effects pure)
+    (func $level (param $s $bytes) (param $end i32) (result i32) (%effects pure)
       (if
         (result i32)
         (i32.eq (local.get $end) (i32.const 4))
@@ -61,15 +65,15 @@
             (else (i32.const -1))))
       ))
 
-    (func $duration (param $s %bytes) (param $start i32) (param $end i32)
-      (result (%option i64)) (%effects pure)
+    (func $duration (param $s $bytes) (param $start i32) (param $end i32)
+      (result (%inst $option i64)) (%effects pure)
       (call $buffer.parse-u64
         (local.get $s)
         (local.get $start)
         (i32.sub (local.get $end) (local.get $start))
         (i64.const 4294967295)))
 
-    (func $fields (param $s %bytes) (result (ref $Line)) (%effects allocates)
+    (func $fields (param $s $bytes) (result (ref $Line)) (%effects allocates)
       (%let $a (call $tab (local.get $s) (i32.const 0))
         (if
           (result (ref $Line))
@@ -85,7 +89,7 @@
                     (i32.eq (local.get $b) (%bytes.len (local.get $s))))
                   (then (%variant.new $Line invalid))
                   (else
-                    (%match (%option i64) (result (ref $Line))
+                    (%match (%inst $option i64) (result (ref $Line))
                       (call $duration
                         (local.get $s)
                         (i32.add (local.get $a) (i32.const 1))
@@ -106,7 +110,7 @@
                   ))))
           ))))
 
-    (func $line (param $line %text) (result (ref $Line)) (%effects allocates)
+    (func $line (param $line $text) (result (ref $Line)) (%effects allocates)
       (%let $s (%text.bytes (local.get $line))
         (if
           (result (ref $Line))

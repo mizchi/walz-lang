@@ -36,6 +36,11 @@ impl Types<'_> {
             Type::Num(NumType::I64) => "s64".into(),
             Type::Num(NumType::F32) => "f32".into(),
             Type::Num(NumType::F64) => "f64".into(),
+            Type::Num(NumType::V128) => {
+                return Err(Error::message(
+                    "v128 has no WIT/JavaScript value representation; use scalar lanes or bytes at the boundary instead".into(),
+                ).with_code("E_ABI_TYPE"));
+            }
             Type::Unit => {
                 self.needs_unit = true;
                 format!("%{}", self.unit_name)

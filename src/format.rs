@@ -145,7 +145,7 @@ fn header_end(items: &[Node]) -> usize {
         Node::Token(_) => true,
         _ => matches!(
             head(n),
-            Some("ref" | "option" | "result" | "pair" | "own" | "future" | "stream")
+            Some("ref" | "inst" | "option" | "result" | "pair" | "own" | "future" | "stream")
         ),
     };
     let name = name.trim_start_matches('%');
@@ -162,6 +162,7 @@ fn header_end(items: &[Node]) -> usize {
             },
         ),
         "case" => Some(3),
+        "let" if meaningful.len() == 3 => Some(1),
         "let" => Some(
             if items
                 .iter()
@@ -240,7 +241,16 @@ fn write_header(items: &[Node], indent: usize, output: &mut String) {
     output.push_str(&" ".repeat(indent));
     output.push('(');
     let mut column = indent + 1;
+    let declaration = matches!(items.first(), Some(Node::Token(t)) if matches!(t.trim_start_matches('%'), "func" | "closure"));
     for (index, item) in items.iter().enumerate() {
+        if declaration && matches!(item, Node::List(_)) {
+            if column > 0 {
+                output.push('\n');
+            }
+            write(item, indent + 2, output);
+            column = 0;
+            continue;
+        }
         if let Some(text) = flat(item).filter(|t| closing_run(t) <= 4) {
             if column > 0 && index > 0 && column + 1 + text.len() > 88 {
                 output.push('\n');
@@ -268,6 +278,38 @@ fn write_header(items: &[Node], indent: usize, output: &mut String) {
     }
 }
 
+fn close_list(items: &[Node], indent: usize, output: &mut String) {
+    if matches!(items.last(), Some(Node::Comment(_)))
+        || closing_run(output.trim_end_matches('\n')) >= 4
+    {
+        output.push_str(&" ".repeat(indent));
+    } else {
+        output.pop();
+    }
+    output.push_str(")\n");
+}
+
+// The first binding shares the opening delimiter; subsequent bindings align
+// with it. Comments remain nodes, so a line comment cannot hide a delimiter.
+fn write_bindings(items: &[Node], indent: usize, output: &mut String) {
+    output.push_str(&" ".repeat(indent));
+    if items.is_empty() {
+        output.push_str("()\n");
+        return;
+    }
+    output.push('(');
+    for (index, item) in items.iter().enumerate() {
+        let mut text = String::new();
+        write(item, indent + 1, &mut text);
+        if index == 0 {
+            output.push_str(&text[indent + 1..]);
+        } else {
+            output.push_str(&text);
+        }
+    }
+    close_list(items, indent, output);
+}
+
 fn write(n: &Node, indent: usize, output: &mut String) {
     let padding = " ".repeat(indent);
     if let Some(s) = flat(n)
@@ -288,6 +330,9 @@ fn write(n: &Node, indent: usize, output: &mut String) {
         Node::List(items) => {
             let prefix = header_end(items);
             write_header(&items[..prefix], indent, output);
+            let grouped_let = head(n) == Some("let") && prefix == 1;
+            let mut content_count = 0;
+            let mut subject_multiline = false;
             for (index, item) in items[prefix..].iter().enumerate() {
                 if index > 0
                     && matches!(head(n), Some("module" | "namespace"))
@@ -296,16 +341,32 @@ fn write(n: &Node, indent: usize, output: &mut String) {
                 {
                     output.push('\n');
                 }
-                write(item, indent + 2, output);
+                let comment = matches!(item, Node::Comment(_));
+                if head(n) == Some("result.let")
+                    && content_count == 1
+                    && subject_multiline
+                    && !comment
+                {
+                    output.push('\n');
+                }
+                let start = output.len();
+                if grouped_let
+                    && content_count == 0
+                    && let Node::List(bindings) = item
+                {
+                    write_bindings(bindings, indent + 2, output);
+                } else {
+                    write(item, indent + 2, output);
+                }
+                if !comment {
+                    if content_count == 0 {
+                        subject_multiline =
+                            output[start..].bytes().filter(|b| *b == b'\n').count() > 1;
+                    }
+                    content_count += 1;
+                }
             }
-            if matches!(items.last(), Some(Node::Comment(_)))
-                || closing_run(output.trim_end_matches('\n')) >= 4
-            {
-                output.push_str(&padding);
-            } else {
-                output.pop(); // Append to the final expression, not a line comment.
-            }
-            output.push_str(")\n");
+            close_list(items, indent, output);
         }
     }
 }

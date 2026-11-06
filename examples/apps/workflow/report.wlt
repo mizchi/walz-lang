@@ -1,5 +1,10 @@
 (module
   (%namespace $report
+    (%import "wlt:std"
+      (type $future)
+      (type $result)
+      (type $text)
+      (type $unit))
     (%import "../../../stdlib/json.wlt"
       (type $json.Object)
       (func $json.boolean)
@@ -9,7 +14,7 @@
       (func $json.u64))
     (%public (func $failure) (func $plan))
     (import "wlt:host/text-io@0.1.0" "write-line"
-      (func $write (param $line %text) (result (%future (%result %unit i32))))
+      (func $write (param $line $text) (result (%inst $future (%inst $result $unit i32))))
     )
     (func $base (param $n i32) (result (ref $json.Object))
       (%effects reads writes allocates)
@@ -22,11 +27,11 @@
             (i64.extend_i32_u (local.get $n)))
           (local.get $o))))
 
-    (func $error (param $n i32) (param $name %text) (param $detail %text) (result %text)
+    (func $error (param $n i32) (param $name $text) (param $detail $text) (result $text)
       (%effects reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
-          (result %text)
+          (result $text)
           (call $json.boolean (local.get $o) (%text.lit "ok") (i32.const 0))
           (call $json.string (local.get $o) (%text.lit "error") (local.get $name))
           (call $json.string (local.get $o) (%text.lit "detail") (local.get $detail))
@@ -34,11 +39,11 @@
     )
 
     (func $failure (param $n i32) (param $e (ref $domain.Error))
-      (result (%result %unit i32)) (%effects reads writes allocates host suspends)
+      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
       (%future.await
-        (%result %unit i32)
+        (%inst $result $unit i32)
         (call $write
-          (%match $domain.Error (result %text)
+          (%match $domain.Error (result $text)
             (local.get $e)
             (case invalid ($detail)
               (call $error
@@ -59,10 +64,10 @@
         )))
 
     (func $header (param $n i32) (param $r (ref $planner.Run)) (param $workers i32)
-      (result %text) (%effects reads writes allocates)
+      (result $text) (%effects reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
-          (result %text)
+          (result $text)
           (call $json.boolean (local.get $o) (%text.lit "ok") (i32.const 1))
           (call $json.string (local.get $o) (%text.lit "kind") (%text.lit "plan"))
           (call $json.u64
@@ -81,11 +86,11 @@
     )
 
     (func $job (param $n i32) (param $g (ref $graph.Graph))
-      (param $r (ref $planner.Run)) (param $i i32) (result %text)
+      (param $r (ref $planner.Run)) (param $i i32) (result $text)
       (%effects reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
-          (result %text)
+          (result $text)
           (call $json.string (local.get $o) (%text.lit "kind") (%text.lit "job"))
           (call $json.string
             (local.get $o)
@@ -107,24 +112,24 @@
     )
 
     (func $plan (param $n i32) (param $g (ref $graph.Graph))
-      (param $r (ref $planner.Run)) (param $workers i32) (result (%result %unit i32))
+      (param $r (ref $planner.Run)) (param $workers i32) (result (%inst $result $unit i32))
       (%effects reads writes allocates host suspends)
-      (%result.let () (%result %unit i32) %unit
+      (%result.let () (%inst $result $unit i32) $unit
         (%future.await
-          (%result %unit i32)
+          (%inst $result $unit i32)
           (call $write
             (call $header (local.get $n) (local.get $r) (local.get $workers))))
         (%loop $emit
           (bind $i i32 (i32.const 0))
-          (result (%result %unit i32))
+          (result (%inst $result $unit i32))
           (if
-            (result (%result %unit i32))
+            (result (%inst $result $unit i32))
             (i32.eq (local.get $i) (call $planner.count (local.get $r)))
             (then (%result.ok))
             (else
-              (%result.let () (%result %unit i32) %unit
+              (%result.let () (%inst $result $unit i32) $unit
                 (%future.await
-                  (%result %unit i32)
+                  (%inst $result $unit i32)
                   (call $write
                     (call $job
                       (local.get $n)

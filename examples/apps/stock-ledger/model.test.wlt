@@ -1,4 +1,6 @@
 (module
+  (%import "wlt:std"
+    (type $result))
   (%include "parse.wlt")
   (%include "stock.wlt")
   (func $error-id (param $e (ref $stock.Error)) (result i32)
@@ -8,15 +10,15 @@
       (case overflow () (i32.const 2))
       (case capacity () (i32.const 3))))
 
-  (func $ok-is (param $r (%result i64 (ref $stock.Error))) (param $n i64) (result i32)
-    (%match (%result i64 (ref $stock.Error)) (result i32)
+  (func $ok-is (param $r (%inst $result i64 (ref $stock.Error))) (param $n i64) (result i32)
+    (%match (%inst $result i64 (ref $stock.Error)) (result i32)
       (local.get $r)
       (case ok ($value) (i64.eq (local.get $value) (local.get $n)))
       (case err ($e) (i32.const 0))))
 
-  (func $err-is (param $r (%result i64 (ref $stock.Error))) (param $code i32)
+  (func $err-is (param $r (%inst $result i64 (ref $stock.Error))) (param $code i32)
     (result i32)
-    (%match (%result i64 (ref $stock.Error)) (result i32)
+    (%match (%inst $result i64 (ref $stock.Error)) (result i32)
       (local.get $r)
       (case ok ($n) (i32.const 0))
       (case err ($e) (i32.eq (call $error-id (local.get $e)) (local.get $code))))

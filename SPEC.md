@@ -6,7 +6,7 @@
 対応範囲は固定した `wat`/`wasmparser` の既定の検証機能です。スタック形式、匿名関数、数値インデックス、線形メモリ、バイト文字列、標準の例外命令などを型付きコアの制限で拒否しません。
 元の WAT にローカルの再代入や動的な呼び出しがあれば、その Wasm の意味を保ちます。`$__` の予約も拡張側だけの規約です。
 
-WLT の拡張入口はすべて `%` で始めます。標準の `import` / `export` と、静的リンクの `%import` / `%export` を区別します。値型の `(%result T E)` と結果宣言の `(result T)` も区別します。型引数は `(%inst $name T...)` で適用します。[接頭辞・移行・解析の境界](docs/syntax.md) に規約をまとめています。
+WLT の拡張入口はすべて `%` で始めます。標準の `import` / `export` と、静的リンクの `%import` / `%export` を区別します。値型の `(%inst $result T E)` と結果宣言の `(result T)` も区別します。型引数は `(%inst $name T...)` で適用します。[接頭辞と解析の境界](docs/syntax.md) に規約をまとめています。
 
 追加構文は、以下の型付きコアで名前・型・束縛・網羅性を検査し、標準 WAT へ展開します。このコアの本体は folded expression 規約に従います。コア外の WAT と構文マクロ `%let` / `%loop` / `%for` を併用する場合は、展開後の Wasm 全体を検証し、解析を opaque とします。この経路から effect・所有権などの契約を検査済みと扱うことはありません。
 構文ごとの展開は固定し、利用者が eval や任意の処理を実行するマクロシステムは設けません。
@@ -22,8 +22,12 @@ WLT の拡張入口はすべて `%` で始めます。標準の `import` / `expo
 
 ## 表現と型
 
+WLT の基本データ型は `(%import "wlt:std" (type $result) (type $option) (type $future) ...)` で明示的に取り込みます。型の適用は `(%inst $result T E)`、`(%inst $future T)` のように、利用者定義の汎用型と同じ構文です。`$text`・`$bytes`・`$unit` は型引数なしの alias です。Wasm の数値型や `ref` には import を必要としません。[標準モジュール](docs/standard.md) を参照してください。
+
 プログラムは1つの `(module ...)`。宣言は WAT 形式の `type`・`func`・関数 `import`・`tag` と、追加の `%closure`・`%test`・`%law`・`%namespace` および静的な named `%import` / `%export` です。ファイルの宣言位置では `%include` も使えます。
-型は `i32`・`i64`・`f32`・`f64`・`(ref $T)`・`(ref null $T)`・`(%option T)`・`(%result T E)`・`(%pair T U)`・`(%own T)`・`(%future T)`・`(%stream T)`・`%bytes`・`%text`。戻り値を宣言しない式・関数は unit です。
+型は `i32`・`i64`・`f32`・`f64`・`v128`・`(ref $T)`・`(ref null $T)`・`(%inst $option T)`・`(%inst $result T E)`・`(%inst $pair T U)`・`(%inst $own T)`・`(%inst $future T)`・`(%inst $stream T)`・`$bytes`・`$text`。戻り値を宣言しない式・関数は unit です。
+
+`v128` と通常 SIMD の非メモリ命令は型付きコアで扱います。lane の形は命令で指定し、型は共通の `v128` です。即値とオペランドを検査し、Wasm 命令へ直接出力します。ベクトル自体は shared/nonunit を満たす値で、GC格納・捕捉・単相化にも使えます。対応範囲と使用例は [SIMD](docs/simd.md) を参照してください。
 関数の引数・戻り値、構造体のフィールド、配列の要素、クロージャの捕捉値には型が必要です。
 `%let` の束縛型は注釈がなければ初期値から一意に決まり、`case` の束縛型は payload の宣言から決まります。
 暗黙の型変換はなく、non-null 参照から同じ型の nullable 参照への適合だけを認めます。
@@ -39,7 +43,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 戻り値注釈を省略した関数や result を省略した block/if/match の型は unit であり、本体から戻り値型を推論する指定ではありません。
 
 `typing::report(&module)` は、関数ごとの params/captures の ID、戻り値型、全束縛の ID・名前・宣言位置・型・束縛の種類、全ソース式の位置・型を返します。
-同名の束縛も関数内の ID で区別します。型名は `i64`・`(ref $T)`・`(ref null $T)`・`%unit`・`never` のように表示します。
+同名の束縛も関数内の ID で区別します。型の報告では alias を展開した基底表記を使い、`i64`・`(ref $T)`・`(ref null $T)`・`%unit`・`never` のように表示します。ソースの標準型は `wlt:std` から import した名前で参照します。
 位置は API に渡したソース（include を使う場合は展開後）の UTF-8 byte offset の半開区間 `[start, end)` です。省略された unit 本体にはソース式の位置がなく、式の一覧には含めません。
 `typing::type_at(&module, offset)` で束縛の宣言名または最も内側の式の型を取得でき、対象範囲外は `None` です。
 型の問い合わせは既に解決した型を参照し、Wasm を実行しません。
@@ -51,6 +55,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 
 ```text
 (%let $name [T] initial-value body)
+(%let (($first [T] initial-first) ($second [U] initial-second) ...) body)
 (local.get $name)
 (block [(result T)] unit-expression ... result-expression)
 (if [(result T)] condition (then expression) (else expression))
@@ -65,6 +70,8 @@ block の最後以外の式は unit でなければならず、不要な値は `
 条件は `i32`、分岐の型は result と一致させます。`unreachable` と `%recur` は値を返さず、任意の結果型の位置で使えます。
 評価順序は左から右です。関数の定義順は呼び出しの可否に影響しません。
 ローカルの再代入はありません。Wasm の `local.set` はこの言語のソースでは使えません。
+
+複数束縛の `%let` は、初期値を左から右に一度ずつ評価するネストした `%let` に展開します。各初期値は、それまでの束縛と外側のスコープを参照でき、後続の束縛は参照できません。同名の束縛は、その初期値を以前のスコープで評価した後から以前の名前を隠します。body からは最後に束縛された名前が見えます。型注釈は束縛ごとに省略できます。これは複数の初期化をまとめる形式で、Wasm の複数戻り値を受ける構文ではありません。pair の分解には既存の pattern let を使います。
 
 `%let` には `(%let $x i64 (i64.const 42) body)` のように任意の型注釈を書けます。
 注釈があれば初期値がその型に適合することを検査し、束縛には注釈した型を保持します。
@@ -89,21 +96,21 @@ nullable 参照の検査による暗黙の型絞り込みは行いません。�
 ## Option/Result の値型
 
 ```wat
-(func $make (result (%option (%result i64 i32))) (%effects pure)
-  (%option.some (%result i64 i32) (%result.ok i64 i32 (i64.const 42))))
+(func $make (result (%inst $option (%inst $result i64 i32))) (%effects pure)
+  (%option.some (%inst $result i64 i32) (%result.ok i64 i32 (i64.const 42))))
 
-(%match (%option i64) (result i64) (%option.none i64)
+(%match (%inst $option i64) (result i64) (%option.none i64)
   (case none () (i64.const 0))
   (case some ($value) (local.get $value)))
 ```
 
-型は `(%option T)` と `(%result T E)`。入れ子、引数・戻り値・フィールド・配列要素・明示 capture・loop 状態に使えます。
+型は `(%inst $option T)` と `(%inst $result T E)`。入れ子、引数・戻り値・フィールド・配列要素・明示 capture・loop 状態に使えます。
 同じ型引数の組合せは1つの内部型に具体化します。型引数が異なる値を暗黙には変換しません。
-関数の結果宣言で Result 値を返す場合は `(result (%result T E))` と書きます。標準 WAT の複数戻り値の宣言とは文脈で区別します。
+関数の結果宣言で Result 値を返す場合は `(result (%inst $result T E))` と書きます。標準 WAT の複数戻り値の宣言とは文脈で区別します。
 
 構築は `(%option.none T)`、`(%option.some T value)`、`(%result.ok T E value)`、`(%result.err T E value)` です。
 型引数には unit も使えます。その側は payload を持たず、構築時の value と case の束縛を省略します。
-例えば `(%result.ok %unit i32)`、`(%option.some %unit)` です。unit 自体はフィールドや引数などに保存する型としては使えません。
+例えば `(%result.ok $unit i32)`、`(%option.some $unit)` です。unit 自体はフィールドや引数などに保存する型としては使えません。
 
 match の型指定には上のような型構築子を渡し、Option は none/some、Result は ok/err の全ケースを記述します。
 payload の個数・型と網羅性を検査し、値がない場合も case の空の束縛列 `()` は必要です。
@@ -332,6 +339,7 @@ normal_return_possible=false は正常な継続がないと確認した場合で
 内部関数とテスト関数は公開せず、引数名は p0/p1/...、export 名は元の lowercase kebab-case を保ちます。WIT のキーワードは escape し、無効な export 名は拒否します。
 
 i32/i64 は既定の境界規約として s32/s64、f32/f64 は同名の WIT 型へ変換します。符号なし整数の意味型はまだありません。
+`v128` は WIT/JavaScript の値境界に直接対応せず、入れ子も含めて拒否します。スカラーや bytes などへの明示的な変換が必要です。Wasm 内部の値には使えます。
 Option/Result は再帰的に同じ WIT 型へ変換します。Result<Unit,E> は result<_,E>、Result<T,Unit> は result<T>、Result<Unit,Unit> は result です。pair は tuple に変換し、own は明示的な resource adapter を要求します。
 Option<Unit> のように WIT が単位値の payload 型を必要とする場合は、1ケースの補助 enum を使います。
 Future/Stream は future<T>/stream<T> に対応し、unit の payload は引数のない future/stream にします。
@@ -342,20 +350,20 @@ WIT は任意の effect 契約を保持しないため、生成 interface だけ
 
 ```wat
 (%let $ticket (%own.new i64 (i64.const 42))
-  (%match (%own i64) (result i64) (%move $ticket)
+  (%match (%inst $own i64) (result i64) (%move $ticket)
     (case own ($value) (local.get $value))))
 
-(%let $unused (%own.new %unit)
+(%let $unused (%own.new $unit)
   (%own.close (%move $unused)))
 ```
 
-`(%own T)` は共有可能なデータ T を包む、複製できない値です。T は unit でもよく、その場合 own.new の値引数と case の束縛を省略します。
+`(%inst $own T)` は共有可能なデータ T を包む、複製できない値です。T は unit でもよく、その場合 own.new の値引数と case の束縛を省略します。
 own.new は新しい所有値を作り、move はローカル・引数・捕捉値の所有権を渡します。所有値に local.get は使えません。move 後の再使用、所有しない値の move、所有値の drop を拒否します。
 own は case own の match で消費して内容を取り出すか、own.close で明示的に消費します。暗黙の解放はありません。
 現在の own.close は所有するデータの包みを消費し、Wasm の drop に展開します。OS リソースの close や Future/Stream の cancel を実装する操作ではありません。
 own は payload の GC 参照を排他的にしません。既存の共有 GC 参照の別名や変更可能性はそのままです。own の内部へ別の所有値を直接包むことは認めません。
 
-`(%pair T U)` は `(%pair.new T U first second)` で作り、case pair の match で分解します。unit 成分の値引数と束縛は省略します。
+`(%inst $pair T U)` は `(%pair.new T U first second)` で作り、case pair の match で分解します。unit 成分の値引数と束縛は省略します。
 pair、Option、Result は、成分のどれかが所有値なら全体も所有値です。所有値を捕捉する closure も所有値になり、構築時の所有 capture と呼び出し時の環境に move を使います。
 所有 closure は nullable にできず、ref.eq/is_null/as_non_null で参照を観測できません。自身を呼び出すと消費され、捕捉した所有値も本体で処理する必要があります。
 共有される struct/array/参照型 variant のフィールド、例外 payload への所有値の格納は拒否します。
@@ -609,22 +617,22 @@ jco の補正には pending-copy のキャンセル接続、取消し完了後�
 
 ## bytes / text と ABI
 
-`%bytes` は不変な任意のバイト列、`%text` は不変な検証済み UTF-8 の値型です。
+`$bytes` は不変な任意のバイト列、`$text` は不変な検証済み UTF-8 の値型です。
 両者とも non-null で共有でき、同一性・格納参照・書込みは公開しません。
 内部では packed i8 の private GC 配列を wrapper に格納し、可変な配列への書込みを構築時だけに制限します。
 数値から bytes への格納は Wasm i8 と同じく下位8ビットを使います。
 
 | 式 | 結果と規約 |
 |---|---|
-| `(%bytes.new i32-expr...)` | `%bytes`。空も可。各式は左から一度だけ評価 |
+| `(%bytes.new i32-expr...)` | `$bytes`。空も可。各式は左から一度だけ評価 |
 | `(%bytes.from-array $Array array-expr)` | 非 null の i32 配列を不変 bytes へコピー。各要素が0..255以外なら trap。可変配列にも対応 |
 | `(%bytes.len bytes-expr)` | `i32` のバイト数 |
 | `(%bytes.get bytes-expr index)` | `i32` の 0..255。index は符号なし、範囲外は trap |
-| `(%bytes.slice bytes-expr start length)` | `%bytes`。start <= size かつ length <= size-start。範囲外は trap |
-| `(%text.lit "日本語")` | `%text`。ソースリテラルは UTF-8 |
+| `(%bytes.slice bytes-expr start length)` | `$bytes`。start <= size かつ length <= size-start。範囲外は trap |
+| `(%text.lit "日本語")` | `$text`。ソースリテラルは UTF-8 |
 | `(%text.byte-len text-expr)` | `i32` の UTF-8 バイト数 |
-| `(%text.bytes text-expr)` | `%bytes`。内容を保つ。private storage は共有可能 |
-| `(%text.from-bytes bytes-expr)` | `(%option %text)`。UTF-8 が不正なら none、正しければ some |
+| `(%text.bytes text-expr)` | `$bytes`。内容を保つ。private storage は共有可能 |
+| `(%text.from-bytes bytes-expr)` | `(%inst $option $text)`。UTF-8 が不正なら none、正しければ some |
 
 不正な continuation、切れた系列、overlong、surrogate、U+10FFFF より大きい値を拒否します。
 NUL・BOM は通常のデータとして保存します。正規化、grapheme、コードポイント添字、比較・連結などの文字列ライブラリはまだありません。
@@ -749,7 +757,7 @@ JSON object builder はフィールド名・値のエスケープと区切りを
 ## Result と Stream の限定マクロ
 
 ```wat
-(%result.let ($value) (%result T E) U subject body)
+(%result.let ($value) (%inst $result T E) U subject body)
 (%stream.fold-result T S E source initial ($state $item) body)
 ```
 
@@ -839,7 +847,7 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 
 ## 不変の list
 
-`(%list T)` と5つの操作、WIT list<T> の変換は [list の契約](docs/lists.md) を参照。
+`(%inst $list T)` と5つの操作、WIT list<T> の変換は [list の契約](docs/lists.md) を参照。
 所有権を持つ要素や借用の格納は認めない。
 
 ## 利用者定義のジェネリクス

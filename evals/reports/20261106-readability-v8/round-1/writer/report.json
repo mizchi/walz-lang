@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/readability-20261106-v8-r1/writer/candidate.wlt",
+      "exitCode": 0,
+      "diagnostic": "ok"
+    },
+    {
+      "command": "cargo run --locked --quiet -- types /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/readability-20261106-v8-r1/writer/candidate.wlt",
+      "exitCode": 0,
+      "diagnostic": "型診断JSONを出力。main は Result<i32,i32>、fold状態は pair<(ref $stock.State),i32>。count64 は Result<i64,i32>、fold状態は pair<(ref $stock.State),i64>。出力全体はツールの出力上限で省略された。"
+    }
+  ],
+  "repairs": [],
+  "ambiguities": [],
+  "assumptions": [],
+  "extraDocumentsRead": []
+}

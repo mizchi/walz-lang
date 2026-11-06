@@ -1,7 +1,10 @@
 (module
+  (%import "wlt:std"
+    (type $result)
+    (type $unit))
   (%import "../../../stdlib/text.wlt" (func $string.u64))
   (%include "compute.wlt")
-  (func $must (param $result (%result %unit (ref $domain.Error)))
+  (func $must (param $result (%inst $result $unit (ref $domain.Error)))
     (%match (local.get $result)
       (case ok () (nop))
       (case err ($e) (unreachable))))

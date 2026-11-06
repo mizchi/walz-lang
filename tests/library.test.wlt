@@ -1,10 +1,12 @@
 (module
+  (%import "wlt:std"
+    (type $text))
   (%import "../stdlib/text.wlt"
     (func $string.concat)
     (func $string.json)
     (func $string.s64)
     (func $string.u64))
-  (func $equal (param $a %text) (param $b %text) (result i32)
+  (func $equal (param $a $text) (param $b $text) (result i32)
     (%let $a (%text.bytes (local.get $a))
       (%let $b (%text.bytes (local.get $b))
         (if

@@ -1,5 +1,10 @@
 (module
   (%namespace $report
+    (%import "wlt:std"
+      (type $future)
+      (type $result)
+      (type $text)
+      (type $unit))
     (%import "../../../stdlib/json.wlt"
       (type $json.Object)
       (func $json.finish)
@@ -7,7 +12,7 @@
       (func $json.object)
       (func $json.u64))
     (import "wlt:host/text-io@0.1.0" "write-line"
-      (func $write-line (param $line %text) (result (%future (%result %unit i32))))
+      (func $write-line (param $line $text) (result (%inst $future (%inst $result $unit i32))))
     )
     (%public (func $write))
     (func $bucket (param $s (ref $stats.State)) (param $level (ref $parse.Level))
@@ -29,12 +34,12 @@
             (call $stats.maximum (local.get $s) (local.get $level)))
           (local.get $o))))
 
-    (func $write (param $s (ref $stats.State)) (result (%result %unit i32))
+    (func $write (param $s (ref $stats.State)) (result (%inst $result $unit i32))
       (%effects reads writes allocates host suspends)
       (%let $o (call $json.new)
         (%let $levels (call $json.new)
           (block
-            (result (%result %unit i32))
+            (result (%inst $result $unit i32))
             (call $json.u64
               (local.get $o)
               (%text.lit "accepted")
@@ -61,7 +66,7 @@
               (call $bucket (local.get $s) (%variant.new $parse.Level error)))
             (call $json.object (local.get $o) (%text.lit "levels") (local.get $levels))
             (%future.await
-              (%result %unit i32)
+              (%inst $result $unit i32)
               (call $write-line (call $json.finish (local.get $o))))
           ))))
   ))

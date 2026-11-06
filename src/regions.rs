@@ -404,7 +404,7 @@ impl Context<'_> {
             }
             Const { .. } | Null(_) | Nop | Unreachable => Points::new(),
             Local(id) | Move(id) => self.locals[id.0].clone(),
-            Numeric { args, .. } => {
+            Numeric { args, .. } | Simd { args, .. } => {
                 for arg in args {
                     self.eval(arg);
                 }

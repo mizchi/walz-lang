@@ -6,7 +6,7 @@
   (call $read-file (local.get $file)))
 ```
 
-`(%resource $File)` は所有値、`(%borrow $File)` は `%using` または関数引数でだけ扱う借用。
+`(%inst $resource $File)` は所有値、`(%inst $borrow $File)` は `%using` または関数引数でだけ扱う借用。
 `%resource.close` は所有値を消費し、登録した destructor を一度呼ぶ。
 `%using` は所有値を消費し、正常値・Result.err・Wasm 例外・取消しを通して終了時に close する。
 ループは内側で使えるが、外側への `%recur` は close を飛ばすため拒否する。

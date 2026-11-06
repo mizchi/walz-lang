@@ -1,21 +1,30 @@
 (module
+  (%import "wlt:std"
+    (type $result)
+    (type $stream)
+    (type $text))
   (%include "compute.wlt")
   (%include "report.wlt")
   (import "wlt:host/text-io@0.1.0" "read-lines"
-    (func $read-lines (result (%stream (%result %text i32))))
+    (func $read-lines (result (%inst $stream (%inst $result $text i32))))
   )
   (%namespace $app
+    (%import "wlt:std"
+      (type $pair)
+      (type $result)
+      (type $text)
+      (type $unit))
     (%public (type $State) (func $advance))
-    (%type.alias $State (%pair (ref $graph.Graph) i32))
-    (func $mutation (param $n i32) (param $result (%result %unit (ref $domain.Error)))
-      (result (%result %unit i32)) (%effects reads writes allocates host suspends)
+    (%type.alias $State (%inst $pair (ref $graph.Graph) i32))
+    (func $mutation (param $n i32) (param $result (%inst $result $unit (ref $domain.Error)))
+      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
       (%match (local.get $result)
         (case ok () (%result.ok))
         (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
     )
 
-    (func $process (param $g (ref $graph.Graph)) (param $n i32) (param $line %text)
-      (result (%result %unit i32)) (%effects reads writes allocates host suspends)
+    (func $process (param $g (ref $graph.Graph)) (param $n i32) (param $line $text)
+      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
       (%match (call $parse.command (local.get $line))
         (case skip () (%result.ok))
         (case invalid ()
@@ -41,7 +50,7 @@
             (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
         )))
 
-    (func $advance (param $state $State) (param $line %text) (result (%result $State i32))
+    (func $advance (param $state $State) (param $line $text) (result (%inst $result $State i32))
       (%effects reads writes allocates host suspends)
       (%let ($g $previous) (local.get $state)
         (%let $n (i32.add (local.get $previous) (i32.const 1))

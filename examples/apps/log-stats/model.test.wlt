@@ -1,4 +1,6 @@
 (module
+  (%import "wlt:std"
+    (type $text))
   (%include "parse.wlt")
   (%namespace $stats
     (%include "stats-impl.wlt")
@@ -56,7 +58,7 @@
       (case warn () (i32.const 1))
       (case error () (i32.const 2))))
 
-  (func $entry (param $line %text) (param $level i32) (param $ms i64) (result i32)
+  (func $entry (param $line $text) (param $level i32) (param $ms i64) (result i32)
     (%match $parse.Line (result i32)
       (call $parse.line (local.get $line))
       (case skip () (i32.const 0))
@@ -75,7 +77,7 @@
           (i64.eq (local.get $n) (local.get $ms))))
     ))
 
-  (func $invalid (param $line %text) (result i32)
+  (func $invalid (param $line $text) (result i32)
     (%match $parse.Line (result i32)
       (call $parse.line (local.get $line))
       (case skip () (i32.const 0))
@@ -84,7 +86,7 @@
       (case warn ($n) (i32.const 0))
       (case error ($n) (i32.const 0))))
 
-  (func $skip (param $line %text) (result i32)
+  (func $skip (param $line $text) (result i32)
     (%match $parse.Line (result i32)
       (call $parse.line (local.get $line))
       (case skip () (i32.const 1))
@@ -93,7 +95,7 @@
       (case warn ($n) (i32.const 0))
       (case error ($n) (i32.const 0))))
 
-  (func $equal (param $a %text) (param $b %text) (result i32)
+  (func $equal (param $a $text) (param $b $text) (result i32)
     (%let $x (%text.bytes (local.get $a))
       (%let $y (%text.bytes (local.get $b))
         (if

@@ -89,6 +89,8 @@ async function worker(directory) {
         source,
         output: join(directory, "work", name),
         checkInputs: () => checkInputs(directory),
+        groupedBindings: manifest.suite.version >= 7,
+        extended: name === "candidate" && manifest.suite.version >= 8,
       });
     }
     if (

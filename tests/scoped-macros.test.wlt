@@ -1,21 +1,24 @@
 (module
+  (%import "wlt:std"
+    (type $result)
+    (type $unit))
   (func $fold
     (param $fail i32)
-    (result (%result i64 i32))
+    (result (%inst $result i64 i32))
     (%stream.fold-result i64 i64 i32
       (%stream.cons
-        (%result i64 i32)
+        (%inst $result i64 i32)
         (%result.ok i64 i32 (i64.const 40))
         (%stream.cons
-          (%result i64 i32)
+          (%inst $result i64 i32)
           (%result.ok i64 i32 (i64.const 2))
-          (%stream.empty (%result i64 i32))
+          (%stream.empty (%inst $result i64 i32))
         )
       )
       (i64.const 0)
       ($sum $item)
       (if
-        (result (%result i64 i32))
+        (result (%inst $result i64 i32))
         (local.get $fail)
         (then (%result.err i64 i32 (i32.const 7)))
         (else (%result.ok i64 i32 (i64.add (local.get $sum) (local.get $item))))
@@ -24,7 +27,7 @@
   )
   (%test "fold returns accumulated value"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (call $fold (i32.const 0))
       (case ok ($n) (i64.eq (local.get $n) (i64.const 42)))
@@ -33,7 +36,7 @@
   )
   (%test "callback error closes the unconsumed tail"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (call $fold (i32.const 1))
       (case ok ($n) (i32.const 0))
@@ -42,13 +45,13 @@
   )
   (%test "source error is propagated, callback is not entered"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (%stream.fold-result i64 i64 i32
         (%stream.cons
-          (%result i64 i32)
+          (%inst $result i64 i32)
           (%result.err i64 i32 (i32.const 9))
-          (%stream.empty (%result i64 i32))
+          (%stream.empty (%inst $result i64 i32))
         )
         (i64.const 0)
         ($sum $item)
@@ -60,16 +63,16 @@
   )
   (%test "result.let maps success and preserves errors, including unit"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (%result.let
         ()
-        (%result %unit i32)
+        (%inst $result $unit i32)
         i64
-        (%result.ok %unit i32)
+        (%result.ok $unit i32)
         (%result.let
           ($value)
-          (%result i64 i32)
+          (%inst $result i64 i32)
           i64
           (%result.ok i64 i32 (i64.const 40))
           (%result.ok i64 i32 (i64.add (local.get $value) (i64.const 2)))
@@ -81,10 +84,10 @@
   )
   (%test "empty stream returns the initial state"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (%stream.fold-result i64 i64 i32
-        (%stream.empty (%result i64 i32))
+        (%stream.empty (%inst $result i64 i32))
         (i64.const 41)
         ($s $i)
         (%result.ok i64 i32 (i64.const 999))
@@ -95,11 +98,11 @@
   )
   (%test "result.let propagates an error without evaluating its body"
     (%match
-      (%result i64 i32)
+      (%inst $result i64 i32)
       (result i32)
       (%result.let
         ($v)
-        (%result i64 i32)
+        (%inst $result i64 i32)
         i64
         (%result.err i64 i32 (i32.const 17))
         (unreachable)
@@ -112,10 +115,10 @@
     (%let $scoped_0
       (i64.const 42)
       (%match
-        (%result i64 i32)
+        (%inst $result i64 i32)
         (result i32)
         (%stream.fold-result i64 i64 i32
-          (%stream.empty (%result i64 i32))
+          (%stream.empty (%inst $result i64 i32))
           (local.get $scoped_0)
           ($s $i)
           (%result.ok i64 i32 (local.get $s))
@@ -127,17 +130,17 @@
   )
   (%test "unit input and error payloads use no dummy binding"
     (%match
-      (%result i64 %unit)
+      (%inst $result i64 $unit)
       (result i32)
-      (%stream.fold-result %unit i64 %unit
+      (%stream.fold-result $unit i64 $unit
         (%stream.cons
-          (%result %unit %unit)
-          (%result.ok %unit %unit)
-          (%stream.empty (%result %unit %unit))
+          (%inst $result $unit $unit)
+          (%result.ok $unit $unit)
+          (%stream.empty (%inst $result $unit $unit))
         )
         (i64.const 0)
         ($state)
-        (%result.ok i64 %unit (i64.add (local.get $state) (i64.const 1)))
+        (%result.ok i64 $unit (i64.add (local.get $state) (i64.const 1)))
       )
       (case ok ($n) (i64.eq (local.get $n) (i64.const 1)))
       (case err () (i32.const 0))

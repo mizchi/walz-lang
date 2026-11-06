@@ -1,0 +1,18 @@
+{
+  "main": {
+    "lines": 15,
+    "tokens": 95,
+    "maxDepth": 8,
+    "match": 0,
+    "patternLets": 0,
+    "stateTypeOccurrences": 0
+  },
+  "counted": {
+    "lines": 27,
+    "tokens": 193,
+    "maxDepth": 8,
+    "match": 0,
+    "patternLets": 2,
+    "stateTypeOccurrences": 1
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "answers": {
+    "flow": "main.wlt:10-11 の複数束縛 %let は、まず最大4096品目の台帳を作り、次に read-lines を呼ぶ。13-19 の fold は input を move で受け取り、initial の台帳を初期状態にして各配送行を app.process に渡す。各行の処理が ok(unit) の場合だけ、その同じ台帳参照を次の状態の ok として返す。EOF で fold が入力を閉じて最終状態の ok を返すと、12 の unused-state が成功bodyだけで束縛され、21 の ok(0) が main の結果になる。入力または行処理が err の場合はこの成功bodyへ進まない。counted.wlt:29-31 は台帳、台帳と0のpair、入力の順に初期化する。33-37 の各行処理を process-counted-line に委譲し、正常なEOF後に39で最終pairを分解し、40で最終行数を成功値として返す。成功値は main の Result payload であり、text-cli の exit code や自動表示ではない（cheatsheet:533-550、contract:25）。実行結果は観測していない。",
+    "state": "counted.wlt:6-8 の LineCount は i32、IoError も i32、ScanState は pair<(ref stock.State), LineCount> の透明な略記である。stock.State は共有できる非nullのopaque GC参照（contract:7）で、カウンタも共有値なので、このpairは共有できる非unitの1値である。初期値は台帳参照と0（counted:30）。process-counted-line は Result<ScanState,IoError> を返し（12）、app.process が成功したとき台帳参照と加算後のカウンタを包み直す（14-21）。公開mainの型は Result<LineCount,IoError>（26）で、成功はI/O処理に成功した配送行数。空行、コメント行、JSONの業務エラーを出力した行も成功なら数える（15、contract:16-18）。i32.add は折り返すため、無制限の自然数の件数ではない（cheatsheet:97）。",
+    "alias": "LineCount、IoError、ScanState はいずれも %type.alias による透明な型の略記である。aliasを宣言しても実行時のGCオブジェクトや新たなnominal identityは増えない（cheatsheet:311-313）。したがって LineCount と IoError は用途を読み分ける名前ではあっても、検査上は同じ i32 であり、取り違えを別型として拒否する仕組みではない（counted:4）。ScanState も別名付きpairの1値で、(ref $ScanState) のようなheap型名にはできない。内側の stock.State のGC参照自体の同一性とは区別する。",
+    "ownership": "counted.wlt:14 および39 の %let ($a $b) はsubjectのpairを一度だけ評価して2成分を字句束縛する構文で、2つの戻り値を受け取る構文ではない（cheatsheet:343、37）。今回のpairは共有台帳参照と整数なので local.get でよく、分解時のmoveは不要。台帳参照は分解後も再利用できる。一方、input は所有値のStreamなので main:14、counted:34 の %move が必要で、foldに消費を移した後は再利用しない。foldはEOFでも入力errでもbodyのerrでも端点をcloseする（cheatsheet:294-305）。own成分を含むpairならpair全体も所有値になり、pattern let のsubjectに (%move $pair) を使い、取り出した所有値も消費する必要がある。所有値への local.get、drop、move後の再利用は禁止（349、394）。GC参照の共有と端点の終了処理は別の問題である。",
+    "errors": "在庫不足・容量超過・構文不正は app.process がJSONエラーレコードを出し、I/O成功ならok(unit)にする業務上の失敗である（contract:15-17）。そのため counted はそれらの行も1加算する。空行・#行は出力なしのokで、同様に加算する。app.process の err(i32) はI/O失敗であり、業務エラー件数ではない。read-lines が配送する入力のerrもfoldを失敗させる。どちらのerrでも入力をcloseしてerrを返し、外側の成功bodyを実行しない。失敗行では helper の加算bodyは実行されず、mainから部分件数のokを返すこともない。EOFは失敗ではなく、入力をcloseして最終状態のokを返す。取消しはResultのerrではなく、JSホストのstartが作ったtask scopeが待機中の操作を中止し、解放完了を待つ。task.cancel()はその完了を待つPromise、task.resultはTaskCancelledErrorでrejectする（cheatsheet:300-307）。CPU処理の強制停止や変更の巻き戻しはしない。Wasm throw/trapも別経路で、foldは任意の例外に対するfinallyではなく、trapはcatchできない。",
+    "scope": "main.wlt:12 の unused-state はfoldがokのときだけ21のbodyで使える束縛で、fold自身の中から参照する名前ではない。foldの state/line は16で導入し17-19のbodyに対応する。counted.wlt:32 の final-scan-state は39-40の成功bodyに対応し、36の scan-state/line は37の行処理bodyに対応する。helperの ledger/line-count は14のpair分解から続く16-21のbodyに対応する。result.let の () は unit成功payloadに名前を付けない指定であり、成功bodyの省略ではない。result.letは関数からの暗黙returnではなく、errならその式の結果を同じEのerrにし、成功時だけbodyを評価する局所的な式である（cheatsheet:217-230、345）。このサンプルではその式が関数の本体結果に置かれているため、結果として関数のerrにもなる。",
+    "changes": "カウンタの意味を調べる入口は counted.wlt:5-8 のコメントとaliasである。型は6、状態への格納は8、初期値は30、行ごとの更新条件は15-17、加算は21、公開する成功型は26、最終状態からの取り出しは39-40を追う。行数はstock.sizeの異なる品目数ではなく配送行数なので、stock.newの容量4096（29）や在庫処理の数値と一括置換してはいけない。更新処理を変える場合も、I/O成功時だけ進むresult.letの内側にあること、foldのbodyがResult<ScanState,IoError>を返すこと（12、37）を保つ必要がある。型をi64にする具体的な変更箇所はcounterに列挙する。",
+    "syntax": "根拠は配布cheatsheetのみ。『標準WATと%拡張の境界』24-33ではfunc/param/result/if/block/callは標準WATなので%を付けず、%let/%match/%for/%loop等はWLT拡張の入口なので%を付ける。case、bind、while、step、do、catch、制約shared等は拡張の内部構文であり%を付けない。『最初に覚える規則』13-14と境界26-27、37では、(result i64)は1値の結果宣言、(result i32 i64)は標準WATの2戻り値宣言、(%inst $result i32 i64)は成功i32/エラーi64を持つ1個の値型、(result (%inst $result i32 i64))はその1個の値型を返す結果宣言である。型付きコアは0値unitまたは1値で、pairも1値。標準WATの複数戻り値はpairへ変換しない。境界28-30と『モジュール・不透明な公開型』446-465では、import/exportはWasmのインスタンス化時のimportと生成モジュールのABI export、%import/%exportはソースの選択的静的リンクとソースAPI公開である。ファイルパスを持つ入口は (%import \"relative.wlt\" ...) と宣言挿入の (%include \"relative.wlt\")。includeのパスは参照元ファイルからの相対で、同じスコープへ挿入する。%importはnamespace名も受け取れ、wlt:stdはファイルパスでもhost importでもない。%exportのtypeは表現も公開し、opaqueは型だけ公開する。『所有値・クロージャ・effect』354-381では、関数・型・alias・closure名の直後の%type.paramsで型変数を宣言し、直後の%whereでshared/nonunit/callableなどの具体化時の制約を置く。適用は常に%instで、関数は (call (%inst $identity i64) value)、汎用GC型は (ref (%inst $Box i64))、汎用aliasは型位置に (%inst $Values i64)。型引数は明示し、具体化した本体で型・effect・所有権を検査する。未使用の適用もDCE前に検査するが、未適用の汎用本体がすべての型引数で正しいとは保証しない。callableは引数/結果型が合う共有・再呼出し可能なclosureを要求し、effect制限は指定時だけ課す。sharedは不変性ではない（375-379）。可変GCデータは共有できてもreads/writesを持つ。pureはsemantic effectが空という意味で、停止、無trap、物理的割当てなしを保証しない（414-422）。境界35-37では、標準WAT単体はそのまま検証・コンパイルし、型付きコアでは型・effect・所有権を検査する。コア外WATと混在できるのは%let/%loop/%for等の構文だけで展開可能な拡張に限り、Wasm全体の検証とanalysis.opaque=true、保守的effectになる。pureを付けても詳細解析や所有権保証を得られず、検査を必要とする拡張との併用は受理しない。",
+    "bindings": "複数束縛%letの規則はcheatsheet:123-124。初期値を左から右に一度ずつ評価し、各後続初期値とbodyから前の束縛を参照できる。後の束縛の先行参照は不可。同名を再束縛する場合、その初期値では以前の名前が見え、初期値の評価後から新しい名前が以前の名前を隠す。配布コードに同名再束縛や先行参照の実例はない。main.wlt:10-11ではstock.newを1回、次にread-linesを1回評価し、bodyからinitial/inputを参照する。counted.wlt:29-31ではstock.newを1回、次にledgerを参照してpairを1回構築し、最後にread-linesを1回呼ぶ。ledgerは30から既に見えるが、29からinitial-scan-stateやinputを先行参照はできない。各initializerの型注釈は省略でき、30だけScanStateを明示してpairの期待型を与えている。これはネストしたletと同じ束縛順であり、同時初期化でも多値戻り値の分解でもない。14/39の (%let ($a $b) subject body) は別形式で、1個のpairのsubjectを一度だけ評価して成分を分ける。どちらも所有権検査を行い、所有値を束縛したことだけで消費義務はなくならない。inputは後でmoveしてfoldに消費させる。所有成分を持つpairの分解も明示moveと各所有成分の消費が必要（348-350、394）。標準WATの(result i32 i64)は標準WAT経路の複数戻り値であり、ここでのどちらのlet形式とも同一ではない（37）。",
+    "standard": "根拠はcheatsheet『wlt:stdと基本データ型』41-58、『bytes/textとライブラリ』482-488およびモジュール節461-465のみ。wlt:stdはコンパイラ同梱の標準型・標準関数を名前ごとに明示importする静的リンク入口で、DCEも使う。host importやファイルパスではない。暗黙preludeはなく、名前はimportしたスコープだけに束縛され、別ファイルやnamespaceでも必要な名前をそこでimportする。(%import \"wlt:std\" (type $result) (type $option) (type $future) (type $text) (type $unit) (func $string.u64 $format)) のように必要名を列挙できる。(type $result $Outcome)ならローカル名Outcomeを使い、(%inst $Outcome $text i32)と適用できる。関数の別名formatは(call $format ...)で使う。Resultは(%inst $result T E)、Optionは(%inst $option T)、Futureは(%inst $future T)で、例51のようにFutureのpayloadにResultを入れられる。text/unit（bytesも）は型引数なしaliasなので型の位置に$text/$unitとそのまま書く。%future.await、%result.ok、%text.lit等は値を操作するコンパイラ固定構文であり、importしたFuture等の型名を参照する構文とは別である。標準関数はstring/buffer/list.map/list.fold/builder/json/json-value群から必要な操作を選ぶ。全文符号なし整数解析はstring.parse-u64、符号なし十進数化はstring.u64かbuilder.u64を選び、parse-s64やs64を使うと入力範囲または表示の意味が違う。%includeは同じスコープへの宣言挿入であり、標準名を暗黙供給する機構ではない。この回答ではリンク先の完全APIや標準ライブラリ実装を根拠にしていない。",
+    "api": "必要な標準APIをbuilder経路で選ぶ。importは (%import \"wlt:std\" (type $text) (type $option) (type $builder.Builder) (func $string.parse-u64) (func $builder.new) (func $builder.text) (func $builder.u64) (func $builder.finish))。Builder型の明示importは作業変数を(ref $builder.Builder)と注釈するためで、内部表現はopaque（api:48-50）。string.parse-u64は(text)->option<i64>、effect pure（api:12-22）。builder.newは()->(ref Builder)、allocates（52-61）。builder.textは((ref Builder),text)->unit、reads/writes/allocates（63-73）。builder.u64は((ref Builder),i64)->unit、reads/writes/allocates（75-85）。builder.finishは((ref Builder))->text、reads/writes/allocates（87-97）。入力textをparse-u64で解析し、some(n)ならbuilderを作り、builder.textに%text.litのcount=を渡し、builder.u64にnを渡し、builder.finishのtextを返せばよい。builder方式ではstring.u64やconcatは不要。失敗時の外側の戻り値形式は課題で指定されていないため、ここでは関数契約を (param $s $text) (result (%inst $option $text)) (%effects reads writes allocates) と定め、parseのnoneではnone、someでは完成textのsomeを返す。これなら失敗と成功を混同しない。空、負数、+、空白、不正文字、桁あふれはnone。入力全体がASCII数字で0〜18446744073709551615なら成功し、先頭ゼロも許す（cheatsheet:485-487）。成功i64は符号なし64bitのビットパターンなので、上位bitが立っても負数として表示せずbuilder.u64を使う。代替のstring.u64も(i64)->textでreads/writes/allocatesだが（api:36-46）、api.mdにはconcatの完全型は載っていないため、この経路では選ばない。pureのparseも無trap・停止・物理的割当てなしの保証ではない（api:9）。型付きコアの複数戻り値は未提供で、0値unitまたは1値、Optionやpairは1値として扱う（cheatsheet:37）。取消しはResult/Optionの失敗へ変換しないtask scopeの経路で、待機点で協調的に処理する（300-307）。この解析・整形に選んだAPIにはhost/suspendsの宣言はなく、資料からCPU処理の強制取消しは主張できない。",
+    "counter": "カウンタだけのi64化は次を追う。(1) counted.wlt:6 の (%type.alias $LineCount i32) をi64にする。(2) 8のScanStateの第2成分はLineCount参照なので自動的にi64になる。ここを別のi32へ置き換えない。(3) 30の初期pairのカウンタ定数を(i64.const 0)にする。(4) 21の加算をi64.add、加算定数を(i64.const 1)にする。(5) 12のhelper成功型ScanStateと26の公開main成功型LineCountが変更後のaliasを通して一貫していることを確認する。明示型を書き直す必要はなく、39-40の分解・返却も型推論でi64になる。pair.newやresult.okも期待型による省略形なので、追加のi32型引数を探して直す箇所はこの配布コードにはない。IoErrorのalias（7）はi32のままにし、mainの結果は成功i64/失敗i32になる。stock.newの容量(i32.const 4096)（29）、stock.State内部の在庫数量や品目数、app.processのI/Oコードは変更対象ではない（contract:8-11、31）。i64.addもWasm整数の折り返しであり、任意精度化ではない。"
+  },
+  "scores": {
+    "flow": {
+      "score": 3,
+      "evidence": "main.wlt:10-19は初期化→入力→fold→行処理の順で、21に成功値が置かれる。counted.wlt:29-40も同じ形で、helper:15-21に成功時だけ加算する条件がまとまる。23の成功値コメントと39-40の最終分解が対応する。各行の詳細を見るためhelperへ1回移動し、fold/result.letの成功継続を確認する必要はあるため、局所的にほぼ迷わない4ではなく、小さな確認で追える3。実行可能性や回答の正しさは加点していない。"
+    },
+    "types": {
+      "score": 3,
+      "evidence": "counted.wlt:6-8にカウンタ、I/Oエラー、状態の型が並び、12と26はその役割名を使う。複合pair型を構築・分解位置ごとに反復しておらず、30の明示ScanStateで初期pairの型を確定できる。4のコメントでLineCountとIoErrorの区別が透明な別名であることも見える。ただし(result (%inst $result ...))の宣言と値型の重なり、および省略形が期待型に依存することは小さな資料確認を要する。"
+    },
+    "scope": {
+      "score": 3,
+      "evidence": "counted.wlt:28-31の複数束縛が初期化の入れ子を減らし、ledgerを次の初期値が使う対応が近い。14のledger/line-countはhelper内、36のscan-state/lineはfold body、32のfinal-scan-stateは39の成功継続に分かれ、名前も役割を示す。一方32-40のresult.letのsubjectとbodyの境界、および39の分解bodyが40で終わることは閉じ括弧を確認する必要がある。目立つ往復負担はないが、4ほど局所的に完結しない。"
+    },
+    "layout": {
+      "score": 3,
+      "evidence": "counted.wlt:9-13と24-27は関数名、引数、結果、effectを1行ずつまとめ、33-37のfoldもsource、initial、束縛、bodyを分けている。38の空行が最終成功継続の切れ目を示し、helper:19-21のpair成分も別行で見える。ただし22の)))と41の)))では式・関数・moduleの閉じ位置を数える確認が残り、境界が完全に視覚化されているわけではない。"
+    },
+    "changes": {
+      "score": 3,
+      "evidence": "counted.wlt:6のLineCount、8の状態成分、21の加算、30の初期値、26/39-40の公開結果を名前で結べる。15のコメントで空行等も数える条件が明示され、4でI/Oエラーとの型の関係が分かる。i64化ではaliasだけでなく2か所の定数・演算を追う必要があり、29の容量i32と区別する確認も必要なので4ではないが、複合型の包み直しを多数探索する負担はなく3。"
+    }
+  },
+  "issues": [
+    {
+      "priority": 3,
+      "kind": "syntax",
+      "location": "cheatsheet.md:214-225、345-346 / counted.wlt:32-40",
+      "problem": "result.letの明示形は入力Result型の次に裸の出力成功型Uが来る一方、配布コードは型を省略する形だけである。foldも同様に省略形なので、初見ではsubjectと成功継続の境界を文法表に照合する小さな負担がある。",
+      "fix": "構文を改める場合は成功型などのヘッダー要素を名前付きの節にする案を検討する。現行構文では短い形のsubject/bodyを明示した対比を同じ表に置き、配布コードと対応させる。"
+    },
+    {
+      "priority": 3,
+      "kind": "format",
+      "location": "counted.wlt:22、41 / main.wlt:21-22",
+      "problem": "末尾の複数閉じ括弧に関数やmoduleの終了も含まれ、字下げだけではどの単位を閉じたか一度数える必要がある。",
+      "fix": "関数とmoduleの閉じ括弧を対応する字下げの独立行へ置くなど、配布例全体で終端の配置を統一する。"
+    },
+    {
+      "priority": 3,
+      "kind": "naming",
+      "location": "counted.wlt:6、14、21、39",
+      "problem": "LineCount/line-countは短く追いやすいが、正常に解釈された業務行だけではなく空行や業務エラーも含む『I/O成功配送行数』という範囲は名前だけでは分からず、15のコメントを参照する。",
+      "fix": "外部契約で数え方を固定する際はProcessedLineCount等の候補と短さを比較し、現名を保つなら5と15の定義コメントを公開結果の説明にも揃える。"
+    },
+    {
+      "priority": 3,
+      "kind": "docs",
+      "location": "api.md:12-97 / cheatsheet.md:485-487",
+      "problem": "解析の境界条件はチートシート、完全な型とeffectはAPIに分かれている。count=形式を組むにはbuilderの4操作の契約を組み合わせる必要があり、APIのsignatureだけから失敗時の外側の返却方針は決まらない。",
+      "fix": "parse-u64→Optionのmatch→builderで接頭辞と符号なし整数を出す短い例を、失敗時noneという明示した関数契約付きでチートシートに追加する。"
+    }
+  ],
+  "limitations": [
+    "読んだ資料はreader/task.md、cheatsheet.md、api.md、contract.md、rubric.md、main.wlt、counted.wltだけ。リンク先、include先、依存実装、他の役の出力、過去の評価は参照していない。",
+    "コンパイラ、プログラム、実行検証は起動していない。コンパイル成功、実際の出力、読了時間は主張していない。",
+    "api.mdは抜粋でありstring.concatの完全なsignatureはないため、必要なsignatureが揃うbuilder経路を選択した。解析失敗を呼出し元へどう返すかは課題では未指定であり、回答ではOption<text>を選んだ。",
+    "main.wltとcounted.wltのinclude先の宣言や標準型importの具体的な配置は確認できない。外部動作は配布contract、一般的なスコープ規則はcheatsheetに限定して読んだ。",
+    "配布コードに未解決の未知構文は残っていない。型推論の全域規則や取消し実装の詳細までは配布資料の保証を超えて推測していない。"
+  ]
+}

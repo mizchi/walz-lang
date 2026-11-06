@@ -231,6 +231,11 @@ fn numeric(op: NumericOp, args: &[Value]) -> Option<Range> {
             _ => Range::BOOL,
         });
     }
+    // Other unary instructions have no range transfer rule yet. Preserve a
+    // conservative result without treating them as binary operations.
+    if op.signature().arity == 1 {
+        return Some(Range::FULL);
+    }
     let b = args[1].range.unwrap_or(Range::FULL);
     if let (Some(a), Some(b)) = (a.constant(), b.constant()) {
         let v = match op {
@@ -508,6 +513,12 @@ impl Visitor<'_> {
                 let args = args.iter().map(|e| self.eval(e, s)).collect::<Vec<_>>();
                 value.range = numeric(*op, &args);
                 op.signature().name.into()
+            }
+            Simd { op, args } => {
+                for arg in args {
+                    self.eval(arg, s);
+                }
+                op.name().into()
             }
             Null(_) => {
                 value.nullness = Some(Nullness::Null);

@@ -1,7 +1,7 @@
 # 不変の list<T>
 
-`(%list T)` は要素型ごとに具体化する組込みの値型。コンテナを変更する操作はなく、
-`%bytes` と同様に内部の GC 配列を参照・比較・変更することはできない。
+`(%inst $list T)` は要素型ごとに具体化する組込みの値型。コンテナを変更する操作はなく、
+`$bytes` と同様に内部の GC 配列を参照・比較・変更することはできない。
 要素には共有の数値・値型・GC 参照を使える。所有値と borrow は格納できない。
 GC 参照の要素が指すオブジェクトの可変性は、その参照型の規則に従う。
 
@@ -34,8 +34,19 @@ Wasm GC 配列の到達性はエンジンに任せ、独自の GC ランタイ�
 
 JS には配列、数値要素には対応する TypedArray も渡せる。
 数値 list の返り値は Int32Array/BigInt64Array/Float32Array/Float64Array、それ以外は Array。
+
+Core＋JSPIでは、対応するTypedArrayの入力と数値listの出力を、リトルエンディアン環境で一括コピーする。
+`i32` / `i64` / `f32` / `f64` には、それぞれ `Int32Array` / `BigInt64Array` / `Float32Array` / `Float64Array` を使う。
+実際の要素型と長さをintrinsic getterで確認し、prototypeの変更やProxyで値検査を迂回させない。
+通常のArray、長さを上書きしたview、ビッグエンディアン環境は従来の要素ごとの検査・変換を使う。
+ABIの長さ上限・アラインメント・範囲の検査は維持する。
+
+返り値はABI領域から独立したコピーで、入力の変更・ABIの解放・後続のメモリ拡張の影響を受けない。
+一括コピー経路では、対応するTypedArray間でNaNのpayloadや負のゼロのビット列も保持する。
+同じ要素型のコピー規則は [ECMAScriptのTypedArray転送](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-settypedarrayfromtypedarray) に従う。
+これはJSと線形メモリの間の転送の改善であり、GC上のlistへの変換やSIMD用のpackは別に必要。
 これは Component の生成 binding に合わせた形。s64 の値は BigInt を使う。
-WIT `list<u8>` は引き続き `%bytes` / Uint8Array へ対応する。
+WIT `list<u8>` は引き続き `$bytes` / Uint8Array へ対応する。
 List を Future/Stream の共有 payload にすることはできるが、Future/Stream を list に格納することはできない。
 
 検査は `just test-lists`。Rust の型・所有権・escape 解析、Wasmtime/Node の副作用順、

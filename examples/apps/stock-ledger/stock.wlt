@@ -1,5 +1,9 @@
 (module
   (%namespace $stock
+    (%import "wlt:std"
+      (type $bytes)
+      (type $result)
+      (type $text))
     (%public
       (opaque $State)
       (type $Error)
@@ -12,7 +16,7 @@
     (type $Error (%variant (insufficient) (overflow) (capacity)))
     (type $Entry
       (struct
-        (field $key %bytes)
+        (field $key $bytes)
         (field $quantity (mut i64))
         (field $next (ref null $Entry))
       )
@@ -42,7 +46,7 @@
       (struct.get $State $size (local.get $s))
     )
     (func $hash
-      (param $key %bytes)
+      (param $key $bytes)
       (result i32)
       (%effects pure)
       (%loop $hash
@@ -66,8 +70,8 @@
       )
     )
     (func $same
-      (param $a %bytes)
-      (param $b %bytes)
+      (param $a $bytes)
+      (param $b $bytes)
       (result i32)
       (%effects pure)
       (if
@@ -100,7 +104,7 @@
     )
     (func $find
       (param $s (ref $State))
-      (param $key %bytes)
+      (param $key $bytes)
       (result (ref null $Entry))
       (%effects reads)
       (%loop $find
@@ -132,7 +136,7 @@
     )
     (func $get
       (param $s (ref $State))
-      (param $key %text)
+      (param $key $text)
       (result i64)
       (%effects reads)
       (%let $found
@@ -147,20 +151,20 @@
     )
     (func $add
       (param $s (ref $State))
-      (param $key %text)
+      (param $key $text)
       (param $n i64)
-      (result (%result i64 (ref $Error)))
+      (result (%inst $result i64 (ref $Error)))
       (%effects reads writes allocates)
       (%let $bytes
         (%text.bytes (local.get $key))
         (%let $found
           (call $find (local.get $s) (local.get $bytes))
           (if
-            (result (%result i64 (ref $Error)))
+            (result (%inst $result i64 (ref $Error)))
             (ref.is_null (local.get $found))
             (then
               (if
-                (result (%result i64 (ref $Error)))
+                (result (%inst $result i64 (ref $Error)))
                 (i32.ge_u
                   (call $size (local.get $s))
                   (struct.get $State $limit (local.get $s))
@@ -172,7 +176,7 @@
                     (%let $index
                       (call $hash (local.get $bytes))
                       (block
-                        (result (%result i64 (ref $Error)))
+                        (result (%inst $result i64 (ref $Error)))
                         (array.set $Buckets
                           (local.get $buckets)
                           (local.get $index)
@@ -201,12 +205,12 @@
                   (%let $sum
                     (i64.add (local.get $before) (local.get $n))
                     (if
-                      (result (%result i64 (ref $Error)))
+                      (result (%inst $result i64 (ref $Error)))
                       (i64.lt_u (local.get $sum) (local.get $before))
                       (then (%result.err i64 (ref $Error) (%variant.new $Error overflow)))
                       (else
                         (block
-                          (result (%result i64 (ref $Error)))
+                          (result (%inst $result i64 (ref $Error)))
                           (struct.set $Entry $quantity
                             (local.get $node)
                             (local.get $sum)
@@ -225,9 +229,9 @@
     )
     (func $take
       (param $s (ref $State))
-      (param $key %text)
+      (param $key $text)
       (param $n i64)
-      (result (%result i64 (ref $Error)))
+      (result (%inst $result i64 (ref $Error)))
       (%effects reads writes allocates)
       (%let $found
         (call $find (local.get $s) (%text.bytes (local.get $key)))
@@ -239,14 +243,14 @@
             (else (struct.get $Entry $quantity (ref.as_non_null (local.get $found))))
           )
           (if
-            (result (%result i64 (ref $Error)))
+            (result (%inst $result i64 (ref $Error)))
             (i64.gt_u (local.get $n) (local.get $before))
             (then (%result.err i64 (ref $Error) (%variant.new $Error insufficient)))
             (else
               (%let $after
                 (i64.sub (local.get $before) (local.get $n))
                 (block
-                  (result (%result i64 (ref $Error)))
+                  (result (%inst $result i64 (ref $Error)))
                   (if
                     (ref.is_null (local.get $found))
                     (then (nop))

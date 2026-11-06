@@ -159,25 +159,26 @@ fn native_fallback_never_weakens_recur_or_semantic_contracts() {
 }
 
 #[test]
-fn migration_preserves_native_wat_strings_comments_and_is_idempotent() {
+fn frozen_legacy_inputs_preserve_comments_strings_and_native_wat() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("frozen.wlt");
     let legacy = r#"(module ;; let text import
       (func $f (export "let text") (result text)
         (let $x (text.lit "(let import)") (local.get $x))))"#;
-    let migration = wlt::syntax::migrate(legacy).unwrap();
-    assert!(migration.text().contains(";; let text import"));
-    assert!(migration.text().contains("\"(let import)\""));
-    assert!(migration.text().contains("(result %text)"));
-    assert_eq!(
-        wlt::syntax::migrate(migration.text()).unwrap().text(),
-        migration.text()
-    );
-    wlt::check(migration.text()).unwrap();
+    std::fs::write(&path, legacy).unwrap();
+    let loaded = wlt::source::load_legacy(&path).unwrap();
+    assert!(loaded.text().contains(";; let text import"));
+    assert!(loaded.text().contains("\"(let import)\""));
+    assert!(loaded.text().contains("(result %text)"));
+    wlt::check(loaded.text()).unwrap();
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), legacy);
     let native = r#"(module (func (result i32) (loop (result i32) (i32.const 42))))"#;
-    assert_eq!(wlt::syntax::migrate(native).unwrap().text(), native);
+    std::fs::write(&path, native).unwrap();
+    assert_eq!(wlt::source::load_legacy(&path).unwrap().text(), native);
 }
 
 #[test]
-fn migration_cli_is_explicit_and_keeps_original_diagnostic_locations() {
+fn frozen_legacy_inputs_keep_original_diagnostic_locations() {
     let dir = tempfile::tempdir().unwrap();
     let main = dir.path().join("main.wlt");
     let lib = dir.path().join("lib.wlt");
@@ -201,19 +202,6 @@ fn migration_cli_is_explicit_and_keeps_original_diagnostic_locations() {
         label.location.column,
         original.lines().nth(2).unwrap().find("$missing").unwrap() + 1
     );
-    let invoke = |args: &[&str]| {
-        Command::new(env!("CARGO_BIN_EXE_wlt"))
-            .args(args)
-            .arg(&lib)
-            .output()
-            .unwrap()
-    };
-    let preview = invoke(&["migrate"]);
-    assert!(preview.status.success());
-    assert!(String::from_utf8_lossy(&preview.stdout).contains("(%let"));
-    assert_eq!(std::fs::read_to_string(&lib).unwrap(), original);
-    assert!(invoke(&["migrate", "--write"]).status.success());
-    assert!(std::fs::read_to_string(&lib).unwrap().contains("(%let"));
 }
 
 #[test]
@@ -230,7 +218,6 @@ fn opaque_wat_annotations_are_never_wlt_expansion_or_file_directives() {
     assert!(compiled.ir.is_none());
     assert!(compiled.analysis.opaque);
     assert!(compiled.analysis.module_effects.host);
-    assert_eq!(wlt::syntax::migrate(source).unwrap().text(), source);
     run(source, "42");
 }
 
@@ -262,4 +249,110 @@ fn native_fallback_cannot_bypass_opaque_type_privacy() {
         (type $State (struct (field i32))))
       (func $bad (result (ref $lib.State)) (struct.new $lib.State (i32.const 1))))"#;
     assert!(wlt::compile(source).is_err());
+}
+
+#[test]
+fn cli_has_no_migration_command_or_write_option() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("source.wlt");
+    let source = "(module (func $f (let $x (i32.const 1) (drop (local.get $x)))))";
+    std::fs::write(&path, source).unwrap();
+    let invoke = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_wlt"))
+            .args(args)
+            .output()
+            .unwrap()
+    };
+    let help = invoke(&["--help"]);
+    assert!(help.status.success());
+    let help = String::from_utf8_lossy(&help.stdout);
+    assert!(!help.contains("migrate"));
+    assert!(!help.contains("--write"));
+    for args in [
+        vec!["migrate", path.to_str().unwrap()],
+        vec!["migrate", path.to_str().unwrap(), "--write"],
+    ] {
+        assert_eq!(invoke(&args).status.code(), Some(2));
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), source);
+    }
+    let error = wlt::check(source).unwrap_err();
+    assert_eq!(error.diagnostic().code, "E_WLT_PREFIX");
+    assert!(!error.to_string().contains("migrate"));
+    assert!(
+        error
+            .diagnostic()
+            .help
+            .iter()
+            .any(|help| help.contains("%let"))
+    );
+}
+
+#[test]
+fn grouped_let_initializes_left_to_right_with_annotations_and_shadowing() {
+    run(
+        r#"(module (func $main (export "main") (result i64)
+          (%let (($a i64 (i64.const 40))
+                 ($b (i64.add (local.get $a) (i64.const 1)))
+                 ($a (i64.add (local.get $b) (i64.const 1))))
+            (local.get $a))))"#,
+        "42",
+    );
+    run(
+        r#"(module (memory 1) (func (export "main") (result i32)
+          (%let (($a i32 (i32.load (i32.const 0)))
+                 ($b (i32.add (local.get $a) (i32.const 42))))
+            (local.get $b))))"#,
+        "42",
+    );
+}
+
+#[test]
+fn grouped_let_preserves_scope_types_ownership_and_expansion_limits() {
+    for (source, code) in [
+        (
+            "(module (func $f (result i64) (%let (($a i64 (i32.const 1))) (local.get $a))))",
+            "E_TYPE_MISMATCH",
+        ),
+        (
+            "(module (func $f (result i64) (%let (($a (local.get $b)) ($b (i64.const 42))) (local.get $a))))",
+            "E_UNKNOWN_LOCAL",
+        ),
+        (
+            "(module (func $f (%let (($owner (%own.new i32 (i32.const 1))) ($next (%move $owner))) (block (%own.close (%move $next)) (%own.close (%move $owner))))))",
+            "E_OWNERSHIP_MOVED",
+        ),
+        ("(module (func $f (%let () (nop))))", "E_LET_BINDINGS"),
+        ("(module (func $f (%let (($x)) (nop))))", "E_LET_BINDINGS"),
+    ] {
+        let error = wlt::check(source).unwrap_err();
+        assert_eq!(error.diagnostic().code, code, "{source}: {error}");
+    }
+    let bindings = (0..1024)
+        .map(|n| format!("($x{n} (i32.const 0))"))
+        .collect::<String>();
+    let source = format!("(module (func $f (%let ({bindings}) (nop))))");
+    assert!(
+        wlt::check(&source)
+            .unwrap_err()
+            .to_string()
+            .contains("limit")
+    );
+}
+
+#[test]
+fn grouped_initializers_observe_effects_once_in_source_order() {
+    run(
+        r#"(module
+      (type $Cell (struct (field (mut i32))))
+      (func $next (param $c (ref $Cell)) (result i32)
+        (block (result i32)
+          (struct.set $Cell 0 (local.get $c) (i32.add (struct.get $Cell 0 (local.get $c)) (i32.const 1)))
+          (struct.get $Cell 0 (local.get $c))))
+      (func $main (export "main") (result i32)
+        (%let (($cell (struct.new $Cell (i32.const 0)))
+               ($a (call $next (local.get $cell)))
+               ($b (call $next (local.get $cell))))
+          (i32.add (i32.mul (local.get $a) (i32.const 10)) (local.get $b)))))"#,
+        "12",
+    );
 }

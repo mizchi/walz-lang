@@ -1,5 +1,6 @@
 //! The checked, closed expression language used by analysis and code generation.
 
+pub use crate::simd::SimdOp;
 use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd, Serialize)]
@@ -23,6 +24,7 @@ pub enum NumType {
     I64,
     F32,
     F64,
+    V128,
 }
 
 impl NumType {
@@ -32,6 +34,7 @@ impl NumType {
             Self::I64 => "i64",
             Self::F32 => "f32",
             Self::F64 => "f64",
+            Self::V128 => "v128",
         }
     }
 
@@ -41,6 +44,7 @@ impl NumType {
             "i64" => Self::I64,
             "f32" => Self::F32,
             "f64" => Self::F64,
+            "v128" => Self::V128,
             _ => return None,
         })
     }
@@ -125,6 +129,9 @@ numeric_ops! {
     I32And => ("i32.and", I32, I32, 2, false), I64And => ("i64.and", I64, I64, 2, false),
     I32Or => ("i32.or", I32, I32, 2, false), I64Or => ("i64.or", I64, I64, 2, false),
     I32Xor => ("i32.xor", I32, I32, 2, false), I64Xor => ("i64.xor", I64, I64, 2, false),
+    I32Clz => ("i32.clz", I32, I32, 1, false), I64Clz => ("i64.clz", I64, I64, 1, false),
+    I32Ctz => ("i32.ctz", I32, I32, 1, false), I64Ctz => ("i64.ctz", I64, I64, 1, false),
+    I32Popcnt => ("i32.popcnt", I32, I32, 1, false), I64Popcnt => ("i64.popcnt", I64, I64, 1, false),
     I32Shl => ("i32.shl", I32, I32, 2, false), I64Shl => ("i64.shl", I64, I64, 2, false),
     I32ShrS => ("i32.shr_s", I32, I32, 2, false), I64ShrS => ("i64.shr_s", I64, I64, 2, false),
     I32ShrU => ("i32.shr_u", I32, I32, 2, false), I64ShrU => ("i64.shr_u", I64, I64, 2, false),
@@ -543,6 +550,10 @@ pub enum ExprKind {
         op: NumericOp,
         args: Vec<Expr>,
     },
+    Simd {
+        op: SimdOp,
+        args: Vec<Expr>,
+    },
     Local(LocalId),
     Move(LocalId),
     Close(Box<Expr>),
@@ -645,6 +656,7 @@ impl Expr {
             List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
+            | Simd { args, .. }
             | Call { args, .. }
             | Delivery { args, .. } => args.iter().collect(),
             StructNew { values, .. }
@@ -700,6 +712,7 @@ impl Expr {
             List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
+            | Simd { args, .. }
             | Call { args, .. }
             | Delivery { args, .. } => args.iter_mut().collect(),
             StructNew { values, .. }

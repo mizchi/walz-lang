@@ -1,20 +1,28 @@
 (module
+  (%import "wlt:std"
+    (type $result)
+    (type $stream)
+    (type $text))
   (%include "parse.wlt")
   (%include "stock.wlt")
   (%include "report.wlt")
   (import "wlt:host/text-io@0.1.0" "read-lines"
-    (func $read-lines (result (%stream (%result %text i32))))
+    (func $read-lines (result (%inst $stream (%inst $result $text i32))))
   )
   (%namespace $app
+    (%import "wlt:std"
+      (type $result)
+      (type $text)
+      (type $unit))
     (%public (func $process))
-    (func $process (param $s (ref $stock.State)) (param $line %text)
-      (result (%result %unit i32)) (%effects reads writes allocates host suspends)
-      (%match $parse.Command (result (%result %unit i32))
+    (func $process (param $s (ref $stock.State)) (param $line $text)
+      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
+      (%match $parse.Command (result (%inst $result $unit i32))
         (call $parse.command (local.get $line))
-        (case skip () (%result.ok %unit i32))
+        (case skip () (%result.ok $unit i32))
         (case invalid () (call $report.invalid))
         (case add ($key $n)
-          (%match (%result i64 (ref $stock.Error)) (result (%result %unit i32))
+          (%match (%inst $result i64 (ref $stock.Error)) (result (%inst $result $unit i32))
             (call $stock.add (local.get $s) (local.get $key) (local.get $n))
             (case ok ($quantity)
               (call $report.success
@@ -28,7 +36,7 @@
                 (local.get $error))))
         )
         (case take ($key $n)
-          (%match (%result i64 (ref $stock.Error)) (result (%result %unit i32))
+          (%match (%inst $result i64 (ref $stock.Error)) (result (%inst $result $unit i32))
             (call $stock.take (local.get $s) (local.get $key) (local.get $n))
             (case ok ($quantity)
               (call $report.success

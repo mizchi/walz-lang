@@ -1,6 +1,9 @@
 (module
+  (%import "wlt:std"
+    (type $result)
+    (type $unit))
   (%include "../../examples/apps/workflow/compute.wlt")
-  (func $must (param $result (%result %unit (ref $domain.Error)))
+  (func $must (param $result (%inst $result $unit (ref $domain.Error)))
     (%match (local.get $result)
       (case ok () (nop))
       (case err ($e) (unreachable))))

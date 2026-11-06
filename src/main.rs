@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
-const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]\n       wlt migrate <file.wlt> [--write]\n       --legacy-syntax explicitly accepts pre-prefix WLT input";
+mod cli_inspection;
+
+const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt check --json <file.wlt>\n       wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]";
 
 fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
     let mut paths = Vec::new();
@@ -106,17 +108,7 @@ fn execute(
     output: Option<&Path>,
     policy: &wlt::bindings::BindingPolicy,
     legacy: bool,
-    write_migration: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    if command == "migrate" {
-        let migration = wlt::syntax::migrate(&std::fs::read_to_string(path)?)?;
-        if write_migration {
-            std::fs::write(path, migration.text())?;
-        } else {
-            print!("{}", migration.text());
-        }
-        return Ok(true);
-    }
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
         let formatted =
@@ -316,20 +308,21 @@ fn execute_source(
 
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    let json = args
+        .iter()
+        .position(|s| s == "--json")
+        .map(|i| args.remove(i))
+        .is_some();
+    if json && !args.first().is_some_and(|s| s == "check") {
+        eprintln!("--json is supported by check; type-at always returns JSON\n{USAGE}");
+        return ExitCode::from(2);
+    }
+    // Compatibility hook for frozen evaluation inputs only.
     let legacy = args
         .iter()
         .position(|s| s == "--legacy-syntax")
         .map(|i| args.remove(i))
         .is_some();
-    let write_migration = args
-        .iter()
-        .position(|s| s == "--write")
-        .map(|i| args.remove(i))
-        .is_some();
-    if write_migration && !args.first().is_some_and(|s| s == "migrate") {
-        eprintln!("--write is only valid for migrate");
-        return ExitCode::from(2);
-    }
     if args.first().is_some_and(|s| s == "bind") {
         if args.len() != 4 {
             eprintln!("Usage: wlt bind <input.wit> <policy.json> <output-directory>");
@@ -370,6 +363,16 @@ fn main() -> ExitCode {
         {
             Ok(p) => policy = p,
             Err(e) => {
+                if json || args.first().is_some_and(|s| s == "type-at") {
+                    return cli_inspection::failure(
+                        if json {
+                            "wlt-check-v1"
+                        } else {
+                            "wlt-type-at-v1"
+                        },
+                        &std::io::Error::other(e),
+                    );
+                }
                 eprintln!("{e}");
                 return ExitCode::FAILURE;
             }
@@ -387,10 +390,12 @@ fn main() -> ExitCode {
     if command == "test" {
         return test_command(&args[1..], legacy);
     }
+    if command == "type-at" {
+        return cli_inspection::type_at(&args[1..], &policy);
+    }
     if !matches!(
         command,
         "check"
-            | "migrate"
             | "fmt"
             | "fmt-check"
             | "types"
@@ -420,14 +425,10 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let path = Path::new(&args[1]);
-    match execute(
-        command,
-        path,
-        args.get(2).map(Path::new),
-        &policy,
-        legacy,
-        write_migration,
-    ) {
+    if json {
+        return cli_inspection::check(path, &policy, legacy);
+    }
+    match execute(command, path, args.get(2).map(Path::new), &policy, legacy) {
         Ok(true) => ExitCode::SUCCESS,
         Ok(false) => ExitCode::FAILURE,
         Err(error) => {

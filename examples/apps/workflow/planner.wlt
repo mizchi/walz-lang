@@ -1,5 +1,8 @@
 (module
   (%namespace $planner
+    (%import "wlt:std"
+      (type $result)
+      (type $text))
     (%public
       (opaque $Run)
       (func $run)
@@ -230,13 +233,13 @@
               ))))
       ))
 
-    (func $blocked (param $r (ref $Run)) (param $g (ref $graph.Graph)) (result %text)
+    (func $blocked (param $r (ref $Run)) (param $g (ref $graph.Graph)) (result $text)
       (%effects reads)
       (%loop $scan
         (bind $i i32 (i32.const 0))
-        (result %text)
+        (result $text)
         (if
-          (result %text)
+          (result $text)
           (call $pending (call $entry (local.get $r) (local.get $i)))
           (then (call $graph.id (call $graph.at (local.get $g) (local.get $i))))
           (else (%recur $scan (i32.add (local.get $i) (i32.const 1))))
@@ -366,9 +369,9 @@
         )))
 
     (func $run (param $g (ref $graph.Graph)) (param $workers i32)
-      (result (%result (ref $Run) (ref $domain.Error))) (%effects reads writes allocates)
+      (result (%inst $result (ref $Run) (ref $domain.Error))) (%effects reads writes allocates)
       (if
-        (result (%result (ref $Run) (ref $domain.Error)))
+        (result (%inst $result (ref $Run) (ref $domain.Error)))
         (i32.or
           (i32.eqz (local.get $workers))
           (i32.gt_u (local.get $workers) (i32.const 32)))
@@ -379,22 +382,22 @@
               (%loop $events
                 (bind $now i64 (i64.const 0))
                 (bind $done i32 (i32.const 0))
-                (result (%result (ref $Run) (ref $domain.Error)))
+                (result (%inst $result (ref $Run) (ref $domain.Error)))
                 (if
-                  (result (%result (ref $Run) (ref $domain.Error)))
+                  (result (%inst $result (ref $Run) (ref $domain.Error)))
                   (i32.eq (local.get $done) (call $graph.size (local.get $g)))
                   (then
                     (block
-                      (result (%result (ref $Run) (ref $domain.Error)))
+                      (result (%inst $result (ref $Run) (ref $domain.Error)))
                       (struct.set $Run $span (local.get $run) (local.get $now))
                       (%result.ok (local.get $run))))
                   (else
                     (block
-                      (result (%result (ref $Run) (ref $domain.Error)))
+                      (result (%inst $result (ref $Run) (ref $domain.Error)))
                       (call $fill (local.get $work) (local.get $g) (local.get $now))
                       (%let $next (call $next-time (local.get $run))
                         (if
-                          (result (%result (ref $Run) (ref $domain.Error)))
+                          (result (%inst $result (ref $Run) (ref $domain.Error)))
                           (i64.eq (local.get $next) (i64.const -1))
                           (then
                             (%result.err

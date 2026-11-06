@@ -9,10 +9,11 @@ for (const [backend, compile] of [
   ["core", buildCore],
 ])
   for (const [fixture, source] of [
-    ...["values", "event-loop", "buffers", "text-library", "module-imports", "json-value", "async-abi", "lists"].map((name) => [
+    ...["values", "event-loop", "buffers", "text-library", "module-imports", "json-value", "async-abi", "lists", "numeric-lists", "standard", "collections", "simd"].map((name) => [
       name,
       `tests/component-fixtures/${name}.wlt`,
     ]),
+    ["simd-kernels", "examples/simd-kernels/portable.wlt"],
     ["resources", "examples/resources/main.wlt"],
     ["wit-bindings", "examples/wit/main.wlt"],
     ["text-io", "examples/io/text-filter.wlt"],

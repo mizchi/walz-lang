@@ -1,24 +1,26 @@
 (module
   (%namespace $list
+    (%import "wlt:std"
+      (type $list))
     (%export (func $map) (func $fold))
     (type $Storage (%type.params $T) (%where (shared $T) (nonunit $T)) (array (mut $T)))
     ;; F is the concrete, shared closure type. Each element calls it once.
     (func $map
       (%type.params $T $U $F)
       (%where (shared $T $U) (nonunit $T $U) (callable $F (param $T) (result $U)))
-      (param $xs (%list $T))
+      (param $xs (%inst $list $T))
       (param $f (ref $F))
-      (result (%list $U))
+      (result (%inst $list $U))
       (%let $length (%list.len $T (local.get $xs))
         (if
-          (result (%list $U))
+          (result (%inst $list $U))
           (i32.eqz (local.get $length))
           (then (%list.new $U))
           (else
             (%let $out
               (array.new (%inst $Storage $U) (%closure.call $F (local.get $f) (%list.get $T (local.get $xs) (i32.const 0))) (local.get $length))
               (block
-                (result (%list $U))
+                (result (%inst $list $U))
                 (%loop $map
                   (bind $i i32 (i32.const 1))
                   (if
@@ -41,7 +43,7 @@
     (func $fold
       (%type.params $T $S $F)
       (%where (shared $T $S) (nonunit $T $S) (callable $F (param $S $T) (result $S)))
-      (param $xs (%list $T))
+      (param $xs (%inst $list $T))
       (param $f (ref $F))
       (param $initial $S)
       (result $S)

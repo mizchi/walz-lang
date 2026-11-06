@@ -13,7 +13,7 @@
 ```
 
 ```wat
-(%type.alias $Values (%type.params $T) (%list $T))
+(%type.alias $Values (%type.params $T) (%inst $list $T))
 (type $Box (%type.params $T) (struct (field $T)))
 (%closure $Identity (%type.params $T) (param $x $T) (result $T) (local.get $x))
 
@@ -54,8 +54,8 @@ WIT と両 JS ABI に出るシグネチャは具体型だけになる。ホス�
 `stdlib/list.wlt` は named import で次の汎用関数を公開する。
 
 ```wat
-(%import "../stdlib/list.wlt" (func $list.map) (func $list.fold))
-(call (%inst $list.map i64 %text $Label) xs label-closure)
+(%import "wlt:std" (func $list.map) (func $list.fold))
+(call (%inst $list.map i64 $text $Label) xs label-closure)
 (call (%inst $list.fold i64 i64 $Sum) xs sum-closure initial)
 ```
 
@@ -82,7 +82,7 @@ func/type/type.alias/closure に共通で、制約はすべて満たす必要が
     (shared $T $U)
     (nonunit $T $U)
     (callable $F (param $T) (result $U) (%effects pure)))
-  (param $xs (%list $T)) (param $f (ref $F)) (result (%list $U))
+  (param $xs (%inst $list $T)) (param $f (ref $F)) (result (%inst $list $U))
   (call (%inst $list.map $T $U $F) (local.get $xs) (local.get $f)))
 ```
 
@@ -94,7 +94,7 @@ func/type/type.alias/closure に共通で、制約はすべて満たす必要が
 
 shared は不変性を要求しない。可変 GC 配列・セルへの参照も、その中身が共有可能なら許可する。
 callable の署名は alias を展開した具体型で厳密に比較し、引数の反変性等の規則は追加しない。
-`(param)` は引数なし、`(result %unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
+`(param)` は引数なし、`(result $unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
 クロージャは callable を満たさない。引数や戻り値に所有型を明示すること自体は許可する。
 
 effects を省略した callable は effect の上限を課さない。指定する場合は通常の effect 契約と同じ

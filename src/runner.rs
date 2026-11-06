@@ -12,6 +12,8 @@ use std::time::{Duration, Instant};
 
 #[derive(Clone, Debug)]
 pub struct RunOptions {
+    /// Internal hook for frozen evaluation inputs.
+    #[doc(hidden)]
     pub legacy_syntax: bool,
     pub filter: Option<String>,
     pub list: bool,

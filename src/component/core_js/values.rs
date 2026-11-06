@@ -10,6 +10,32 @@ pub(super) fn write(ty: &Type, p: &str, v: &str) -> String {
     format!("w_{}({p},{v});", type_key(ty))
 }
 
+fn numeric_array(ty: &Type) -> Option<&'static str> {
+    match ty {
+        Type::Num(NumType::I32) => Some("Int32Array"),
+        Type::Num(NumType::I64) => Some("BigInt64Array"),
+        Type::Num(NumType::F32) => Some("Float32Array"),
+        Type::Num(NumType::F64) => Some("Float64Array"),
+        _ => None,
+    }
+}
+
+pub(super) fn prelude(a: &Adapter<'_>) -> &'static str {
+    if a.types.iter().any(|ty| {
+        matches!(ty, Type::Value(id) if matches!(a.value(*id), ValueType::List(t) if numeric_array(t).is_some()))
+    }) {
+        // TypedArray views use native endian, while the ABI is little-endian.
+        // Intrinsic getters distinguish actual element types from proxies or
+        // objects with a forged prototype, without consulting user properties.
+        "const __wltLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;\n\
+         const __wltTA=Object.getPrototypeOf(Uint8Array.prototype);\n\
+         const __wltTag=Object.getOwnPropertyDescriptor(__wltTA,Symbol.toStringTag).get;\n\
+         const __wltLen=Object.getOwnPropertyDescriptor(__wltTA,'length').get;\n"
+    } else {
+        ""
+    }
+}
+
 pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
     let view = "c.view()";
     match ty {
@@ -31,6 +57,7 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                     "Float64",
                     "if(typeof v!=='number')throw new TypeError('expected f64');",
                 ),
+                NumType::V128 => unreachable!("v128 is not a portable ABI type"),
             };
             (
                 format!("return {view}.get{method}(p,true);"),
@@ -71,27 +98,31 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                 let limit = (16 * 1024 * 1024) / stride;
                 let r = read(payload, &format!("q+i*{stride}"));
                 let w = write(payload, &format!("q+i*{stride}"), "v[i]");
-                let typed = match payload {
-                    Type::Num(NumType::I32) => Some("Int32Array"),
-                    Type::Num(NumType::I64) => Some("BigInt64Array"),
-                    Type::Num(NumType::F32) => Some("Float32Array"),
-                    Type::Num(NumType::F64) => Some("Float64Array"),
-                    _ => None,
-                };
+                let typed = numeric_array(payload);
                 let read = if let Some(typed) = typed {
-                    format!("const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;")
+                    // Construct an owning copy before post-return frees the ABI
+                    // buffer. Identical element types also preserve NaN bits.
+                    format!(
+                        "if(__wltLE)return new {typed}(new {typed}(c.memory.buffer,q,n));const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;"
+                    )
                 } else {
                     format!("return Array.from({{length:n}},(_,i)=>{r});")
                 };
                 let valid = typed
                     .map(|typed| format!("(Array.isArray(v)||v instanceof {typed})"))
                     .unwrap_or("Array.isArray(v)".into());
+                let bulk = typed.map(|typed| {
+                    // The intrinsic length must match the validated length:
+                    // TypedArray subclasses can shadow their length property.
+                    // Empty detached views retain the existing empty-list path.
+                    format!("if(__wltLE&&__wltTag.call(v)==='{typed}'&&__wltLen.call(v)===n){{if(n)new {typed}(c.memory.buffer,q,n).set(v);return;}}")
+                }).unwrap_or_default();
                 (
                     format!(
                         "const q=c.view().getUint32(p,true),n=c.view().getUint32(p+4,true);if(n>{limit}||q%{align}||q+n*{stride}>c.memory.buffer.byteLength)throw new TypeError('invalid list bounds');{read}"
                     ),
                     format!(
-                        "if(!{valid}||v.length>{limit})throw new TypeError('expected bounded list');const n=v.length,q=n?c.alloc(n*{stride}):0;c.view().setUint32(p,q,true);c.view().setUint32(p+4,n,true);for(let i=0;i<n;i++){{{w}}}"
+                        "if(!{valid}||v.length>{limit})throw new TypeError('expected bounded list');const n=v.length,q=n?c.alloc(n*{stride}):0;c.view().setUint32(p,q,true);c.view().setUint32(p+4,n,true);{bulk}for(let i=0;i<n;i++){{{w}}}"
                     ),
                 )
             }

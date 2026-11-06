@@ -1,0 +1,30 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/standard-bindings-20261106-r1/writer/candidate.wlt",
+      "exitCode": 0,
+      "diagnostic": "変更前: ok"
+    },
+    {
+      "command": "cargo run --locked --quiet -- check /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/standard-bindings-20261106-r1/writer/candidate.wlt",
+      "exitCode": 0,
+      "diagnostic": "変更後: ok"
+    },
+    {
+      "command": "cargo run --locked --quiet -- types /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/standard-bindings-20261106-r1/writer/candidate.wlt",
+      "exitCode": 0,
+      "diagnostic": "$main の結果は (%result i32 i32)。$initial、fold の $state、$final-state は (%pair (ref $stock.State) i32)、$count は i32。エラーなし。CLI の全体出力は表示上限で省略された。"
+    }
+  ],
+  "repairs": [
+    {
+      "edit": 1,
+      "change": "$pair を import し、初期状態を台帳参照と 0 の pair に変更。fold 内で pair を分解して同じ台帳で app.process を呼び、ok 時に i32.add で行数を加算。fold の成功結果から行数を返す。",
+      "diagnosticDriven": false
+    }
+  ],
+  "ambiguities": [],
+  "assumptions": [],
+  "extraDocumentsRead": []
+}

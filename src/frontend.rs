@@ -1584,6 +1584,45 @@ impl Checker<'_, '_> {
         let count = |n| tables.count(node, items, n);
         let (ty, kind) = if let Some(op) = DeliveryOp::parse(head) {
             self.delivery_expr(node, items, op, scope, loops)?
+        } else if let Some(signature) = crate::simd::lookup(head) {
+            let start = 1 + signature.immediate_count();
+            count(start + signature.inputs().len())?;
+            let immediates = items[1..start]
+                .iter()
+                .map(|n| self.tables.atom(n).map(str::to_owned))
+                .collect::<Result<Vec<_>, _>>()?;
+            let op = signature
+                .build(immediates)
+                .map_err(|e| tables.error(node, e).with_code("E_SIMD"))?;
+            let mut args = Vec::new();
+            for (index, (argument, ty)) in items[start..].iter().zip(op.inputs()).enumerate() {
+                let value = self
+                    .expr_as(argument, scope, loops, false, &Type::Num(*ty))
+                    .map_err(|e| {
+                        e.expected_at(
+                            tables.source,
+                            items[0].span,
+                            format!("operand {} of `{head}` requires {}", index + 1, ty.wat()),
+                        )
+                    })?;
+                args.push(value);
+            }
+            (Type::Num(op.output()), Simd { op, args })
+        } else if head == "v128.const" {
+            let literal = items[1..]
+                .iter()
+                .map(|n| self.tables.atom(n))
+                .collect::<Result<Vec<_>, _>>()?
+                .join(" ");
+            crate::simd::constant(&literal)
+                .map_err(|e| tables.error(node, e).with_code("E_SIMD"))?;
+            (
+                Type::Num(NumType::V128),
+                Const {
+                    ty: NumType::V128,
+                    literal,
+                },
+            )
         } else if let Some(op) = NumericOp::parse(head) {
             let signature = op.signature();
             count(signature.arity + 1)?;

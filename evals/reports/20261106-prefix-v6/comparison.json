@@ -1,0 +1,80 @@
+{
+  "schema": "wlt-eval-historical-comparison-v1",
+  "before": {
+    "schema": "wlt-eval-summary-v1",
+    "id": "syntax-prefix-20261106-r1",
+    "status": "fail",
+    "passed": false,
+    "inputsFingerprint": "a3d066cf74c8b7c85a3edfa283100b2128330c89d89bb2aed8b9416fd9536f74",
+    "readability": {
+      "scores": {
+        "flow": 3,
+        "types": 3,
+        "scope": 3,
+        "layout": 2,
+        "changes": 3
+      },
+      "total": 14,
+      "meetsTarget": false
+    },
+    "answers": {
+      "reviewed": true,
+      "correct": true
+    },
+    "execution": {
+      "current": true,
+      "passed": true,
+      "implementation": "5b3c52ebe62d4ed854d5eea63b8ab96aa7d73742845e02102a89570cd147b0b5",
+      "implementationChangedSincePrepare": false
+    },
+    "writer": {
+      "reported": true,
+      "completed": true,
+      "extraDocumentsRead": []
+    },
+    "notes": []
+  },
+  "after": {
+    "schema": "wlt-eval-summary-v1",
+    "id": "syntax-prefix-20261106-r2",
+    "status": "pass",
+    "passed": true,
+    "inputsFingerprint": "1473b1245ff990cae7f2f7f4a32c953e78daedc73ea7323ddf5e0905a3e6dc11",
+    "readability": {
+      "scores": {
+        "flow": 3,
+        "types": 3,
+        "scope": 3,
+        "layout": 3,
+        "changes": 3
+      },
+      "total": 15,
+      "meetsTarget": true
+    },
+    "answers": {
+      "reviewed": true,
+      "correct": true
+    },
+    "execution": {
+      "current": true,
+      "passed": true,
+      "implementation": "5b3c52ebe62d4ed854d5eea63b8ab96aa7d73742845e02102a89570cd147b0b5",
+      "implementationChangedSincePrepare": false
+    },
+    "writer": {
+      "reported": true,
+      "completed": true,
+      "extraDocumentsRead": []
+    },
+    "notes": []
+  },
+  "comparableRubric": true,
+  "scoreDelta": {
+    "flow": 0,
+    "types": 0,
+    "scope": 0,
+    "layout": 1,
+    "changes": 0
+  },
+  "note": "保存済みの採点時点のsummaryを比較した履歴。現在の実装での再検証結果ではない。同じモデルによる少数の主観評価であり、人間の改善量や統計的効果とは扱わない。"
+}

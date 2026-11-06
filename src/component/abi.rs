@@ -44,6 +44,7 @@ pub(super) fn component_type_in(ty: &Type, scope: &str) -> String {
     match ty {
         Type::Num(NumType::I32) => "s32".into(),
         Type::Num(NumType::I64) => "s64".into(),
+        Type::Num(NumType::V128) => unreachable!("v128 is not a portable ABI type"),
         Type::Num(n) => n.wat().into(),
         Type::Unit => format!("{scope}unit"),
         Type::Value(id) => format!("{scope}t{}", id.0),
@@ -52,6 +53,10 @@ pub(super) fn component_type_in(ty: &Type, scope: &str) -> String {
 }
 
 pub(super) fn coerce(value: &str, have: NumType, want: NumType) -> String {
+    assert!(
+        have != NumType::V128 && want != NumType::V128,
+        "v128 is not a portable ABI type"
+    );
     if have == want {
         return value.into();
     }
@@ -60,6 +65,7 @@ pub(super) fn coerce(value: &str, have: NumType, want: NumType) -> String {
         NumType::F64 => (format!("(i64.reinterpret_f64 {value})"), 64),
         NumType::I32 => (value.into(), 32),
         NumType::I64 => (value.into(), 64),
+        NumType::V128 => unreachable!("v128 is not a portable ABI type"),
     };
     let want_width = if matches!(want, NumType::I32 | NumType::F32) {
         32
@@ -135,6 +141,7 @@ impl<'a> Adapter<'a> {
     }
     fn portable(&self, ty: &Type) -> bool {
         match ty {
+            Type::Num(NumType::V128) => false,
             Type::Unit | Type::Num(_) => true,
             Type::Value(id) => match &self.module.types[id.0].kind {
                 TypeKind::Value(ValueType::Bytes | ValueType::Text) => true,
@@ -159,6 +166,7 @@ impl<'a> Adapter<'a> {
     pub(super) fn layout(&self, ty: &Type) -> Layout {
         match ty {
             Type::Unit => Layout { size: 1, align: 1 },
+            Type::Num(NumType::V128) => unreachable!("v128 is not a portable ABI type"),
             Type::Num(NumType::I64 | NumType::F64) => Layout { size: 8, align: 8 },
             Type::Num(_) => Layout { size: 4, align: 4 },
             Type::Value(id) => match self.value(*id) {

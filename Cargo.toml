@@ -11,6 +11,10 @@ license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace]
 
+[[example]]
+name = "stdlib-docs"
+path = "tools/stdlib-docs.rs"
+
 [dependencies]
 wat = "=1.262.0"
 wast = "=262.0.0"

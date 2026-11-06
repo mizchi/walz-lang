@@ -1,0 +1,7 @@
+{
+  "correct": true,
+  "reason": "配布mainの11–21行とcountedの9–43行、contractのI/O成功・業務エラー・取消し規約へ全10回答を照合した。初期化が左から右に各一度であること、pairの共有性とStreamの明示move、成功時の行数とEOF/errのclose、result.letの局所的な成功bodyを正しく区別している。syntax回答の標準WATと%入口、結果宣言とResult値型、具体化時検査、shared/pure/opaqueの限界、およびstandard回答のスコープ別import・Result/Option/Futureの共通%inst・固定操作構文の区別も凍結cheatsheetへ照合した。全5軸の根拠は具体的な配置・型・追跡負担であり、実行成功を可読性へ加点していない。全API型一覧や取消し詳細が資料外であるという限界は正しく、配布コードの意味の誤読はない。",
+  "reviewedAt": "2026-11-05T16:45:14.126Z",
+  "inputsFingerprint": "8a15dec3c5144e41622ea87a053231e56875b667acc5d3dcf32b783e2711e129",
+  "readerSha256": "be96d6ef4a05b14b7fa68881ad7f7c32c8d0f459cea52ec5d1aac002ec42747c"
+}

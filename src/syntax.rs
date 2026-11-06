@@ -63,17 +63,17 @@ fn prefix_error(source: &str, node: &Sexp, name: &str) -> Error {
         format!("WLT extension `{name}` requires `%{name}`"),
     )
     .with_code("E_WLT_PREFIX")
-    .help("use `wlt migrate FILE` to convert legacy syntax; frozen inputs can use --legacy-syntax")
+    .help(format!("write `%{name}` for this WLT extension"))
 }
 
 /// An insertion-only migration preserves comments, strings and identifiers.
-pub struct Migration {
+pub(crate) struct Migration {
     text: String,
     original: String,
     insertions: Vec<(usize, usize)>,
 }
 impl Migration {
-    pub fn text(&self) -> &str {
+    pub(crate) fn text(&self) -> &str {
         &self.text
     }
     pub(crate) fn original(&self) -> &str {
@@ -132,16 +132,8 @@ fn legacy_control(node: &Sexp, head: &str, legacy_try: bool) -> bool {
     false
 }
 
-/// Explicit compatibility conversion; normal checking never calls this.
-pub fn migrate(source: &str) -> Result<Migration, Error> {
-    migrate_mode(source, false)
-}
-
-pub(crate) fn migrate_legacy(source: &str) -> Result<Migration, Error> {
-    migrate_mode(source, true)
-}
-
-fn migrate_mode(source: &str, legacy_try: bool) -> Result<Migration, Error> {
+/// Internal adapter for frozen historical evaluation inputs.
+pub(crate) fn convert_legacy(source: &str) -> Result<Migration, Error> {
     if native(source) {
         return Ok(Migration {
             text: source.into(),
@@ -151,8 +143,7 @@ fn migrate_mode(source: &str, legacy_try: bool) -> Result<Migration, Error> {
     }
     let mut root = crate::sexpr::parse(source)?;
     let mut plan = Plan::new(source, true);
-    plan.legacy_try = legacy_try;
-    plan.walk(&mut root, false)?;
+    plan.walk(&mut root, false, 0)?;
     plan.types(&mut root)?;
     let mut text = String::new();
     let mut cursor = 0;
@@ -174,15 +165,79 @@ fn migrate_mode(source: &str, legacy_try: bool) -> Result<Migration, Error> {
 pub(crate) fn normalize(source: &str, root: &Sexp) -> Result<Sexp, Error> {
     let mut root = root.clone();
     let mut plan = Plan::new(source, false);
-    plan.walk(&mut root, false)?;
+    plan.walk(&mut root, false, 0)?;
     plan.types(&mut root)?;
     Ok(root)
+}
+
+/// A binding group has exactly the semantics of left-to-right nested lets.
+/// Lower it before name, type, effect and ownership analysis so those contracts
+/// use the same implementation for both spellings.
+fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
+    if !matches!(node.head(), Some("let" | "%let")) {
+        return Ok(());
+    }
+    let parts = node.list().unwrap();
+    if parts.len() != 3 || parts[1].list().is_none() {
+        return Ok(());
+    }
+    let bindings = parts[1].list().unwrap();
+    let error = |span, message| Error::at(source, span, message).with_code("E_LET_BINDINGS");
+    if bindings.len() > 256 {
+        return Err(error(
+            node.span,
+            "let binding group expansion limit exceeded",
+        ));
+    }
+    if bindings.is_empty() {
+        return Err(error(
+            parts[1].span,
+            "expected at least one ($name [type] initial) binding",
+        ));
+    }
+    for binding in bindings {
+        if binding.list().is_none_or(|p| {
+            !(2..=3).contains(&p.len()) || !p[0].atom().is_some_and(|n| n.starts_with('$'))
+        }) {
+            return Err(error(
+                binding.span,
+                "expected ($name [type] initial) in %let binding group",
+            ));
+        }
+    }
+    // Move the body and initializers; never clone a potentially large subtree.
+    let Kind::List(mut parts) = std::mem::replace(&mut node.kind, Kind::List(vec![])) else {
+        unreachable!()
+    };
+    let mut body = parts.pop().unwrap();
+    let Kind::List(bindings) = parts.pop().unwrap().kind else {
+        unreachable!()
+    };
+    let head = parts.pop().unwrap();
+    for binding in bindings.into_iter().rev() {
+        let Kind::List(mut fields) = binding.kind else {
+            unreachable!()
+        };
+        let mut items = vec![head.clone()];
+        items.append(&mut fields);
+        let span = Span {
+            start: binding.span.start,
+            end: body.span.end,
+        };
+        items.push(body);
+        body = Sexp {
+            kind: Kind::List(items),
+            span,
+        };
+    }
+    body.span = node.span;
+    *node = body;
+    Ok(())
 }
 
 struct Plan<'a> {
     source: &'a str,
     legacy: bool,
-    legacy_try: bool,
     marked: BTreeSet<Span>,
     edits: BTreeMap<usize, String>,
 }
@@ -191,7 +246,6 @@ impl<'a> Plan<'a> {
         Self {
             source,
             legacy,
-            legacy_try: false,
             marked: BTreeSet::new(),
             edits: BTreeMap::new(),
         }
@@ -223,7 +277,14 @@ impl<'a> Plan<'a> {
             Ok(())
         })
     }
-    fn walk(&mut self, node: &mut Sexp, loop_header: bool) -> Result<(), Error> {
+    fn walk(&mut self, node: &mut Sexp, loop_header: bool, depth: usize) -> Result<(), Error> {
+        if depth > 256 {
+            return Err(
+                Error::at(self.source, node.span, "macro expansion limit exceeded")
+                    .with_code("E_LET_BINDINGS"),
+            );
+        }
+        lower_let_group(self.source, node)?;
         if let Kind::Atom(name) = &mut node.kind {
             if let Some(bare) = name.strip_prefix('%') {
                 if !matches!(bare, "text" | "bytes" | "unit") {
@@ -256,7 +317,7 @@ impl<'a> Plan<'a> {
         }
         let old_control = self.legacy
             && matches!(head.as_str(), "loop" | "try")
-            && legacy_control(node, &head, self.legacy_try);
+            && legacy_control(node, &head, self.legacy);
         let Kind::List(items) = &mut node.kind else {
             return Ok(());
         };
@@ -308,7 +369,11 @@ impl<'a> Plan<'a> {
                 || matches!(normalized.as_str(), "case" | "catch") && i == 2
                 || normalized == "stream.fold-result" && i == if count == 8 { 6 } else { 3 };
             if !binders {
-                self.walk(child, matches!(normalized.as_str(), "loop" | "for"))?;
+                self.walk(
+                    child,
+                    matches!(normalized.as_str(), "loop" | "for"),
+                    depth + 1,
+                )?;
             }
         }
         Ok(())

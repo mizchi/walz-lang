@@ -2,7 +2,8 @@
 
 在庫台帳を課題に、初見の読解・コードの可読性・コード変更の正しさを確認する。
 使い回す課題、ルーブリック、外部契約、検証器をここへ分離した。過去の点数や回答を新しい評価役に渡さない。
-suite は [stock-ledger v1](stock-ledger/suite.json) と [diagnostics v1](diagnostics/README.md)。以下は既定の在庫台帳評価の手順。エラーメッセージは `just eval-diagnostics-prepare ID` で準備し、同じ review/verify/score/compare を使う。
+suite は [stock-ledger](stock-ledger/suite.json) と [diagnostics](diagnostics/README.md)。以下は既定の在庫台帳評価の手順。エラーメッセージは `just eval-diagnostics-prepare ID` で準備し、同じ review/verify/score/compare を使う。
+在庫台帳の v7 は、制御・所有性の読解とコード変更に加え、標準 WAT と `%` 拡張の区別、`wlt:std` の基本型、単相化、複数束縛の `%let`、解析の境界を質問する。必須回答は各 run の suite.answerKeys に固定する。5軸のルーブリックと各14件の実行検証は維持し、異なる suite 版の点差は比較しない。
 以前の記録は [文法評価](../docs/grammar-eval/REPORT.md)、[可読性](../docs/readability/REPORT.md)、[文法改良後](../docs/readability/implemented/REPORT.md) に残す。
 
 ## 1. 新しい評価回を作る
@@ -17,6 +18,7 @@ node evals/run.mjs prepare trial-02 --output /tmp/wlt-eval-trial-02
 
 既存の評価回は上書きしない。ID に回数上限はなく、`evals/runs/` は Git 管理対象外。
 現在の CHEATSHEET、main、行数付き版、契約、基準、課題に加えて依存する .wlt を support へコピーする。
+suite v8 は生成済み標準API資料から必要な公開名の型・制約・effectを抜粋し、両役の `api.md` として固定する。
 main の include はコピー先の program.wlt から support を参照するため、後のライブラリ変更で評価コードが変わらない。
 依存ファイルを増やしたら suite.json の support も更新する。
 
@@ -27,8 +29,8 @@ evals/runs/trial-01/
   dispatch.md           # 各初見エージェントへ渡す指示
   manifest.json         # suite、環境、実装fingerprint、役ごとの読取り範囲
   inputs.json           # 変更しない配布物・依存ソースのSHA-256
-  reader/              # task、cheatsheet、契約、基準、main、counted
-  writer/              # task、cheatsheet、契約、main、candidate.wlt、program.wlt
+  reader/              # task、cheatsheet、api、契約、基準、main、counted
+  writer/              # task、cheatsheet、api、契約、main、candidate.wlt、program.wlt
   support/             # 静的includeの依存ソース
   reviewer-task.md      # 親による回答監査の手順
 ```
@@ -38,8 +40,10 @@ evals/runs/trial-01/
 dispatch.md の2つの指示を、会話履歴を持たない別コンテキストへ渡す。CLI 自体はエージェントを生成しない。
 読み書きの制限は評価指示であり、OS の sandbox ではない。
 
-- **読解役**は reader 内の配布物だけを読み、reader.json へ回答と5軸の点数・根拠を書く。コンパイラは実行しない。
+- **読解役**は reader 内の配布物だけを読み、reader.json へ回答と5軸の点数・根拠を書く。answers.syntax / bindings / standard は文法・初期化順・標準型の説明であり、自己採点だけで正解にしない。コンパイラは実行しない。
 - **変更役**は writer 内の main をもとに candidate.wlt を編集し、成功値を配送行数へ変える。CLI の check/types/fmt は使用可。結果を writer/report.json へ記録する。
+
+v8 の変更役は同じ candidate に `count64` と `format-count` も追加する。前者はfold状態・定数・演算・成功型のi64への変更、後者は標準APIを選んだ符号なし整数の解析とtext生成を検査する。
 
 変更役へ counted の完成例、読解役の資料、依存実装、過去の結果を渡さない。通常の補助関数は許可するが、状態を pair に持つ条件は維持する。
 candidate は最初は成功値0の main であり、未変更なら実行検証に失敗する。雛形をコピーしただけで合格にならない。
@@ -66,6 +70,8 @@ verify は reader の counted と writer の candidate をそれぞれ独立に�
 
 同期 Wasm の無限ループも止めるため子プロセス全体を既定30秒で終了させる。環境に応じて `verify RUN --timeout-ms 120000` と変更できる。
 ビルド生成物は work/、検証結果は verification.json。使用した実装の fingerprint と prepare 後の変更有無も記録する。
+`wlt:std` の同梱ソースも実装の一部として fingerprint に含める。v7 の変更候補は main の初期化に複数束縛の `%let` があることも既存の W4 内で確認する。
+v8 は候補に W5（i64のfold状態と実行）と W6（標準API、整数上限、不正入力、ABI live=0）を追加し、サンプル14件・候補16件を検査する。最終値だけi64へ変換する実装や固定のtextを返す実装を、ハーネスの負例で拒否する。
 コンパイラ/ランタイム自体はコピーしないので、厳密な再現には記録した実装とツールチェーンを用意する。現在の実装で過去のソースを再検証することも可能。
 
 summary.json の status:
@@ -91,6 +97,9 @@ just eval-compare trial-01 trial-02
 基準を途中で緩めず、指摘→原因→コード/資料の修正→機械検証→初見評価を記録する。
 同じモデルによる少数の主観点なので、点差を人間の作業時間や統計的な効果として扱わない。
 必要な結果はディレクトリごと保存でき、相対 include を保ったまま別の場所で再検証できる。
+
+保存した評価記録は [`%` 構文の v6](reports/20261106-prefix-v6/REPORT.md) と [標準型 import・複数束縛の v7](reports/20261106-standard-bindings-v7/REPORT.md) を参照。各記録には配布物、読解回答、変更候補、監査と実行結果を含める。
+整形・命名・API資料の修正と、API選択・i64化の追加課題の結果は [v8の評価記録](reports/20261106-readability-v8/REPORT.md) に保存している。
 
 ## ハーネスのテスト
 

@@ -1,6 +1,8 @@
 (module
+  (%import "wlt:std"
+    (type $result))
   (%include "program.wlt")
-  (func $main (export "main") (result (%result i32 i32))
+  (func $main (export "main") (result (%inst $result i32 i32))
     (%effects reads writes allocates host suspends)
     (%result.let ($final)
       (%stream.fold-result

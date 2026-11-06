@@ -1,4 +1,8 @@
 (module
+  (%import "wlt:std"
+    (type $option)
+    (type $pair)
+    (type $text))
   (%import "../stdlib/builder.wlt" (type $builder.Builder))
   (%import "../stdlib/json.wlt" (type $json.Object))
   (%import "../stdlib/bytes.wlt"
@@ -24,18 +28,18 @@
     (func $string.parse-s64)
     (func $string.parse-u64)
     (func $string.split-once))
-  (func $equal (param $a %text) (param $b %text) (result i32)
+  (func $equal (param $a $text) (param $b $text) (result i32)
     (call $buffer.equal (%text.bytes (local.get $a)) (%text.bytes (local.get $b))))
 
-  (func $some (param $v (%option i64)) (param $expected i64) (result i32)
-    (%match (%option i64) (result i32)
+  (func $some (param $v (%inst $option i64)) (param $expected i64) (result i32)
+    (%match (%inst $option i64) (result i32)
       (local.get $v)
       (case none () (i32.const 0))
       (case some ($n) (i64.eq (local.get $n) (local.get $expected))))
   )
 
-  (func $none (param $v (%option i64)) (result i32)
-    (%match (%option i64) (result i32)
+  (func $none (param $v (%inst $option i64)) (result i32)
+    (%match (%inst $option i64) (result i32)
       (local.get $v)
       (case none () (i32.const 1))
       (case some ($n) (i32.const 0))))
@@ -55,7 +59,7 @@
     ))
   (%test "substring search handles overlap and the empty needle at the end"
     (i32.and
-      (%match (%option i32) (result i32)
+      (%match (%inst $option i32) (result i32)
         (call $buffer.find
           (%text.bytes (%text.lit "aaab"))
           (%text.bytes (%text.lit "aab"))
@@ -63,18 +67,18 @@
         (case none () (i32.const 0))
         (case some ($i) (i32.eq (local.get $i) (i32.const 1))))
       (i32.and
-        (%match (%option i32) (result i32)
+        (%match (%inst $option i32) (result i32)
           (call $string.find (%text.lit "🦀") (%text.lit "") (i32.const 4))
           (case none () (i32.const 0))
           (case some ($i) (i32.eq (local.get $i) (i32.const 4))))
-        (%match (%option i32) (result i32)
+        (%match (%inst $option i32) (result i32)
           (call $string.find (%text.lit "🦀") (%text.lit "") (i32.const 1))
           (case none () (i32.const 1))
           (case some ($i) (i32.const 0))))
     ))
   (%test "split once preserves empty fields and Unicode"
     (i32.and
-      (%match (%option (%pair %text %text)) (result i32)
+      (%match (%inst $option (%inst $pair $text $text)) (result i32)
         (call $string.split-once (%text.lit "🦀::日本語::") (%text.lit "::"))
         (case none () (i32.const 0))
         (case some ($parts)
@@ -83,7 +87,7 @@
               (call $equal (local.get $a) (%text.lit "🦀"))
               (call $equal (local.get $b) (%text.lit "日本語::"))))
         ))
-      (%match (%option (%pair %text %text)) (result i32)
+      (%match (%inst $option (%inst $pair $text $text)) (result i32)
         (call $string.split-once (%text.lit "x") (%text.lit ""))
         (case none () (i32.const 0))
         (case some ($parts)

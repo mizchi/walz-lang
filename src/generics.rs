@@ -89,16 +89,16 @@ pub(crate) struct Expanded {
     /// Nominal specializations inherit their template's representation privacy.
     pub origins: BTreeMap<String, String>,
     pub bounds: Vec<crate::bounds::Site>,
-    instances: Vec<(Span, Span, String)>,
+    pub(crate) instances: Vec<(Span, Span, String, String)>,
 }
 impl Expanded {
     pub fn annotate(&self, source: &str, mut error: Error) -> Error {
         if let Some(primary) = &error.diagnostic().primary {
             let span = primary.span;
-            for (_, call, name) in self
+            for (_, call, name, _) in self
                 .instances
                 .iter()
-                .filter(|(definition, _, _)| {
+                .filter(|(definition, _, _, _)| {
                     definition.start <= span.start && span.end <= definition.end
                 })
                 .take(8)
@@ -126,7 +126,7 @@ struct Expander<'a> {
     pending: VecDeque<(Sexp, Vec<usize>, Span)>,
     output: Vec<Sexp>,
     origins: BTreeMap<String, String>,
-    instances: Vec<(Span, Span, String)>,
+    instances: Vec<(Span, Span, String, String)>,
     nodes: usize,
     bounds: Vec<crate::bounds::Site>,
 }
@@ -171,10 +171,9 @@ impl Expander<'_> {
             if let Some(target) = self.aliases.get(name).cloned() {
                 return self.normalize(&target, depth + 1);
             }
-            if matches!(
-                name,
-                "i32" | "i64" | "f32" | "f64" | "unit" | "bytes" | "text"
-            ) || self.nominal.contains(name)
+            if crate::ir::NumType::parse(name).is_some()
+                || matches!(name, "unit" | "bytes" | "text")
+                || self.nominal.contains(name)
             {
                 return Ok(node.clone());
             }
@@ -350,6 +349,7 @@ impl Expander<'_> {
             template.syntax.span,
             node.span,
             format!("{name}<{}>", keys.join(", ")),
+            concrete.clone(),
         ));
         Ok(Sexp {
             kind: Kind::Atom(concrete),

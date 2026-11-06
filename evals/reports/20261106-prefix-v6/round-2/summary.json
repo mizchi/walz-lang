@@ -1,0 +1,34 @@
+{
+  "schema": "wlt-eval-summary-v1",
+  "id": "syntax-prefix-20261106-r2",
+  "status": "pass",
+  "passed": true,
+  "inputsFingerprint": "1473b1245ff990cae7f2f7f4a32c953e78daedc73ea7323ddf5e0905a3e6dc11",
+  "readability": {
+    "scores": {
+      "flow": 3,
+      "types": 3,
+      "scope": 3,
+      "layout": 3,
+      "changes": 3
+    },
+    "total": 15,
+    "meetsTarget": true
+  },
+  "answers": {
+    "reviewed": true,
+    "correct": true
+  },
+  "execution": {
+    "current": true,
+    "passed": true,
+    "implementation": "5b3c52ebe62d4ed854d5eea63b8ab96aa7d73742845e02102a89570cd147b0b5",
+    "implementationChangedSincePrepare": false
+  },
+  "writer": {
+    "reported": true,
+    "completed": true,
+    "extraDocumentsRead": []
+  },
+  "notes": []
+}

@@ -1,5 +1,9 @@
 (module
   (%namespace $buffer
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $pair))
     (%export
       (func $concat)
       (func $equal)
@@ -7,7 +11,7 @@
       (func $find)
       (func $split-once)
       (func $parse-u64))
-    (func $equal (param $a %bytes) (param $b %bytes) (result i32) (%effects pure)
+    (func $equal (param $a $bytes) (param $b $bytes) (result i32) (%effects pure)
       (if
         (result i32)
         (i32.ne (%bytes.len (local.get $a)) (%bytes.len (local.get $b)))
@@ -31,7 +35,7 @@
                 ))))
         )))
     ;; Return the length when absent or start is out of range. byte is unsigned.
-    (func $find-byte (param $b %bytes) (param $start i32) (param $byte i32) (result i32)
+    (func $find-byte (param $b $bytes) (param $start i32) (param $byte i32) (result i32)
       (%effects pure)
       (%loop $scan
         (bind $i i32 (local.get $start))
@@ -49,7 +53,7 @@
             ))))
     )
 
-    (func $matches (param $b %bytes) (param $needle %bytes) (param $start i32)
+    (func $matches (param $b $bytes) (param $needle $bytes) (param $start i32)
       (result i32) (%effects pure)
       (%loop $scan
         (bind $i i32 (i32.const 0))
@@ -69,15 +73,15 @@
             ))))
     )
 
-    (func $find (param $b %bytes) (param $needle %bytes) (param $start i32)
-      (result (%option i32)) (%effects pure)
+    (func $find (param $b $bytes) (param $needle $bytes) (param $start i32)
+      (result (%inst $option i32)) (%effects pure)
       (if
-        (result (%option i32))
+        (result (%inst $option i32))
         (i32.gt_u (local.get $start) (%bytes.len (local.get $b)))
         (then (%option.none))
         (else
           (if
-            (result (%option i32))
+            (result (%inst $option i32))
             (i32.gt_u
               (%bytes.len (local.get $needle))
               (i32.sub (%bytes.len (local.get $b)) (local.get $start)))
@@ -87,14 +91,14 @@
                 (i32.sub (%bytes.len (local.get $b)) (%bytes.len (local.get $needle)))
                 (%loop $scan
                   (bind $i i32 (local.get $start))
-                  (result (%option i32))
+                  (result (%inst $option i32))
                   (if
-                    (result (%option i32))
+                    (result (%inst $option i32))
                     (call $matches (local.get $b) (local.get $needle) (local.get $i))
                     (then (%option.some (local.get $i)))
                     (else
                       (if
-                        (result (%option i32))
+                        (result (%inst $option i32))
                         (i32.eq (local.get $i) (local.get $last))
                         (then (%option.none))
                         (else (%recur $scan (i32.add (local.get $i) (i32.const 1))))
@@ -102,8 +106,8 @@
               ))))
       ))
 
-    (func $split-once (param $b %bytes) (param $needle %bytes)
-      (result (%option (%pair %bytes %bytes))) (%effects pure)
+    (func $split-once (param $b $bytes) (param $needle $bytes)
+      (result (%inst $option (%inst $pair $bytes $bytes))) (%effects pure)
       (%match (call $find (local.get $b) (local.get $needle) (i32.const 0))
         (case none () (%option.none))
         (case some ($i)
@@ -118,17 +122,17 @@
             ))))
     )
     ;; ASCII decimal over a checked range; test the cutoff before multiplication.
-    (func $parse-u64 (param $b %bytes) (param $start i32) (param $length i32)
-      (param $limit i64) (result (%option i64)) (%effects pure)
+    (func $parse-u64 (param $b $bytes) (param $start i32) (param $length i32)
+      (param $limit i64) (result (%inst $option i64)) (%effects pure)
       (if
-        (result (%option i64))
+        (result (%inst $option i64))
         (i32.or
           (i32.eqz (local.get $length))
           (i32.gt_u (local.get $start) (%bytes.len (local.get $b))))
         (then (%option.none))
         (else
           (if
-            (result (%option i64))
+            (result (%inst $option i64))
             (i32.gt_u
               (local.get $length)
               (i32.sub (%bytes.len (local.get $b)) (local.get $start)))
@@ -140,16 +144,16 @@
                     (%loop $digits
                       (bind $i i32 (local.get $start))
                       (bind $n i64 (i64.const 0))
-                      (result (%option i64))
+                      (result (%inst $option i64))
                       (if
-                        (result (%option i64))
+                        (result (%inst $option i64))
                         (i32.eq (local.get $i) (local.get $end))
                         (then (%option.some (local.get $n)))
                         (else
                           (%let $d
                             (i32.sub (%bytes.get (local.get $b) (local.get $i)) (i32.const 48))
                             (if
-                              (result (%option i64))
+                              (result (%inst $option i64))
                               (i32.or
                                 (i32.gt_u (local.get $d) (i32.const 9))
                                 (i32.or
@@ -170,25 +174,25 @@
               ))))
       ))
     (type $Array (array (mut i32)))
-    (func $concat (param $a %bytes) (param $b %bytes) (result %bytes)
+    (func $concat (param $a $bytes) (param $b $bytes) (result $bytes)
       (%effects reads writes allocates)
       (%let $n (i32.add (%bytes.len (local.get $a)) (%bytes.len (local.get $b)))
         (if
-          (result %bytes)
+          (result $bytes)
           (i32.lt_u (local.get $n) (%bytes.len (local.get $a)))
           (then (unreachable))
           (else
             (%let $out (array.new $Array (i32.const 0) (local.get $n))
               (%loop $copy
                 (bind $i i32 (i32.const 0))
-                (result %bytes)
+                (result $bytes)
                 (if
-                  (result %bytes)
+                  (result $bytes)
                   (i32.eq (local.get $i) (local.get $n))
                   (then (%bytes.from-array $Array (local.get $out)))
                   (else
                     (block
-                      (result %bytes)
+                      (result $bytes)
                       (array.set $Array
                         (local.get $out)
                         (local.get $i)

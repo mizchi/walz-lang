@@ -1,0 +1,14 @@
+{
+  "completed": true,
+  "checks": [
+    {
+      "command": "'cargo' 'run' '--locked' '--quiet' '--' 'check' '/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/syntax-prefix-20261106-r2/writer/candidate.wlt'",
+      "exitCode": 0,
+      "diagnostic": "ok"
+    }
+  ],
+  "repairs": [],
+  "ambiguities": [],
+  "assumptions": [],
+  "extraDocumentsRead": []
+}

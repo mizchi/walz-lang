@@ -32,7 +32,7 @@
 | `(%export (func $f) (type $T) (tag $Error))` | 静的に公開する名前。`%public` も互換で受理 |
 | `(%export (opaque $State))` | 型を公開し、その表現を宣言スコープに閉じる |
 | `(%import "file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
-| `(%import "stdlib/text.wlt" (func $string.u64 $unsigned))` | ファイル内 namespace の公開パスを選択 |
+| `(%import "wlt:std" (func $string.u64 $unsigned))` | ファイル内 namespace の公開パスを選択 |
 | `(%import $math (func $f $local))` | 同じコンパイル単位の namespace から選択。`%use` も互換で受理 |
 | `(export "name" (func $local))` | ルートから Wasm / Component API に公開。静的 import の関数も指定可能 |
 | 関数内の `(export "name")` | 従来どおりの Wasm ABI export |

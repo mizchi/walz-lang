@@ -1,4 +1,7 @@
 (module
+  (%import "wlt:std"
+    (type $list)
+    (type $text))
   (%import "../stdlib/list.wlt" (func $list.map) (func $list.fold))
   (%closure $Scale (%capture $factor i64) (param $x i64) (result i64)
     (i64.mul (local.get $factor) (local.get $x)))
@@ -6,23 +9,23 @@
   (%closure $Sum (param $state i64) (param $x i64) (result i64)
     (i64.add (local.get $state) (local.get $x)))
 
-  (%closure $Label (%capture $text %text) (param $x i64) (result %text) (local.get $text))
+  (%closure $Label (%capture $text $text) (param $x i64) (result $text) (local.get $text))
 
-  (func $scale (export "scale") (param $xs (%list i64)) (param $factor i64)
-    (result (%list i64)) (%effects reads writes allocates)
+  (func $scale (export "scale") (param $xs (%inst $list i64)) (param $factor i64)
+    (result (%inst $list i64)) (%effects reads writes allocates)
     (call
       (%inst $list.map i64 i64 $Scale)
       (local.get $xs)
       (%closure.new $Scale (local.get $factor))))
 
-  (func $labels (export "labels") (param $xs (%list i64)) (param $label %text)
-    (result (%list %text)) (%effects reads writes allocates)
+  (func $labels (export "labels") (param $xs (%inst $list i64)) (param $label $text)
+    (result (%inst $list $text)) (%effects reads writes allocates)
     (call
-      (%inst $list.map i64 %text $Label)
+      (%inst $list.map i64 $text $Label)
       (local.get $xs)
       (%closure.new $Label (local.get $label))))
 
-  (func $sum (export "sum") (param $xs (%list i64)) (result i64) (%effects allocates)
+  (func $sum (export "sum") (param $xs (%inst $list i64)) (result i64) (%effects allocates)
     (call (%inst $list.fold i64 i64 $Sum) (local.get $xs) (%closure.new $Sum) (i64.const 0)))
 
   (func $identity
@@ -32,7 +35,7 @@
     (result $T)
     (%effects pure)
     (local.get $x))
-  (export "identity" (func (%inst $identity (%list i64))))
+  (export "identity" (func (%inst $identity (%inst $list i64))))
   ;; This wrapper also checks the inferred effects of the concrete callback.
   (func $map-pure
     (%type.params $T $U $F)
@@ -40,13 +43,13 @@
       (shared $T $U)
       (nonunit $T $U)
       (callable $F (param $T) (result $U) (%effects pure)))
-    (param $xs (%list $T))
+    (param $xs (%inst $list $T))
     (param $f (ref $F))
-    (result (%list $U))
+    (result (%inst $list $U))
     (call (%inst $list.map $T $U $F) (local.get $xs) (local.get $f)))
 
-  (func $scale-pure (export "scale-pure") (param $xs (%list i64)) (param $factor i64)
-    (result (%list i64)) (%effects reads writes allocates)
+  (func $scale-pure (export "scale-pure") (param $xs (%inst $list i64)) (param $factor i64)
+    (result (%inst $list i64)) (%effects reads writes allocates)
     (call
       (%inst $map-pure i64 i64 $Scale)
       (local.get $xs)
@@ -72,7 +75,7 @@
     (i32.eq
       (%bytes.len
         (%text.bytes
-          (%list.get %text
+          (%list.get $text
             (call $labels (%list.new i64 (i64.const 1)) (%text.lit "abc"))
             (i32.const 0))))
       (i32.const 3)))

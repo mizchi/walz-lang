@@ -51,7 +51,7 @@ fn formatter_groups_contracts_and_macro_headers_and_attaches_closing_delimiters(
         (%result.let ($value) (%result i64 i32) i32 (local.get $input)
           (%result.ok i32 i32 (i32.wrap_i64 (local.get $value))))))"#;
     let formatted = wlt::format::source(source).unwrap();
-    assert!(formatted.contains("(func $convert (param $input (%result i64 i32))"));
+    assert!(formatted.contains("(func $convert\n    (param $input (%result i64 i32))"));
     assert!(formatted.contains("(%result.let ($value) (%result i64 i32) i32\n"));
     assert!(formatted.lines().filter(|line| line.trim() == ")").count() <= 1);
     assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
@@ -154,4 +154,71 @@ fn formatter_exposes_pattern_let_continuation_even_when_it_fits_one_line() {
         wlt::compile(source).unwrap().wasm,
         wlt::compile(&formatted).unwrap().wasm
     );
+}
+
+#[test]
+fn grouped_let_keeps_the_continuation_out_of_the_binding_header() {
+    let source = "(module (func $main (export \"main\") (result i64) (%let (($a (i64.const 40)) ($b (i64.const 42))) (local.get $b))))";
+    let formatted = wlt::format::source(source).unwrap();
+    assert!(
+        formatted
+            .lines()
+            .any(|line| line.trim_start().starts_with("(local.get $b)")),
+        "{formatted}"
+    );
+    assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
+    assert_eq!(
+        wlt::compile(source).unwrap().wasm,
+        wlt::compile(&formatted).unwrap().wasm
+    );
+}
+
+#[test]
+fn grouped_bindings_align_and_long_result_subjects_separate_the_continuation() {
+    let source = r#"(module
+      (func $main (result (%result i64 i32)) (%effects suspends)
+        (%let (($base (i64.const 40)) ($initial (i64.add (local.get $base) (i64.const 2))))
+          (%result.let ($total)
+            (%stream.fold-result (%stream.empty (%result i64 i32)) (local.get $initial) ($sum $item)
+              (%result.ok (i64.add (local.get $sum) (local.get $item))))
+            (%result.ok (local.get $total))))))"#;
+    let formatted = wlt::format::source(source).unwrap();
+    assert!(
+        formatted.contains("(%let\n      (($base (i64.const 40))\n       ($initial"),
+        "{formatted}"
+    );
+    assert!(
+        formatted.contains("\n\n        (%result.ok (local.get $total))"),
+        "{formatted}"
+    );
+    assert!(
+        formatted.contains("(func $main\n    (result (%result i64 i32))\n    (%effects suspends)"),
+        "{formatted}"
+    );
+    assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
+    assert_eq!(
+        wlt::compile(source).unwrap().wasm,
+        wlt::compile(&formatted).unwrap().wasm
+    );
+}
+
+#[test]
+fn grouped_binding_comments_keep_their_order_and_do_not_swallow_delimiters() {
+    let source = "(module (func $f (result i64) (%let (;first;) (($a (i64.const 40)) ;; between\n ($b (i64.add (local.get $a) (i64.const 2))) ;; final\n) (local.get $b))))";
+    let formatted = wlt::format::source(source).unwrap();
+    assert!(formatted.contains("(%let\n"), "{formatted}");
+    assert!(formatted.contains(";; final\n"), "{formatted}");
+    assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
+    assert_eq!(
+        wlt::compile(source).unwrap().wasm,
+        wlt::compile(&formatted).unwrap().wasm
+    );
+}
+
+#[test]
+fn formatting_an_empty_binding_list_preserves_its_delimiters() {
+    // Formatting preserves tokens even when the compiler would reject a form.
+    let formatted = wlt::format::source("(module (%let () (nop)))").unwrap();
+    assert!(formatted.contains("()"), "{formatted}");
+    assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);
 }

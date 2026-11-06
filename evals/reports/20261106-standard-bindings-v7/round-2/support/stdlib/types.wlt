@@ -1,0 +1,18 @@
+(module
+  (%export
+    (type $text) (type $bytes) (type $unit)
+    (type $option) (type $result) (type $pair) (type $list)
+    (type $own) (type $future) (type $stream)
+    (type $resource) (type $borrow))
+  (%type.alias $text %text)
+  (%type.alias $bytes %bytes)
+  (%type.alias $unit %unit)
+  (%type.alias $option (%type.params $T) (%option $T))
+  (%type.alias $result (%type.params $T $E) (%result $T $E))
+  (%type.alias $pair (%type.params $T $U) (%pair $T $U))
+  (%type.alias $list (%type.params $T) (%list $T))
+  (%type.alias $own (%type.params $T) (%own $T))
+  (%type.alias $future (%type.params $T) (%future $T))
+  (%type.alias $stream (%type.params $T) (%stream $T))
+  (%type.alias $resource (%type.params $R) (%resource $R))
+  (%type.alias $borrow (%type.params $R) (%borrow $R)))

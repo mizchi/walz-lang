@@ -90,6 +90,8 @@ export function assertSnapshotIncludes(source) {
           'candidate may only include "program.wlt" from the frozen support',
         );
       count++;
+    } else if (["import", "%import"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
+      if (node[1].text !== '\"wlt:std\"') throw new Error("candidate may only import wlt:std in addition to frozen support");
     } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
@@ -103,6 +105,7 @@ export function metrics(source) {
     maxDepth = 0,
     match = 0,
     patterns = 0,
+    grouped = 0,
     stateTypes = 0;
   for (const item of items) {
     if (item === "(") {
@@ -120,8 +123,12 @@ export function metrics(source) {
   const walk = (node) => {
     if (!Array.isArray(node)) return;
     if (canonical(node[0]) === "match") match++;
-    if (canonical(node[0]) === "let" && Array.isArray(node[1])) patterns++;
-    if (canonical(node[0]) === "pair" && text(node) === "(pair (ref $stock.State) i32)")
+    if (canonical(node[0]) === "let" && Array.isArray(node[1])) {
+      if (Array.isArray(node[1][0])) grouped++;
+      else patterns++;
+    }
+    if ((canonical(node[0]) === "pair" && text(node) === "(pair (ref $stock.State) i32)") ||
+        (canonical(node[0]) === "inst" && text(node) === "(inst $pair (ref $stock.State) i32)"))
       stateTypes++;
     node.forEach(walk);
   };
@@ -132,6 +139,7 @@ export function metrics(source) {
     maxDepth,
     match,
     patternLets: patterns,
+    groupedLets: grouped,
     stateTypeOccurrences: stateTypes,
   };
 }
@@ -152,6 +160,7 @@ export function functionForms(source, name) {
     if (typeof node[0] === "string") {
       const head = node[0].replace(/^%/, "");
       heads[head] = (heads[head] ?? 0) + 1;
+      if (head === "let" && Array.isArray(node[1]?.[0])) heads["let.group"] = (heads["let.group"] ?? 0) + 1;
     }
     node.forEach(count);
   };

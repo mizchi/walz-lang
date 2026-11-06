@@ -1,7 +1,9 @@
 (module
+  (%import "wlt:std"
+    (type $text))
   (%include "parse.wlt")
   (%include "stats.wlt")
-  (type $Corpus (array %text))
+  (type $Corpus (array $text))
   (func $once (param $input (ref $Corpus)) (param $rows i32) (result i64)
     (%effects reads writes allocates)
     (%let $s (call $stats.new)

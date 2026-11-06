@@ -1,5 +1,7 @@
 (module
   (%namespace $builder
+    (%import "wlt:std"
+      (type $text))
     (%import "text.wlt" (func $string.json) (func $string.s64) (func $string.u64))
     (%export
       (opaque $Builder)
@@ -9,14 +11,14 @@
       (func $u64)
       (func $s64)
       (func $finish))
-    (type $Chunk (struct (field $text %text) (field $previous (ref null $Chunk))))
+    (type $Chunk (struct (field $text $text) (field $previous (ref null $Chunk))))
     (type $Builder
       (struct (field $head (mut (ref null $Chunk))) (field $length (mut i32))))
     (type $Array (array (mut i32)))
     (func $new (result (ref $Builder)) (%effects allocates)
       (struct.new $Builder (ref.null $Chunk) (i32.const 0)))
 
-    (func $text (param $b (ref $Builder)) (param $s %text)
+    (func $text (param $b (ref $Builder)) (param $s $text)
       (%effects reads writes allocates)
       (%let $n (%bytes.len (%text.bytes (local.get $s)))
         (if
@@ -40,7 +42,7 @@
           (else (block))))
     )
 
-    (func $json (param $b (ref $Builder)) (param $s %text)
+    (func $json (param $b (ref $Builder)) (param $s $text)
       (%effects reads writes allocates)
       (call $text (local.get $b) (call $string.json (local.get $s))))
 
@@ -50,12 +52,12 @@
     (func $s64 (param $b (ref $Builder)) (param $n i64) (%effects reads writes allocates)
       (call $text (local.get $b) (call $string.s64 (local.get $n))))
     ;; Traverse backwards, placing each fragment at its final offset. No recursion.
-    (func $finish (param $b (ref $Builder)) (result %text)
+    (func $finish (param $b (ref $Builder)) (result $text)
       (%effects reads writes allocates)
       (%let $length (struct.get $Builder $length (local.get $b))
         (%let $out (array.new $Array (i32.const 0) (local.get $length))
           (block
-            (result %text)
+            (result $text)
             (%loop $chunks
               (bind $chunk (ref null $Chunk) (struct.get $Builder $head (local.get $b)))
               (bind $end i32 (local.get $length))

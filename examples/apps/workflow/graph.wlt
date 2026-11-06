@@ -1,5 +1,11 @@
 (module
   (%namespace $graph
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $result)
+      (type $text)
+      (type $unit))
     (%public
       (opaque $Graph)
       (opaque $Job)
@@ -17,8 +23,8 @@
       (func $after))
     (type $Job
       (struct
-        (field $id %text)
-        (field $key %bytes)
+        (field $id $text)
+        (field $key $bytes)
         (field $index i32)
         (field $duration i64)
         (field $deps (mut (ref null $Link))))
@@ -49,7 +55,7 @@
       (ref.as_non_null
         (array.get $Jobs (struct.get $Graph $jobs (local.get $g)) (local.get $i))))
 
-    (func $id (param $j (ref $Job)) (result %text) (%effects pure)
+    (func $id (param $j (ref $Job)) (result $text) (%effects pure)
       (struct.get $Job $id (local.get $j)))
 
     (func $index (param $j (ref $Job)) (result i32) (%effects pure)
@@ -67,7 +73,7 @@
     (func $edge-next (param $l (ref $Link)) (result (ref null $Link)) (%effects pure)
       (struct.get $Link $next (local.get $l)))
 
-    (func $hash (param $key %bytes) (result i32) (%effects pure)
+    (func $hash (param $key $bytes) (result i32) (%effects pure)
       (%loop $bytes
         (bind $i i32 (i32.const 0))
         (bind $h i32 (i32.const 0))
@@ -84,13 +90,13 @@
                 (%bytes.get (local.get $key) (local.get $i))))
           ))))
 
-    (func $bucket (param $buckets (ref $Buckets)) (param $key %bytes) (result i32)
+    (func $bucket (param $buckets (ref $Buckets)) (param $key $bytes) (result i32)
       (%effects pure)
       (i32.and
         (call $hash (local.get $key))
         (i32.sub (array.len (local.get $buckets)) (i32.const 1))))
 
-    (func $find (param $g (ref $Graph)) (param $key %bytes) (result (%option (ref $Job)))
+    (func $find (param $g (ref $Graph)) (param $key $bytes) (result (%inst $option (ref $Job)))
       (%effects reads)
       (%let $buckets (struct.get $Graph $buckets (local.get $g))
         (%loop $search
@@ -99,16 +105,16 @@
             (array.get $Buckets
               (local.get $buckets)
               (call $bucket (local.get $buckets) (local.get $key))))
-          (result (%option (ref $Job)))
+          (result (%inst $option (ref $Job)))
           (if
-            (result (%option (ref $Job)))
+            (result (%inst $option (ref $Job)))
             (ref.is_null (local.get $entry))
             (then (%option.none))
             (else
               (%let $node (ref.as_non_null (local.get $entry))
                 (%let $job (struct.get $Entry $job (local.get $node))
                   (if
-                    (result (%option (ref $Job)))
+                    (result (%inst $option (ref $Job)))
                     (call $lex.equal
                       (struct.get $Job $key (local.get $job))
                       (local.get $key))
@@ -165,20 +171,20 @@
           (else (nop))))
     )
 
-    (func $add (param $g (ref $Graph)) (param $id %text) (param $duration i64)
-      (result (%result %unit (ref $domain.Error))) (%effects reads writes allocates)
-      (%match (%option (ref $Job)) (result (%result %unit (ref $domain.Error)))
+    (func $add (param $g (ref $Graph)) (param $id $text) (param $duration i64)
+      (result (%inst $result $unit (ref $domain.Error))) (%effects reads writes allocates)
+      (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
         (call $find (local.get $g) (%text.bytes (local.get $id)))
         (case some ($existing)
           (%result.err (%variant.new $domain.Error duplicate (local.get $id))))
         (case none ()
           (if
-            (result (%result %unit (ref $domain.Error)))
+            (result (%inst $result $unit (ref $domain.Error)))
             (i32.ge_u (call $size (local.get $g)) (i32.const 4096))
             (then (%result.err (%variant.new $domain.Error capacity (%text.lit "tasks"))))
             (else
               (if
-                (result (%result %unit (ref $domain.Error)))
+                (result (%inst $result $unit (ref $domain.Error)))
                 (i32.or
                   (i64.gt_u (local.get $duration) (i64.const 1000000))
                   (i32.or
@@ -189,7 +195,7 @@
                 (else
                   (%let $i (call $size (local.get $g))
                     (block
-                      (result (%result %unit (ref $domain.Error)))
+                      (result (%inst $result $unit (ref $domain.Error)))
                       (call $grow (local.get $g))
                       (call $rehash (local.get $g))
                       (%let $buckets (struct.get $Graph $buckets (local.get $g))
@@ -237,25 +243,25 @@
               ))))
       ))
 
-    (func $after (param $g (ref $Graph)) (param $id %text) (param $dependency %text)
-      (result (%result %unit (ref $domain.Error))) (%effects reads writes allocates)
-      (%match (%option (ref $Job)) (result (%result %unit (ref $domain.Error)))
+    (func $after (param $g (ref $Graph)) (param $id $text) (param $dependency $text)
+      (result (%inst $result $unit (ref $domain.Error))) (%effects reads writes allocates)
+      (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
         (call $find (local.get $g) (%text.bytes (local.get $id)))
         (case none () (%result.err (%variant.new $domain.Error unknown (local.get $id))))
         (case some ($job)
-          (%match (%option (ref $Job)) (result (%result %unit (ref $domain.Error)))
+          (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
             (call $find (local.get $g) (%text.bytes (local.get $dependency)))
             (case none ()
               (%result.err (%variant.new $domain.Error unknown (local.get $dependency))))
             (case some ($prerequisite)
               (%let $head (call $dependencies (local.get $job))
                 (if
-                  (result (%result %unit (ref $domain.Error)))
+                  (result (%inst $result $unit (ref $domain.Error)))
                   (call $contains (local.get $head) (local.get $prerequisite))
                   (then (%result.ok))
                   (else
                     (if
-                      (result (%result %unit (ref $domain.Error)))
+                      (result (%inst $result $unit (ref $domain.Error)))
                       (i32.ge_u
                         (struct.get $Graph $edges (local.get $g))
                         (i32.const 65536))
@@ -264,7 +270,7 @@
                           (%variant.new $domain.Error capacity (%text.lit "dependencies"))))
                       (else
                         (block
-                          (result (%result %unit (ref $domain.Error)))
+                          (result (%inst $result $unit (ref $domain.Error)))
                           (struct.set $Job $deps
                             (local.get $job)
                             (struct.new $Link

@@ -97,6 +97,7 @@ fn bindings(adapter: &Adapter<'_>) -> String {
     let mut out = String::from(
         "// Generated typed boundary functions; GC references stay inside Wasm.\nexport function bind(c) {\n",
     );
+    out.push_str(values::prelude(adapter));
     for ty in &adapter.types {
         let (r, w) = codec(adapter, ty);
         out.push_str(&format!(

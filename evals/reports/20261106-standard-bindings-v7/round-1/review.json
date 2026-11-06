@@ -1,0 +1,7 @@
+{
+  "correct": true,
+  "reason": "配布 main:11–21 と counted:9–43、契約、チートシートを照合した。10回答は制御・型・透明alias・共有pairと所有Stream・I/O err/EOF/取消し・result.letの式スコープ・変更箇所に誤りなし。bindingsは左から右に各一度、先行参照不可、同名再束縛と明示moveを正しく説明し、standardはwlt:stdの解決・可視性・型と関数の%inst・Future型と固定操作の区別を説明している。旧表記の契約とinclude説明の混在を推測で埋めず資料の問題として指摘した。各3点の根拠は具体的なコード配置と確認負担に基づく。",
+  "reviewedAt": "2026-11-05T16:34:26.985Z",
+  "inputsFingerprint": "2adbf8585710dde95e511f2992ed9d81612b0b163cef7ddc7c3bfc50b909faf3",
+  "readerSha256": "5ce60f49a9cd540f06d3d27cd6c30ffa0c1eb189b37ea4774093e2ace9285fbb"
+}

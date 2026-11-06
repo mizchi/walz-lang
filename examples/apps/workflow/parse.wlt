@@ -1,21 +1,25 @@
 (module
   (%namespace $lex
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $text))
     (%import "../../../stdlib/bytes.wlt"
       (func $buffer.equal)
       (func $buffer.find-byte)
       (func $buffer.parse-u64))
     (%public (func $equal) (func $tab) (func $key) (func $number))
-    (func $equal (param $a %bytes) (param $b %bytes) (result i32) (%effects pure)
+    (func $equal (param $a $bytes) (param $b $bytes) (result i32) (%effects pure)
       (call $buffer.equal (local.get $a) (local.get $b)))
 
-    (func $tab (param $b %bytes) (param $start i32) (result i32) (%effects pure)
+    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effects pure)
       (call $buffer.find-byte (local.get $b) (local.get $start) (i32.const 9)))
 
-    (func $key (param $b %bytes) (param $start i32) (param $end i32)
-      (result (%option %text)) (%effects pure)
+    (func $key (param $b $bytes) (param $start i32) (param $end i32)
+      (result (%inst $option $text)) (%effects pure)
       (%let $n (i32.sub (local.get $end) (local.get $start))
         (if
-          (result (%option %text))
+          (result (%inst $option $text))
           (i32.or (i32.eqz (local.get $n)) (i32.gt_u (local.get $n) (i32.const 128)))
           (then (%option.none))
           (else
@@ -23,7 +27,7 @@
               (%bytes.slice (local.get $b) (local.get $start) (local.get $n))))
         )))
 
-    (func $number (param $b %bytes) (param $start i32) (result (%option i64))
+    (func $number (param $b $bytes) (param $start i32) (result (%inst $option i64))
       (%effects pure)
       (call $buffer.parse-u64
         (local.get $b)
@@ -31,8 +35,12 @@
         (i32.sub (%bytes.len (local.get $b)) (local.get $start))
         (i64.const 1000000))))
   (%namespace $parse
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $text))
     (%public (func $command))
-    (func $fields (param $b %bytes) (result (ref $domain.Command)) (%effects allocates)
+    (func $fields (param $b $bytes) (result (ref $domain.Command)) (%effects allocates)
       (%let $first (call $lex.tab (local.get $b) (i32.const 0))
         (%let $op (%bytes.slice (local.get $b) (i32.const 0) (local.get $first))
           (%let $start (i32.add (local.get $first) (i32.const 1))
@@ -40,7 +48,7 @@
               (result (ref $domain.Command))
               (call $lex.equal (local.get $op) (%text.bytes (%text.lit "PLAN")))
               (then
-                (%match (%option i64) (result (ref $domain.Command))
+                (%match (%inst $option i64) (result (ref $domain.Command))
                   (call $lex.number (local.get $b) (local.get $start))
                   (case none () (%variant.new $domain.Command invalid))
                   (case some ($workers)
@@ -56,7 +64,7 @@
                     ))))
               (else
                 (%let $second (call $lex.tab (local.get $b) (local.get $start))
-                  (%match (%option %text) (result (ref $domain.Command))
+                  (%match (%inst $option $text) (result (ref $domain.Command))
                     (call $lex.key
                       (local.get $b)
                       (local.get $start)
@@ -67,7 +75,7 @@
                         (result (ref $domain.Command))
                         (call $lex.equal (local.get $op) (%text.bytes (%text.lit "TASK")))
                         (then
-                          (%match (%option i64) (result (ref $domain.Command))
+                          (%match (%inst $option i64) (result (ref $domain.Command))
                             (call $lex.number
                               (local.get $b)
                               (i32.add (local.get $second) (i32.const 1)))
@@ -90,7 +98,7 @@
                                   (i32.add (local.get $second) (i32.const 1)))
                                 (%bytes.len (local.get $b))))
                             (then
-                              (%match (%option %text) (result (ref $domain.Command))
+                              (%match (%inst $option $text) (result (ref $domain.Command))
                                 (call $lex.key
                                   (local.get $b)
                                   (i32.add (local.get $second) (i32.const 1))
@@ -106,7 +114,7 @@
               ))))
       ))
 
-    (func $command (param $line %text) (result (ref $domain.Command)) (%effects allocates)
+    (func $command (param $line $text) (result (ref $domain.Command)) (%effects allocates)
       (%let $b (%text.bytes (local.get $line))
         (if
           (result (ref $domain.Command))

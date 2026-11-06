@@ -6,12 +6,14 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 | --- | --- |
 | 式・制御構造 | `%let`、`%for`、`%loop`、`%recur`、`%match`、`%try` |
 | 値の操作 | `%list.new`、`%text.lit`、`%result.ok`、`%future.await` など |
-| 値型 | `%text`、`%bytes`、`%unit`、`(%list T)`、`(%option T)`、`(%result T E)` など |
+| 値型 | `$text`、`$bytes`、`$unit`、`(%inst $list T)`、`(%inst $option T)`、`(%inst $result T E)` など |
 | 宣言・注釈 | `%closure`、`%capture`、`%effects`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
 | 静的モジュール | `%include`、`%import`、`%export`、`%namespace`、`%public`、`%use` |
 | 型引数の適用 | `(%inst $name T...)`。関数・型・alias・クロージャで共通 |
 
 拡張の内部にある `case`、`bind`、`while`、`step`、`catch`、制約の `shared` / `nonunit` / `callable` は、その入口に属するデータ構文なので接頭辞を付けない。`if`、`then`、`else`、`block`、`param`、結果宣言の `result` は WAT の構文を使う。
+
+基本型は `(%import "wlt:std" (type $result) (type $option) (type $future) ...)` で明示的に取り込む。Result と Future は `(%inst $result T E)` / `(%inst $future T)`、型引数のない text は `$text` と参照する。複数束縛は `(%let (($a initial-a) ($b initial-b)) body)` で左から右に初期化する。[標準モジュールと束縛](standard.md) に詳しい規約をまとめた。
 
 ```wat
 (module
@@ -23,7 +25,8 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
       (local.get $answer))))
 ```
 
-`(result i32 i64)` は標準の複数戻り値宣言。`(result (%result i32 i64))` は WLT の Result 値を1つ返す宣言。
+`(result i32 i64)` は標準の複数戻り値宣言。`(result (%inst $result i32 i64))` は WLT の Result 値を1つ返す宣言。
+型付きコアの戻り値は0個（unit）または1値に限る。pair は1つの値として返し、pair の分解 let で取り出す。標準 WAT の複数戻り値は標準 WAT 経路で検証・コンパイルし、型付きコアの複数束縛へ自動変換しない。
 
 ```wat
 (%import "math.wlt" (func $answer))  ;; ソースの静的リンク
@@ -44,18 +47,10 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 
 `%let` とループ状態は不変。標準の `local.set` / `local.tee` から変更できない。数値ローカルインデックスは元の WAT の引数・ローカルだけを指し、生成した一時変数には届かない。`%let` は制御ラベルを追加しない。`%recur` は最内側の WLT ループへの末尾呼び出しで、引数をすべて評価してから同時に状態を更新する。
 
-## 旧構文からの移行
+## 入力の規約
 
-```sh
-just migrate examples/old.wlt        # 変更を標準出力で確認
-cargo run -- migrate examples/old.wlt --write
-cargo run -- --legacy-syntax check examples/old.wlt
-```
+WLT 拡張には `%` を必須とし、接頭辞の欠落を `E_WLT_PREFIX` として診断する。未知の入口は `E_WLT_EXTENSION`。移行コマンドや旧構文との互換性を言語仕様には設けない。
 
-通常の入力では旧構文を `E_WLT_PREFIX` として拒否する。未知の `%` 構文は `E_WLT_EXTENSION`。自動的な旧構文への切り替えはしない。
+凍結済みの評価入力を再実行するための変換だけを、評価ハーネス用の内部処理に残す。過去の入力・結果・スナップショットは保存する。標準型の import と複数束縛を質問した suite v7 に続き、標準APIの選択とi64カウンタへの変更を含む評価は suite v8 として区別する。
 
-`migrate` は1ファイルへの挿入だけを行い、コメント・文字列・識別子を保持する。依存ファイルはそれぞれ移行する。検証可能な標準 WAT は変更しない。WAT と字面の等しい旧 `try` / `catch_all` は標準構文として保持するため、WLT の例外マクロとして使う場合は `%try` と明示する。
-
-`--legacy-syntax` はファイルグラフを読み込んでからメモリ上で移行し、元ファイルは変更しない。診断の位置も元ファイルに対応させる。評価の凍結済み入力はこのオプションで実行し、過去の入力・結果・スナップショットは保存する。新規の可読性評価は suite v5 として区別する。
-
-`just test-syntax` で標準 WAT の保持、混在時の実行、移行、診断位置、検査の境界を確認できる。
+`just test-syntax` で標準 WAT の保持、混在時の実行、診断位置、検査の境界を確認できる。

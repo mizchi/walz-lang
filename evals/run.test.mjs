@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile, rm, access } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, access, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   prepareRun,
+  readReader,
   checkInputs,
   recordReview,
   scoreRun,
@@ -15,7 +16,7 @@ import {
 
 const reader = (score = 3) => ({
   answers: Object.fromEntries(
-    ["flow", "state", "alias", "ownership", "errors", "scope", "changes"].map(
+    ["flow", "state", "alias", "ownership", "errors", "scope", "changes", "syntax", "bindings", "standard", "api", "counter"].map(
       (k) => [k, "コードと契約に基づく具体的な回答"],
     ),
   ),
@@ -73,7 +74,7 @@ async function fakeVerification(directory) {
           {
             passed: true,
             checks: Array.from(
-              { length: manifest.suite.executionChecks },
+              { length: manifest.suite.executionChecks + (k === "candidate" ? (manifest.suite.additionalCandidateChecks ?? 0) : 0) },
               (_, i) => ({ name: String(i), passed: true }),
             ),
           },
@@ -92,6 +93,12 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
     );
     assert.equal(manifest.id, "round-99");
     assert.ok(manifest.roles.reader.includes("reader/counted.wlt"));
+    assert.ok(manifest.roles.reader.includes("reader/api.md"));
+    assert.ok(manifest.roles.writer.includes("writer/api.md"));
+    const api = await readFile(join(directory, "writer/api.md"), "utf8");
+    assert.match(api, /\(func \$string.parse-u64/);
+    assert.match(api, /具体化時に推論/);
+    assert.ok(!api.includes("(func $buffer.matches"));
     assert.ok(!manifest.roles.writer.some((p) => p.includes("counted")));
     await assert.rejects(access(join(directory, "writer/counted.wlt")));
     const bridge = await readFile(
@@ -100,7 +107,7 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
     );
     assert.equal(
       bridge,
-      '(module (include "../support/examples/apps/stock-ledger/program.wlt"))\n',
+      '(module (%include "../support/examples/apps/stock-ledger/program.wlt"))\n',
     );
     await checkInputs(directory);
     await writeFile(join(directory, "reader.json"), "keep");
@@ -196,4 +203,38 @@ test("invalid scores and tampered input invalidate summary; differing rubrics ar
     const comparison = await compareRuns(one, two);
     assert.equal(comparison.comparableRubric, false);
     assert.equal(comparison.scoreDelta, null);
+  }));
+
+test("reader answers follow the frozen suite contract and older runs remain readable", () =>
+  temporary(async (parent) => {
+    const directory = join(parent, "syntax");
+    await prepareRun("syntax", { directory });
+    const manifestPath = join(directory, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const data = reader();
+    delete data.answers.syntax;
+    await writeFile(join(directory, "reader.json"), JSON.stringify(data));
+    manifest.suite.answerKeys = [...Object.keys(data.answers), "syntax"];
+    await writeFile(manifestPath, JSON.stringify(manifest));
+    await assert.rejects(readReader(directory), /missing answer: syntax/);
+    data.answers.syntax = "WAT and WLT syntax distinguished using the cheatsheet";
+    await writeFile(join(directory, "reader.json"), JSON.stringify(data));
+    await readReader(directory);
+    delete manifest.suite.answerKeys;
+    delete data.answers.syntax;
+    await writeFile(manifestPath, JSON.stringify(manifest));
+    await writeFile(join(directory, "reader.json"), JSON.stringify(data));
+    await readReader(directory);
+  }));
+
+test("embedded standard WLT sources participate in the implementation fingerprint", () =>
+  temporary(async (parent) => {
+    await mkdir(join(parent, "stdlib"));
+    const path=join(parent, "stdlib/types.wlt");
+    await writeFile(path, "before");
+    const before=await implementationFingerprint(parent);
+    assert.ok(before.files["stdlib/types.wlt"]);
+    await writeFile(path, "after");
+    const after=await implementationFingerprint(parent);
+    assert.notEqual(before.sha256, after.sha256);
   }));

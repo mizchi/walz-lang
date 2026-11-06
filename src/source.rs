@@ -25,6 +25,104 @@ impl Source {
     pub fn text(&self) -> &str {
         &self.text
     }
+
+    pub(crate) fn label(&self, span: Span, message: &str) -> Option<crate::diagnostic::Label> {
+        if span.start > span.end
+            || span.end > self.text.len()
+            || !self.text.is_char_boundary(span.start)
+            || !self.text.is_char_boundary(span.end)
+        {
+            return None;
+        }
+        self.diagnostic(Error::at(&self.text, span, message))
+            .diagnostic
+            .primary
+    }
+
+    /// Inverse source map for an immutable loaded snapshot. Generated wrappers
+    /// are excluded; repeated includes may have more than one expanded offset.
+    pub(crate) fn offsets(
+        &self,
+        path: Option<&Path>,
+        line: usize,
+        column: usize,
+    ) -> Result<Vec<usize>, Error> {
+        let error = || {
+            Error::message("position is outside the loaded source files".into())
+                .with_code("E_SOURCE_POSITION")
+        };
+        let path = if let Some(path) = path {
+            let absolute = if path.is_absolute() {
+                path.to_owned()
+            } else {
+                std::env::current_dir().map_err(|_| error())?.join(path)
+            };
+            if self.chunks.iter().any(|c| c.path == absolute) {
+                absolute
+            } else if let Ok(canonical) = path.canonicalize() {
+                canonical
+            } else {
+                // The file may have disappeared while its parent (including
+                // symlinks such as macOS /var) still identifies the snapshot.
+                let name = path.file_name().ok_or_else(error)?;
+                path.parent()
+                    .filter(|p| !p.as_os_str().is_empty())
+                    .unwrap_or(Path::new("."))
+                    .canonicalize()
+                    .map_err(|_| error())?
+                    .join(name)
+            }
+        } else {
+            self.chunks.first().ok_or_else(error)?.path.clone()
+        };
+        let original = &self
+            .chunks
+            .iter()
+            .find(|c| c.path == path)
+            .ok_or_else(error)?
+            .original;
+        let row = original
+            .split('\n')
+            .nth(line.checked_sub(1).ok_or_else(error)?)
+            .ok_or_else(error)?;
+        let column = column.checked_sub(1).ok_or_else(error)?;
+        let byte = row
+            .char_indices()
+            .map(|(i, _)| i)
+            .chain(std::iter::once(row.len()))
+            .nth(column)
+            .ok_or_else(error)?;
+        let start = original
+            .split_inclusive('\n')
+            .take(line - 1)
+            .map(str::len)
+            .sum::<usize>()
+            + byte;
+        let mut offsets = self
+            .chunks
+            .iter()
+            .filter(|c| {
+                c.path == path
+                    && !c.generated
+                    && c.offset <= start
+                    && start < c.offset + c.end - c.start
+            })
+            .map(|c| c.start + start - c.offset)
+            .collect::<Vec<_>>();
+        if start == original.len()
+            && let Some(c) = self
+                .chunks
+                .iter()
+                .rev()
+                .find(|c| c.path == path && !c.generated && c.offset + c.end - c.start == start)
+        {
+            offsets.push(c.end);
+        }
+        offsets.sort_unstable();
+        offsets.dedup();
+        // A valid coordinate can belong to an import/include that was removed.
+        Ok(offsets)
+    }
     /// Translate a checker diagnostic on expanded text back to its input file.
     pub fn diagnostic(&self, mut error: Error) -> Error {
         if error.diagnostic.primary.is_none() {
@@ -121,6 +219,15 @@ fn includes<'a>(
         )
         .with_code("E_WLT_PREFIX"));
     }
+    if node.head() == Some("%import")
+        && node
+            .list()
+            .and_then(|p| p.get(1))
+            .and_then(Sexp::text)
+            .is_some_and(|s| s.starts_with("wlt:"))
+    {
+        return Ok(());
+    }
     if matches!(node.head(), Some("include" | "%include")) || file_import(node) {
         output.push(node);
     } else if matches!(node.head(), Some("module" | "namespace" | "%namespace")) {
@@ -214,6 +321,15 @@ fn expand(
             )
             .with_path(&canonical));
         };
+        if relative.starts_with("wlt:") {
+            return Err(Error::at(
+                &original,
+                node.span,
+                "standard modules require %import, not %include",
+            )
+            .with_code("E_STD_MODULE")
+            .with_path(&canonical));
+        }
         if Path::new(relative).is_absolute() {
             return Err(
                 Error::at(&original, node.span, "include/import path must be relative")
@@ -288,11 +404,12 @@ pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
     load_mode(path.as_ref(), false)
 }
 
-/// Explicit compatibility entry for frozen historical evaluation inputs.
+/// Internal harness entry for frozen historical evaluation inputs.
+#[doc(hidden)]
 pub fn load_legacy(path: impl AsRef<Path>) -> Result<Source, Error> {
     let mut source = load_mode(path.as_ref(), true)?;
     let migration =
-        crate::syntax::migrate_legacy(&source.text).map_err(|e| source.diagnostic(e))?;
+        crate::syntax::convert_legacy(&source.text).map_err(|e| source.diagnostic(e))?;
     source.text = migration.text().into();
     source.migration = Some(migration);
     Ok(source)

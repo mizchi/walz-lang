@@ -17,6 +17,13 @@
 1 の API と境界は [stdlib/README.md](stdlib/README.md)、変更前後の出力照合・測定値・生成サイズは [実装記録](docs/stdlib/20261105.md) に保存した。
 JSON 値・parser・配列・null・小数/指数の字句を扱う API を追加した。数値は正確な text として保持する。binary float の変換は後続。詳細は [JSON 値](docs/json-values.md)。
 
+## 開発ツールと標準コレクション
+
+- [x] `check --json` で既存の診断契約と終了コードを機械処理可能にする。
+- [x] `type-at` で元ファイルの行・Unicode列を問い合わせ、型注釈・型alias・具体化位置を返す。詳細は [外部ツール向けの検査](docs/tooling.md)。
+- [x] textキーの `dict<T>` と、不変listを作る `list-builder<T>` を通常のWLTライブラリとして提供する。共有可能・非unitの制約、opaque、effectを検査する。
+- [x] 衝突・拡張・更新・削除・再利用・参照同一性・不変スナップショットをWasmtimeで検査し、Core＋JSPI / Componentを独立したMapと照合する。詳細は [コレクション](docs/collections.md)。
+
 ## リポジトリの独立
 
 - [x] Wasmtime の作業ディレクトリから独立させ、言語・crate・CLI・拡張子を WLT / wlt / .wlt に改名する。
@@ -94,6 +101,10 @@ i64 の区間、可変フィールドの値の精密化、関数間の範囲契�
 
 ## 8. 任意の WAT 命令とマクロの混在
 
+- [x] `v128` と通常 SIMD の非メモリ命令を型付きコアで検査。GC格納・捕捉・単相化、Core / Component / Chromium で確認。ABI 境界はスカラー等へ明示変換。[SIMD](docs/simd.md)。
+- [x] jsimdを参考に4種類のバルクカーネルを実装し、保持したGC値とコピー込みの双方でJS・参照Wasmと比較。[測定結果](docs/simd-kernels.md)。
+- [x] SIMDの実測で見つかったCore＋JSPIの数値list ABIを、対応するTypedArrayの一括コピーで改善。値検査・解放とArrayの経路を維持し、同一Wasmで変更前後を交互に測定。
+- [ ] pack前の中間GCコピーを減らし、pack済みデータの再利用を増やす。型検査・値検査・例外時の解放を維持し、保持したデータと単発呼び出しを分けて再測定する。
 - [ ] 型付きマクロを、現在のコア外の WAT 命令と同じ関数で使用する。
 - [ ] Wasm validator と型情報を共有する。
 - [ ] 不透明な命令区間の effect・escape・所有権の境界を定義する。

@@ -403,6 +403,16 @@
       "path": "examples/bytes-text.wlt",
       "pattern": "immutable bytes, UTF-8 validation and slicing",
       "expected": "42"
+    },
+    {
+      "path": "examples/simd.wlt",
+      "pattern": "typed v128 and fixed SIMD lane operations",
+      "expected": "42"
+    },
+    {
+      "path": "examples/simd-kernels/demo.wlt",
+      "pattern": "resident packed GC arrays and wide SIMD integer sums",
+      "expected": "42"
     }
   ],
   "probes": [

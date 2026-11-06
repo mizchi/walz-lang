@@ -1,5 +1,10 @@
 (module
   (%namespace $string
+    (%import "wlt:std"
+      (type $bytes)
+      (type $option)
+      (type $pair)
+      (type $text))
     (%import "bytes.wlt"
       (func $buffer.concat)
       (func $buffer.find)
@@ -14,16 +19,16 @@
       (func $split-once)
       (func $parse-u64)
       (func $parse-s64))
-    (func $find (param $s %text) (param $needle %text) (param $start i32)
-      (result (%option i32)) (%effects pure)
+    (func $find (param $s $text) (param $needle $text) (param $start i32)
+      (result (%inst $option i32)) (%effects pure)
       (%let $b (%text.bytes (local.get $s))
         (if
-          (result (%option i32))
+          (result (%inst $option i32))
           (i32.gt_u (local.get $start) (%bytes.len (local.get $b)))
           (then (%option.none))
           (else
             (if
-              (result (%option i32))
+              (result (%inst $option i32))
               (if
                 (result i32)
                 (i32.eq (local.get $start) (%bytes.len (local.get $b)))
@@ -42,8 +47,8 @@
                   (local.get $start))))
           ))))
 
-    (func $split-once (param $s %text) (param $needle %text)
-      (result (%option (%pair %text %text))) (%effects pure)
+    (func $split-once (param $s $text) (param $needle $text)
+      (result (%inst $option (%inst $pair $text $text))) (%effects pure)
       (%match
         (call $buffer.split-once (%text.bytes (local.get $s)) (%text.bytes (local.get $needle)))
         (case none () (%option.none))
@@ -53,17 +58,17 @@
               (%pair.new (call $valid (local.get $a)) (call $valid (local.get $b))))
           ))))
 
-    (func $parse-u64 (param $s %text) (result (%option i64)) (%effects pure)
+    (func $parse-u64 (param $s $text) (result (%inst $option i64)) (%effects pure)
       (call $buffer.parse-u64
         (%text.bytes (local.get $s))
         (i32.const 0)
         (%bytes.len (%text.bytes (local.get $s)))
         (i64.const -1)))
 
-    (func $parse-s64 (param $s %text) (result (%option i64)) (%effects pure)
+    (func $parse-s64 (param $s $text) (result (%inst $option i64)) (%effects pure)
       (%let $b (%text.bytes (local.get $s))
         (if
-          (result (%option i64))
+          (result (%inst $option i64))
           (i32.eqz (%bytes.len (local.get $b)))
           (then (%option.none))
           (else
@@ -82,26 +87,26 @@
                 ))))
         )))
     (type $Array (array (mut i32)))
-    (func $valid (param $b %bytes) (result %text) (%effects pure)
-      (%match (%option %text) (result %text)
+    (func $valid (param $b $bytes) (result $text) (%effects pure)
+      (%match (%inst $option $text) (result $text)
         (%text.from-bytes (local.get $b))
         (case none () (unreachable))
         (case some ($s) (local.get $s))))
 
-    (func $concat (param $a %text) (param $b %text) (result %text)
+    (func $concat (param $a $text) (param $b $text) (result $text)
       (%effects reads writes allocates)
       (call $valid
         (call $buffer.concat (%text.bytes (local.get $a)) (%text.bytes (local.get $b))))
     )
 
-    (func $u64 (param $n i64) (result %text) (%effects reads writes allocates)
+    (func $u64 (param $n i64) (result $text) (%effects reads writes allocates)
       (%let $out (array.new $Array (i32.const 48) (i32.const 20))
         (%loop $digits
           (bind $n i64 (local.get $n))
           (bind $i i32 (i32.const 19))
-          (result %text)
+          (result $text)
           (block
-            (result %text)
+            (result $text)
             (array.set $Array
               (local.get $out)
               (local.get $i)
@@ -110,7 +115,7 @@
                 (i32.wrap_i64 (i64.rem_u (local.get $n) (i64.const 10))))
             )
             (if
-              (result %text)
+              (result $text)
               (i64.lt_u (local.get $n) (i64.const 10))
               (then
                 (call $valid
@@ -126,9 +131,9 @@
             ))))
     )
 
-    (func $s64 (param $n i64) (result %text) (%effects reads writes allocates)
+    (func $s64 (param $n i64) (result $text) (%effects reads writes allocates)
       (if
-        (result %text)
+        (result $text)
         (i64.lt_s (local.get $n) (i64.const 0))
         (then
           (call $concat
@@ -206,7 +211,7 @@
           (i32.add (local.get $i) (local.get $w))))
     )
 
-    (func $json (param $s %text) (result %text) (%effects reads writes allocates)
+    (func $json (param $s $text) (result $text) (%effects reads writes allocates)
       (%let $b (%text.bytes (local.get $s))
         (%let $size
           (%loop $size
@@ -233,9 +238,9 @@
             (%loop $copy
               (bind $i i32 (i32.const 0))
               (bind $p i32 (i32.const 1))
-              (result %text)
+              (result $text)
               (if
-                (result %text)
+                (result $text)
                 (i32.eq (local.get $i) (%bytes.len (local.get $b)))
                 (then (call $valid (%bytes.from-array $Array (local.get $out))))
                 (else

@@ -1,0 +1,34 @@
+{
+  "schema": "wlt-eval-summary-v1",
+  "id": "standard-bindings-20261106-r1",
+  "status": "pass",
+  "passed": true,
+  "inputsFingerprint": "2adbf8585710dde95e511f2992ed9d81612b0b163cef7ddc7c3bfc50b909faf3",
+  "readability": {
+    "scores": {
+      "flow": 3,
+      "types": 3,
+      "scope": 3,
+      "layout": 3,
+      "changes": 3
+    },
+    "total": 15,
+    "meetsTarget": true
+  },
+  "answers": {
+    "reviewed": true,
+    "correct": true
+  },
+  "execution": {
+    "current": true,
+    "passed": true,
+    "implementation": "57fcf51d68d5bd1b9146efe2e3912c52294a03dc591b76b145dcdef57af00cf2",
+    "implementationChangedSincePrepare": false
+  },
+  "writer": {
+    "reported": true,
+    "completed": true,
+    "extraDocumentsRead": []
+  },
+  "notes": []
+}

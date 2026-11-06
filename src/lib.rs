@@ -12,6 +12,7 @@ pub mod flow;
 pub mod format;
 mod frontend;
 mod generics;
+pub mod inspect;
 pub mod ir;
 mod link;
 mod lists;
@@ -26,8 +27,11 @@ mod resources;
 pub mod runner;
 mod scoped;
 mod sexpr;
+mod simd;
 pub mod source;
-pub mod syntax;
+mod standard;
+mod standard_sources;
+mod syntax;
 mod type_syntax;
 pub mod typing;
 pub mod verified;
@@ -106,25 +110,37 @@ pub fn check_with_policy(
     source: &str,
     policy: &bindings::BindingPolicy,
 ) -> Result<ir::Module, Error> {
+    check_observed(source, policy, |_, _| ()).map(|(module, ())| module)
+}
+
+pub(crate) fn check_observed<T>(
+    source: &str,
+    policy: &bindings::BindingPolicy,
+    observe: impl FnOnce(&ir::Module, &generics::Expanded) -> T,
+) -> Result<(ir::Module, T), Error> {
+    let standard = standard::prepare(source)?;
+    let source = standard.source(source);
     let syntax = sexpr::parse(source)?;
-    let syntax = syntax::normalize(source, &syntax)?;
-    let syntax = modules::expand(source, &syntax)?;
-    let generics = generics::expand(source, &syntax.syntax)?;
+    let mut syntax = syntax::normalize(source, &syntax)?;
+    standard.rewrite(&mut syntax);
+    let syntax = modules::expand(source, &syntax).map_err(|e| standard.annotate(e))?;
+    let generics = generics::expand(source, &syntax.syntax).map_err(|e| standard.annotate(e))?;
     let checked = (|| {
         let aliases = aliases::expand(source, &generics.syntax)?;
         let expanded = scoped::expand(source, &aliases.syntax)?;
         let (mut module, bounds) = frontend::check(source, &expanded, &generics.bounds)?;
         policy.apply(&mut module);
+        bindings::validate(source, &module)?;
         frontend::validate_alias_targets(source, &module, &aliases.targets)?;
         syntax.validate(source, &module, &generics.origins)?;
-        bindings::validate(source, &module)?;
         resources::validate(source, &module)?;
         bounds::check_effects(source, &module, &bounds)?;
         effects::validate(source, &module)?;
         ownership::validate(source, &module)?;
-        Ok(module)
+        let observation = observe(&module, &generics);
+        Ok((module, observation))
     })();
-    checked.map_err(|error| generics.annotate(source, error))
+    checked.map_err(|error| standard.annotate(generics.annotate(source, error)))
 }
 
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.

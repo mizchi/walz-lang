@@ -1,11 +1,13 @@
 (module
+  (%import "wlt:std"
+    (type $text))
   (%include "compute.wlt")
-  (func $add (param $g (ref $graph.Graph)) (param $id %text) (param $duration i64)
+  (func $add (param $g (ref $graph.Graph)) (param $id $text) (param $duration i64)
     (%match (call $graph.add (local.get $g) (local.get $id) (local.get $duration))
       (case ok () (nop))
       (case err ($e) (unreachable))))
 
-  (func $after (param $g (ref $graph.Graph)) (param $id %text) (param $dependency %text)
+  (func $after (param $g (ref $graph.Graph)) (param $id $text) (param $dependency $text)
     (%match (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))
       (case ok () (nop))
       (case err ($e) (unreachable))))
@@ -27,7 +29,7 @@
       (case ok ($r) (local.get $r))
       (case err ($e) (unreachable))))
 
-  (func $invalid (param $s %text) (result i32)
+  (func $invalid (param $s $text) (result i32)
     (%match (call $parse.command (local.get $s))
       (case skip () (i32.const 0))
       (case invalid () (i32.const 1))

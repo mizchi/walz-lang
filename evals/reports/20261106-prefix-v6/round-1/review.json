@@ -1,0 +1,7 @@
+{
+  "correct": true,
+  "reason": "main.wlt:5–14 と counted.wlt:4–26、契約:13–23を照合し、初期化1回・pair状態・I/O成功行の加算・業務エラーとの区別・EOF close・Resultと取消しの区別・result.letの式スコープは正しい。syntaxの6項目もチートシート:20–35/241–262/291–342へ照合し、入口だけの%・4種類のresult・ソースとWasmのimport/export・単相化後の検査・shared/pureの限界・opaque経路の制限を正しく説明している。layout=2の根拠は孤立した閉じ括弧と契約の長い行であり、実行成功による加点はない。",
+  "reviewedAt": "2026-11-05T15:13:23.508Z",
+  "inputsFingerprint": "a3d066cf74c8b7c85a3edfa283100b2128330c89d89bb2aed8b9416fd9536f74",
+  "readerSha256": "f4f4fda3b93c35fbc17518a4895c9ec9f1b0b5bf3638bbf0f92bf38b3f16da63"
+}

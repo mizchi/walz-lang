@@ -1,0 +1,7 @@
+{
+  "correct": true,
+  "reason": "main.wlt:9–18、counted.wlt:5–39、配布契約とチートシートを照合した。初期化1回、I/O成功行だけの加算、業務エラーとI/O errの区別、EOF closeと取消しの担当、透明aliasと共有pair、result.letの式スコープはいずれも正しい。syntaxの6項目も標準WATと%入口、結果宣言とResult値型、import/export、単相化、shared/pure、opaqueの保証範囲を正しく説明している。各3点の根拠は配布コードの具体的な行と残る確認負担に基づき、実行成功を加点していない。",
+  "reviewedAt": "2026-11-05T15:27:33.287Z",
+  "inputsFingerprint": "1473b1245ff990cae7f2f7f4a32c953e78daedc73ea7323ddf5e0905a3e6dc11",
+  "readerSha256": "c7b50884790402d3b86d940638e9a7462c75d0e972ab1d5da864da3cd03379e9"
+}

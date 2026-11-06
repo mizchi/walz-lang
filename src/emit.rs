@@ -326,6 +326,7 @@ impl Emitter<'_> {
             },
             Const { ty, literal } => format!("({}.const {literal})", ty.wat()),
             Numeric { op, args } => format!("({}{})", op.signature().name, self.arguments(args)),
+            Simd { op, args } => op.wat(&self.arguments(args)),
             Local(id) | Move(id) => match self.function.locals[id.0].kind {
                 BindingKind::Capture(index) => {
                     let FunctionKind::Closure { environment } = self.function.kind else {

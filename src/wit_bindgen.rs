@@ -46,6 +46,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
         String::from(";; Generated from WIT. Trust comes from bindings.json.\n(module\n");
     let mut policy = BindingPolicy::default();
     let mut names = std::collections::BTreeSet::new();
+    let mut standard_types = std::collections::BTreeSet::new();
     for item in resolve.worlds[world].imports.values() {
         let WorldItem::Interface { id, .. } = item else {
             return Err(fail(
@@ -76,11 +77,11 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
             let params = function
                 .params
                 .iter()
-                .map(|p| shape(&resolve, p.ty, 0))
+                .map(|p| shape(&resolve, p.ty, 0, ""))
                 .collect::<Result<Vec<_>, _>>()?;
             let result = function
                 .result
-                .map(|t| shape(&resolve, t, 0))
+                .map(|t| shape(&resolve, t, 0, ""))
                 .transpose()?
                 .unwrap_or("unit".into());
             let local = format!("${}.{}", interface.name.as_deref().unwrap(), function.name);
@@ -91,13 +92,25 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
                 "  (import {namespace:?} {:?} (func {local}",
                 function.name
             ));
-            for (param, ty) in function.params.iter().zip(&params) {
+            for param in &function.params {
+                let ty = shape(&resolve, param.ty, 0, "$")?;
+                standard_types.extend(
+                    ty.split(['(', ')', ' '])
+                        .filter(|t| t.starts_with('$'))
+                        .map(str::to_owned),
+                );
                 source.push_str(&format!(" (param ${} {ty})", param.name));
             }
-            if result != "unit" {
-                source.push_str(&format!(" (result {result})"));
+            if let Some(result) = function.result {
+                let ty = shape(&resolve, result, 0, "$")?;
+                standard_types.extend(
+                    ty.split(['(', ')', ' '])
+                        .filter(|t| t.starts_with('$'))
+                        .map(str::to_owned),
+                );
+                source.push_str(&format!(" (result {ty})"));
             }
-            source.push_str(&format!("))\n  (export (func {local}))\n"));
+            source.push_str(&format!("))\n  (%export (func {local}))\n"));
             policy.imports.push(PolicyImport {
                 module: namespace.clone(),
                 name: function.name.clone(),
@@ -118,41 +131,71 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
         ));
     }
     source.push_str(")\n");
+    if !standard_types.is_empty() {
+        let imports = standard_types
+            .iter()
+            .map(|name| format!(" (type {name})"))
+            .collect::<String>();
+        let start = source.find("(module\n").unwrap() + "(module\n".len();
+        source.insert_str(start, &format!("  (%import \"wlt:std\"{imports})\n"));
+    }
     let policy = serde_json::to_string_pretty(&policy).unwrap();
     BindingPolicy::parse(&policy)?;
-    let source = crate::syntax::migrate(&source)?.text().to_owned();
     Ok(Generated { source, policy })
 }
 
-fn shape(r: &Resolve, ty: Type, depth: usize) -> Result<String, Error> {
+fn shape(r: &Resolve, ty: Type, depth: usize, prefix: &str) -> Result<String, Error> {
     if depth > 64 {
         return Err(Error::message("WIT type nesting exceeds 64".into()));
     }
-    let sub = |t| shape(r, t, depth + 1);
-    let optional = |t: Option<Type>| t.map(sub).transpose().map(|x| x.unwrap_or("unit".into()));
+    let sub = |t| shape(r, t, depth + 1, prefix);
+    let constructor = |name: &str| {
+        if prefix.is_empty() {
+            name.to_owned()
+        } else {
+            format!("%inst ${name}")
+        }
+    };
+    let optional = |t: Option<Type>| {
+        t.map(sub)
+            .transpose()
+            .map(|x| x.unwrap_or_else(|| format!("{prefix}unit")))
+    };
     Ok(match ty {
         Type::S32 => "i32".into(),
         Type::S64 => "i64".into(),
         Type::F32 => "f32".into(),
         Type::F64 => "f64".into(),
-        Type::String => "text".into(),
+        Type::String => format!("{prefix}text"),
         Type::Id(id) => match &r.types[id].kind {
             TypeDefKind::Type(t) => sub(*t)?,
-            TypeDefKind::List(Type::U8) => "bytes".into(),
+            TypeDefKind::List(Type::U8) => format!("{prefix}bytes"),
             TypeDefKind::List(t) => {
                 let payload = sub(*t)?;
                 if contains_endpoint(r, *t, 0) {
                     return Err(Error::message("WIT list elements must be shared data; future/stream elements are unsupported".into()));
                 }
-                format!("(list {payload})")
+                format!("({} {payload})", constructor("list"))
             }
-            TypeDefKind::Option(t) => format!("(option {})", sub(*t)?),
-            TypeDefKind::Result(t) => format!("(result {} {})", optional(t.ok)?, optional(t.err)?),
+            TypeDefKind::Option(t) => format!("({} {})", constructor("option"), sub(*t)?),
+            TypeDefKind::Result(t) => {
+                format!(
+                    "({} {} {})",
+                    constructor("result"),
+                    optional(t.ok)?,
+                    optional(t.err)?
+                )
+            }
             TypeDefKind::Tuple(t) if t.types.len() == 2 => {
-                format!("(pair {} {})", sub(t.types[0])?, sub(t.types[1])?)
+                format!(
+                    "({} {} {})",
+                    constructor("pair"),
+                    sub(t.types[0])?,
+                    sub(t.types[1])?
+                )
             }
-            TypeDefKind::Future(t) => format!("(future {})", optional(*t)?),
-            TypeDefKind::Stream(t) => format!("(stream {})", optional(*t)?),
+            TypeDefKind::Future(t) => format!("({} {})", constructor("future"), optional(*t)?),
+            TypeDefKind::Stream(t) => format!("({} {})", constructor("stream"), optional(*t)?),
             t => {
                 return Err(Error::message(format!(
                     "unsupported WIT type: {}",

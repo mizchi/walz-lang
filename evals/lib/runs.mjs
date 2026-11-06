@@ -49,6 +49,7 @@ export async function implementationFingerprint(root = projectRoot) {
   for (const name of [
     "src",
     "runtime",
+    "stdlib",
     "Cargo.toml",
     "Cargo.lock",
     "package.json",
@@ -69,7 +70,7 @@ export async function implementationFingerprint(root = projectRoot) {
       else throw e;
     }
     for (const file of paths)
-      if (/\.(rs|mjs|md|json|yaml)$|Cargo\.(toml|lock)$/.test(file))
+      if (/\.(rs|mjs|md|json|yaml|wlt)$|Cargo\.(toml|lock)$/.test(file))
         hashes[relative(root, file)] = sha256(await readFile(file));
   }
   return { sha256: sha256(JSON.stringify(hashes)), files: hashes };
@@ -122,6 +123,16 @@ export async function prepareRun(
       await cp(join(root, name), destination, { recursive: true });
     }
     for (const role of ["reader", "writer"]) {
+      if (suite.apiReference) {
+        const document = await readFile(join(root, suite.apiReference), "utf8");
+        const sections = document.split(/(?=^### )/m);
+        const excerpt = suite.apiMembers.map((name) => {
+          const section = sections.find((s) => s.startsWith(`### \`${name}\`\n`));
+          if (!section) throw new Error("missing API documentation for " + name);
+          return section.split(/\n## /)[0].trimEnd();
+        }).join("\n\n");
+        await writeFile(join(directory, role, "api.md"), document.slice(0, document.indexOf("## 基本型")) + excerpt + "\n");
+      }
       await copyFile(
         join(root, suite.cheatsheet),
         join(directory, role, "cheatsheet.md"),
@@ -136,7 +147,7 @@ export async function prepareRun(
       );
       await writeFile(
         join(directory, role, "program.wlt"),
-        '(module (include "../support/examples/apps/stock-ledger/program.wlt"))\n',
+        '(module (%include "../support/examples/apps/stock-ledger/program.wlt"))\n',
       );
     }
     await copyFile(
@@ -174,7 +185,6 @@ export async function prepareRun(
         "--locked",
         "--quiet",
         "--",
-        "--legacy-syntax",
         "check",
         join(directory, "writer/candidate.wlt"),
       ]),
@@ -225,6 +235,7 @@ export async function prepareRun(
         "reader/rubric.md",
         "reader/main.wlt",
         "reader/counted.wlt",
+        ...(suite.apiReference ? ["reader/api.md"] : []),
       ],
       writer: [
         "writer/task.md",
@@ -232,6 +243,7 @@ export async function prepareRun(
         "writer/contract.md",
         "writer/main.wlt",
         "writer/candidate.wlt",
+        ...(suite.apiReference ? ["writer/api.md"] : []),
       ],
     };
     await save(join(directory, "manifest.json"), {
@@ -280,8 +292,9 @@ export async function readReader(directory) {
       directory,
     );
   const data = await json(join(directory, "reader.json"));
-  const axes = (await json(join(directory, "manifest.json"))).suite.axes;
-  for (const key of [
+  const { suite: runSuite } = await json(join(directory, "manifest.json"));
+  const axes = runSuite.axes;
+  for (const key of runSuite.answerKeys ?? [
     "flow",
     "state",
     "alias",
@@ -395,7 +408,7 @@ export async function scoreRun(directory) {
         const checks = execution.subjects?.[k]?.checks;
         return (
           execution.subjects?.[k]?.passed === true &&
-          checks?.length === manifest.suite.executionChecks &&
+          checks?.length === manifest.suite.executionChecks + (k === "candidate" ? (manifest.suite.additionalCandidateChecks ?? 0) : 0) &&
           checks.every((c) => c.passed === true)
         );
       })
