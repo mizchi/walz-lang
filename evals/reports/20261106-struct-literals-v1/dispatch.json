@@ -1,0 +1,32 @@
+{
+  "schema": "wlt-struct-dispatch-v1",
+  "context": "fresh; fork_turns=none",
+  "roles": {
+    "readerA": {
+      "task": "/root/struct_literal_reader_a_v1",
+      "read": [
+        "readability/readerA/packet.md"
+      ],
+      "write": [
+        "readability/readerA.json"
+      ]
+    },
+    "readerB": {
+      "task": "/root/struct_literal_reader_b_v1",
+      "read": [
+        "readability/readerB/packet.md"
+      ],
+      "write": [
+        "readability/readerB.json"
+      ]
+    }
+  },
+  "counterbalance": "readerB reverses the order and labels of readerA",
+  "historyAndPreviousScoresProvided": false,
+  "compilerUseAllowedForReaders": false,
+  "audit": {
+    "task": "/root/struct_literals_audit_v1",
+    "output": "audit.json",
+    "scope": "source audit; no language implementation changes"
+  }
+}

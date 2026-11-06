@@ -30,7 +30,7 @@
     (type $Bytes16 (struct (field $length i32) (field $values (ref $Vectors))))
     (func $limit
       (param $n i32)
-      (%effects pure)
+      (%effect pure)
       (if
         (i32.gt_u (local.get $n) (i32.const 16777216))
         (then (unreachable))
@@ -39,13 +39,13 @@
     (func $same-length
       (param $a i32)
       (param $b i32)
-      (%effects pure)
+      (%effect pure)
       (if (i32.ne (local.get $a) (local.get $b)) (then (unreachable)) (else (nop))))
 
     (func $new-i32
       (param $n i32)
       (result (ref $Ints))
-      (%effects allocates)
+      (%effect allocates)
       (block
         (result (ref $Ints))
         (call $limit (local.get $n))
@@ -54,7 +54,7 @@
     (func $new-f32
       (param $n i32)
       (result (ref $Floats))
-      (%effects allocates)
+      (%effect allocates)
       (block
         (result (ref $Floats))
         (call $limit (local.get $n))
@@ -64,21 +64,21 @@
       (param $xs (ref $Ints))
       (param $i i32)
       (param $x i32)
-      (%effects writes)
+      (%effect writes)
       (array.set $Ints (local.get $xs) (local.get $i) (local.get $x)))
 
     (func $set-f32
       (param $xs (ref $Floats))
       (param $i i32)
       (param $x f32)
-      (%effects writes)
+      (%effect writes)
       (array.set $Floats (local.get $xs) (local.get $i) (local.get $x)))
     ;; Only packing uses zero-extended tail reads. Scalar kernels use exact bounds.
     (func $get-i32
       (param $xs (ref $Ints))
       (param $i i32)
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (if
         (result i32)
         (i32.lt_u (local.get $i) (array.len (local.get $xs)))
@@ -89,7 +89,7 @@
       (param $xs (ref $Floats))
       (param $i i32)
       (result f32)
-      (%effects reads)
+      (%effect reads)
       (if
         (result f32)
         (i32.lt_u (local.get $i) (array.len (local.get $xs)))
@@ -100,7 +100,7 @@
       (param $xs (ref $Ints))
       (param $i i32)
       (result v128)
-      (%effects reads)
+      (%effect reads)
       (i32x4.replace_lane 3
         (i32x4.replace_lane 2
           (i32x4.replace_lane 1
@@ -116,7 +116,7 @@
       (param $xs (ref $Floats))
       (param $i i32)
       (result v128)
-      (%effects reads)
+      (%effect reads)
       (f32x4.replace_lane 3
         (f32x4.replace_lane 2
           (f32x4.replace_lane 1
@@ -132,7 +132,7 @@
       (param $xs (ref $Ints))
       (param $i i32)
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (i32.or
         (i32.and (call $get-i32 (local.get $xs) (local.get $i)) (i32.const 255))
         (i32.or
@@ -158,7 +158,7 @@
       (param $xs (ref $Ints))
       (param $i i32)
       (result v128)
-      (%effects reads)
+      (%effect reads)
       (i32x4.replace_lane 3
         (i32x4.replace_lane 2
           (i32x4.replace_lane 1
@@ -173,7 +173,7 @@
     (func $pack-i32
       (param $xs (ref $Ints))
       (result (ref $I32x4))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let
         (($n (array.len (local.get $xs)))
          ($count (i32.shr_u (i32.add (local.get $n) (i32.const 3)) (i32.const 2)))
@@ -195,7 +195,7 @@
     (func $pack-f32
       (param $xs (ref $Floats))
       (result (ref $F32x4))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let
         (($n (array.len (local.get $xs)))
          ($count (i32.shr_u (i32.add (local.get $n) (i32.const 3)) (i32.const 2)))
@@ -217,7 +217,7 @@
     (func $pack-bytes
       (param $xs (ref $Ints))
       (result (ref $Bytes16))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let
         (($n (array.len (local.get $xs)))
          ($count (i32.shr_u (i32.add (local.get $n) (i32.const 15)) (i32.const 4)))
@@ -241,7 +241,7 @@
     (func $sum-scalar
       (param $xs (ref $Ints))
       (result i64)
-      (%effects reads)
+      (%effect reads)
       (%loop $sum
         (bind $i i32 (i32.const 0))
         (bind $sum i64 (i64.const 0))
@@ -262,7 +262,7 @@
     (func $sum-simd
       (param $xs (ref $I32x4))
       (result i64)
-      (%effects reads)
+      (%effect reads)
       (%let $values (struct.get $I32x4 $values (local.get $xs))
         (%loop $sum
           (bind $i i32 (i32.const 0))
@@ -291,7 +291,7 @@
       (param $a (ref $Floats))
       (param $b (ref $Floats))
       (result f32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result f32)
         (call $same-length (array.len (local.get $a)) (array.len (local.get $b)))
@@ -318,7 +318,7 @@
       (param $a (ref $F32x4))
       (param $b (ref $F32x4))
       (result f32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result f32)
         (call $same-length
@@ -358,7 +358,7 @@
       (param $a (ref $Ints))
       (param $b (ref $Ints))
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result i32)
         (call $same-length (array.len (local.get $a)) (array.len (local.get $b)))
@@ -386,7 +386,7 @@
       (param $a (ref $I32x4))
       (param $b (ref $I32x4))
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result i32)
         (call $same-length
@@ -428,7 +428,7 @@
 
     (func $byte-needle
       (param $needle i32)
-      (%effects pure)
+      (%effect pure)
       (if
         (i32.gt_u (local.get $needle) (i32.const 255))
         (then (unreachable))
@@ -438,7 +438,7 @@
       (param $xs (ref $Ints))
       (param $needle i32)
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result i32)
         (call $byte-needle (local.get $needle))
@@ -464,7 +464,7 @@
       (param $xs (ref $Bytes16))
       (param $needle i32)
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (block
         (result i32)
         (call $byte-needle (local.get $needle))

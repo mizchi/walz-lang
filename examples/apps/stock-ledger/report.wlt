@@ -16,7 +16,7 @@
       (func $write (param $line $text) (result (%inst $future (%inst $result $unit i32))))
     )
     (%public (func $success) (func $failure) (func $invalid))
-    (func $error-name (param $e (ref $stock.Error)) (result $text) (%effects pure)
+    (func $error-name (param $e (ref $stock.Error)) (result $text) (%effect pure)
       (%match $stock.Error (result $text)
         (local.get $e)
         (case insufficient () (%text.lit "insufficient-stock"))
@@ -24,7 +24,7 @@
         (case capacity () (%text.lit "capacity"))))
 
     (func $base (param $op $text) (param $key $text) (result (ref $json.Object))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $o (call $json.new)
         (block
           (result (ref $json.Object))
@@ -33,7 +33,7 @@
           (local.get $o))))
 
     (func $success (param $op $text) (param $key $text) (param $quantity i64)
-      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
       (%let $o (call $base (local.get $op) (local.get $key))
         (block
           (result (%inst $result $unit i32))
@@ -45,7 +45,7 @@
         )))
 
     (func $failure (param $op $text) (param $key $text) (param $error (ref $stock.Error))
-      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
       (%let $o (call $base (local.get $op) (local.get $key))
         (block
           (result (%inst $result $unit i32))
@@ -59,7 +59,7 @@
             (call $write (call $json.finish (local.get $o))))
         )))
 
-    (func $invalid (result (%inst $result $unit i32)) (%effects host suspends)
+    (func $invalid (result (%inst $result $unit i32)) (%effect host suspends)
       (%future.await
         (%inst $result $unit i32)
         (call $write (%text.lit "{\"ok\":false,\"error\":\"invalid-command\"}"))))

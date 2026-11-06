@@ -41,7 +41,7 @@ import: `(func $buffer.concat)`。effect は宣言した上限（本体を検査
   (param $a $bytes)
   (param $b $bytes)
   (result $bytes)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -54,7 +54,7 @@ import: `(func $buffer.equal)`。effect は宣言した上限（本体を検査�
   (param $a $bytes)
   (param $b $bytes)
   (result i32)
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -68,7 +68,7 @@ import: `(func $buffer.find)`。effect は宣言した上限（本体を検査�
   (param $needle $bytes)
   (param $start i32)
   (result (%inst $option i32))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -82,7 +82,7 @@ import: `(func $buffer.find-byte)`。effect は宣言した上限（本体を検
   (param $start i32)
   (param $byte i32)
   (result i32)
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -97,7 +97,7 @@ import: `(func $buffer.parse-u64)`。effect は宣言した上限（本体を検
   (param $length i32)
   (param $limit i64)
   (result (%inst $option i64))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -110,7 +110,7 @@ import: `(func $buffer.split-once)`。effect は宣言した上限（本体を�
   (param $b $bytes)
   (param $needle $bytes)
   (result (%inst $option (%inst $pair $bytes $bytes)))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -128,7 +128,7 @@ import: `(func $string.concat)`。effect は宣言した上限（本体を検査
   (param $a $text)
   (param $b $text)
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -142,7 +142,7 @@ import: `(func $string.find)`。effect は宣言した上限（本体を検査�
   (param $needle $text)
   (param $start i32)
   (result (%inst $option i32))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -154,7 +154,7 @@ import: `(func $string.json)`。effect は宣言した上限（本体を検査�
 (func $string.json
   (param $s $text)
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -166,7 +166,7 @@ import: `(func $string.parse-s64)`。effect は宣言した上限（本体を検
 (func $string.parse-s64
   (param $s $text)
   (result (%inst $option i64))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -178,7 +178,7 @@ import: `(func $string.parse-u64)`。effect は宣言した上限（本体を検
 (func $string.parse-u64
   (param $s $text)
   (result (%inst $option i64))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -190,7 +190,7 @@ import: `(func $string.s64)`。effect は宣言した上限（本体を検査）
 (func $string.s64
   (param $n i64)
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -203,7 +203,7 @@ import: `(func $string.split-once)`。effect は宣言した上限（本体を�
   (param $s $text)
   (param $needle $text)
   (result (%inst $option (%inst $pair $text $text)))
-  (%effects pure)
+  (%effect pure)
 )
 ```
 
@@ -215,7 +215,7 @@ import: `(func $string.u64)`。effect は宣言した上限（本体を検査）
 (func $string.u64
   (param $n i64)
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -278,7 +278,7 @@ import: `(func $dict.clear)`。effect は宣言した上限（本体を検査）
   (%type.params $T)
   (%where (shared $T) (nonunit $T))
   (param $d (ref (%inst $dict.Dict $T)))
-  (%effects reads writes)
+  (%effect reads writes)
 )
 ```
 
@@ -292,7 +292,7 @@ import: `(func $dict.entries)`。effect は宣言した上限（本体を検査�
   (%where (shared $T) (nonunit $T))
   (param $d (ref (%inst $dict.Dict $T)))
   (result (%inst $list (%inst $pair $text $T)))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -307,7 +307,7 @@ import: `(func $dict.get)`。effect は宣言した上限（本体を検査）�
   (param $d (ref (%inst $dict.Dict $T)))
   (param $key $text)
   (result (%inst $option $T))
-  (%effects reads)
+  (%effect reads)
 )
 ```
 
@@ -321,7 +321,7 @@ import: `(func $dict.len)`。effect は宣言した上限（本体を検査）�
   (%where (shared $T) (nonunit $T))
   (param $d (ref (%inst $dict.Dict $T)))
   (result i32)
-  (%effects reads)
+  (%effect reads)
 )
 ```
 
@@ -334,7 +334,7 @@ import: `(func $dict.new)`。effect は宣言した上限（本体を検査）�
   (%type.params $T)
   (%where (shared $T) (nonunit $T))
   (result (ref (%inst $dict.Dict $T)))
-  (%effects allocates)
+  (%effect allocates)
 )
 ```
 
@@ -349,7 +349,7 @@ import: `(func $dict.remove)`。effect は宣言した上限（本体を検査�
   (param $d (ref (%inst $dict.Dict $T)))
   (param $key $text)
   (result (%inst $option $T))
-  (%effects reads writes)
+  (%effect reads writes)
 )
 ```
 
@@ -365,7 +365,7 @@ import: `(func $dict.set)`。effect は宣言した上限（本体を検査）�
   (param $key $text)
   (param $value $T)
   (result (%inst $option $T))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -394,7 +394,7 @@ import: `(func $list-builder.clear)`。effect は宣言した上限（本体を�
   (%type.params $T)
   (%where (shared $T) (nonunit $T))
   (param $b (ref (%inst $list-builder.Builder $T)))
-  (%effects writes)
+  (%effect writes)
 )
 ```
 
@@ -408,7 +408,7 @@ import: `(func $list-builder.extend)`。effect は宣言した上限（本体を
   (%where (shared $T) (nonunit $T))
   (param $b (ref (%inst $list-builder.Builder $T)))
   (param $values (%inst $list $T))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -422,7 +422,7 @@ import: `(func $list-builder.finish)`。effect は宣言した上限（本体を
   (%where (shared $T) (nonunit $T))
   (param $b (ref (%inst $list-builder.Builder $T)))
   (result (%inst $list $T))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -436,7 +436,7 @@ import: `(func $list-builder.len)`。effect は宣言した上限（本体を検
   (%where (shared $T) (nonunit $T))
   (param $b (ref (%inst $list-builder.Builder $T)))
   (result i32)
-  (%effects reads)
+  (%effect reads)
 )
 ```
 
@@ -449,7 +449,7 @@ import: `(func $list-builder.new)`。effect は宣言した上限（本体を検
   (%type.params $T)
   (%where (shared $T) (nonunit $T))
   (result (ref (%inst $list-builder.Builder $T)))
-  (%effects allocates)
+  (%effect allocates)
 )
 ```
 
@@ -463,7 +463,7 @@ import: `(func $list-builder.push)`。effect は宣言した上限（本体を�
   (%where (shared $T) (nonunit $T))
   (param $b (ref (%inst $list-builder.Builder $T)))
   (param $value $T)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -484,7 +484,7 @@ import: `(func $builder.finish)`。effect は宣言した上限（本体を検�
 (func $builder.finish
   (param $b (ref $builder.Builder))
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -496,7 +496,7 @@ import: `(func $builder.json)`。effect は宣言した上限（本体を検査�
 (func $builder.json
   (param $b (ref $builder.Builder))
   (param $s $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -507,7 +507,7 @@ import: `(func $builder.new)`。effect は宣言した上限（本体を検査�
 ```text
 (func $builder.new
   (result (ref $builder.Builder))
-  (%effects allocates)
+  (%effect allocates)
 )
 ```
 
@@ -519,7 +519,7 @@ import: `(func $builder.s64)`。effect は宣言した上限（本体を検査�
 (func $builder.s64
   (param $b (ref $builder.Builder))
   (param $n i64)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -531,7 +531,7 @@ import: `(func $builder.text)`。effect は宣言した上限（本体を検査�
 (func $builder.text
   (param $b (ref $builder.Builder))
   (param $s $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -543,7 +543,7 @@ import: `(func $builder.u64)`。effect は宣言した上限（本体を検査�
 (func $builder.u64
   (param $b (ref $builder.Builder))
   (param $n i64)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -565,7 +565,7 @@ import: `(func $json.boolean)`。effect は宣言した上限（本体を検査�
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value i32)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -577,7 +577,7 @@ import: `(func $json.finish)`。effect は宣言した上限（本体を検査�
 (func $json.finish
   (param $o (ref $json.Object))
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -588,7 +588,7 @@ import: `(func $json.new)`。effect は宣言した上限（本体を検査）�
 ```text
 (func $json.new
   (result (ref $json.Object))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -600,7 +600,7 @@ import: `(func $json.null)`。effect は宣言した上限（本体を検査）�
 (func $json.null
   (param $o (ref $json.Object))
   (param $key $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -614,7 +614,7 @@ import: `(func $json.number)`。effect は宣言した上限（本体を検査�
   (param $key $text)
   (param $lexeme $text)
   (result (%inst $result $unit i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -627,7 +627,7 @@ import: `(func $json.object)`。effect は宣言した上限（本体を検査�
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value (ref $json.Object))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -640,7 +640,7 @@ import: `(func $json.s64)`。effect は宣言した上限（本体を検査）�
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value i64)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -653,7 +653,7 @@ import: `(func $json.string)`。effect は宣言した上限（本体を検査�
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -666,7 +666,7 @@ import: `(func $json.u64)`。effect は宣言した上限（本体を検査）�
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value i64)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -679,7 +679,7 @@ import: `(func $json.value)`。effect は宣言した上限（本体を検査）
   (param $o (ref $json.Object))
   (param $key $text)
   (param $value (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -707,7 +707,7 @@ import: `(func $json-value.array)`。effect は宣言した上限（本体を検
 ```text
 (func $json-value.array
   (result (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -719,7 +719,7 @@ import: `(func $json-value.as-boolean)`。effect は宣言した上限（本体�
 (func $json-value.as-boolean
   (param $value (ref $json-value.Value))
   (result (%inst $option i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -731,7 +731,7 @@ import: `(func $json-value.as-number)`。effect は宣言した上限（本体�
 (func $json-value.as-number
   (param $value (ref $json-value.Value))
   (result (%inst $option $text))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -743,7 +743,7 @@ import: `(func $json-value.as-string)`。effect は宣言した上限（本体�
 (func $json-value.as-string
   (param $value (ref $json-value.Value))
   (result (%inst $option $text))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -756,7 +756,7 @@ import: `(func $json-value.at)`。effect は宣言した上限（本体を検査
   (param $array (ref $json-value.Value))
   (param $index i32)
   (result (%inst $option (ref $json-value.Value)))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -768,7 +768,7 @@ import: `(func $json-value.boolean)`。effect は宣言した上限（本体を�
 (func $json-value.boolean
   (param $value i32)
   (result (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -781,7 +781,7 @@ import: `(func $json-value.get)`。effect は宣言した上限（本体を検�
   (param $object (ref $json-value.Value))
   (param $key $text)
   (result (%inst $option (ref $json-value.Value)))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -793,7 +793,7 @@ import: `(func $json-value.kind)`。effect は宣言した上限（本体を検�
 (func $json-value.kind
   (param $value (ref $json-value.Value))
   (result (ref $json-value.Kind))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -804,7 +804,7 @@ import: `(func $json-value.null)`。effect は宣言した上限（本体を検�
 ```text
 (func $json-value.null
   (result (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -816,7 +816,7 @@ import: `(func $json-value.number)`。effect は宣言した上限（本体を�
 (func $json-value.number
   (param $lexeme $text)
   (result (%inst $result (ref $json-value.Value) i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -827,7 +827,7 @@ import: `(func $json-value.object)`。effect は宣言した上限（本体を�
 ```text
 (func $json-value.object
   (result (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -839,7 +839,7 @@ import: `(func $json-value.parse)`。effect は宣言した上限（本体を検
 (func $json-value.parse
   (param $source $text)
   (result (%inst $result (ref $json-value.Value) i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -852,7 +852,7 @@ import: `(func $json-value.prepend)`。effect は宣言した上限（本体を�
   (param $array (ref $json-value.Value))
   (param $item (ref $json-value.Value))
   (result (%inst $result (ref $json-value.Value) i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -866,7 +866,7 @@ import: `(func $json-value.set)`。effect は宣言した上限（本体を検�
   (param $key $text)
   (param $item (ref $json-value.Value))
   (result (%inst $result (ref $json-value.Value) i32))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -878,7 +878,7 @@ import: `(func $json-value.string)`。effect は宣言した上限（本体を�
 (func $json-value.string
   (param $value $text)
   (result (ref $json-value.Value))
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```
 
@@ -890,6 +890,6 @@ import: `(func $json-value.stringify)`。effect は宣言した上限（本体�
 (func $json-value.stringify
   (param $value (ref $json-value.Value))
   (result $text)
-  (%effects reads writes allocates)
+  (%effect reads writes allocates)
 )
 ```

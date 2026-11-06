@@ -14,7 +14,7 @@
     (export "normalize")
     (param $source $text)
     (result (%inst $result $text i32))
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%result.do
       ($value (call $parse (local.get $source)))
       (%result.ok (call $stringify (local.get $value))))
@@ -23,7 +23,7 @@
   (func $answer
     (param $value (ref $Value))
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (%match (call $get (local.get $value) (%text.lit "answer"))
       (case none () (i32.const 0))
       (case some ($field)
@@ -39,7 +39,7 @@
   (func $main
     (export "main")
     (result i32)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%match
       (call $parse (%text.lit "{\"answer\":42,\"items\":[null,true,\"日本語🦀\"]}"))
       (case err ($offset) (i32.const 0))

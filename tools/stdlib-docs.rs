@@ -10,6 +10,9 @@ impl Error {
     fn at(_: &str, span: ir::Span, message: impl std::fmt::Display) -> Self {
         Self(format!("byte {}: {message}", span.start))
     }
+    fn with_code(self, code: &str) -> Self {
+        Self(format!("{code}: {}", self.0))
+    }
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -63,7 +66,7 @@ fn effect_text(e: &wlt::effects::EffectSet, module: &ir::Module) -> String {
     if names.is_empty() {
         names.push("pure".into());
     }
-    format!("(%effects {})", names.join(" "))
+    format!("(%effect {})", names.join(" "))
 }
 
 fn append_scope(
@@ -144,7 +147,7 @@ fn append_scope(
         }
         let fields = declaration.list().unwrap();
         let generic = fields.iter().any(|n| n.head() == Some("%type.params"));
-        let explicit = fields.iter().any(|n| n.head() == Some("%effects"));
+        let explicit = fields.iter().any(|n| n.head() == Some("%effect"));
         out.push_str(&format!("import: `(func {public_name})`。"));
         out.push_str(if explicit {
             "effect は宣言した上限（本体を検査）。\n\n"
@@ -157,7 +160,7 @@ fn append_scope(
         let signature = fields.iter().skip(2).filter(|n| {
             matches!(
                 n.head(),
-                Some("param" | "result" | "%type.params" | "%where" | "%effects")
+                Some("param" | "result" | "%type.params" | "%where" | "%effect")
             )
         });
         for field in signature {
@@ -267,7 +270,7 @@ mod tests {
             "$builder.Builder",
             "(func $builder.new",
             "(param $s $text)",
-            "(%effects allocates)",
+            "(%effect allocates)",
             "(func $list.map",
             "(type $dict.Dict\n  (%type.params $T)\n  (%where (shared $T) (nonunit $T))",
             "(func $dict.remove",

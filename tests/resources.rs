@@ -3,9 +3,9 @@ const SOURCE: &str = r#"(module
   (import "files" "open" (func $open (result i32)))
   (import "files" "read" (func $read (param $id i32) (result i32)))
   (import "files" "close" (func $close (param $id i32)))
-  (func $read-file (param $f (%borrow $File)) (result i32) (%effects host reads)
+  (func $read-file (param $f (%borrow $File)) (result i32) (%effect host reads)
     (call $read (%resource.handle (local.get $f))))
-  (func $main (export "main") (result i32) (%effects host reads writes allocates)
+  (func $main (export "main") (result i32) (%effect host reads writes allocates)
     (%using $f (%resource.new $File (call $open)) (call $read-file (local.get $f)))))"#;
 
 fn policy() -> wlt::bindings::BindingPolicy {
@@ -31,8 +31,8 @@ fn borrowed_resources_cannot_escape_or_be_duplicated() {
         SOURCE
             .replace("(call $read-file (local.get $f))", "(local.get $f)")
             .replace(
-                "(%result i32) (%effects host reads writes allocates)",
-                "(result (%borrow $File)) (%effects host reads writes allocates)",
+                "(%result i32) (%effect host reads writes allocates)",
+                "(result (%borrow $File)) (%effect host reads writes allocates)",
             ),
         SOURCE.replace(
             "(call $read-file (local.get $f))",
@@ -80,7 +80,7 @@ fn resources_and_borrows_resolve_across_an_opaque_namespace() {
         (import "files" "close" (func $drop (param $id i32)))
         (func $new (result (%resource $File)) (%resource.new $File (call $open)))
         (func $read (param $f (%borrow $File)) (result i32) (call $read-host (%resource.handle (local.get $f)))))
-      (func $main (export "main") (result i32) (%effects host reads writes allocates)
+      (func $main (export "main") (result i32) (%effect host reads writes allocates)
         (%using $file (call $file.new) (call $file.read (local.get $file)))))"#;
     wlt::component::compile_with_policy(source, &policy()).unwrap();
 }
@@ -90,7 +90,7 @@ fn dce_retains_the_implicit_destructor_of_a_raw_resource_factory() {
     let source = r#"(module
       (import "files" "open" (func $open (result i32)))
       (import "files" "close" (func $close (param $id i32)))
-      (func $main (export "main") (%effects host) (drop (call $open))))"#;
+      (func $main (export "main") (%effect host) (drop (call $open))))"#;
     let built = wlt::component::core_js::compile_with_policy(source, &policy()).unwrap();
     assert_eq!(built.manifest["imports"].as_array().unwrap().len(), 2);
 }

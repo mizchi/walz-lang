@@ -13,7 +13,7 @@
     (func $write-line (param $line $text) (result (%inst $future (%inst $result $unit i32)))))
 
   ;; Keep non-empty lines. All I/O errors are explicit Result values.
-  (func $main (export "main") (result (%inst $result i32 i32)) (%effects host suspends)
+  (func $main (export "main") (result (%inst $result i32 i32)) (%effect host suspends)
     (%loop $read (bind $lines (%inst $stream (%inst $result $text i32)) (call $read-lines))
                 (bind $count i32 (i32.const 0)) (result (%inst $result i32 i32))
       (%match (%inst $pair (%inst $stream (%inst $result $text i32)) (%inst $option (%inst $result $text i32)))

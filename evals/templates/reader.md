@@ -12,7 +12,7 @@
 - (result i64)、(result i32 i64)、(%inst $result i32 i64)、(result (%inst $result i32 i64)) の違い。
 - import/export と %import/%export の役割、ファイルパスを持つ入口。
 - %type.params / %where / %inst がいつ何を検査するか。関数・型・alias の適用形も書く。
-- shared と不変性、%effects pure と停止・trap の関係。
+- shared と不変性、%effect pure と停止・trap の関係。
 - 標準 WAT、型付きコア、コア外の WAT と構文マクロの混在で、得られる解析と保証の範囲。
 
 answers.bindings では、配布コードの複数束縛の %let を追い、評価順と回数、前の束縛の参照、後の束縛の先行参照、同名の再束縛、所有値の消費を説明する。pair の分解 let や Wasm の複数戻り値との違いも述べる。

@@ -812,7 +812,7 @@ pub(crate) fn check<'b>(
                     result_seen = true;
                     function.result = tables.ty(&parts[1])?;
                 }
-                Some("effects") if body.is_none() => {
+                Some("effect") if body.is_none() => {
                     if matches!(function.kind, FunctionKind::Import { .. }) {
                         return Err(tables.error(item, "imports cannot declare effect contracts"));
                     }
@@ -838,11 +838,9 @@ pub(crate) fn check<'b>(
                 }
                 _ => {
                     if body.is_some() {
-                        return Err(
-                            tables.error(item, "expected one folded expression as function body")
-                        );
+                        return Err(tables.error(item, "expected one expression as function body"));
                     }
-                    if item.list().is_none() {
+                    if item.list().is_none() && item.atom().is_none() {
                         return Err(tables.error(item, "expected folded expression"));
                     }
                     body = Some(item);
@@ -1612,6 +1610,243 @@ impl Checker<'_, '_> {
         Ok(expression)
     }
 
+    fn local_value(
+        &self,
+        node: &Sexp,
+        name: &str,
+        scope: &Scope,
+        moving: bool,
+    ) -> Result<(Type, ExprKind), Error> {
+        let id = *scope
+            .get(name)
+            .ok_or_else(|| self.unknown_local(node, name, scope))?;
+        Ok((
+            self.locals[id.0].ty.clone(),
+            if moving {
+                ExprKind::Move(id)
+            } else {
+                ExprKind::Local(id)
+            },
+        ))
+    }
+
+    fn numeric_constant(
+        &self,
+        node: &Sexp,
+        ty: NumType,
+        literal: &str,
+    ) -> Result<(Type, ExprKind), Error> {
+        let fragment = format!(
+            "(module (func (result {}) ({}.const {})))",
+            ty.wat(),
+            ty.wat(),
+            literal
+        );
+        wat::parse_str(&fragment).map_err(|_| {
+            self.tables
+                .error(node, "invalid numeric literal")
+                .with_code("E_NUMERIC_LITERAL")
+        })?;
+        Ok((
+            Type::Num(ty),
+            ExprKind::Const {
+                ty,
+                literal: literal.to_owned(),
+            },
+        ))
+    }
+
+    fn operator_expr(
+        &mut self,
+        node: &Sexp,
+        items: &[Sexp],
+        operator: crate::typeclasses::Operator,
+        scope: &Scope,
+        loops: &[LoopContext],
+        expected: Option<&Type>,
+    ) -> Result<(Type, ExprKind), Error> {
+        let tables = self.tables;
+        let symbol = items[0].atom().unwrap();
+        if items.len() != 3 {
+            return Err(tables
+                .error(
+                    node,
+                    format!("operator `{symbol}` requires exactly two operands"),
+                )
+                .with_code("E_OPERATOR_ARITY"));
+        }
+        // Comparisons return i32 independently of their operand type. Their
+        // surrounding result must never choose the width of the operands.
+        let mut input = operator.fixed_input().or_else(|| {
+            expected
+                .filter(|ty| operator.preserves_type() && !matches!(ty, Type::Unit | Type::Never))
+                .cloned()
+        });
+        let mut args = [None, None];
+        if input.is_none() {
+            for (index, argument) in items[1..].iter().enumerate() {
+                let local_count = self.locals.len();
+                let next_loop = self.next_loop;
+                match self.expr(argument, scope, loops, false) {
+                    Ok(value) => {
+                        if value.ty != Type::Never {
+                            input = Some(value.ty.clone());
+                        }
+                        // Reuse successful elaboration: probing nested operators
+                        // again would duplicate locals and exponential work.
+                        args[index] = Some(value);
+                        if input.is_some() {
+                            break;
+                        }
+                    }
+                    Err(error)
+                        if matches!(
+                            error.diagnostic().code,
+                            "E_LITERAL_TYPE" | "E_OPERATOR_TYPE"
+                        ) =>
+                    {
+                        // A contextual expression can allocate lexical IDs
+                        // before reaching a literal that needs its input type.
+                        self.locals.truncate(local_count);
+                        self.next_loop = next_loop;
+                        // Keep the work budget charged. Value-type interning is
+                        // an idempotent cache, not a source binding or an effect.
+                    }
+                    Err(error) => return Err(error),
+                }
+            }
+        }
+        let input = input.ok_or_else(|| tables.error(node,
+            format!("cannot determine operand type for `{symbol}`"))
+            .with_code("E_OPERATOR_TYPE")
+            .help("add (type T) to the surrounding let, declare an arithmetic result type, or give one operand an explicit type such as (i64.const 1); comparisons do not infer operand types from their i32 result"))?;
+        let op = operator.resolve(&input).ok_or_else(|| tables.error(node,
+            format!("{} has no instance for {}", operator.class().name(), tables.type_name(&input)))
+            .with_code("E_CLASS_INSTANCE")
+            .help(format!("{} supports {}; use explicit Wasm instructions for other numeric semantics, and explicitly unwrap newtypes", operator.class().name(), operator.class().supported_types())))?;
+        let mut values = Vec::new();
+        for (index, (argument, cached)) in items[1..].iter().zip(args).enumerate() {
+            let value = if let Some(value) = cached {
+                self.check(argument, &input, &value).map(|()| value)
+            } else {
+                self.expr_as(argument, scope, loops, false, &input)
+            }
+            .map_err(|error| {
+                error.expected_at(
+                    tables.source,
+                    items[0].span,
+                    format!(
+                        "operand {} of `{symbol}` requires {}",
+                        index + 1,
+                        tables.type_name(&input)
+                    ),
+                )
+            })?;
+            values.push(value);
+        }
+        let result = op.lower(values.try_into().unwrap(), node.span);
+        Ok((result.ty, result.kind))
+    }
+
+    fn named_struct(
+        &mut self,
+        node: &Sexp,
+        items: &[Sexp],
+        scope: &Scope,
+        loops: &[LoopContext],
+    ) -> Result<(Type, ExprKind), Error> {
+        use crate::sexpr::Kind;
+        let type_node = items
+            .get(1)
+            .ok_or_else(|| self.tables.error(node, "missing constructor type"))?;
+        let ty = self.tables.type_id(type_node)?;
+        let TypeKind::Struct(fields) = &self.module.types[ty.0].kind else {
+            return Err(self
+                .tables
+                .error(type_node, "named construction requires a struct type")
+                .with_code("E_STRUCT_FIELDS"));
+        };
+        let fields = fields.clone();
+        let plan = crate::construction::fields(self.tables.source, node, &fields, &items[2..])?;
+        let mut values = vec![None; fields.len()];
+        let mut bindings = Vec::new();
+        for (index, initializer) in plan {
+            let field = &fields[index];
+            // Text elision is local to named fields. Numeric literals and local
+            // reads use the same expected-type rules as every other expression.
+            let expanded;
+            let expression = if matches!(initializer.kind, Kind::Text(_) | Kind::Bytes(_)) {
+                if !matches!(self.tables.value(&field.ty), Some(ValueType::Text)) {
+                    return Err(self
+                        .tables
+                        .error(
+                            initializer,
+                            format!(
+                                "literal is not valid for field `{}`; expected {}",
+                                field.name.as_deref().unwrap_or(""),
+                                self.tables.type_name(&field.ty)
+                            ),
+                        )
+                        .with_code("E_STRUCT_LITERAL")
+                        .help("use an explicit expression for bytes and other non-text values"));
+                }
+                expanded = Sexp {
+                    span: initializer.span,
+                    kind: Kind::List(vec![
+                        Sexp {
+                            span: initializer.span,
+                            kind: Kind::Atom("text.lit".into()),
+                        },
+                        initializer.clone(),
+                    ]),
+                };
+                &expanded
+            } else {
+                initializer
+            };
+            let value = self.expr_as(expression, scope, loops, false, &field.ty)?;
+            // LocalId, rather than a source-level binding, makes these temporaries
+            // hygienic. Initializers cannot refer to another field's temporary.
+            let local = self.local(
+                format!("$__struct.{}", self.locals.len()),
+                initializer.span,
+                field.ty.clone(),
+                BindingKind::Let,
+            );
+            values[index] = Some(Expr {
+                ty: field.ty.clone(),
+                span: initializer.span,
+                kind: ExprKind::Local(local),
+            });
+            bindings.push((local, value));
+        }
+        let mut body = Expr {
+            ty: Type::Ref {
+                ty,
+                nullable: false,
+            },
+            span: node.span,
+            kind: ExprKind::StructNew {
+                ty,
+                values: values.into_iter().map(Option::unwrap).collect(),
+            },
+        };
+        // Evaluate in source order; only the final local reads use layout order.
+        // Abrupt completion never reaches later initializers or allocation.
+        for (local, value) in bindings.into_iter().rev() {
+            body = Expr {
+                ty: body.ty.clone(),
+                span: node.span,
+                kind: ExprKind::Let {
+                    local,
+                    value: Box::new(value),
+                    body: Box::new(body),
+                },
+            };
+        }
+        Ok((body.ty, body.kind))
+    }
+
     fn expr_expected(
         &mut self,
         node: &Sexp,
@@ -1620,11 +1855,75 @@ impl Checker<'_, '_> {
         tail: bool,
         expected: Option<&Type>,
     ) -> Result<Expr, Error> {
-        use ExprKind::*;
         self.remaining_work = self.remaining_work.checked_sub(1).ok_or_else(|| {
             self.tables
                 .error(node, "local type elaboration limit exceeded")
         })?;
+        if let Some(atom) = node.atom() {
+            let mut offset = 0;
+            let numeric = wast::lexer::Lexer::new(atom)
+                .parse(&mut offset)
+                .ok()
+                .flatten()
+                .is_some_and(|token| {
+                    matches!(
+                        token.kind,
+                        wast::lexer::TokenKind::Integer(_) | wast::lexer::TokenKind::Float(_)
+                    )
+                });
+            if !atom.starts_with('$') && !numeric {
+                // Keep native stack keywords on the existing opaque macro
+                // path. Only identifiers and numeric tokens are sugar here.
+                return Err(self.tables.error(node, "expected folded expression"));
+            }
+            let (ty, kind) = if atom.starts_with('$') {
+                self.local_value(node, atom, scope, false)?
+            } else if let Some(Type::Num(ty)) = expected
+                && *ty != NumType::V128
+            {
+                self.numeric_constant(node, *ty, atom)?
+            } else {
+                return Err(self.tables.error(node,
+                    "bare literal requires an expected numeric type (i32, i64, f32 or f64)")
+                    .with_code("E_LITERAL_TYPE")
+                    .help("add a type annotation or write an explicit constant such as (i32.const 1); numeric widths are not inferred from the value"));
+            };
+            return Ok(Expr {
+                ty,
+                span: node.span,
+                kind,
+            });
+        }
+        if let Some(operator) = node.head().and_then(crate::typeclasses::Operator::parse) {
+            return self
+                .operator_expr(
+                    node,
+                    self.tables.list(node)?,
+                    operator,
+                    scope,
+                    loops,
+                    expected,
+                )
+                .map(|(ty, kind)| Expr {
+                    ty,
+                    kind,
+                    span: node.span,
+                });
+        }
+        // Recursive operator elaboration does not need a stack frame containing
+        // the entire instruction dispatcher, especially in debug builds.
+        self.folded_expr_expected(node, scope, loops, tail, expected)
+    }
+
+    fn folded_expr_expected(
+        &mut self,
+        node: &Sexp,
+        scope: &Scope,
+        loops: &[LoopContext],
+        tail: bool,
+        expected: Option<&Type>,
+    ) -> Result<Expr, Error> {
+        use ExprKind::*;
         let items = self.tables.list(node)?;
         let head = items
             .first()
@@ -1676,7 +1975,12 @@ impl Checker<'_, '_> {
         } else if let Some(op) = NumericOp::parse(head) {
             let signature = op.signature();
             count(signature.arity + 1)?;
-            let args = self.expressions(&items[1..], scope, loops)?;
+            let args = items[1..]
+                .iter()
+                .map(|node| {
+                    self.expr_expected(node, scope, loops, false, Some(&Type::Num(signature.input)))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
             for (index, (node, argument)) in items[1..].iter().zip(&args).enumerate() {
                 self.check(node, &Type::Num(signature.input), argument)
                     .map_err(|error| {
@@ -1695,28 +1999,13 @@ impl Checker<'_, '_> {
             (Type::Num(signature.output), Numeric { op, args })
         } else if let Some(ty) = head.strip_suffix(".const").and_then(NumType::parse) {
             count(2)?;
-            let literal = self.tables.atom(&items[1])?.to_owned();
-            let fragment = format!(
-                "(module (func (result {}) ({} {})))",
-                ty.wat(),
-                head,
-                literal
-            );
-            wat::parse_str(&fragment)
-                .map_err(|_| self.tables.error(&items[1], "invalid numeric literal"))?;
-            (Type::Num(ty), Const { ty, literal })
+            self.numeric_constant(&items[1], ty, self.tables.atom(&items[1])?)?
         } else {
             match head {
                 "local.get" | "move" => {
                     count(2)?;
                     let name = self.tables.atom(&items[1])?;
-                    let id = *scope
-                        .get(name)
-                        .ok_or_else(|| self.unknown_local(&items[1], name, scope))?;
-                    (
-                        self.locals[id.0].ty.clone(),
-                        if head == "move" { Move(id) } else { Local(id) },
-                    )
+                    self.local_value(&items[1], name, scope, head == "move")?
                 }
                 "resource.new" => {
                     tables.count(node, items, 3)?;
@@ -2007,8 +2296,8 @@ impl Checker<'_, '_> {
                 "if" => {
                     let (result, start) = self.result(items, 1)?;
                     count(start + 3)?;
-                    let condition = self.expr(&items[start], scope, loops, false)?;
-                    self.check(&items[start], &Type::Num(NumType::I32), &condition)?;
+                    let condition =
+                        self.expr_as(&items[start], scope, loops, false, &Type::Num(NumType::I32))?;
                     let then_node = self.tables.branch(&items[start + 1], "then")?;
                     let else_node = self.tables.branch(&items[start + 2], "else")?;
                     let then_body = self.expr_as(then_node, scope, loops, tail, &result)?;
@@ -2196,6 +2485,7 @@ impl Checker<'_, '_> {
                     }
                     (result, Call { function: id, args })
                 }
+                "struct.named" => self.named_struct(node, items, scope, loops)?,
                 "struct.new" | "closure.new" => {
                     let type_node = items
                         .get(1)
@@ -2359,18 +2649,6 @@ impl Checker<'_, '_> {
             span: node.span,
             kind,
         })
-    }
-
-    fn expressions(
-        &mut self,
-        nodes: &[Sexp],
-        scope: &Scope,
-        loops: &[LoopContext],
-    ) -> Result<Vec<Expr>, Error> {
-        nodes
-            .iter()
-            .map(|node| self.expr(node, scope, loops, false))
-            .collect()
     }
 
     fn result(&self, items: &[Sexp], start: usize) -> Result<(Type, usize), Error> {
@@ -2544,16 +2822,11 @@ impl Checker<'_, '_> {
         expected: Option<&Type>,
     ) -> Result<(Type, ExprKind), Error> {
         let head = node.head().unwrap();
-        let explicit = match head {
-            "pair.new" | "result.ok" | "result.err" => {
-                items.len() >= 3
-                    && self.tables.is_payload_syntax(&items[1])
-                    && self.tables.is_payload_syntax(&items[2])
-            }
-            _ => items
-                .get(1)
-                .is_some_and(|n| self.tables.is_payload_syntax(n)),
-        };
+        let explicit = crate::type_syntax::explicit_constructor(
+            items,
+            |n| self.tables.is_payload_syntax(n),
+            |n| n.atom().is_some_and(|name| scope.contains_key(name)),
+        );
         let (shape, start, variant) = if !explicit {
             let shape = expected
                 .and_then(|ty| self.tables.value(ty))
@@ -2644,49 +2917,48 @@ impl Checker<'_, '_> {
         let name = items
             .get(1)
             .ok_or_else(|| tables.error(node, "missing match type"))?;
-        let (ty, result, start, subject) =
-            if name.list().is_some() && !tables.is_payload_syntax(name) {
-                let result = expected.cloned().ok_or_else(|| {
-                    tables.error(
-                        node,
-                        "match output needs an expected type; add a type annotation",
-                    )
-                })?;
-                let subject = self.expr(name, scope, loops, false)?;
-                let ty = match subject.ty {
-                    Type::Value(ty)
-                    | Type::Ref {
-                        ty,
-                        nullable: false,
-                    } => ty,
-                    _ => {
-                        return Err(
-                            tables.error(name, "match subject requires a non-null variant value")
-                        );
-                    }
-                };
-                (ty, result, 1, subject)
-            } else {
-                let ty = if name.atom().is_some() {
-                    tables.type_id(name)?
-                } else {
-                    let Type::Value(ty) = tables.ty(name)? else {
-                        return Err(tables.error(name, "expected variant, option, or result type"));
-                    };
-                    ty
-                };
-                let (result, start) = self.result(items, 2)?;
-                let subject_node = items
-                    .get(start)
-                    .ok_or_else(|| tables.error(node, "missing match subject"))?;
-                let subject_type = if ty.0 >= self.tables.types.len() {
-                    Type::Value(ty)
-                } else {
-                    self.module.instance_type(ty)
-                };
-                let subject = self.expr_as(subject_node, scope, loops, false, &subject_type)?;
-                (ty, result, start, subject)
+        let (ty, result, start, subject) = if items.get(2).and_then(Sexp::head) == Some("case") {
+            let result = expected.cloned().ok_or_else(|| {
+                tables.error(
+                    node,
+                    "match output needs an expected type; add a type annotation",
+                )
+            })?;
+            let subject = self.expr(name, scope, loops, false)?;
+            let ty = match subject.ty {
+                Type::Value(ty)
+                | Type::Ref {
+                    ty,
+                    nullable: false,
+                } => ty,
+                _ => {
+                    return Err(
+                        tables.error(name, "match subject requires a non-null variant value")
+                    );
+                }
             };
+            (ty, result, 1, subject)
+        } else {
+            let ty = if name.atom().is_some() {
+                tables.type_id(name)?
+            } else {
+                let Type::Value(ty) = tables.ty(name)? else {
+                    return Err(tables.error(name, "expected variant, option, or result type"));
+                };
+                ty
+            };
+            let (result, start) = self.result(items, 2)?;
+            let subject_node = items
+                .get(start)
+                .ok_or_else(|| tables.error(node, "missing match subject"))?;
+            let subject_type = if ty.0 >= self.tables.types.len() {
+                Type::Value(ty)
+            } else {
+                self.module.instance_type(ty)
+            };
+            let subject = self.expr_as(subject_node, scope, loops, false, &subject_type)?;
+            (ty, result, start, subject)
+        };
         let variant_count = self.variants(name, ty)?.len();
         let mut seen = BTreeSet::new();
         let mut arms = Vec::new();
@@ -2928,8 +3200,8 @@ impl Checker<'_, '_> {
             "array.new" => {
                 self.tables.count(node, items, 4)?;
                 let initial = self.expr_as(&items[2], scope, loops, false, &field.ty)?;
-                let length = self.expr(&items[3], scope, loops, false)?;
-                self.check(&items[3], &Type::Num(NumType::I32), &length)?;
+                let length =
+                    self.expr_as(&items[3], scope, loops, false, &Type::Num(NumType::I32))?;
                 Ok((
                     Type::Ref {
                         ty,
@@ -2977,9 +3249,9 @@ impl Checker<'_, '_> {
                 self.tables
                     .count(node, items, if head == "array.get" { 4 } else { 5 })?;
                 let object = self.expr(&items[2], scope, loops, false)?;
-                let index = self.expr(&items[3], scope, loops, false)?;
+                let index =
+                    self.expr_as(&items[3], scope, loops, false, &Type::Num(NumType::I32))?;
                 self.check(&items[2], &Type::Ref { ty, nullable: true }, &object)?;
-                self.check(&items[3], &Type::Num(NumType::I32), &index)?;
                 if head == "array.get" {
                     Ok((
                         field.ty,

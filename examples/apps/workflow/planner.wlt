@@ -21,40 +21,40 @@
         (field $workers (ref $Workers))
         (field $span (mut i64))))
     (func $entry (param $r (ref $Run)) (param $i i32) (result (ref $Phase))
-      (%effects reads)
+      (%effect reads)
       (array.get $Phases (struct.get $Run $phases (local.get $r)) (local.get $i)))
 
-    (func $count (param $r (ref $Run)) (result i32) (%effects pure)
+    (func $count (param $r (ref $Run)) (result i32) (%effect pure)
       (array.len (struct.get $Run $phases (local.get $r))))
 
-    (func $makespan (param $r (ref $Run)) (result i64) (%effects reads)
+    (func $makespan (param $r (ref $Run)) (result i64) (%effect reads)
       (struct.get $Run $span (local.get $r)))
 
-    (func $pending (param $p (ref $Phase)) (result i32) (%effects pure)
+    (func $pending (param $p (ref $Phase)) (result i32) (%effect pure)
       (%match (local.get $p)
         (case pending () (i32.const 1))
         (case running ($s $f $w) (i32.const 0))
         (case done ($s $f $w) (i32.const 0))))
 
-    (func $due (param $p (ref $Phase)) (result i64) (%effects pure)
+    (func $due (param $p (ref $Phase)) (result i64) (%effect pure)
       (%match (local.get $p)
         (case pending () (i64.const -1))
         (case running ($s $f $w) (local.get $f))
         (case done ($s $f $w) (i64.const -1))))
 
-    (func $start (param $r (ref $Run)) (param $i i32) (result i64) (%effects reads)
+    (func $start (param $r (ref $Run)) (param $i i32) (result i64) (%effect reads)
       (%match (call $entry (local.get $r) (local.get $i))
         (case pending () (unreachable))
         (case running ($s $f $w) (unreachable))
         (case done ($s $f $w) (local.get $s))))
 
-    (func $finish (param $r (ref $Run)) (param $i i32) (result i64) (%effects reads)
+    (func $finish (param $r (ref $Run)) (param $i i32) (result i64) (%effect reads)
       (%match (call $entry (local.get $r) (local.get $i))
         (case pending () (unreachable))
         (case running ($s $f $w) (unreachable))
         (case done ($s $f $w) (local.get $f))))
 
-    (func $worker (param $r (ref $Run)) (param $i i32) (result i32) (%effects reads)
+    (func $worker (param $r (ref $Run)) (param $i i32) (result i32) (%effect reads)
       (%match (call $entry (local.get $r) (local.get $i))
         (case pending () (unreachable))
         (case running ($s $f $w) (unreachable))
@@ -70,7 +70,7 @@
         (field $edges (ref $Ints))
         (field $ready (ref $queue.Heap))))
     (func $count-edges (param $g (ref $graph.Graph)) (param $remaining (ref $Ints))
-      (param $starts (ref $Ints)) (result i32) (%effects reads writes)
+      (param $starts (ref $Ints)) (result i32) (%effect reads writes)
       (%loop $jobs
         (bind $i i32 (i32.const 0))
         (bind $total i32 (i32.const 0))
@@ -122,7 +122,7 @@
     )
 
     (func $prepare (param $g (ref $graph.Graph)) (param $workers i32)
-      (result (ref $Work)) (%effects reads writes allocates)
+      (result (ref $Work)) (%effect reads writes allocates)
       (%let $n (call $graph.size (local.get $g))
         (%let $remaining (array.new $Ints (i32.const 0) (local.get $n))
           (%let $starts
@@ -201,7 +201,7 @@
                   ))))
           ))))
 
-    (func $release (param $work (ref $Work)) (param $job i32) (%effects reads writes)
+    (func $release (param $work (ref $Work)) (param $job i32) (%effect reads writes)
       (%let $starts (struct.get $Work $starts (local.get $work))
         (%let $remaining (struct.get $Work $remaining (local.get $work))
           (%for $children
@@ -234,7 +234,7 @@
       ))
 
     (func $blocked (param $r (ref $Run)) (param $g (ref $graph.Graph)) (result $text)
-      (%effects reads)
+      (%effect reads)
       (%loop $scan
         (bind $i i32 (i32.const 0))
         (result $text)
@@ -246,7 +246,7 @@
         )))
 
     (func $fill (param $work (ref $Work)) (param $g (ref $graph.Graph)) (param $now i64)
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $r (struct.get $Work $result (local.get $work))
         (%let $workers (struct.get $Run $workers (local.get $r))
           (%for $assign
@@ -283,7 +283,7 @@
               (else (nop))))
         )))
 
-    (func $next-time (param $r (ref $Run)) (result i64) (%effects reads)
+    (func $next-time (param $r (ref $Run)) (result i64) (%effect reads)
       (%let $workers (struct.get $Run $workers (local.get $r))
         (%loop $scan
           (bind $w i32 (i32.const 0))
@@ -313,7 +313,7 @@
         )))
 
     (func $complete (param $work (ref $Work)) (param $now i64) (result i32)
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $r (struct.get $Work $result (local.get $work))
         (%let $workers (struct.get $Run $workers (local.get $r))
           (%loop $finish
@@ -369,7 +369,7 @@
         )))
 
     (func $run (param $g (ref $graph.Graph)) (param $workers i32)
-      (result (%inst $result (ref $Run) (ref $domain.Error))) (%effects reads writes allocates)
+      (result (%inst $result (ref $Run) (ref $domain.Error))) (%effect reads writes allocates)
       (if
         (result (%inst $result (ref $Run) (ref $domain.Error)))
         (i32.or

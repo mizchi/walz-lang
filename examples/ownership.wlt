@@ -6,11 +6,11 @@
   (%closure $Take
     (%capture $ticket (%inst $own i64))
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (%match (%inst $own i64) (result i64) (%move $ticket)
       (case own ($value) (local.get $value))))
 
-  (func $main (export "main") (result i64) (%effects allocates)
+  (func $main (export "main") (result i64) (%effect allocates)
     (%let $pair
       (%pair.new (%inst $own i64) i64 (%own.new i64 (i64.const 40)) (i64.const 2))
       (%match (%inst $pair (%inst $own i64) i64) (result i64) (%move $pair)

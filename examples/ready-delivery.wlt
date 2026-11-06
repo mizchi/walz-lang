@@ -7,7 +7,7 @@
     (type $stream)
     (type $unit))
   ;; Already-ready local endpoints; no producer task or host I/O is started.
-  (func $sum (param $input (%inst $stream i64)) (result i64) (%effects suspends)
+  (func $sum (param $input (%inst $stream i64)) (result i64) (%effect suspends)
     (%loop $read
       (bind $stream (%inst $stream i64) (%move $input))
       (bind $sum i64 (i64.const 0)) (result i64)
@@ -22,7 +22,7 @@
             (case some ($value)
               (%recur $read (%move $next) (i64.add (local.get $sum) (local.get $value)))))))))
 
-  (func $main (export "main") (result i64) (%effects suspends)
+  (func $main (export "main") (result i64) (%effect suspends)
     (%let $transfer
       (%pair.new (%inst $stream i64) (%inst $future (%inst $result $unit i32))
         (%stream.cons i64 (i64.const 40)

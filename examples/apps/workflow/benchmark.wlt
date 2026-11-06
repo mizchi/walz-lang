@@ -25,7 +25,7 @@
         (local.get $g))))
 
   (func $chain (export "chain") (param $n i32) (param $rounds i32) (result i64)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (if
       (result i64)
       (i32.or
@@ -70,7 +70,7 @@
             ))))
     ))
 
-  (func $edge-limit (export "edge-limit") (result i32) (%effects reads writes allocates)
+  (func $edge-limit (export "edge-limit") (result i32) (%effect reads writes allocates)
     (%let $g (call $jobs (i32.const 257))
       (block
         (result i32)

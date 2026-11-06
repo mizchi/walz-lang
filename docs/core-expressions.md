@@ -8,6 +8,32 @@
 
 `(i32.trunc_f64_s (f64.sqrt (f64.const 1764)))` は42になる。変換に暗黙の丸め規則は追加しない。`trunc_*` は NaN や範囲外で Wasm の trap、`trunc_sat_*` は飽和変換になる。`nearest` は Wasm の偶数丸め。semantic effect の `pure` は trap しないという意味ではない。整数 law の証明対象も自動では拡大しない。
 
+## ローカル参照と数値の省略形
+
+式の位置にある`$foo`は`(local.get $foo)`と同じ。引数・let・ループ状態・case・catch・明示的なクロージャ捕捉の束縛を参照できる。フィールド名は束縛を作らず、globalや関数を自動で参照することもない。所有値には従来どおり`(%move $foo)`が必要。
+
+```wat
+(module
+  (func $inc (param $foo i64) (result i64)
+    (i64.add $foo 1))
+  (func $main (export "main") (result i64)
+    (%let (($start (type i64) 41)
+           ($answer (call $inc $start)))
+      $answer)))
+```
+
+letの型注釈は`(type T)`で表せる。単一の`(%let $x (type i32) 1 body)`と複数束縛のどちらでも使え、Tにはalias・参照型・`(%inst ...)`も置ける。注釈のない`(%let $x $foo body)`は、既存の`$foo`の型を使う。
+
+裸の数値は、期待型が`i32`・`i64`・`f32`・`f64`のいずれかに確定する式位置で、その型の`.const`へ展開する。期待型は、型注釈、関数の引数・戻り値、数値/SIMD命令のオペランド、宣言したblock/if/matchの結果、struct/arrayの要素、型を指定した値構築などから与える。条件式と配列インデックスはi32。`(i64.eq 1 2)`はi64の定数を比較してi32を返す。
+
+`(%let $x 1 body)`や`(drop 1)`は期待型がないためエラーになる。数値の大きさから幅を選ばず、後続の使用箇所から型を逆算しない。`(result)`の省略はunitのままであり、本体が裸の数値でも戻り値型を推論しない。
+範囲・16進数・浮動小数点・NaN/InfはWATの定数規則に従う。明示した`(i32.const 1)`やi32ローカルをi64へ暗黙に変換せず、newtypeを自動でwrapしない。v128には明示的な`v128.const`を使う。
+
+文字列の省略は[名前付きstructの初期値](struct-construction.md)に限る。型付きコアの外にあるWATのスタック構文や即値は、この省略形の対象にしない。標準WATとして有効な入力は引き続きそのままコンパイルする。
+展開後は既存のLocal/Constを使い、型・effect・所有権・領域の検査、最適化、`type-at`に同じ情報を渡す。実行例は[expression-sugar.wlt](../examples/expression-sugar.wlt)、検査は`just test-expression-sugar`。
+
+基本型には`+`・`=`・`<`等の[型クラス演算子](typeclasses.md)もある。型が確定すると、ここで扱う既存の数値命令へ直接展開する。
+
 ## `%result.do`
 
 ```wat

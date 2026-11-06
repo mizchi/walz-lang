@@ -131,7 +131,7 @@ fn namespace_resolution_preserves_existing_type_effect_and_ownership_checks() {
         );
         wlt::compile(&source).unwrap_or_else(|e| panic!("{name}: {e}"));
     }
-    let source = "(module (%namespace $lib (%public (func $set)) (type $C (struct (field (mut i32)))) (func $set (param $c (ref $C)) (struct.set $C 0 (local.get $c) (i32.const 1)))) (func $bad (%effects pure) (call $lib.set (unreachable))))";
+    let source = "(module (%namespace $lib (%public (func $set)) (type $C (struct (field (mut i32)))) (func $set (param $c (ref $C)) (struct.set $C 0 (local.get $c) (i32.const 1)))) (func $bad (%effect pure) (call $lib.set (unreachable))))";
     assert!(
         wlt::check(source)
             .unwrap_err()

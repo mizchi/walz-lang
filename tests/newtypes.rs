@@ -5,9 +5,9 @@ fn scalar_newtypes_are_nominal_and_erase_without_gc_allocations() {
     let source = r#"(module
       (type $Id (%newtype i32))
       (type $Count (%newtype i32))
-      (func $id (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effects pure) (local.get $x))
-      (func $take (param $x $Id) (result $Id) (%effects pure) (local.get $x))
-      (func $main (export "main") (result i32) (%effects pure)
+      (func $id (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effect pure) (local.get $x))
+      (func $take (param $x $Id) (result $Id) (%effect pure) (local.get $x))
+      (func $main (export "main") (result i32) (%effect pure)
         (%let $id $Id (%newtype.wrap $Id (i32.const 42))
           (%newtype.unwrap $Id (call $take (call (%inst $id $Id) (local.get $id)))))))"#;
     let module = wlt::check(source).unwrap();
@@ -45,9 +45,9 @@ fn newtypes_work_in_gc_storage_values_and_portable_scalar_boundaries() {
       (%import "wlt:std" (type $list))
       (type $Id (%newtype i64))
       (type $Box (struct (field $value $Id)))
-      (func $roundtrip (export "roundtrip") (param $id $Id) (result $Id) (%effects pure)
+      (func $roundtrip (export "roundtrip") (param $id $Id) (result $Id) (%effect pure)
         (local.get $id))
-      (func $stored (export "stored") (param $id $Id) (result (%inst $list $Id)) (%effects reads allocates)
+      (func $stored (export "stored") (param $id $Id) (result (%inst $list $Id)) (%effect reads allocates)
         (%let $b (struct.new $Box (local.get $id))
           (%list.new $Id (struct.get $Box $value (local.get $b))))))"#;
     let module = wlt::check(source).unwrap();
@@ -74,7 +74,7 @@ fn opaque_newtypes_keep_representation_private_and_laws_erase_after_checking() {
         (func $new (param $n i32) (result $Id) (%newtype.wrap $Id (local.get $n)))
         (func $number (param $id $Id) (result i32) (%newtype.unwrap $Id (local.get $id))))
       (%type.alias $Alias $user.Id)
-      (func $main (export "main") (result i32) (%effects pure) (call $user.number (call $user.new (i32.const 42)))))"#;
+      (func $main (export "main") (result i32) (%effect pure) (call $user.number (call $user.new (i32.const 42)))))"#;
     wlt::compile(source).unwrap();
     for body in [
         "(%newtype.unwrap $user.Id (call $user.new (i32.const 42)))",
@@ -101,7 +101,7 @@ fn abrupt_newtype_operands_keep_their_nominal_dependencies_during_linking() {
         "(%newtype.unwrap $Id (%newtype.wrap $Id (unreachable)))",
     ] {
         let source = format!(
-            "(module (type $Id (%newtype i32)) (func $main (export \"main\") (result i32) (%effects pure) {body}))"
+            "(module (type $Id (%newtype i32)) (func $main (export \"main\") (result i32) (%effect pure) {body}))"
         );
         wlt::compile(&source).unwrap();
     }

@@ -31,6 +31,13 @@ struct Surface<'a> {
 }
 impl Surface<'_> {
     fn annotation(&mut self, source: &str, name: &Sexp, ty: &Sexp) {
+        let ty = if ty.head() == Some("type")
+            && let Some([_, inner]) = ty.list()
+        {
+            inner
+        } else {
+            ty
+        };
         self.annotations
             .insert(name.span.start, source[ty.span.start..ty.span.end].into());
     }

@@ -12,7 +12,7 @@ fn command(mode: &str, source: &str) -> std::process::Output {
 }
 
 const GOOD: &str = r#"(module
-  (func $add (param $x i32) (param $y i32) (result i32) (%effects pure)
+  (func $add (param $x i32) (param $y i32) (result i32) (%effect pure)
     (i32.add (local.get $x) (local.get $y)))
   (%law "addition is commutative" (param $x i32) (param $y i32)
     (i32.eq (call $add (local.get $x) (local.get $y))
@@ -20,7 +20,7 @@ const GOOD: &str = r#"(module
   (%law "wrapping is wasm wrapping" (param $x i64)
     (i64.eq (i64.add (local.get $x) (i64.const 1))
             (i64.sub (local.get $x) (i64.const -1))))
-  (func $main (export "main") (result i32) (%effects pure)
+  (func $main (export "main") (result i32) (%effect pure)
     (call $add (i32.const 40) (i32.const 2))))"#;
 
 #[test]
@@ -109,7 +109,7 @@ fn proof_semantics_preserve_signedness_wrapping_masked_shifts_and_branching() {
         (%let $y (if (result i32) (i32.eqz (local.get $x))
                   (then (i32.const 1)) (else (local.get $x)))
           (i32.ne (local.get $y) (i32.const 0))))
-      (func $main (export "main") (result i32) (%effects pure)
+      (func $main (export "main") (result i32) (%effect pure)
         (i32.add
           (i32.shr_u (i32.const -1) (i32.const 33))
           (i32.const -2147483605))))"#;

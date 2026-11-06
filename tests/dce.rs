@@ -42,7 +42,7 @@ fn unused_trusted_imports_do_not_require_host_capabilities_or_abi_codecs() {
     let source = r#"(module
       (import "wlt:host/event-loop@0.1.0" "defer-i64"
         (func $sleep (param $n i32) (param $value i64) (result (%future i64))))
-      (func $main (export "main") (result i32) (%effects pure) (i32.const 42)))"#;
+      (func $main (export "main") (result i32) (%effect pure) (i32.const 42)))"#;
     let core = wlt::component::core_js::compile(source).unwrap();
     let component = wlt::component::compile(source).unwrap();
     assert_eq!(core.manifest["imports"].as_array().unwrap().len(), 0);
@@ -55,7 +55,7 @@ fn unused_trusted_imports_do_not_require_host_capabilities_or_abi_codecs() {
 fn unreachable_code_is_still_type_effect_and_ownership_checked() {
     for body in [
         "(func $bad (result i32) (i64.const 1))",
-        "(func $bad (param $b (ref $B)) (%effects pure) (struct.set $B 0 (local.get $b) (i32.const 1)))",
+        "(func $bad (param $b (ref $B)) (%effect pure) (struct.set $B 0 (local.get $b) (i32.const 1)))",
         "(func $bad (param $s (%stream i32)) (nop))",
     ] {
         let source = format!(

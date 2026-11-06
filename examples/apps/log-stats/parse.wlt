@@ -10,10 +10,10 @@
     (%public (type $Line) (type $Level) (func $line))
     (type $Level (%variant (info) (warn) (error)))
     (type $Line (%variant (skip) (invalid) (info i64) (warn i64) (error i64)))
-    (func $tab (param $s $bytes) (param $start i32) (result i32) (%effects pure)
+    (func $tab (param $s $bytes) (param $start i32) (result i32) (%effect pure)
       (call $buffer.find-byte (local.get $s) (local.get $start) (i32.const 9)))
 
-    (func $level (param $s $bytes) (param $end i32) (result i32) (%effects pure)
+    (func $level (param $s $bytes) (param $end i32) (result i32) (%effect pure)
       (if
         (result i32)
         (i32.eq (local.get $end) (i32.const 4))
@@ -66,14 +66,14 @@
       ))
 
     (func $duration (param $s $bytes) (param $start i32) (param $end i32)
-      (result (%inst $option i64)) (%effects pure)
+      (result (%inst $option i64)) (%effect pure)
       (call $buffer.parse-u64
         (local.get $s)
         (local.get $start)
         (i32.sub (local.get $end) (local.get $start))
         (i64.const 4294967295)))
 
-    (func $fields (param $s $bytes) (result (ref $Line)) (%effects allocates)
+    (func $fields (param $s $bytes) (result (ref $Line)) (%effect allocates)
       (%let $a (call $tab (local.get $s) (i32.const 0))
         (if
           (result (ref $Line))
@@ -110,7 +110,7 @@
                   ))))
           ))))
 
-    (func $line (param $line $text) (result (ref $Line)) (%effects allocates)
+    (func $line (param $line $text) (result (ref $Line)) (%effect allocates)
       (%let $s (%text.bytes (local.get $line))
         (if
           (result (ref $Line))

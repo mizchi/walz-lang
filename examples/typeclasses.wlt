@@ -1,0 +1,35 @@
+(module
+  (func $add (%type.params $T) (%where (Add $T))
+    (param $a $T) (param $b $T) (result $T)
+    (%effect pure)
+    (+ $a $b))
+
+  (func $minimum (%type.params $T) (%where (Ord $T))
+    (param $a $T) (param $b $T) (result $T)
+    (%effect pure)
+    (if (result $T) (< $a $b) (then $a) (else $b)))
+
+  (func $four (result i32) (%effect pure)
+    (+ 1 3))
+
+  (func $scaled (%type.params $T) (%where (Sub $T) (Mul $T) (Div $T))
+    (param $n $T) (param $offset $T) (param $scale $T) (param $denominator $T)
+    (result $T) (%effect pure)
+    (/ (* (- $n $offset) $scale) $denominator))
+
+  (func $masked (%type.params $T) (%where (Bitwise $T) (Shift $T))
+    (param $x $T) (param $mask $T) (param $n $T) (result $T)
+    (%effect pure)
+    (>>> (& $x $mask) $n))
+
+  (func $main (export "main") (result i64) (%effect pure)
+    (%let (($base (call (%inst $minimum i64) 40 99))
+           ($delta (type i64) 2))
+      (call (%inst $add i64) $base $delta)))
+
+  (%test "literal addition" (= (call $four) 4))
+  (%test "generic arithmetic" (= (call (%inst $scaled i64) 20 6 3 1) 42))
+  (%test "short circuit" (|| (= (call $four) 4) (unreachable)))
+  (%test "logical normalization" (&& 2 4))
+  (%test "generic mask and shift" (= (call (%inst $masked i64) 84 127 1) 42))
+  (%test "generic addition" (= (call $main) 42)))

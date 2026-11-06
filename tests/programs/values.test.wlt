@@ -4,9 +4,9 @@
     (type $result)
     (type $unit))
   (tag $Error (param i64))
-  (func $pure-option (param $n i64) (result (%inst $option i64)) (%effects pure)
+  (func $pure-option (param $n i64) (result (%inst $option i64)) (%effect pure)
     (%option.some i64 (local.get $n)))
-  (func $raise (%effects (throws $Error)) (throw $Error (i64.const 42)))
+  (func $raise (%effect (throws $Error)) (throw $Error (i64.const 42)))
 
   (%test "option is a pure value"
     (%match (%inst $option i64) (result i32) (call $pure-option (i64.const 42))

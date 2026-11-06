@@ -25,72 +25,59 @@
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (result (ref (%inst $Builder $T)))
-      (%effects allocates)
-      (struct.new (%inst $Builder $T) (ref.null (%inst $Chunk $T)) (i32.const 0)))
+      (%effect allocates)
+      (struct.new (%inst $Builder $T) (ref.null (%inst $Chunk $T)) 0))
 
     (func $len
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $b (ref (%inst $Builder $T)))
       (result i32)
-      (%effects reads)
-      (struct.get (%inst $Builder $T) $length (local.get $b)))
+      (%effect reads)
+      (struct.get (%inst $Builder $T) $length $b))
 
     (func $clear
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $b (ref (%inst $Builder $T)))
-      (%effects writes)
+      (%effect writes)
       (block
-        (struct.set
-          (%inst $Builder $T)
-          $head
-          (local.get $b)
-          (ref.null (%inst $Chunk $T)))
-        (struct.set (%inst $Builder $T) $length (local.get $b) (i32.const 0))))
+        (struct.set (%inst $Builder $T) $head $b (ref.null (%inst $Chunk $T)))
+        (struct.set (%inst $Builder $T) $length $b 0)))
 
     (func $push
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $b (ref (%inst $Builder $T)))
       (param $value $T)
-      (%effects reads writes allocates)
-      (%let $length (struct.get (%inst $Builder $T) $length (local.get $b))
+      (%effect reads writes allocates)
+      (%let $length (struct.get (%inst $Builder $T) $length $b)
         (if
-          (i32.eq (local.get $length) (i32.const -1))
+          (= $length -1)
           (then (unreachable))
           (else
             (block
               (struct.set
                 (%inst $Builder $T)
                 $head
-                (local.get $b)
-                (struct.new
-                  (%inst $Chunk $T)
-                  (local.get $value)
-                  (struct.get (%inst $Builder $T) $head (local.get $b))))
-              (struct.set
-                (%inst $Builder $T)
-                $length
-                (local.get $b)
-                (i32.add (local.get $length) (i32.const 1))))
-          ))))
+                $b
+                (struct.new (%inst $Chunk $T)
+                  $value
+                  (struct.get (%inst $Builder $T) $head $b)))
+              (struct.set (%inst $Builder $T) $length $b (+ $length 1))))
+        )))
 
     (func $extend
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $b (ref (%inst $Builder $T)))
       (param $values (%inst $list $T))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%for $append
-        (bind $i i32 (i32.const 0))
-        (while (i32.lt_u (local.get $i) (%list.len $T (local.get $values))))
-        (step (i32.add (local.get $i) (i32.const 1)))
-        (call
-          (%inst $push $T)
-          (local.get $b)
-          (%list.get $T (local.get $values) (local.get $i))))
-    )
+        (bind $i i32 0)
+        (while (i32.lt_u $i (%list.len $T $values)))
+        (step (+ $i 1))
+        (call (%inst $push $T) $b (%list.get $T $values $i))))
 
     (func $copy
       (%type.params $T)
@@ -98,59 +85,52 @@
       (param $out (ref (%inst $Storage $T)))
       (param $head (ref (%inst $Chunk $T)))
       (param $length i32)
-      (%effects writes)
+      (%effect writes)
       (%loop $copy
-        (bind $chunk (ref null (%inst $Chunk $T)) (local.get $head))
-        (bind $end i32 (local.get $length))
+        (bind $chunk (ref null (%inst $Chunk $T)) $head)
+        (bind $end i32 $length)
         (if
-          (ref.is_null (local.get $chunk))
+          (ref.is_null $chunk)
           (then (nop))
           (else
-            (%let $chunk (ref.as_non_null (local.get $chunk))
+            (%let $chunk (ref.as_non_null $chunk)
               (block
                 (array.set
                   (%inst $Storage $T)
-                  (local.get $out)
-                  (i32.sub (local.get $end) (i32.const 1))
-                  (struct.get (%inst $Chunk $T) $value (local.get $chunk)))
+                  $out
+                  (- $end 1)
+                  (struct.get (%inst $Chunk $T) $value $chunk))
                 (%recur $copy
-                  (struct.get (%inst $Chunk $T) $previous (local.get $chunk))
-                  (i32.sub (local.get $end) (i32.const 1))))
-            ))))
-    )
+                  (struct.get (%inst $Chunk $T) $previous $chunk)
+                  (- $end 1))))
+          ))))
 
     (func $finish
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $b (ref (%inst $Builder $T)))
       (result (%inst $list $T))
-      (%effects reads writes allocates)
-      (%let $length (struct.get (%inst $Builder $T) $length (local.get $b))
+      (%effect reads writes allocates)
+      (%let $length (struct.get (%inst $Builder $T) $length $b)
         (if
           (result (%inst $list $T))
-          (i32.eqz (local.get $length))
+          (i32.eqz $length)
           (then (%list.new $T))
           (else
             (%let
-              (($head
-                 (ref.as_non_null (struct.get (%inst $Builder $T) $head (local.get $b))))
+              (($head (ref.as_non_null (struct.get (%inst $Builder $T) $head $b)))
                ($out
                  (array.new
                    (%inst $Storage $T)
-                   (struct.get (%inst $Chunk $T) $value (local.get $head))
-                   (local.get $length))))
+                   (struct.get (%inst $Chunk $T) $value $head)
+                   $length)))
               (block
                 (result (%inst $list $T))
-                (call
-                  (%inst $copy $T)
-                  (local.get $out)
-                  (local.get $head)
-                  (local.get $length))
-                (%let $snapshot
-                  (%list.from-array $T (%inst $Storage $T) (local.get $out))
+                (call (%inst $copy $T) $out $head $length)
+                (%let $snapshot (%list.from-array $T (%inst $Storage $T) $out)
                   (block
                     (result (%inst $list $T))
-                    (call (%inst $clear $T) (local.get $b))
-                    (local.get $snapshot))))
-            ))))
-    )))
+                    (call (%inst $clear $T) $b)
+                    $snapshot))))
+          ))))
+  ))

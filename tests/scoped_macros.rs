@@ -23,7 +23,7 @@ fn result_propagation_does_not_hide_unconsumed_owners_or_effects() {
           (block (result (%result i64 i32)) (%future.close i64 (%move $owner)) (%result.ok i64 i32 (local.get $v)))))))"#;
     let error = wlt::check(source).unwrap_err().to_string();
     assert!(error.contains("ownership"), "{error}");
-    let source = "(module (func $f (result (%result i64 i32)) (%effects pure) (%stream.fold-result i64 i64 i32 (%stream.empty (%result i64 i32)) (i64.const 0) ($s $i) (%result.ok i64 i32 (local.get $s)))))";
+    let source = "(module (func $f (result (%result i64 i32)) (%effect pure) (%stream.fold-result i64 i64 i32 (%stream.empty (%result i64 i32)) (i64.const 0) ($s $i) (%result.ok i64 i32 (local.get $s)))))";
     assert!(
         wlt::check(source)
             .unwrap_err()

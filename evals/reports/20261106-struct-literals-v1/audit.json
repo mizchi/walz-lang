@@ -1,0 +1,265 @@
+{
+  "scope": {
+    "repository": "/Users/mz/ghq/github.com/mizchi/wlt-lang",
+    "revision": "68215f52d5f0f4cb6696edd9aed967d54dfcc30c",
+    "date": "2026-11-06",
+    "method": "現行ソースと仕様の静的監査。言語実装・既存評価結果は変更しない。",
+    "candidates": {
+      "current": "(struct.new $User (%text.lit \"Alice\") (i32.const 30) (%text.lit \"alice@example.com\"))",
+      "named_sexpr": "(%struct.new $User ($name (%text.lit \"Alice\")) ($age (i32.const 30)) ($email (%text.lit \"alice@example.com\")))",
+      "compact": "(%User::{:name \"Alice\" :age 30 :email \"alice@example.com\"})"
+    },
+    "comparison_note": "名前付け、波括弧、期待型による裸リテラルを独立した変更として比較する。named_sexpr は括弧を釣り合わせた比較用表記。",
+    "frontend_note": "現行 src/frontend.rs に struct_expr という関数はなく、expr_expected 内の struct.new 分岐を監査した。"
+  },
+  "findings": [
+    {
+      "severity": "info",
+      "claim": "現行の struct.new は型名と定義順の位置引数を要求し、宣言フィールド型ごとに値を検査して non-null な同一 nominal 型の StructNew を作る。二つの提案は現行では利用可能な構文ではない。",
+      "evidence": [
+        "src/frontend.rs:2199",
+        "src/frontend.rs:2225",
+        "src/frontend.rs:1214",
+        "src/frontend.rs:2233",
+        "src/syntax.rs:10",
+        "src/syntax.rs:334",
+        "src/sexpr.rs:118"
+      ],
+      "recommendation": "現行構文を維持した追加の構築表記として扱い、提案を現行コンパイラへそのまま入力できるとは説明しない。"
+    },
+    {
+      "severity": "high",
+      "claim": "WAT 互換を守るには文字列の単純置換や ':'/'::' の全域分割を避ける必要がある。現行 Reader は文字列と通常トークンを wast lexer に委ね、compile は合法な標準 WAT を優先して無変更で返す。固定版 wast の未引用識別子には ':' が含まれ、'{}' はその文字集合に含まれないが、文字列・引用識別子・コメントの内部には現れうる。",
+      "evidence": [
+        "src/sexpr.rs:86",
+        "src/sexpr.rs:139",
+        "src/sexpr.rs:152",
+        "src/lib.rs:164",
+        "SPEC.md:5",
+        "Cargo.toml:24",
+        "/Users/mz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wast-262.0.0/src/lexer.rs:278",
+        "/Users/mz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wast-262.0.0/src/lexer.rs:294",
+        "/Users/mz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wast-262.0.0/src/lexer.rs:448",
+        "/Users/mz/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wast-262.0.0/src/lexer.rs:585"
+      ],
+      "recommendation": "新構文を式の明示的な '%' 入口に限定し、コメント・WAT の引用識別子・文字列エスケープを理解する字句処理で認識する。$a::b、$a:b、$\"{}:::\"、文字列や data の \"{}:::\"、入れ子コメントを変更しない回帰例を設ける。標準 WAT 優先の経路を維持する。"
+    },
+    {
+      "severity": "high",
+      "claim": "名前付きフィールドを定義順へ並べ替えてから値式を評価すると、ソースの左右順を壊す。既存の StructNew は values の順をフィールド添字と評価順の両方に使うため、この二つの順序を分ける必要がある。",
+      "evidence": [
+        "CHEATSHEET.md:12",
+        "SPEC.md:72",
+        "SPEC.md:270",
+        "src/frontend.rs:2226",
+        "src/regions.rs:501",
+        "src/regions.rs:504",
+        "src/emit.rs:558"
+      ],
+      "recommendation": "各到達した値式をソース順に一度だけ評価し、衝突しない一時変数へ保存する。その参照だけを定義順に並べた既存 StructNew に渡す。例えば定義が name,age でソースが age,name なら、let t_age=age_expr; let t_name=name_expr; struct.new User t_name t_age とする。値式の複製・先行評価はしない。"
+    },
+    {
+      "severity": "high",
+      "claim": "必要なのは nominal struct の全フィールドへの一対一の対応であり、汎用 map の意味ではない。現行は引数数が宣言フィールド数と一致する必要があり、宣言の同名フィールドも拒否する。nullable であることからフィールドの省略は導けない。",
+      "evidence": [
+        "src/frontend.rs:671",
+        "src/frontend.rs:679",
+        "src/frontend.rs:2225",
+        "src/frontend.rs:1533",
+        "SPEC.md:33",
+        "SPEC.md:83"
+      ],
+      "recommendation": "重複キー・欠落・未知の余剰キーをすべて静的エラーにする。last-wins、追加キー、暗黙の null/nil/default、キー式の評価、動的探索、構造的な型互換、スプレッドは最小契約へ入れない。誤りは該当キーのソース位置で診断する。"
+    },
+    {
+      "severity": "medium",
+      "claim": "裸の 30 や \"Alice\" の導入はフィールド名の導入とは独立した型付け拡張である。現行の式は List を要求し、数値は明示された *.const の型と WAT のリテラル検査を使い、text.lit は UTF-8 の意味上の text 値を作る。既存の期待型伝播はフィールド型を利用できるが、裸の式を受理する規則そのものはない。",
+      "evidence": [
+        "src/frontend.rs:1628",
+        "src/frontend.rs:1696",
+        "src/frontend.rs:2271",
+        "src/frontend.rs:1602",
+        "src/frontend.rs:2226",
+        "SPEC.md:33",
+        "SPEC.md:43",
+        "SPEC.md:829",
+        "CHEATSHEET.md:9"
+      ],
+      "recommendation": "裸の数値は解決済みの期待型が i32/i64/f32/f64 のときだけ対応する *.const として検査し、既定 i32 や暗黙の数値変換は導入しない。範囲、符号、16進数、NaN/Inf を含め WAT の該当型の文法へ合わせる。裸文字列は期待型が text のときだけ text.lit へ展開し、bytes・参照・newtype へ自動変換しない。期待型が得られない位置では明示形を要求する。"
+    },
+    {
+      "severity": "high",
+      "claim": "%User:: という型名の埋め込みだけでは、既存の明示的な型適用と namespace の型参照を表現しきれない。現行の名義的型オペランドは type_syntax の専用 visitor から namespace 解決を経て、明示した型引数ごとに具体化される。",
+      "evidence": [
+        "src/type_syntax.rs:64",
+        "src/type_syntax.rs:79",
+        "src/type_syntax.rs:325",
+        "src/modules.rs:467",
+        "src/modules.rs:635",
+        "src/lib.rs:125",
+        "src/lib.rs:128",
+        "CHEATSHEET.md:360",
+        "CHEATSHEET.md:386",
+        "SPEC.md:671",
+        "SPEC.md:676"
+      ],
+      "recommendation": "User を文字列から独自に検索せず、$User・$ns.User・(%inst $Box i64) を既存の nominal 型参照として解決する契約を先に決める。初版の名前付きS式は %struct.new の第1オペランドに既存の型参照を置くと扱いを明示できる。型引数推論は追加しない。"
+    },
+    {
+      "severity": "high",
+      "claim": "新構文も opaque 型の構築制限を受ける必要がある。現行の制限は型付き IR の StructNew と元宣言・元スコープを照合し、generic origins とソース span を利用する。別名や短縮型名を使っても外側からの構築を認めてはいけない。",
+      "evidence": [
+        "src/modules.rs:515",
+        "src/modules.rs:540",
+        "src/modules.rs:543",
+        "src/modules.rs:549",
+        "src/lib.rs:137",
+        "SPEC.md:679",
+        "SPEC.md:791",
+        "SPEC.md:794"
+      ],
+      "recommendation": "同じ StructNew IR へ落とし、元の式の span と宣言スコープの対応を保持して既存の opaque 検査を必ず通す。公開 type と opaque type、import の別名、完全修飾名、具体化後の型で同じ可否となることを検査する。"
+    },
+    {
+      "severity": "high",
+      "claim": "通常の struct は共有 GC 格納であり、新しい名前付き構築表記は owned な record を追加するものではない。現行は struct の owned フィールドを宣言時に拒否し、所有値には明示 move と消費を要求する。共有参照の alias や mutability はそのまま残る。",
+      "evidence": [
+        "src/ownership.rs:77",
+        "src/ownership.rs:99",
+        "src/ownership.rs:152",
+        "src/ownership.rs:162",
+        "src/ownership.rs:443",
+        "src/ownership.rs:468",
+        "SPEC.md:365",
+        "SPEC.md:370",
+        "SPEC.md:378"
+      ],
+      "recommendation": "所有フィールド、暗黙 move、複製、暗黙 drop を許可しない。値式の内部で行う所有操作も既存の ownership/effect 検査を通す。生成した一時変数は各 initializer を一度だけ保持し、ユーザー変数の捕捉や所有値のコピーを起こさない。"
+    },
+    {
+      "severity": "high",
+      "claim": "initializer が throw・trap・return などで中断した場合、後続 initializer と最終 struct の生成は実行されない必要がある。各値を一回という契約は、到達した値についての契約である。effect 集合が同じであっても、値式を並べ替えてよい根拠にはならない。",
+      "evidence": [
+        "SPEC.md:270",
+        "SPEC.md:304",
+        "SPEC.md:378",
+        "src/ownership.rs:526",
+        "src/ownership_graph.rs:154",
+        "src/regions.rs:475",
+        "src/emit.rs:459"
+      ],
+      "recommendation": "ネストした let または同等の checked IR でソース順を保持する。副作用の記録、同じ可変 field の更新と読取り、例外を投げる中間 initializer、所有値を消費する initializer を含む差分検査を行い、後続の未実行と既存の例外時所有検査を確認する。独自の暗黙 catch/cleanup は追加しない。"
+    },
+    {
+      "severity": "medium",
+      "claim": "波括弧表記でも生成結果は通常の GC struct である。構築には観測可能な参照 identity と allocates があり、mutable field は mutable のままである。不変フィールドの読取りと mutable field の読取り・書込みの effect の違いも変わらない。",
+      "evidence": [
+        "SPEC.md:92",
+        "SPEC.md:93",
+        "SPEC.md:266",
+        "SPEC.md:300",
+        "src/frontend.rs:376",
+        "src/frontend.rs:2256",
+        "src/effects.rs:83",
+        "src/effects.rs:87",
+        "src/effects.rs:112",
+        "src/effects.rs:151",
+        "src/regions.rs:530"
+      ],
+      "recommendation": "構築時に一つの StructNew を作り、フィールド値の effect を合成する。immutable map・構造等値・interning・identity の省略を導入しない。mut は宣言から取得し、初期化を後続の struct.set 群へ変換しない。構築結果は non-null、nullable field の値は明示的な既存規則で検査する。"
+    },
+    {
+      "severity": "medium",
+      "claim": "名前付きS式案も '%' を一つ追加するだけでは実装できない。現行 normalize は未知の %struct.new を拒否し、($name value) の head を型適用の旧表記として解釈して %inst を要求する。ラベルと値式を区別した traversal が必要になる。",
+      "evidence": [
+        "src/syntax.rs:334",
+        "src/syntax.rs:345",
+        "src/syntax.rs:367",
+        "src/type_syntax.rs:123",
+        "src/type_syntax.rs:132",
+        "src/type_syntax.rs:325"
+      ],
+      "recommendation": "%struct.new を明示的な拡張として登録し、その内部の ($field expr) は構築専用のラベル節として扱う。キー自体を型・関数・ローカル参照として解決せず、値式だけを通常の式として再帰処理する。構築用型オペランドは既存 visitors に明示する。"
+    },
+    {
+      "severity": "medium",
+      "claim": "WAT の struct 宣言はフィールド名を省略できる。名前付き構築だけを唯一の構築法にすると、現行の匿名フィールドを表現できなくなる。既存の get/set は添字でも名前でもアクセスできる。",
+      "evidence": [
+        "src/frontend.rs:676",
+        "src/frontend.rs:679",
+        "src/frontend.rs:685",
+        "src/frontend.rs:1533",
+        "SPEC.md:83"
+      ],
+      "recommendation": "位置引数の struct.new を残す。初版の名前付き表記は全フィールドに名前がある型に限定するか、添字キーの規約を別に明記する。名前と位置の混在、匿名 field への自動命名は暗黙に追加しない。"
+    },
+    {
+      "severity": "medium",
+      "claim": "型を使って定義順を決める処理は、純粋な字句マクロとして完結しない。現行は parse、normalize、namespace 解決、generic 具体化、alias/scoped 展開、frontend の後に opaque・effect・所有権を検査する。生成名と期待型と元位置の扱いはこの順序に合わせる必要がある。",
+      "evidence": [
+        "src/lib.rs:125",
+        "src/lib.rs:128",
+        "src/lib.rs:131",
+        "src/lib.rs:137",
+        "src/lib.rs:140",
+        "src/frontend.rs:83",
+        "src/frontend.rs:1833",
+        "src/syntax.rs:175",
+        "SPEC.md:775",
+        "CHEATSHEET.md:36"
+      ],
+      "recommendation": "表層の認識と、型解決後の対応付け・一時変数生成を分離する。initializer の一時変数には field の期待型を伝え、構築値は元の non-null 型を保つ。生成 LocalId を使うか既存の衛生的な名前生成を利用し、ソース用の $__ 予約を誤って踏まない。型情報が必要な構築を opaque な WAT 混在経路へ無検査で流さない。"
+    },
+    {
+      "severity": "info",
+      "claim": "可読性上の候補利益は別々に説明できる。名前付けは値と field の対応を使用箇所に表す。波括弧は field 群の境界を示す別の記号を加える。裸リテラルは *.const/text.lit の表記を省く。対してそれぞれ、ラベル検査と並替え、字句・整形規則、期待型付けと診断の追加が必要になる。どれが読み取りの速度や正答率を改善するかはソース監査だけでは決まらない。",
+      "evidence": [
+        "CHEATSHEET.md:9",
+        "CHEATSHEET.md:11",
+        "src/frontend.rs:2199",
+        "src/sexpr.rs:118",
+        "src/frontend.rs:1628",
+        "src/frontend.rs:1696",
+        "src/frontend.rs:2271"
+      ],
+      "recommendation": "まず明示リテラルを共通にして位置引数と名前付きS式を比較し、次に同じ名前付き構築で波括弧だけ、裸リテラルだけを変える比較を行う。正答率・読了時間・誤った field 対応・型誤認を測るまでは『必ず読みやすい』『実装が短時間で済む』と断定しない。"
+    }
+  ],
+  "minimal_contract": [
+    "追加構文は nominal な既存 struct.new の糖衣であり、現行 struct.new を維持する。",
+    "型名は既存の静的名前解決と明示的な型適用を通す。型引数や未知の型を推測しない。",
+    "一つの型に対して各宣言フィールドをちょうど一度指定し、重複・欠落・余剰を静的に拒否する。",
+    "キーは静的なフィールドラベルであり、値式や汎用 map のキーではない。:name を使うなら $name への対応を明記する。",
+    "値式をソース順で評価し、到達した各式をちょうど一度だけ一時変数に保持してから、定義順の local 参照で StructNew を一つ生成する。",
+    "throw・trap・return などで中断したら後続値と struct の割当てを実行しない。",
+    "一時変数は衛生的に生成し、各値式には対応 field の期待型を伝え、元のソース位置を保持する。",
+    "裸の数値は解決済み期待型 i32/i64/f32/f64 の *.const として検査し、暗黙の数値変換・既定幅・桁あふれの独自処理を追加しない。",
+    "裸文字列は期待型 text に対する UTF-8 text.lit に限定し、bytes や任意の ref や newtype への変換はしない。",
+    "型が定まらない省略リテラルには明示形を要求する。明示的な既存式は引き続き使える。",
+    "結果の型は既存と同じ non-null nominal ref であり、nullable field に暗黙 null/nil を補わない。",
+    "共有 GC 格納への owned 値の禁止、明示 move、例外時の所有値検査を維持する。",
+    "宣言 namespace 外の opaque 型構築を、import 別名・完全修飾・具体化を含めて拒否する。",
+    "identity、allocates、initializer の effect、mutable field と get/set の規則を維持する。",
+    "波括弧・コロンを文字列、WAT の合法識別子、引用識別子、コメント、data 文字列内で再解釈せず、標準 WAT 優先を維持する。",
+    "匿名 field を持つ型の扱いを明記し、位置引数構文を失わせない。",
+    "汎用 map、追加キー、last-wins、暗黙 default、Clojure の nil・keyword 値の意味は導入しない。",
+    "型・opaque・effect・所有権を同じ checked IR と検査経路で検証する。構文展開だけを根拠に契約を検査済みとしない。"
+  ],
+  "preferred_first_step": "言語実装を変更せず、型と値式を明示したまま、現行位置引数と %struct.new の名前付きS式を比較する小さな読み取り評価を作る。これで名前付けの利益を先に測れる。その後、波括弧と裸リテラルを一つずつ追加して比較する。実装へ進む場合の最初の仕様は、既存の型参照を第1オペランドに取る名前付きS式、全 field 必須、ソース順一回評価から既存 StructNew への lowering とする。",
+  "open_questions": [
+    "%User:: の User は $User の別綴りとするか。$ns.User と (%inst $Box i64) を compact 表記でどう書くか。",
+    "名前付き表記は全フィールドが named な struct だけに限定するか。匿名 field の添字指定と名前・位置の混在を初版に含めるか。",
+    ":name の許容文字と $name への正確な対応は何か。field 内の '.' は namespace 区切りとして解釈せず、そのまま一致させるか。",
+    "裸リテラルは struct initializer の直下だけか、期待型のある一般式位置にも許すか。後者は比較・実装範囲が広がる。",
+    "f32/f64 の整数形、NaN payload、符号付き/符号なしビットパターン、16進数をどこまで WAT と同じ綴りで受理するか。",
+    "空 struct、空白・改行・コメント、入れ子の compact 構築、field 値が一般の式である場合の文法と整形規則をどう定めるか。",
+    "可読性評価の主な読み手は WAT 経験者か一般のアプリ開発者か。field 対応の理解、型の理解、変更時の誤り発見のどれを主な評価対象にするか。"
+  ],
+  "limitations": [
+    "静的なソース監査であり、提案構文のコンパイル、runtime の差分試験、可読性の被験者評価は実行していない。",
+    "言語実装は変更していない。既存の評価入力・他エージェントの入力と回答・既存結果は参照または変更していない。",
+    "指定された主要ファイルに加え、パイプライン・effect・出力順・検査順の根拠として src/lib.rs、src/effects.rs、src/emit.rs、src/ir.rs、src/flow.rs、src/ownership_graph.rs、Cargo.toml、および固定版 wast lexer を必要な範囲で参照した。",
+    "観測可能な意味の保全条件を挙げたものであり、完全な意味保存証明や実装工数の見積りではない。",
+    "revision はコミット識別子であり、作業ツリー全体の不変スナップショットを作成したものではない。根拠行は監査時点のファイルに対するもの。"
+  ]
+}

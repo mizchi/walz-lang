@@ -5,7 +5,7 @@
   (%include "stats.wlt")
   (type $Corpus (array $text))
   (func $once (param $input (ref $Corpus)) (param $rows i32) (result i64)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $s (call $stats.new)
       (%loop $scan
         (bind $i i32 (i32.const 0))
@@ -37,7 +37,7 @@
         ))))
   ;; The same parser and accumulator as main.wlt; deliberately no host/ABI I/O.
   (func $run (export "run") (param $rows i32) (param $rounds i32) (result i64)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (if
       (result i64)
       (i32.or

@@ -1,7 +1,6 @@
 (module
   (%namespace $list
-    (%import "wlt:std"
-      (type $list))
+    (%import "wlt:std" (type $list))
     (%export (func $map) (func $fold))
     (type $Storage (%type.params $T) (%where (shared $T) (nonunit $T)) (array (mut $T)))
     ;; F is the concrete, shared closure type. Each element calls it once.
@@ -11,34 +10,31 @@
       (param $xs (%inst $list $T))
       (param $f (ref $F))
       (result (%inst $list $U))
-      (%let $length (%list.len $T (local.get $xs))
+      (%let $length (%list.len $T $xs)
         (if
           (result (%inst $list $U))
-          (i32.eqz (local.get $length))
+          (i32.eqz $length)
           (then (%list.new $U))
           (else
             (%let $out
-              (array.new (%inst $Storage $U) (%closure.call $F (local.get $f) (%list.get $T (local.get $xs) (i32.const 0))) (local.get $length))
+              (array.new (%inst $Storage $U) (%closure.call $F $f (%list.get $T $xs 0)) $length)
               (block
                 (result (%inst $list $U))
                 (%loop $map
-                  (bind $i i32 (i32.const 1))
+                  (bind $i i32 1)
                   (if
-                    (i32.lt_u (local.get $i) (local.get $length))
+                    (i32.lt_u $i $length)
                     (then
                       (block
                         (array.set
                           (%inst $Storage $U)
-                          (local.get $out)
-                          (local.get $i)
-                          (%closure.call $F
-                            (local.get $f)
-                            (%list.get $T (local.get $xs) (local.get $i))))
-                        (%recur $map (i32.add (local.get $i) (i32.const 1))))
-                    )
+                          $out
+                          $i
+                          (%closure.call $F $f (%list.get $T $xs $i)))
+                        (%recur $map (+ $i 1))))
                     (else (nop))))
-                (%list.from-array $U (%inst $Storage $U) (local.get $out))))
-          ))))
+                (%list.from-array $U (%inst $Storage $U) $out))))
+        )))
 
     (func $fold
       (%type.params $T $S $F)
@@ -48,19 +44,14 @@
       (param $initial $S)
       (result $S)
       (%loop $fold
-        (bind $i i32 (i32.const 0))
-        (bind $state $S (local.get $initial))
+        (bind $i i32 0)
+        (bind $state $S $initial)
         (result $S)
         (if
           (result $S)
-          (i32.eq (local.get $i) (%list.len $T (local.get $xs)))
-          (then (local.get $state))
+          (= $i (%list.len $T $xs))
+          (then $state)
           (else
-            (%recur $fold
-              (i32.add (local.get $i) (i32.const 1))
-              (%closure.call $F
-                (local.get $f)
-                (local.get $state)
-                (%list.get $T (local.get $xs) (local.get $i))))
-          ))))
-  ))
+            (%recur $fold (+ $i 1) (%closure.call $F $f $state (%list.get $T $xs $i))))
+        ))))
+)

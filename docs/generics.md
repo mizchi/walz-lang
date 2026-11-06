@@ -1,14 +1,14 @@
 # 明示的な型引数と単相化
 
 宣言名の直後に `(%type.params $T ...)` を置く。`func`、`type`、`%type.alias`、
-`%closure` に共通の文法で、適用は `(%inst $name T...)`。型引数の推論・trait・辞書渡し・
+`%closure` に共通の文法で、適用は `(%inst $name T...)`。型引数の推論・利用者定義trait・辞書渡し・
 実行時の型消去は導入しない。通常の WAT の関数と呼び出しはそのまま使える。
 
 ```wat
 (module
-  (func $identity (%type.params $T) (param $x $T) (result $T) (%effects pure)
+  (func $identity (%type.params $T) (param $x $T) (result $T) (%effect pure)
     (local.get $x))
-  (func $main (export "main") (result i64) (%effects pure)
+  (func $main (export "main") (result i64) (%effect pure)
     (call (%inst $identity i64) (i64.const 42))))
 ```
 
@@ -81,7 +81,7 @@ func/type/type.alias/closure に共通で、制約はすべて満たす必要が
   (%where
     (shared $T $U)
     (nonunit $T $U)
-    (callable $F (param $T) (result $U) (%effects pure)))
+    (callable $F (param $T) (result $U) (%effect pure)))
   (param $xs (%inst $list $T)) (param $f (ref $F)) (result (%inst $list $U))
   (call (%inst $list.map $T $U $F) (local.get $xs) (local.get $f)))
 ```
@@ -90,14 +90,17 @@ func/type/type.alias/closure に共通で、制約はすべて満たす必要が
 | --- | --- |
 | `(shared $T...)` | 所有値と借用を含まない共有可能な型。GC 型・値型・クロージャの捕捉も再帰的に調べる |
 | `(nonunit $T...)` | unit 以外。格納や引数としての型の正当性は通常の型検査でも確認する |
-| `(callable $F (param T...) (result U) [(%effects ...)])` | F が共有・再呼出し可能な具体的な nominal クロージャ型で、引数列と戻り値の型が一致する |
+| `(Add $T...)` / `(Eq $T...)` / `(Ord $T...)` | [組み込み型クラス](typeclasses.md)の固定インスタンスがある具体型 |
+| `(Sub $T...)` / `(Mul $T...)` / `(Div $T...)` | 加算と同じ4つのスカラー型。整数除算はWasmの符号付き除算 |
+| `(Logical $T...)` / `(Bitwise $T...)` / `(Shift $T...)` | 論理演算はi32、ビット演算・シフトはi32/i64。論理演算は短絡するifへ展開 |
+| `(callable $F (param T...) (result U) [(%effect ...)])` | F が共有・再呼出し可能な具体的な nominal クロージャ型で、引数列と戻り値の型が一致する |
 
 shared は不変性を要求しない。可変 GC 配列・セルへの参照も、その中身が共有可能なら許可する。
 callable の署名は alias を展開した具体型で厳密に比較し、引数の反変性等の規則は追加しない。
 `(param)` は引数なし、`(result $unit)` は unit 戻り値。所有する捕捉を持つ一度きりの
 クロージャは callable を満たさない。引数や戻り値に所有型を明示すること自体は許可する。
 
-effects を省略した callable は effect の上限を課さない。指定する場合は通常の effect 契約と同じ
+`%effect` を省略した callable は effect の上限を課さない。指定する場合は通常の effect 契約と同じ
 reads/writes/allocates/suspends/host、`(throws $Tag...)`、`(throws *)` を使う。
 pure は単独で指定する。再帰・呼び出し先・catch を含む実際の本体から推論し、
 関数自身の effect 宣言を証拠として扱わない。ホスト import は信頼する policy に従い、
@@ -109,7 +112,7 @@ effect の上限は本体を型検査し、ホスト policy を適用した後�
 適用・制約の両方の位置を `E_GENERIC_BOUND` で報告し、effect 違反には呼び出し経路を付ける。
 
 未適用でも where の位置・構造・対象パラメータ名・effect の文法は検査する。
-抽象的な型変数を使った body の宣言時検査、型クラス、実装探索、辞書渡しは追加しない。
+抽象的な型変数を使った body の宣言時検査、利用者定義の型クラス・実装探索・辞書渡しは追加しない。
 制約は検査用の情報として消去し、実行用の関数やランタイムの状態を増やさない。
 stdlib/list.wlt の map/fold も shared/nonunit/callable を宣言する。
 例の `scale-pure` は純粋なコールバックに限定した map を両 ABI へ公開する。

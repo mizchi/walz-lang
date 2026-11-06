@@ -8,9 +8,9 @@
 ```wat
 (module
   (%export (func $answer) (func $unused))
-  (func $helper (result i32) (%effects pure) (i32.const 42))
-  (func $answer (result i32) (%effects pure) (call $helper))
-  (func $unused (result i32) (%effects pure) (i32.const 99)))
+  (func $helper (result i32) (%effect pure) (i32.const 42))
+  (func $answer (result i32) (%effect pure) (call $helper))
+  (func $unused (result i32) (%effect pure) (i32.const 99)))
 ```
 
 `main.wlt`:

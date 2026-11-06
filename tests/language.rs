@@ -233,7 +233,7 @@ fn rejects_programs_outside_the_analyzable_core() {
         ("(module (memory 1))", "unsupported declaration"),
         (
             "(module (func $f (param $x i64) (result i64) local.get $x))",
-            "folded expression",
+            "one expression as function body",
         ),
         ("(module (func $f) (func $f))", "duplicate function"),
         ("(module (type $T (array (ref $Missing))))", "unknown type"),

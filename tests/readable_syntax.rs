@@ -256,7 +256,7 @@ fn short_macros_preserve_ownership_and_effect_boundaries() {
           (%let $owner (%future.ready i64 (i64.const 0))
             (%result.let ($v) (local.get $r)
               (block (result (%result i64 i32)) (%future.close i64 (%move $owner)) (%result.ok (local.get $v)))))))"#,
-        r#"(module (func $f (result (%result i64 i32)) (%effects pure)
+        r#"(module (func $f (result (%result i64 i32)) (%effect pure)
           (%stream.fold-result (%stream.empty (%result i64 i32)) (i64.const 0) ($s $i)
             (%result.ok (local.get $s)))))"#,
         r#"(module (func $f (param $r (%result i64 (%own i32))) (result (%result i64 (%own i32)))

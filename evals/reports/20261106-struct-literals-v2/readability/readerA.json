@@ -1,0 +1,72 @@
+{
+  "variants": {
+    "R": {
+      "answers": {
+        "user": {"name": "Alice", "age": 30, "email": "alice@example.com"},
+        "bucket": {"count": 7, "total": 91, "max": 22, "totalType": "i64"},
+        "nested": {"accepted": 11, "warnTotal": 19, "errorMax": 5},
+        "order": {"trace": [2, 1], "left": 1, "right": 2},
+        "cell": {"value": 40, "mutable": true},
+        "job": {"index": 3, "durationType": "i64", "depsNull": true, "keyFrom": "id"}
+      },
+      "edit": "(struct.new $Bucket\n  (i64.const 7)\n  (i64.const 100)\n  (i64.const 22)\n)",
+      "scores": {"fields": 2, "types": 3, "order": 2, "layout": 3, "changes": 3},
+      "evidence": "fields: R.bucket の 7/91/22 を $Bucket 宣言の count/total/max に照合し、R.nested では $State の第5フィールドが warn、その内側の第2値が total であることをさらに照合した。構築箇所に名前がなく、複数の宣言順を使った。types: R.bucket の (i64.const 91) は値型を示し、R.job の (local.get $duration) は提示された束縛の i64 を確認した。nominal 型は struct.new の $Bucket/$Job で明示されるが、R.cell の mutable は $Cell 宣言の (mut i32) の確認が必要だった。order: R.order は %let の $right、$left の順に mark が呼ばれ、その後の struct.new では $left、$right の順に配置される。trace とフィールド値を区別するため、逐次束縛の規則と $Pair 宣言順を行き来した。layout: R.user と R.bucket は各値が括弧で分かれる。R.nested は内側の struct.new の閉じ括弧を確認して次の Bucket に戻る必要があったが、インデントと型名でまとまりを追えた。changes: R.bucket の total を変更するには宣言で第2値と一度照合し、(i64.const 91) だけを (i64.const 100) に置き換えた。",
+      "unclear": [
+        "R.nested の同型の Bucket が info/warn/error のどれかは構築式だけでは判断できず、$State の宣言順との照合で解消した。",
+        "R.order の呼出し順と値の配置順が逆なので、%let と struct.new を別々に確認した。資料にない規則は補っていない。"
+      ]
+    },
+    "S": {
+      "answers": {
+        "user": {"name": "Alice", "age": 30, "email": "alice@example.com"},
+        "bucket": {"count": 7, "total": 91, "max": 22, "totalType": "i64"},
+        "nested": {"accepted": 11, "warnTotal": 19, "errorMax": 5},
+        "order": {"trace": [2, 1], "left": 1, "right": 2},
+        "cell": {"value": 40, "mutable": true},
+        "job": {"index": 3, "durationType": "i64", "depsNull": true, "keyFrom": "id"}
+      },
+      "edit": "(%struct.new $Bucket\n  ($count (i64.const 7))\n  ($total (i64.const 100))\n  ($max (i64.const 22))\n)",
+      "scores": {"fields": 4, "types": 3, "order": 3, "layout": 3, "changes": 4},
+      "evidence": "fields: S.user の $name/$age/$email、S.bucket の $total、S.nested の $warn 内の $total と $error 内の $max が各値に直接付いており、宣言の位置を数えずに対応を読めた。types: S.bucket の ($total (i64.const 91)) から値型が読め、S.job の $duration の型は与えられた束縛で確認できた。%struct.new $Cell で nominal 型は明示されるが、S.cell の mutable は $Cell 宣言の (mut i32) を確認した。order: S.order では $right の mark 2 が $left の mark 1 より先に書かれている。記述順に評価するという一つの規則を確認すれば trace [2,1] と名前に対応する left/right を分けて読めた。layout: S.bucket は ($field 式) の単位が明確。S.nested の $warn はフィールドの括弧と %struct.new の括弧を重ねて閉じるため、末尾の )) が何を閉じるか一部確認した。$warn と $error のラベルにより次のまとまりを見失わなかった。changes: S.bucket の ($total (i64.const 91)) を名前から直接特定し、その定数だけを 100 に変更できた。",
+      "unclear": []
+    },
+    "T": {
+      "answers": {
+        "user": {"name": "Alice", "age": 30, "email": "alice@example.com"},
+        "bucket": {"count": 7, "total": 91, "max": 22, "totalType": "i64"},
+        "nested": {"accepted": 11, "warnTotal": 19, "errorMax": 5},
+        "order": {"trace": [2, 1], "left": 1, "right": 2},
+        "cell": {"value": 40, "mutable": true},
+        "job": {"index": 3, "durationType": "i64", "depsNull": true, "keyFrom": "id"}
+      },
+      "edit": "(%Bucket::{\n  :count (i64.const 7)\n  :total (i64.const 100)\n  :max (i64.const 22)\n})",
+      "scores": {"fields": 4, "types": 3, "order": 3, "layout": 4, "changes": 4},
+      "evidence": "fields: T.user の :name/:age/:email、T.bucket の :total、T.nested の :warn 内の :total と :error 内の :max により対応が構築箇所で分かった。同型の Bucket 同士も親のフィールド名で区別できた。types: T.bucket の :total (i64.const 91) に値型があり、%Bucket::{ が宣言された nominal 型を指定することは表記の規則で確認した。T.job の durationType は提示された $duration の束縛、T.cell の mutable は $Cell 宣言の (mut i32) を確認した。order: T.order は :right の mark 2、:left の mark 1 という記述と、記述順に各1回評価する規則から読んだ。名前が配置先を示すため、$Pair の宣言順に並べ替えて trace を考える必要はなかった。layout: T.user/T.bucket では :field の後ろの括弧式が値の境界を示す。T.nested では普通の値式の ) と struct の }) を区別でき、:warn のまとまりの終わりと次の :error の開始が局所的に分かった。T.job の %text.bytes の内側の local.get も通常の式として境界を追えた。changes: T.bucket の :total (i64.const 91) の値だけを 100 に変更すればよく、同じ i64 の :count/:max の位置を数え直さなかった。",
+      "unclear": []
+    },
+    "U": {
+      "answers": {
+        "user": {"name": "Alice", "age": 30, "email": "alice@example.com"},
+        "bucket": {"count": 7, "total": 91, "max": 22, "totalType": "i64"},
+        "nested": {"accepted": 11, "warnTotal": 19, "errorMax": 5},
+        "order": {"trace": [2, 1], "left": 1, "right": 2},
+        "cell": {"value": 40, "mutable": true},
+        "job": {"index": 3, "durationType": "i64", "depsNull": true, "keyFrom": "id"}
+      },
+      "edit": "(%Bucket::{\n  :count 7\n  :total 100\n  :max 22\n})",
+      "scores": {"fields": 4, "types": 2, "order": 3, "layout": 4, "changes": 4},
+      "evidence": "fields: U.user の :name/:age/:email、U.bucket の :count/:total/:max が値を直接指定している。U.nested でも :warn 内の :total 19、:error 内の :max 5 を名前からたどれた。types: U.bucket の :total 91 だけでは i32/i64 が分からず $Bucket.total の i64 を確認し、U.cell の :value 40 は $Cell の i32 と mutable を宣言で確認した。U.user の文字列が $text になることも期待型の規則と宣言を使った。%Bucket::{ の nominal 型は明示されるが、複数の値型を期待型から補う必要があった。U.job の :duration (local.get $duration) は与えられた束縛で i64 と確認できた。order: U.order の :right と :left は呼出し式のままで、mark 2、mark 1 の記述順に各1回評価する規則を確認した。裸のリテラルを許す規則を呼出し順に拡張する必要はなかった。layout: U.user/U.bucket の各ラベルに続く単一リテラルは境界が明確で、U.nested の内側の Bucket は }) でまとまりが分かった。U.job の :key (%text.bytes (local.get $id)) のような通常の式も、リテラルとは区別して境界を読めた。changes: U.bucket の :total 91 を名前から直接特定し :total 100 に変更した。フィールドと構築型を変えないため期待型の i64 も保たれる。",
+      "unclear": [
+        "U.bucket の裸の 91 と U.cell の裸の 40 の整数幅は値の表記だけでは確定せず、それぞれのフィールド宣言との照合で解消した。裸の整数を一律 i32 とする慣習は補っていない。"
+      ]
+    }
+  },
+  "recommendation": "同型フィールドが多い構築や nested の保守には、名前で対象をたどれ、通常の式に値型も残る T を推薦する。括弧式のフィールド単位を明示したい用途には S も適するが、nested ではフィールドと構築の閉じ括弧を確認した。U は宣言の型が手元にある設定的な構築では値と親子関係を追いやすい一方、整数幅や mutable の確認には宣言が必要で、型を監査する読み方には T/S が適する。R は宣言を併読できる小型の構築には使えるが、同型フィールドや nested の対象変更では位置照合が増えた。合計点や記号数だけで選んでいない。",
+  "limitations": [
+    "指定された packet だけに基づく初見の LLM による主観評価であり、人間の読了時間、作業速度、誤答率は測定していない。",
+    "回答と変更式は資料中の規則を読んで作成した。コンパイラ、対象プログラムの実行、他の資料による検証は行っていない。",
+    "ケースは全フィールドがそろう固定フィールドの GC struct に限られる。欠落・重複・余剰のある入力や、資料にない構文の読解は評価していない。",
+    "各軸は同じ正答に到達できたかだけでなく、宣言への照合や値の境界の確認を根拠に採点した。正答数から可読性を推定する実験ではない。"
+  ]
+}

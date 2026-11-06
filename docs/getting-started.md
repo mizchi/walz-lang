@@ -93,13 +93,13 @@ payload の型と個数、case の網羅性と重複をコンパイル時に検�
 `examples/ast-interpreter.wlt` はこの形式で実装しています。`examples/result.wlt` は組込みの Result 値型を使います。
 
 ```wat
-(func $answer (result (%inst $option i64)) (%effects pure)
+(func $answer (result (%inst $option i64)) (%effect pure)
   (%option.some i64 (i64.const 42)))
 ```
 
 `(%inst $option T)`・`(%inst $result T E)` は型引数ごとに具体化します。入れ子、unit payload、配列・フィールド・明示 capture に対応します。
 これらの格納用 GC オブジェクトの identity はソースで比較できません。payload 自身の GC 参照の性質は保持します。
-`(%effects ...)` は reads/writes/allocates/suspends/host と、関数外へ出る throws の上限を検査します。
+`(%effect ...)` は reads/writes/allocates/suspends/host と、関数外へ出る throws の上限を検査します。
 pure な関数でも値のための物理的な割当てや trap はあり得るため、従来の低水準の解析情報も別に残します。
 
 `(%inst $pair T U)` も値型として使え、WIT では tuple に対応します。

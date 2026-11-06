@@ -7,6 +7,7 @@
 元の WAT にローカルの再代入や動的な呼び出しがあれば、その Wasm の意味を保ちます。`$__` の予約も拡張側だけの規約です。
 
 WLT の拡張入口はすべて `%` で始めます。標準の `import` / `export` と、静的リンクの `%import` / `%export` を区別します。値型の `(%inst $result T E)` と結果宣言の `(result T)` も区別します。型引数は `(%inst $name T...)` で適用します。[接頭辞と解析の境界](docs/syntax.md) に規約をまとめています。
+式のローカル・数値の省略形と、固定の記号演算子には接頭辞を付けません。算術・比較に加え、`&&`・`||`・`&`・`|`・`^`・`<<`・`>>`・`>>>`を提供します。
 
 追加構文は、以下の型付きコアで名前・型・束縛・網羅性を検査し、標準 WAT へ展開します。このコアの本体は folded expression 規約に従います。コア外の WAT と構文マクロ `%let` / `%loop` / `%for` を併用する場合は、展開後の Wasm 全体を検証し、解析を opaque とします。この経路から effect・所有権などの契約を検査済みと扱うことはありません。
 構文ごとの展開は固定し、利用者が eval や任意の処理を実行するマクロシステムは設けません。
@@ -30,6 +31,7 @@ WLT の基本データ型は `(%import "wlt:std" (type $result) (type $option) (
 `v128` と通常 SIMD の非メモリ命令は型付きコアで扱います。lane の形は命令で指定し、型は共通の `v128` です。即値とオペランドを検査し、Wasm 命令へ直接出力します。ベクトル自体は shared/nonunit を満たす値で、GC格納・捕捉・単相化にも使えます。対応範囲と使用例は [SIMD](docs/simd.md) を参照してください。
 関数の引数・戻り値、構造体のフィールド、配列の要素、クロージャの捕捉値には型が必要です。
 `%let` の束縛型は注釈がなければ初期値から一意に決まり、`case` の束縛型は payload の宣言から決まります。
+`(%let $x (type i32) 1 body)`の`(type T)`は明示的なlet注釈です。複数束縛でも使えます。式位置の`$foo`は`(local.get $foo)`であり、裸の数値は期待するスカラー型の`.const`に展開します。期待型のない数値には既定幅を設けず、型エラーとします。所有値のmove・クロージャ捕捉・newtypeのwrapは明示します。[省略式の規約](docs/core-expressions.md#ローカル参照と数値の省略形)を参照してください。
 暗黙の型変換はなく、non-null 参照から同じ型の nullable 参照への適合だけを認めます。
 GC 型は名前で区別します。前方参照と再帰型を認め、出力時には1つの Wasm recursion group にまとめます。
 
@@ -55,8 +57,8 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 束縛は字句スコープで、内側の同名束縛による隠蔽を認めます。引数・捕捉宣言の重複はエラーです。
 
 ```text
-(%let $name [T] initial-value body)
-(%let (($first [T] initial-first) ($second [U] initial-second) ...) body)
+(%let $name [(type T)] initial-value body)
+(%let (($first [(type T)] initial-first) ($second [(type U)] initial-second) ...) body)
 (local.get $name)
 (block [(result T)] unit-expression ... result-expression)
 (if [(result T)] condition (then expression) (else expression))
@@ -66,7 +68,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 (unreachable)
 ```
 
-すべて folded expression とし、1関数の本体は1つの式です。複数の処理は `block` でまとめます。
+式は folded expression、またはローカル参照・期待型付き数値の省略形とし、1関数の本体は1つの式です。複数の処理は `block` でまとめます。
 block の最後以外の式は unit でなければならず、不要な値は `drop` で明示します。
 条件は `i32`、分岐の型は result と一致させます。`unreachable` と `%recur` は値を返さず、任意の結果型の位置で使えます。
 評価順序は左から右です。関数の定義順は呼び出しの可否に影響しません。
@@ -74,9 +76,9 @@ block の最後以外の式は unit でなければならず、不要な値は `
 
 複数束縛の `%let` は、初期値を左から右に一度ずつ評価するネストした `%let` に展開します。各初期値は、それまでの束縛と外側のスコープを参照でき、後続の束縛は参照できません。同名の束縛は、その初期値を以前のスコープで評価した後から以前の名前を隠します。body からは最後に束縛された名前が見えます。型注釈は束縛ごとに省略できます。これは複数の初期化をまとめる形式で、Wasm の複数戻り値を受ける構文ではありません。pair の分解には既存の pattern let を使います。
 
-`%let` には `(%let $x i64 (i64.const 42) body)` のように任意の型注釈を書けます。
+`%let` には `(%let $x (type i64) 42 body)` のように任意の型注釈を書けます。
 注釈があれば初期値がその型に適合することを検査し、束縛には注釈した型を保持します。
-例えば `(%let $x (ref null $T) (struct.new $T ...) body)` の `$x` は nullable です。初期値の式自体の型は non-null のままです。
+例えば `(%let $x (type (ref null $T)) (struct.new $T ...) body)` の `$x` は nullable です。初期値の式自体の型は non-null のままです。
 
 ## GC データ
 
@@ -89,6 +91,11 @@ WAT 形式の struct・array を使用します。フィールド名は任意で
 ```
 
 コア命令は `struct.new/get/set`、`array.new/new_fixed/get/set/len`、`ref.null/is_null/as_non_null/eq` です。
+名前付き構築は `(%struct.new $T ($field initializer) ...)`。型の全フィールドをちょうど一度指定します。
+`(%struct.new $T {:field initializer ...})` と `(%$T::{:field initializer ...})` はその糖衣です。
+名前付き初期値の直下では、フィールドの期待型に従った裸の数値・textリテラルも使えます。2つの糖衣は独立で、一般の式位置へ省略を広げません。
+初期値はソース順に一度ずつ評価し、最後に型定義順へ配置します。opaque・effect・所有権・identity・mutableの意味を維持します。
+型引数は `%struct.new` の型オペランドに既存の `(%inst ...)` を使います。[名前付き構築](docs/struct-construction.md)に詳細があります。
 `array.new_fixed` の要素数は WAT と同様に明示します。`set` は宣言が `mut` の場合だけ認めます。
 null、配列境界、オブジェクトの同一性、割当て失敗は Wasm の意味に従います。
 nullable 参照の検査による暗黙の型絞り込みは行いません。必要なら `ref.as_non_null` を明示します。
@@ -97,7 +104,7 @@ nullable 参照の検査による暗黙の型絞り込みは行いません。�
 ## Option/Result の値型
 
 ```wat
-(func $make (result (%inst $option (%inst $result i64 i32))) (%effects pure)
+(func $make (result (%inst $option (%inst $result i64 i32))) (%effect pure)
   (%option.some (%inst $result i64 i32) (%result.ok i64 i32 (i64.const 42))))
 
 (%match (%inst $option i64) (result i64) (%option.none i64)
@@ -285,14 +292,14 @@ import には副作用を過小評価する注釈を認めず、読み書き・�
 
 ```wat
 (func $add (param $x i64) (param $y i64) (result i64)
-  (%effects pure)
+  (%effect pure)
   (i64.add (local.get $x) (local.get $y)))
 
-(func $raise (%effects (throws $Error))
+(func $raise (%effect (throws $Error))
   (throw $Error (i64.const 42)))
 ```
 
-関数と closure のヘッダに `(%effects ...)` を指定できます。省略時は実装から推論します。
+関数と closure のヘッダに `(%effect ...)` を指定できます。省略時は実装から推論します。
 項目は reads、writes、allocates、suspends、host、`(throws $Tag...)`、`(throws *)` です。pure は空の集合の別名で、他の項目と併記できません。
 指定した集合は許可する作用の上限です。実装の作用が上限を超えた場合は、契約の位置と不足する作用を報告します。
 重複、未知の項目・tag、複数の effects 宣言を拒否します。契約は本体より前に置きます。
@@ -419,7 +426,7 @@ await/next には、中断境界として suspends を常に付けます。通�
 ## law と契約付き実行
 
 ```wat
-(func $add (param $x i32) (param $y i32) (result i32) (%effects pure)
+(func $add (param $x i32) (param $y i32) (result i32) (%effect pure)
   (i32.add (local.get $x) (local.get $y)))
 
 (%law "addition is commutative" (param $x i32) (param $y i32)
@@ -855,8 +862,9 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 
 `(%type.params $T ...)` と `(%inst $name T...)` により、関数・型・alias・クロージャを単相化する。
 適用時の検査、再帰と展開の上限、公開 ABI、map/fold は [単相化の契約](docs/generics.md) を参照。
-`%type.params` 直後の where は shared/nonunit/callable と callable の effect 上限を具体化時に検査する。
-型クラスや抽象的な body 検査は導入せず、制約を消去して既存の閉じた IR へ変換する。
+`%type.params` 直後の where は shared/nonunit/callable、組み込みのAdd/Sub/Mul/Div/Eq/Ord/Logical/Bitwise/Shiftとcallableのeffect上限を具体化時に検査する。
+固定の基本型インスタンスで演算子を解決し、制約を消去して既存の閉じたIRへ変換する。利用者定義class/implや抽象的なbody検査は追加しない。[型クラスと演算子](docs/typeclasses.md)を参照。
+Logicalはi32の0/非0を真偽値とし、`&&`・`||`を短絡するifと0/1への正規化へ展開する。実行されない右辺にも型・effect・所有権の検査を課す。BitwiseとShiftはi32/i64に固定し、シフト量も同じ型にする。`>>`は符号拡張、`>>>`はゼロ埋め、シフト量のマスクはWasmの規則に従う。
 
 
 ## スカラー newtype と構造化された早期脱出

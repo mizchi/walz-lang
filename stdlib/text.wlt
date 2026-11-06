@@ -1,10 +1,6 @@
 (module
   (%namespace $string
-    (%import "wlt:std"
-      (type $bytes)
-      (type $option)
-      (type $pair)
-      (type $text))
+    (%import "wlt:std" (type $bytes) (type $option) (type $pair) (type $text))
     (%import "bytes.wlt"
       (func $buffer.concat)
       (func $buffer.find)
@@ -19,237 +15,198 @@
       (func $split-once)
       (func $parse-u64)
       (func $parse-s64))
-    (func $find (param $s $text) (param $needle $text) (param $start i32)
-      (result (%inst $option i32)) (%effects pure)
-      (%let $b (%text.bytes (local.get $s))
+    (func $find
+      (param $s $text)
+      (param $needle $text)
+      (param $start i32)
+      (result (%inst $option i32))
+      (%effect pure)
+      (%let $b (%text.bytes $s)
         (if
           (result (%inst $option i32))
-          (i32.gt_u (local.get $start) (%bytes.len (local.get $b)))
+          (i32.gt_u $start (%bytes.len $b))
           (then (%option.none))
           (else
             (if
               (result (%inst $option i32))
               (if
                 (result i32)
-                (i32.eq (local.get $start) (%bytes.len (local.get $b)))
-                (then (i32.const 0))
-                (else
-                  (i32.eq
-                    (i32.and
-                      (%bytes.get (local.get $b) (local.get $start))
-                      (i32.const 192))
-                    (i32.const 128))))
+                (= $start (%bytes.len $b))
+                (then 0)
+                (else (= (& (%bytes.get $b $start) 192) 128)))
               (then (%option.none))
-              (else
-                (call $buffer.find
-                  (local.get $b)
-                  (%text.bytes (local.get $needle))
-                  (local.get $start))))
-          ))))
+              (else (call $buffer.find $b (%text.bytes $needle) $start))))
+        )))
 
-    (func $split-once (param $s $text) (param $needle $text)
-      (result (%inst $option (%inst $pair $text $text))) (%effects pure)
-      (%match
-        (call $buffer.split-once (%text.bytes (local.get $s)) (%text.bytes (local.get $needle)))
+    (func $split-once
+      (param $s $text)
+      (param $needle $text)
+      (result (%inst $option (%inst $pair $text $text)))
+      (%effect pure)
+      (%match (call $buffer.split-once (%text.bytes $s) (%text.bytes $needle))
         (case none () (%option.none))
         (case some ($parts)
-          (%let ($a $b) (local.get $parts)
-            (%option.some
-              (%pair.new (call $valid (local.get $a)) (call $valid (local.get $b))))
-          ))))
+          (%let ($a $b) $parts
+            (%option.some (%pair.new (call $valid $a) (call $valid $b))))
+        )))
 
-    (func $parse-u64 (param $s $text) (result (%inst $option i64)) (%effects pure)
-      (call $buffer.parse-u64
-        (%text.bytes (local.get $s))
-        (i32.const 0)
-        (%bytes.len (%text.bytes (local.get $s)))
-        (i64.const -1)))
+    (func $parse-u64
+      (param $s $text)
+      (result (%inst $option i64))
+      (%effect pure)
+      (call $buffer.parse-u64 (%text.bytes $s) 0 (%bytes.len (%text.bytes $s)) -1))
 
-    (func $parse-s64 (param $s $text) (result (%inst $option i64)) (%effects pure)
-      (%let $b (%text.bytes (local.get $s))
+    (func $parse-s64
+      (param $s $text)
+      (result (%inst $option i64))
+      (%effect pure)
+      (%let $b (%text.bytes $s)
         (if
           (result (%inst $option i64))
-          (i32.eqz (%bytes.len (local.get $b)))
+          (i32.eqz (%bytes.len $b))
           (then (%option.none))
           (else
-            (%let $negative
-              (i32.eq (%bytes.get (local.get $b) (i32.const 0)) (i32.const 45))
+            (%let $negative (= (%bytes.get $b 0) 45)
               (%match
-                (call $buffer.parse-u64 (local.get $b) (local.get $negative) (i32.sub (%bytes.len (local.get $b)) (local.get $negative)) (if (result i64) (local.get $negative) (then (i64.const -9223372036854775808)) (else (i64.const 9223372036854775807))))
+                (call $buffer.parse-u64 $b $negative
+                  (- (%bytes.len $b) $negative)
+                  ;; The negative magnitude may reach 2^63; a positive value may not.
+                  (if
+                    (result i64)
+                    $negative
+                    (then -9223372036854775808)
+                    (else 9223372036854775807)))
                 (case none () (%option.none))
                 (case some ($n)
-                  (%option.some
-                    (if
-                      (result i64)
-                      (local.get $negative)
-                      (then (i64.sub (i64.const 0) (local.get $n)))
-                      (else (local.get $n))))
-                ))))
-        )))
+                  (%option.some (if (result i64) $negative (then (- 0 $n)) (else $n))))
+              ))))
+      ))
     (type $Array (array (mut i32)))
-    (func $valid (param $b $bytes) (result $text) (%effects pure)
-      (%match (%inst $option $text) (result $text)
-        (%text.from-bytes (local.get $b))
+    (func $valid
+      (param $b $bytes)
+      (result $text)
+      (%effect pure)
+      (%match (%text.from-bytes $b)
         (case none () (unreachable))
-        (case some ($s) (local.get $s))))
+        (case some ($s) $s)))
 
-    (func $concat (param $a $text) (param $b $text) (result $text)
-      (%effects reads writes allocates)
-      (call $valid
-        (call $buffer.concat (%text.bytes (local.get $a)) (%text.bytes (local.get $b))))
-    )
+    (func $concat
+      (param $a $text)
+      (param $b $text)
+      (result $text)
+      (%effect reads writes allocates)
+      (call $valid (call $buffer.concat (%text.bytes $a) (%text.bytes $b))))
 
-    (func $u64 (param $n i64) (result $text) (%effects reads writes allocates)
-      (%let $out (array.new $Array (i32.const 48) (i32.const 20))
+    (func $u64
+      (param $n i64)
+      (result $text)
+      (%effect reads writes allocates)
+      (%let $out (array.new $Array 48 20)
         (%loop $digits
-          (bind $n i64 (local.get $n))
-          (bind $i i32 (i32.const 19))
+          (bind $n i64 $n)
+          (bind $i i32 19)
           (result $text)
           (block
             (result $text)
-            (array.set $Array
-              (local.get $out)
-              (local.get $i)
-              (i32.add
-                (i32.const 48)
-                (i32.wrap_i64 (i64.rem_u (local.get $n) (i64.const 10))))
-            )
+            (array.set $Array $out $i (+ 48 (i32.wrap_i64 (i64.rem_u $n 10))))
             (if
               (result $text)
-              (i64.lt_u (local.get $n) (i64.const 10))
+              (i64.lt_u $n 10)
               (then
                 (call $valid
-                  (%bytes.slice
-                    (%bytes.from-array $Array (local.get $out))
-                    (local.get $i)
-                    (i32.sub (i32.const 20) (local.get $i))))
-              )
-              (else
-                (%recur $digits
-                  (i64.div_u (local.get $n) (i64.const 10))
-                  (i32.sub (local.get $i) (i32.const 1))))
-            ))))
-    )
+                  (%bytes.slice (%bytes.from-array $Array $out) $i (- 20 $i))))
+              (else (%recur $digits (i64.div_u $n 10) (- $i 1))))
+          ))))
 
-    (func $s64 (param $n i64) (result $text) (%effects reads writes allocates)
+    (func $s64
+      (param $n i64)
+      (result $text)
+      (%effect reads writes allocates)
       (if
         (result $text)
-        (i64.lt_s (local.get $n) (i64.const 0))
-        (then
-          (call $concat
-            (%text.lit "-")
-            (call $u64 (i64.sub (i64.const 0) (local.get $n))))
-        )
-        (else (call $u64 (local.get $n))))
-    )
+        (< $n 0)
+        (then (call $concat (%text.lit "-") (call $u64 (- 0 $n))))
+        (else (call $u64 $n))))
 
-    (func $width (param $b i32) (result i32) (%effects pure)
+    (func $width
+      (param $b i32)
+      (result i32)
+      (%effect pure)
       (if
         (result i32)
-        (i32.lt_u (local.get $b) (i32.const 32))
-        (then (i32.const 6))
-        (else
-          (if
-            (result i32)
-            (i32.or
-              (i32.eq (local.get $b) (i32.const 34))
-              (i32.eq (local.get $b) (i32.const 92)))
-            (then (i32.const 2))
-            (else (i32.const 1))))
-      ))
-
-    (func $hex (param $n i32) (result i32) (%effects pure)
-      (if
-        (result i32)
-        (i32.lt_u (local.get $n) (i32.const 10))
-        (then (i32.add (local.get $n) (i32.const 48)))
-        (else (i32.add (local.get $n) (i32.const 87))))
+        (i32.lt_u $b 32)
+        (then 6)
+        (else (if (result i32) (| (= $b 34) (= $b 92)) (then 2) (else 1))))
     )
 
-    (func $put (param $out (ref $Array)) (param $i i32) (param $b i32) (result i32)
-      (%effects writes)
-      (%let $w (call $width (local.get $b))
+    (func $hex
+      (param $n i32)
+      (result i32)
+      (%effect pure)
+      (if (result i32) (i32.lt_u $n 10) (then (+ $n 48)) (else (+ $n 87))))
+
+    (func $put
+      (param $out (ref $Array))
+      (param $i i32)
+      (param $b i32)
+      (result i32)
+      (%effect writes)
+      (%let $w (call $width $b)
         (block
           (result i32)
           (if
-            (i32.eq (local.get $w) (i32.const 1))
-            (then (array.set $Array (local.get $out) (local.get $i) (local.get $b)))
+            (= $w 1)
+            (then (array.set $Array $out $i $b))
             (else
               (block
-                (array.set $Array (local.get $out) (local.get $i) (i32.const 92))
+                (array.set $Array $out $i 92)
                 (if
-                  (i32.eq (local.get $w) (i32.const 2))
-                  (then
-                    (array.set $Array
-                      (local.get $out)
-                      (i32.add (local.get $i) (i32.const 1))
-                      (local.get $b)))
+                  (= $w 2)
+                  (then (array.set $Array $out (+ $i 1) $b))
                   (else
                     (block
-                      (array.set $Array
-                        (local.get $out)
-                        (i32.add (local.get $i) (i32.const 1))
-                        (i32.const 117))
-                      (array.set $Array
-                        (local.get $out)
-                        (i32.add (local.get $i) (i32.const 2))
-                        (i32.const 48))
-                      (array.set $Array
-                        (local.get $out)
-                        (i32.add (local.get $i) (i32.const 3))
-                        (i32.const 48))
-                      (array.set $Array
-                        (local.get $out)
-                        (i32.add (local.get $i) (i32.const 4))
-                        (call $hex (i32.shr_u (local.get $b) (i32.const 4))))
-                      (array.set $Array
-                        (local.get $out)
-                        (i32.add (local.get $i) (i32.const 5))
-                        (call $hex (i32.and (local.get $b) (i32.const 15))))
-                    ))))
-            ))
-          (i32.add (local.get $i) (local.get $w))))
-    )
-
-    (func $json (param $s $text) (result $text) (%effects reads writes allocates)
-      (%let $b (%text.bytes (local.get $s))
-        (%let $size
-          (%loop $size
-            (bind $i i32 (i32.const 0))
-            (bind $n i32 (i32.const 2))
-            (result i32)
-            (if
-              (result i32)
-              (i32.eq (local.get $i) (%bytes.len (local.get $b)))
-              (then (local.get $n))
-              (else
-                (%let $w (call $width (%bytes.get (local.get $b) (local.get $i)))
-                  (if
-                    (result i32)
-                    (i32.gt_u (local.get $n) (i32.sub (i32.const -1) (local.get $w)))
-                    (then (unreachable))
-                    (else
-                      (%recur $size
-                        (i32.add (local.get $i) (i32.const 1))
-                        (i32.add (local.get $n) (local.get $w))))
+                      (array.set $Array $out (+ $i 1) 117)
+                      (array.set $Array $out (+ $i 2) 48)
+                      (array.set $Array $out (+ $i 3) 48)
+                      (array.set $Array $out (+ $i 4) (call $hex (>>> $b 4)))
+                      (array.set $Array $out (+ $i 5) (call $hex (& $b 15))))
                   ))))
           )
-          (%let $out (array.new $Array (i32.const 34) (local.get $size))
-            (%loop $copy
-              (bind $i i32 (i32.const 0))
-              (bind $p i32 (i32.const 1))
-              (result $text)
-              (if
-                (result $text)
-                (i32.eq (local.get $i) (%bytes.len (local.get $b)))
-                (then (call $valid (%bytes.from-array $Array (local.get $out))))
-                (else
-                  (%recur $copy
-                    (i32.add (local.get $i) (i32.const 1))
-                    (call $put
-                      (local.get $out)
-                      (local.get $p)
-                      (%bytes.get (local.get $b) (local.get $i))))
-                ))))
-        ))))
-)
+          (+ $i $w))))
+
+    (func $json
+      (param $s $text)
+      (result $text)
+      (%effect reads writes allocates)
+      (%let
+        (($b (%text.bytes $s))
+         ($size
+           (%loop $size
+             (bind $i i32 0)
+             (bind $n i32 2)
+             (result i32)
+             (if
+               (result i32)
+               (= $i (%bytes.len $b))
+               (then $n)
+               (else
+                 (%let $w (call $width (%bytes.get $b $i))
+                   (if
+                     (result i32)
+                     (i32.gt_u $n (- -1 $w))
+                     (then (unreachable))
+                     (else (%recur $size (+ $i 1) (+ $n $w))))
+                 ))))
+         )
+         ($out (array.new $Array 34 $size)))
+        (%loop $copy
+          (bind $i i32 0)
+          (bind $p i32 1)
+          (result $text)
+          (if
+            (result $text)
+            (= $i (%bytes.len $b))
+            (then (call $valid (%bytes.from-array $Array $out)))
+            (else (%recur $copy (+ $i 1) (call $put $out $p (%bytes.get $b $i))))
+          ))))
+  ))

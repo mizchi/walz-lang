@@ -22,7 +22,7 @@
     (param $remove (%inst $list $text))
     (param $erase-all i32)
     (result (%inst $list (%inst $option i64)))
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let
       (($d (call (%inst $dict.new i64)))
        ($alias (local.get $d))
@@ -80,7 +80,7 @@
     (export "snapshots")
     (param $input (%inst $list $text))
     (result (%inst $pair (%inst $list $text) (%inst $list $text)))
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $b (call (%inst $list-builder.new $text))
       (block
         (result (%inst $pair (%inst $list $text) (%inst $list $text)))
@@ -104,7 +104,7 @@
     (param $keys (%inst $list $text))
     (param $values (%inst $list i64))
     (result (%inst $list (%inst $pair $text i64)))
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $d (call (%inst $dict.new i64))
       (block
         (result (%inst $list (%inst $pair $text i64)))

@@ -176,7 +176,7 @@ for (const backend of ["core", "component"])
         source,
         `(module
       (import "wlt:host/text-io@0.1.0" "write-line" (func $write (param $text %text) (result (%future (%result %unit i32)))))
-      (func $main (export "main") (param $text %text) (result (%result %unit i32)) (%effects host suspends)
+      (func $main (export "main") (param $text %text) (result (%result %unit i32)) (%effect host suspends)
         (%future.await (%result %unit i32) (call $write (local.get $text)))))`,
       );
       const { build } = await import(

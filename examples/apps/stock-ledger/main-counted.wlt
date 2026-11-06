@@ -10,7 +10,7 @@
     (param $scan-state $ScanState)
     (param $line $text)
     (result (%inst $result $ScanState $IoError))
-    (%effects reads writes allocates host suspends)
+    (%effect reads writes allocates host suspends)
     (%let ($ledger $line-count) (local.get $scan-state)
       ;; 空行・コメント・業務エラーも、I/Oに成功すれば1行と数える。
       (%result.let ()
@@ -24,7 +24,7 @@
   (func $main
     (export "main")
     (result (%inst $result $LineCount $IoError))
-    (%effects reads writes allocates host suspends)
+    (%effect reads writes allocates host suspends)
     (%let
       (($ledger (call $stock.new (i32.const 4096)))
        ($initial-scan-state $ScanState (%pair.new (local.get $ledger) (i32.const 0)))

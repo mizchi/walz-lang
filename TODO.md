@@ -19,6 +19,12 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 
 ## 型付きコアの小さな拡張（1 → 2 → 3 → 4 → 5）
 
+- [x] 名前付きstruct構築。`%struct.new`、独立したfield-map・期待型リテラルの糖衣、ソース順一回評価、opaque・所有権・effectの既存検査を維持する。[規約](docs/struct-construction.md)。
+- [x] ローカル参照と期待型付き数値の省略形、letの`(type T)`注釈。曖昧な幅・暗黙のmove/変換は認めず、単相化・静的解析・両JS ABIで確認する。
+- [x] 基本型向けのAdd/Eq/Ord制約と記号演算子。単相化時に固定インスタンスを検査し、辞書を作らず既存のWasm命令へ解決する。[規約](docs/typeclasses.md)。
+- [x] Logical/Bitwise/Shift制約。短絡する`&&`/`||`、`&`/`|`/`^`、`<<`/`>>`/`>>>`。右辺の静的検査・所有権・待機とWasmのシフト規則を維持する。
+- [x] Sub/Mul/Div制約と`- * /`。Wasmの折返し・符号付き除算のtrap・float除算を保ち、json-valueを省略記法で整理する。
+
 - [x] 1: 標準スカラーの変換・飽和変換・丸め・sqrt・min/max・reinterpret・回転・符号拡張。署名をWasm validatorと照合する。
 - [x] 2: `%result.do`。既存のresult.letへ展開し、左から右の一度だけの評価とerrの短絡を保つ。
 - [x] 3: スカラーnewtypeと明示wrap/unwrap。nominalな検査とopaqueを保ち、実行用表現では消去する。

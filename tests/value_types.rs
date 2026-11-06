@@ -28,9 +28,9 @@ fn run(source: &str) -> String {
 fn option_and_result_are_instantiated_and_nested_as_value_types() {
     assert_eq!(
         run(r#"(module
-      (func $make (result (%option (%result i64 i32))) (%effects pure)
+      (func $make (result (%option (%result i64 i32))) (%effect pure)
         (%option.some (%result i64 i32) (%result.ok i64 i32 (i64.const 42))))
-      (func $main (export "main") (result i64) (%effects pure)
+      (func $main (export "main") (result i64) (%effect pure)
         (%match (%option (%result i64 i32)) (result i64) (call $make)
           (case none () (i64.const -1))
           (case some ($result)
@@ -61,7 +61,7 @@ fn value_types_work_in_fields_arrays_and_explicit_captures() {
         run(r#"(module
       (type $Values (array (%option i64)))
       (type $Box (struct (field (%result i64 i32))))
-      (%closure $Read (%capture $value (%option i64)) (result i64) (%effects pure)
+      (%closure $Read (%capture $value (%option i64)) (result i64) (%effect pure)
         (%match (%option i64) (result i64) (local.get $value)
           (case none () (i64.const 0)) (case some ($n) (local.get $n))))
       (func $main (export "main") (result i64)
@@ -94,7 +94,7 @@ fn value_storage_identity_is_hidden_but_payload_null_is_preserved() {
 
 #[test]
 fn value_types_and_contracts_are_visible_in_type_and_effect_reports() {
-    let source = "(module (func $f (result (%option i64)) (%effects pure) (%option.some i64 (i64.const 42))))";
+    let source = "(module (func $f (result (%option i64)) (%effect pure) (%option.some i64 (i64.const 42))))";
     let module = wlt::check(source).unwrap();
     assert_eq!(
         module.type_name(&module.functions[0].result),

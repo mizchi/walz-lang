@@ -30,9 +30,9 @@ fn standard_types_are_explicit_aliases_and_use_normal_instantiation() {
     run(
         r#"(module
       (%import "wlt:std" (type $result $R) (type $option $O) (type $future $F) (type $unit))
-      (func $ready (result (%inst $F (%inst $R (%inst $O i64) i32))) (%effects pure)
+      (func $ready (result (%inst $F (%inst $R (%inst $O i64) i32))) (%effect pure)
         (%future.ready (%inst $R (%inst $O i64) i32) (%result.ok (%option.some (i64.const 42)))))
-      (func $main (export "main") (result i64) (%effects suspends)
+      (func $main (export "main") (result i64) (%effect suspends)
         (%let $f (call $ready)
           (%match (%future.await (%inst $R (%inst $O i64) i32) (%move $f))
             (case ok ($v) (%match (local.get $v) (case none () (i64.const 0)) (case some ($n) (local.get $n))))
@@ -48,7 +48,7 @@ fn standard_stream_pair_list_own_and_scalars_share_existing_checked_types() {
         r#"(module
       (%import "wlt:std" (type $stream) (type $pair) (type $list) (type $own) (type $text) (type $bytes) (type $unit))
       (%type.alias $Values (%inst $list i64))
-      (func $first (param $v $Values) (result i64) (%effects pure)
+      (func $first (param $v $Values) (result i64) (%effect pure)
         (%list.get i64 (local.get $v) (i32.const 0)))
       (func $main (export "main") (result i64)
         (%let (($input (%inst $stream i64) (%stream.empty i64))
@@ -67,7 +67,7 @@ fn standard_functions_are_embedded_selective_and_can_be_renamed() {
     let compiled = run(
         r#"(module
       (%import "wlt:std" (type $text) (func $string.u64 $format))
-      (func $main (export "main") (result i32) (%effects reads writes allocates)
+      (func $main (export "main") (result i32) (%effect reads writes allocates)
         (%text.byte-len (call $format (i64.const 42)))))"#,
         "2",
     );

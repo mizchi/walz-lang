@@ -40,12 +40,12 @@ fn emits_wit_for_nested_options_results_and_unit_payloads() {
     let wit = validate_wit(
         r#"(module
       (func $lookup (export "lookup") (param $key i64) (result (%option (%result i64 i32)))
-        (%effects pure) (%option.some (%result i64 i32) (%result.ok i64 i32 (local.get $key))))
-      (func $done (export "done") (result (%result %unit i32)) (%effects pure) (%result.ok %unit i32))
-      (func $empty (export "type") (result (%result i64 %unit)) (%effects pure) (%result.err i64 %unit))
-      (func $both (export "wlt-unit") (result (%result %unit %unit)) (%effects pure) (%result.ok %unit %unit))
-      (func $event (export "event") (result (%option %unit)) (%effects pure) (%option.some %unit))
-      (func $pair (export "pair") (result (%pair %unit i64)) (%effects pure) (%pair.new %unit i64 (i64.const 42))))"#,
+        (%effect pure) (%option.some (%result i64 i32) (%result.ok i64 i32 (local.get $key))))
+      (func $done (export "done") (result (%result %unit i32)) (%effect pure) (%result.ok %unit i32))
+      (func $empty (export "type") (result (%result i64 %unit)) (%effect pure) (%result.err i64 %unit))
+      (func $both (export "wlt-unit") (result (%result %unit %unit)) (%effect pure) (%result.ok %unit %unit))
+      (func $event (export "event") (result (%option %unit)) (%effect pure) (%option.some %unit))
+      (func $pair (export "pair") (result (%pair %unit i64)) (%effect pure) (%pair.new %unit i64 (i64.const 42))))"#,
     );
     assert!(wit.contains("option<result<s64, s32>>"), "{wit}");
     assert!(wit.contains("result<_, s32>"), "{wit}");
@@ -76,15 +76,15 @@ fn imported_suspension_becomes_async_only_after_escaping_errors_are_handled() {
 fn delivery_types_preserve_wasi_shapes_and_reads_have_async_signatures() {
     let wit = validate_wit(
         r#"(module
-      (func $fetch (export "fetch") (result (%pair (%stream i64) (%future (%result %unit i32)))) (%effects pure)
+      (func $fetch (export "fetch") (result (%pair (%stream i64) (%future (%result %unit i32)))) (%effect pure)
         (%pair.new (%stream i64) (%future (%result %unit i32))
           (%stream.empty i64) (%future.ready (%result %unit i32) (%result.ok %unit i32))))
-      (func $read (export "read") (param $next (%future i64)) (result i64) (%effects suspends)
+      (func $read (export "read") (param $next (%future i64)) (result i64) (%effect suspends)
         (%future.await i64 (%move $next)))
-      (func $step (export "step") (param $stream (%stream i64)) (result (%pair (%stream i64) (%option i64))) (%effects suspends)
+      (func $step (export "step") (param $stream (%stream i64)) (result (%pair (%stream i64) (%option i64))) (%effect suspends)
         (%stream.next i64 (%move $stream)))
-      (func $event (export "event") (result (%future %unit)) (%effects pure) (%future.ready %unit))
-      (func $events (export "events") (result (%stream %unit)) (%effects pure) (%stream.empty %unit)))"#,
+      (func $event (export "event") (result (%future %unit)) (%effect pure) (%future.ready %unit))
+      (func $events (export "events") (result (%stream %unit)) (%effect pure) (%stream.empty %unit)))"#,
     );
     assert!(
         wit.contains("tuple<stream<s64>, future<result<_, s32>>>"),

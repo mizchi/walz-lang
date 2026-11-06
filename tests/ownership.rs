@@ -33,10 +33,10 @@ fn run(source: &str) -> String {
 fn owned_values_require_explicit_move_and_an_explicit_destination() {
     assert_eq!(
         run(r#"(module
-      (func $take (param $x (%own i64)) (result i64) (%effects pure)
+      (func $take (param $x (%own i64)) (result i64) (%effect pure)
         (%match (%own i64) (result i64) (%move $x)
           (case own ($n) (local.get $n))))
-      (func $main (export "main") (result i64) (%effects pure)
+      (func $main (export "main") (result i64) (%effect pure)
         (%let $x (%own.new i64 (i64.const 42)) (call $take (%move $x)))))"#),
         "42"
     );
@@ -64,9 +64,9 @@ fn owned_values_require_explicit_move_and_an_explicit_destination() {
 fn ownership_propagates_through_pairs_options_results_and_once_closures() {
     assert_eq!(
         run(r#"(module
-      (%closure $Take (%capture $x (%own i64)) (result i64) (%effects pure)
+      (%closure $Take (%capture $x (%own i64)) (result i64) (%effect pure)
         (%match (%own i64) (result i64) (%move $x) (case own ($n) (local.get $n))))
-      (func $main (export "main") (result i64) (%effects allocates)
+      (func $main (export "main") (result i64) (%effect allocates)
         (%let $wrapped
           (%option.some (%result (%pair (%own i64) i64) i32)
             (%result.ok (%pair (%own i64) i64) i32

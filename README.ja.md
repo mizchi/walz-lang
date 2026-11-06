@@ -14,7 +14,7 @@ Wasm GC と静的解析を前提にした、WAT の小さな拡張言語です�
   (func $main
     (export "main")
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (%let
       (($a i64 (i64.const 40))
        ($b (i64.const 2))
@@ -52,7 +52,9 @@ JS 実行には Node.js 24以降と pnpm、検証付き実行には Lean を使�
 | 文法を一覧する | [チートシート](CHEATSHEET.md)・[仕様](SPEC.md) |
 | 標準型、Future、複数束縛 | [標準モジュール](docs/standard.md) |
 | 型引数・制約・単相化 | [ジェネリクス](docs/generics.md) |
+| 組み込み型クラス・短絡論理・ビット演算 | [型クラス](docs/typeclasses.md) |
 | v128・ベクトル演算 | [SIMD](docs/simd.md)・[カーネルと速度比較](docs/simd-kernels.md) |
+| 名前付きstruct構築 | [構築と糖衣](docs/struct-construction.md) |
 | import/export と生成物の除去 | [静的モジュールと DCE](docs/static-modules.md) |
 | effect・型・メモリ領域の解析 | [型検査と静的解析](docs/analysis.md) |
 | 所有権と証明 | [検証付き実行](docs/verification.md)・[外部リソース](docs/resources.md) |

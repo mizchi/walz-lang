@@ -52,7 +52,7 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
         .unwrap()
         .to_owned()
         + r#"
-      (func $bad-pure (param $s (ref $stock.State)) (result (%result i64 (ref $stock.Error))) (%effects pure)
+      (func $bad-pure (param $s (ref $stock.State)) (result (%result i64 (ref $stock.Error))) (%effect pure)
         (call $stock.add (local.get $s) (%text.lit "a") (i64.const 1))))"#;
     assert!(
         wlt::check(&pure)

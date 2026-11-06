@@ -5,6 +5,7 @@ use crate::{
     ir::*,
     ownership::Kinds,
     sexpr::Sexp,
+    typeclasses::Class,
 };
 use std::collections::BTreeSet;
 
@@ -17,6 +18,10 @@ pub(crate) struct Site {
 enum Clause<'a> {
     Shared(&'a [Sexp]),
     Nonunit(&'a [Sexp]),
+    Class {
+        class: Class,
+        targets: &'a [Sexp],
+    },
     Callable {
         target: &'a Sexp,
         params: &'a [Sexp],
@@ -27,12 +32,16 @@ enum Clause<'a> {
 
 fn parse<'a>(source: &str, node: &'a Sexp) -> Result<Clause<'a>, Error> {
     let fail = || {
-        Error::at(source, node.span, "expected shared/nonunit targets or (callable $F (param types...) (result type) [(effects ...)])").with_code("E_GENERIC_CONSTRAINT")
+        Error::at(source, node.span, "expected shared/nonunit or built-in type-class constraints, or (callable $F (param types...) (result type) [(%effect ...)])").with_code("E_GENERIC_CONSTRAINT")
     };
     let items = node.list().ok_or_else(fail)?;
     Ok(match node.head() {
         Some("shared") if items.len() >= 2 => Clause::Shared(&items[1..]),
         Some("nonunit") if items.len() >= 2 => Clause::Nonunit(&items[1..]),
+        Some(name) if items.len() >= 2 && Class::parse(name).is_some() => Clause::Class {
+            class: Class::parse(name).unwrap(),
+            targets: &items[1..],
+        },
         Some("callable") if (4..=5).contains(&items.len()) => {
             let params = items[2]
                 .list()
@@ -44,7 +53,7 @@ fn parse<'a>(source: &str, node: &'a Sexp) -> Result<Clause<'a>, Error> {
                 .ok_or_else(fail)?;
             let effects = items.get(4);
             if let Some(effects) = effects {
-                if effects.head() != Some("effects") {
+                if effects.head() != Some("effect") {
                     return Err(fail());
                 }
                 crate::frontend::validate_effect_syntax(source, effects)?;
@@ -96,7 +105,9 @@ pub(crate) fn validate_declaration(
     }
     for node in clauses {
         let targets = match parse(source, node)? {
-            Clause::Shared(targets) | Clause::Nonunit(targets) => targets,
+            Clause::Shared(targets) | Clause::Nonunit(targets) | Clause::Class { targets, .. } => {
+                targets
+            }
             Clause::Callable { target, .. } => std::slice::from_ref(target),
         };
         for target in targets {
@@ -124,6 +135,22 @@ impl Site {
             match parse(source, node)? {
                 Clause::Nonunit(targets) if targets.iter().any(|t| t.atom() == Some("unit")) => {
                     return Err(self.error(source, node.span, "nonunit excludes unit"));
+                }
+                Clause::Class { class, targets } => {
+                    for target in targets {
+                        let ty = target.atom().and_then(NumType::parse).map(Type::Num);
+                        if !ty.as_ref().is_some_and(|ty| class.supports(ty)) {
+                            return Err(self.error(
+                                source,
+                                node.span,
+                                format!(
+                                    "{} has no instance for {}",
+                                    class.name(),
+                                    target.atom().unwrap_or("this type")
+                                ),
+                            ));
+                        }
+                    }
                 }
                 Clause::Callable { target, .. }
                     if !target.atom().is_some_and(|t| t.starts_with('$')) =>
@@ -173,6 +200,10 @@ pub(crate) struct TypedClause<'a> {
 enum Bound {
     Shared(Vec<Argument>),
     Nonunit(Vec<Argument>),
+    Class {
+        class: Class,
+        targets: Vec<Argument>,
+    },
     Callable {
         target: Argument,
         params: Vec<Type>,
@@ -204,6 +235,13 @@ pub(crate) fn resolve<'a>(
                 Clause::Nonunit(types) => {
                     Bound::Nonunit(types.iter().map(&mut argument).collect::<Result<_, _>>()?)
                 }
+                Clause::Class { class, targets } => Bound::Class {
+                    class,
+                    targets: targets
+                        .iter()
+                        .map(&mut argument)
+                        .collect::<Result<_, _>>()?,
+                },
                 Clause::Callable {
                     target,
                     params,
@@ -325,6 +363,20 @@ pub(crate) fn check_shapes<'a>(
                     .any(|t| matches!(t, Argument::Value(Type::Unit)))
                 {
                     return Err(fail("nonunit excludes unit"));
+                }
+            }
+            Bound::Class { class, targets } => {
+                for target in targets {
+                    if !matches!(&target, Argument::Value(ty) if class.supports(ty)) {
+                        let name = match &target {
+                            Argument::Value(ty) => type_name(module, ty),
+                            Argument::Heap(id) => module.types[id.0].name.clone(),
+                        };
+                        return Err(fail(&format!(
+                            "{} has no instance for {name}",
+                            class.name()
+                        )));
+                    }
                 }
             }
             Bound::Callable {

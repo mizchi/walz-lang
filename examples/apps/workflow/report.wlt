@@ -17,7 +17,7 @@
       (func $write (param $line $text) (result (%inst $future (%inst $result $unit i32))))
     )
     (func $base (param $n i32) (result (ref $json.Object))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $o (call $json.new)
         (block
           (result (ref $json.Object))
@@ -28,7 +28,7 @@
           (local.get $o))))
 
     (func $error (param $n i32) (param $name $text) (param $detail $text) (result $text)
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
           (result $text)
@@ -39,7 +39,7 @@
     )
 
     (func $failure (param $n i32) (param $e (ref $domain.Error))
-      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
       (%future.await
         (%inst $result $unit i32)
         (call $write
@@ -64,7 +64,7 @@
         )))
 
     (func $header (param $n i32) (param $r (ref $planner.Run)) (param $workers i32)
-      (result $text) (%effects reads writes allocates)
+      (result $text) (%effect reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
           (result $text)
@@ -87,7 +87,7 @@
 
     (func $job (param $n i32) (param $g (ref $graph.Graph))
       (param $r (ref $planner.Run)) (param $i i32) (result $text)
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $o (call $base (local.get $n))
         (block
           (result $text)
@@ -113,7 +113,7 @@
 
     (func $plan (param $n i32) (param $g (ref $graph.Graph))
       (param $r (ref $planner.Run)) (param $workers i32) (result (%inst $result $unit i32))
-      (%effects reads writes allocates host suspends)
+      (%effect reads writes allocates host suspends)
       (%result.let () (%inst $result $unit i32) $unit
         (%future.await
           (%inst $result $unit i32)

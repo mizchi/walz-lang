@@ -177,6 +177,14 @@ eval-score run:
 eval-compare before after:
     node evals/run.mjs compare {{quote(before)}} {{quote(after)}}
 
+# Compare draft struct spellings without changing the language implementation.
+eval-struct-prepare output:
+    node evals/struct-literals/run.mjs prepare {{quote(output)}}
+
+# Use the verifier frozen with the packets; result output must be a new file.
+eval-struct-verify run output:
+    node {{quote(run + "/support/run.mjs")}} verify {{quote(run)}} {{quote(output)}}
+
 test-evals:
     node --test --test-concurrency=1 evals/*.test.mjs
 
@@ -299,6 +307,22 @@ test-resources:
 test-json:
     cargo test --locked --test json_values --test buffers
     node --test runtime/json-value.test.mjs runtime/json-parser.test.mjs runtime/json-parser-bench.test.mjs
+
+# Named GC construction, independent brace/literal sugars, and both JS ABIs.
+test-structs:
+    cargo test --locked --test struct_construction --test formatting
+    node --test runtime/struct-construction.test.mjs
+
+# Expected-type atoms, explicit let annotations, and both JS ABIs.
+test-expression-sugar:
+    cargo test --locked --test expression_sugar --test struct_construction --test type_aliases --test surface --test inspection
+    node --test runtime/struct-construction.test.mjs
+
+# Sealed scalar classes, monomorphized constraints and portable operators.
+test-typeclasses:
+    cargo test --locked --lib typeclasses
+    cargo test --locked --test typeclasses --test logical_bits --test arithmetic_classes --test generic_bounds --test expression_sugar
+    node --test runtime/typeclasses.test.mjs
 
 test-lists:
     cargo test --locked --test lists --test wit_bindings --test differential

@@ -33,7 +33,7 @@ fn rejects(source: &str, message: &str) {
 fn ready_future_is_consumed_by_await_and_supports_result_and_unit() {
     assert_eq!(
         run(r#"(module
-      (func $main (export "main") (result i64) (%effects suspends)
+      (func $main (export "main") (result i64) (%effect suspends)
         (%let $done (%future.ready (%result i64 i32) (%result.ok i64 i32 (i64.const 42)))
           (block (result i64)
             (%future.await %unit (%future.ready %unit))
@@ -43,7 +43,7 @@ fn ready_future_is_consumed_by_await_and_supports_result_and_unit() {
         "42"
     );
     rejects(
-        r#"(module (func $f (%effects suspends)
+        r#"(module (func $f (%effect suspends)
       (%let $f (%future.ready i64 (i64.const 1))
         (block (drop (%future.await i64 (%move $f))) (%future.close i64 (%move $f))))))"#,
         "already moved",
@@ -54,7 +54,7 @@ fn ready_future_is_consumed_by_await_and_supports_result_and_unit() {
 fn finite_stream_preserves_order_and_returns_an_owner_even_at_end() {
     assert_eq!(
         run(r#"(module
-      (func $main (export "main") (result i64) (%effects suspends)
+      (func $main (export "main") (result i64) (%effect suspends)
         (%loop $read
           (bind $stream (%stream i64)
             (%stream.cons i64 (i64.const 4) (%stream.cons i64 (i64.const 2) (%stream.empty i64))))
@@ -69,7 +69,7 @@ fn finite_stream_preserves_order_and_returns_an_owner_even_at_end() {
     );
     assert_eq!(
         run(r#"(module
-      (func $main (export "main") (result i32) (%effects suspends)
+      (func $main (export "main") (result i32) (%effect suspends)
         (%match (%pair (%stream %unit) (%option %unit)) (result i32)
           (%stream.next %unit (%stream.cons %unit (%stream.empty %unit)))
           (case pair ($next $event)
@@ -90,7 +90,7 @@ fn finite_stream_preserves_order_and_returns_an_owner_even_at_end() {
 fn stream_end_and_completion_error_remain_separate_values() {
     assert_eq!(
         run(r#"(module
-      (func $main (export "main") (result i32) (%effects suspends)
+      (func $main (export "main") (result i32) (%effect suspends)
         (%let $io
           (%pair.new (%stream i64) (%future (%result %unit i32))
             (%stream.empty i64) (%future.ready (%result %unit i32) (%result.err %unit i32 (i32.const 42))))
@@ -135,7 +135,7 @@ fn endpoints_are_opaque_owned_values_and_payloads_are_shared_for_now() {
             "opaque delivery",
         ),
         (
-            "(module (func $f (%effects suspends) (drop (%future.await i32 (%future.ready i64 (i64.const 1))))))",
+            "(module (func $f (%effect suspends) (drop (%future.await i32 (%future.ready i64 (i64.const 1))))))",
             "type mismatch",
         ),
         (
@@ -147,7 +147,7 @@ fn endpoints_are_opaque_owned_values_and_payloads_are_shared_for_now() {
             "type mismatch",
         ),
         (
-            "(module (func $f (%effects suspends) (drop (%stream.next i64 (%stream.empty i64)))))",
+            "(module (func $f (%effect suspends) (drop (%stream.next i64 (%stream.empty i64)))))",
             "cannot drop an owned",
         ),
     ] {
@@ -158,12 +158,12 @@ fn endpoints_are_opaque_owned_values_and_payloads_are_shared_for_now() {
 #[test]
 fn suspension_is_checked_and_propagates_without_hiding_payload_effects() {
     rejects(
-        "(module (func $f (%effects pure) (%future.await %unit (%future.ready %unit))))",
+        "(module (func $f (%effect pure) (%future.await %unit (%future.ready %unit))))",
         "suspends",
     );
     let source = r#"(module
-      (func $read (result i64) (%effects suspends) (%future.await i64 (%future.ready i64 (i64.const 42))))
-      (func $call (result i64) (%effects suspends) (call $read)))"#;
+      (func $read (result i64) (%effect suspends) (%future.await i64 (%future.ready i64 (i64.const 42))))
+      (func $call (result i64) (%effect suspends) (call $read)))"#;
     let info = wlt::compile(source).unwrap();
     for function in &info.analysis.functions {
         assert!(function.effects.may_suspend);
@@ -173,14 +173,14 @@ fn suspension_is_checked_and_propagates_without_hiding_payload_effects() {
     }
     rejects(
         r#"(module (type $Cell (struct (field (mut i64))))
-      (func $f (param $cell (ref $Cell)) (%effects suspends)
+      (func $f (param $cell (ref $Cell)) (%effect suspends)
         (%future.close %unit (%future.ready %unit
           (struct.set $Cell 0 (local.get $cell) (i64.const 1))))))"#,
         "argument count",
     );
     rejects(
         r#"(module (type $Cell (struct (field (mut i64))))
-      (func $f (param $cell (ref $Cell)) (%effects pure)
+      (func $f (param $cell (ref $Cell)) (%effect pure)
         (%future.close i64 (%future.ready i64
           (block (result i64) (struct.set $Cell 0 (local.get $cell) (i64.const 1)) (i64.const 42))))))"#,
         "writes",

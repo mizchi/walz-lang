@@ -15,10 +15,10 @@ fn published_json_values_remain_immutable_for_effect_analysis() {
           (%import "wlt:std" (type $json-value.Value $Value) (type $option)
             (func $json-value.get) (func $json-value.at))
           (func $get (param $value (ref $Value))
-            (result (%inst $option (ref $Value))) (%effects pure)
+            (result (%inst $option (ref $Value))) (%effect pure)
             (call $json-value.get (local.get $value) (%text.lit "key")))
           (func $at (param $value (ref $Value))
-            (result (%inst $option (ref $Value))) (%effects pure)
+            (result (%inst $option (ref $Value))) (%effect pure)
             (call $json-value.at (local.get $value) (i32.const 0))))"#,
     )
     .unwrap();

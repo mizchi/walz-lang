@@ -36,44 +36,35 @@
       (param $key $text)
       (param $length i32)
       (result i32)
-      (%effects pure)
-      (%let $bytes (%text.bytes (local.get $key))
+      (%effect pure)
+      (%let $bytes (%text.bytes $key)
         (%loop $hash
-          (bind $i i32 (i32.const 0))
-          (bind $hash i32 (i32.const 2166136261))
+          (bind $i i32 0)
+          (bind $hash i32 2166136261)
           (result i32)
           (if
             (result i32)
-            (i32.eq (local.get $i) (%bytes.len (local.get $bytes)))
-            (then
-              (i32.and (local.get $hash) (i32.sub (local.get $length) (i32.const 1))))
-            (else
-              (%recur $hash
-                (i32.add (local.get $i) (i32.const 1))
-                (i32.mul
-                  (i32.xor
-                    (local.get $hash)
-                    (%bytes.get (local.get $bytes) (local.get $i)))
-                  (i32.const 16777619))))
-          ))))
+            (= $i (%bytes.len $bytes))
+            (then (& $hash (- $length 1)))
+            (else (%recur $hash (+ $i 1) (* (^ $hash (%bytes.get $bytes $i)) 16777619))))
+        )))
 
     (func $new
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (result (ref (%inst $Dict $T)))
-      (%effects allocates)
-      (struct.new
-        (%inst $Dict $T)
-        (array.new (%inst $Buckets $T) (ref.null (%inst $Entry $T)) (i32.const 16))
-        (i32.const 0)))
+      (%effect allocates)
+      (struct.new (%inst $Dict $T)
+        (array.new (%inst $Buckets $T) (ref.null (%inst $Entry $T)) 16)
+        0))
 
     (func $len
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $d (ref (%inst $Dict $T)))
       (result i32)
-      (%effects reads)
-      (struct.get (%inst $Dict $T) $size (local.get $d)))
+      (%effect reads)
+      (struct.get (%inst $Dict $T) $size $d))
 
     (func $find
       (%type.params $T)
@@ -81,34 +72,31 @@
       (param $d (ref (%inst $Dict $T)))
       (param $key $text)
       (result (ref null (%inst $Entry $T)))
-      (%effects reads)
-      (%let $buckets (struct.get (%inst $Dict $T) $buckets (local.get $d))
+      (%effect reads)
+      (%let $buckets (struct.get (%inst $Dict $T) $buckets $d)
         (%loop $find
           (bind $entry
             (ref null (%inst $Entry $T))
             (array.get
               (%inst $Buckets $T)
-              (local.get $buckets)
-              (call $slot (local.get $key) (array.len (local.get $buckets))))
-          )
+              $buckets
+              (call $slot $key (array.len $buckets))))
           (result (ref null (%inst $Entry $T)))
           (if
             (result (ref null (%inst $Entry $T)))
-            (ref.is_null (local.get $entry))
+            (ref.is_null $entry)
             (then (ref.null (%inst $Entry $T)))
             (else
-              (%let $entry (ref.as_non_null (local.get $entry))
+              (%let $entry (ref.as_non_null $entry)
                 (if
                   (result (ref null (%inst $Entry $T)))
                   (call $buffer.equal
-                    (%text.bytes (local.get $key))
-                    (%text.bytes (struct.get (%inst $Entry $T) $key (local.get $entry))))
-                  (then (local.get $entry))
-                  (else
-                    (%recur $find
-                      (struct.get (%inst $Entry $T) $next (local.get $entry))))
-                ))))
-        )))
+                    (%text.bytes $key)
+                    (%text.bytes (struct.get (%inst $Entry $T) $key $entry)))
+                  (then $entry)
+                  (else (%recur $find (struct.get (%inst $Entry $T) $next $entry))))
+              ))))
+      ))
 
     (func $get
       (%type.params $T)
@@ -116,71 +104,62 @@
       (param $d (ref (%inst $Dict $T)))
       (param $key $text)
       (result (%inst $option $T))
-      (%effects reads)
-      (%let $entry (call (%inst $find $T) (local.get $d) (local.get $key))
+      (%effect reads)
+      (%let $entry (call (%inst $find $T) $d $key)
         (if
           (result (%inst $option $T))
-          (ref.is_null (local.get $entry))
-          (then (%option.none $T))
+          (ref.is_null $entry)
+          (then (%option.none))
           (else
-            (%option.some $T
-              (struct.get (%inst $Entry $T) $value (ref.as_non_null (local.get $entry))))
-          ))))
+            (%option.some
+              (struct.get (%inst $Entry $T) $value (ref.as_non_null $entry))))
+        )))
 
     (func $grow
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $d (ref (%inst $Dict $T)))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let
-        (($old (struct.get (%inst $Dict $T) $buckets (local.get $d)))
-         ($length (array.len (local.get $old))))
+        (($old (struct.get (%inst $Dict $T) $buckets $d))
+         ($length (array.len $old)))
         (if
-          (i32.ge_u (local.get $length) (i32.const 1073741824))
+          (i32.ge_u $length 1073741824)
           (then (unreachable))
           (else
             (%let $new
-              (array.new (%inst $Buckets $T) (ref.null (%inst $Entry $T)) (i32.mul (local.get $length) (i32.const 2)))
+              (array.new (%inst $Buckets $T) (ref.null (%inst $Entry $T)) (* $length 2))
               (block
                 (%for $buckets
-                  (bind $i i32 (i32.const 0))
-                  (while (i32.lt_u (local.get $i) (local.get $length)))
-                  (step (i32.add (local.get $i) (i32.const 1)))
+                  (bind $i i32 0)
+                  (while (i32.lt_u $i $length))
+                  (step (+ $i 1))
                   (%loop $chain
                     (bind $entry
                       (ref null (%inst $Entry $T))
-                      (array.get (%inst $Buckets $T) (local.get $old) (local.get $i)))
+                      (array.get (%inst $Buckets $T) $old $i))
                     (if
-                      (ref.is_null (local.get $entry))
+                      (ref.is_null $entry)
                       (then (nop))
                       (else
                         (%let
-                          (($entry (ref.as_non_null (local.get $entry)))
-                           ($next
-                             (struct.get (%inst $Entry $T) $next (local.get $entry)))
+                          (($entry (ref.as_non_null $entry))
+                           ($next (struct.get (%inst $Entry $T) $next $entry))
                            ($slot
                              (call $slot
-                               (struct.get (%inst $Entry $T) $key (local.get $entry))
-                               (array.len (local.get $new))))
-                          )
+                               (struct.get (%inst $Entry $T) $key $entry)
+                               (array.len $new))))
                           (block
                             (struct.set
                               (%inst $Entry $T)
                               $next
-                              (local.get $entry)
-                              (array.get
-                                (%inst $Buckets $T)
-                                (local.get $new)
-                                (local.get $slot)))
-                            (array.set
-                              (%inst $Buckets $T)
-                              (local.get $new)
-                              (local.get $slot)
-                              (local.get $entry))
-                            (%recur $chain (local.get $next))))
-                      ))))
-                (struct.set (%inst $Dict $T) $buckets (local.get $d) (local.get $new))))
-          ))))
+                              $entry
+                              (array.get (%inst $Buckets $T) $new $slot))
+                            (array.set (%inst $Buckets $T) $new $slot $entry)
+                            (%recur $chain $next))))
+                    )))
+                (struct.set (%inst $Dict $T) $buckets $d $new))))
+        )))
 
     (func $set
       (%type.params $T)
@@ -189,60 +168,49 @@
       (param $key $text)
       (param $value $T)
       (result (%inst $option $T))
-      (%effects reads writes allocates)
-      (%let $entry (call (%inst $find $T) (local.get $d) (local.get $key))
+      (%effect reads writes allocates)
+      (%let $entry (call (%inst $find $T) $d $key)
         (if
           (result (%inst $option $T))
-          (ref.is_null (local.get $entry))
+          (ref.is_null $entry)
           (then
             (block
               (result (%inst $option $T))
               (if
                 (i32.ge_u
-                  (struct.get (%inst $Dict $T) $size (local.get $d))
-                  (array.len (struct.get (%inst $Dict $T) $buckets (local.get $d))))
-                (then (call (%inst $grow $T) (local.get $d)))
+                  (struct.get (%inst $Dict $T) $size $d)
+                  (array.len (struct.get (%inst $Dict $T) $buckets $d)))
+                (then (call (%inst $grow $T) $d))
                 (else (nop)))
               (%let
-                (($buckets (struct.get (%inst $Dict $T) $buckets (local.get $d)))
-                 ($slot (call $slot (local.get $key) (array.len (local.get $buckets))))
-                )
+                (($buckets (struct.get (%inst $Dict $T) $buckets $d))
+                 ($slot (call $slot $key (array.len $buckets))))
                 (block
                   (result (%inst $option $T))
                   (array.set
                     (%inst $Buckets $T)
-                    (local.get $buckets)
-                    (local.get $slot)
-                    (struct.new
-                      (%inst $Entry $T)
-                      (local.get $key)
-                      (local.get $value)
-                      (array.get
-                        (%inst $Buckets $T)
-                        (local.get $buckets)
-                        (local.get $slot))))
+                    $buckets
+                    $slot
+                    (struct.new (%inst $Entry $T)
+                      $key
+                      $value
+                      (array.get (%inst $Buckets $T) $buckets $slot)))
                   (struct.set
                     (%inst $Dict $T)
                     $size
-                    (local.get $d)
-                    (i32.add
-                      (struct.get (%inst $Dict $T) $size (local.get $d))
-                      (i32.const 1)))
-                  (%option.none $T))))
+                    $d
+                    (+ (struct.get (%inst $Dict $T) $size $d) 1))
+                  (%option.none))))
           )
           (else
             (%let
-              (($entry (ref.as_non_null (local.get $entry)))
-               ($previous (struct.get (%inst $Entry $T) $value (local.get $entry))))
+              (($entry (ref.as_non_null $entry))
+               ($previous (struct.get (%inst $Entry $T) $value $entry)))
               (block
                 (result (%inst $option $T))
-                (struct.set
-                  (%inst $Entry $T)
-                  $value
-                  (local.get $entry)
-                  (local.get $value))
-                (%option.some $T (local.get $previous))))
-          ))))
+                (struct.set (%inst $Entry $T) $value $entry $value)
+                (%option.some $previous))))
+        )))
 
     (func $remove
       (%type.params $T)
@@ -250,122 +218,104 @@
       (param $d (ref (%inst $Dict $T)))
       (param $key $text)
       (result (%inst $option $T))
-      (%effects reads writes)
+      (%effect reads writes)
       (%let
-        (($buckets (struct.get (%inst $Dict $T) $buckets (local.get $d)))
-         ($slot (call $slot (local.get $key) (array.len (local.get $buckets))))
-        )
+        (($buckets (struct.get (%inst $Dict $T) $buckets $d))
+         ($slot (call $slot $key (array.len $buckets))))
         (%loop $remove
           (bind $entry
             (ref null (%inst $Entry $T))
-            (array.get (%inst $Buckets $T) (local.get $buckets) (local.get $slot)))
+            (array.get (%inst $Buckets $T) $buckets $slot))
           (bind $previous (ref null (%inst $Entry $T)) (ref.null (%inst $Entry $T)))
           (result (%inst $option $T))
           (if
             (result (%inst $option $T))
-            (ref.is_null (local.get $entry))
-            (then (%option.none $T))
+            (ref.is_null $entry)
+            (then (%option.none))
             (else
-              (%let $entry (ref.as_non_null (local.get $entry))
+              (%let $entry (ref.as_non_null $entry)
                 (if
                   (result (%inst $option $T))
                   (call $buffer.equal
-                    (%text.bytes (local.get $key))
-                    (%text.bytes (struct.get (%inst $Entry $T) $key (local.get $entry))))
+                    (%text.bytes $key)
+                    (%text.bytes (struct.get (%inst $Entry $T) $key $entry)))
                   (then
-                    (%let $next (struct.get (%inst $Entry $T) $next (local.get $entry))
+                    (%let $next (struct.get (%inst $Entry $T) $next $entry)
                       (block
                         (result (%inst $option $T))
                         (if
-                          (ref.is_null (local.get $previous))
-                          (then
-                            (array.set
-                              (%inst $Buckets $T)
-                              (local.get $buckets)
-                              (local.get $slot)
-                              (local.get $next)))
+                          (ref.is_null $previous)
+                          (then (array.set (%inst $Buckets $T) $buckets $slot $next))
                           (else
                             (struct.set
                               (%inst $Entry $T)
                               $next
-                              (ref.as_non_null (local.get $previous))
-                              (local.get $next))))
+                              (ref.as_non_null $previous)
+                              $next)))
                         (struct.set
                           (%inst $Entry $T)
                           $next
-                          (local.get $entry)
+                          $entry
                           (ref.null (%inst $Entry $T)))
                         (struct.set
                           (%inst $Dict $T)
                           $size
-                          (local.get $d)
-                          (i32.sub
-                            (struct.get (%inst $Dict $T) $size (local.get $d))
-                            (i32.const 1)))
-                        (%option.some $T
-                          (struct.get (%inst $Entry $T) $value (local.get $entry))))
-                    ))
+                          $d
+                          (- (struct.get (%inst $Dict $T) $size $d) 1))
+                        (%option.some (struct.get (%inst $Entry $T) $value $entry))))
+                  )
                   (else
-                    (%recur $remove
-                      (struct.get (%inst $Entry $T) $next (local.get $entry))
-                      (local.get $entry))))
-              ))))
-      ))
+                    (%recur $remove (struct.get (%inst $Entry $T) $next $entry) $entry))))
+            ))))
+    )
 
     (func $clear
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $d (ref (%inst $Dict $T)))
-      (%effects reads writes)
-      (%let $buckets (struct.get (%inst $Dict $T) $buckets (local.get $d))
+      (%effect reads writes)
+      (%let $buckets (struct.get (%inst $Dict $T) $buckets $d)
         (block
           (%for $clear
-            (bind $i i32 (i32.const 0))
-            (while (i32.lt_u (local.get $i) (array.len (local.get $buckets))))
-            (step (i32.add (local.get $i) (i32.const 1)))
-            (array.set
-              (%inst $Buckets $T)
-              (local.get $buckets)
-              (local.get $i)
-              (ref.null (%inst $Entry $T))))
-          (struct.set (%inst $Dict $T) $size (local.get $d) (i32.const 0))))
-    )
+            (bind $i i32 0)
+            (while (i32.lt_u $i (array.len $buckets)))
+            (step (+ $i 1))
+            (array.set (%inst $Buckets $T) $buckets $i (ref.null (%inst $Entry $T))))
+          (struct.set (%inst $Dict $T) $size $d 0))))
 
     (func $entries
       (%type.params $T)
       (%where (shared $T) (nonunit $T))
       (param $d (ref (%inst $Dict $T)))
       (result (%inst $list (%inst $pair $text $T)))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let
-        (($buckets (struct.get (%inst $Dict $T) $buckets (local.get $d)))
+        (($buckets (struct.get (%inst $Dict $T) $buckets $d))
          ($out (call (%inst $list-builder.new (%inst $pair $text $T))))
         )
         (block
           (result (%inst $list (%inst $pair $text $T)))
           (%for $buckets
-            (bind $i i32 (i32.const 0))
-            (while (i32.lt_u (local.get $i) (array.len (local.get $buckets))))
-            (step (i32.add (local.get $i) (i32.const 1)))
+            (bind $i i32 0)
+            (while (i32.lt_u $i (array.len $buckets)))
+            (step (+ $i 1))
             (%loop $chain
               (bind $entry
                 (ref null (%inst $Entry $T))
-                (array.get (%inst $Buckets $T) (local.get $buckets) (local.get $i)))
+                (array.get (%inst $Buckets $T) $buckets $i))
               (if
-                (ref.is_null (local.get $entry))
+                (ref.is_null $entry)
                 (then (nop))
                 (else
-                  (%let $entry (ref.as_non_null (local.get $entry))
+                  (%let $entry (ref.as_non_null $entry)
                     (block
                       (call
                         (%inst $list-builder.push (%inst $pair $text $T))
-                        (local.get $out)
+                        $out
                         (%pair.new
-                          (struct.get (%inst $Entry $T) $key (local.get $entry))
-                          (struct.get (%inst $Entry $T) $value (local.get $entry))))
-                      (%recur $chain
-                        (struct.get (%inst $Entry $T) $next (local.get $entry))))
-                  ))))
-          )
-          (call (%inst $list-builder.finish (%inst $pair $text $T)) (local.get $out))))
-    )))
+                          (struct.get (%inst $Entry $T) $key $entry)
+                          (struct.get (%inst $Entry $T) $value $entry)))
+                      (%recur $chain (struct.get (%inst $Entry $T) $next $entry))))
+                ))))
+          (call (%inst $list-builder.finish (%inst $pair $text $T)) $out))))
+  ))

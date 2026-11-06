@@ -24,7 +24,7 @@ fn generated_imports_require_separate_trusted_policy() {
             .source
             .contains("(%inst $pair i64 (%inst $option $text))")
     );
-    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (%result (%inst $pair i64 (%inst $option $text)) i32)) (%effects host) (call $service.echo (%text.lit \"日本語\")))", 1);
+    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (%result (%inst $pair i64 (%inst $option $text)) i32)) (%effect host) (call $service.echo (%text.lit \"日本語\")))", 1);
     assert!(wlt::component::compile(&source).is_err());
     let policy = BindingPolicy::parse(&generated.policy).unwrap();
     let module = wlt::check_with_policy(&source, &policy).unwrap();

@@ -1,0 +1,11 @@
+{
+  "schema": "wlt-struct-baseline-execution-v1",
+  "compilerHead": "68215f52d5f0f4cb6696edd9aed967d54dfcc30c",
+  "sourceHash": "b0cbd99f7b0b3f384f6e5bf610dd441b453c2a582a5c02ca80db2cb00ade2221",
+  "command": "just run evals/reports/20261106-struct-literals-v1/readability/baseline.wlt",
+  "exitCode": 0,
+  "stdout": "42\n",
+  "sameBaselineAsV1": true,
+  "candidateSyntaxExecuted": false,
+  "note": "Only the existing positional spelling is executed; candidate spellings have a draft reading contract."
+}

@@ -30,7 +30,7 @@
     (param $a $text)
     (param $b $text)
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (call $buffer.equal (%text.bytes (local.get $a)) (%text.bytes (local.get $b))))
   (%test "dict collision, replacement, unlink and clear"
     (%let

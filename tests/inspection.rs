@@ -80,7 +80,7 @@ fn type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances(
     let dir = tempfile::tempdir().unwrap();
     let root = dir.path().join("main.wlt");
     let child = dir.path().join("lib.wlt");
-    let source = "(module\n (%export (func $id) (func $count))\n (%type.alias $Count i64)\n (func $id (%type.params $T) (param $x $T) (result $T) (%effects pure) (local.get $x))\n (func $count (result $Count) (%effects pure) ;; 日本語🦀\n  (; 型🦀 ;) (%let $n $Count (i64.const 42) (local.get $n))))";
+    let source = "(module\n (%export (func $id) (func $count))\n (%type.alias $Count i64)\n (func $id (%type.params $T) (param $x $T) (result $T) (%effect pure) (local.get $x))\n (func $count (result $Count) (%effect pure) ;; 日本語🦀\n  (; 型🦀 ;) (%let $n $Count (i64.const 42) (local.get $n))))";
     std::fs::write(&child, source).unwrap();
     std::fs::write(&root, "(module (%import \"lib.wlt\" (func $id) (func $count)) (func $a (result i32) (call (%inst $id i32) (i32.const 1))) (func $b (result i64) (call (%inst $id i64) (i64.const 2))))").unwrap();
     let (line, column) = position(source, "$n $Count");
@@ -105,7 +105,7 @@ fn type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances(
         ),
         child.canonicalize().unwrap()
     );
-    let (line, column) = position(source, "$Count) (%effects");
+    let (line, column) = position(source, "$Count) (%effect");
     let (_, report) = cli(&[
         "type-at",
         root.to_str().unwrap(),

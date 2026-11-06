@@ -10,7 +10,7 @@
   (func $make
     (export "make")
     (result (ref $Box))
-    (%effects allocates)
+    (%effect allocates)
     (struct.new $Box
       (%newtype.wrap $Id (i32.const 42))
       (array.new $Data (i64.const 42) (i32.const 4096))))
@@ -19,44 +19,44 @@
     (export "data")
     (param $box (ref $Box))
     (result (ref $Data))
-    (%effects pure)
+    (%effect pure)
     (struct.get $Box $data (local.get $box)))
 
   (func $root
     (export "root")
     (result (ref $Root))
-    (%effects allocates)
+    (%effect allocates)
     (struct.new $Root (ref.null $Box)))
 
   (func $pin
     (export "pin")
     (param $root (ref $Root))
     (param $box (ref $Box))
-    (%effects writes)
+    (%effect writes)
     (struct.set $Root $value (local.get $root) (local.get $box)))
 
   (func $clear
     (export "clear")
     (param $root (ref $Root))
-    (%effects writes)
+    (%effect writes)
     (struct.set $Root $value (local.get $root) (ref.null $Box)))
 
   (func $read
     (param $box (ref $Box))
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (%newtype.unwrap $Id (struct.get $Box $id (local.get $box))))
 
   (func $maybe-throw
     (param $fail i32)
-    (%effects (throws $Failure))
+    (%effect (throws $Failure))
     (if (local.get $fail) (then (throw $Failure)) (else (nop))))
 
   (func $owned
     (param $box (ref $Box))
     (param $fail i32)
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (%let $owner (%own.new (ref $Box) (local.get $box))
       (%try
         (result i32)
@@ -76,7 +76,7 @@
   (%closure $Inspect
     (%capture $owner (%inst $own (ref $Box)))
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (%match (%move $owner)
       (case own ($value) (return (call $read (local.get $value))))
     ))
@@ -86,7 +86,7 @@
     (param $box (ref $Box))
     (param $mode i32)
     (result i32)
-    (%effects allocates)
+    (%effect allocates)
     (if
       (result i32)
       (i32.eqz (local.get $mode))

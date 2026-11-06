@@ -47,7 +47,7 @@ fn format_cli_checks_then_writes_only_a_valid_source_file() {
 fn formatter_groups_contracts_and_macro_headers_and_attaches_closing_delimiters() {
     let source = r#"(module
       (func $convert (param $input (%result i64 i32))
-        (result (%result i32 i32)) (%effects pure)
+        (result (%result i32 i32)) (%effect pure)
         (%result.let ($value) (%result i64 i32) i32 (local.get $input)
           (%result.ok i32 i32 (i32.wrap_i64 (local.get $value))))))"#;
     let formatted = wlt::format::source(source).unwrap();
@@ -176,7 +176,7 @@ fn grouped_let_keeps_the_continuation_out_of_the_binding_header() {
 #[test]
 fn grouped_bindings_align_and_long_result_subjects_separate_the_continuation() {
     let source = r#"(module
-      (func $main (result (%result i64 i32)) (%effects suspends)
+      (func $main (result (%result i64 i32)) (%effect suspends)
         (%let (($base (i64.const 40)) ($initial (i64.add (local.get $base) (i64.const 2))))
           (%result.let ($total)
             (%stream.fold-result (%stream.empty (%result i64 i32)) (local.get $initial) ($sum $item)
@@ -192,7 +192,7 @@ fn grouped_bindings_align_and_long_result_subjects_separate_the_continuation() {
         "{formatted}"
     );
     assert!(
-        formatted.contains("(func $main\n    (result (%result i64 i32))\n    (%effects suspends)"),
+        formatted.contains("(func $main\n    (result (%result i64 i32))\n    (%effect suspends)"),
         "{formatted}"
     );
     assert_eq!(wlt::format::source(&formatted).unwrap(), formatted);

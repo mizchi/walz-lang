@@ -108,7 +108,7 @@ fn moved_value_diagnostic_identifies_binding_and_first_move() {
 
 #[test]
 fn effect_diagnostic_explains_declared_bound_and_transitive_cause() {
-    let source = "(module\n (type $Cell (struct (field $value (mut i32))))\n (func $read (param $cell (ref $Cell)) (result i32)\n  (struct.get $Cell $value (local.get $cell)))\n (func $f (param $cell (ref $Cell)) (result i32) (%effects pure)\n  (call $read (local.get $cell))))";
+    let source = "(module\n (type $Cell (struct (field $value (mut i32))))\n (func $read (param $cell (ref $Cell)) (result i32)\n  (struct.get $Cell $value (local.get $cell)))\n (func $f (param $cell (ref $Cell)) (result i32) (%effect pure)\n  (call $read (local.get $cell))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert!(error.to_string().contains("declared: pure"));
     assert!(error.to_string().contains("required: reads"));
@@ -217,7 +217,7 @@ fn inner_type_errors_do_not_blame_an_outer_call_or_result_bound() {
 
 #[test]
 fn effect_provenance_ignores_caught_throws_and_finds_handler_rethrows() {
-    let source = "(module (tag $E (param i32))\n (func $f (result i32) (%effects pure)\n  (%try (result i32)\n   (do (throw $E (i32.const 1)))\n   (catch $E ($value) (throw $E (local.get $value))))))";
+    let source = "(module (tag $E (param i32))\n (func $f (result i32) (%effect pure)\n  (%try (result i32)\n   (do (throw $E (i32.const 1)))\n   (catch $E ($value) (throw $E (local.get $value))))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert_eq!(error.diagnostic().related.len(), 1);
     assert_eq!(error.diagnostic().related[0].location.line, 5);
@@ -226,7 +226,7 @@ fn effect_provenance_ignores_caught_throws_and_finds_handler_rethrows() {
 
 #[test]
 fn effect_provenance_handles_recursive_calls_and_unknown_imports() {
-    let source = "(module\n (type $Cell (struct (field (mut i32))))\n (func $a (param $c (ref $Cell)) (%effects pure) (call $b (local.get $c)))\n (func $b (param $c (ref $Cell))\n  (block (call $a (local.get $c))\n   (struct.set $Cell 0 (local.get $c) (i32.const 1)))))";
+    let source = "(module\n (type $Cell (struct (field (mut i32))))\n (func $a (param $c (ref $Cell)) (%effect pure) (call $b (local.get $c)))\n (func $b (param $c (ref $Cell))\n  (block (call $a (local.get $c))\n   (struct.set $Cell 0 (local.get $c) (i32.const 1)))))";
     let error = rejects(source, "E_EFFECT_CONTRACT");
     assert!(
         error
@@ -236,7 +236,7 @@ fn effect_provenance_handles_recursive_calls_and_unknown_imports() {
             .any(|label| label.location.line == 6 && label.message.contains("struct.set"))
     );
     let error = rejects(
-        "(module (import \"host\" \"f\" (func $host)) (func $f (%effects pure) (call $host)))",
+        "(module (import \"host\" \"f\" (func $host)) (func $f (%effect pure) (call $host)))",
         "E_EFFECT_CONTRACT",
     );
     assert!(

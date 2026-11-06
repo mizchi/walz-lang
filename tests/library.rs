@@ -36,7 +36,7 @@ fn builder_representation_and_mutation_effects_are_checked() {
     let prefix = loaded.text().trim_end().strip_suffix(')').unwrap();
     for (body, message) in [
         (
-            "(func $bad (param $b (ref $builder.Builder)) (%effects pure) (call $builder.text (local.get $b) (%text.lit \"x\")))",
+            "(func $bad (param $b (ref $builder.Builder)) (%effect pure) (call $builder.text (local.get $b) (%text.lit \"x\")))",
             "effect contract",
         ),
         (
@@ -44,7 +44,7 @@ fn builder_representation_and_mutation_effects_are_checked() {
             "opaque",
         ),
         (
-            "(func $bad (param $o (ref $json.Object)) (%effects pure) (call $json.u64 (local.get $o) (%text.lit \"n\") (i64.const 1)))",
+            "(func $bad (param $o (ref $json.Object)) (%effect pure) (call $json.u64 (local.get $o) (%text.lit \"n\") (i64.const 1)))",
             "effect contract",
         ),
     ] {
@@ -117,7 +117,7 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
         ("i64", "reads", false),
     ] {
         let source = format!(
-            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result %bytes) (%effects {effect}) (%bytes.from-array $A (local.get $a))))"
+            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result %bytes) (%effect {effect}) (%bytes.from-array $A (local.get $a))))"
         );
         assert_eq!(wlt::check(&source).is_ok(), ok, "{source}");
     }

@@ -49,7 +49,7 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
             .contains("opaque")
     );
     let probe = format!(
-        "{prefix} (func $impure (param $g (ref $graph.Graph)) (result (%result (ref $planner.Run) (ref $domain.Error))) (%effects pure) (call $planner.run (local.get $g) (i32.const 2))))"
+        "{prefix} (func $impure (param $g (ref $graph.Graph)) (result (%result (ref $planner.Run) (ref $domain.Error))) (%effect pure) (call $planner.run (local.get $g) (i32.const 2))))"
     );
     assert!(
         wlt::check(&probe)

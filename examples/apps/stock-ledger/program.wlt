@@ -16,7 +16,7 @@
       (type $unit))
     (%public (func $process))
     (func $process (param $s (ref $stock.State)) (param $line $text)
-      (result (%inst $result $unit i32)) (%effects reads writes allocates host suspends)
+      (result (%inst $result $unit i32)) (%effect reads writes allocates host suspends)
       (%match $parse.Command (result (%inst $result $unit i32))
         (call $parse.command (local.get $line))
         (case skip () (%result.ok $unit i32))

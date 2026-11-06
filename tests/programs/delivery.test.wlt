@@ -5,7 +5,7 @@
     (type $pair)
     (type $stream)
     (type $unit))
-  (%closure $Await (%capture $future (%inst $future i64)) (result i64) (%effects suspends)
+  (%closure $Await (%capture $future (%inst $future i64)) (result i64) (%effect suspends)
     (%future.await i64 (%move $future)))
 
   (%test "ready future delivers its value"

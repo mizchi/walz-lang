@@ -41,39 +41,39 @@
         (field $buckets (mut (ref $Buckets)))
         (field $size (mut i32))
         (field $edges (mut i32))))
-    (func $new (result (ref $Graph)) (%effects allocates)
+    (func $new (result (ref $Graph)) (%effect allocates)
       (struct.new $Graph
         (array.new $Jobs (ref.null $Job) (i32.const 8))
         (array.new $Buckets (ref.null $Entry) (i32.const 64))
         (i32.const 0)
         (i32.const 0)))
 
-    (func $size (param $g (ref $Graph)) (result i32) (%effects reads)
+    (func $size (param $g (ref $Graph)) (result i32) (%effect reads)
       (struct.get $Graph $size (local.get $g)))
 
-    (func $at (param $g (ref $Graph)) (param $i i32) (result (ref $Job)) (%effects reads)
+    (func $at (param $g (ref $Graph)) (param $i i32) (result (ref $Job)) (%effect reads)
       (ref.as_non_null
         (array.get $Jobs (struct.get $Graph $jobs (local.get $g)) (local.get $i))))
 
-    (func $id (param $j (ref $Job)) (result $text) (%effects pure)
+    (func $id (param $j (ref $Job)) (result $text) (%effect pure)
       (struct.get $Job $id (local.get $j)))
 
-    (func $index (param $j (ref $Job)) (result i32) (%effects pure)
+    (func $index (param $j (ref $Job)) (result i32) (%effect pure)
       (struct.get $Job $index (local.get $j)))
 
-    (func $duration (param $j (ref $Job)) (result i64) (%effects pure)
+    (func $duration (param $j (ref $Job)) (result i64) (%effect pure)
       (struct.get $Job $duration (local.get $j)))
 
-    (func $dependencies (param $j (ref $Job)) (result (ref null $Link)) (%effects reads)
+    (func $dependencies (param $j (ref $Job)) (result (ref null $Link)) (%effect reads)
       (struct.get $Job $deps (local.get $j)))
 
-    (func $edge-job (param $l (ref $Link)) (result (ref $Job)) (%effects pure)
+    (func $edge-job (param $l (ref $Link)) (result (ref $Job)) (%effect pure)
       (struct.get $Link $job (local.get $l)))
 
-    (func $edge-next (param $l (ref $Link)) (result (ref null $Link)) (%effects pure)
+    (func $edge-next (param $l (ref $Link)) (result (ref null $Link)) (%effect pure)
       (struct.get $Link $next (local.get $l)))
 
-    (func $hash (param $key $bytes) (result i32) (%effects pure)
+    (func $hash (param $key $bytes) (result i32) (%effect pure)
       (%loop $bytes
         (bind $i i32 (i32.const 0))
         (bind $h i32 (i32.const 0))
@@ -91,13 +91,13 @@
           ))))
 
     (func $bucket (param $buckets (ref $Buckets)) (param $key $bytes) (result i32)
-      (%effects pure)
+      (%effect pure)
       (i32.and
         (call $hash (local.get $key))
         (i32.sub (array.len (local.get $buckets)) (i32.const 1))))
 
     (func $find (param $g (ref $Graph)) (param $key $bytes) (result (%inst $option (ref $Job)))
-      (%effects reads)
+      (%effect reads)
       (%let $buckets (struct.get $Graph $buckets (local.get $g))
         (%loop $search
           (bind $entry
@@ -123,7 +123,7 @@
                   ))))
           ))))
 
-    (func $rehash (param $g (ref $Graph)) (%effects reads writes allocates)
+    (func $rehash (param $g (ref $Graph)) (%effect reads writes allocates)
       (%let $old (struct.get $Graph $buckets (local.get $g))
         (if
           (i32.eq (call $size (local.get $g)) (array.len (local.get $old)))
@@ -150,7 +150,7 @@
           (else (nop))))
     )
 
-    (func $grow (param $g (ref $Graph)) (%effects reads writes allocates)
+    (func $grow (param $g (ref $Graph)) (%effect reads writes allocates)
       (%let $old (struct.get $Graph $jobs (local.get $g))
         (if
           (i32.eq (call $size (local.get $g)) (array.len (local.get $old)))
@@ -172,7 +172,7 @@
     )
 
     (func $add (param $g (ref $Graph)) (param $id $text) (param $duration i64)
-      (result (%inst $result $unit (ref $domain.Error))) (%effects reads writes allocates)
+      (result (%inst $result $unit (ref $domain.Error))) (%effect reads writes allocates)
       (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
         (call $find (local.get $g) (%text.bytes (local.get $id)))
         (case some ($existing)
@@ -225,7 +225,7 @@
       ))
 
     (func $contains (param $head (ref null $Link)) (param $job (ref $Job)) (result i32)
-      (%effects pure)
+      (%effect pure)
       (%loop $walk
         (bind $link (ref null $Link) (local.get $head))
         (result i32)
@@ -244,7 +244,7 @@
       ))
 
     (func $after (param $g (ref $Graph)) (param $id $text) (param $dependency $text)
-      (result (%inst $result $unit (ref $domain.Error))) (%effects reads writes allocates)
+      (result (%inst $result $unit (ref $domain.Error))) (%effect reads writes allocates)
       (%match (%inst $option (ref $Job)) (result (%inst $result $unit (ref $domain.Error)))
         (call $find (local.get $g) (%text.bytes (local.get $id)))
         (case none () (%result.err (%variant.new $domain.Error unknown (local.get $id))))

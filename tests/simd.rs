@@ -88,7 +88,7 @@ fn typed_simd_covers_vector_shapes_and_mixed_scalar_operands() {
         ),
     ] {
         let source = format!(
-            "(module (func $main (export \"main\") (result {ty}) (%effects pure) (%let $answer {expression} (local.get $answer))))"
+            "(module (func $main (export \"main\") (result {ty}) (%effect pure) (%let $answer {expression} (local.get $answer))))"
         );
         let module = run(&source, expected);
         let main = &module.analysis.functions[0];
@@ -112,7 +112,7 @@ fn scalar_bit_counts_use_standard_width_and_zero_semantics() {
     ] {
         run(
             &format!(
-                "(module (func $main (export \"main\") (result {ty}) (%effects pure) ({ty}.{op} ({ty}.const {value}))))"
+                "(module (func $main (export \"main\") (result {ty}) (%effect pure) ({ty}.{op} ({ty}.const {value}))))"
             ),
             expected,
         );
@@ -134,9 +134,9 @@ fn vectors_are_shared_values_in_gc_storage_captures_generics_and_lists() {
       (%import "wlt:std" (type $option) (func $list-builder.new) (func $list-builder.push) (func $list-builder.finish))
       (type $Box (struct (field $v (mut v128))))
       (type $Array (array (mut v128)))
-      (func $id (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effects pure) (local.get $x))
-      (%closure $Add (%capture $base v128) (param $x v128) (result v128) (%effects pure) (i32x4.add (local.get $base) (local.get $x)))
-      (func $main (export "main") (result i32) (%effects reads writes allocates)
+      (func $id (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effect pure) (local.get $x))
+      (%closure $Add (%capture $base v128) (param $x v128) (result v128) (%effect pure) (i32x4.add (local.get $base) (local.get $x)))
+      (func $main (export "main") (result i32) (%effect reads writes allocates)
         (%let (($box (struct.new $Box (v128.const i32x4 0 0 0 0)))
                ($array (array.new_fixed $Array 1 (v128.const i32x4 0 0 0 0)))
                ($builder (call (%inst $list-builder.new v128))))
@@ -160,12 +160,12 @@ fn vectors_are_shared_values_in_gc_storage_captures_generics_and_lists() {
 fn simd_operands_keep_left_to_right_evaluation_and_effects() {
     let source = r#"(module
       (type $Counter (struct (field $n (mut i32))))
-      (func $tick (param $c (ref $Counter)) (result i32) (%effects reads writes)
+      (func $tick (param $c (ref $Counter)) (result i32) (%effect reads writes)
         (%let $n (i32.add (struct.get $Counter $n (local.get $c)) (i32.const 1))
           (block (result i32)
             (struct.set $Counter $n (local.get $c) (local.get $n))
             (local.get $n))))
-      (func $main (export "main") (result i32) (%effects reads writes allocates)
+      (func $main (export "main") (result i32) (%effect reads writes allocates)
         (%let $c (struct.new $Counter (i32.const 0))
           (%let $v (i32x4.sub
                     (i32x4.splat (call $tick (local.get $c)))
@@ -176,8 +176,7 @@ fn simd_operands_keep_left_to_right_evaluation_and_effects() {
     let main = compiled.analysis.functions.last().unwrap();
     assert!(main.semantic_effects.reads && main.semantic_effects.writes);
     assert!(
-        wlt::check(&source.replace("(%effects reads writes allocates)", "(%effects pure)"))
-            .is_err()
+        wlt::check(&source.replace("(%effect reads writes allocates)", "(%effect pure)")).is_err()
     );
 }
 
@@ -195,7 +194,7 @@ fn native_simd_memory_keeps_the_wat_path_without_bypassing_contracts() {
     assert!(
         wlt::compile(&source.replace(
             "(result i32)\n        (v128.store",
-            "(result i32) (%effects pure)\n        (v128.store"
+            "(result i32) (%effect pure)\n        (v128.store"
         ))
         .is_err()
     );
@@ -208,7 +207,7 @@ fn trusted_host_policies_also_reject_vector_abi_shapes() {
             r#"(module
           (%import "wlt:std" (type $list))
           (import "simd:host/math" "take" (func $take (param $v {ty})))
-          (func $main (export "main") (result i32) (%effects pure) (i32.const 42)))"#
+          (func $main (export "main") (result i32) (%effect pure) (i32.const 42)))"#
         );
         let policy = wlt::bindings::BindingPolicy::parse(
             &serde_json::json!({
@@ -245,7 +244,7 @@ fn invalid_lanes_shuffle_constants_and_operand_types_are_rejected() {
         "(i32x4.shl (i32x4.splat (i32.const 1)) (i64.const 1))",
         "(v128.bitselect (i32x4.splat (i32.const 1)) (i32x4.splat (i32.const 2)))",
     ] {
-        let source = format!("(module (func $bad (%effects pure) (drop {expression})))");
+        let source = format!("(module (func $bad (%effect pure) (drop {expression})))");
         assert!(wlt::check(&source).is_err(), "accepted: {source}");
         assert!(
             wlt::compile(&source).is_err(),
@@ -264,7 +263,7 @@ fn portable_boundaries_reject_vectors_recursively_and_laws_do_not_skip_them() {
         "(%inst $future v128)",
     ] {
         let source = format!(
-            r#"(module (%import "wlt:std" (type $list) (type $option) (type $pair) (type $future)) (func $f (export "f") (param $x {ty}) (result {ty}) (%effects pure) (local.get $x)))"#
+            r#"(module (%import "wlt:std" (type $list) (type $option) (type $pair) (type $future)) (func $f (export "f") (param $x {ty}) (result {ty}) (%effect pure) (local.get $x)))"#
         );
         // Future is owned; the corresponding move below keeps the boundary test valid.
         let source = if ty.starts_with("(%inst $future") {

@@ -6,6 +6,7 @@ enum Node {
     Token(String),
     Comment(String),
     List(Vec<Node>),
+    Fields(Vec<Node>),
 }
 struct Reader<'a> {
     source: &'a str,
@@ -15,7 +16,7 @@ impl Reader<'_> {
     fn error(&self, start: usize, message: &str) -> Error {
         Error::at(self.source, Span { start, end: start }, message)
     }
-    fn nodes(&mut self, open: Option<usize>, depth: usize) -> Result<Vec<Node>, Error> {
+    fn nodes(&mut self, open: Option<(usize, u8)>, depth: usize) -> Result<Vec<Node>, Error> {
         if depth > 256 {
             return Err(self.error(self.offset, "format nesting limit exceeded"));
         }
@@ -52,50 +53,39 @@ impl Reader<'_> {
                 }
                 b'(' => {
                     self.offset += 1;
-                    nodes.push(Node::List(self.nodes(Some(start), depth + 1)?));
+                    nodes.push(Node::List(self.nodes(Some((start, b')')), depth + 1)?));
                 }
-                b')' => {
-                    if open.is_none() {
-                        return Err(self.error(start, "unexpected ')'"));
+                b'{' => {
+                    self.offset += 1;
+                    nodes.push(Node::Fields(self.nodes(Some((start, b'}')), depth + 1)?));
+                }
+                b')' | b'}' => {
+                    if open.map(|(_, close)| close) != Some(bytes[start]) {
+                        return Err(self.error(start, "unexpected closing delimiter"));
                     }
                     self.offset += 1;
                     return Ok(nodes);
                 }
-                b'"' => {
-                    self.offset += 1;
-                    let mut closed = false;
-                    while self.offset < bytes.len() {
-                        let byte = bytes[self.offset];
-                        self.offset += 1;
-                        if byte == b'"' {
-                            closed = true;
-                            break;
-                        }
-                        if byte == b'\\' && self.offset < bytes.len() {
-                            self.offset += 1;
-                        }
-                    }
-                    if !closed {
-                        return Err(self.error(start, "unterminated string"));
-                    }
-                    nodes.push(Node::Token(self.source[start..self.offset].to_owned()));
-                }
                 _ => {
-                    while self.offset < bytes.len()
-                        && !bytes[self.offset].is_ascii_whitespace()
-                        && !matches!(bytes[self.offset], b'(' | b')' | b'"' | b';')
-                    {
-                        self.offset += 1;
-                    }
-                    if self.offset == start {
-                        return Err(self.error(start, "unexpected token"));
-                    }
+                    // Includes WAT quoted identifiers, whose embedded quotes and
+                    // braces must remain part of the same token.
+                    wast::lexer::Lexer::new(self.source)
+                        .parse(&mut self.offset)
+                        .map_err(|e| self.error(start, &e.to_string()))?
+                        .ok_or_else(|| self.error(start, "expected token"))?;
                     nodes.push(Node::Token(self.source[start..self.offset].to_owned()));
                 }
             }
         }
-        if let Some(start) = open {
-            return Err(self.error(start, "unclosed '('; expected ')'"));
+        if let Some((start, close)) = open {
+            return Err(self.error(
+                start,
+                if close == b')' {
+                    "unclosed '('; expected ')'"
+                } else {
+                    "unclosed '{'; expected '}'"
+                },
+            ));
         }
         Ok(nodes)
     }
@@ -104,8 +94,19 @@ fn flat(n: &Node) -> Option<String> {
     match n {
         Node::Token(t) => Some(t.clone()),
         Node::Comment(_) => None,
+        Node::Fields(items) => Some(format!(
+            "{{{}}}",
+            items
+                .iter()
+                .map(flat)
+                .collect::<Option<Vec<_>>>()?
+                .join(" ")
+        )),
         Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('%'),"let"|"result.let"|"stream.fold-result"|"match")) => {
             None
+        }
+        Node::List(items) if matches!(items.as_slice(), [Node::Token(head), Node::Fields(_)] if head.ends_with("::")) => {
+            Some(format!("({}{})", flat(&items[0])?, flat(&items[1])?))
         }
         Node::List(items) => Some(format!(
             "({})",
@@ -162,6 +163,7 @@ fn header_end(items: &[Node]) -> usize {
             },
         ),
         "case" => Some(3),
+        "struct.new" => Some(2),
         "let" if meaningful.len() == 3 => Some(1),
         "let" => Some(
             if items
@@ -215,7 +217,7 @@ fn header_end(items: &[Node]) -> usize {
                             | "type.params"
                             | "where"
                             | "result"
-                            | "effects"
+                            | "effect"
                             | "export"
                             | "import"
                             | "capture"
@@ -310,6 +312,51 @@ fn write_bindings(items: &[Node], indent: usize, output: &mut String) {
     close_list(items, indent, output);
 }
 
+// Keep each :field and its value together. Comments between a key and value
+// stay in that gap, including line comments which must end before the value.
+fn write_fields(items: &[Node], indent: usize, output: &mut String) {
+    let mut key_pending = false;
+    let mut line_open = false;
+    for item in items {
+        if matches!(item, Node::Comment(_)) {
+            if line_open {
+                output.push('\n');
+            }
+            write(item, indent + if key_pending { 2 } else { 0 }, output);
+            line_open = false;
+        } else if !key_pending {
+            output.push_str(&" ".repeat(indent));
+            if let Some(key) = flat(item) {
+                output.push_str(&key);
+            } else {
+                write(item, indent, output);
+            }
+            key_pending = true;
+            line_open = true;
+        } else {
+            if let Some(value) = flat(item).filter(|v| {
+                line_open
+                    && output.rsplit('\n').next().unwrap_or("").len() + 1 + v.len() <= 88
+                    && closing_run(v) <= 4
+            }) {
+                output.push(' ');
+                output.push_str(&value);
+                output.push('\n');
+            } else {
+                if line_open {
+                    output.push('\n');
+                }
+                write(item, indent + 2, output);
+            }
+            line_open = false;
+            key_pending = false;
+        }
+    }
+    if line_open {
+        output.push('\n');
+    }
+}
+
 fn write(n: &Node, indent: usize, output: &mut String) {
     let padding = " ".repeat(indent);
     if let Some(s) = flat(n)
@@ -326,6 +373,23 @@ fn write(n: &Node, indent: usize, output: &mut String) {
             output.push_str(&padding);
             output.push_str(t);
             output.push('\n');
+        }
+        Node::Fields(items) => {
+            output.push_str(&format!("{padding}{{\n"));
+            write_fields(items, indent + 2, output);
+            output.push_str(&format!("{padding}}}\n"));
+        }
+        Node::List(items) if matches!(items.as_slice(), [Node::Token(head), Node::Fields(_)] if head.ends_with("::")) =>
+        {
+            let Node::Token(head) = &items[0] else {
+                unreachable!()
+            };
+            let Node::Fields(fields) = &items[1] else {
+                unreachable!()
+            };
+            output.push_str(&format!("{padding}({head}{{\n"));
+            write_fields(fields, indent + 2, output);
+            output.push_str(&format!("{padding}}})\n"));
         }
         Node::List(items) => {
             let prefix = header_end(items);

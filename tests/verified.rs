@@ -13,7 +13,7 @@ fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output
 }
 
 const GOOD: &str = r#"(module
-  (func $main (export "main") (result i64) (%effects pure)
+  (func $main (export "main") (result i64) (%effect pure)
     (%let $x (%own.new i64 (i64.const 42))
       (%match (%own i64) (result i64) (%move $x) (case own ($n) (local.get $n))))))"#;
 
@@ -52,7 +52,7 @@ fn verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel() {
             "typed core",
         ),
         (
-            "(module (import \"host\" \"x\" (func $x)) (func $main (export \"main\") (%effects pure) (nop)))",
+            "(module (import \"host\" \"x\" (func $x)) (func $main (export \"main\") (%effect pure) (nop)))",
             "imports",
         ),
         (
@@ -60,7 +60,7 @@ fn verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel() {
             "effect contract",
         ),
         (
-            "(module (func $main (export \"main\") (param $x (%own i64)) (%effects pure) (%own.close (%move $x))))",
+            "(module (func $main (export \"main\") (param $x (%own i64)) (%effect pure) (%own.close (%move $x))))",
             "owned exports",
         ),
     ] {
@@ -133,8 +133,8 @@ fn ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_prote
     );
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "42");
     for source in [
-        "(module (func $f (export \"f\") (result (%future %unit)) (%effects pure) (%future.ready %unit)))",
-        "(module (func $f (export \"f\") (param $s (%stream %unit)) (%effects pure) (%stream.close %unit (%move $s))))",
+        "(module (func $f (export \"f\") (result (%future %unit)) (%effect pure) (%future.ready %unit)))",
+        "(module (func $f (export \"f\") (param $s (%stream %unit)) (%effect pure) (%stream.close %unit (%move $s))))",
     ] {
         let output = command("verify", source, None);
         assert_eq!(output.status.code(), Some(1));

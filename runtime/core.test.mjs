@@ -30,11 +30,11 @@ async function fixture(source, run) {
 }
 
 const source = `(module
-  (func $main (export "main") (param $x i64) (result i64) (%effects pure) (local.get $x))
+  (func $main (export "main") (param $x i64) (result i64) (%effect pure) (local.get $x))
   (func $transfer (export "transfer") (param $x (%pair (%future i64) (%pair %text %unit)))
-    (result (%pair (%future i64) (%pair %text %unit))) (%effects pure) (%move $x))
+    (result (%pair (%future i64) (%pair %text %unit))) (%effect pure) (%move $x))
   (func $option (export "option") (param $x (%option (%option i64)))
-    (result (%option (%option i64))) (%effects pure) (local.get $x)))`;
+    (result (%option (%option i64))) (%effect pure) (local.get $x)))`;
 
 test("Core bindings roll back partially encoded owned inputs and preserve nested option distinctions", async () => {
   await fixture(source, async (runtime) => {
@@ -75,7 +75,7 @@ test("Core bindings roll back partially encoded owned inputs and preserve nested
 
 test("scalar Core output has no Component dependency or text codecs", async () => {
   await fixture(
-    "(module (func $f (export \"main\") (result i64) (%effects pure) (i64.const 42)))",
+    "(module (func $f (export \"main\") (result i64) (%effect pure) (i64.const 42)))",
     async (runtime, directory) => {
       assert.equal((await runtime.instantiate()).api.main(), 42n);
       const names = await readdir(directory);
@@ -154,7 +154,7 @@ test("Core keeps the existing shared-payload restriction for delivery", async ()
   await assert.rejects(
     fixture(
       `(module
-    (func $nested (export "nested") (result (%future (%future i64))) (%effects pure)
+    (func $nested (export "nested") (result (%future (%future i64))) (%effect pure)
       (%future.ready (%future i64) (%future.ready i64 (i64.const 42)))))`,
       () => {},
     ),
@@ -168,9 +168,9 @@ test(
   async () => {
     await fixture(
       `(module
-    (func $value (export "value") (param $n i64) (result i64) (%effects pure) (local.get $n))
-    (func $crash (export "crash") (%effects pure) (unreachable))
-    (func $await (export "await") (param $f (%future i64)) (result i64) (%effects suspends)
+    (func $value (export "value") (param $n i64) (result i64) (%effect pure) (local.get $n))
+    (func $crash (export "crash") (%effect pure) (unreachable))
+    (func $await (export "await") (param $f (%future i64)) (result i64) (%effect suspends)
       (%future.await i64 (%move $f))))`,
       async (runtime) => {
         const create = async (name, args) => {
@@ -231,8 +231,8 @@ test("host failures stay fatal through catch_all and falsy rejection reasons", a
   await fixture(
     `(module
     (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
-    (func $direct (export "direct") (%effects host suspends) (call $sleep (i32.const 0)))
-    (func $caught (export "caught") (result i64) (%effects host suspends)
+    (func $direct (export "direct") (%effect host suspends) (call $sleep (i32.const 0)))
+    (func $caught (export "caught") (result i64) (%effect host suspends)
       (%try (result i64) (do (block (result i64) (call $sleep (i32.const 0)) (i64.const 42)))
         (catch_all (i64.const 99)))))`,
     async (runtime) => {

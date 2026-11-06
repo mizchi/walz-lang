@@ -49,7 +49,7 @@ fn functions_aliases_nominal_types_and_closures_share_explicit_type_application(
 fn recursion_and_alias_arguments_reuse_one_concrete_instance() {
     let source = r#"(module
       (%type.alias $Count i64)
-      (func $id (%type.params $T) (param $x $T) (result $T) (%effects pure) (local.get $x))
+      (func $id (%type.params $T) (param $x $T) (result $T) (%effect pure) (local.get $x))
       (func $repeat (%type.params $T) (param $x $T) (param $n i32) (result $T)
         (if (result $T) (i32.eqz (local.get $n)) (then (local.get $x))
           (else (call (%inst $repeat $T) (local.get $x) (i32.sub (local.get $n) (i32.const 1))))))
@@ -301,7 +301,7 @@ fn callback_effects_are_checked_after_specialization() {
       (type $Cell (struct (field (mut i64))))
       (%closure $Set (%capture $cell (ref $Cell)) (param $x i64) (result i64)
         (block (result i64) (struct.set $Cell 0 (local.get $cell) (local.get $x)) (local.get $x)))
-      (func $apply (%type.params $F) (param $f (ref $F)) (result i64) (%effects pure)
+      (func $apply (%type.params $F) (param $f (ref $F)) (result i64) (%effect pure)
         (%closure.call $F (local.get $f) (i64.const 42)))
       (func $main (export "main") (result i64)
         (call (%inst $apply $Set) (%closure.new $Set (struct.new $Cell (i64.const 0))))))"#;

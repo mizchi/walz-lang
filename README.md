@@ -14,7 +14,7 @@ WLT is a small extension of WAT built around Wasm GC and static analysis. It acc
   (func $main
     (export "main")
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (%let
       (($a i64 (i64.const 40))
        ($b (i64.const 2))
@@ -54,7 +54,9 @@ The detailed documentation linked below is in Japanese.
 | Syntax overview | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) |
 | Standard types, Future, and grouped bindings | [Standard modules](docs/standard.md) |
 | Type parameters, bounds, and monomorphization | [Generics](docs/generics.md) |
+| Built-in type classes, short-circuit logic and bit operations | [Type classes](docs/typeclasses.md) |
 | v128 and vector operations | [SIMD](docs/simd.md) · [Kernels and benchmarks](docs/simd-kernels.md) |
+| Named struct construction | [Struct construction](docs/struct-construction.md) |
 | Imports, exports, and dead code elimination | [Static modules and DCE](docs/static-modules.md) |
 | Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
 | Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |

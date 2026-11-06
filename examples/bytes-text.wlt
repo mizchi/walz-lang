@@ -2,7 +2,7 @@
   (%import "wlt:std"
     (type $option)
     (type $text))
-  (func $main (export "main") (result i32) (%effects pure)
+  (func $main (export "main") (result i32) (%effect pure)
     (%let $raw (%text.bytes (%text.lit "*日本語"))
       (%let $head (%bytes.slice (local.get $raw) (i32.const 0) (i32.const 1))
         (%match (%inst $option $text) (result i32) (%text.from-bytes (local.get $head))

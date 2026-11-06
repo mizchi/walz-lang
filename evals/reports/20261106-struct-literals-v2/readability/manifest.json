@@ -1,0 +1,41 @@
+{
+  "schema": "wlt-struct-readability-v2",
+  "cases": [
+    "user",
+    "bucket",
+    "nested",
+    "order",
+    "cell",
+    "job"
+  ],
+  "axes": [
+    "fields",
+    "types",
+    "order",
+    "layout",
+    "changes"
+  ],
+  "labels": {
+    "readerA": {
+      "R": "positional",
+      "S": "named",
+      "T": "objectExplicit",
+      "U": "objectShort"
+    },
+    "readerB": {
+      "R": "objectShort",
+      "S": "objectExplicit",
+      "T": "named",
+      "U": "positional"
+    }
+  },
+  "hashes": {
+    "support/run.mjs": "a40f2aa3cdf386ba6673af876f19b39e6114ccb0c42c96da144f185fd5264a9f",
+    "support/cases.mjs": "34b7b2c834ba077ded32753b30b519aa0bd9c95b35165abcc935d5d05704ae71",
+    "support/rubric.md": "32365917c5b0bd29694b1411bbff38f24122dee8496b25d6de300c55ae18a476",
+    "oracle.json": "58ab8d23ef9a7dab4007fb80358627d824d1dada6a4dc5e6a9e66e88453ebb52",
+    "baseline.wlt": "b0cbd99f7b0b3f384f6e5bf610dd441b453c2a582a5c02ca80db2cb00ade2221",
+    "readerA/packet.md": "82658d715d3f473a461e44931db0d784e281e1c17c8586645b31bcc5e9c8a796",
+    "readerB/packet.md": "a948c86e032a47cdd161de132a29a3e1b8cf253631ed6dd869ea090d231c197c"
+  }
+}

@@ -418,6 +418,21 @@
       "path": "examples/json-parser/main.wlt",
       "pattern": "WLT recursive-descent JSON parser and opaque GC AST lookup",
       "expected": "42"
+    },
+    {
+      "path": "examples/struct-literals.wlt",
+      "pattern": "named structs with independent field maps and literal elision",
+      "expected": "42"
+    },
+    {
+      "path": "examples/expression-sugar.wlt",
+      "pattern": "bare local reads and expected-type constants with explicit let annotations",
+      "expected": "42"
+    },
+    {
+      "path": "examples/typeclasses.wlt",
+      "pattern": "sealed scalar Add/Eq/Ord instances with statically resolved operators",
+      "expected": "42"
     }
   ],
   "probes": [

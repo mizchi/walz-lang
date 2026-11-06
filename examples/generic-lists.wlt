@@ -12,20 +12,20 @@
   (%closure $Label (%capture $text $text) (param $x i64) (result $text) (local.get $text))
 
   (func $scale (export "scale") (param $xs (%inst $list i64)) (param $factor i64)
-    (result (%inst $list i64)) (%effects reads writes allocates)
+    (result (%inst $list i64)) (%effect reads writes allocates)
     (call
       (%inst $list.map i64 i64 $Scale)
       (local.get $xs)
       (%closure.new $Scale (local.get $factor))))
 
   (func $labels (export "labels") (param $xs (%inst $list i64)) (param $label $text)
-    (result (%inst $list $text)) (%effects reads writes allocates)
+    (result (%inst $list $text)) (%effect reads writes allocates)
     (call
       (%inst $list.map i64 $text $Label)
       (local.get $xs)
       (%closure.new $Label (local.get $label))))
 
-  (func $sum (export "sum") (param $xs (%inst $list i64)) (result i64) (%effects allocates)
+  (func $sum (export "sum") (param $xs (%inst $list i64)) (result i64) (%effect allocates)
     (call (%inst $list.fold i64 i64 $Sum) (local.get $xs) (%closure.new $Sum) (i64.const 0)))
 
   (func $identity
@@ -33,7 +33,7 @@
     (%where (shared $T) (nonunit $T))
     (param $x $T)
     (result $T)
-    (%effects pure)
+    (%effect pure)
     (local.get $x))
   (export "identity" (func (%inst $identity (%inst $list i64))))
   ;; This wrapper also checks the inferred effects of the concrete callback.
@@ -42,20 +42,20 @@
     (%where
       (shared $T $U)
       (nonunit $T $U)
-      (callable $F (param $T) (result $U) (%effects pure)))
+      (callable $F (param $T) (result $U) (%effect pure)))
     (param $xs (%inst $list $T))
     (param $f (ref $F))
     (result (%inst $list $U))
     (call (%inst $list.map $T $U $F) (local.get $xs) (local.get $f)))
 
   (func $scale-pure (export "scale-pure") (param $xs (%inst $list i64)) (param $factor i64)
-    (result (%inst $list i64)) (%effects reads writes allocates)
+    (result (%inst $list i64)) (%effect reads writes allocates)
     (call
       (%inst $map-pure i64 i64 $Scale)
       (local.get $xs)
       (%closure.new $Scale (local.get $factor))))
 
-  (func $main (export "main") (result i64) (%effects reads writes allocates)
+  (func $main (export "main") (result i64) (%effect reads writes allocates)
     (call $sum
       (call $scale
         (%list.new i64 (i64.const 1) (i64.const 2) (i64.const 3))

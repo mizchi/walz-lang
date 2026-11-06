@@ -1,26 +1,30 @@
 # `%` で WLT 拡張を区別する
 
 WLT が追加する構文の入口には `%` を付ける。接頭辞のない `import`、`export`、`loop`、`try`、`result` は WAT の意味を保つ。識別子の `$name`、コメント、文字列の内容は変えない。
+固定の記号演算子`+`・`-`・`*`・`/`・`=`・`!=`・`<`・`<=`・`>`・`>=`・`&&`・`||`・`&`・`|`・`^`・`<<`・`>>`・`>>>`と、式位置のローカル・数値の省略形は接頭辞を持たない糖衣とする。
 
 | 用途 | 構文 |
 | --- | --- |
 | 式・制御構造 | `%let`、`%for`、`%loop`、`%recur`、`%match`、`%try`、`%result.do` |
 | 値の操作 | `%list.new`、`%text.lit`、`%result.ok`、`%future.await` など |
+| struct構築 | `(%struct.new $T ($field 式) ...)`。`{}`のfield群と`(%$T::{...})`の短縮形も使える |
 | 値型 | `$text`、`$bytes`、`$unit`、`(%inst $list T)`、`(%inst $option T)`、`(%inst $result T E)` など |
-| 宣言・注釈 | `%closure`、`%capture`、`%effects`、`%newtype`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
+| 宣言・注釈 | `%closure`、`%capture`、`%effect`、`%newtype`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
 | 静的モジュール | `%include`、`%import`、`%export`、`%namespace`、`%public`、`%use` |
 | 型引数の適用 | `(%inst $name T...)`。関数・型・alias・クロージャで共通 |
 
-拡張の内部にある `case`、`bind`、`while`、`step`、`catch`、制約の `shared` / `nonunit` / `callable` は、その入口に属するデータ構文なので接頭辞を付けない。`if`、`then`、`else`、`block`、`param`、結果宣言の `result` は WAT の構文を使う。
+拡張の内部にある `case`、`bind`、`while`、`step`、`catch`と`%where`の制約名は、その入口に属するデータ構文なので接頭辞を付けない。`if`、`then`、`else`、`block`、`param`、結果宣言の `result` は WAT の構文を使う。
+
+型付きコアの式位置では、`$foo`を`local.get`の省略形、期待するスカラー型が分かる数値を`.const`の省略形として使える。letの型注釈は`(%let $x (type i32) 1 body)`と書ける。この`(type T)`は`%let`に属する注釈であり、独立した命令ではない。[規約と例](core-expressions.md#ローカル参照と数値の省略形)。
 
 基本型は `(%import "wlt:std" (type $result) (type $option) (type $future) ...)` で明示的に取り込む。Result と Future は `(%inst $result T E)` / `(%inst $future T)`、型引数のない text は `$text` と参照する。複数束縛は `(%let (($a initial-a) ($b initial-b)) body)` で左から右に初期化する。[標準モジュールと束縛](standard.md) に詳しい規約をまとめた。
 
 ```wat
 (module
   (func $id (%type.params $T) (%where (shared $T))
-    (param $x $T) (result $T) (%effects pure)
+    (param $x $T) (result $T) (%effect pure)
     (local.get $x))
-  (func $main (export "main") (result i64) (%effects pure)
+  (func $main (export "main") (result i64) (%effect pure)
     (%let $answer (call (%inst $id i64) (i64.const 42))
       (local.get $answer))))
 ```
@@ -43,7 +47,7 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 
 型付きコアの外にある WAT には、構文だけで展開できる `%let`、状態付き `%loop` / `%recur`、`%for` と静的な名前・型の展開を併用できる。展開したモジュール全体を Wasm validator で検査する。`%let` の型が推論できない初期値には明示的な型注釈を書く。
 
-この経路は `analysis.opaque=true`、保守的な全 effect、`ir=None` を返す。`%effects`、`%where`、所有値、クロージャ、値型、テスト、law などの検査を必要とする拡張をこの経路で処理しない。Component / Core＋JSPI / verified の生成は型付きコアを必要とする。
+この経路は `analysis.opaque=true`、保守的な全 effect、`ir=None` を返す。`%effect`、`%where`、所有値、クロージャ、値型、テスト、law などの検査を必要とする拡張をこの経路で処理しない。Component / Core＋JSPI / verified の生成は型付きコアを必要とする。
 
 `%let` とループ状態は不変。標準の `local.set` / `local.tee` から変更できない。数値ローカルインデックスは元の WAT の引数・ローカルだけを指し、生成した一時変数には届かない。`%let` は制御ラベルを追加しない。`%recur` は最内側の WLT ループへの末尾呼び出しで、引数をすべて評価してから同時に状態を更新する。
 

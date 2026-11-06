@@ -66,7 +66,7 @@ fn callable_checks_nominal_closure_signature_before_the_template_body() {
 #[test]
 fn inferred_effects_are_checked_even_when_the_callback_is_never_called() {
     let template = r#"(func $require (%type.params $F)
-      (%where (callable $F (param i64) (result i64) (%effects pure))) (nop))"#;
+      (%where (callable $F (param i64) (result i64) (%effect pure))) (nop))"#;
     let source = format!(
         r#"(module
       (type $Cell (struct (field (mut i64))))
@@ -75,7 +75,7 @@ fn inferred_effects_are_checked_even_when_the_callback_is_never_called() {
       {template} (func $unused (call (%inst $require $Set))) (func $main (export "main") (nop)))"#
     );
     bound_error(&source, "writes");
-    wlt::compile(&source.replace("(%effects pure)", "(%effects writes)")).unwrap();
+    wlt::compile(&source.replace("(%effect pure)", "(%effect writes)")).unwrap();
 }
 
 #[test]
@@ -110,8 +110,8 @@ fn malformed_constraints_are_rejected_without_instantiation() {
         "(%where (unknown $T))",
         "(%where (callable $F (param i64)))",
         "(%where (callable $F (param) (result)))",
-        "(%where (callable $F (param) (result %unit) (%effects pure writes)))",
-        "(%where (callable $F (param) (result %unit) (%effects imaginary)))",
+        "(%where (callable $F (param) (result %unit) (%effect pure writes)))",
+        "(%where (callable $F (param) (result %unit) (%effect imaginary)))",
     ] {
         let source = format!("(module (func $f (%type.params $T $F) {clause} (nop)))");
         assert!(wlt::check(&source).is_err(), "accepted {source}");
@@ -148,7 +148,7 @@ fn callback_effect_bounds_follow_calls_and_preserve_caught_exception_semantics()
       (func $raise (throw $Failure (i32.const 1)))
       (%closure $Throw (call $raise))
       (func $require (%type.params $F)
-        (%where (callable $F (param) (result %unit) (%effects pure))) (nop))
+        (%where (callable $F (param) (result %unit) (%effect pure))) (nop))
       (func $f (call (%inst $require $Throw))))"#;
     let error = bound_error(source, "throws");
     assert!(
@@ -159,8 +159,8 @@ fn callback_effect_bounds_follow_calls_and_preserve_caught_exception_semantics()
             .any(|l| l.message.contains("call to `$raise`")),
         "{error}"
     );
-    wlt::compile(&source.replace("(%effects pure)", "(%effects (throws $Failure))")).unwrap();
-    wlt::compile(&source.replace("(%effects pure)", "(%effects (throws *))")).unwrap();
+    wlt::compile(&source.replace("(%effect pure)", "(%effect (throws $Failure))")).unwrap();
+    wlt::compile(&source.replace("(%effect pure)", "(%effect (throws *))")).unwrap();
     let caught = source.replace(
         "(%closure $Throw (call $raise))",
         "(%closure $Throw (%try (do (call $raise)) (catch $Failure ($error) (nop))))",
@@ -174,7 +174,7 @@ fn callback_effect_bounds_use_trusted_import_policy_and_never_trust_a_pure_annot
       (import "clock" "now" (func $now (result i64)))
       (%closure $Now (result i64) (call $now))
       (func $require (%type.params $F)
-        (%where (callable $F (param) (result i64) (%effects host))) (nop))
+        (%where (callable $F (param) (result i64) (%effect host))) (nop))
       (func $f (call (%inst $require $Now))))"#;
     bound_error(source, "exceed");
     let policy = wlt::bindings::BindingPolicy::parse(r#"{"imports":[{"module":"clock","name":"now","params":[],"result":"i64","suspends":false,"capability":"clock"}]}"#).unwrap();
@@ -182,9 +182,9 @@ fn callback_effect_bounds_use_trusted_import_policy_and_never_trust_a_pure_annot
     let lying = source
         .replace(
             "(%closure $Now (result i64)",
-            "(%closure $Now (result i64) (%effects pure)",
+            "(%closure $Now (result i64) (%effect pure)",
         )
-        .replace("(%effects host)", "(%effects pure)");
+        .replace("(%effect host)", "(%effect pure)");
     let error = wlt::check_with_policy(&lying, &policy).unwrap_err();
     assert_eq!(error.diagnostic().code, "E_GENERIC_BOUND", "{error}");
     assert!(error.to_string().contains("host"));

@@ -8,7 +8,7 @@
 ```wat
 (module
   (%import "wlt:std" (type $text) (func $string.u64 $unsigned))
-  (func $answer (export "answer") (result $text) (%effects reads writes allocates)
+  (func $answer (export "answer") (result $text) (%effect reads writes allocates)
     (call $unsigned (i64.const 42))))
 ```
 

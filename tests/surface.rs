@@ -30,12 +30,74 @@ fn prefixed_expressions_types_annotations_and_instantiations_are_checked() {
         r#"(module
       (%type.alias $Values (%type.params $T) (%list $T))
       (func $id (%type.params $T) (%where (shared $T) (nonunit $T))
-        (param $x $T) (result $T) (%effects pure) (local.get $x))
-      (func $main (export "main") (result i64) (%effects pure)
+        (param $x $T) (result $T) (%effect pure) (local.get $x))
+      (func $main (export "main") (result i64) (%effect pure)
         (%let $xs (%inst $Values i64) (%list.new i64 (i64.const 42))
           (call (%inst $id i64) (%list.get i64 (local.get $xs) (i32.const 0))))))"#,
         "42",
     );
+}
+
+#[test]
+fn singular_effect_annotations_keep_function_and_callable_contracts() {
+    let source = r#"(module
+      (%closure $Id (param $x i64) (result i64) $x)
+      (func $apply (%type.params $F)
+        (%where (callable $F (param i64) (result i64) (%effect pure)))
+        (param $f (ref $F)) (result i64) (%effect pure)
+        (%closure.call $F $f 42))
+      (func $main (export "main") (result i64) (%effect allocates)
+        (call (%inst $apply $Id) (%closure.new $Id))))"#;
+    run(source, "42");
+    let error = wlt::check(
+        "(module (type $C (struct (field (mut i32))))
+          (func $write (param $c (ref $C)) (%effect pure) (struct.set $C 0 $c 1)))",
+    )
+    .unwrap_err();
+    assert_eq!(error.diagnostic().code, "E_EFFECT_CONTRACT");
+    assert!(error.to_string().contains("writes"), "{error}");
+}
+
+#[test]
+fn singular_effect_requires_a_prefix_and_replaces_the_plural_spelling() {
+    let error = wlt::check("(module (func $f (effect pure) (nop)))").unwrap_err();
+    assert_eq!(error.diagnostic().code, "E_WLT_PREFIX");
+    assert!(error.to_string().contains("%effect"), "{error}");
+    let error = wlt::check("(module (func $f (%effects pure) (nop)))").unwrap_err();
+    assert_eq!(error.diagnostic().code, "E_WLT_EXTENSION");
+}
+
+#[test]
+fn frozen_plural_effects_keep_strings_annotations_and_diagnostic_offsets() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("frozen.wlt");
+    for spelling in ["effects", "%effects"] {
+        let original = format!(
+            "(module ;; (%effects pure)\n  (func $f (export \"%effects\") (result i64) ({spelling} pure) $missing))"
+        );
+        std::fs::write(&path, &original).unwrap();
+        let loaded = wlt::source::load_legacy(&path).unwrap();
+        assert!(loaded.text().contains("(%effect "), "{}", loaded.text());
+        assert!(loaded.text().contains(";; (%effects pure)"));
+        assert!(loaded.text().contains("\"%effects\""));
+        let error = loaded.diagnostic(wlt::check(loaded.text()).unwrap_err());
+        assert_eq!(error.diagnostic().code, "E_UNKNOWN_LOCAL", "{error}");
+        let label = error.diagnostic().primary.as_ref().unwrap();
+        assert_eq!(label.location.line, 2);
+        assert_eq!(
+            label.location.column,
+            original.lines().nth(1).unwrap().find("$missing").unwrap() + 1
+        );
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), original);
+    }
+    std::fs::write(
+        &path,
+        "(module (@metadata (%effects pure)) (func $f (%effects pure) (nop)))",
+    )
+    .unwrap();
+    let loaded = wlt::source::load_legacy(&path).unwrap();
+    assert!(loaded.text().contains("(@metadata (%effects pure))"));
+    assert!(loaded.text().contains("(func $f (%effect "));
 }
 
 #[test]
@@ -45,7 +107,7 @@ fn unprefixed_extension_entries_are_not_accepted_in_strict_mode() {
         "(module (include \"missing.wlt\"))",
         "(module (import \"missing.wlt\" (func $f)))",
         "(module (export (func $f)) (func $f (nop)))",
-        "(module (func $f (effects pure) (nop)))",
+        "(module (func $f (effect pure) (nop)))",
         "(module (func $f (param $s text) (nop)))",
         "(module (func $f (param $s (option i64)) (nop)))",
         "(module (func $f (type.params $T) (nop)))",
@@ -150,7 +212,7 @@ fn native_fallback_never_weakens_recur_or_semantic_contracts() {
         let source = format!("(module (memory 1) (func (result i32) {body}))");
         assert!(wlt::compile(&source).is_err(), "{source}");
     }
-    for contract in ["(%effects pure)", "(%where (shared $T))"] {
+    for contract in ["(%effect pure)", "(%where (shared $T))"] {
         let source = format!(
             "(module (memory 1) (func {contract} (%let $x i32 (i32.load (i32.const 0)) (drop (local.get $x)))))"
         );

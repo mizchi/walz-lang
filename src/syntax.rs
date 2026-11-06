@@ -17,7 +17,7 @@ fn entry(name: &str) -> bool {
             | "recur"
             | "closure"
             | "capture"
-            | "effects"
+            | "effect"
             | "namespace"
             | "file.namespace"
             | "public"
@@ -68,7 +68,7 @@ fn prefix_error(source: &str, node: &Sexp, name: &str) -> Error {
     .help(format!("write `%{name}` for this WLT extension"))
 }
 
-/// An insertion-only migration preserves comments, strings and identifiers.
+/// Insertions and same-width legacy keyword replacements preserve source offsets.
 pub(crate) struct Migration {
     text: String,
     original: String,
@@ -147,16 +147,21 @@ pub(crate) fn convert_legacy(source: &str) -> Result<Migration, Error> {
     let mut plan = Plan::new(source, true);
     plan.walk(&mut root, false, 0)?;
     plan.types(&mut root)?;
+    // A space replaces the final ASCII `s`, keeping all original offsets valid.
+    let mut canonical = source.to_owned();
+    for offset in plan.effect_renames {
+        canonical.replace_range(offset..offset + 1, " ");
+    }
     let mut text = String::new();
     let mut cursor = 0;
     let mut insertions = vec![];
     for (offset, value) in plan.edits {
-        text.push_str(&source[cursor..offset]);
+        text.push_str(&canonical[cursor..offset]);
         text.push_str(&value);
         insertions.push((offset, value.len()));
         cursor = offset;
     }
-    text.push_str(&source[cursor..]);
+    text.push_str(&canonical[cursor..]);
     Ok(Migration {
         text,
         original: source.into(),
@@ -242,6 +247,7 @@ struct Plan<'a> {
     legacy: bool,
     marked: BTreeSet<Span>,
     edits: BTreeMap<usize, String>,
+    effect_renames: Vec<usize>,
 }
 impl<'a> Plan<'a> {
     fn new(source: &'a str, legacy: bool) -> Self {
@@ -250,6 +256,7 @@ impl<'a> Plan<'a> {
             legacy,
             marked: BTreeSet::new(),
             edits: BTreeMap::new(),
+            effect_renames: vec![],
         }
     }
     fn require(&mut self, node: &Sexp, name: &str) -> Result<(), Error> {
@@ -287,6 +294,24 @@ impl<'a> Plan<'a> {
             );
         }
         lower_let_group(self.source, node)?;
+        // `(type T)` marks a let annotation at the surface; the checked core
+        // and the native macro expander share the existing type operand.
+        if matches!(node.head(), Some("let" | "%let"))
+            && let Kind::List(items) = &mut node.kind
+            && items.len() == 5
+            && items[2].head() == Some("type")
+        {
+            let annotation = items[2].list().unwrap();
+            if annotation.len() != 2 {
+                return Err(Error::at(
+                    self.source,
+                    items[2].span,
+                    "expected one type in %let annotation: (type T)",
+                )
+                .with_code("E_LET_TYPE"));
+            }
+            items[2] = annotation[1].clone();
+        }
         if let Kind::Atom(name) = &mut node.kind {
             if let Some(bare) = name.strip_prefix('%') {
                 if !matches!(bare, "text" | "bytes" | "unit") {
@@ -302,11 +327,11 @@ impl<'a> Plan<'a> {
             }
             return Ok(());
         }
-        let head = node.head().unwrap_or("").to_owned();
+        let mut head = node.head().unwrap_or("").to_owned();
         if head.starts_with('@') {
             return Ok(());
         }
-        if matches!(head.as_str(), "native.loop" | "native.try") {
+        if matches!(head.as_str(), "native.loop" | "native.try" | "struct.named") {
             return Err(Error::at(
                 self.source,
                 node.span,
@@ -323,6 +348,11 @@ impl<'a> Plan<'a> {
         let Kind::List(items) = &mut node.kind else {
             return Ok(());
         };
+        if self.legacy && matches!(head.as_str(), "effects" | "%effects") {
+            self.effect_renames.push(items[0].span.end - 1);
+            head.pop();
+            items[0].kind = Kind::Atom(head.clone());
+        }
         if head == "%inst" {
             if items.len() < 2 || !items[1].atom().is_some_and(|n| n.starts_with('$')) {
                 return Err(
@@ -332,7 +362,12 @@ impl<'a> Plan<'a> {
             }
             items.remove(0);
         } else if let Some(bare) = head.strip_prefix('%') {
-            if !entry(bare) && !matches!(bare, "import" | "export" | "loop" | "try" | "result") {
+            if !entry(bare)
+                && !matches!(
+                    bare,
+                    "import" | "export" | "loop" | "try" | "result" | "struct.new"
+                )
+            {
                 return Err(Error::at(
                     self.source,
                     node.span,
@@ -341,7 +376,14 @@ impl<'a> Plan<'a> {
                 .with_code("E_WLT_EXTENSION"));
             }
             self.marked.insert(items[0].span);
-            items[0].kind = Kind::Atom(bare.into());
+            items[0].kind = Kind::Atom(
+                if bare == "struct.new" {
+                    "struct.named"
+                } else {
+                    bare
+                }
+                .into(),
+            );
         } else if head.starts_with('$') {
             if !self.legacy {
                 return Err(prefix_error(self.source, node, "inst"));
@@ -367,6 +409,14 @@ impl<'a> Plan<'a> {
         let normalized = items.first().and_then(Sexp::atom).unwrap_or("").to_owned();
         let count = items.len();
         for (i, child) in items.iter_mut().enumerate().skip(1) {
+            if normalized == "struct.named" && i >= 2 {
+                if let Kind::List(binding) = &mut child.kind {
+                    for expression in binding.iter_mut().skip(1) {
+                        self.walk(expression, false, depth + 1)?;
+                    }
+                }
+                continue;
+            }
             if normalized == "result.do" && i + 1 < count {
                 if let Kind::List(binding) = &mut child.kind {
                     for expression in binding.iter_mut().skip(1) {

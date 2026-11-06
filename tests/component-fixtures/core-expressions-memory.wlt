@@ -14,7 +14,7 @@
     (param $data $bytes)
     (param $fail i32)
     (result (%inst $result $bytes i32))
-    (%effects pure)
+    (%effect pure)
     (if
       (result (%inst $result $bytes i32))
       (local.get $fail)
@@ -27,7 +27,7 @@
     (param $data $bytes)
     (param $fail i32)
     (result (%inst $result $bytes i32))
-    (%effects pure)
+    (%effect pure)
     (%result.do
       ($a (call $step (local.get $data) (i32.eq (local.get $fail) (i32.const 1))))
       ($b (call $step (local.get $a) (i32.eq (local.get $fail) (i32.const 2))))
@@ -37,7 +37,7 @@
     (export "early")
     (param $data $bytes)
     (result $bytes)
-    (%effects pure)
+    (%effect pure)
     (return (local.get $data)))
 
   (func $branch
@@ -45,7 +45,7 @@
     (param $data $bytes)
     (param $take i32)
     (result $bytes)
-    (%effects pure)
+    (%effect pure)
     (block $done
       (result $bytes)
       (drop (br_if $done (local.get $data) (local.get $take)))
@@ -53,7 +53,7 @@
 
   (func $fail
     (param $flag i32)
-    (%effects (throws $Failure))
+    (%effect (throws $Failure))
     (if (local.get $flag) (then (throw $Failure)) (else (nop))))
 
   (func $owned
@@ -61,7 +61,7 @@
     (param $data $bytes)
     (param $flag i32)
     (result $bytes)
-    (%effects pure)
+    (%effect pure)
     (%let $owner (%own.new $bytes (local.get $data))
       (%try
         (result $bytes)
@@ -82,42 +82,42 @@
     (export "ids")
     (param $data (%inst $list $Id))
     (result (%inst $list $Id))
-    (%effects pure)
+    (%effect pure)
     (return (local.get $data)))
 
   (func $ints
     (export "ints")
     (param $data (%inst $list i64))
     (result (%inst $list i64))
-    (%effects pure)
+    (%effect pure)
     (local.get $data))
 
   (func $ready
     (export "ready")
     (param $data (%inst $list $Id))
     (result (%inst $future (%inst $list $Id)))
-    (%effects pure)
+    (%effect pure)
     (%future.ready (%inst $list $Id) (local.get $data)))
 
   (func $await
     (export "await")
     (param $f (%inst $future (%inst $list $Id)))
     (result (%inst $list $Id))
-    (%effects suspends)
+    (%effect suspends)
     (%future.await (%inst $list $Id) (%move $f)))
 
   (func $stream
     (export "stream")
     (param $data (%inst $list $Id))
     (result (%inst $stream (%inst $list $Id)))
-    (%effects pure)
+    (%effect pure)
     (%stream.cons (%inst $list $Id) (local.get $data) (%stream.empty (%inst $list $Id))))
 
   (func $first
     (export "first")
     (param $s (%inst $stream (%inst $list $Id)))
     (result (%inst $option (%inst $list $Id)))
-    (%effects suspends)
+    (%effect suspends)
     (%match (%stream.next (%inst $list $Id) (%move $s))
       (case pair ($next $item)
         (block
@@ -130,7 +130,7 @@
     (export "sqrt")
     (param $n f64)
     (result i32)
-    (%effects pure)
+    (%effect pure)
     (i32.trunc_sat_f64_s (f64.sqrt (local.get $n))))
 
-  (func $trap (export "trap") (param $data $bytes) (%effects pure) (unreachable)))
+  (func $trap (export "trap") (param $data $bytes) (%effect pure) (unreachable)))

@@ -6,7 +6,7 @@
 
 ## 最初に覚える規則
 
-- 式は `(操作 引数...)`。数値は `(i64.const 42)`、文字列の値は `(%text.lit "hello")` と書く。
+- 式は `(操作 引数...)`。式位置の `$foo` は `(local.get $foo)`。数値は期待型が分かれば `42`、明示するなら `(i64.const 42)`。文字列は `(%text.lit "hello")` と書く。
 - プログラムは `(module 宣言...)`。関数の本体は1つの式。複数の処理には block を使う。
 - `$name` は識別子、`"text"` は文字列、`;;` は行コメント、`(; ... ;)` は入れ子可能なコメント。
 - 引数と演算は左から右へ評価する。暗黙の数値変換・捕捉・ローカル再代入はない。
@@ -28,12 +28,12 @@
 | `(import "host" "member" ...)` / `(export "name" ...)` | Wasm のインスタンス化時の import／生成モジュールの export |
 | `(%import "file.wlt" ...)` / `(%export ...)` | WLT ソースの選択的な静的リンク／ソース API の公開 |
 | `(%import "wlt:std" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
-| `%closure`・`%capture`・`%effects`・`%type.params`・`%where` | WLT が追加した宣言・注釈 |
+| `%closure`・`%capture`・`%effect`・`%type.params`・`%where` | WLT が追加した宣言・注釈 |
 
 `%` は拡張の入口に付ける。内部の `case`、`bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
 
 標準 WAT 単体はそのまま検証・コンパイルする。以下の型付きコアでは型・effect・所有権を検査する。
-コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `%let` / `%loop` / `%for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`%effects pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
+コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `%let` / `%loop` / `%for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`%effect pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
 型付きコアの戻り値は0個（unit）または1値。pair も1値として返す。標準 WAT の `(result i32 i64)` は標準 WAT 経路で扱い、型付きコアの pair 分解へは変換しない。
 
 ## `wlt:std` と基本データ型
@@ -64,12 +64,12 @@ WLT の基本型は `wlt:std` から明示的に import する。`i32` などの
   (func $main
     (export "main")
     (result i64)
-    (%effects suspends)
+    (%effect suspends)
     (%let
-      (($pending (%inst $future i64) (%future.ready i64 (i64.const 40)))
+      (($pending (type (%inst $future i64)) (%future.ready i64 40))
        ($base (%future.await i64 (%move $pending)))
-       ($answer i64 (i64.add (local.get $base) (i64.const 2))))
-      (local.get $answer)))
+       ($answer (type i64) (i64.add $base 2)))
+      $answer))
   (%test "standard Future" (i64.eq (call $main) (i64.const 42))))
 ```
 
@@ -81,13 +81,13 @@ WLT の基本型は `wlt:std` から明示的に import する。`i32` などの
     (param $a i64)
     (param $b i64)
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (i64.add (local.get $a) (local.get $b)))
 
   (func $main
     (export "main")
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (%let $answer (call $add (i64.const 40) (i64.const 2))
       (local.get $answer)))
   (%test "answer" (i64.eq (call $main) (i64.const 42))))
@@ -106,10 +106,10 @@ WLT の基本型は `wlt:std` から明示的に import する。`i32` などの
 | `$unit` | 値のない結果。関数の引数・通常のフィールドには格納しない |
 
 ```text
-(func $f (param $x T)... [(result R)] [(%effects ...)] body)
-(%let $x [T] initializer body)        ;; T は省略時に推論。不変の字句束縛
-(%let (($a [T] initial-a) ($b [U] initial-b) ...) body)
-(local.get $x)
+(func $f (param $x T)... [(result R)] [(%effect ...)] body)
+(%let $x [(type T)] initializer body) ;; 注釈省略時は初期値の型。不変の字句束縛
+(%let (($a [(type T)] initial-a) ($b [(type U)] initial-b) ...) body)
+(local.get $x)                      ;; 式位置では $x とも書ける
 (call $f arg...)
 (block [(result R)] unit-expr... final-expr)
 (if [(result R)] i32-condition (then expr) (else expr))
@@ -124,6 +124,46 @@ if / block / match の結果宣言がない場合も unit。unit の戻り値は
 
 複数束縛の `%let` は、初期値を左から右に一度ずつ評価する。後の初期値と body からは前の束縛を参照でき、後の束縛の先行参照はできない。同名の再束縛は、その初期値の評価後から以前の名前を隠す。個々の型注釈は省略できる。これはネストした `%let` と同じ意味であり、Wasm の複数戻り値を分解する指定ではない。
 pair の分解には既存の `(%let ($a $b) subject body)` を使う。どちらの形式も型・effect・所有権を検査し、所有値には明示的な move と消費が必要。
+
+```wat
+(module
+  (func $main (export "main") (result i32)
+    (%let $foo (type i32) 41
+      (i32.add $foo 1))))
+```
+
+`1` の型は演算命令・引数・戻り値・フィールド・`(type T)`注釈などから決める。既定の整数幅は設けず、`(%let $x 1 ...)` と `(drop 1)` は曖昧なのでエラー。`$foo`は既存のローカルを読むだけで、暗黙のmoveや変換はしない。[省略式の規約](docs/core-expressions.md#ローカル参照と数値の省略形)。
+
+## 基本型の型クラス
+
+| クラス | 対応型 | 2引数の演算子 |
+| --- | --- | --- |
+| `Add` | i32 / i64 / f32 / f64 | `+` |
+| `Sub` | i32 / i64 / f32 / f64 | `-` |
+| `Mul` | i32 / i64 / f32 / f64 | `*` |
+| `Div` | i32 / i64 / f32 / f64 | `/`。整数は符号付き除算 |
+| `Eq` | i32 / i64 | `=` / `!=` |
+| `Ord` | i32 / i64 | `<` / `<=` / `>` / `>=`。符号付きの比較 |
+| `Logical` | i32 | `&&` / `\|\|`。短絡評価して0/1を返す |
+| `Bitwise` | i32 / i64 | `&` / `\|` / `^`。両辺を評価するビット演算 |
+| `Shift` | i32 / i64 | `<<` / `>>` / `>>>`。左・符号付き右・ゼロ埋め右シフト |
+
+```wat
+(module
+  (func $four (result i32) (+ 1 3))
+  (func $add (%type.params $T) (%where (Add $T))
+    (param $a $T) (param $b $T) (result $T) (%effect pure)
+    (+ $a $b))
+  (func $main (export "main") (result i64)
+    (call (%inst $add i64) 40 2))
+  (%test "literal plus" (= (call $four) 4))
+  (%test "short circuit" (|| (= (call $four) 4) (unreachable)))
+  (%test "masked shift" (= (i64.const 1) (<< (i64.const 1) 64))))
+```
+
+固定の記号演算子には`%`を付けない。`+`は期待型または型の分かるオペランドから型を決める。比較のi32結果はオペランドの幅を決めないので、裸の数値だけなら`(< (i64.const 1) 3)`と一方を明示する。利用者定義class/implはなく、単相化後にWasm命令へ直接展開する。[詳しい規約](docs/typeclasses.md)。
+`&&`・`||`の入力は条件式と同じi32。右辺も静的検査するが、必要な場合だけ実行する。シフト量は左辺と同じ型とし、Wasm同様に下位5bit（i32）/6bit（i64）を使う。`(Logical $T)`・`(Bitwise $T)`・`(Shift $T)`も`%where`に指定できる。
+`Sub`・`Mul`・`Div`も同様に制約に指定する。整数の`/`は0方向へ丸め、ゼロ除算と最小値/-1でtrapする。floatの`/`はWasmの浮動小数点除算に従う。
 
 ## GC データと enum
 
@@ -143,6 +183,17 @@ pair の分解には既存の `(%let ($a $b) subject body)` を使う。どち�
 (ref.as_non_null nullable)           ;; null なら trap。暗黙の型絞り込みはない
 (ref.is_null reference)
 (ref.eq reference reference)         ;; 構造比較でなく参照同一性
+```
+
+名前付き構築は全フィールド必須。重複・欠落・未知の名前を拒否し、初期値は記述順に一度ずつ評価する。
+`{}`と裸リテラルは独立した糖衣で、型・effect・所有権の検査を保つ。[詳細](docs/struct-construction.md)。
+
+```text
+(%struct.new $User ($name (%text.lit "Alice")) ($age (i32.const 30)))
+(%struct.new $User ($name "Alice") ($age 30))
+(%struct.new $User {:name (%text.lit "Alice") :age (i32.const 30)})
+(%$User::{:name "Alice" :age 30})
+(%struct.new (%inst $Box i64) {:value 42})
 ```
 
 ```wat
@@ -191,7 +242,7 @@ pair の状態を Result で返す例。match の `(result (%inst $result ...))`
   (func $increment
     (param $state (%inst $pair i64 i32))
     (result (%inst $result (%inst $pair i64 i32) i32))
-    (%effects pure)
+    (%effect pure)
     (%match (%inst $pair i64 i32) (result (%inst $result (%inst $pair i64 i32) i32))
       (local.get $state)
       (case pair ($id $count)
@@ -239,7 +290,7 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
   (func $after-unit
     (param $input (%inst $result $unit i32))
     (result (%inst $result i64 i32))
-    (%effects pure)
+    (%effect pure)
     (%result.let ()
       (local.get $input)
       (%result.ok (i64.const 42))))
@@ -260,7 +311,7 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
   (func $convert
     (param $input (%inst $result i64 i32))
     (result (%inst $result i32 i32))
-    (%effects pure)
+    (%effect pure)
     (%result.let ($n) (%inst $result i64 i32) i32
       (local.get $input)
       (%result.ok i32 i32 (i32.wrap_i64 (local.get $n))))
@@ -368,19 +419,19 @@ pattern let で own 成分を含む pair を分解するときは `(%move $pair)
     (%where (shared $T) (nonunit $T))
     (param $x $T)
     (result $T)
-    (%effects pure)
+    (%effect pure)
     (local.get $x))
 
   (func $main
     (export "main")
     (result i64)
-    (%effects pure)
+    (%effect pure)
     (call (%inst $identity i64) (i64.const 42))))
 ```
 
 type.params の直後に `(%where (shared $T) (nonunit $T))` を置くと、具体化する型引数を制限できる。
 共有は不変性を意味しない。コールバックには
-`(callable $F (param $T) (result $U) (%effects pure))` と書ける。
+`(callable $F (param $T) (result $U) (%effect pure))` と書ける。
 引数・戻り値が一致する共有・再呼出し可能なクロージャに限定し、effect は本体から推論する。
 effects を省略すれば effect の制限は課さない。未使用の適用も DCE 前に検査する。
 適用は常に `(%inst $name T...)`。関数では `(call (%inst $identity i64) value)`、汎用型では `(ref (%inst $Box i64))`、汎用 alias では型の位置に `(%inst $Values i64)` と書く。
@@ -506,7 +557,7 @@ include は宣言を挿入し、参照元ファイルからの相対パスを使
     (param $name $text)
     (param $count i64)
     (result $text)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $o (call $json.new)
       (block
         (result $text)
@@ -587,13 +638,13 @@ JS
 (module
   (%import "wlt:std" (type $result))
   (type $Id (%newtype i32))
-  (func $compute (result (%inst $result $Id i32)) (%effects pure)
+  (func $compute (result (%inst $result $Id i32)) (%effect pure)
     (%result.do
       ($a (%result.ok i32 i32 (i32.const 40)))
       ($b (%result.ok i32 i32 (i32.const 2)))
       (%result.ok $Id i32
         (%newtype.wrap $Id (i32.add (local.get $a) (local.get $b))))))
-  (func $main (export "main") (result i32) (%effects pure)
+  (func $main (export "main") (result i32) (%effect pure)
     (%match (call $compute)
       (case ok ($id) (return (%newtype.unwrap $Id (local.get $id))))
       (case err ($code) (i32.const 0))))

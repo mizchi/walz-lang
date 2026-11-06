@@ -3,6 +3,7 @@
 在庫台帳を課題に、初見の読解・コードの可読性・コード変更の正しさを確認する。
 使い回す課題、ルーブリック、外部契約、検証器をここへ分離した。過去の点数や回答を新しい評価役に渡さない。
 suite は [stock-ledger](stock-ledger/suite.json) と [diagnostics](diagnostics/README.md)。以下は既定の在庫台帳評価の手順。エラーメッセージは `just eval-diagnostics-prepare ID` で準備し、同じ review/verify/score/compare を使う。
+struct構築表記を比較する独立した読解課題は [struct-literals](struct-literals/README.md)。名前付け・波括弧・期待型リテラルを分けて評価する。
 在庫台帳の v7 は、制御・所有性の読解とコード変更に加え、標準 WAT と `%` 拡張の区別、`wlt:std` の基本型、単相化、複数束縛の `%let`、解析の境界を質問する。必須回答は各 run の suite.answerKeys に固定する。5軸のルーブリックと各14件の実行検証は維持し、異なる suite 版の点差は比較しない。
 以前の記録は [文法評価](../docs/grammar-eval/REPORT.md)、[可読性](../docs/readability/REPORT.md)、[文法改良後](../docs/readability/implemented/REPORT.md) に残す。
 
@@ -18,7 +19,8 @@ node evals/run.mjs prepare trial-02 --output /tmp/wlt-eval-trial-02
 
 既存の評価回は上書きしない。ID に回数上限はなく、`evals/runs/` は Git 管理対象外。
 現在の CHEATSHEET、main、行数付き版、契約、基準、課題に加えて依存する .wlt を support へコピーする。
-suite v8 は生成済み標準API資料から必要な公開名の型・制約・effectを抜粋し、両役の `api.md` として固定する。
+suite v8 以降は生成済み標準API資料から必要な公開名の型・制約・effectを抜粋し、両役の `api.md` として固定する。
+v9 は effect 契約の表記を `%effect` に統一する。既存の run の入力・回答・記録は変更しない。
 main の include はコピー先の program.wlt から support を参照するため、後のライブラリ変更で評価コードが変わらない。
 依存ファイルを増やしたら suite.json の support も更新する。
 

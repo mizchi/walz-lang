@@ -3,6 +3,7 @@ use crate::{
     Error,
     sexpr::{Kind, Sexp},
 };
+use std::collections::BTreeSet;
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) enum ReferenceKind {
@@ -66,9 +67,9 @@ fn map_arguments(
 fn reference(head: &str) -> Option<(ReferenceKind, usize)> {
     Some(match head {
         "call" | "closure.call" => (ReferenceKind::Function, 1),
-        "struct.new" | "struct.get" | "struct.set" | "closure.new" | "bytes.from-array"
-        | "array.new" | "array.new_fixed" | "array.get" | "array.set" | "variant.new"
-        | "ref.null" | "resource.new" | "newtype.wrap" | "newtype.unwrap" => {
+        "struct.new" | "struct.named" | "struct.get" | "struct.set" | "closure.new"
+        | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get" | "array.set"
+        | "variant.new" | "ref.null" | "resource.new" | "newtype.wrap" | "newtype.unwrap" => {
             (ReferenceKind::Type, 1)
         }
         "list.from-array" => (ReferenceKind::Type, 2),
@@ -121,12 +122,39 @@ fn map_storage(
 /// Folded value expressions have different heads from constructed types. This
 /// distinguishes explicit constructor arguments from the inferred short forms.
 fn type_argument(node: &Sexp) -> bool {
-    node.atom().is_some()
-        || node.head().is_some_and(|head| head.starts_with('$'))
+    node.atom().is_some_and(|name| {
+        name.starts_with('$')
+            || name.starts_with("@generic.")
+            || crate::ir::NumType::parse(name).is_some()
+            || matches!(name, "unit" | "bytes" | "text")
+    }) || node.head().is_some_and(|head| head.starts_with('$'))
         || matches!(
             node.head(),
             Some("ref" | "list" | "option" | "result" | "pair" | "own" | "future" | "stream")
         )
+}
+
+/// A short constructor can contain bare locals where the explicit spelling
+/// contains types. Only the overlapping arities need lexical disambiguation.
+pub(crate) fn explicit_constructor(
+    items: &[Sexp],
+    is_type: impl Fn(&Sexp) -> bool,
+    is_local: impl Fn(&Sexp) -> bool,
+) -> bool {
+    let head = items.first().and_then(Sexp::atom).unwrap_or("");
+    let count = if matches!(head, "pair.new" | "result.ok" | "result.err") {
+        2
+    } else {
+        1
+    };
+    let overlap = matches!(
+        (head, items.len()),
+        ("pair.new", 3) | ("option.some" | "own.new", 2)
+    );
+    items.len() > count
+        && items[1..=count]
+            .iter()
+            .all(|n| is_type(n) && !(overlap && is_local(n)))
 }
 
 /// Apply `f` only to source type positions, never declaration names, locals,
@@ -135,6 +163,24 @@ fn type_argument(node: &Sexp) -> bool {
 pub(crate) fn map_types(
     node: &mut Sexp,
     f: &mut impl FnMut(&mut Sexp) -> Result<(), Error>,
+) -> Result<(), Error> {
+    walk_types(node, f, &BTreeSet::new())
+}
+
+fn bind_names(node: &Sexp, locals: &mut BTreeSet<String>) {
+    if let Some(name) = node.atom() {
+        locals.insert(name.to_owned());
+    } else if let Some(names) = node.list() {
+        for name in names {
+            bind_names(name, locals);
+        }
+    }
+}
+
+fn walk_types(
+    node: &mut Sexp,
+    f: &mut impl FnMut(&mut Sexp) -> Result<(), Error>,
+    locals: &BTreeSet<String>,
 ) -> Result<(), Error> {
     let head = node.head().unwrap_or("").to_owned();
     let Kind::List(items) = &mut node.kind else {
@@ -145,7 +191,7 @@ pub(crate) fn map_types(
         "type.alias" => {
             let index = definition_index(items);
             for header in items.iter_mut().take(index).skip(2) {
-                map_types(header, f)?;
+                walk_types(header, f, locals)?;
             }
             if let Some(target) = items.get_mut(index) {
                 map_type(target, f)?;
@@ -154,7 +200,7 @@ pub(crate) fn map_types(
         "type" => {
             let index = definition_index(items);
             for header in items.iter_mut().take(index).skip(2) {
-                map_types(header, f)?;
+                walk_types(header, f, locals)?;
             }
             if let Some(definition) = items.get_mut(index) {
                 let kind = definition.head().unwrap_or("").to_owned();
@@ -198,7 +244,9 @@ pub(crate) fn map_types(
             for clause in items.iter_mut().skip(1) {
                 let head = clause.head().unwrap_or("").to_owned();
                 if let Kind::List(parts) = &mut clause.kind {
-                    if matches!(head.as_str(), "shared" | "nonunit") {
+                    if matches!(head.as_str(), "shared" | "nonunit")
+                        || crate::typeclasses::Class::parse(&head).is_some()
+                    {
                         for target in parts.iter_mut().skip(1) {
                             map_type(target, f)?;
                         }
@@ -214,7 +262,7 @@ pub(crate) fn map_types(
                             }
                         }
                         if let Some(result) = parts.get_mut(3) {
-                            map_types(result, f)?;
+                            walk_types(result, f, locals)?;
                         }
                     }
                 }
@@ -237,15 +285,22 @@ pub(crate) fn map_types(
             }
         }
         "result" if items.len() == 2 => map_type(&mut items[1], f)?,
-        "let" => {
+        "let" | "using" => {
             let start = if items.len() == 5 && items[1].atom().is_some() {
                 map_type(&mut items[2], f)?;
                 3
             } else {
                 2
             };
-            for expression in items.iter_mut().skip(start) {
-                map_types(expression, f)?;
+            if let Some(initial) = items.get_mut(start) {
+                walk_types(initial, f, locals)?;
+            }
+            let mut nested = locals.clone();
+            if let Some(names) = items.get(1) {
+                bind_names(names, &mut nested);
+            }
+            for expression in items.iter_mut().skip(start + 1) {
+                walk_types(expression, f, &nested)?;
             }
         }
         "bind" => {
@@ -253,24 +308,38 @@ pub(crate) fn map_types(
                 map_type(ty, f)?;
             }
             for expression in items.iter_mut().skip(3) {
-                map_types(expression, f)?;
+                walk_types(expression, f, locals)?;
             }
         }
         "match" => {
+            let inferred = items.get(2).and_then(Sexp::head) == Some("case");
             if let Some(first) = items.get_mut(1) {
-                if type_argument(first) {
+                if !inferred && type_argument(first) {
                     map_type(first, f)?;
                 } else {
-                    map_types(first, f)?;
+                    walk_types(first, f, locals)?;
                 }
             }
             for expression in items.iter_mut().skip(2) {
-                map_types(expression, f)?;
+                walk_types(expression, f, locals)?;
             }
         }
         "case" | "catch" => {
+            let mut nested = locals.clone();
+            if let Some(names) = items.get(2) {
+                bind_names(names, &mut nested);
+            }
             for expression in items.iter_mut().skip(3) {
-                map_types(expression, f)?;
+                walk_types(expression, f, &nested)?;
+            }
+        }
+        "catch_all" => {
+            let mut nested = locals.clone();
+            if let Some(names) = items.get(1) {
+                bind_names(names, &mut nested);
+            }
+            for expression in items.iter_mut().skip(2) {
+                walk_types(expression, f, &nested)?;
             }
         }
         "result.let" => {
@@ -281,8 +350,31 @@ pub(crate) fn map_types(
             } else {
                 2
             };
-            for expression in items.iter_mut().skip(start) {
-                map_types(expression, f)?;
+            if let Some(subject) = items.get_mut(start) {
+                walk_types(subject, f, locals)?;
+            }
+            let mut nested = locals.clone();
+            if let Some(names) = items.get(1) {
+                bind_names(names, &mut nested);
+            }
+            for expression in items.iter_mut().skip(start + 1) {
+                walk_types(expression, f, &nested)?;
+            }
+        }
+        "result.do" => {
+            let mut nested = locals.clone();
+            let last = items.len().saturating_sub(1);
+            for (index, child) in items.iter_mut().enumerate().skip(1) {
+                if index == last {
+                    walk_types(child, f, &nested)?;
+                } else if let Kind::List(binding) = &mut child.kind {
+                    for subject in binding.iter_mut().skip(1) {
+                        walk_types(subject, f, &nested)?;
+                    }
+                    if let Some(name) = binding.first() {
+                        bind_names(name, &mut nested);
+                    }
+                }
             }
         }
         "stream.fold-result" => {
@@ -294,9 +386,17 @@ pub(crate) fn map_types(
             } else {
                 (1, 3)
             };
+            let mut nested = locals.clone();
+            if let Some(names) = items.get(binders) {
+                bind_names(names, &mut nested);
+            }
             for (index, expression) in items.iter_mut().enumerate().skip(start) {
                 if index != binders {
-                    map_types(expression, f)?;
+                    walk_types(
+                        expression,
+                        f,
+                        if index > binders { &nested } else { locals },
+                    )?;
                 }
             }
         }
@@ -311,15 +411,48 @@ pub(crate) fn map_types(
                 map_arguments(array, f)?;
             }
             for e in items.iter_mut().skip(start) {
-                map_types(e, f)?;
+                walk_types(e, f, locals)?;
             }
         }
-        "func" => {
+        "func" | "closure" | "law" => {
             if let Some(name) = items.get_mut(1) {
                 map_arguments(name, f)?;
             }
+            // Closure captures are explicit; never inherit another function's
+            // locals while deciding whether an atom occupies a value position.
+            let mut nested = BTreeSet::new();
+            for child in items.iter().skip(2) {
+                if matches!(child.head(), Some("param" | "capture"))
+                    && let Some(name) = child.list().and_then(|p| p.get(1))
+                {
+                    bind_names(name, &mut nested);
+                }
+            }
             for child in items.iter_mut().skip(2) {
-                map_types(child, f)?;
+                walk_types(child, f, &nested)?;
+            }
+        }
+        "loop" | "native.loop" | "for" => {
+            let mut nested = locals.clone();
+            for child in items
+                .iter()
+                .skip(2)
+                .take_while(|n| n.head() == Some("bind"))
+            {
+                if let Some(name) = child.list().and_then(|p| p.get(1)) {
+                    bind_names(name, &mut nested);
+                }
+            }
+            for child in items.iter_mut().skip(1) {
+                walk_types(
+                    child,
+                    f,
+                    if child.head() == Some("bind") {
+                        locals
+                    } else {
+                        &nested
+                    },
+                )?;
             }
         }
         _ if reference(&head).is_some() => {
@@ -328,7 +461,7 @@ pub(crate) fn map_types(
                 map_arguments(operand, f)?;
             }
             for expression in items.iter_mut().skip(index + 1) {
-                map_types(expression, f)?;
+                walk_types(expression, f, locals)?;
             }
         }
         "option.none" | "option.some" | "own.new" | "future.ready" | "future.await"
@@ -339,7 +472,9 @@ pub(crate) fn map_types(
             } else {
                 1
             };
-            let explicit = items.len() > count && items[1..=count].iter().all(type_argument);
+            let explicit = explicit_constructor(items, type_argument, |n| {
+                n.atom().is_some_and(|name| locals.contains(name))
+            });
             let start = if explicit {
                 for ty in &mut items[1..=count] {
                     map_type(ty, f)?;
@@ -349,12 +484,12 @@ pub(crate) fn map_types(
                 1
             };
             for expression in items.iter_mut().skip(start) {
-                map_types(expression, f)?;
+                walk_types(expression, f, locals)?;
             }
         }
         _ => {
             for child in items.iter_mut().skip(1) {
-                map_types(child, f)?;
+                walk_types(child, f, locals)?;
             }
         }
     }

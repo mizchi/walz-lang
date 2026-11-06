@@ -10,7 +10,7 @@
     (export "input-new")
     (param $n i32)
     (result (ref $Input))
-    (%effects allocates)
+    (%effect allocates)
     (array.new $Input (i32.const 0) (local.get $n)))
 
   (func $set
@@ -18,14 +18,14 @@
     (param $data (ref $Input))
     (param $i i32)
     (param $v i32)
-    (%effects writes)
+    (%effect writes)
     (array.set $Input (local.get $data) (local.get $i) (local.get $v)))
 
   (func $text
     (export "input-text")
     (param $data (ref $Input))
     (result $text)
-    (%effects reads)
+    (%effect reads)
     (%match (%text.from-bytes (%bytes.from-array $Input (local.get $data)))
       (case some ($text) (local.get $text))
       (case none () (unreachable))))
@@ -34,7 +34,7 @@
     (export "parse")
     (param $source $text)
     (result (ref $Value))
-    (%effects allocates reads writes)
+    (%effect allocates reads writes)
     (%match (call $json-value.parse (local.get $source))
       (case ok ($value) (local.get $value))
       (case err ($offset) (unreachable))))
@@ -43,7 +43,7 @@
     (export "checksum")
     (param $value (ref $Value))
     (result i32)
-    (%effects allocates reads writes)
+    (%effect allocates reads writes)
     (%let $bytes (%text.bytes (call $json-value.stringify (local.get $value)))
       (%loop $hash
         (bind $i i32 (i32.const 0))

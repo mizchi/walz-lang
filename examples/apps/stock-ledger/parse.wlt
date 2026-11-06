@@ -10,10 +10,10 @@
     (%public (type $Command) (func $command))
     (type $Command
       (%variant (skip) (invalid) (add $text i64) (take $text i64) (show $text)))
-    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effects pure)
+    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effect pure)
       (call $buffer.find-byte (local.get $b) (local.get $start) (i32.const 9)))
 
-    (func $op (param $b $bytes) (param $end i32) (result i32) (%effects pure)
+    (func $op (param $b $bytes) (param $end i32) (result i32) (%effect pure)
       (if
         (result i32)
         (i32.eq (local.get $end) (i32.const 3))
@@ -65,7 +65,7 @@
       ))
 
     (func $number (param $b $bytes) (param $start i32) (result (%inst $option i64))
-      (%effects pure)
+      (%effect pure)
       (call $buffer.parse-u64
         (local.get $b)
         (local.get $start)
@@ -73,7 +73,7 @@
         (i64.const 4294967295)))
 
     (func $key (param $b $bytes) (param $start i32) (param $end i32)
-      (result (%inst $option $text)) (%effects pure)
+      (result (%inst $option $text)) (%effect pure)
       (%let $len (i32.sub (local.get $end) (local.get $start))
         (if
           (result (%inst $option $text))
@@ -86,7 +86,7 @@
               (%bytes.slice (local.get $b) (local.get $start) (local.get $len))))
         )))
 
-    (func $fields (param $b $bytes) (result (ref $Command)) (%effects allocates)
+    (func $fields (param $b $bytes) (result (ref $Command)) (%effect allocates)
       (%let $first (call $tab (local.get $b) (i32.const 0))
         (%let $op (call $op (local.get $b) (local.get $first))
           (if
@@ -147,7 +147,7 @@
               ))))
       ))
 
-    (func $command (param $line $text) (result (ref $Command)) (%effects allocates)
+    (func $command (param $line $text) (result (ref $Command)) (%effect allocates)
       (%let $b (%text.bytes (local.get $line))
         (if
           (result (ref $Command))

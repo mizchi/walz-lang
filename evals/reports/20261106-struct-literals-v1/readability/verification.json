@@ -1,0 +1,131 @@
+{
+  "schema": "wlt-struct-readability-v1",
+  "correct": 56,
+  "total": 56,
+  "readers": {
+    "readerA": {
+      "positional": {
+        "label": "R",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 2,
+          "types": 3,
+          "order": 2,
+          "layout": 3,
+          "changes": 3
+        },
+        "unclear": [
+          "R.order の %let について、複数の初期化式を記述順に評価する規則はこの資料にない。trace はその順序を仮定した [2,1] であり、struct.new の左から右という規則だけからは確定できない。left=1 と right=2 の対応自体にはこの仮定を要しない。"
+        ],
+        "evidence": "fields: R.bucket の 7/91/22 は $Bucket 宣言の count/total/max と順に照合した。R.nested は $State 宣言で5番目が warn、6番目が error と確認してから、各 $Bucket の2番目を total、3番目を max に対応させた。types: R.bucket の (i64.const 91) は値型をその場で示し、R.job の (struct.new $Job ...) は nominal 型を示すが、duration の i64 は束縛、R.cell の mutable は $Cell 宣言の (mut i32) を確認した。order: R.order は %let 内の $right の mark 2、$left の mark 1 を読み、その後の (struct.new $Pair (local.get $left) (local.get $right)) と行き来して、評価順と格納先を分けた。%let 初期化の記述順評価は資料に明記されていないため仮定を含む。layout: R.user の各式は括弧で区切られる。R.nested はインデントで子の構築を識別できたが、各 $Bucket 末尾の ) と外側 $State 末尾の ) の所属を確認した。changes: R.bucket の total を変えるため $Bucket 宣言を一度照合し、2番目の (i64.const 91) だけを (i64.const 100) に置き換えた。"
+      },
+      "named": {
+        "label": "S",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 3,
+          "order": 4,
+          "layout": 3,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: S.bucket の ($total (i64.const 91)) は field と値を同じ箇所で結び、S.nested の ($warn (%struct.new $Bucket ... ($total (i64.const 19)) ...)) と $error 内の $max から、宣言の順番を数えず対象を特定した。types: S.bucket の i64.const と S.user の %text.lit は値型を示し、%struct.new $User/$Bucket は nominal 型を示す。S.cell の mutable は $Cell 宣言、S.job の duration の型は与えられた束縛を確認した。order: S.order は記述順評価という明記された規則のもと、最初の $right にある mark 2、次の $left にある mark 1 を直接追え、宣言の left/right 順へ並べ替えて読む必要がなかった。layout: S.user の ($field expression) は値の範囲を示す。S.nested の子 $Bucket の終了にある )) は、構築の終了と $warn/$error の組の終了が連続するため、その所属を確認した。changes: S.bucket の $total という名前から対象の式へ直接移り、その中の 91 だけを 100 に変更できた。"
+      },
+      "objectExplicit": {
+        "label": "T",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 3,
+          "order": 4,
+          "layout": 4,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: T.user の :name/:age/:email と T.bucket の :count/:total/:max は各値の直前にある。T.nested は :warn の %Bucket 内の :total 19、:error の %Bucket 内の :max 5 と名前をたどれて、同型の値を宣言の位置へ照合しなかった。types: T.bucket の (i64.const 91) は値型を示し、T.nested の %State と %Bucket は資料の規則により宣言された nominal 型と分かる。T.cell の mutable は $Cell 宣言の (mut i32)、T.job の durationType は与えられた $duration:i64 を確認した。order: T.order の :right の mark 2 が先、:left の mark 1 が後という記述と、記述順評価の規則から trace と各格納先を局所的に追えた。layout: T.user/T.job は :field に続く通常の括弧式がそれぞれの値を囲む。T.nested は子のフィールド集合を閉じる } と、その外の ) により子の境界が示され、次の :warn/:error が外側のフィールドであると追えた。changes: T.bucket の :total (i64.const 91) を直接特定し、同じ位置で i64.const を保って 100 に変えた。"
+      },
+      "objectShort": {
+        "label": "U",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 2,
+          "order": 4,
+          "layout": 4,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: U.bucket の :total 91 と U.nested の :warn 内の :total 19、:error 内の :max 5 は名前で対応した。U.job も :key の値が %text.bytes (local.get $id) であるとその場で読めた。types: U.bucket の 91 が i64 であることは $Bucket 宣言、U.cell の 40 が i32 かつ mutable であることは $Cell 宣言で確認した。U.user の文字列も期待型が $text のとき許されるという規則と宣言に依存する。U.job の durationType ではさらに $duration:i64 の束縛を確認し、裸のリテラルだけから値型が見えるとは判断しなかった。%User/%Bucket 自体は nominal 型を明示する。order: U.order は通常式の mark 2 が :right に、mark 1 が :left に記述され、明記された記述順評価から [2,1] と格納先を直接読んだ。layout: U.user は引用符で文字列の境界が決まり、U.bucket は整数1個と次の :field で値を区切れた。U.nested は %Bucket の { ... } と外側の :warn/:error により子の終端と次の field が区別でき、U.job の複合値も通常式の括弧が境界を示す。changes: U.bucket の :total 91 のみを :total 100 に変えた。型を保つことは $Bucket の total:i64 と裸の整数の期待型規則により確認した。"
+      }
+    },
+    "readerB": {
+      "objectShort": {
+        "label": "R",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 2,
+          "order": 3,
+          "layout": 3,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: R.user の :name/:age/:email、R.bucket の :total 91、R.nested の :warn 内の :total 19 と :error 内の :max 5 は、位置を数えず名前で対応を確認できた。types: R.user の裸の文字列と 30 は期待型によるリテラル規則を確認し、R.bucket の :total 91 と R.nested の :accepted 11 は宣言へ戻って i64 と判断した。R.cell の :value 40 だけでは mutable は分からず、$Cell の (mut i32) を確認した。R.job の :duration (local.get $duration) も束縛の i64 を確認したため、値型の判別には複数の照合があった。order: R.order は :right の call 2 が :left の call 1 より先に書かれているが、フィールド宣言順でなく記述順に各1回評価する規則を確認して trace=[2,1]、left=1、right=2 とした。layout: R.user の (%User::{ と末尾 })、R.nested の各 (%Bucket::{ と }) の対応を確認した。インデントと次の :warn/:error により子structの境界は追えたが、括弧と波括弧の両方が閉じる点は確認を要した。changes: R.bucket の :total 91 を :total 100 に変える箇所は名前から直ちに特定でき、:count 7 と :max 22 をそのまま残せた。"
+      },
+      "objectExplicit": {
+        "label": "S",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 3,
+          "order": 3,
+          "layout": 3,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: S.user の :name/:age/:email、S.bucket の :count/:total/:max、S.nested の :warn 内の :total と :error 内の :max が値に隣接し、同型の値でも宣言順を数えず対応を確認できた。types: S.user の (i32.const 30)、S.bucket の :total (i64.const 91)、S.nested の (i64.const 11) は式自身に数値型が出ている。(%User::{ や (%Bucket::{ から構築する nominal 型も分かる。S.cell の mutable は $Cell の (mut i32)、S.job の durationType は $duration:i64 の束縛を確認したため、すべてが構築式だけで完結するわけではなかった。order: S.order の :right の call 2、続く :left の call 1 を見た後、記述順に各1回評価する規則を確認し、宣言中の left/right 順と区別した。layout: S.nested は :warn (%Bucket::{ と末尾 }) で子structを区切り、その内側の (i64.const 19) は値1個として読めた。子struct末尾の }) と値式末尾の ) は区別して確認したが、フィールド名とインデントで境界を追えた。changes: S.bucket の :total (i64.const 91) を直接選び、数値だけ100へ変更できた。count/max の値と total の i64.const は維持できた。"
+      },
+      "named": {
+        "label": "T",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 4,
+          "types": 3,
+          "order": 3,
+          "layout": 3,
+          "changes": 4
+        },
+        "unclear": [],
+        "evidence": "fields: T.user の ($name ...)、T.bucket の ($total ...)、T.nested の ($warn ... ($total (i64.const 19)) ...) と ($error ... ($max (i64.const 5)) ...) は、親子のフィールド名から対応を確認できた。types: T.bucket の (i64.const 91) と T.user の (i32.const 30) は値型が式にあり、%struct.new $Bucket/$User は nominal 型を示していた。T.cell の ($value (i32.const 40)) から mutable は判断せず、$Cell 宣言の (mut i32) を確認した。T.job の ($duration (local.get $duration)) は束縛 $duration:i64 を参照した。order: T.order は ($right ...2) が ($left ...1) より前にある。名前付きフィールドを記述順に各1回評価する規則を確認し、フィールド名の left/right と評価の前後を分けて判断した。layout: T.nested の ($warn (%struct.new $Bucket ... )) はフィールドの括弧と構築の括弧を持つため、末尾 )) が両方を閉じることを確認した。T.job の ($key (%text.bytes (local.get $id))) も閉じ括弧を確認したが、各フィールドを囲む括弧とインデントにより値のまとまりは保たれていた。changes: T.bucket の ($total (i64.const 91)) を名前で特定し、91だけを100へ変更できた。隣接する同型の count/max を宣言と照合する必要はなかった。"
+      },
+      "positional": {
+        "label": "U",
+        "correct": 7,
+        "total": 7,
+        "scores": {
+          "fields": 2,
+          "types": 3,
+          "order": 1,
+          "layout": 3,
+          "changes": 3
+        },
+        "unclear": [
+          "U.order: %let の束縛初期化式を評価する順番は packet に明記されていない。answers.order.trace=[2,1] は、表示順に $right、$left を初期化するという仮定を置いた値。仮定を置かなければ trace はこの資料だけでは確定できない。left=1、right=2 は、示された束縛がそれぞれの初期化式の返り値を保持する読み方に基づく。"
+        ],
+        "evidence": "fields: U.bucket は3個とも i64.const なので total が2番目であることを $Bucket 宣言と照合した。U.nested は $State の第5フィールドが warn、第6が error であることを確認し、各 $Bucket の第2値19、第3値5を選んだ。U.job も $Job 宣言の第3が index、第4が duration、第5が deps と照合したため、複数箇所で定義順の確認が必要だった。types: U.bucket の (i64.const 91) と U.user の (i32.const 30) は式に型があり、struct.new $Bucket/$User は nominal 型を示す。U.cell の mutable は $Cell 宣言の (mut i32)、U.job の durationType は $duration:i64 の束縛を確認した。order: U.order の struct.new $Pair (local.get $left) (local.get $right) はlayout順だが、副作用は外側の %let 内で起きる。rightのcall 2とleftのcall 1の束縛を追い、$Pair の宣言順とも照合した。packetには %let の束縛初期化順がないので、trace=[2,1] は記述順に束縛を評価するという仮定による回答であり、順序を確定できたとは扱わなかった。layout: U.nested の各 (struct.new $Bucket ... ) は改行と括弧から子の値境界を追えた。U.order は %let の束縛リストを閉じる )) と本体の struct.new を区別する確認が必要だった。changes: U.bucket では $Bucket 宣言を1回照合して total が2番目と分かれば、2番目の (i64.const 91) だけ100へ変えられた。編集対象自体にはtotalという名前がないので、名前だけで直ちに特定はできなかった。"
+      }
+    }
+  },
+  "responseHashes": {
+    "readerA": "30ce9a325216e7d514718cc5279a98786744f0c24519416585f428e843ab7631",
+    "readerB": "d92cc9454eaca8cccb52294914f6e5d8b6f1bacedcae972c78a04b73dfef7fcf"
+  }
+}

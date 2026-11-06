@@ -8,7 +8,7 @@
   (%import "wlt:std" (type $text) (type $result)
     (func $json-value.parse) (func $json-value.stringify))
   (func $normalize (export "normalize") (param $source $text)
-    (result (%inst $result $text i32)) (%effects reads writes allocates)
+    (result (%inst $result $text i32)) (%effect reads writes allocates)
     (%result.do
       ($value (call $json-value.parse (local.get $source)))
       (%result.ok (call $json-value.stringify (local.get $value))))))

@@ -4,7 +4,7 @@
 
 ```wat
 (module
-  (func $main (export "main") (result i32) (%effects pure)
+  (func $main (export "main") (result i32) (%effect pure)
     (%let $v v128 (v128.const i32x4 40 0 0 0)
       (i32x4.extract_lane 0
         (i32x4.add (local.get $v) (i32x4.splat (i32.const 2)))))))
@@ -34,7 +34,7 @@ lane番号と shuffle の添字は、式ではなく命令の即値です。範�
 
 `v128` は共有可能な値で、`shared` / `nonunit` 制約を満たします。関数の引数・戻り値、`%let`、GC の struct/array フィールド、明示したクロージャ捕捉、`list` / `option` などの型引数に使えます。ベクトル自体に参照 identity や所有権の move はありません。可変フィールドへの読み書きやコンテナの割当ては、既存の effect 規則に従います。
 
-対応する非メモリ SIMD 命令自体は pure で trap しません。オペランドは左から右に一度ずつ評価し、呼び出し・読み書き・例外・中断などの作用をそのまま引き継ぎます。`%effects pure` でオペランドの作用を隠すことはできません。
+対応する非メモリ SIMD 命令自体は pure で trap しません。オペランドは左から右に一度ずつ評価し、呼び出し・読み書き・例外・中断などの作用をそのまま引き継ぎます。`%effect pure` でオペランドの作用を隠すことはできません。
 
 型・effect・所有権・アクセス先の解析を維持しますが、ベクトルの値域推論や SIMD の代数的な簡約は追加していません。現在の Lean の `%law` モデルも SIMD を扱わず、対象外の式として拒否します。
 

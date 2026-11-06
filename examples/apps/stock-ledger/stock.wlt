@@ -32,7 +32,7 @@
     (func $new
       (param $limit i32)
       (result (ref $State))
-      (%effects allocates)
+      (%effect allocates)
       (struct.new $State
         (array.new $Buckets (ref.null $Entry) (i32.const 64))
         (i32.const 0)
@@ -42,13 +42,13 @@
     (func $size
       (param $s (ref $State))
       (result i32)
-      (%effects reads)
+      (%effect reads)
       (struct.get $State $size (local.get $s))
     )
     (func $hash
       (param $key $bytes)
       (result i32)
-      (%effects pure)
+      (%effect pure)
       (%loop $hash
         (bind $i i32 (i32.const 0))
         (bind $h i32 (i32.const 0))
@@ -73,7 +73,7 @@
       (param $a $bytes)
       (param $b $bytes)
       (result i32)
-      (%effects pure)
+      (%effect pure)
       (if
         (result i32)
         (i32.ne (%bytes.len (local.get $a)) (%bytes.len (local.get $b)))
@@ -106,7 +106,7 @@
       (param $s (ref $State))
       (param $key $bytes)
       (result (ref null $Entry))
-      (%effects reads)
+      (%effect reads)
       (%loop $find
         (bind $entry
           (ref null $Entry)
@@ -138,7 +138,7 @@
       (param $s (ref $State))
       (param $key $text)
       (result i64)
-      (%effects reads)
+      (%effect reads)
       (%let $found
         (call $find (local.get $s) (%text.bytes (local.get $key)))
         (if
@@ -154,7 +154,7 @@
       (param $key $text)
       (param $n i64)
       (result (%inst $result i64 (ref $Error)))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $bytes
         (%text.bytes (local.get $key))
         (%let $found
@@ -232,7 +232,7 @@
       (param $key $text)
       (param $n i64)
       (result (%inst $result i64 (ref $Error)))
-      (%effects reads writes allocates)
+      (%effect reads writes allocates)
       (%let $found
         (call $find (local.get $s) (%text.bytes (local.get $key)))
         (%let $before

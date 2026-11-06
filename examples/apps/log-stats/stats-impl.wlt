@@ -25,7 +25,7 @@
   )
   (func $new
     (result (ref $State))
-    (%effects allocates)
+    (%effect allocates)
     (struct.new $State
       (i64.const 0)
       (i64.const 0)
@@ -38,26 +38,26 @@
   (func $accepted
     (param $s (ref $State))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $State $accepted (local.get $s))
   )
   (func $rejected
     (param $s (ref $State))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $State $rejected (local.get $s))
   )
   (func $ignored
     (param $s (ref $State))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $State $ignored (local.get $s))
   )
   (func $bucket
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result (ref $Bucket))
-    (%effects pure)
+    (%effect pure)
     (%match $parse.Level
       (result (ref $Bucket))
       (local.get $level)
@@ -70,28 +70,28 @@
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $Bucket $count (call $bucket (local.get $s) (local.get $level)))
   )
   (func $total
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $Bucket $total (call $bucket (local.get $s) (local.get $level)))
   )
   (func $maximum
     (param $s (ref $State))
     (param $level (ref $parse.Level))
     (result i64)
-    (%effects reads)
+    (%effect reads)
     (struct.get $Bucket $max (call $bucket (local.get $s) (local.get $level)))
   )
   (func $consume
     (param $s (ref $State))
     (param $line (ref $parse.Line))
     (result i32)
-    (%effects reads writes)
+    (%effect reads writes)
     (%match $parse.Line
       (result i32)
       (local.get $line)
@@ -162,7 +162,7 @@
     (param $b (ref $Bucket))
     (param $ms i64)
     (result i32)
-    (%effects reads writes)
+    (%effect reads writes)
     (%let $before
       (struct.get $Bucket $total (local.get $b))
       (%let $sum

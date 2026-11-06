@@ -40,7 +40,7 @@ fn standard_numeric_instructions_remain_in_the_typed_core() {
         ),
     ] {
         let source = format!(
-            "(module (func $main (export \"main\") (result {result}) (%effects pure) {expression}))"
+            "(module (func $main (export \"main\") (result {result}) (%effect pure) {expression}))"
         );
         let compiled = wlt::compile(&source).unwrap();
         assert!(!compiled.analysis.opaque, "{expression}");
@@ -69,13 +69,13 @@ fn standard_numeric_instructions_remain_in_the_typed_core() {
 fn numeric_conversion_types_and_trapping_effects_are_checked() {
     assert!(
         wlt::check(
-            "(module (func $bad (result f64) (%effects pure) (f64.convert_i64_s (i32.const 1))))"
+            "(module (func $bad (result f64) (%effect pure) (f64.convert_i64_s (i32.const 1))))"
         )
         .is_err()
     );
     for (op, trapping) in [("i32.trunc_f64_s", true), ("i32.trunc_sat_f64_s", false)] {
         let module = wlt::check(&format!(
-            "(module (func $f (param $x f64) (result i32) (%effects pure) ({op} (local.get $x))))"
+            "(module (func $f (param $x f64) (result i32) (%effect pure) ({op} (local.get $x))))"
         ))
         .unwrap();
         assert_eq!(

@@ -1,7 +1,7 @@
 use std::process::Command;
 fn run(body: &str, expected: &str) {
     let source =
-        format!("(module (func $main (export \"main\") (result i32) (%effects pure) {body}))");
+        format!("(module (func $main (export \"main\") (result i32) (%effect pure) {body}))");
     let compiled = wlt::compile(&source).unwrap();
     assert!(!compiled.analysis.opaque);
     let dir = tempfile::tempdir().unwrap();
@@ -57,9 +57,9 @@ fn early_exits_cannot_discard_owners_or_cross_mismatched_label_types() {
     ] {
         assert!(wlt::check(&format!("(module (func $f (result i32) {body}))")).is_err());
     }
-    let bad = "(module (func $f (param $x (%own i32)) (result i32) (%effects pure) (return (i32.const 42))))";
+    let bad = "(module (func $f (param $x (%own i32)) (result i32) (%effect pure) (return (i32.const 42))))";
     assert!(wlt::check(bad).is_err());
-    let good = "(module (func $f (param $x (%own i32)) (result (%own i32)) (%effects pure) (return (%move $x))))";
+    let good = "(module (func $f (param $x (%own i32)) (result (%own i32)) (%effect pure) (return (%move $x))))";
     wlt::check(good).unwrap();
 }
 
@@ -69,7 +69,7 @@ fn named_loop_branches_and_owned_block_results_are_checked() {
         "(%loop $again (bind $n i32 (i32.const 0)) (result i32) (if (result i32) (i32.lt_s (local.get $n) (i32.const 42)) (then (br $again (i32.add (local.get $n) (i32.const 1)))) (else (local.get $n))))",
         "42",
     );
-    let good = r#"(module (func $main (export "main") (result i32) (%effects pure)
+    let good = r#"(module (func $main (export "main") (result i32) (%effect pure)
       (%let $x (%own.new i32 (i32.const 42))
         (%match (%own i32) (result i32)
           (block $done (result (%own i32)) (br $done (%move $x)))

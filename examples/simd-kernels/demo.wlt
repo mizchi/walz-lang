@@ -3,7 +3,7 @@
   (func $main
     (export "main")
     (result i64)
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $xs (call $simd.new-i32 (i32.const 3))
       (block
         (result i64)

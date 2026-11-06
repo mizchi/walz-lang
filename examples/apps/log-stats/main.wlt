@@ -12,7 +12,7 @@
     (func $read-lines (result (%inst $stream (%inst $result $text i32))))
   )
   (func $main (export "main") (result (%inst $result i32 i32))
-    (%effects reads writes allocates host suspends)
+    (%effect reads writes allocates host suspends)
     (%let $initial (call $stats.new)
       (%result.let ($state) (%inst $result (ref $stats.State) i32) i32
         (%stream.fold-result $text (ref $stats.State) i32

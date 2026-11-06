@@ -27,7 +27,7 @@ fn collection_bounds_effects_and_opaque_layouts_are_checked_before_dce() {
             "nonunit",
         ),
         (
-            r#"(module (%import "wlt:std" (type $dict.Dict) (type $text) (type $option) (func $dict.get)) (func $bad (param $d (ref (%inst $dict.Dict i64))) (param $key $text) (result (%inst $option i64)) (%effects pure) (call (%inst $dict.get i64) (local.get $d) (local.get $key))))"#,
+            r#"(module (%import "wlt:std" (type $dict.Dict) (type $text) (type $option) (func $dict.get)) (func $bad (param $d (ref (%inst $dict.Dict i64))) (param $key $text) (result (%inst $option i64)) (%effect pure) (call (%inst $dict.get i64) (local.get $d) (local.get $key))))"#,
             "effect contract",
         ),
         (

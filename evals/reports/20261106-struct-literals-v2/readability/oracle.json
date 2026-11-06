@@ -1,0 +1,44 @@
+{
+  "answers": {
+    "user": {
+      "name": "Alice",
+      "age": 30,
+      "email": "alice@example.com"
+    },
+    "bucket": {
+      "count": 7,
+      "total": 91,
+      "max": 22,
+      "totalType": "i64"
+    },
+    "nested": {
+      "accepted": 11,
+      "warnTotal": 19,
+      "errorMax": 5
+    },
+    "order": {
+      "trace": [
+        2,
+        1
+      ],
+      "left": 1,
+      "right": 2
+    },
+    "cell": {
+      "value": 40,
+      "mutable": true
+    },
+    "job": {
+      "index": 3,
+      "durationType": "i64",
+      "depsNull": true,
+      "keyFrom": "id"
+    }
+  },
+  "edits": {
+    "positional": "(struct.new $Bucket\n  (i64.const 7)\n  (i64.const 100)\n  (i64.const 22)\n)",
+    "named": "(%struct.new $Bucket\n  ($count (i64.const 7))\n  ($total (i64.const 100))\n  ($max (i64.const 22))\n)",
+    "objectExplicit": "(%Bucket::{\n  :count (i64.const 7)\n  :total (i64.const 100)\n  :max (i64.const 22)\n})",
+    "objectShort": "(%Bucket::{\n  :count 7\n  :total 100\n  :max 22\n})"
+  }
+}

@@ -16,7 +16,7 @@
     )
     (%public (func $write))
     (func $bucket (param $s (ref $stats.State)) (param $level (ref $parse.Level))
-      (result (ref $json.Object)) (%effects reads writes allocates)
+      (result (ref $json.Object)) (%effect reads writes allocates)
       (%let $o (call $json.new)
         (block
           (result (ref $json.Object))
@@ -35,7 +35,7 @@
           (local.get $o))))
 
     (func $write (param $s (ref $stats.State)) (result (%inst $result $unit i32))
-      (%effects reads writes allocates host suspends)
+      (%effect reads writes allocates host suspends)
       (%let $o (call $json.new)
         (%let $levels (call $json.new)
           (block

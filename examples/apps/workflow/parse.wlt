@@ -9,14 +9,14 @@
       (func $buffer.find-byte)
       (func $buffer.parse-u64))
     (%public (func $equal) (func $tab) (func $key) (func $number))
-    (func $equal (param $a $bytes) (param $b $bytes) (result i32) (%effects pure)
+    (func $equal (param $a $bytes) (param $b $bytes) (result i32) (%effect pure)
       (call $buffer.equal (local.get $a) (local.get $b)))
 
-    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effects pure)
+    (func $tab (param $b $bytes) (param $start i32) (result i32) (%effect pure)
       (call $buffer.find-byte (local.get $b) (local.get $start) (i32.const 9)))
 
     (func $key (param $b $bytes) (param $start i32) (param $end i32)
-      (result (%inst $option $text)) (%effects pure)
+      (result (%inst $option $text)) (%effect pure)
       (%let $n (i32.sub (local.get $end) (local.get $start))
         (if
           (result (%inst $option $text))
@@ -28,7 +28,7 @@
         )))
 
     (func $number (param $b $bytes) (param $start i32) (result (%inst $option i64))
-      (%effects pure)
+      (%effect pure)
       (call $buffer.parse-u64
         (local.get $b)
         (local.get $start)
@@ -40,7 +40,7 @@
       (type $option)
       (type $text))
     (%public (func $command))
-    (func $fields (param $b $bytes) (result (ref $domain.Command)) (%effects allocates)
+    (func $fields (param $b $bytes) (result (ref $domain.Command)) (%effect allocates)
       (%let $first (call $lex.tab (local.get $b) (i32.const 0))
         (%let $op (%bytes.slice (local.get $b) (i32.const 0) (local.get $first))
           (%let $start (i32.add (local.get $first) (i32.const 1))
@@ -114,7 +114,7 @@
               ))))
       ))
 
-    (func $command (param $line $text) (result (ref $domain.Command)) (%effects allocates)
+    (func $command (param $line $text) (result (ref $domain.Command)) (%effect allocates)
       (%let $b (%text.bytes (local.get $line))
         (if
           (result (ref $domain.Command))

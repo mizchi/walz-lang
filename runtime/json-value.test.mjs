@@ -40,6 +40,16 @@ for(const backend of ['core','component'])test(`${backend}: JSON library matches
     assert.deepEqual(JSON.parse(api.builder().val),{nothing:null,n:125,values:[null,true]});
     assert.equal(api.normalize('9007199254740993').val,'9007199254740993');
     assert.equal(api.normalize('1.2300e+45').val,'1.2300e+45');
+    // EOF is represented by -1 internally; byte/range checks must reject it
+    // without accepting signs, control bytes or invalid Unicode hex digits.
+    for(let c=0;c<128;c++) {
+      const char=String.fromCharCode(c),source='"\\u'+char.repeat(4)+'"';
+      const hex=/^[0-9a-fA-F]$/.test(char),loneLowSurrogate=char.toLowerCase()==='d';
+      assert.equal(api.normalize(source).tag,hex&&!loneLowSurrogate?'ok':'err',`hex byte ${c}`);
+      let accepted;try{JSON.parse(char);accepted=true;}catch{accepted=false;}
+      assert.equal(api.normalize(char).tag,accepted?'ok':'err',`root byte ${c}`);
+      assert.equal(memory.live(),0);
+    }
     assert.equal(api.get('{"x":1,"x":[null,"日本語"]}','x'),'[null,"日本語"]');
     assert.equal(api.get('{"x":null}','missing'),undefined);
     for(const length of [...Array.from({length:34},(_,i)=>i),63,64,65,127,255,1023,48000]) {

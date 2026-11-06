@@ -56,7 +56,7 @@ test(
       const wideStart = candidate.indexOf("  (func $count64");
       const formatStart = candidate.indexOf("  (func $format-count");
       const fakeWide = `(func $count64 (export "count64") (result (%inst $result i64 i32))
-        (%effects reads writes allocates host suspends)
+        (%effect reads writes allocates host suspends)
         (%result.let ($n) (call $main) (%result.ok (i64.extend_i32_u (local.get $n)))))\n`;
       const falsePositive = (candidate.slice(0, wideStart) + fakeWide + candidate.slice(formatStart))
         .replace('(%result.ok (call $builder.finish (local.get $builder)))', '(%result.ok (%text.lit "count=42"))');

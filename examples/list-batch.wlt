@@ -2,7 +2,7 @@
   (%import "wlt:std"
     (type $list))
   (type $Numbers (array (mut i64)))
-  (func $sum (export "sum") (param $values (%inst $list i64)) (result i64) (%effects pure)
+  (func $sum (export "sum") (param $values (%inst $list i64)) (result i64) (%effect pure)
     (%loop $sum
       (bind $i i32 (i32.const 0))
       (bind $total i64 (i64.const 0))
@@ -20,7 +20,7 @@
         ))))
 
   (func $double (export "double") (param $values (%inst $list i64)) (result (%inst $list i64))
-    (%effects reads writes allocates)
+    (%effect reads writes allocates)
     (%let $length (%list.len i64 (local.get $values))
       (%let $out (array.new $Numbers (i64.const 0) (local.get $length))
         (block
@@ -43,7 +43,7 @@
           (%list.from-array i64 $Numbers (local.get $out))))
     ))
 
-  (func $main (export "main") (result i64) (%effects reads writes allocates)
+  (func $main (export "main") (result i64) (%effect reads writes allocates)
     (call $sum (call $double (%list.new i64 (i64.const 20) (i64.const 1))))
   )
   (%test "an empty list maps to an empty list"

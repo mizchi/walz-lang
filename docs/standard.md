@@ -15,9 +15,9 @@ WLT の基本型と標準関数は、通常の静的 import と同じ名前解�
   (func $main
     (export "main")
     (result (%inst $Outcome $text i32))
-    (%effects reads writes allocates suspends)
+    (%effect reads writes allocates suspends)
     (%let
-      (($pending (%inst $future i64) (%future.ready i64 (i64.const 42)))
+      (($pending (type (%inst $future i64)) (%future.ready i64 42))
        ($number (%future.await i64 (%move $pending)))
        ($label (call $format (local.get $number))))
       (%result.ok (local.get $label))))
@@ -45,14 +45,14 @@ WLT の基本型と標準関数は、通常の静的 import と同じ名前解�
 ## 複数束縛の `%let`
 
 ```text
-(%let (($a [T] initial-a)
-       ($b [U] initial-b)
+(%let (($a [(type T)] initial-a)
+       ($b [(type U)] initial-b)
        ...)
   body)
 ```
 
 各初期値を左から右に一度だけ評価する。`initial-b` は `$a` を参照でき、`initial-a` は後続の `$b` を参照できない。同名で再束縛する場合、その初期値では以前の束縛が見え、新しい束縛は評価後から見える。すべての名前は body 内に有効で、式の外には出ない。
 
-型注釈は束縛ごとに省略可能。不変性、初期値の型適合、effect、所有値の move と消費義務は単独の `%let` と同じ。初期値が trap・throw・中断を起こす場合も、ネストした `%let` と同じ順序と既存の終了処理に従う。Wasm の複数戻り値を束縛する構文ではない。pair の分解は `(%let ($first $second) subject body)` を使う。
+型注釈`(type T)`は束縛ごとに省略可能。`($n (type i64) 42)`はi64の定数を初期値にし、`($copy $n)`は既存のローカルの型を使う。期待型のない`($n 42)`は整数幅が決まらずエラーになる。不変性、初期値の型適合、effect、所有値の move と消費義務は単独の `%let` と同じ。初期値が trap・throw・中断を起こす場合も、ネストした `%let` と同じ順序と既存の終了処理に従う。Wasm の複数戻り値を束縛する構文ではない。pair の分解は `(%let ($first $second) subject body)` を使う。
 
 `just test-standard` で、標準型・関数・別名・可視性と、Core＋JSPI / Component の Future・Result・Option ABI を確認する。

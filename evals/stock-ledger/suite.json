@@ -1,6 +1,6 @@
 {
   "id": "stock-ledger",
-  "version": 8,
+  "version": 9,
   "apiReference": "docs/stdlib-api.md",
   "apiMembers": ["$string.parse-u64", "$string.parse-s64", "$string.u64", "$builder.Builder", "$builder.new", "$builder.text", "$builder.u64", "$builder.finish", "$list.map", "$list.fold", "$json-value.parse"],
   "cheatsheet": "CHEATSHEET.md",

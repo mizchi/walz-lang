@@ -1,7 +1,7 @@
 (module
   (%import "wlt:std"
     (type $result))
-  (func $divide (param $n i64) (param $d i64) (result (%inst $result i64 i32)) (%effects pure)
+  (func $divide (param $n i64) (param $d i64) (result (%inst $result i64 i32)) (%effect pure)
     (if (result (%inst $result i64 i32)) (i64.eqz (local.get $d))
       (then (%result.err i64 i32 (i32.const 1)))
       (else
@@ -12,11 +12,11 @@
           (else (%result.ok i64 i32
             (i64.div_s (local.get $n) (local.get $d))))))))
 
-  (func $error-code (export "error-code") (param $n i64) (param $d i64) (result i32) (%effects pure)
+  (func $error-code (export "error-code") (param $n i64) (param $d i64) (result i32) (%effect pure)
     (%match (%inst $result i64 i32) (result i32) (call $divide (local.get $n) (local.get $d))
       (case ok ($value) (i32.const 0))
       (case err ($code) (local.get $code))))
-  (func $main (export "main") (result i64) (%effects pure)
+  (func $main (export "main") (result i64) (%effect pure)
     (%match (%inst $result i64 i32) (result i64) (call $divide (i64.const 84) (i64.const 2))
       (case ok ($value) (local.get $value))
       (case err ($code) (i64.const -1)))))

@@ -1,0 +1,158 @@
+{
+  "schema": "wlt-struct-notation-metrics-v1",
+  "scope": "Generated construction expressions only; source size is not a readability score",
+  "variants": {
+    "positional": {
+      "user": {
+        "characters": 92,
+        "nonWhitespace": 78,
+        "tokens": 16,
+        "maxDepth": 2
+      },
+      "bucket": {
+        "characters": 71,
+        "nonWhitespace": 57,
+        "tokens": 16,
+        "maxDepth": 2
+      },
+      "nested": {
+        "characters": 314,
+        "nonWhitespace": 225,
+        "tokens": 64,
+        "maxDepth": 3
+      },
+      "order": {
+        "characters": 177,
+        "nonWhitespace": 153,
+        "tokens": 47,
+        "maxDepth": 5
+      },
+      "cell": {
+        "characters": 36,
+        "nonWhitespace": 30,
+        "tokens": 8,
+        "maxDepth": 2
+      },
+      "job": {
+        "characters": 132,
+        "nonWhitespace": 109,
+        "tokens": 27,
+        "maxDepth": 3
+      }
+    },
+    "named": {
+      "user": {
+        "characters": 117,
+        "nonWhitespace": 100,
+        "tokens": 25,
+        "maxDepth": 3
+      },
+      "bucket": {
+        "characters": 97,
+        "nonWhitespace": 80,
+        "tokens": 25,
+        "maxDepth": 3
+      },
+      "nested": {
+        "characters": 453,
+        "nonWhitespace": 349,
+        "tokens": 109,
+        "maxDepth": 5
+      },
+      "order": {
+        "characters": 133,
+        "nonWhitespace": 113,
+        "tokens": 34,
+        "maxDepth": 4
+      },
+      "cell": {
+        "characters": 46,
+        "nonWhitespace": 39,
+        "tokens": 11,
+        "maxDepth": 3
+      },
+      "job": {
+        "characters": 175,
+        "nonWhitespace": 147,
+        "tokens": 42,
+        "maxDepth": 4
+      }
+    },
+    "objectExplicit": {
+      "user": {
+        "characters": 103,
+        "nonWhitespace": 87,
+        "tokens": 20,
+        "maxDepth": 3
+      },
+      "bucket": {
+        "characters": 83,
+        "nonWhitespace": 67,
+        "tokens": 20,
+        "maxDepth": 3
+      },
+      "nested": {
+        "characters": 391,
+        "nonWhitespace": 291,
+        "tokens": 83,
+        "maxDepth": 5
+      },
+      "order": {
+        "characters": 121,
+        "nonWhitespace": 102,
+        "tokens": 31,
+        "maxDepth": 4
+      },
+      "cell": {
+        "characters": 36,
+        "nonWhitespace": 30,
+        "tokens": 10,
+        "maxDepth": 3
+      },
+      "job": {
+        "characters": 157,
+        "nonWhitespace": 130,
+        "tokens": 33,
+        "maxDepth": 4
+      }
+    },
+    "objectShort": {
+      "user": {
+        "characters": 67,
+        "nonWhitespace": 54,
+        "tokens": 11,
+        "maxDepth": 2
+      },
+      "bucket": {
+        "characters": 47,
+        "nonWhitespace": 34,
+        "tokens": 11,
+        "maxDepth": 2
+      },
+      "nested": {
+        "characters": 247,
+        "nonWhitespace": 159,
+        "tokens": 47,
+        "maxDepth": 4
+      },
+      "order": {
+        "characters": 121,
+        "nonWhitespace": 102,
+        "tokens": 31,
+        "maxDepth": 4
+      },
+      "cell": {
+        "characters": 24,
+        "nonWhitespace": 19,
+        "tokens": 7,
+        "maxDepth": 2
+      },
+      "job": {
+        "characters": 157,
+        "nonWhitespace": 130,
+        "tokens": 33,
+        "maxDepth": 4
+      }
+    }
+  }
+}

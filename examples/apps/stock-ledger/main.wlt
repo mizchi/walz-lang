@@ -5,7 +5,7 @@
   (func $main
     (export "main")
     (result (%inst $result i32 i32))
-    (%effects reads writes allocates host suspends)
+    (%effect reads writes allocates host suspends)
     (%let
       (($initial (call $stock.new (i32.const 4096)))
        ($input (call $read-lines)))

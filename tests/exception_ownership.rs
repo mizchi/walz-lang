@@ -2,15 +2,15 @@ use std::process::Command;
 
 const GOOD: &str = r#"(module
   (tag $E)
-  (func $fail (param $flag i32) (%effects (throws $E))
+  (func $fail (param $flag i32) (%effect (throws $E))
     (if (local.get $flag) (then (throw $E)) (else (nop))))
-  (func $run (param $flag i32) (result i32) (%effects pure)
+  (func $run (param $flag i32) (result i32) (%effect pure)
     (%let $x (%own.new i32 (i32.const 42))
       (%try (result i32)
         (do (block (result i32) (call $fail (local.get $flag))
           (%match (%own i32) (result i32) (%move $x) (case own ($n) (local.get $n)))))
         (catch $E () (%match (%own i32) (result i32) (%move $x) (case own ($n) (local.get $n)))))))
-  (func $main (export "main") (result i32) (%effects pure)
+  (func $main (export "main") (result i32) (%effect pure)
     (i32.add (call $run (i32.const 0)) (call $run (i32.const 1)))))"#;
 
 #[test]
@@ -43,9 +43,9 @@ fn exceptional_edges_cannot_lose_owners_or_uncommitted_owned_arguments() {
     assert!(wlt::check(&GOOD.replace("(catch $E () (%match (%own i32) (result i32) (%move $x) (case own ($n) (local.get $n))))", "(catch $E () (i32.const 42))")).is_err());
     let pending = r#"(module
       (tag $E)
-      (func $fail (result i32) (%effects (throws $E)) (throw $E))
-      (func $take (param $x (%own i32)) (param $n i32) (%effects pure) (%own.close (%move $x)))
-      (func $f (%effects pure)
+      (func $fail (result i32) (%effect (throws $E)) (throw $E))
+      (func $take (param $x (%own i32)) (param $n i32) (%effect pure) (%own.close (%move $x)))
+      (func $f (%effect pure)
         (%try (do (call $take (%own.new i32 (i32.const 1)) (call $fail))) (catch $E () (nop)))))"#;
     let error = wlt::check(pending).unwrap_err().to_string();
     assert!(error.contains("temporary"), "{error}");
@@ -54,8 +54,8 @@ fn exceptional_edges_cannot_lose_owners_or_uncommitted_owned_arguments() {
 #[test]
 fn nested_handlers_and_throwing_closures_preserve_owner_states() {
     let nested = r#"(module (tag $A) (tag $B)
-      (%closure $raise (%effects (throws $A)) (throw $A))
-      (func $f (param $x (%own i32)) (%effects allocates)
+      (%closure $raise (%effect (throws $A)) (throw $A))
+      (func $f (param $x (%own i32)) (%effect allocates)
         (%try
           (do (block
             (%try (do (%closure.call $raise (%closure.new $raise)))

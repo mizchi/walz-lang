@@ -1,0 +1,207 @@
+{
+  "variants": {
+    "R": {
+      "answers": {
+        "user": {
+          "name": "Alice",
+          "age": 30,
+          "email": "alice@example.com"
+        },
+        "bucket": {
+          "count": 7,
+          "total": 91,
+          "max": 22,
+          "totalType": "i64"
+        },
+        "nested": {
+          "accepted": 11,
+          "warnTotal": 19,
+          "errorMax": 5
+        },
+        "order": {
+          "trace": [
+            2,
+            1
+          ],
+          "left": 1,
+          "right": 2
+        },
+        "cell": {
+          "value": 40,
+          "mutable": true
+        },
+        "job": {
+          "index": 3,
+          "durationType": "i64",
+          "depsNull": true,
+          "keyFrom": "id"
+        }
+      },
+      "edit": "(%Bucket::{\n  :count 7\n  :total 100\n  :max 22\n})",
+      "scores": {
+        "fields": 4,
+        "types": 2,
+        "order": 3,
+        "layout": 3,
+        "changes": 4
+      },
+      "evidence": "fields=4: R.user の :name/:age/:email、R.bucket の :count/:total/:max は値との対応をその場で示し、R.nested も :warn 内の :total 19 と :error 内の :max 5 を名前からたどれた。types=2: R.bucket の :total 91 には整数幅がなく、$Bucket.total の i64 と裸の整数が期待型を使う規則を確認した。R.user の裸の文字列にも $text の期待型ルールを当てはめ、R.cell の変更可能性は :value 40 では分からず $Cell の (mut i32) を確認した。R.job の duration は提示された $duration:i64 の束縛から確定した。order=3: R.order の :right が :left より先にある点に対し、記述順評価という規則を確認して trace=[2,1] と判断した。名前で割り当てるため $Pair の宣言順と呼出し順を分けられる。layout=3: R.user や R.bucket の各 :field と式の組は明確だったが、R.nested の各 Bucket 終端の }) では波括弧の終わりと外側の丸括弧の終わりを確認した。短さ自体は加点理由にしていない。changes=4: R.bucket の :total 91 という局所的な対応を使い、そこだけ :total 100 に置換できた。count/max の順番を定義から数え直す必要はなかった。",
+      "unclear": [
+        "R.bucket の裸の 91 を見た時点では i32/i64 が値だけから分からず、宣言と期待型ルールを確認した。確認後に未解決の規則はない。"
+      ]
+    },
+    "S": {
+      "answers": {
+        "user": {
+          "name": "Alice",
+          "age": 30,
+          "email": "alice@example.com"
+        },
+        "bucket": {
+          "count": 7,
+          "total": 91,
+          "max": 22,
+          "totalType": "i64"
+        },
+        "nested": {
+          "accepted": 11,
+          "warnTotal": 19,
+          "errorMax": 5
+        },
+        "order": {
+          "trace": [
+            2,
+            1
+          ],
+          "left": 1,
+          "right": 2
+        },
+        "cell": {
+          "value": 40,
+          "mutable": true
+        },
+        "job": {
+          "index": 3,
+          "durationType": "i64",
+          "depsNull": true,
+          "keyFrom": "id"
+        }
+      },
+      "edit": "(%Bucket::{\n  :count (i64.const 7)\n  :total (i64.const 100)\n  :max (i64.const 22)\n})",
+      "scores": {
+        "fields": 4,
+        "types": 3,
+        "order": 3,
+        "layout": 3,
+        "changes": 4
+      },
+      "evidence": "fields=4: S.bucket の :total (i64.const 91) と S.nested の :warn 内の :total、:error 内の :max にフィールド名があり、同じ型の数値が並んでも宣言順による対応付けは不要だった。S.job も :key と :index で値の役割を局所的に区別できた。types=3: S.user の %text.lit/i32.const、S.bucket の i64.const が値型を示し、先頭の %User/%Bucket が nominal 型を示す。一方 S.cell の (i32.const 40) は mutable を表さないので $Cell の (mut i32) を確認し、S.job の duration は $duration:i64 の束縛を確認した。order=3: S.order は :right の call が先、:left の call が後という記述と、フィールド名付き構築の記述順評価規則を合わせて追えた。宣言順に並べ替えて評価するという補完はしていない。layout=3: S.user と S.bucket は各 :field の直後の丸括弧で式が閉じる。S.nested では内側の i64.const の ) と Bucket 終端の }) を区別して境界を確認した。changes=4: S.bucket の :total (i64.const 91) から変更対象を直接特定でき、i64.const を保って 100 に置換できた。",
+      "unclear": []
+    },
+    "T": {
+      "answers": {
+        "user": {
+          "name": "Alice",
+          "age": 30,
+          "email": "alice@example.com"
+        },
+        "bucket": {
+          "count": 7,
+          "total": 91,
+          "max": 22,
+          "totalType": "i64"
+        },
+        "nested": {
+          "accepted": 11,
+          "warnTotal": 19,
+          "errorMax": 5
+        },
+        "order": {
+          "trace": [
+            2,
+            1
+          ],
+          "left": 1,
+          "right": 2
+        },
+        "cell": {
+          "value": 40,
+          "mutable": true
+        },
+        "job": {
+          "index": 3,
+          "durationType": "i64",
+          "depsNull": true,
+          "keyFrom": "id"
+        }
+      },
+      "edit": "(%struct.new $Bucket\n  ($count (i64.const 7))\n  ($total (i64.const 100))\n  ($max (i64.const 22))\n)",
+      "scores": {
+        "fields": 4,
+        "types": 3,
+        "order": 3,
+        "layout": 3,
+        "changes": 4
+      },
+      "evidence": "fields=4: T.user の ($name ...)、T.bucket の ($total ...)、T.nested の ($warn ... ($total ...)) に名前が付いているので、各値の役割と親子関係を定義の順番なしで特定できた。T.job の ($key (%text.bytes (local.get $id))) でも key の入力をその組の中で追えた。types=3: T.bucket の i64.const と T.user の i32.const/%text.lit が値型を示し、%struct.new の直後の $Bucket/$User が nominal 型を示す。T.cell の mutable は構築式にはないため $Cell 宣言の (mut i32) を確認し、T.job の duration は $duration の型付き束縛を確認した。order=3: T.order の ($right (call ... 2)) が先に現れるため、記述順評価の規則を一度照合すれば trace=[2,1] と割当結果 left=1/right=2 を分けて追えた。layout=3: T.bucket はフィールド組ごとに丸括弧で囲われて境界が明示される。T.nested では ($max (i64.const 8)) の終端と、その次の )) が閉じる Bucket 構築および $warn の組を区別して確認した。changes=4: T.bucket の ($total (i64.const 91)) が名前で特定できるので、その数値だけを 100 に変更できた。count/max との位置照合は不要だった。",
+      "unclear": []
+    },
+    "U": {
+      "answers": {
+        "user": {
+          "name": "Alice",
+          "age": 30,
+          "email": "alice@example.com"
+        },
+        "bucket": {
+          "count": 7,
+          "total": 91,
+          "max": 22,
+          "totalType": "i64"
+        },
+        "nested": {
+          "accepted": 11,
+          "warnTotal": 19,
+          "errorMax": 5
+        },
+        "order": {
+          "trace": [
+            2,
+            1
+          ],
+          "left": 1,
+          "right": 2
+        },
+        "cell": {
+          "value": 40,
+          "mutable": true
+        },
+        "job": {
+          "index": 3,
+          "durationType": "i64",
+          "depsNull": true,
+          "keyFrom": "id"
+        }
+      },
+      "edit": "(struct.new $Bucket\n  (i64.const 7)\n  (i64.const 100)\n  (i64.const 22)\n)",
+      "scores": {
+        "fields": 2,
+        "types": 3,
+        "order": 2,
+        "layout": 3,
+        "changes": 3
+      },
+      "evidence": "fields=2: U.bucket の 7/91/22 にはフィールド名がなく、$Bucket の count/total/max の順に照合した。U.nested は $State の第5フィールドが warn、第6が error であることに加え、各 Bucket の第2値が total、第3値が max であることを確認した。U.job も第3式の local.get $index を index に割り当てるには $Job の順序を照合した。types=3: U.bucket の i64.const、U.user の i32.const/%text.lit、struct.new 直後の $Bucket/$User から値型と nominal 型を読めた。U.cell の mutable は $Cell の (mut i32) を確認する必要があり、U.job の duration は提示された $duration:i64 を確認した。order=2: U.order は %let の $right の call、$left の call、body の struct.new の順に分かれており、上から順に束縛する規則と、body の $left/$right が $Pair の宣言順に対応することの両方を照合した。構築式内の local.get の並びだけでは trace を判断できなかった。layout=3: U.user/U.bucket の各式は丸括弧で明確に分かれ、U.nested の3つの Bucket 構築も閉じ括弧で境界を確認できた。ただし U.order は %let の束縛列を閉じる括弧と body の境界を確認した。フィールド名不足による役割の確認は fields 側で評価した。changes=3: U.bucket について $Bucket 宣言の count/total/max を一度照合し、第2式の (i64.const 91) を (i64.const 100) に変えた。今回の3フィールドでは一度の照合で編集できたが、構築式だけには total という変更対象名がない。",
+      "unclear": [
+        "U.nested では同じ $Bucket の構築が3つ続き、どれが warn/error かを式内の名前からは選べなかったため、$State の宣言順と照合した。これは仕様の欠落ではなく位置対応を確認する必要があった箇所で、確認後に未解決の規則はない。"
+      ]
+    }
+  },
+  "recommendation": "数値幅を読みながら同型フィールドや nested な値を保守する用途では S または T を推薦する。どちらもフィールド名と明示的な定数型があり、今回の評価では同点だった。S は :field の直後を値として読め、T はフィールドごとに丸括弧の組を作るため、採用先での括弧の読み方に合わせて選べる。R は名前からの変更対象特定が容易で、型宣言と期待型ルールを参照できる用途には適するが、裸の数値だけから整数幅は確認できない。U は小さく宣言順を把握している構築に適する一方、今回の nested な集計値や同型フィールドの保守では定義との照合が増えた。推薦は記号数や既存性の推測ではなく、今回確認した対応・型・順序に基づく。",
+  "limitations": [
+    "packet.md の6ケースだけに基づく、初見のLLMによる主観的な読解評価である。人間の読了時間、速度、誤答率は測定していない。",
+    "コンパイルや実行、コンパイラの参照、他の資料や他の読者の回答の参照はしていない。値と評価順は packet の規則を適用して答えた。",
+    "宣言と束縛が資料内に提示されている条件での評価であり、実際の編集環境、補完、型表示、慣熟後の作業や別のレイアウトは評価していない。",
+    "同じ値を正読できたことだけを可読性の得点にせず、各軸で実際に確認した構文と宣言の箇所を根拠にした。軸の弱点を合計点で相殺していない。"
+  ]
+}

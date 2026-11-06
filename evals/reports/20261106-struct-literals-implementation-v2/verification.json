@@ -1,0 +1,32 @@
+{
+  "schema": "wlt-struct-execution-v2",
+  "compactSpelling": "%$Type::",
+  "casesHash": "a1ebe719023d87e01a9c468a37023341b5e92e4f1234a7dede7375f0e0337ca5",
+  "compilerHash": "aa88611fa5fa8db88c179ce7f0fb221950447bba9a52a4b9771d5d79638b93be",
+  "variants": {
+    "positional": {
+      "sourceHash": "b0cbd99f7b0b3f384f6e5bf610dd441b453c2a582a5c02ca80db2cb00ade2221",
+      "wasmHash": "0b53b205a84b79c52b7e6252f6e93c48fcc322707d52f3977aece483dd43f6ed",
+      "result": 42,
+      "binaryIdenticalToV1": true
+    },
+    "named": {
+      "sourceHash": "8d223ddee1960825710ebc9870aade2044b6f754478051764e7750a7726835fc",
+      "wasmHash": "76fcf1e1c1b93073236a1466c3fa48decb15e8fc85db0b004926ad9099b94b95",
+      "result": 42,
+      "binaryIdenticalToV1": true
+    },
+    "objectExplicit": {
+      "sourceHash": "f8b30e99e5b5f63eda714bb9cebbb575ee997fa4f506001f50b2313052f25931",
+      "wasmHash": "76fcf1e1c1b93073236a1466c3fa48decb15e8fc85db0b004926ad9099b94b95",
+      "result": 42,
+      "binaryIdenticalToV1": true
+    },
+    "objectShort": {
+      "sourceHash": "dde602352a0e975b088c475ddc023ac9a144c11688b2dc4cfda065927df076b8",
+      "wasmHash": "76fcf1e1c1b93073236a1466c3fa48decb15e8fc85db0b004926ad9099b94b95",
+      "result": 42,
+      "binaryIdenticalToV1": true
+    }
+  }
+}

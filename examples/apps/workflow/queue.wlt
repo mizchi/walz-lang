@@ -5,12 +5,12 @@
     ;; returns -1. The planner enqueues each job exactly once.
     (type $Ints (array (mut i32)))
     (type $Heap (struct (field $values (ref $Ints)) (field $size (mut i32))))
-    (func $new (param $capacity i32) (result (ref $Heap)) (%effects allocates)
+    (func $new (param $capacity i32) (result (ref $Heap)) (%effect allocates)
       (struct.new $Heap
         (array.new $Ints (i32.const 0) (local.get $capacity))
         (i32.const 0)))
 
-    (func $push (param $q (ref $Heap)) (param $value i32) (%effects reads writes)
+    (func $push (param $q (ref $Heap)) (param $value i32) (%effect reads writes)
       (%let $a (struct.get $Heap $values (local.get $q))
         (%let $size (struct.get $Heap $size (local.get $q))
           (block
@@ -45,7 +45,7 @@
               ))))
       ))
 
-    (func $pop (param $q (ref $Heap)) (result i32) (%effects reads writes)
+    (func $pop (param $q (ref $Heap)) (result i32) (%effect reads writes)
       (%let $size (struct.get $Heap $size (local.get $q))
         (if
           (result i32)
