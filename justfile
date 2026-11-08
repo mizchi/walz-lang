@@ -1,5 +1,18 @@
 default: run
 
+install:
+    cargo install --locked --path . --bin wlt
+
+test-cli:
+    cargo test --locked --test cli --test cli_build --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test runner --test benchmarks --test inspection --test lsp
+
+test-runtime-cli:
+    cargo test --locked --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test interface_types --test wit_values --test wit_world --test stream_batch --test wasm_bridge --test scoped_tasks --test resources --test local_cancellation --test native_async --test native_resources --test abi_limits
+    node --expose-gc --test runtime/interface-types.test.mjs runtime/wit-values.test.mjs runtime/wit-world.test.mjs runtime/stream-batch.test.mjs runtime/deadlines.test.mjs runtime/wasi-filesystem.test.mjs runtime/channels.test.mjs runtime/scoped-tasks.test.mjs runtime/wasm-bridge.test.mjs runtime/local-cancellation.test.mjs runtime/native-async.test.mjs runtime/native-resources.test.mjs
+
+test-install:
+    node tools/test-installed-cli.mjs
+
 playground-build:
     node tools/build-playground.mjs
 
@@ -37,6 +50,7 @@ proof-check:
     lean +v4.34.1 proof/Delivery.lean
     lean +v4.34.1 proof/Tasks.lean
     lean +v4.34.1 proof/Flow.lean
+    lean +v4.34.1 proof/AtomicCells.lean
 
 verify file="examples/verified-laws.wlt":
     cargo run --locked --quiet -- verify {{quote(file)}}
@@ -432,3 +446,80 @@ json-bench-compare before after output rounds="9":
 
 test-json-bench:
     node --test runtime/json-parser-bench.test.mjs
+
+# Typed Wasm atomics, affine operands, host shared memory, and browser workers.
+test-threads:
+    cargo test --locked --test threads
+    node --test runtime/threads.test.mjs
+    pnpm exec playwright test runtime/e2e/threads.spec.mjs
+
+# Conditional race-freedom certificates and their independent trace kernel.
+test-atomic-cells:
+    lean +v4.34.1 proof/AtomicCells.lean
+    cargo test --locked --test race_free
+    node --test runtime/atomic-cells.test.mjs
+    pnpm exec playwright test runtime/e2e/atomic-cells.spec.mjs
+
+# First generate the example WIT bindings as documented in examples/wasi-files.
+bench-stream-file input samples="5":
+    WLT_BENCH_INPUT={{quote(input)}} cargo run --locked --quiet -- bench examples/wasi-files/io_bench.wlt --target core-js --bindings examples/wasi-files/generated/bindings.json --host examples/wasi-files/bench-host.mjs --samples {{samples}} --iterations 1 --warmup-ms 0
+
+# Memoized ABI graph limits and independently cancellable WLT children.
+test-local-cancellation:
+    cargo test --locked --test abi_limits --test local_cancellation --test scoped_tasks
+    cargo build --locked --bin wlt
+    node --expose-gc --test runtime/local-cancellation.test.mjs runtime/scoped-tasks.test.mjs runtime/deadlines.test.mjs
+
+# Stdio LSP framing, unsaved modules, incremental UTF-16 edits and IR caching.
+test-lsp:
+    cargo test --locked --lib lsp
+    cargo test --locked --test lsp --test inspection --test modules
+
+# Native Canonical ABI execution requires Wasmtime 50+ (WLT_WASMTIME overrides PATH).
+test-native-engine:
+    cargo test --locked --test native_async -- --include-ignored
+
+# Original WIT identities, standard async producers and typed resource handles.
+test-native-worlds:
+    cargo test --locked --test native_async --test native_resources --test wit_world --test wit_bindings
+    cargo build --locked --bin wlt
+    node --expose-gc --test runtime/native-async.test.mjs runtime/native-resources.test.mjs
+    pnpm exec playwright test runtime/e2e/native-world.spec.mjs
+
+# End-to-end developer workflows; records observed failures as well as successes.
+eval-usability id:
+    cargo build --locked --bin wlt
+    node --expose-gc evals/usability/run.mjs {{quote(id)}}
+
+# Production ABI roots, readable generics, editor recovery, and typed value sugar.
+test-usability-fixes:
+    cargo test --locked --test application_harness --test generic_diagnostics --test lsp --test string_sugar --test option_result --test inspection
+
+test-value-sugar:
+    cargo test --locked --test string_sugar --test option_result --test expression_sugar --test struct_construction
+    cargo build --locked --bin wlt
+    node --expose-gc --test runtime/option-result.test.mjs
+    pnpm exec playwright test runtime/e2e/option-result.spec.mjs
+
+# Checked list traversal, field destructuring, and non-atomic field updates.
+test-high-level:
+    cargo test --locked --test high_level --test lsp --test struct_construction --test readable_syntax
+    cargo build --locked --bin wlt
+    node --expose-gc --test runtime/high-level.test.mjs
+    pnpm exec playwright test runtime/e2e/high-level.spec.mjs
+
+# Succinct indexes, conditional readonly certificates, and joined Worker queries.
+test-succinct:
+    cargo test --locked --test readonly_regions --test race_free
+    node --expose-gc --test runtime/succinct.test.mjs runtime/succinct-pool.test.mjs runtime/readonly-regions.test.mjs runtime/workers.test.mjs
+    pnpm exec playwright test runtime/e2e/succinct.spec.mjs runtime/e2e/workers.spec.mjs
+
+test-workers:
+    node --expose-gc --test runtime/workers.test.mjs runtime/succinct-pool.test.mjs
+    pnpm exec playwright test runtime/e2e/workers.spec.mjs
+
+succinct-build output="target/succinct/library" backend="core":
+    node runtime/succinct/build.mjs {{quote(output)}} {{quote(backend)}}
+
+bench-succinct id reference="../jsimd":
+    node --expose-gc --experimental-wasm-modules runtime/succinct/bench.mjs {{quote(id)}} {{quote(reference)}}

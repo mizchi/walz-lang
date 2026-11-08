@@ -3,7 +3,7 @@ import { TEXT_IO, createTextIO } from "./text-io.mjs";
 import { pathToFileURL } from "node:url";
 import { resolve, join } from "node:path";
 
-function inputCapability(open) {
+export function inputCapability(open) {
   let stream, iterator, closing;
   return {
     [Symbol.asyncIterator]() {
@@ -36,7 +36,7 @@ function inputCapability(open) {
   };
 }
 
-function outputCapability(open, owned) {
+export function outputCapability(open, owned) {
   let stream, failure;
   const attach = () => {
     if (!stream) {

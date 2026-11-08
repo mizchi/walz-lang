@@ -24,6 +24,15 @@ mod index {
     include!(concat!(env!("OUT_DIR"), "/standard-index.rs"));
 }
 
+#[cfg(not(target_family = "wasm"))]
+pub(crate) fn completion_exports() -> Vec<(&'static str, u32)> {
+    index::MEMBERS
+        .iter()
+        .map(|(kind, name, _)| (*name, if *kind == "func" { 3 } else { 22 }))
+        .chain(index::CORE_ALIASES.iter().map(|(name, _, _)| (*name, 22)))
+        .collect()
+}
+
 struct ParsedLibrary {
     syntax: Sexp,
     body: std::ops::Range<usize>,

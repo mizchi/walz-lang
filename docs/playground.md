@@ -112,3 +112,5 @@ PlaywrightはWasmコンパイラの読み込み、GCを含むサンプル、実�
 追加するときは`category`、`label`、`description`、`features`、`expectation`、単独で扱える`source`を指定する。
 `expectation.kind`は`run`（`output`）、`compile`（ホストの`imports`と説明`note`）、
 `diagnostic`（`code`、必要なら`message`）のいずれかにし、`just test-playground`で実際の挙動を確かめる。
+
+スコープ付き子タスクを含むソースは、Core＋JSPI の生成物と専用 scheduler を使って実行します。WAT 表示はこの場合の実際の private ABI を含み、関数の選択肢には元ソースの export だけを出します。[spawn / join の契約](scoped-tasks.md) を参照してください。

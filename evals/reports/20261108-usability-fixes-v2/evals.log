@@ -1,0 +1,28 @@
+node --test --test-concurrency=1 evals/*.test.mjs
+✔ CLI works outside project, reports incomplete as exit 2, and rejects missing/unknown options (520.304375ms)
+✔ diagnostic suite freezes real messages, rejects originals and checks meaningful controls/repairs (8285.852167ms)
+✔ quality is per-case, audited, and invalidated by changed repairs or stale diagnostics (3674.894541ms)
+✔ diagnostic comparisons require the same corpus as well as the same rubric (1474.315792ms)
+✔ source inspection ignores strings/nested comments but rejects live includes (2.176959ms)
+✔ frozen sources execute outside checkout; seed is a negative control and completed candidate passes (19681.655625ms)
+✔ a synchronous Wasm loop is killed and cannot retain a successful verification (5101.665708ms)
+✔ prefixed syntax retains evaluation measurements and frozen include checks (0.403333ms)
+✔ standard type applications and grouped lets keep distinct lexical measurements (0.14925ms)
+✔ prepare works outside the checkout, freezes dependencies, separates roles and refuses overwrite (71.740292ms)
+✔ score needs audited answers and both executions; it rejects stale review and stale candidate results (216.942125ms)
+✔ one weak readability axis or incorrect answers cannot be hidden by a high total (129.382417ms)
+✔ invalid scores and tampered input invalidate summary; differing rubrics are not comparable (249.349583ms)
+✔ reader answers follow the frozen suite contract and older runs remain readable (75.71875ms)
+✔ embedded standard WLT sources participate in the implementation fingerprint (1.562959ms)
+✔ struct literal evaluation freezes counterbalanced packets and rejects tampering (14.962833ms)
+✔ expense oracle keeps exact signed bounds and rejects overflow without committing a row (0.766959ms)
+✔ oracle distinguishes malformed/wrong-type/fractional rows and the changed policy (0.108917ms)
+✔ evaluation IDs cannot escape or overwrite an existing run (3.155875ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39774.500959

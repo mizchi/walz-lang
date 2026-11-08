@@ -2,7 +2,11 @@
   (%use "wlt:core"
     (type $result)
     (type $unit))
-  (%include "../../examples/apps/workflow/compute.wlt")
+  (%use "../../examples/apps/workflow/domain.wlt" (type $Error $domain.Error))
+  (%use "../../examples/apps/workflow/graph.wlt"
+    (type $Graph $graph.Graph) (type $Job $graph.Job)
+    (func $new $graph.new) (func $add $graph.add)
+    (func $at $graph.at) (func $duration $graph.duration))
   (func $must (param $result (%inst $result $unit (ref $domain.Error)))
     (%match (local.get $result)
       (case ok () (nop))

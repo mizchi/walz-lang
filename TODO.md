@@ -3,6 +3,54 @@
 小さい言語仕様、WAT の包含、Wasm GC、静的解析のしやすさを維持する。
 チェックは実装と回帰検査の完了を意味し、設計だけでは付けない。
 
+## 非同期機能を実用へ接続する（1 → 2 → 3 → 4）
+
+- [x] test / bench の Core＋JSPI、明示 host と binding、ケース単位の解放と期限。
+- [x] WIT の共有値型と同期 world export adapter。native async / resource の対応範囲は下記を参照。
+- [x] 明示的な Stream batch read、部分受理を返す sendMany、ファイルの chunk 転送と比較 bench。
+- [x] 公開呼出しとホスト側スコープの期限・取消し、所有する timer future。WLT 内の子取消し・join の期限も追加。
+
+[バッチ転送](docs/stream-batches.md)、[スコープと期限](docs/scoped-tasks.md)。
+
+## 今回の追加（1 → 3 → 5 → 4）
+
+- [x] 1: 型グラフ・ABI layout/flatten/schema のメモ化、サイズ制限と DAG 回帰検査。
+- [x] 3: WLT の子タスク単位の取消しと join-timeout。両 JS backend とブラウザで解放を検査。
+- [x] 5: stdio LSP の diagnostics / hover / definition。UTF-16、未保存 import、cache 上限、request cancellation。
+- [x] 4: native WIT async worlds と imported resource の own/borrow。標準 Canonical ABI、raw jco と Wasmtime 50 で検査。
+
+[LSP](docs/lsp.md)、[native worlds](docs/native-worlds.md) に実行条件と未対応範囲を記載する。HTTP や WASI ネットワーク binding は別工程。
+
+## 使い勝手の修正（1 → 2 → 3 → 4 → 5）
+
+- [x] 1: 通常のJS/Component ABIからtest/benchの生成exportを除外し、全ソース検査と各runnerの動作を維持。
+- [x] 2: 単相化した型・関数の診断を、型引数とスコープ内の別名で表示。診断表示の展開も制限。
+- [x] 3: LSPで現在の宣言syntaxを回復し、未検査表示を区別。未入力の括弧、定義移動、lexical shadowing、core importのcompletion。
+- [x] 4: 個別取消し・native own/borrow・backend別stdoutの説明を同期。
+- [x] 5: 期待型が確定したstringリテラルと、shared/nonunitの`$option.ok-or` / `$result.map-err`。評価順とGC同一性を検査。
+
+[修正後の評価](evals/reports/20261108-usability-fixes-v2/REPORT.md) に検査結果と制限を記録した。
+
+## 高水準の糖衣（1 → 2 → 3）
+
+- [x] 1: `%for-each`。共有可能な非unit要素のlistを、単一名・tuple・フィールドpatternで走査。
+- [x] 2: `%let {:field $binding ...}`。non-nullの共有構造体から必要なフィールドを一度読み、ローカルに束縛。
+- [x] 3: `%struct.update`。対象・旧値・更新式を一度ずつ評価する、通常の可変フィールド更新。
+
+[規約](docs/high-level-forms.md) と [実行例](examples/high-level.wlt)。既存IRへ展開し、型・effect・所有権・opaqueを検査。LSP、最適化の有無、Core / Component / Chromiumの実行と中断・例外経路を検査する。
+
+## CLI から実用アプリケーションまで（2 → 1 → 3 → 4 → 5）
+
+Rust 1.99 を処理系と CI の基準にする。
+
+- [x] 2: `wlt run` のエントリー・引数・標準入出力・終了コード・明示ホスト capability。割り込みの解放完了も待つ。
+- [x] 1: `wlt build --target core-js` に必要なランタイムだけを同梱し、チェックアウト不要の JS 成果物を生成する。
+- [x] 3: WIT の record / enum / flags / unsigned・world 選択・型付き export 雛形、および WASI 0.3.0 のファイル値 adapter。
+- [x] 4: Wasm validator の型を共有し、数値・SIMD のメモリ命令と型付きマクロを同じ関数で扱う。未知の命令と所有権の境界は閉じる。
+- [x] 5: 共有 payload の Future / Stream writer、backpressure・close・取消し、スコープ付き spawn / join。両 JS backend と Playground で実行する。
+
+[CLI](docs/cli.md)、[WIT](docs/wit-bindings.md)、[WASI 値 adapter](docs/wasi-files.md)、[validator](docs/wat-validator.md)、[writer / 子タスク](docs/scoped-tasks.md) に対応範囲と制限を記載した。
+
 ## 直近の優先順位
 
 複雑なアプリケーションで確認した不足を、次の順に進める。
@@ -57,11 +105,14 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 
 ## 2. 汎用 WIT binding と実用 I/O
 
-- [ ] WIT から import/export の型を生成する。
+- [x] 対応する WIT 値型から import と export 実装雛形の型を生成する。
+- [x] 同期の共有値 world の native export instance adapter。元の interface 名と型・関数署名を検査する。
+- [x] native world の共有 payload async endpoint と imported resource own/borrow ABI。所有要素の list・record と full WASI worlds は対象外。
 - [x] 固定した text I/O の型・host effect・必須 capability と manifest、明示的な host 接続。
 - [x] 対応する WIT 値型の freestanding import と明示的な effect/capability policy。対応範囲は [WIT binding](docs/wit-bindings.md) を参照。
 - [x] Node の標準入出力・ファイルを、値だけを渡す text I/O capability に接続。
-- [ ] WASI の標準ファイル・ネットワーク binding。WASI の版を固定する。
+- [x] WASI 0.3.0 に固定したファイル値 adapter。descriptor はホスト所有、名前付きの明示 grant を使う。
+- [ ] WASI の native resource world とネットワーク binding。
 - [x] UTF-8 入力の空行をフィルタして出力し、途中取消しでも解放する CLI。
 
 ## 3. 外部 resource と終了処理
@@ -112,10 +163,13 @@ i64 の区間、可変フィールドの値の精密化、関数間の範囲契�
 ## 7. writer と言語内タスク
 
 - [x] JS 向け Core＋JSPI 出力。使用する型の codec を生成し、既存の取消しと Stream の終了処理を共有する。
-- [ ] pending Future/Stream を作る writer と所有権の protocol。
-- [ ] backpressure、部分進捗、終了と取消し。
-- [ ] スコープ付き spawn/join/select。現在のタスク開始・取消しは JS 側。
-- [ ] Component Model の native async ABI との接続。
+- [x] 共有 payload の pending Future/Stream writer と、既存 resource を使う所有権の protocol。
+- [x] 一要素単位の受理・終了、backpressure、close と取消し。
+- [x] スコープ付き spawn/join/drop。明示捕捉、GC 同一性、兄弟の失敗・親の取消しと解放を検査する。
+- [x] Stream のバッチ転送と部分進捗、公開呼出しとホスト側スコープの期限・取消し。
+- [x] WLT 内の子だけの取消し・期限。親と兄弟を保ち、子孫と disposal の完了を待つ。
+- [ ] select と任意スコープの取消しトークン。
+- [x] 共有 payload の future/stream を標準の native async ABI に接続。WLT SDK の子 scheduler は別境界。
 
 ## 8. 任意の WAT 命令とマクロの混在
 
@@ -123,9 +177,10 @@ i64 の区間、可変フィールドの値の精密化、関数間の範囲契�
 - [x] jsimdを参考に4種類のバルクカーネルを実装し、保持したGC値とコピー込みの双方でJS・参照Wasmと比較。[測定結果](docs/simd-kernels.md)。
 - [x] SIMDの実測で見つかったCore＋JSPIの数値list ABIを、対応するTypedArrayの一括コピーで改善。値検査・解放とArrayの経路を維持し、同一Wasmで変更前後を交互に測定。
 - [ ] pack前の中間GCコピーを減らし、pack済みデータの再利用を増やす。型検査・値検査・例外時の解放を維持し、保持したデータと単発呼び出しを分けて再測定する。
-- [ ] 型付きマクロを、現在のコア外の WAT 命令と同じ関数で使用する。
-- [ ] Wasm validator と型情報を共有する。
-- [ ] 不透明な命令区間の effect・escape・所有権の境界を定義する。
+- [x] 数値・SIMD の線形メモリ命令と型付きマクロを混在させる。
+- [x] その命令の型と結果を Wasm validator の operand stack と共有する。
+- [x] 閉じた命令一覧、保守的な effect / escape、数値だけの境界で所有権の迂回を拒否する。
+- [ ] 任意の stack 区間・多値・table/ref 命令への一般化。未知の opcode の自動受理はしない。
 
 bytes/text とモジュールは Rust/Node/Chromium で検査する。構文と ABI の詳細は SPEC.md を参照。
 UTF-8 validator、ファイル展開、名前解決と adapter は TCB に含み、Lean による意味保存の証明はまだない。
@@ -147,3 +202,22 @@ UTF-8 validator、ファイル展開、名前解決と adapter は TCB に含み
 - [x] main の記述量、展開後 IR、生成サイズ、交互実行時間の記録。
 - [x] bytes/text の検索・分割・整数解析のライブラリ化。
 - [x] 直後に match する共有 Result/Pair の簡約。意味保存の検査を伴う6.6の課題として扱う。
+
+## 共有メモリの検証
+
+- [x] 固定atomicセルの検証モード、ホスト契約、独立Lean traceカーネル。
+- [x] rawアドレス・部分重複・非atomic命令の拒否と、load/storeの論理的な更新喪失の対照実験。
+- [x] 公開後不変のreadonly領域、論理範囲を検査するload、私有memory併用と独立Lean traceカーネル。ホスト初期化・不変性は前提として明示。
+- [ ] Owned<R>による排他領域の分割・Worker間のmoveとjoin。
+- [ ] ロックやチャネルのプロトコル不変条件・線形化可能性。データ競合排除と別に扱う。
+
+## 簡潔索引と汎用マルチスレッドホスト
+
+- [x] 不変BitVectorのrank/selectとu8 Wavelet MatrixのrangeFreq/quantile。空・境界・欠落を独立oracleと同方式JSで照合。
+- [x] スカラー／SIMDの交互比較で、単独rankはスカラー・Wavelet内部はSIMDを選ぶ。1/2/4 Worker、実際のjsimd公開API、通信込みのバッチ計測を新しいrunとして保存。
+- [x] Node／ブラウザの汎用WorkerHostへキュー・個別取消し・join・終了を分離。索引layoutはdriverに置く。別の非同期WLTをCore＋JSPIとComponentで実行。
+- [x] 公開前コピー・非公開のshared memory・全reader終了待ち。取消しの個別bit、終了失敗の再試行、Chromiumを検査。
+- [ ] 小さい索引向けの共有memory capacity削減。現在16MiB固定で、byteLengthは使用サイズ。
+- [ ] 索引構築・Worker起動を含むcold-startの分布とp95、実アプリでの損益分岐を計測する。
+
+[Workerホスト](docs/worker-host.md)、[readonly領域](docs/readonly-regions.md)、[索引と計測](docs/succinct.md)。任意のJS driverやホスト全体のrace-free、静的Builder freeze、GC参照のスレッド間転送は保証に含めない。

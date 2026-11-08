@@ -2,6 +2,7 @@
 
 基本型は既存の基底型への透明な alias、標準関数は通常の WLT 関数です。ライブラリごとの追加ランタイムは持ちません。
 必要な関数・型を列挙して、`wlt:core` から import します。コンパイラが同梱したソースを静的にリンクするため、呼出し元の場所やインストール先のパスに依存しません。
+Option→Resultとエラー変換は `$option.ok-or` / `$result.map-err` を使います。[評価順と制約](../docs/option-result.md)。
 完全な型・型制約・effect は [生成した標準 API 一覧](../docs/stdlib-api.md) を参照してください。`just stdlib-docs` で公開宣言から更新し、`just check-stdlib-docs` でソースとの一致を確認します。
 標準文字列型は `$string` です。`bytes-view.wlt` / `string-view.wlt` は [ゼロコピービュー](../docs/views.md) を提供し、部分範囲の共有と明示的なコピーを使い分けます。
 `dict.wlt` はtextキーの汎用辞書、`list-builder.wlt` は不変listの構築を提供します。型制約・変更とスナップショットの契約は [コレクション](../docs/collections.md) を参照してください。

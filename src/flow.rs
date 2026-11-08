@@ -481,6 +481,23 @@ impl Visitor<'_> {
         let mut null_check = None;
         let mut bounds = None;
         let operation = match &e.kind {
+            TaskScope { body } => {
+                value = self.eval(body, s);
+                "task.scope".into()
+            }
+            TaskSpawn { .. } | TaskJoin { .. } => {
+                for child in e.children() {
+                    self.eval(child, s);
+                }
+                s.locals = self
+                    .function
+                    .locals
+                    .iter()
+                    .map(|l| Value::unknown(&l.ty))
+                    .collect();
+                s.less.clear();
+                "task.wait".into()
+            }
             Label { body, .. } => {
                 let reachable = s.reachable;
                 self.eval(body, s);
@@ -554,6 +571,18 @@ impl Visitor<'_> {
             Local(id) | Move(id) => {
                 value = s.locals[id.0].clone();
                 "local".into()
+            }
+            Memory { op, args, .. } => {
+                for arg in args {
+                    self.eval(arg, s);
+                }
+                op.name().to_owned()
+            }
+            Wasm { instruction, args } => {
+                for arg in args {
+                    self.eval(arg, s);
+                }
+                instruction.opcode.clone()
             }
             Numeric { op, args } => {
                 let args = args.iter().map(|e| self.eval(e, s)).collect::<Vec<_>>();

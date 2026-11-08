@@ -5,7 +5,7 @@ use crate::ir::*;
 
 impl Adapter<'_> {
     pub(super) fn value_helpers(&self) -> String {
-        let mut out = String::new();
+        let mut out = self.resource_helpers();
         for ty in &self.types {
             let k = type_key(ty);
             let result = if *ty == Type::Unit {
@@ -71,6 +71,9 @@ impl Adapter<'_> {
         format!("(call $__release_{} {ptr})", type_key(ty))
     }
     fn released_memory(&self, ty: &Type, ptr: &str) -> String {
+        if self.interface_type(ty).is_some() {
+            return self.interface_release(ty, ptr);
+        }
         let Type::Value(id) = ty else {
             return "(nop)".into();
         };
@@ -148,7 +151,11 @@ impl Adapter<'_> {
         )
     }
     fn lifted_memory(&self, ty: &Type, ptr: &str) -> String {
+        if self.interface_type(ty).is_some() {
+            return self.interface_lift(ty, ptr);
+        }
         match ty {
+            Type::Resource(_) | Type::Borrow(_) => self.resource_lift(ty, &load(NumType::I32, ptr)),
             Type::Num(n) => load(*n, ptr),
             Type::Unit => {
                 format!("(if (i32.ne (i32.load8_u {ptr}) (i32.const 0)) (then (unreachable)))")
@@ -210,7 +217,17 @@ impl Adapter<'_> {
         }
     }
     fn lowered_memory(&self, ty: &Type, value: &str, ptr: &str) -> String {
+        if self.interface_type(ty).is_some() {
+            return self.interface_lower(ty, value, ptr);
+        }
         match ty {
+            Type::Resource(id) => {
+                format!("(i32.store {ptr} (call $__resource_take_{} {value}))", id.0)
+            }
+            Type::Borrow(id) => format!(
+                "(i32.store {ptr} (call $__resource_handle_{} {value}))",
+                id.0
+            ),
             Type::Num(n) => format!("({}.store {ptr} {value})", n.wat()),
             Type::Unit => format!("(i32.store8 {ptr} (i32.const 0))"),
             Type::Value(id) => match self.value(*id) {
@@ -279,7 +296,21 @@ impl Adapter<'_> {
         }
     }
     pub(super) fn flat_lift(&self, ty: &Type, values: &[(String, NumType)]) -> String {
+        // Variant flattening joins differently typed payload slots. Restore
+        // each nested scalar/pointer width before reading the selected case.
+        let normalized = values
+            .iter()
+            .zip(self.flat(ty))
+            .map(|((value, have), want)| (coerce(value, *have, want), want))
+            .collect::<Vec<_>>();
+        let values = normalized.as_slice();
+        if self.interface_type(ty).is_some() {
+            return self.interface_flat_lift(ty, values);
+        }
         match ty {
+            Type::Resource(_) | Type::Borrow(_) => {
+                self.resource_lift(ty, &coerce(&values[0].0, values[0].1, NumType::I32))
+            }
             Type::Num(n) => coerce(&values[0].0, values[0].1, *n),
             Type::Unit => format!(
                 "(if (i32.ne {} (i32.const 0)) (then (unreachable)))",

@@ -1,0 +1,36 @@
+{
+  "imports": [
+    {
+      "module": "test:resources/host",
+      "name": "make",
+      "params": [],
+      "result": "(resource test:resources/host/file)",
+      "suspends": false,
+      "capability": "files"
+    },
+    {
+      "module": "test:resources/host",
+      "name": "read",
+      "params": [
+        "(borrow test:resources/host/file)"
+      ],
+      "result": "i32",
+      "suspends": false,
+      "capability": "files"
+    },
+    {
+      "module": "test:resources/host",
+      "name": "[resource-drop]file",
+      "params": [
+        "i32"
+      ],
+      "result": "unit",
+      "suspends": false,
+      "capability": "files",
+      "resource": {
+        "kind": "test:resources/host/file",
+        "operation": "close"
+      }
+    }
+  ]
+}

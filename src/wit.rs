@@ -17,6 +17,7 @@ struct Types<'a> {
     module: &'a Module,
     unit_name: String,
     needs_unit: bool,
+    definitions: std::collections::BTreeMap<String, String>,
 }
 
 pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
@@ -24,6 +25,7 @@ pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
         module,
         unit_name: "wlt-unit".into(),
         needs_unit: false,
+        definitions: Default::default(),
     }
     .render(ty)
     .map(|_| ())
@@ -31,6 +33,102 @@ pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
 
 impl Types<'_> {
     fn render(&mut self, ty: &Type) -> Result<String, Error> {
+        if let Type::Newtype(id)
+        | Type::Ref {
+            ty: id,
+            nullable: false,
+        } = ty
+            && let Some(abi) = self.module.types[id.0].abi.clone()
+        {
+            use crate::interface::AbiType;
+            if matches!(abi, AbiType::U8) {
+                return Ok("u8".into());
+            }
+            if matches!(abi, AbiType::U16) {
+                return Ok("u16".into());
+            }
+            if matches!(abi, AbiType::U32) {
+                return Ok("u32".into());
+            }
+            if matches!(abi, AbiType::U64) {
+                return Ok("u64".into());
+            }
+            if let Some(name) = match abi {
+                AbiType::Bool => Some("bool"),
+                AbiType::Char => Some("char"),
+                AbiType::S8 => Some("s8"),
+                AbiType::S16 => Some("s16"),
+                _ => None,
+            } {
+                return Ok(name.into());
+            }
+            if matches!(abi, AbiType::Tuple) {
+                let TypeKind::Struct(fields) = self.module.types[id.0].kind.clone() else {
+                    unreachable!()
+                };
+                return Ok(format!(
+                    "tuple<{}>",
+                    fields
+                        .iter()
+                        .map(|f| self.render(&f.ty))
+                        .collect::<Result<Vec<_>, _>>()?
+                        .join(", ")
+                ));
+            }
+            let name = format!("abi-t{}", id.0);
+            if self.definitions.contains_key(&name) {
+                return Ok(format!("%{name}"));
+            }
+            let def = match abi {
+                AbiType::Variant(names) => {
+                    let TypeKind::Variant(cases) = self.module.types[id.0].kind.clone() else {
+                        unreachable!()
+                    };
+                    let cases = cases
+                        .iter()
+                        .zip(names)
+                        .map(|(c, n)| {
+                            Ok(format!(
+                                "%{n}{}",
+                                c.payloads
+                                    .first()
+                                    .map(|t| self.render(t).map(|t| format!("({t})")))
+                                    .transpose()?
+                                    .unwrap_or_default()
+                            ))
+                        })
+                        .collect::<Result<Vec<_>, Error>>()?;
+                    format!("  variant %{name} {{ {} }}\n", cases.join(", "))
+                }
+                AbiType::Enum(names) | AbiType::Flags(names) => format!(
+                    "  {} %{name} {{ {} }}\n",
+                    if matches!(self.module.types[id.0].abi, Some(AbiType::Enum(_))) {
+                        "enum"
+                    } else {
+                        "flags"
+                    },
+                    names
+                        .iter()
+                        .map(|n| format!("%{n}"))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+                AbiType::Record(names) => {
+                    let TypeKind::Struct(fields) = self.module.types[id.0].kind.clone() else {
+                        unreachable!()
+                    };
+                    let fields = fields
+                        .iter()
+                        .zip(names)
+                        .map(|(f, n)| Ok(format!("%{n}: {}", self.render(&f.ty)?)))
+                        .collect::<Result<Vec<_>, Error>>()?;
+                    format!("  record %{name} {{ {} }}\n", fields.join(", "))
+                }
+                _ => unreachable!(),
+            };
+            self.definitions.insert(name.clone(), def);
+            return Ok(format!("%{name}"));
+        }
         Ok(match ty {
             Type::Newtype(id) => {
                 let TypeKind::Newtype(n) = self.module.types[id.0].kind else {
@@ -52,6 +150,7 @@ impl Types<'_> {
                 format!("%{}", self.unit_name)
             }
             Type::Value(id) => match &self.module.types[id.0].kind {
+                TypeKind::Value(ValueType::Task(_)) => return Err(Error::message("task handles stay inside their Wasm instance; join before crossing an ABI boundary".into()).with_code("E_ABI_TYPE")),
                 TypeKind::Value(ValueType::Future(payload) | ValueType::Stream(payload)) => {
                     let name = if matches!(
                         self.module.types[id.0].kind,
@@ -91,11 +190,9 @@ impl Types<'_> {
                 }
                 _ => unreachable!("checked value type"),
             },
-            Type::Resource(_) | Type::Borrow(_) => {
-                return Err(Error::message(
-                    "resources require a host resource adapter and cannot cross value exports"
-                        .into(),
-                ));
+            Type::Resource(id)|Type::Borrow(id)=>{
+                let name=format!("resource-{}",id.0);self.definitions.entry(name.clone()).or_insert_with(||format!("  resource %{name};\n"));
+                if matches!(ty,Type::Resource(_)){format!("%{name}")}else{format!("borrow<%{name}>")}
             }
             Type::Ref { .. } => return Err(Error::message(
                 "GC references are not WIT value types; use an explicit value or resource adapter"
@@ -109,6 +206,22 @@ impl Types<'_> {
 /// Export representable public functions of a checked module as a WIT package.
 /// Unknown/escaping exceptions and nonportable types require explicit adapters.
 pub fn emit(module: &Module) -> Result<String, Error> {
+    validate_memories(module)?;
+    emit_functions(module)
+}
+
+pub(crate) fn validate_memories(module: &Module) -> Result<(), Error> {
+    if module
+        .memories
+        .iter()
+        .any(|m| m.import.is_some() || !m.exports.is_empty())
+    {
+        return Err(Error::message("WIT and Component boundaries cannot import/export a raw WebAssembly.Memory; use Core Wasm or Core+JSPI for host-shared memory".into()).with_code("E_COMPONENT_MEMORY"));
+    }
+    Ok(())
+}
+
+pub(crate) fn emit_functions(module: &Module) -> Result<String, Error> {
     let lowered = crate::newtypes::lower(module);
     let module = &lowered;
     let exported = module
@@ -137,6 +250,7 @@ pub fn emit(module: &Module) -> Result<String, Error> {
         module,
         unit_name,
         needs_unit: false,
+        definitions: Default::default(),
     };
     let inferred = crate::effects::infer(module);
     let mut declarations = String::new();
@@ -195,6 +309,10 @@ pub fn emit(module: &Module) -> Result<String, Error> {
     } else {
         String::new()
     };
+    declarations = format!(
+        "{}{declarations}",
+        types.definitions.values().cloned().collect::<String>()
+    );
     Ok(format!(
         "package wlt:generated@0.1.0;\n\ninterface api {{\n{unit}{declarations}}}\n\nworld program {{\n  export api;\n}}\n"
     ))

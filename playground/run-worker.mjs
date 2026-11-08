@@ -13,13 +13,15 @@ async function executeHost(program, name) {
   const url = URL.createObjectURL(new Blob([program.bindings], { type: 'text/javascript' }));
   try {
     const { bind } = await import(url);
+    const Children=program.manifest.childTasks?(await import('./runtime/children.mjs')).Children:null;
+    const readables=program.manifest.readables?(await import('./runtime/readables.mjs')).install:null;
     const { api } = await instantiate(import.meta.url, program.manifest.abi, bind, {
       getCoreModule: file => {
         if (file === 'core.wasm') return WebAssembly.compile(program.wasm);
         if (file === 'memory.wasm') return WebAssembly.compile(program.memory);
         throw new Error(`Unknown runtime module: ${file}`);
       },
-    }, program.manifest.imports);
+    }, program.manifest.imports,program.manifest.memories??[],program.manifest.raceFree??null,Children,readables);
     return await api[entry.js_name]();
   } finally { URL.revokeObjectURL(url); }
 }

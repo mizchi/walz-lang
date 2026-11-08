@@ -19,12 +19,13 @@
 just test-language
 just test-language tests/programs GC
 just list-tests tests/programs
-cargo run --locked -- test tests/programs --filter closure
-cargo run --locked -- test tests/programs/core.test.wlt --timeout-ms 1000
+wlt test tests/programs --filter closure
+wlt test tests/programs/core.test.wlt --timeout-ms 1000
 ```
 
 `wlt test` は既定で `tests/` 配下の `*.test.wlt` を再帰探索します。ファイルを明示した場合は名前を問いません。
 複数のパスを渡せ、同じファイルは1回だけ実行します。ディレクトリ探索ではシンボリックリンクをたどりません。
+`target`・`node_modules`・`.git` は再帰探索から除外し、入力パスとして明示した場合だけ探索します。[インストールとCLI](cli.md) も参照してください。
 `--filter` はテスト名の部分一致、`--list` は型検査と一覧表示のみです。絞り込み前にモジュール全体を型検査します。
 失敗、trap、コンパイルエラーがあっても他のテスト・ファイルを続けます。0件の場合も成功扱いにしません。
 終了コードは成功が0、テスト失敗・実行環境やソースのエラーが1、引数の誤りが2です。
@@ -37,3 +38,14 @@ cargo run --locked -- test tests/programs/core.test.wlt --timeout-ms 1000
 GC の割当て、参照同一性、明示した変更、trap、評価順序は通常のコードと同じです。型・副作用の検査と定義域は [SPEC.md](../SPEC.md) を参照してください。
 [core.test.wlt](../tests/programs/core.test.wlt)・[gc.test.wlt](../tests/programs/gc.test.wlt)・[macros.test.wlt](../tests/programs/macros.test.wlt)・[values.test.wlt](../tests/programs/values.test.wlt)・[ownership.test.wlt](../tests/programs/ownership.test.wlt)・[delivery.test.wlt](../tests/programs/delivery.test.wlt) の計21本は、`just test` からも検証します。
 Rust API は `wlt::runner::run(paths, options)` で、各テストの結果・ファイル単位のエラーを構造化して取得できます。
+
+## Core＋JSPI のテスト・計測
+
+`wlt test --target core-js --bindings policy.json --host host.mjs` と
+`wlt bench --target core-js --bindings policy.json --host host.mjs` で、非同期 import と子タスクを実行できる。
+ケースごとにプロセス・Wasm instance・host factory を作り、正常・失敗・取消し後にホストの解放を待つ。
+`--list` は型チェックだけを行い、host module と Node を起動しない。
+タイムアウト時は協調的な取消しを要求し、最大5秒の解放猶予後も終了しないホストは強制終了して失敗を報告する。
+
+Core＋JSPI のベンチは、各呼出しを順番に await する end-to-end 計測。codec・JSPI・待機時間を含み、結果は ABI 対応の共有値または unit に限定する。
+既定の `core` の Wasm 内バッチ計測とは別の測定条件で、JSON の `options.target` と `summary.runtime` に区別を残す。

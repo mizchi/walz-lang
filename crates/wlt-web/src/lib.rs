@@ -16,6 +16,8 @@ enum Outcome {
         wat: String,
         wasm: Vec<u8>,
         analysis: wlt::Analysis,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        execution: Option<wlt::component::core_js::CoreJs>,
     },
     Error {
         diagnostic: wlt::diagnostic::Diagnostic,
@@ -63,7 +65,27 @@ pub fn compile_source(source: &str, optimize: bool) -> String {
             wat: compilation.wat,
             wasm: compilation.wasm,
             analysis: compilation.analysis,
+            execution: None,
         },
+        Err(error) if error.diagnostic().code == "E_TASK_BACKEND" => {
+            match wlt::component::core_js::compile_for_browser(
+                source,
+                wlt::CompileOptions { optimize },
+            )
+            .and_then(|program| {
+                wlt::check(source).map(|module| (program, wlt::analysis::analyze(&module)))
+            }) {
+                Ok((mut program, analysis)) => Outcome::Success {
+                    wat: std::mem::take(&mut program.wat),
+                    wasm: program.wasm.clone(),
+                    analysis,
+                    execution: Some(program),
+                },
+                Err(error) => Outcome::Error {
+                    diagnostic: error.diagnostic().clone(),
+                },
+            }
+        }
         Err(error) => Outcome::Error {
             diagnostic: error.diagnostic().clone(),
         },

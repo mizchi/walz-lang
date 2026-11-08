@@ -80,3 +80,16 @@ fn browser_execution_keeps_type_effect_ownership_binding_and_proof_checks() {
         assert!(actual.get("program").is_none());
     }
 }
+
+#[test]
+fn scoped_tasks_compile_to_a_browser_execution_bundle() {
+    let source = include_str!("../../../tests/component-fixtures/scoped-tasks.wlt");
+    for optimize in [true, false] {
+        let actual: Value =
+            serde_json::from_str(&wlt_web::compile_source(source, optimize)).unwrap();
+        assert_eq!(actual["status"], "success", "{actual}");
+        assert_eq!(actual["execution"]["manifest"]["childTasks"], true);
+        assert_eq!(actual["wasm"], actual["execution"]["wasm"]);
+        assert!(actual["wat"].as_str().unwrap().contains("__child_run"));
+    }
+}

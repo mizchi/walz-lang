@@ -1,0 +1,16 @@
+package test:resources;
+interface host {
+  resource file;
+  make: func() -> file;
+  read: func(f: borrow<file>) -> s32;
+}
+interface api {
+  use host.{file};
+  echo: func(f: file) -> file;
+  read: func(f: borrow<file>) -> s32;
+  close: func(f: file);
+  optional: func(f: file) -> option<file>;
+  release-option: func(f: option<file>);
+  make: func() -> file;
+}
+world guest { import host; export api; }

@@ -1,0 +1,43 @@
+{
+  "imports": [
+    {
+      "module": "usability:ticket/store",
+      "name": "open",
+      "params": [],
+      "result": "(resource usability:ticket/store/ticket)",
+      "suspends": false,
+      "capability": "tickets",
+      "param_names": []
+    },
+    {
+      "module": "usability:ticket/store",
+      "name": "size",
+      "params": [
+        "(borrow usability:ticket/store/ticket)"
+      ],
+      "result": "u32",
+      "suspends": false,
+      "capability": "tickets",
+      "param_names": [
+        "value"
+      ]
+    },
+    {
+      "module": "usability:ticket/store",
+      "name": "[resource-drop]ticket",
+      "params": [
+        "i32"
+      ],
+      "result": "unit",
+      "suspends": false,
+      "capability": "resource-drop:usability:ticket/store/ticket",
+      "param_names": [
+        "handle"
+      ],
+      "resource": {
+        "kind": "usability:ticket/store/ticket",
+        "operation": "close"
+      }
+    }
+  ]
+}

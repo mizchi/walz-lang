@@ -13,6 +13,7 @@ pub struct RunOptions {
     /// Internal hook for frozen evaluation inputs.
     #[doc(hidden)]
     pub legacy_syntax: bool,
+    pub execution: crate::execution::ExecutionOptions,
     pub filter: Option<String>,
     pub list: bool,
     /// Includes Wasmtime process startup and compilation for each test.
@@ -23,6 +24,7 @@ impl Default for RunOptions {
     fn default() -> Self {
         Self {
             legacy_syntax: false,
+            execution: Default::default(),
             filter: None,
             list: false,
             timeout: Duration::from_secs(5),
@@ -127,6 +129,13 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
         report.error(None, "test timeout must be positive");
         return report;
     }
+    let policy = match options.execution.policy() {
+        Ok(policy) => policy,
+        Err(error) => {
+            report.error(None, error);
+            return report;
+        }
+    };
     let discovery = crate::harness::discover(paths, "tests", ".test.wlt");
     report.errors.extend(discovery.errors);
     for path in discovery.files {
@@ -137,7 +146,8 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
                 crate::source::load(&path)?
             };
             let source = loaded.text();
-            let module = crate::check(source).map_err(|e| loaded.diagnostic(e))?;
+            let module =
+                crate::check_with_policy(source, &policy).map_err(|e| loaded.diagnostic(e))?;
             let tests = module
                 .tests
                 .iter()
@@ -164,14 +174,45 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
                     }));
                 return Ok(());
             }
-            let compilation =
-                crate::compile_checked(source, module).map_err(|e| loaded.diagnostic(e))?;
             let directory = tempfile::tempdir()?;
             let wasm = directory.path().join("suite.wasm");
-            std::fs::write(&wasm, compilation.wasm)?;
+            if options.execution.target == crate::execution::Target::Core {
+                let compilation = crate::compile_checked(source, module.clone())
+                    .map_err(|e| loaded.diagnostic(e))?;
+                std::fs::write(&wasm, compilation.wasm)?;
+            }
             for test in tests {
-                let outcome = invoke(&wasm, &test.export, options.timeout)
-                    .unwrap_or_else(TestOutcome::Failed);
+                let execute = || -> Result<TestOutcome, Box<dyn std::error::Error>> {
+                    if options.execution.target == crate::execution::Target::Core {
+                        return invoke(&wasm, &test.export, options.timeout).map_err(Into::into);
+                    }
+                    let built = crate::component::core_js::compile_case(
+                        source,
+                        &module,
+                        test.function,
+                        "wlt-case",
+                    )
+                    .map_err(|e| loaded.diagnostic(e))?;
+                    let report = crate::execution::invoke(
+                        &built,
+                        "wlt-case",
+                        &options.execution,
+                        "test",
+                        options.timeout,
+                        serde_json::Value::Null,
+                    )?;
+                    Ok(match report["status"].as_str() {
+                        Some("passed") => TestOutcome::Passed,
+                        Some("timed_out") => TestOutcome::TimedOut,
+                        _ => TestOutcome::Failed(
+                            report["message"]
+                                .as_str()
+                                .unwrap_or("invalid test outcome")
+                                .into(),
+                        ),
+                    })
+                };
+                let outcome = execute().unwrap_or_else(|e| TestOutcome::Failed(e.to_string()));
                 report.tests.push(TestResult {
                     path: path.clone(),
                     name: test.name,

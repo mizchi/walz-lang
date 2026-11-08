@@ -80,8 +80,12 @@ test("scalar Core output has no Component dependency or text codecs", async () =
       assert.equal((await runtime.instantiate()).api.main(), 42n);
       const names = await readdir(directory);
       assert.ok(
-        !names.includes("component.js") && !names.includes("component.wasm"),
+        !names.includes("component.js") && !names.includes("component.wasm") &&
+          !names.includes("core-contracts.mjs"),
       );
+      // Optional modules must not leave unresolved imports for JS bundlers.
+      const core = await readFile(join(directory, "core.mjs"), "utf8");
+      assert.ok(!core.includes("./core-contracts.mjs"));
       const binding = await readFile(join(directory, "bindings.mjs"), "utf8");
       assert.ok(
         !binding.includes("TextEncoder") && !binding.includes("Float64"),

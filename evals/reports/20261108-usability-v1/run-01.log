@@ -1,0 +1,81 @@
+PASS README example checks and runs
+FAIL co-located test/bench can build as a JS application: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/parse.wlt:1:1: expected module
+
+FAIL CLI JSON result with the JS target: run failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/main.wlt:1:1: expected module
+
+FAIL expense oracle and cleanup: core: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/main.wlt:1:1: expected module
+
+FAIL expense oracle and cleanup: component: Command failed: cargo run --locked --quiet -- component /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/main.wlt /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/work/expenses-component/component.wasm
+/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/main.wlt:1:1: expected module
+
+FAIL policy change stays in one module selection: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/work/policy-change/main.wlt:1:1: expected module
+
+FAIL CLI test: core: test failed: ERROR /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses.test.wlt: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses.test.wlt:1:1: expected module
+0 passed; 0 failed; 1 errors; 0 filtered out
+
+FAIL CLI bench: core: bench failed: {
+  "schema": "wlt-bench-v1",
+  "options": {
+    "target": "core",
+    "filter": null,
+    "list": false,
+    "samples": 2,
+    "iterations": 1,
+    "warmup_ms": 0,
+    "sample_ms": 10,
+    "timeout_ms": 30000
+  },
+  "benchmarks": [],
+  "errors": [
+    {
+      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses_bench.wlt",
+      "message": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses_bench.wlt:1:1: expected module"
+    }
+  ],
+  "filtered_out": 0
+}
+
+FAIL CLI test: core-js: test failed: ERROR /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses.test.wlt: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses.test.wlt:1:1: expected module
+0 passed; 0 failed; 1 errors; 0 filtered out
+
+FAIL CLI bench: core-js: bench failed: {
+  "schema": "wlt-bench-v1",
+  "options": {
+    "target": "core-js",
+    "filter": null,
+    "list": false,
+    "samples": 2,
+    "iterations": 1,
+    "warmup_ms": 0,
+    "sample_ms": 10,
+    "timeout_ms": 30000
+  },
+  "benchmarks": [],
+  "errors": [
+    {
+      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses_bench.wlt",
+      "message": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/expenses/expenses_bench.wlt:1:1: expected module"
+    }
+  ],
+  "filtered_out": 0
+}
+
+FAIL child timeout and cancellation: core: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/async/main.wlt:1:1: expected module
+
+FAIL child timeout and cancellation: component: Command failed: cargo run --locked --quiet -- component /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/async/main.wlt /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/work/async-component/component.wasm
+/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/async/main.wlt:1:1: expected module
+
+PASS LSP unsaved modules, UTF-16, navigation and repair
+FAIL generated native resource own/borrow and async value: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r1/snapshot/evals/usability/native/main.wlt:1:1: expected module
+
+PASS domain diagnostics reject real mistakes without panicking
+file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:78
+  if (stack.length || !root) throw new Error("unclosed module");
+                                   ^
+
+Error: unclosed module
+    at tree (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:78:36)
+    at metrics (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:103:12)
+    at file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/run.mjs:112:278
+
+Node.js v24.21.0

@@ -1,5 +1,7 @@
 import { releaseEndpoints } from "./jco-lifetime.mjs";
 import { tuneScheduler } from "./jco-scheduler.mjs";
+import {batchStreams} from './jco-batches.mjs';
+import {internalChildThreads} from './jco-children.mjs';
 // Compatibility with pinned jco-transpile 0.23.0: payload-less endpoints emit
 // null alignment but ManagedBuffer requires a number; its unit path also uses
 // null despite the generated PromiseLike<void>/AsyncIterable<void> contract.
@@ -66,6 +68,12 @@ export function adaptJspiGlue(source) {
     // Failed payload conversion leaves an abandoned copy buffer in 0.23.0.
     // Clear it before guest-scope cleanup drops the readable end.
     const wrapper = `function ${kind}Read(ctx,handle,...args){
+      // Payload copies can complete on the producer's continuation. Stamp every
+      // nested allocation with the waiting reader's scope before lowering it.
+      const owner=options?.wlt?.scope?.(), getReallocFn=ctx.getReallocFn;
+      if(owner!==undefined && getReallocFn)ctx={...ctx,getReallocFn:()=>{
+        const realloc=getReallocFn();return realloc && ((...args)=>{options.wlt.enter(owner);return realloc(...args);});
+      }};
       const end=get${kind[0].toUpperCase() + kind.slice(1)}End({tableIdx:ctx.${table},${handle}:handle});
       const failed=error=>{end.resetPendingBufferMeta();end.setCopyState(${endClass}.CopyState.DONE);throw error;};
       const run=()=>{try{const value=wltRaw${kind}Read(ctx,handle,...args);return value?.then?Promise.resolve(value).catch(failed):value;}catch(error){return failed(error);}};
@@ -113,5 +121,5 @@ ${marker}`,
             return finishCopy();
           }`,
   );
-  return tuneScheduler(releaseEndpoints(source));
+  return internalChildThreads(tuneScheduler(releaseEndpoints(batchStreams(source))));
 }

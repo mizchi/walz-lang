@@ -1,0 +1,414 @@
+{
+  "schema": "wlt-usability-result-v2",
+  "id": "usability-fixes-20261108-v2-r1",
+  "checks": [
+    {
+      "name": "README example checks and runs",
+      "passed": true,
+      "milliseconds": 22.343416000000047,
+      "evidence": {
+        "stdout": "42\n"
+      }
+    },
+    {
+      "name": "co-located test/bench can build as a JS application",
+      "passed": true,
+      "milliseconds": 2461.8928339999998,
+      "evidence": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/mixed\n"
+    },
+    {
+      "name": "CLI JSON result with the JS target",
+      "passed": true,
+      "milliseconds": 2560.04325,
+      "evidence": {
+        "stdout": "\"{\\\"accepted\\\":2,\\\"rejected\\\":1,\\\"totals\\\":{\\\"food\\\":42}}\"\n"
+      }
+    },
+    {
+      "name": "expense oracle and cleanup: core",
+      "passed": true,
+      "milliseconds": 2699.8010830000003,
+      "evidence": [
+        {
+          "case": "empty",
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refund",
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "invalid rows",
+          "rows": 8,
+          "actual": "{\"accepted\":0,\"rejected\":8,\"totals\":{}}"
+        },
+        {
+          "case": "signed overflow is atomic",
+          "rows": 4,
+          "actual": "{\"accepted\":2,\"rejected\":2,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "integer out of range",
+          "rows": 2,
+          "actual": "{\"accepted\":0,\"rejected\":2,\"totals\":{}}"
+        },
+        {
+          "case": "unicode and escaped keys",
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "large input",
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        }
+      ]
+    },
+    {
+      "name": "expense oracle and cleanup: component",
+      "passed": true,
+      "milliseconds": 6974.000499999999,
+      "evidence": [
+        {
+          "case": "empty",
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refund",
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "invalid rows",
+          "rows": 8,
+          "actual": "{\"accepted\":0,\"rejected\":8,\"totals\":{}}"
+        },
+        {
+          "case": "signed overflow is atomic",
+          "rows": 4,
+          "actual": "{\"accepted\":2,\"rejected\":2,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "integer out of range",
+          "rows": 2,
+          "actual": "{\"accepted\":0,\"rejected\":2,\"totals\":{}}"
+        },
+        {
+          "case": "unicode and escaped keys",
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "large input",
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        }
+      ]
+    },
+    {
+      "name": "policy change stays in one module selection",
+      "passed": true,
+      "milliseconds": 1600.423834000001,
+      "evidence": {
+        "changedExistingLines": 1,
+        "addedPolicyLines": 16,
+        "cases": 7
+      }
+    },
+    {
+      "name": "CLI test: core",
+      "passed": true,
+      "milliseconds": 1265.554458999999,
+      "evidence": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt::\"public entry runs\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n"
+    },
+    {
+      "name": "CLI bench: core",
+      "passed": true,
+      "milliseconds": 1281.729707999999,
+      "evidence": {
+        "target": "core",
+        "status": "measured"
+      }
+    },
+    {
+      "name": "CLI test: core-js",
+      "passed": true,
+      "milliseconds": 1237.701333000001,
+      "evidence": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt::\"public entry runs\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n"
+    },
+    {
+      "name": "CLI bench: core-js",
+      "passed": true,
+      "milliseconds": 1343.5075829999987,
+      "evidence": {
+        "target": "core-js",
+        "status": "measured"
+      }
+    },
+    {
+      "name": "child timeout and cancellation: core",
+      "passed": true,
+      "milliseconds": 1006.9727910000001,
+      "evidence": {
+        "answer": 42,
+        "acquired": 1,
+        "disposed": 1
+      }
+    },
+    {
+      "name": "child timeout and cancellation: component",
+      "passed": true,
+      "milliseconds": 1717.338708000003,
+      "evidence": {
+        "answer": 42,
+        "acquired": 2,
+        "disposed": 2
+      }
+    },
+    {
+      "name": "LSP unsaved modules, UTF-16, navigation and repair",
+      "passed": true,
+      "milliseconds": 10.025999999998021,
+      "evidence": {
+        "capabilities": {
+          "completionProvider": {
+            "triggerCharacters": [
+              "$",
+              "."
+            ]
+          },
+          "definitionProvider": true,
+          "hoverProvider": true,
+          "positionEncoding": "utf-16",
+          "textDocumentSync": {
+            "change": 2,
+            "openClose": true,
+            "save": true
+          }
+        },
+        "hover": {
+          "contents": {
+            "kind": "plaintext",
+            "value": "$main: i32"
+          }
+        },
+        "definition": [
+          {
+            "range": {
+              "end": {
+                "character": 40,
+                "line": 0
+              },
+              "start": {
+                "character": 36,
+                "line": 0
+              }
+            },
+            "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/unsaved-ide/calc.wlt"
+          }
+        ],
+        "invalidDiagnostics": [
+          {
+            "code": "E_TYPE_MISMATCH",
+            "message": "type mismatch: expected i32, got i64",
+            "range": {
+              "end": {
+                "character": 56,
+                "line": 2
+              },
+              "start": {
+                "character": 43,
+                "line": 2
+              }
+            },
+            "relatedInformation": [
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 65,
+                      "line": 0
+                    },
+                    "start": {
+                      "character": 63,
+                      "line": 0
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/unsaved-ide/calc.wlt"
+                },
+                "message": "argument 2 of `$sum`: parameter `$b` requires i32"
+              }
+            ],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "hoverDuringError": {
+          "contents": {
+            "kind": "plaintext",
+            "value": "binding $answer (no inferred type)\nDeclared syntax (unverified; no checked type is inferred)"
+          }
+        },
+        "definitionDuringError": [
+          {
+            "range": {
+              "end": {
+                "character": 40,
+                "line": 0
+              },
+              "start": {
+                "character": 36,
+                "line": 0
+              }
+            },
+            "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/unsaved-ide/calc.wlt"
+          }
+        ],
+        "completionItems": [
+          {
+            "detail": "$main (result i32)",
+            "kind": 3,
+            "label": "$main"
+          },
+          {
+            "detail": "binding $answer (no inferred type)",
+            "kind": 6,
+            "label": "$answer"
+          },
+          {
+            "detail": "explicit import selection",
+            "kind": 3,
+            "label": "$sum"
+          }
+        ],
+        "samples": [
+          {
+            "method": "initialize",
+            "milliseconds": 3.3564579999983835
+          },
+          {
+            "method": "textDocument/hover",
+            "milliseconds": 0.17362499999944703
+          },
+          {
+            "method": "textDocument/definition",
+            "milliseconds": 0.18220800000199233
+          },
+          {
+            "method": "textDocument/hover",
+            "milliseconds": 0.1625000000021828
+          },
+          {
+            "method": "textDocument/definition",
+            "milliseconds": 0.14841700000033597
+          },
+          {
+            "method": "textDocument/hover",
+            "milliseconds": 0.14887499999895226
+          },
+          {
+            "method": "textDocument/completion",
+            "milliseconds": 0.1302079999986745
+          },
+          {
+            "method": "shutdown",
+            "milliseconds": 0.045625000002473826
+          }
+        ]
+      }
+    },
+    {
+      "name": "generated native resource own/borrow and async value",
+      "passed": true,
+      "milliseconds": 913.9365410000028,
+      "evidence": {
+        "run": 42,
+        "future": 42,
+        "closed": 5,
+        "bindingTypes": ";; Generated nominal portable types.\n(module\n  (%use \"wlt:core\" (type $future))\n  (import \"usability:ticket/store\" \"[resource-drop]ticket\" (func $wit-drop-resource0 (param $handle i32)))\n  (type $store.ticket (%resource \"usability:ticket/store/ticket\" $wit-drop-resource0))\n  (type $wit-u32 (%newtype i32))\n  (%abi.type $wit-u32 (u32))\n  (%export (type $store.ticket) (type $wit-u32))\n)\n"
+      }
+    },
+    {
+      "name": "domain diagnostics reject real mistakes without panicking",
+      "passed": true,
+      "milliseconds": 146.64387500000157,
+      "evidence": [
+        {
+          "name": "unknown-local",
+          "stdout": "{\"diagnostics\":[{\"code\":\"E_UNKNOWN_LOCAL\",\"help\":[\"did you mean `$previous`?\"],\"message\":\"unbound local `$prevous`\",\"notes\":[],\"primary\":{\"location\":{\"column\":28,\"line\":59,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-unknown-local/model.wlt\"},\"message\":\"\",\"span\":{\"end\":1768,\"start\":1760}},\"related\":[{\"location\":{\"column\":13,\"line\":54,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-unknown-local/model.wlt\"},\"message\":\"`$previous` is bound here\",\"span\":{\"end\":1561,\"start\":1552}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": "",
+          "code": 1
+        },
+        {
+          "name": "wrong-generic",
+          "stdout": "{\"diagnostics\":[{\"code\":\"E_TYPE_MISMATCH\",\"help\":[],\"message\":\"type mismatch: expected (ref $dict<i32>), got (ref $dict<i64>)\",\"notes\":[],\"primary\":{\"location\":{\"column\":39,\"line\":56,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-wrong-generic/model.wlt\"},\"message\":\"\",\"span\":{\"end\":1656,\"start\":1649}},\"related\":[{\"location\":{\"column\":12,\"line\":1855,\"path\":\"wlt:core\"},\"message\":\"argument 1 of `$dict.get<i32>`: parameter `$d` requires (ref $dict<i32>)\",\"span\":{\"end\":66960,\"start\":66958}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": "",
+          "code": 1
+        }
+      ]
+    }
+  ],
+  "sourceMetrics": {
+    "expenses/main.wlt": {
+      "lines": 4,
+      "tokens": 33,
+      "maxDepth": 3,
+      "match": 0,
+      "groupedLets": 0,
+      "instantiations": 0,
+      "structGets": 0
+    },
+    "expenses/model.wlt": {
+      "lines": 113,
+      "tokens": 745,
+      "maxDepth": 10,
+      "match": 3,
+      "groupedLets": 2,
+      "instantiations": 10,
+      "structGets": 8
+    },
+    "expenses/parse.wlt": {
+      "lines": 65,
+      "tokens": 366,
+      "maxDepth": 6,
+      "match": 1,
+      "groupedLets": 0,
+      "instantiations": 7,
+      "structGets": 0
+    },
+    "expenses/parse-nonnegative.wlt": {
+      "lines": 16,
+      "tokens": 134,
+      "maxDepth": 7,
+      "match": 0,
+      "groupedLets": 0,
+      "instantiations": 2,
+      "structGets": 1
+    },
+    "async/main.wlt": {
+      "lines": 32,
+      "tokens": 217,
+      "maxDepth": 8,
+      "match": 1,
+      "groupedLets": 1,
+      "instantiations": 1,
+      "structGets": 0
+    },
+    "native/main.wlt": {
+      "lines": 18,
+      "tokens": 92,
+      "maxDepth": 4,
+      "match": 0,
+      "groupedLets": 0,
+      "instantiations": 1,
+      "structGets": 0
+    }
+  },
+  "summary": {
+    "passed": 15,
+    "failed": 0
+  }
+}

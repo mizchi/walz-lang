@@ -40,7 +40,7 @@ WATではドットも識別子の一部で、名前空間を意味しない。WL
 
 WITの `own<R>` はresourceの所有権を表すため、GC boxの名前には使わない。
 GC boxは `%box.new`、型は `(%inst $box T)`。外部資源は既存の `%resource.*` 操作を使う。
-resourceのWIT入出力、一般のn要素tuple、bool/char/各幅のunsigned整数を新しく実装したことは意味しない。
+命名変更と ABI 対応は別の機能で、現在の bool/char・整数・tuple/variant の対応範囲は [WIT binding](wit-bindings.md) を参照する。resource の WIT 入出力は後続。
 たとえば `$u32` をi32の透明なaliasとして追加しても、符号なし比較・除算の意味を持つ型にはならない。
 WATのi32/i64の演算と、WIT境界の型は分けて定義する。
 

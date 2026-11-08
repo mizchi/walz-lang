@@ -32,6 +32,7 @@ export function createEventLoop({ onEvent = () => {} } = {}) {
     return { promise, cancel };
   }
   return {
+    after(milliseconds){return wait(milliseconds,undefined).promise;},
     sleep(milliseconds) {
       return wait(milliseconds, undefined).promise;
     },
@@ -139,6 +140,13 @@ function prefix(items, tail) {
       }
       return result;
     },
+    async readMany(max){
+      if(!Number.isInteger(max)||max<1||max>65536)throw new RangeError('invalid batch count');
+      if(closed)return {items:[],done:true};
+      if(index<items.length){const end=Math.min(items.length,index+max),batch=items.slice(index,end);items.fill(undefined,index,end);index=end;return {items:batch,done:false};}
+      const batch=iterator?.readMany?await iterator.readMany(max):iterator?await Promise.resolve(iterator.next()).then(r=>({items:r.done?[]:[r.value],done:r.done})):{items:[],done:true};
+      if(batch.done){closed=true;iterator=null;}return batch;
+    },
     async return() {
       if (!closed) {
         closed = true;
@@ -173,8 +181,9 @@ export function createHostImports(options, tasks, bindings = []) {
       const closeProvider=original[closer?.module],close=closeProvider?.[closer?.jsName];
       if(typeof close!=="function")throw new TypeError(`missing destructor for ${kind}`);
       hosts[binding.module][binding.jsName]=(...args)=>tasks.resources.add(kind,invoke(...args),v=>close.call(closeProvider,v));
-    } else if(operation==="use") hosts[binding.module][binding.jsName]=(id,...args)=>tasks.resources.use(kind,id,invoke,args);
-    else hosts[binding.module][binding.jsName]=id=>tasks.resources.close(kind,id);
+    } else if(operation==="use" || operation==="reader") hosts[binding.module][binding.jsName]=(id,...args)=>tasks.resources.use(kind,id,invoke,args);
+    else if(operation==='close') hosts[binding.module][binding.jsName]=id=>tasks.resources.close(kind,id);
+    else throw new TypeError(`unsupported resource operation ${operation}`);
   }
   for (const namespace of new Set(bindings.map(b=>b.module))) {
     if (namespace !== eventLoop && hosts[namespace])

@@ -11,13 +11,21 @@ pub mod core_js;
 mod endpoints;
 mod functions;
 mod imports;
+mod interface;
+mod interface_variant;
 mod lists;
+mod native_delivery;
 pub mod profiling;
+mod resource_values;
+pub(crate) mod stream_batch;
 mod values;
+mod world;
 
-use abi::{component_signature, component_type};
+use abi::component_type;
 
 pub struct Adapter<'a> {
+    pub(crate) native_resources: bool,
+    flat_cache: std::cell::RefCell<std::collections::BTreeMap<Type, Vec<NumType>>>,
     pub module: &'a Module,
     pub endpoints: BTreeSet<TypeId>,
     types: BTreeSet<Type>,
@@ -40,9 +48,41 @@ pub fn compile_with_policy(
 ) -> Result<Component, Error> {
     let module = checked_module_with_policy(source, policy)?;
     let adapter = Adapter::new(&module);
+    adapter.validate_boundary()?;
     let core = crate::emit::emit_component(&module, &adapter);
     let effects = crate::effects::boundary(&module);
-    assemble(&module, &adapter, core, effects)
+    assemble(&module, &adapter, core, effects, None)
+}
+
+/// Assemble the original WIT world's Canonical ABI boundary.
+/// Supports shared async payloads and typed imported-resource own/borrow handles.
+pub fn compile_with_world(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+    path: &std::path::Path,
+    name: Option<&str>,
+) -> Result<Component, Error> {
+    let mut checked = crate::check_with_policy(source, policy)?;
+    let roots = world::selected_exports(path, name)?;
+    crate::harness::select_application(&mut checked);
+    for f in &mut checked.functions {
+        f.exports.retain(|n| roots.contains(n));
+    }
+    let module = prepare_checked_module(source, checked, crate::verified::verify_component, true)?;
+    let effects = crate::effects::boundary(&module);
+    let adapter = Adapter::new_native(&module);
+    adapter.validate_boundary()?;
+    if crate::task_children::enabled(&module) {
+        return Err(Error::message(
+            "native WIT worlds do not yet provide the WLT child scheduler".into(),
+        )
+        .with_code("E_WIT_WORLD"));
+    }
+    let world = world::World::load(path, name, &module)?;
+    let core = crate::emit::emit_component(&module, &adapter);
+    let mut built = assemble(&module, &adapter, core, effects, Some(&world))?;
+    built.manifest["nativeWorld"] = true.into();
+    Ok(built)
 }
 
 fn checked_module(source: &str) -> Result<Module, Error> {
@@ -72,6 +112,16 @@ fn prepare_module(
     optimize: bool,
 ) -> Result<Module, Error> {
     let mut module = crate::check_with_policy(source, policy)?;
+    crate::harness::select_application(&mut module);
+    prepare_checked_module(source, module, check_contracts, optimize)
+}
+
+fn prepare_checked_module(
+    source: &str,
+    mut module: Module,
+    check_contracts: fn(&str, &Module) -> Result<(), Error>,
+    optimize: bool,
+) -> Result<Module, Error> {
     for f in &module.functions {
         if matches!(f.kind, FunctionKind::Import { .. }) && crate::bindings::lookup(f).is_none() {
             return Err(Error::message(
@@ -79,7 +129,7 @@ fn prepare_module(
             ));
         }
     }
-    crate::wit::emit(&module)?;
+    crate::wit::emit_functions(&module)?;
     check_contracts(source, &module)?;
     module.abi_suspends = module
         .functions
@@ -100,7 +150,9 @@ fn assemble(
     adapter: &Adapter<'_>,
     core: String,
     effects: Vec<crate::effects::EffectSet>,
+    world: Option<&world::World>,
 ) -> Result<Component, Error> {
+    crate::wit::validate_memories(module)?;
     let mut text = format!(
         "(core module $mem {})\n(core instance $mem (instantiate $mem))\n",
         include_str!("component-memory.wat")
@@ -112,10 +164,32 @@ fn assemble(
         }
     }
     for (group, (namespace, functions)) in groups.iter().enumerate() {
+        if let Some(world) = world.filter(|w| w.has_resources()) {
+            for (i, f) in functions {
+                if let Some(id) = world.close_resource(module, f) {
+                    text += &format!(
+                        "(core func $host_lower{i} (canon resource.drop $t{}))\n",
+                        id.0
+                    );
+                } else {
+                    let FunctionKind::Import { name, .. } = &f.kind else {
+                        unreachable!()
+                    };
+                    text += &format!(
+                        "(alias export $host{group} {name:?} (func $host{i}))\n(core func $host_lower{i} (canon lower (func $host{i}) (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\"))))\n"
+                    );
+                }
+            }
+            continue;
+        }
         let scope = format!("$host{group}_");
         let mut exports = format!("(export \"wlt-unit\" (type {scope}unit (eq $unit)))\n");
         for ty in &adapter.types {
-            if let Type::Value(id) = ty {
+            if let Type::Resource(id)
+            | Type::Value(id)
+            | Type::Newtype(id)
+            | Type::Ref { ty: id, .. } = ty
+            {
                 exports.push_str(&format!(
                     "(export \"t{}\" (type {scope}t{} (eq $t{})))\n",
                     id.0, id.0, id.0
@@ -125,7 +199,11 @@ fn assemble(
         if functions.iter().all(|(_, f)| f.import_contract.is_some()) {
             exports = format!("(alias outer 1 $unit (type {scope}unit))\n");
             for ty in &adapter.types {
-                if let Type::Value(id) = ty {
+                if let Type::Resource(id)
+                | Type::Value(id)
+                | Type::Newtype(id)
+                | Type::Ref { ty: id, .. } = ty
+                {
                     exports.push_str(&format!(
                         "(alias outer 1 $t{} (type {scope}t{}))\n",
                         id.0, id.0
@@ -139,7 +217,12 @@ fn assemble(
                 unreachable!()
             };
             let binding = crate::bindings::lookup(f).unwrap();
-            let signature = component_signature(f, binding.suspends, &scope);
+            let signature = abi::component_signature_named(
+                f,
+                binding.suspends,
+                &scope,
+                world.and_then(|w| w.imported_names(namespace, name)),
+            );
             exports.push_str(&format!("(export \"{name}\" (func {signature}))\n"));
             // Both directions copy UTF-8 strings through the same arena.
             lowers.push_str(&format!("(alias export $host{group} \"{name}\" (func $host{i}))\n(core func $host_lower{i} (canon lower (func $host{i}) (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\"))))\n"));
@@ -176,6 +259,41 @@ fn assemble(
         }
     }
     text.push_str(&factory_lowers);
+    if crate::task_children::enabled(module) {
+        text.push_str(
+            "(import \"wlt:runtime/tasks@0.1.0\" (instance $children
+          (export \"scope-new\" (func (param \"parent\" s32) (result s32)))
+          (export \"scope-close\" (func async (param \"id\" s32)))
+          (export \"scope-abort\" (func (param \"id\" s32)))
+          (export \"child-new\" (func (param \"scope\" s32) (result s32)))
+          (export \"child-start\" (func (param \"id\" s32)))
+          (export \"child-join\" (func async (param \"id\" s32)))
+          (export \"child-cancel\" (func async (param \"id\" s32)))
+          (export \"child-timeout\" (func async (param \"id\" s32) (param \"ms\" s32) (result s32)))
+          (export \"scope-enter\" (func (param \"id\" s32) (result s32)))
+          (export \"child-adopt\" (func (param \"id\" s32) (param \"scope\" s32)))
+          (export \"resource-adopt\" (func (param \"id\" s32) (param \"scope\" s32)))))\n",
+        );
+        for (i, name) in [
+            "scope-new",
+            "scope-close",
+            "scope-abort",
+            "child-new",
+            "child-start",
+            "child-join",
+            "child-cancel",
+            "child-timeout",
+            "scope-enter",
+            "child-adopt",
+            "resource-adopt",
+        ]
+        .iter()
+        .enumerate()
+        {
+            text.push_str(&format!("(alias export $children \"{name}\" (func $child_op{i}))\n(core func $child_lower{i} (canon lower (func $child_op{i})))\n"));
+            builtin_exports.push_str(&format!("(export \"{name}\" (func $child_lower{i}))\n"));
+        }
+    }
     let core = core
         .strip_prefix("(module")
         .unwrap()
@@ -194,6 +312,9 @@ fn assemble(
     text.push_str(
         ")\n(core instance $guest (instantiate $guest (with \"__component\" (instance $env))))\n",
     );
+    if crate::task_children::enabled(module) {
+        text.push_str("(func $child_run async (param \"id\" s32) (param \"scope\" s32) (canon lift (core func $guest \"__child_run\")))\n(export \"wlt-child-run\" (func $child_run))\n");
+    }
     let used = module
         .functions
         .iter()
@@ -211,7 +332,9 @@ fn assemble(
         type_name("wlt-unit".into())
     );
     for ty in &adapter.types {
-        if let Type::Value(id) = ty {
+        if let Type::Resource(id) | Type::Value(id) | Type::Newtype(id) | Type::Ref { ty: id, .. } =
+            ty
+        {
             api_types.push_str(&format!(
                 "(export $api_t{} \"{}\" (type $t{}))\n",
                 id.0,
@@ -223,19 +346,29 @@ fn assemble(
     let mut api_imports = String::new();
     let mut api_arguments = String::new();
     let mut exports = String::new();
+    let mut export_functions = BTreeMap::new();
     for (i, f) in
         module.functions.iter().enumerate().filter(|(i, f)| {
             !f.exports.is_empty() && !module.tests.iter().any(|t| t.function.0 == *i)
         })
     {
         for (alias, name) in f.exports.iter().enumerate() {
+            let async_ = world
+                .map(|w| w.is_async(name))
+                .unwrap_or(effects[i].suspends);
             let post = if f.result != Type::Unit && adapter.flat(&f.result).len() > 1 {
                 format!(" (post-return (core func $guest \"__post_{i}\"))")
             } else {
                 String::new()
             };
-            text.push_str(&format!("(func $e{i}_{alias} {} (canon lift (core func $guest \"__export_{i}\") (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\")){post}))\n",component_signature(f,effects[i].suspends,"$")));
-            let api_signature = component_signature(f, effects[i].suspends, "$api_");
+            text.push_str(&format!("(func $e{i}_{alias} {} (canon lift (core func $guest \"__export_{i}\") (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\")){post}))\n",abi::component_signature_named(f,async_,"$",world.and_then(|w|w.names(name)))));
+            let api_signature = abi::component_signature_named(
+                f,
+                async_,
+                "$api_",
+                world.and_then(|w| w.names(name)),
+            );
+            export_functions.insert(name.clone(), format!("$e{i}_{alias}"));
             api_imports.push_str(&format!(
                 "(import \"f{i}-{alias}\" (func $e{i}_{alias} {api_signature}))\n"
             ));
@@ -247,7 +380,11 @@ fn assemble(
         .types
         .iter()
         .filter_map(|ty| {
-            if let Type::Value(id) = ty {
+            if let Type::Resource(id)
+            | Type::Value(id)
+            | Type::Newtype(id)
+            | Type::Ref { ty: id, .. } = ty
+            {
                 Some(format!(
                     "(alias export $delivery \"t{}\" (type $t{}))\n",
                     id.0, id.0
@@ -257,13 +394,44 @@ fn assemble(
             }
         })
         .collect::<String>();
-    text.push_str(&format!(
-        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n(export \"wlt:generated/api@0.1.0\" (instance $api)))\n",
+
+    let (api_exports, outer_exports) = if let Some(world) = world {
+        world.render(&export_functions)?
+    } else {
+        (
+            exports,
+            "(export \"wlt:generated/api@0.1.0\" (instance $api))\n".into(),
+        )
+    };
+    if world.is_some() {
+        text.push_str(&api_exports);
+        text.push(')');
+    } else {
+        text.push_str(&format!(
+        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{api_exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n{outer_exports})\n",
         adapter.declarations()
     ));
+    }
+    let delivery = if world.is_some() {
+        format!(
+            "(component $types {}{})\n(instance $delivery (instantiate $types{}))\n",
+            adapter.materialized_types(),
+            native_delivery::body(adapter)?,
+            world.map(|w| w.resource_arguments()).unwrap_or_default()
+        )
+    } else {
+        format!(
+            "(import \"wlt:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n",
+            adapter.declarations()
+        )
+    };
+    let prefix = world
+        .filter(|w| w.has_resources())
+        .map(|w| w.import_prefix(module))
+        .transpose()?
+        .unwrap_or_default();
     let text = format!(
-        "(component\n(import \"wlt:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{text}",
-        adapter.declarations()
+        "(component\n{prefix}{delivery}(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{text}"
     );
     let wasm = wat::parse_str(&text).map_err(|e| Error::message(format!("component WAT: {e}")))?;
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
@@ -281,9 +449,13 @@ fn assemble(
             serde_json::json!({"id":id.0,"kind":kind,"unit":*payload==Type::Unit})
         })
         .collect::<Vec<_>>();
+    let mut manifest = serde_json::json!({"version":2,"imports":crate::bindings::manifest(module),"factories":factories,"asyncExports": module.functions.iter().enumerate().filter(|(i,f)|effects[*i].suspends || world.is_some_and(|w|f.exports.iter().any(|n|w.is_async(n)))).flat_map(|(_,f)|f.exports.clone()).collect::<Vec<_>>()});
+    if crate::task_children::enabled(module) {
+        manifest["childTasks"] = true.into();
+    }
     Ok(Component {
         wasm,
         wat: text,
-        manifest: serde_json::json!({"version":2,"imports":crate::bindings::manifest(module),"factories":factories,"asyncExports": module.functions.iter().enumerate().filter(|(i,_)|effects[*i].suspends).flat_map(|(_,f)|f.exports.clone()).collect::<Vec<_>>()}),
+        manifest,
     })
 }

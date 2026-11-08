@@ -1,0 +1,32 @@
+(module
+  (%use "wlt:core" (type $option))
+  (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
+  (%closure $Work
+    (%capture $ms i32)
+    (%capture $answer i32)
+    (result i32)
+    (%effect host suspends)
+    (block (result i32) (call $sleep $ms) $answer))
+
+  (func $main
+    (export "main")
+    (result i32)
+    (%effect host reads writes allocates suspends)
+    (%let
+      (($slow (%task.spawn i32 $Work (%closure.new $Work 60000 99)))
+       ($sibling (%task.spawn i32 $Work (%closure.new $Work 10 21))))
+      (%let $result (%task.join-timeout i32 5 (%move $slow))
+        (+
+          (%match (%inst $option i32) (result i32)
+            $result
+            (case none () 21)
+            (case some ($value) $value))
+          (%task.join i32 (%move $sibling))))
+    ))
+
+  (func $cancel
+    (export "cancel")
+    (result i32)
+    (%effect host reads writes allocates suspends)
+    (%let $job (%task.spawn i32 $Work (%closure.new $Work 60000 99))
+      (block (result i32) (%task.cancel i32 (%move $job)) 42))))

@@ -5,6 +5,8 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 
+mod high_level;
+
 type Names = BTreeMap<String, usize>;
 type Scope = BTreeMap<String, LocalId>;
 
@@ -43,6 +45,9 @@ struct Tables<'a> {
     types: Names,
     newtypes: BTreeMap<TypeId, NumType>,
     functions: Names,
+    memories: Names,
+    atomic_cells: Names,
+    readonly_regions: Names,
     function_sites: BTreeMap<String, FunctionSite>,
     tags: Names,
     values: RefCell<ValueTables>,
@@ -61,6 +66,9 @@ impl Tables<'_> {
             types: Names::new(),
             newtypes: BTreeMap::new(),
             functions: Names::new(),
+            memories: Names::new(),
+            atomic_cells: Names::new(),
+            readonly_regions: Names::new(),
             function_sites: BTreeMap::new(),
             tags: Names::new(),
             values: RefCell::default(),
@@ -225,10 +233,12 @@ impl Tables<'_> {
                 self.count(node, items, 2)?;
                 Some(ValueType::Own(self.payload_ty(&items[1])?))
             }
-            Some("future" | "stream") => {
+            Some("future" | "stream" | "task") => {
                 self.count(node, items, 2)?;
                 let payload = self.payload_ty(&items[1])?;
-                Some(if node.head() == Some("future") {
+                Some(if node.head() == Some("task") {
+                    ValueType::Task(payload)
+                } else if node.head() == Some("future") {
                     ValueType::Future(payload)
                 } else {
                     ValueType::Stream(payload)
@@ -257,6 +267,8 @@ impl Tables<'_> {
         let id = TypeId(self.types.len() + self.values.borrow().types.len());
         self.values.borrow_mut().ids.insert(value.clone(), id);
         self.values.borrow_mut().types.push(TypeDecl {
+            abi: None,
+            abi_facts: None,
             name: format!("$__value{}", id.0),
             kind: TypeKind::Value(value.clone()),
         });
@@ -271,6 +283,9 @@ impl Tables<'_> {
     }
 
     fn collect_values(&self, node: &Sexp) -> Result<(), Error> {
+        if node.head() == Some("abi.type") {
+            return Ok(());
+        }
         if node.atom() == Some("text") {
             self.intern_value(ValueType::Bytes);
         }
@@ -294,6 +309,16 @@ impl Tables<'_> {
         let Some(items) = node.list() else {
             return Ok(());
         };
+        if node.head() == Some("variant") {
+            for case in &items[1..] {
+                if let Some(parts) = case.list() {
+                    for payload in parts.iter().skip(1) {
+                        self.collect_values(payload)?;
+                    }
+                }
+            }
+            return Ok(());
+        }
         for child in items {
             self.collect_values(child)?;
         }
@@ -301,6 +326,14 @@ impl Tables<'_> {
             self.intern_value(value);
         }
         match node.head() {
+            Some(
+                "task.spawn" | "task.join" | "task.drop" | "task.cancel" | "task.join-timeout",
+            ) if items.len() >= 2 => {
+                self.intern_value(ValueType::Task(self.payload_ty(&items[1])?));
+                if node.head() == Some("task.join-timeout") {
+                    self.intern_value(ValueType::Option(self.payload_ty(&items[1])?));
+                }
+            }
             Some(name) if name.starts_with("list.") && items.len() >= 2 => {
                 self.intern_value(ValueType::List(self.payload_ty(&items[1])?));
             }
@@ -358,7 +391,18 @@ impl Tables<'_> {
                     .is_some_and(|id| self.newtypes.contains_key(&TypeId(*id)))
         }) || matches!(
             node.head(),
-            Some("ref" | "list" | "option" | "own" | "future" | "stream" | "pair")
+            Some(
+                "ref"
+                    | "resource"
+                    | "borrow"
+                    | "list"
+                    | "option"
+                    | "own"
+                    | "future"
+                    | "stream"
+                    | "task"
+                    | "pair"
+            )
         ) || node.head() == Some("result") && node.list().unwrap().len() == 3
     }
 
@@ -430,6 +474,8 @@ impl Tables<'_> {
                 "allocates" => allowed.allocates = true,
                 "suspends" => allowed.suspends = true,
                 "host" => allowed.host = true,
+                "synchronizes" => allowed.synchronizes = true,
+                "blocks" => allowed.blocks = true,
                 "throws" => {
                     let tags = self.list(item)?;
                     if tags.len() == 2 && tags[1].atom() == Some("*") {
@@ -514,6 +560,11 @@ pub(crate) fn check<'b>(
     let mut law_names = BTreeSet::new();
     let mut test_names = BTreeSet::new();
     let mut tag_nodes = Vec::new();
+    let mut memory_nodes = Vec::new();
+    let mut cell_nodes = Vec::new();
+    let mut region_nodes = Vec::new();
+    let mut abi_nodes = Vec::new();
+    let mut race_mode = None;
     for node in &declarations[1..] {
         let items = tables.list(node)?;
         match node.head() {
@@ -531,6 +582,17 @@ pub(crate) fn check<'b>(
                 }
             }
             Some("func") => function_nodes.push((node, None)),
+            Some("memory") => memory_nodes.push((node, None)),
+            Some("atomic.cell") => cell_nodes.push(node),
+            Some("readonly.region") => region_nodes.push(node),
+            Some("abi.type") => abi_nodes.push(node),
+            Some("race-free") => {
+                if items.len() != 1 || race_mode.replace(node.span).is_some() {
+                    return Err(tables
+                        .error(node, "expected one (%race-free) declaration")
+                        .with_code("E_RACE_MODE"));
+                }
+            }
             Some("tag") => {
                 let name = tables.name(
                     items
@@ -593,13 +655,75 @@ pub(crate) fn check<'b>(
                 let name = items[2]
                     .text()
                     .ok_or_else(|| tables.error(node, "expected import name string"))?;
-                if items[3].head() != Some("func") {
-                    return Err(tables.error(node, "only function imports are supported"));
+                match items[3].head() {
+                    Some("func") => {
+                        function_nodes.push((&items[3], Some((module.to_owned(), name.to_owned()))))
+                    }
+                    Some("memory") => memory_nodes.push((
+                        &items[3],
+                        Some(crate::threads::MemoryImport {
+                            module: module.into(),
+                            name: name.into(),
+                        }),
+                    )),
+                    _ => {
+                        return Err(
+                            tables.error(node, "typed imports support functions and memories")
+                        );
+                    }
                 }
-                function_nodes.push((&items[3], Some((module.to_owned(), name.to_owned()))));
             }
             _ => return Err(tables.error(node, "unsupported declaration")),
         }
+    }
+    // Memory indices count imports before definitions, as in Core Wasm.
+    memory_nodes.sort_by_key(|(_, import)| import.is_none());
+    let mut memories = Vec::new();
+    for (node, import) in memory_nodes {
+        let memory = crate::threads::declaration(source, node, import)?;
+        tables
+            .name(&tables.list(node)?[1])
+            .map_err(|e| e.with_code("E_MEMORY_DECL"))?;
+        if tables
+            .memories
+            .insert(memory.name.clone(), memories.len())
+            .is_some()
+        {
+            return Err(tables
+                .error(node, "duplicate memory")
+                .with_code("E_MEMORY_DECL"));
+        }
+        memories.push(memory);
+    }
+    let mut atomic_cells = Vec::new();
+    for node in cell_nodes {
+        let cell = crate::race::cell_declaration(source, node, &memories)?;
+        tables.name(&tables.list(node)?[1])?;
+        if tables
+            .atomic_cells
+            .insert(cell.name.clone(), atomic_cells.len())
+            .is_some()
+        {
+            return Err(tables
+                .error(node, "duplicate atomic cell")
+                .with_code("E_ATOMIC_CELL"));
+        }
+        atomic_cells.push(cell);
+    }
+    let mut readonly_regions = Vec::new();
+    for node in region_nodes {
+        let region = crate::readonly::declaration(source, node, &memories)?;
+        tables.name(&tables.list(node)?[1])?;
+        if tables
+            .readonly_regions
+            .insert(region.name.clone(), readonly_regions.len())
+            .is_some()
+        {
+            return Err(tables
+                .error(node, "duplicate readonly region")
+                .with_code("E_READONLY_REGION"));
+        }
+        readonly_regions.push(region);
     }
     for (node, _) in &function_nodes {
         let items = tables.list(node)?;
@@ -734,7 +858,12 @@ pub(crate) fn check<'b>(
                 _ => return Err(tables.error(node, "expected GC struct, array, or variant type")),
             }
         };
-        types.push(TypeDecl { name, kind });
+        types.push(TypeDecl {
+            name,
+            kind,
+            abi: None,
+            abi_facts: None,
+        });
     }
     types.extend(tables.values.borrow().types.iter().cloned());
     let mut functions = Vec::new();
@@ -855,7 +984,13 @@ pub(crate) fn check<'b>(
                     if body.is_some() {
                         return Err(tables.error(item, "expected one expression as function body"));
                     }
-                    if item.list().is_none() && item.atom().is_none() {
+                    if item.list().is_none()
+                        && item.atom().is_none()
+                        && !matches!(
+                            item.kind,
+                            crate::sexpr::Kind::Text(_) | crate::sexpr::Kind::Bytes(_)
+                        )
+                    {
                         return Err(tables.error(item, "expected folded expression"));
                     }
                     body = Some(item);
@@ -1009,6 +1144,11 @@ pub(crate) fn check<'b>(
     }
     let mut module = Module {
         abi_suspends: Default::default(),
+        memories,
+        atomic_cells,
+        readonly_regions,
+        race_free: race_mode.is_some(),
+        race_span: race_mode.unwrap_or(root.span),
         types,
         functions,
         tests,
@@ -1016,6 +1156,7 @@ pub(crate) fn check<'b>(
         laws,
         tags,
     };
+    crate::interface::apply(source, &mut module, &abi_nodes)?;
     let constraints = crate::bounds::resolve(
         source,
         bounds,
@@ -1113,6 +1254,21 @@ pub(crate) fn check<'b>(
         }
         module.functions[index].body = Some(expression);
         module.functions[index].locals = checker.locals;
+    }
+    let mut export_names = module
+        .functions
+        .iter()
+        .flat_map(|f| f.exports.iter())
+        .cloned()
+        .collect::<BTreeSet<_>>();
+    for memory in &module.memories {
+        for name in &memory.exports {
+            if !export_names.insert(name.clone()) {
+                return Err(tables
+                    .error(root, "duplicate memory export")
+                    .with_code("E_MEMORY_DECL"));
+            }
+        }
     }
     // Inference may compose value types that never appeared in annotations.
     module.types.truncate(tables.types.len());
@@ -1278,7 +1434,12 @@ impl Checker<'_, '_> {
 
     fn is_owned(&self, ty: &Type) -> bool {
         match self.tables.value(ty) {
-            Some(ValueType::Own(_) | ValueType::Future(_) | ValueType::Stream(_)) => true,
+            Some(
+                ValueType::Own(_)
+                | ValueType::Future(_)
+                | ValueType::Stream(_)
+                | ValueType::Task(_),
+            ) => true,
             Some(value) => value
                 .variants(TypeId(0))
                 .iter()
@@ -1640,7 +1801,8 @@ impl Checker<'_, '_> {
                 ValueType::Bytes
                 | ValueType::Text
                 | ValueType::Future(_)
-                | ValueType::Stream(_) => Err(self
+                | ValueType::Stream(_)
+                | ValueType::Task(_) => Err(self
                     .tables
                     .error(node, "opaque delivery endpoints require await/next/close")),
                 value => Ok(Cow::Owned(value.variants(ty))),
@@ -1938,6 +2100,28 @@ impl Checker<'_, '_> {
             self.tables
                 .error(node, "local type elaboration limit exceeded")
         })?;
+        if matches!(
+            node.kind,
+            crate::sexpr::Kind::Text(_) | crate::sexpr::Kind::Bytes(_)
+        ) {
+            let ty = Type::Value(self.tables.intern_value(ValueType::Text));
+            if expected != Some(&ty) {
+                return Err(self.tables.error(node,"bare string literal requires an expected $string type")
+                    .with_code("E_LITERAL_TYPE")
+                    .help("add (type $string) or write an explicit (%string.lit \"...\"); strings are not converted to other types"));
+            }
+            let text = node.text().ok_or_else(|| {
+                self.tables
+                    .error(node, "string literal must contain valid UTF-8")
+                    .with_code("E_LITERAL_TYPE")
+                    .help("use %bytes.lit for arbitrary bytes")
+            })?;
+            return Ok(Expr {
+                ty,
+                span: node.span,
+                kind: ExprKind::Data(text.as_bytes().to_vec()),
+            });
+        }
         if let Some(atom) = node.atom() {
             let mut offset = 0;
             let numeric = wast::lexer::Lexer::new(atom)
@@ -1994,6 +2178,130 @@ impl Checker<'_, '_> {
         self.folded_expr_expected(node, scope, loops, tail, expected)
     }
 
+    fn memory_expr(
+        &mut self,
+        node: &Sexp,
+        items: &[Sexp],
+        op: &crate::threads::MemoryOp,
+        scope: &Scope,
+        loops: &[LoopContext],
+    ) -> Result<(Type, ExprKind), Error> {
+        let atomic_error = |message: &str| self.tables.error(node, message).with_code("E_ATOMIC");
+        let selector = crate::threads::selector(items);
+        let mut memory = if op.fence() {
+            None
+        } else {
+            let id = if let Some(index) = selector {
+                let name = self.tables.atom(&items[index])?;
+                self.tables
+                    .memories
+                    .get(name)
+                    .copied()
+                    .or_else(|| crate::threads::index(name).map(|n| n as usize))
+            } else {
+                Some(0)
+            };
+            Some(MemoryId(
+                id.filter(|i| *i < self.module.memories.len())
+                    .ok_or_else(|| {
+                        self.tables
+                            .error(node, "unknown or missing linear memory")
+                            .with_code("E_MEMORY_USE")
+                    })?,
+            ))
+        };
+        let mut start = 1 + usize::from(selector.is_some());
+        let mut offset = None;
+        let mut align = None;
+        while let Some(part) = items.get(start).filter(|n| crate::threads::immediate(n)) {
+            let token = part.atom().unwrap();
+            let (kind, value) = token.split_once('=').unwrap();
+            let value = crate::threads::index(value).ok_or_else(|| {
+                atomic_error("memory immediate must be an unsigned memory32 integer")
+            })?;
+            let slot = if kind == "offset" {
+                &mut offset
+            } else {
+                &mut align
+            };
+            if slot.replace(value).is_some() {
+                return Err(atomic_error("duplicate memory immediate"));
+            }
+            start += 1;
+        }
+        if op.bytes() == 0 && (offset.is_some() || align.is_some()) {
+            return Err(atomic_error(
+                "this instruction has no offset or alignment immediate",
+            ));
+        }
+        if align.is_some_and(|a| a != op.bytes()) {
+            return Err(atomic_error(
+                "atomic alignment must equal the natural access width in bytes",
+            ));
+        }
+        if items.len() != start + op.inputs().len() {
+            return Err(atomic_error(
+                "atomic/memory operand count does not match its Wasm signature",
+            ));
+        }
+        let cell = if let Some(address) = items.get(start).filter(|n| n.head() == Some("atomic.at"))
+        {
+            let fields = self.tables.list(address)?;
+            if fields.len() != 2 {
+                return Err(self
+                    .tables
+                    .error(address, "expected (%atomic.at $cell)")
+                    .with_code("E_ATOMIC_CELL"));
+            }
+            let name = self.tables.atom(&fields[1])?;
+            let id = AtomicCellId(*self.tables.atomic_cells.get(name).ok_or_else(|| {
+                self.tables
+                    .error(address, "unknown atomic cell")
+                    .with_code("E_ATOMIC_CELL")
+            })?);
+            let declaration = &self.module.atomic_cells[id.0];
+            if selector.is_none() {
+                memory = Some(declaration.memory);
+            }
+            if memory != Some(declaration.memory)
+                || offset.unwrap_or(0) != 0
+                || !crate::race::compatible(op, declaration)
+            {
+                return Err(self.tables.error(node, "atomic operation must use the cell's memory, full width, and zero extra offset").with_code("E_ATOMIC_CELL"));
+            }
+            Some(id)
+        } else {
+            None
+        };
+        let mut args = Vec::new();
+        for (index, (part, ty)) in items[start..].iter().zip(op.inputs()).enumerate() {
+            if index == 0
+                && let Some(id) = cell
+            {
+                args.push(Expr {
+                    ty: Type::Num(NumType::I32),
+                    span: part.span,
+                    kind: ExprKind::Const {
+                        ty: NumType::I32,
+                        literal: self.module.atomic_cells[id.0].offset.to_string(),
+                    },
+                });
+                continue;
+            }
+            args.push(self.expr_as(part, scope, loops, false, &Type::Num(*ty))?);
+        }
+        Ok((
+            op.output().map(Type::Num).unwrap_or(Type::Unit),
+            ExprKind::Memory {
+                op: op.clone(),
+                memory,
+                cell,
+                offset: offset.unwrap_or(0),
+                args,
+            },
+        ))
+    }
+
     fn folded_expr_expected(
         &mut self,
         node: &Sexp,
@@ -2010,7 +2318,108 @@ impl Checker<'_, '_> {
             .ok_or_else(|| self.tables.error(node, "expected expression operator"))?;
         let tables = self.tables;
         let count = |n| tables.count(node, items, n);
-        let (ty, kind) = if let Some(op) = DeliveryOp::parse(head) {
+        if head == "atomic.at" {
+            return Err(tables
+                .error(
+                    node,
+                    "an atomic cell reference is only allowed as an atomic address operand",
+                )
+                .with_code("E_ATOMIC_CELL"));
+        }
+        let (ty, kind) = if head == "readonly.load" {
+            count(4)?;
+            let id = tables
+                .atom(&items[1])
+                .ok()
+                .and_then(|name| tables.readonly_regions.get(name))
+                .copied()
+                .ok_or_else(|| {
+                    tables
+                        .error(&items[1], "unknown readonly region")
+                        .with_code("E_READONLY_REGION")
+                })?;
+            let (opcode, ty, width) = items[2]
+                .atom()
+                .and_then(crate::readonly::opcode)
+                .ok_or_else(|| {
+                    tables
+                        .error(&items[2], "readonly.load supports u8, i32, i64 or v128")
+                        .with_code("E_READONLY_LOAD")
+                })?;
+            let offset = self.expr_as(&items[3], scope, loops, false, &Type::Num(NumType::I32))?;
+            (
+                Type::Num(ty),
+                Wasm {
+                    instruction: crate::wasm::Instruction {
+                        opcode: opcode.into(),
+                        memories: vec![self.module.readonly_regions[id].memory],
+                        immediates: vec![],
+                        readonly: Some(crate::readonly::Load { region: id, width }),
+                    },
+                    args: vec![offset],
+                },
+            )
+        } else if let Some(op) = crate::threads::lookup(head) {
+            self.memory_expr(node, items, op, scope, loops)?
+        } else if crate::wasm::supported(head) {
+            let mut instruction = crate::wasm::Instruction {
+                opcode: head.into(),
+                memories: Vec::new(),
+                immediates: Vec::new(),
+                readonly: None,
+            };
+            let mut args = Vec::new();
+            let mut lane = false;
+            for item in &items[1..] {
+                if args.is_empty()
+                    && let Some(name) = item.atom()
+                {
+                    if let Some(id) = self.module.memories.iter().position(|m| m.name == name) {
+                        instruction.memories.push(MemoryId(id));
+                        continue;
+                    }
+                    if name.starts_with("offset=")
+                        || name.starts_with("align=")
+                        || (head.ends_with("_lane")
+                            && !lane
+                            && crate::threads::index(name).is_some())
+                    {
+                        instruction.immediates.push(name.into());
+                        if head.ends_with("_lane") && !name.contains('=') {
+                            lane = true;
+                        }
+                        continue;
+                    }
+                }
+                let hint = Type::Num(
+                    instruction.hint(
+                        args.iter()
+                            .filter(|e: &&Expr| matches!(e.ty, Type::Num(_)))
+                            .count(),
+                    ),
+                );
+                let value = if item.atom().is_some_and(|s| !s.starts_with('$')) {
+                    self.expr_as(item, scope, loops, false, &hint)?
+                } else {
+                    self.expr(item, scope, loops, false)?
+                };
+                args.push(value);
+            }
+            let count = if head == "memory.copy" { 2 } else { 1 };
+            if instruction.memories.is_empty() && !self.module.memories.is_empty() {
+                instruction.memories = vec![MemoryId(0); count];
+            }
+            if instruction.memories.len() != count {
+                return Err(tables
+                    .error(node, "expected named memory operands")
+                    .with_code("E_WAT_TYPE"));
+            }
+            let inputs = args.iter().map(|e| e.ty.clone()).collect::<Vec<_>>();
+            let ty = instruction
+                .result(&self.module.memories, &inputs)
+                .map_err(|e| tables.error(node, e.to_string()).with_code("E_WAT_TYPE"))?;
+            (ty, Wasm { instruction, args })
+        } else if let Some(op) = DeliveryOp::parse(head) {
             self.delivery_expr(node, items, op, scope, loops)?
         } else if let Some(signature) = crate::simd::lookup(head) {
             let start = 1 + signature.immediate_count();
@@ -2107,6 +2516,94 @@ impl Checker<'_, '_> {
                         },
                     )
                 }
+                "task.spawn" => {
+                    tables.count(node, items, 4)?;
+                    let payload = tables.payload_ty(&items[1])?;
+                    let name = tables.atom(&items[2])?;
+                    let function = FunctionId(
+                        *tables
+                            .functions
+                            .get(name)
+                            .ok_or_else(|| tables.error(node, "unknown task closure"))?,
+                    );
+                    let f = &self.module.functions[function.0];
+                    let FunctionKind::Closure { environment } = f.kind else {
+                        return Err(tables.error(node, "task.spawn requires a declared closure"));
+                    };
+                    if !f.params.is_empty() || f.result != payload {
+                        return Err(tables.error(
+                            node,
+                            "task closure must take no arguments and return the declared payload",
+                        ));
+                    }
+                    let environment = self.expr_as(
+                        &items[3],
+                        scope,
+                        loops,
+                        false,
+                        &Type::Ref {
+                            ty: environment,
+                            nullable: false,
+                        },
+                    )?;
+                    (
+                        Type::Value(tables.intern_value(ValueType::Task(payload))),
+                        TaskSpawn {
+                            function,
+                            environment: Box::new(environment),
+                        },
+                    )
+                }
+                "task.join" | "task.drop" | "task.cancel" | "task.join-timeout" => {
+                    let timed = head == "task.join-timeout";
+                    tables.count(node, items, if timed { 4 } else { 3 })?;
+                    let payload = tables.payload_ty(&items[1])?;
+                    let ty = Type::Value(tables.intern_value(ValueType::Task(payload.clone())));
+                    let timeout = if timed {
+                        Some(Box::new(self.expr_as(
+                            &items[2],
+                            scope,
+                            loops,
+                            false,
+                            &Type::Num(NumType::I32),
+                        )?))
+                    } else {
+                        None
+                    };
+                    let task =
+                        self.expr_as(&items[if timed { 3 } else { 2 }], scope, loops, false, &ty)?;
+                    (
+                        if head == "task.drop" || head == "task.cancel" {
+                            Type::Unit
+                        } else if timed {
+                            Type::Value(tables.intern_value(ValueType::Option(payload.clone())))
+                        } else {
+                            payload
+                        },
+                        TaskJoin {
+                            task: Box::new(task),
+                            discard: head == "task.drop" || head == "task.cancel",
+                            cancel: head == "task.cancel",
+                            timeout,
+                        },
+                    )
+                }
+                "task.scope" => {
+                    tables.count(node, items, 3)?;
+                    let annotation = tables.list(&items[1])?;
+                    tables.count(&items[1], annotation, 2)?;
+                    if items[1].head() != Some("result") {
+                        return Err(tables.error(&items[1], "task.scope requires (result T)"));
+                    }
+                    let result = tables.payload_ty(&annotation[1])?;
+                    let body = self.expr_as(&items[2], scope, loops, tail, &result)?;
+                    (
+                        result,
+                        TaskScope {
+                            body: Box::new(body),
+                        },
+                    )
+                }
                 "resource.handle" | "resource.close" => {
                     tables.count(node, items, 2)?;
                     let value = self.expr(&items[1], scope, loops, false)?;
@@ -2195,6 +2692,9 @@ impl Checker<'_, '_> {
                         );
                     }
                     if items[1].list().is_some() {
+                        if items[1].head() == Some("@fields") {
+                            return self.struct_let(node, items, scope, loops, tail, expected);
+                        }
                         return self.pair_let(node, items, scope, loops, tail, expected);
                     }
                     let name = self.tables.name(&items[1])?;
@@ -2398,6 +2898,7 @@ impl Checker<'_, '_> {
                 }
                 "match" => self.match_expr(node, items, scope, loops, tail, expected)?,
                 "for" => self.for_expr(node, items, scope, loops)?,
+                "for-each" => self.for_each(node, items, scope, loops)?,
                 "try" => self.try_expr(node, items, scope, loops, tail)?,
                 "throw" => {
                     let tag = tables.tag_id(
@@ -2565,6 +3066,7 @@ impl Checker<'_, '_> {
                     (result, Call { function: id, args })
                 }
                 "struct.named" => self.named_struct(node, items, scope, loops)?,
+                "struct.update" => self.struct_update(node, items, scope, loops)?,
                 "struct.new" | "closure.new" => {
                     let type_node = items
                         .get(1)
@@ -2717,9 +3219,21 @@ impl Checker<'_, '_> {
                     (Type::Never, Unreachable)
                 }
                 _ => {
-                    return Err(self
+                    let surface = items
+                        .first()
+                        .and_then(|n| self.tables.source.get(n.span.start..n.span.end))
+                        .filter(|s| s.starts_with('%'))
+                        .unwrap_or(head);
+                    let error = self
                         .tables
-                        .error(node, format!("unsupported expression `{head}`")));
+                        .error(node, format!("unsupported expression `{surface}`"));
+                    return Err(if surface == "%string.len" {
+                        error
+                            .with_code("E_BUFFER_OP")
+                            .help("use (%string.byte-len value) for the UTF-8 byte length")
+                    } else {
+                        error
+                    });
                 }
             }
         };
@@ -2869,6 +3383,9 @@ impl Checker<'_, '_> {
         let endpoint = self.tables.intern_value(shape.clone());
         let handle = Type::Value(endpoint);
         let mut parameters = Vec::new();
+        if op == DeliveryOp::StreamReadBatch {
+            parameters.push(Type::Num(NumType::I32));
+        }
         if matches!(op, DeliveryOp::FutureReady | DeliveryOp::StreamCons) && payload != Type::Unit {
             parameters.push(payload.clone());
         }
@@ -2881,6 +3398,13 @@ impl Checker<'_, '_> {
             DeliveryOp::FutureReady | DeliveryOp::StreamEmpty | DeliveryOp::StreamCons => handle,
             DeliveryOp::FutureAwait => payload,
             DeliveryOp::FutureClose | DeliveryOp::StreamClose => Type::Unit,
+            DeliveryOp::StreamReadBatch => {
+                let list = self.tables.intern_value(ValueType::List(payload));
+                Type::Value(self.tables.intern_value(ValueType::Pair {
+                    first: handle,
+                    second: Type::Value(list),
+                }))
+            }
             DeliveryOp::StreamNext => {
                 let option = self.tables.intern_value(ValueType::Option(payload));
                 Type::Value(self.tables.intern_value(ValueType::Pair {

@@ -24,20 +24,19 @@ function materializeError(error, seen) {
 }
 
 export class TaskCancelledError extends Error {
-  constructor(reason) {
-    super("Task cancelled", { cause: reason });
-    this.name = "TaskCancelledError";
+  constructor(reason,message="Task cancelled",name="TaskCancelledError") {
+    super(message, { cause: reason });
+    this.name = name;
     materializeError(this);
   }
 }
+export class TaskTimeoutError extends TaskCancelledError {
+  constructor(milliseconds){super(undefined,`Task timed out after ${milliseconds} ms`,"TaskTimeoutError");this.timeoutMs=milliseconds;}
+}
+const cancellationError=reason=>reason instanceof TaskTimeoutError?reason:new TaskCancelledError(reason);
 const terminal = new Set(["returned", "cancelled", "failed"]);
 function deferred() {
-  let resolve, reject;
-  const promise = new Promise((a, b) => {
-    resolve = a;
-    reject = b;
-  });
-  return { promise, resolve, reject };
+  return Promise.withResolvers();
 }
 
 // Construct handles outside the scheduler's method scope: keeping completed
@@ -62,9 +61,17 @@ export class Tasks {
     this.active = null;
     this.failure = null;
     this.nextId = 1;
-    this.resources = new Resources(()=>this.active,fn=>this.disposal(fn));
+    this.resources = new Resources(()=>this.active,fn=>this.disposal(fn),()=>this.scope);
+    this.children = null;
+    this.scope=0;
   }
   capture(instance) {
+    if(instance.exports["scope-owner"])this.scopeOwner=instance.exports["scope-owner"];
+    if(instance.exports["free-scope"])this.freeScope=instance.exports["free-scope"];
+    if(instance.exports.__child_discard)this.discardChild=instance.exports.__child_discard;
+    if(instance.exports.__scope_cleanup)this.cleanupScope=instance.exports.__scope_cleanup;
+    if(instance.exports.__child_run)this.childRun=WebAssembly.promising(instance.exports.__child_run);
+    if(instance.exports.__children_clear)this.clearChildren=instance.exports.__children_clear;
     if (instance.exports["free-all"])
       this.freeBoundary = instance.exports["free-all"];
     if (instance.exports.__task_cleanup)
@@ -75,12 +82,16 @@ export class Tasks {
       this.tag = instance.exports.__task_cancel;
     return instance;
   }
+  enter(scope) {this.scope=scope;if(this.scopeOwner)this.scopeOwner.value=scope;}
+  cancelled(scope=this.scope){return this.active?.state==="cancelling" || !!this.active?.children?.scopes.get(scope)?.cancelled;}
   cleanupGuest() {
     this.cleaning = true;
     try { this.guestCleanup?.(); }
     finally { this.cleaning = false; }
   }
   bind(component) {
+    if(component.wltChildRun)this.childRun=component.wltChildRun;
+    const {wltChildRun:privateRunner,...visible}=component;
     if (!this.flag || !this.tag)
       throw new Error("component lacks the cancellation ABI");
     this.raw = component.api;
@@ -92,7 +103,7 @@ export class Tasks {
     );
     // Both aliases must use the scheduler; raw exports are never exposed.
     return {
-      ...component,
+      ...visible,
       api,
       "wlt:generated/api@0.1.0": api,
       start: this.start.bind(this),
@@ -103,6 +114,8 @@ export class Tasks {
       throw new TypeError(`unknown export ${name}`);
     if (!Array.isArray(args))
       throw new TypeError("task arguments must be an array");
+    if(options.timeoutMs!==undefined&&(!Number.isInteger(options.timeoutMs)||options.timeoutMs<0||options.timeoutMs>2147483647))throw new RangeError('invalid timeoutMs');
+    if(options.signal&&typeof options.signal.addEventListener!=='function')throw new TypeError('expected AbortSignal');
     const result = deferred(),
       done = deferred();
     result.promise.catch(() => {});
@@ -130,7 +143,7 @@ export class Tasks {
         record.detach?.();
         record.detach = undefined;
         record.args = [];
-        result.reject(new TaskCancelledError(reason));
+        result.reject(cancellationError(reason));
         done.resolve({ status: "cancelled", started: false });
         return done.promise;
       }
@@ -142,14 +155,15 @@ export class Tasks {
     };
     record.cancel = cancel;
     record.public = taskHandle(record);
-    if (options.signal) {
-      const signal = options.signal;
-      if (typeof signal.addEventListener !== "function")
-        throw new TypeError("expected AbortSignal");
-      const abort = () => cancel(signal.reason);
-      record.detach = () => signal.removeEventListener("abort", abort);
-      signal.addEventListener("abort", abort, { once: true });
-      if (signal.aborted) abort();
+    let timer;
+    const signal=options.signal;
+    const abort=()=>cancel(signal.reason);
+    record.detach=()=>{clearTimeout(timer);signal?.removeEventListener("abort",abort);};
+    signal?.addEventListener("abort",abort,{once:true});
+    if(signal?.aborted)abort();
+    if(!terminal.has(record.state)&&options.timeoutMs!==undefined){
+      if(options.timeoutMs===0)cancel(new TaskTimeoutError(0));
+      else timer=setTimeout(()=>cancel(new TaskTimeoutError(options.timeoutMs)),options.timeoutMs);
     }
     return record;
   }
@@ -189,6 +203,7 @@ export class Tasks {
     record.started = true;
     record.state = "running";
     this.flag.value = 0;
+    this.enter(0);
     let value;
     try {
       if (this.failure) throw this.failure;
@@ -223,6 +238,7 @@ export class Tasks {
     record.settling = true;
     try {
       const failures = [];
+      if(record.children){await this.children.finish(record,error);error=record.childFailure??error;}
       if (error) {
         try { this.cleanupGuest(); }
         catch (cleanupError) { failures.push(cleanupError); }
@@ -269,7 +285,7 @@ export class Tasks {
     record.cancel = undefined;
     record.detach?.();
     record.detach = undefined;
-    if (cancelled) record.result.reject(new TaskCancelledError(record.reason));
+    if (cancelled) record.result.reject(cancellationError(record.reason));
     else if (error) record.result.reject(error);
     else if (typeof value?.resolveAsValue === "function")
       value.resolveAsValue(record.result.resolve);
@@ -281,7 +297,11 @@ export class Tasks {
   }
   disposal(thunk) {
     const operation = Promise.resolve().then(thunk);
-    if (this.active) this.active.disposals.push(operation);
+    if (this.active) {
+      this.active.disposals.push(operation);
+      const scope=this.active.children?.scopes.get(this.scope);
+      scope?.disposals.push(operation);
+    }
     else
       operation.catch((error) => console.error("host disposal failed", error));
     // A cancellation request may await only done, rather than result.
@@ -289,14 +309,16 @@ export class Tasks {
     return operation;
   }
   read(cancel, run) {
+    const scope=this.scope;
     const value = run();
     if (!value || typeof value.then !== "function") return value;
     const record = this.active;
     if (!record) return value;
+    cancel.scope=scope;
     record.reads.add(cancel);
     this.notify({ type: "read-pending", id: record.id });
-    if (record.state === "cancelling") cancel();
-    return Promise.resolve(value).finally(() => record.reads.delete(cancel));
+    if (this.cancelled(scope)) cancel();
+    return Promise.resolve(value).finally(() => {this.enter(scope);record.reads.delete(cancel);});
   }
   host(host, blocking = ["sleep", "yield"]) {
     return Object.fromEntries(
@@ -305,6 +327,7 @@ export class Tasks {
         typeof fn !== "function"
           ? fn
           : (...args) => {
+              const scope=this.scope;
               const value = fn.apply(host, args),
                 record = this.active;
               if (!record || !blocking.includes(name)) return value;
@@ -316,8 +339,10 @@ export class Tasks {
                   value?.[Symbol.asyncDispose] ?? value?.[Symbol.dispose];
                 if (dispose) cleanup = this.disposal(() => dispose.call(value));
               };
+              cancel.scope=scope;
               record.blocking.add(cancel);
-              if (record.state === "cancelling") cancel();
+              this.notify({type:'host-pending',id:record.id,name});
+              if (this.cancelled(scope)) cancel();
               const cancelled = async () => {
                 // The host operation may reject with AbortError. Complete its
                 // disposal before unwinding guest using scopes and closing resources.
@@ -325,9 +350,9 @@ export class Tasks {
                 throw new WebAssembly.Exception(this.tag, []);
               };
               return Promise.resolve(value).then(
-                value => record.state === "cancelling" ? cancelled() : value,
+                value => {this.enter(scope);return this.cancelled(scope) ? cancelled() : value;},
                 error => {
-                  if (record.state === "cancelling") return cancelled();
+                  this.enter(scope);if (this.cancelled(scope)) return cancelled();
                   throw error;
                 },
               ).finally(() => record.blocking.delete(cancel));

@@ -15,9 +15,9 @@ Rust側の型検査・コンパイル時間は [Criterionによるフロント�
 just bench                          # カレント以下の *_bench.wlt
 just bench examples 'JSON'          # 名前の部分一致
 just list-benches examples
-cargo run --release -- bench examples/benchmarks/stdlib_v2_bench.wlt --samples 20
-cargo run --release -- bench examples --json > target/bench.json
-cargo run --release -- bench examples --iterations 1000 --warmup-ms 100
+wlt bench examples/benchmarks/stdlib_v2_bench.wlt --samples 20
+wlt bench examples --json > target/bench.json
+wlt bench examples --iterations 1000 --warmup-ms 100
 just test-bench
 ```
 
@@ -68,8 +68,9 @@ JSONには測定順の生サンプルとNode/V8の版、OS・アーキテクチ�
 選んだbench以外のexportはリンクの根から外すため、無関係なimportは持ち込まない。
 通常の `%test` と探索・実行を分け、`wlt test` はbenchを実行しない。
 
-ディレクトリは再帰探索し、シンボリックリンクをたどらない。明示したファイルは名前を問わず、
-重複は正規化したパスでまとめる。`--` の後はすべてファイルパスとして扱う。
+ディレクトリは再帰探索し、シンボリックリンクをたどらない。
+`target`・`node_modules`・`.git` は再帰探索から除外する。これらも入力パスとして明示した場合は対象にできる。
+明示したファイルは名前を問わず、重複は正規化したパスでまとめる。`--` の後はすべてファイルパスとして扱う。
 trapやタイムアウト、ファイルの型エラーがあっても他のケースは続行する。
 0件はエラー。終了コードは成功0、計測・ソース・環境のエラー1、引数の誤り2。
 
@@ -119,3 +120,14 @@ V8はウォームアップ後に約1秒、Wasmtimeは指定した反復数を1ms
 プロファイルの起動・Wasmコンパイルは採取区間から外し、プロファイル下の時間を速度比較には使わない。
 Wasmtime側のサンプルが少なければ、新しい出力先で反復数を増やす。
 両エンジンでインライン化やGCが異なるため、サンプル比をエンジン間で性能比として扱わない。
+
+## Core＋JSPI のテスト・計測
+
+`wlt test --target core-js --bindings policy.json --host host.mjs` と
+`wlt bench --target core-js --bindings policy.json --host host.mjs` で、非同期 import と子タスクを実行できる。
+ケースごとにプロセス・Wasm instance・host factory を作り、正常・失敗・取消し後にホストの解放を待つ。
+`--list` は型チェックだけを行い、host module と Node を起動しない。
+タイムアウト時は協調的な取消しを要求し、最大5秒の解放猶予後も終了しないホストは強制終了して失敗を報告する。
+
+Core＋JSPI のベンチは、各呼出しを順番に await する end-to-end 計測。codec・JSPI・待機時間を含み、結果は ABI 対応の共有値または unit に限定する。
+既定の `core` の Wasm 内バッチ計測とは別の測定条件で、JSON の `options.target` と `summary.runtime` に区別を残す。

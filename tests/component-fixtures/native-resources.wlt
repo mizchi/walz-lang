@@ -1,0 +1,17 @@
+(module
+  (%use "wlt:core" (type $borrow) (type $option))
+  (type $File (%resource "test:resources/host/file" $drop))
+  (import "test:resources/host" "make" (func $new (result (%resource $File))))
+  (import "test:resources/host" "read" (func $read (param $f (%inst $borrow $File)) (result i32)))
+  (import "test:resources/host" "[resource-drop]file" (func $drop (param $f i32)))
+  (func $echo (export "api-echo") (param $f (%resource $File)) (result (%resource $File)) (%effect pure) (%move $f))
+  (func $borrow (export "api-read") (param $f (%inst $borrow $File)) (result i32) (%effect host reads) (call $read $f))
+  (func $close (export "api-close") (param $f (%resource $File)) (%effect host writes) (%resource.close (%move $f)))
+  (func $make (export "api-make") (result (%resource $File)) (%effect host writes allocates) (call $new))
+
+  (func $optional (export "api-optional") (param $f (%resource $File)) (result (%inst $option (%resource $File))) (%effect allocates)
+    (%option.some (%resource $File) (%move $f)))
+  (func $release (export "api-release-option") (param $v (%inst $option (%resource $File))) (%effect host writes)
+    (%match (%inst $option (%resource $File)) (%move $v)
+      (case none () (nop)) (case some ($f) (%resource.close (%move $f)))))
+)

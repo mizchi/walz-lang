@@ -1,5 +1,7 @@
 # 導入とサンプル
 
+CLI のインストールと `wlt build`・`wlt test`・`wlt bench` の使い方は [CLI ガイド](cli.md) を参照してください。以下はリポジトリ内の開発用タスクとサンプルの説明です。
+
 [mizchi/wlt-lang](https://github.com/mizchi/wlt-lang) は Wasmtime の作業ディレクトリ内の試作から独立した言語リポジトリです。
 旧名 gcwat からの変更点と過去の評価記録の扱いは [MIGRATION.md](../MIGRATION.md) にまとめています。
 
@@ -52,7 +54,7 @@ just samples                 # 実行サンプルと期待値を一覧で確認
 just probes                  # 未対応機能を再現する検査
 ```
 
-Rust 1.97 以降と just を使用します。実行と実行テストには Wasm GC 対応の `wasmtime`、WIT のテストには `wasm-tools` が PATH 上に必要です。
+Rust 1.99 以降と just を使用します。実行と実行テストには Wasm GC 対応の `wasmtime`、WIT のテストには `wasm-tools` が PATH 上に必要です。
 契約付き実行・law を含むモジュール・Rust の検証テストには、elan 経由の `lean +v4.34.1` も必要です。
 `check`・`wat`・`build`・静的解析には Wasmtime は不要です。law を含まない通常のコンパイルでは Lean も不要です。just を使わず `cargo run --locked -- run examples/closure.wlt` としても実行できます。
 生成した Wasm は `wasmtime run -W gc=y,function-references=y,exceptions=y --invoke main target/program.wasm` で実行できます。

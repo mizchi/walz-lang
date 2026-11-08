@@ -1,0 +1,6 @@
+cargo run --locked --quiet --example stdlib-docs -- --check
+cargo fmt --all -- --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+    Checking wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Checking wlt-web v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang/crates/wlt-web)
+    Finished `dev` profile [unoptimized] target(s) in 3.24s

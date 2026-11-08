@@ -24,6 +24,7 @@
 | `(type $list)` | `$T` | `(%inst $list $T)` |
 | `(type $box)` | `$T` | `(%inst $box $T)` |
 | `(type $future)` | `$T` | `(%inst $future $T)` |
+| `(type $task)` | `$T` | `(%inst $task $T)` |
 | `(type $stream)` | `$T` | `(%inst $stream $T)` |
 | `(type $resource-handle)` | `$R` | `(%inst $resource-handle $R)` |
 | `(type $borrow)` | `$R` | `(%inst $borrow $R)` |
@@ -470,6 +471,45 @@ import: `(func $list.map)`。effect は具体化時に推論。渡した closure
   (param $xs (%inst $list $T))
   (param $f (ref $F))
   (result (%inst $list $U))
+)
+```
+
+
+## `option.wlt`
+
+実装: [stdlib/option.wlt](../stdlib/option.wlt)。
+
+### `$option.ok-or`
+
+import: `(func $option.ok-or)`。effect は宣言した上限（本体を検査）。
+
+```text
+(func $option.ok-or
+  (%type.params $T $E)
+  (%where (shared $T $E) (nonunit $T $E))
+  (param $value (%inst $option $T))
+  (param $error $E)
+  (result (%inst $result $T $E))
+  (%effect pure)
+)
+```
+
+
+## `result.wlt`
+
+実装: [stdlib/result.wlt](../stdlib/result.wlt)。
+
+### `$result.map-err`
+
+import: `(func $result.map-err)`。effect は具体化時に推論。渡した closure の effect も含む。
+
+```text
+(func $result.map-err
+  (%type.params $T $E $U $F)
+  (%where (shared $T $E $U) (nonunit $T $E $U) (callable $F (param $E) (result $U)))
+  (param $value (%inst $result $T $E))
+  (param $mapper (ref $F))
+  (result (%inst $result $T $U))
 )
 ```
 

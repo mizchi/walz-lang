@@ -1,0 +1,5 @@
+lean +v4.34.1 proof/Ownership.lean
+lean +v4.34.1 proof/Delivery.lean
+lean +v4.34.1 proof/Tasks.lean
+lean +v4.34.1 proof/Flow.lean
+lean +v4.34.1 proof/AtomicCells.lean

@@ -1,6 +1,25 @@
 use wlt::bindings::BindingPolicy;
 
 #[test]
+fn wit_generation_rejects_flags_exceeding_the_component_limit() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("flags.wit");
+    let names = (0..33)
+        .map(|i| format!("flag{i}"))
+        .collect::<Vec<_>>()
+        .join(",");
+    std::fs::write(&input,format!("package example:host@1.0.0; interface service {{ flags many {{ {names} }} echo: func(value: many) -> many; }} world guest {{ import service; }}")).unwrap();
+    let grants = r#"{"imports":[{"module":"example:host/service@1.0.0","name":"echo","suspends":false,"capability":"flags"}]}"#;
+    let error = wlt::wit_bindgen::generate(&input, None, grants)
+        .err()
+        .unwrap();
+    assert!(
+        error.to_string().contains("cannot have more than 32 flags"),
+        "{error}"
+    );
+}
+
+#[test]
 fn generated_imports_require_separate_trusted_policy() {
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("host.wit");
@@ -51,12 +70,68 @@ fn generated_imports_require_separate_trusted_policy() {
 }
 
 #[test]
+fn wit_records_enums_flags_unsigned_and_export_scaffolds_share_checked_types() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("types.wit");
+    std::fs::write(
+        &path,
+        r#"package example:shapes@1.0.0;
+      interface io {
+        enum color { red, green, blue }
+        flags access { read, write }
+        record item { label: string, count: u32, wide: u64, color: color, access: access }
+        echo: func(value: item) -> item;
+      }
+      world guest { import io; export io; }
+      world empty {}"#,
+    )
+    .unwrap();
+    let grants = r#"{"imports":[{"module":"example:shapes/io@1.0.0","name":"echo","suspends":false,"capability":"echo"}]}"#;
+    let generated = wlt::wit_bindgen::generate(&path, Some("guest"), grants).unwrap();
+    assert!(generated.source.contains("%abi.type"));
+    assert!(
+        generated
+            .source
+            .contains("(record \"label\" \"count\" \"wide\" \"color\" \"access\")")
+    );
+    let policy = BindingPolicy::parse(&generated.policy).unwrap();
+    let source=generated.source.replacen("(module",r#"(module (func $main (export "main") (param $v (ref $io.item)) (result (ref $io.item)) (%effect host) (call $io.echo $v))"#,1);
+    wlt::component::compile_with_policy(&source, &policy).unwrap();
+    wlt::component::core_js::compile_with_policy(&source, &policy).unwrap();
+    assert!(wlt::wit_bindgen::generate(&path, Some("empty"), grants).is_err());
+    std::fs::write(dir.path().join("grants.json"), grants).unwrap();
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
+        .args([
+            "bind",
+            path.to_str().unwrap(),
+            dir.path().join("grants.json").to_str().unwrap(),
+            dir.path().join("generated").to_str().unwrap(),
+            "--world",
+            "guest",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let export = std::fs::read_to_string(dir.path().join("generated/exports.wlt")).unwrap();
+    assert!(
+        export.contains("unreachable") && export.contains("export \"io-echo\""),
+        "{export}"
+    );
+    let loaded = wlt::source::load(dir.path().join("generated/exports.wlt")).unwrap();
+    wlt::component::core_js::compile(loaded.text()).unwrap();
+}
+
+#[test]
 fn wit_generation_rejects_missing_authority_and_unsupported_shapes() {
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("host.wit");
     std::fs::write(
         &input,
-        "package example:host; interface io { read: func() -> u32; } world guest { import io; }",
+        "package example:host; interface io { resource handle; read: func() -> list<own<handle>>; } world guest { import io; }",
     )
     .unwrap();
     assert!(

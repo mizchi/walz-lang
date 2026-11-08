@@ -1,0 +1,11 @@
+{"imports":[
+  {"module":"channels","name":"stream","params":["i32"],"result":"i32","suspends":false,"capability":"channels","resource":{"kind":"stream-writer","operation":"new"}},
+  {"module":"channels","name":"stream-reader","params":["i32"],"result":"(stream i32)","suspends":false,"capability":"channels","resource":{"kind":"stream-writer","operation":"reader"}},
+  {"module":"channels","name":"send","params":["i32","i32"],"result":"i32","suspends":true,"capability":"channels","resource":{"kind":"stream-writer","operation":"use"}},
+  {"module":"channels","name":"close-stream","params":["i32"],"result":"unit","suspends":false,"capability":"channels","resource":{"kind":"stream-writer","operation":"close"}},
+  {"module":"channels","name":"future","params":[],"result":"i32","suspends":false,"capability":"channels","resource":{"kind":"future-writer","operation":"new"}},
+  {"module":"channels","name":"future-reader","params":["i32"],"result":"(future (result i32 i32))","suspends":false,"capability":"channels","resource":{"kind":"future-writer","operation":"reader"}},
+  {"module":"channels","name":"resolve","params":["i32","i32"],"result":"i32","suspends":false,"capability":"channels","resource":{"kind":"future-writer","operation":"use"}},
+  {"module":"channels","name":"close-future","params":["i32"],"result":"unit","suspends":false,"capability":"channels","resource":{"kind":"future-writer","operation":"close"}},
+  {"module":"consumer","name":"start","params":["(stream i32)"],"result":"unit","suspends":false,"capability":"consumer"}
+]}

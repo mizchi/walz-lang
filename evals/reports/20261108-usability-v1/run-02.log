@@ -1,0 +1,24 @@
+PASS README example checks and runs
+FAIL co-located test/bench can build as a JS application: build failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r2/snapshot/evals/usability/expenses/mixed.wlt:invalid WIT export name `__wlt_bench_0`; use lowercase kebab-case
+
+PASS CLI JSON result with the JS target
+PASS expense oracle and cleanup: core
+PASS expense oracle and cleanup: component
+PASS policy change stays in one module selection
+PASS CLI test: core
+PASS CLI bench: core
+PASS CLI test: core-js
+PASS CLI bench: core-js
+FAIL child timeout and cancellation: core: Expected values to be strictly equal:
+
+1 !== 2
+
+PASS child timeout and cancellation: component
+PASS LSP unsaved modules, UTF-16, navigation and repair
+PASS generated native resource own/borrow and async value
+PASS domain diagnostics reject real mistakes without panicking
+{
+  "directory": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-20261108-v1-r2",
+  "passed": 13,
+  "failed": 2
+}

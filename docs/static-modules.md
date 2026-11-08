@@ -1,7 +1,7 @@
 # ファイルモジュール・%use / %export と DCE
 
 `%include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
-関数・型・tag を選んで使うときは、明示的な相対パスの `%use` を使います。
+関数・型・tag・メモリを選んで使うときは、明示的な相対パスの `%use` を使います。
 
 `math.wlt`:
 
@@ -88,3 +88,7 @@ JSON builder 共通化後の保存済み成果物と、今回の成果物を同�
 
 回帰検査は `just check`、Rust 212件、言語内テスト41件、Node 45件、Chromium 26件、評価ハーネス11件が成功しました。
 未使用 import を除いた Component で生成されなくなる Future / Stream の管理表も、検査用メトリクスでは不在を0として扱います。
+
+`%export (memory $mem)` と `%use "./file.wlt" (memory $mem $local)` でメモリも選択できる。ライブラリ内の memory 命令は参照先の名前を明示する。[共有メモリ](threads.md) を参照。
+
+固定atomicセルは`(cell $name $alias)`、readonly領域は`(region $name $alias)`で選択できる。領域を取り込むと対応するmemoryもリンクする。これらは整数ポインタを公開する操作ではない。[atomicセル](atomic-cells.md)・[readonly領域](readonly-regions.md)を参照。

@@ -1,9 +1,8 @@
 // Private, generated Core ABI. The engine owns GC objects and suspended stacks.
 import { Tasks } from "./tasks.mjs";
-import { createHostImports, createDelivery } from "./host.mjs";
-export { TaskCancelledError } from "./tasks.mjs";
+import { createHostImports } from "./host.mjs";
+export { TaskCancelledError,TaskTimeoutError } from "./tasks.mjs";
 
-const cancelled = Symbol("cancelled read");
 const noop = () => {};
 
 // This wrapper can leave the instance: its methods capture only the producer.
@@ -34,28 +33,6 @@ class FutureValue {
   }
 }
 
-function stream(value) {
-  const get = value?.[Symbol.asyncIterator] ?? value?.[Symbol.iterator];
-  if (typeof get !== "function") throw new TypeError("expected iterable");
-  let iterator = get.call(value);
-  return {
-    [Symbol.asyncIterator]() {
-      return this;
-    },
-    async next() {
-      if (!iterator) return { done: true };
-      const result = await iterator.next();
-      if (result.done) iterator = null;
-      return result;
-    },
-    async return() {
-      const current = iterator;
-      iterator = null;
-      await current?.return?.();
-      return { done: true };
-    },
-  };
-}
 
 class Boundary {
   constructor(memory, tasks, hosts) {
@@ -88,7 +65,7 @@ class Boundary {
   }
   add(type, source) {
     const definition = this.definitions.get(type);
-    if (definition.kind === "stream") source = stream(source);
+    if (definition.kind === "stream") source = this.wrapStream(source);
     else {
       if (typeof source?.then !== "function")
         throw new TypeError("expected PromiseLike");
@@ -125,49 +102,6 @@ class Boundary {
         : (source?.[Symbol.asyncDispose] ?? source?.[Symbol.dispose]);
     if (dispose) this.tasks.disposal(() => dispose.call(source));
   }
-  endpoint(type, kind, size, read, write) {
-    this.definitions.set(type, { kind });
-    const factory = createDelivery([{ id: type, kind, unit: false }]);
-    const items = (p, n) =>
-      Array.from({ length: n }, (_, i) => read(p + i * size));
-    this.imports[`ready${type}`] = (p, n) =>
-      this.add(type, factory[`readyT${type}`](items(p, n)));
-    if (kind === "stream")
-      this.imports[`prepend${type}`] = (p, n, tail) =>
-        this.add(
-          type,
-          factory[`prependT${type}`](items(p, n), this.take(type, tail)),
-        );
-    this.imports[`drop${type}`] = (handle) => this.drop(type, handle);
-    this.imports[`read${type}`] = new WebAssembly.Suspending((handle, p) => {
-      if (this.hostFailure) throw this.hostFailure;
-      const { source } = this.entry(type, handle);
-      const stop = Promise.withResolvers();
-      let active = true;
-      const cancel = () => {
-        active = false;
-        stop.resolve(cancelled);
-      };
-      // Put the write after the race. A late producer keeps no callback capable
-      // of writing into an arena already reclaimed by cancellation.
-      const pending =
-        kind === "future" ? Promise.resolve(source) : source.next();
-      return this.tasks.read(cancel, () =>
-        Promise.race([pending, stop.promise])
-          .then((value) => {
-            if (!active || value === cancelled) return 1;
-            if (kind === "future") {
-              write(p, value);
-              return 0;
-            }
-            if (value.done) return 1;
-            write(p, value.value);
-            return 16; // one element, readable remains open
-          })
-          .catch((error) => this.failHost(error, "promise failed")),
-      );
-    });
-  }
   hostImport(
     slot,
     name,
@@ -180,12 +114,13 @@ class Boundary {
     if (typeof host?.[name] !== "function")
       throw new TypeError(`missing host capability ${namespace}#${name}`);
     const invoke = (...args) => {
+      const scope = this.tasks.scope;
       if (this.hostFailure) throw this.hostFailure;
       try {
         const value = host[name](...decode(args));
         return suspends
           ? Promise.resolve(value)
-              .then(v => convert(v,args))
+              .then(v => { this.tasks.enter(scope); return convert(v,args); })
               .catch((error) => this.failHost(error))
           : convert(value,args);
       } catch (error) {
@@ -227,6 +162,7 @@ class Boundary {
         );
         // Retire registered guest ends before draining partially converted ends.
         // finish() may invoke this again; the guest cleanup is idempotent.
+        if(this.tasks.active?.children)throw error;
         try { this.tasks.cleanupGuest(); }
         catch (cleanupError) { error = new AggregateError([error,cleanupError], "guest cleanup failed"); }
         for (const [handle, entry] of this.handles)
@@ -258,9 +194,20 @@ export async function instantiate(
   bind,
   options = {},
   bindings = [],
+  memories = [],
+  raceFree = null,
+  Children = null,
+  installReadables = null,
+  validateContract = null,
 ) {
-  if (!["wlt-core-js-v1", "wlt-core-js-v2"].includes(abi))
+  if (!["wlt-core-js-v1", "wlt-core-js-v2", "wlt-core-js-v3", "wlt-core-js-v4"].includes(abi))
     throw new Error("unsupported Core JS ABI");
+  if (abi === "wlt-core-js-v3" || abi === "wlt-core-js-v4") {
+    if (!validateContract) throw new Error("shared-memory contract validator is required");
+    validateContract(abi, raceFree, memories, options);
+  } else if (raceFree !== null) {
+    throw new Error("shared-memory contract requires Core JS ABI v3 or v4");
+  }
   const load =
     options.getCoreModule ??
     (async (name) => {
@@ -286,9 +233,21 @@ export async function instantiate(
     );
   const memory = await create("memory.wasm", {});
   const boundary = new Boundary(memory, tasks, hosts);
-  const { api, asyncExports } = bind(boundary);
+  installReadables?.(boundary);
+  const { api, asyncExports, childTasks } = bind(boundary);
+  if(childTasks){if(!Children)throw new Error('child task scheduler is required');Children.core(tasks,boundary);}
   tasks.asyncExports = new Set(asyncExports);
-  const guest = await create("core.wasm", { __component: boundary.imports });
+  const guestImports = Object.create(null);
+  guestImports.__component = boundary.imports;
+  for (const { module, name } of memories) {
+    if (module === "__component") throw new Error("__component is reserved for private ABI imports");
+    const imports = Object.hasOwn(guestImports, module) ? guestImports[module]
+      : (guestImports[module] = Object.create(null));
+    // The Wasm engine checks Memory identity, limits, and sharedness. No copy
+    // or ABI allocator ever takes ownership of this host-provided capability.
+    imports[name] = options.imports?.[module]?.[name];
+  }
+  const guest = await create("core.wasm", guestImports);
   boundary.exports = guest.exports;
   return tasks.bind({ api });
 }

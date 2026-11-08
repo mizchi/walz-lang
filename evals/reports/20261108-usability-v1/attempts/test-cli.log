@@ -1,0 +1,2 @@
+ERROR /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/expenses/expenses.test.wlt: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/expenses/main.wlt:55:20: Wasm exports belong to the root module
+0 passed; 0 failed; 1 errors; 0 filtered out

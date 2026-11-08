@@ -1,7 +1,7 @@
 // Task-scoped external resources. GC values never own OS handles implicitly.
 export class Resources {
-  constructor(active, disposal) {
-    this.active=active; this.disposal=disposal;
+  constructor(active, disposal, owner=()=>0) {
+    this.active=active; this.disposal=disposal;this.owner=owner;
     this.entries=new Map(); this.next=1;
   }
   add(kind, value, close) {
@@ -13,7 +13,7 @@ export class Resources {
       throw new TypeError("resource factory must be synchronous");
     }
     const id=this.next++;
-    this.entries.set(id,{kind,value,close,scope});
+    this.entries.set(id,{kind,value,close,scope,owner:this.owner()});
     scope.resources??=new Set(); scope.resources.add(id);
     return id;
   }
@@ -34,10 +34,12 @@ export class Resources {
       throw this.failure;
     }
   }
-  closeScope(scope) {
+  adopt(id,owner){const e=this.entries.get(id);if(!e || e.scope!==this.active())throw new TypeError("invalid resource move");e.owner=owner;}
+  closeScope(scope,owner) {
     const errors=[];
     for(const id of [...(scope.resources??[])].reverse()) {
       const e=this.entries.get(id);
+      if(owner!==undefined&&e.owner!==owner)continue;
       try {this.close(e.kind,id);}catch(error){errors.push(error);}
     }
     if(errors.length)throw new AggregateError(errors,'resource cleanup failed');

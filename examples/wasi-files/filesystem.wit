@@ -1,0 +1,9 @@
+// Value-only adapter over WASI 0.3.0 filesystem descriptors.
+// The host retains descriptor ownership; this is not wasi:filesystem itself.
+package wlt:filesystem@0.3.0;
+interface files {
+  enum error-code { bad-descriptor, interrupted, invalid, io, no-entry, not-permitted, read-only }
+  read-file: func(name: string) -> tuple<stream<u8>, future<result<_, error-code>>>;
+  write-file: func(name: string, data: stream<u8>) -> future<result<_, error-code>>;
+}
+world guest { import files; }

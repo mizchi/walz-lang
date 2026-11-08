@@ -10,9 +10,17 @@ use std::collections::{BTreeMap, BTreeSet};
 fn entry(name: &str) -> bool {
     matches!(
         name,
-        "let"
+        "race-free"
+            | "abi.type"
+            | "atomic.cell"
+            | "atomic.at"
+            | "readonly.region"
+            | "readonly.load"
+            | "let"
             | "newtype"
             | "for"
+            | "for-each"
+            | "struct.update"
             | "match"
             | "recur"
             | "closure"
@@ -40,6 +48,7 @@ fn entry(name: &str) -> bool {
             | "option"
             | "pair"
             | "own"
+            | "task"
             | "future"
             | "stream"
     ) || [
@@ -52,6 +61,7 @@ fn entry(name: &str) -> bool {
         "pair.",
         "result.",
         "own.",
+        "task.",
         "future.",
         "stream.",
         "resource.",
@@ -524,11 +534,32 @@ impl<'a> Plan<'a> {
             return Err(prefix_error(self.source, &items[0], "loop"));
         }
         let normalized = items.first().and_then(Sexp::atom).unwrap_or("").to_owned();
+        // ABI descriptors are a separate schema grammar, not instructions.
+        if normalized == "abi.type" {
+            return Ok(());
+        }
         let count = items.len();
         for (i, child) in items.iter_mut().enumerate().skip(1) {
+            if normalized == "variant" {
+                // Case labels are data, even if they share an extension name.
+                if let Kind::List(case) = &mut child.kind {
+                    for payload in case.iter_mut().skip(1) {
+                        self.walk(payload, false, depth + 1)?;
+                    }
+                }
+                continue;
+            }
             if normalized == "struct.named" && i >= 2 {
                 if let Kind::List(binding) = &mut child.kind {
                     for expression in binding.iter_mut().skip(1) {
+                        self.walk(expression, false, depth + 1)?;
+                    }
+                }
+                continue;
+            }
+            if normalized == "struct.update" && i >= 3 {
+                if let Kind::List(binding) = &mut child.kind {
+                    for expression in binding.iter_mut().skip(2) {
                         self.walk(expression, false, depth + 1)?;
                     }
                 }
@@ -542,7 +573,8 @@ impl<'a> Plan<'a> {
                 }
                 continue;
             }
-            let binders = matches!(normalized.as_str(), "let" | "result.let") && i == 1
+            let binders = matches!(normalized.as_str(), "let" | "result.let" | "for-each")
+                && i == 1
                 || matches!(normalized.as_str(), "case" | "catch") && i == 2
                 || normalized == "stream.fold-result" && i == if count == 8 { 6 } else { 3 };
             if !binders {

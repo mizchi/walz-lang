@@ -264,7 +264,7 @@ pub(crate) fn resolve<'a>(
     Ok(out)
 }
 
-fn shared(module: &Module, kinds: &Kinds, start: &Type) -> bool {
+pub(crate) fn shared(module: &Module, kinds: &Kinds, start: &Type) -> bool {
     let mut pending = vec![start];
     let mut seen = BTreeSet::new();
     while let Some(ty) = pending.pop() {
@@ -295,7 +295,8 @@ fn shared(module: &Module, kinds: &Kinds, start: &Type) -> bool {
                 | ValueType::Option(t)
                 | ValueType::Own(t)
                 | ValueType::Future(t)
-                | ValueType::Stream(t) => pending.push(t),
+                | ValueType::Stream(t)
+                | ValueType::Task(t) => pending.push(t),
                 ValueType::Pair { first, second } => pending.extend([first, second]),
                 ValueType::Result { ok, err } => pending.extend([ok, err]),
             },

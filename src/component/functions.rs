@@ -8,6 +8,7 @@ impl Adapter<'_> {
         let mut out = String::from(
             "(import \"__component\" \"memory\" (memory 1 256))\n(import \"__component\" \"alloc\" (func $__alloc (param i32) (result i32)))\n(import \"__component\" \"free\" (func $__free (param i32)))\n",
         );
+        out.push_str(&crate::task_children::imports(self.module));
         out.push_str("(import \"__component\" \"cancel-requested\" (global $__cancel_requested (mut i32)))\n(import \"__component\" \"free-all\" (func $__free_all))\n");
         for (i, f) in self
             .module
@@ -47,10 +48,11 @@ impl Adapter<'_> {
                 out.push_str(&format!("(import \"__component\" \"prepend{n}\" (func $__prepend{n} (param i32 i32 i32) (result i32)))\n"));
             }
         }
-        out
+        crate::task_children::wrap_imports(self.module, out)
     }
     pub(crate) fn helpers(&self) -> String {
         let mut out = self.task_helpers();
+        out.push_str(&crate::task_children::helpers(self.module));
         out.push_str(&self.value_helpers());
         for id in &self.endpoints {
             out.push_str(&self.endpoint_helpers(*id));
@@ -132,12 +134,40 @@ impl Adapter<'_> {
 
     fn task_helpers(&self) -> String {
         let drops = self.endpoints.iter().map(|id|format!("(if (i32.eq (struct.get $__task_entry 0 (ref.as_non_null (local.get $e))) (i32.const {})) (then (call $__drop{} (struct.get $__task_entry 1 (ref.as_non_null (local.get $e))))))",id.0,id.0)).collect::<String>();
-        format!("(tag $__task_cancel (export \"__task_cancel\"))
+        let drops = if self.native_resources {
+            format!("{drops}{}",self.module.types.iter().enumerate().filter_map(|(n,t)|{
+                let TypeKind::Resource{close,..}=t.kind else{return None};
+                Some(format!("(if (i32.eq (struct.get $__task_entry 0 (ref.as_non_null (local.get $e))) (i32.const {n})) (then (call {} (struct.get $__task_entry 1 (ref.as_non_null (local.get $e))))))",self.module.functions[close.0].name))
+            }).collect::<String>())
+        } else {
+            drops
+        };
+        let owner = if crate::task_children::enabled(self.module) {
+            "(global.get $__current_scope)"
+        } else {
+            "(i32.const 0)"
+        };
+        let checkpoint = if crate::task_children::enabled(self.module) {
+            "(if (call $__scope_enter (global.get $__current_scope)) (then (throw $__task_cancel)))"
+        } else {
+            ""
+        };
+        let scoped = if crate::task_children::enabled(self.module) {
+            format!("(func (export \"__scope_cleanup\") (param $scope i32) (local $e (ref null $__task_entry)) (local $next (ref null $__task_entry)) (local $previous_scope i32)
+          (local.set $previous_scope (global.get $__current_scope)) (global.set $__current_scope (local.get $scope))
+          (local.set $e (global.get $__task_owned)) (loop $again (if (ref.is_null (local.get $e)) (then) (else
+            (local.set $next (struct.get $__task_entry 3 (ref.as_non_null (local.get $e))))
+            (if (i32.eq (struct.get $__task_entry 5 (ref.as_non_null (local.get $e))) (local.get $scope)) (then {drops} (call $__task_release (ref.as_non_null (local.get $e)))))
+            (local.set $e (local.get $next)) (br $again)))) (global.set $__current_scope (local.get $previous_scope)))")
+        } else {
+            String::new()
+        };
+        format!("{scoped} (tag $__task_cancel (export \"__task_cancel\"))
           (global $__task_owned (mut (ref null $__task_entry)) (ref.null $__task_entry))
-          (func $__checkpoint (if (global.get $__cancel_requested) (then (throw $__task_cancel))))
+          (func $__checkpoint (if (global.get $__cancel_requested) (then (throw $__task_cancel))) {checkpoint})
           (func $__task_register (param $kind i32) (param $handle i32) (result (ref $__task_entry))
             (local $e (ref $__task_entry))
-            (local.set $e (struct.new $__task_entry (local.get $kind) (local.get $handle) (i32.const 1) (global.get $__task_owned) (ref.null $__task_entry)))
+            (local.set $e (struct.new $__task_entry (local.get $kind) (local.get $handle) (i32.const 1) (global.get $__task_owned) (ref.null $__task_entry) {owner}))
             (if (ref.is_null (global.get $__task_owned)) (then) (else (struct.set $__task_entry 4 (ref.as_non_null (global.get $__task_owned)) (local.get $e))))
             (global.set $__task_owned (local.get $e)) (local.get $e))
           (func $__task_release (param $e (ref $__task_entry))
@@ -193,6 +223,19 @@ impl Adapter<'_> {
             )
         };
         let mut locals = String::from(" (local $p i32)");
+        let child_tasks = crate::task_children::enabled(self.module);
+        // The hidden scope parameter exists module-wide, but only suspending
+        // boundaries can spawn/wait children. Pure exports must stay synchronous.
+        let scoped = child_tasks
+            && self
+                .module
+                .abi_suspends
+                .get(&f.name)
+                .copied()
+                .unwrap_or(false);
+        if child_tasks {
+            locals.push_str(" (local $__scope i32)");
+        }
         let mut init = String::new();
         let mut slot = 0;
         let mut offset = 0;
@@ -219,10 +262,21 @@ impl Adapter<'_> {
             init.push_str(" (call $__free (local.get $args))");
         }
         init.push_str(" (call $__checkpoint)");
+        if scoped {
+            init.push_str(" (local.set $__scope (call $__scope_new (i32.const 0)))");
+        }
         let args = (0..params.len())
             .map(|i| format!(" (local.get $v{i})"))
             .collect::<String>();
-        let call = format!("(call {}{args})", f.name);
+        let call = format!(
+            "(call {}{}{args})",
+            f.name,
+            if child_tasks {
+                " (local.get $__scope)"
+            } else {
+                ""
+            }
+        );
         let body = if f.result == Type::Unit {
             format!("{init} {call}")
         } else {
@@ -232,10 +286,14 @@ impl Adapter<'_> {
             ));
             let layout = self.layout(&f.result);
             let lower = self.lower(&f.result, "(local.get $r)", "(local.get $p)");
-            let finish = if indirect_result {
+            let finish = if result_flat.is_empty() {
+                "(call $__free (local.get $p))".into()
+            } else if indirect_result {
                 "(local.get $p)".into()
             } else {
-                let read = if matches!(f.result,Type::Value(id) if matches!(self.value(id),ValueType::Result{..}))
+                let read = if self.interface_type(&f.result).is_some() {
+                    self.flat_load(&f.result, "(local.get $p)")[0].0.clone()
+                } else if matches!(f.result,Type::Value(id) if matches!(self.value(id),ValueType::Result{..}))
                 {
                     "(i32.load8_u (local.get $p))".into()
                 } else {
@@ -249,11 +307,35 @@ impl Adapter<'_> {
                 layout.size
             )
         };
+        let borrowed = params
+            .iter()
+            .enumerate()
+            .filter_map(|(n, t)| {
+                let Type::Borrow(id) = t else { return None };
+                let TypeKind::Resource { close, .. } = self.module.types[id.0].kind else {
+                    unreachable!()
+                };
+                Some(format!(
+                    "(call {} (struct.get {} 0 (local.get $v{n})))",
+                    self.module.functions[close.0].name, self.module.types[id.0].name
+                ))
+            })
+            .collect::<String>();
         let mut out = format!(
             "(func (export \"__export_{index}\"){signature}{result}{locals}
           (block $__cancelled (return (try_table{result} (catch $__task_cancel $__cancelled)
-            {body} (global.set $__task_owned (ref.null $__task_entry)))))
-          (call $__task_cleanup) (throw $__task_cancel))\n"
+            {body} {borrowed} {} (global.set $__task_owned (ref.null $__task_entry)))))
+          {} (call $__task_cleanup) (throw $__task_cancel))\n",
+            if scoped {
+                "(call $__scope_close (local.get $__scope)) (call $__checkpoint)"
+            } else {
+                ""
+            },
+            if scoped {
+                "(call $__scope_close (local.get $__scope))"
+            } else {
+                ""
+            }
         );
         if indirect_result {
             out.push_str(&format!(

@@ -1,0 +1,2 @@
+/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/expenses/main.wlt:30:18: WLT extension `result` requires `%result`
+  help: write `%result` for this WLT extension

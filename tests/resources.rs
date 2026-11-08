@@ -106,3 +106,32 @@ fn a_branch_cannot_carry_a_borrow_out_of_using() {
         .to_string();
     assert!(error.contains("borrow"), "{error}");
 }
+
+#[test]
+fn a_trusted_reader_factory_returns_an_independent_affine_endpoint() {
+    let source = r#"(module
+      (type $Writer (%resource "channel" $close))
+      (import "channels" "new" (func $new (result i32)))
+      (import "channels" "reader" (func $reader (param $id i32) (result (%stream i32))))
+      (import "channels" "close" (func $close (param $id i32)))
+      (func $main (export "main") (%effect host reads writes allocates)
+        (%using $w (%resource.new $Writer (call $new))
+          (%let $r (call $reader (%resource.handle (local.get $w)))
+            (%stream.close i32 (%move $r))))))"#;
+    let text = r#"{"imports":[
+      {"module":"channels","name":"new","params":[],"result":"i32","suspends":false,"capability":"channels","resource":{"kind":"channel","operation":"new"}},
+      {"module":"channels","name":"reader","params":["i32"],"result":"(stream i32)","suspends":false,"capability":"channels","resource":{"kind":"channel","operation":"reader"}},
+      {"module":"channels","name":"close","params":["i32"],"result":"unit","suspends":false,"capability":"channels","resource":{"kind":"channel","operation":"close"}}
+    ]}"#;
+    let policy = wlt::bindings::BindingPolicy::parse(text).unwrap();
+    wlt::component::compile_with_policy(source, &policy).unwrap();
+    wlt::component::core_js::compile_with_policy(source, &policy).unwrap();
+    // Ordinary borrowed uses cannot produce owned results. A reader is an
+    // explicit trusted factory, not a relaxation of the nonescaping borrow rule.
+    let use_policy =
+        wlt::bindings::BindingPolicy::parse(&text.replace("\"reader\"}}", "\"use\"}}")).unwrap();
+    assert!(wlt::check_with_policy(source, &use_policy).is_err());
+    assert!(
+        wlt::check_with_policy(&source.replace("(%move $r)", "(local.get $r)"), &policy).is_err()
+    );
+}

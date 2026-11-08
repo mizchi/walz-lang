@@ -1,0 +1,1 @@
+{"imports":[{"module":"usability:ticket/store","name":"open","suspends":false,"capability":"tickets"},{"module":"usability:ticket/store","name":"size","suspends":false,"capability":"tickets"}]}

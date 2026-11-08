@@ -2,8 +2,9 @@
 name = "wlt"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.97"
+rust-version = "1.99"
 publish = false
+default-run = "wlt"
 description = "A small typed language extending WAT for Wasm GC"
 repository = "https://github.com/mizchi/wlt-lang"
 readme = "README.md"
@@ -37,6 +38,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tempfile = "3"
 wit-parser = "=0.262.0"
+same-file = "1.0.6"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ctrlc = { version = "3.5.2", features = ["termination"] }
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1.6", features = ["process"] }
 
 [build-dependencies]
 wast = "=262.0.0"

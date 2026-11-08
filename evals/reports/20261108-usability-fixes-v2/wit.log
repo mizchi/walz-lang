@@ -1,0 +1,6 @@
+mkdir -p target
+wasm-tools component wit interfaces/async-contract.wit --wasm -o target/async-contract.wasm
+wasm-tools validate --features all target/async-contract.wasm
+wasm-tools component wit interfaces/async-contract.wit -o target/async-contract.expected.wit
+wasm-tools component wit target/async-contract.wasm -o target/async-contract.roundtrip.wit
+cmp target/async-contract.expected.wit target/async-contract.roundtrip.wit

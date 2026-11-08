@@ -6,6 +6,23 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use std::time::{Duration, Instant};
 
+/// Select an application only after validating every declaration. Harness
+/// entry points are capabilities of test/bench runners, not public ABI roots.
+pub(crate) fn select_application(module: &mut crate::ir::Module) {
+    for (function, export) in module
+        .benches
+        .iter()
+        .map(|b| (b.function, &b.export))
+        .chain(module.tests.iter().map(|t| (t.function, &t.export)))
+    {
+        module.functions[function.0]
+            .exports
+            .retain(|name| name != export);
+    }
+    module.tests.clear();
+    module.benches.clear();
+}
+
 #[derive(Debug, Serialize)]
 pub struct SuiteError {
     pub path: Option<PathBuf>,
@@ -27,7 +44,12 @@ pub(crate) fn discover(paths: &[PathBuf], default: &str, suffix: &str) -> Discov
                     let entry = entry?;
                     let kind = entry.file_type()?;
                     // Only explicitly supplied paths may follow symlinks.
-                    if kind.is_dir()
+                    // Build artifacts and dependencies are opt-in search roots.
+                    let generated = matches!(
+                        entry.file_name().to_str(),
+                        Some("target" | "node_modules" | ".git")
+                    );
+                    if (kind.is_dir() && !generated)
                         || (kind.is_file() && entry.file_name().to_string_lossy().ends_with(suffix))
                     {
                         visit(&entry.path(), suffix, out);

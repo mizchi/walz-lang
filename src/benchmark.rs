@@ -9,6 +9,8 @@ use std::time::Duration;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct BenchOptions {
+    #[serde(flatten)]
+    pub execution: crate::execution::ExecutionOptions,
     pub filter: Option<String>,
     pub list: bool,
     pub samples: u32,
@@ -22,6 +24,7 @@ pub struct BenchOptions {
 impl Default for BenchOptions {
     fn default() -> Self {
         Self {
+            execution: Default::default(),
             filter: None,
             list: false,
             samples: 10,
@@ -35,6 +38,7 @@ impl Default for BenchOptions {
 
 impl BenchOptions {
     pub fn validate(&self) -> Result<(), String> {
+        self.execution.validate()?;
         if !(1..=10_000).contains(&self.samples) {
             return Err("--samples must be between 1 and 10000".into());
         }
@@ -207,6 +211,7 @@ pub fn compile(source: &str, module: &Module, index: usize) -> Result<Vec<u8>, E
         .functions
         .iter()
         .any(|f| matches!(f.kind, FunctionKind::Import { .. }))
+        || lowered.memories.iter().any(|m| m.import.is_some())
     {
         return Err(Error::at(
             source,
@@ -274,13 +279,21 @@ pub fn run(paths: &[PathBuf], options: &BenchOptions) -> BenchReport {
         report.error(None, error);
         return report;
     }
+    let policy = match options.execution.policy() {
+        Ok(policy) => policy,
+        Err(error) => {
+            report.error(None, error);
+            return report;
+        }
+    };
     let discovery = crate::harness::discover(paths, ".", "_bench.wlt");
     report.errors.extend(discovery.errors);
     for path in discovery.files {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
             let loaded = crate::source::load(&path)?;
             let source = loaded.text();
-            let module = crate::check(source).map_err(|e| loaded.diagnostic(e))?;
+            let module =
+                crate::check_with_policy(source, &policy).map_err(|e| loaded.diagnostic(e))?;
             for (index, bench) in module.benches.iter().enumerate() {
                 if options
                     .filter
@@ -294,6 +307,38 @@ pub fn run(paths: &[PathBuf], options: &BenchOptions) -> BenchReport {
                     BenchOutcome::Listed
                 } else {
                     let execute = (|| -> Result<BenchOutcome, Box<dyn std::error::Error>> {
+                        if options.execution.target == crate::execution::Target::CoreJs {
+                            let built = crate::component::core_js::compile_case(
+                                source,
+                                &module,
+                                bench.function,
+                                "wlt-case",
+                            )
+                            .map_err(|e| loaded.diagnostic(e))?;
+                            let report = crate::execution::invoke(
+                                &built,
+                                "wlt-case",
+                                &options.execution,
+                                "bench",
+                                Duration::from_millis(options.timeout_ms),
+                                serde_json::to_value(options)?,
+                            )?;
+                            return Ok(match report["status"].as_str() {
+                                Some("timed_out") => BenchOutcome::TimedOut,
+                                Some("measured") => BenchOutcome::Measured {
+                                    summary: Summary::from_measurement(
+                                        serde_json::from_value(report["measurement"].clone())?,
+                                        options,
+                                    )?,
+                                },
+                                _ => BenchOutcome::Failed {
+                                    message: report["message"]
+                                        .as_str()
+                                        .unwrap_or("invalid benchmark outcome")
+                                        .into(),
+                                },
+                            });
+                        }
                         let wasm =
                             compile(source, &module, index).map_err(|e| loaded.diagnostic(e))?;
                         let directory = tempfile::tempdir()?;

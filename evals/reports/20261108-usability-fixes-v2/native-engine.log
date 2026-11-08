@@ -1,0 +1,11 @@
+cargo test --locked --test native_async -- --include-ignored
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.61s
+     Running tests/native_async.rs (target/debug/deps/native_async-fe1de67c7a8ce012)
+
+running 2 tests
+test native_async_world_uses_standard_internal_producers ... ok
+test native_engine_runs_the_canonical_future_producer_without_javascript ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+

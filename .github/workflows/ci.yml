@@ -34,16 +34,16 @@ jobs:
           cache: pnpm
       - name: Rust toolchain
         run: |
-          rustup toolchain install 1.98.0 --profile minimal --component rustfmt --component clippy
-          rustup override set 1.98.0
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.99.0
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target/debug
-          key: rust-${{ runner.os }}-1.98-${{ matrix.suite }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: rust-${{ runner.os }}-1.98-${{ matrix.suite }}-
+          key: rust-${{ runner.os }}-1.99-${{ matrix.suite }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: rust-${{ runner.os }}-1.99-${{ matrix.suite }}-
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -60,6 +60,7 @@ jobs:
           just test-language
           just proof-check
           just wit-check
+          just test-install
       - name: Differential seeds
         if: matrix.suite == 'compiler'
         env:

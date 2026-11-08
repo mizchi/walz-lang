@@ -1,0 +1,11 @@
+package usability:ticket;
+interface store {
+  resource ticket;
+  open: func() -> ticket;
+  size: func(value: borrow<ticket>) -> u32;
+}
+interface api {
+  run: func() -> u32;
+  ready: async func() -> future<u32>;
+}
+world guest { import store; export api; }

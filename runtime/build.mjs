@@ -30,6 +30,7 @@ export async function build(source, directory, options = {}) {
     base64Cutoff: 0,
     noComponentErrorWrapping: false,
     bindgenEnableWasmExnref: true,
+    multiMemory: true,
   });
   for (const [name, bytes] of Object.entries(generated.files)) {
     const path = resolve(output, name);
@@ -52,32 +53,36 @@ export async function build(source, directory, options = {}) {
     join(output, "tasks.mjs"),
   );
   await copyFile(new URL("./resources.mjs",import.meta.url),join(output,"resources.mjs"));
+  if(manifest.asyncExports.length)await copyFile(new URL('./scopes.mjs',import.meta.url),join(output,'scopes.mjs'));
+  if(manifest.childTasks)await copyFile(new URL('./children.mjs',import.meta.url),join(output,'children.mjs'));
   await writeFile(
     join(output, "package.json"),
     '{"type":"module","private":true}\n',
   );
   await writeFile(
     join(output, "index.js"),
-    `import {instantiate as create} from './component.js';
+    `${manifest.asyncExports.length?"export {withTaskScope} from './scopes.mjs';\n":""}import {instantiate as create} from './component.js';
 import {createHostImports,createDelivery} from './host.mjs';
 import {Tasks} from './tasks.mjs';
-export {TaskCancelledError} from './tasks.mjs';
+export {TaskCancelledError,TaskTimeoutError} from './tasks.mjs';
 const factories=${JSON.stringify(manifest.factories)};
 const asyncExports=${JSON.stringify(manifest.asyncExports)}.map(name=>name.replace(/-([a-z0-9])/g,(_,c)=>c.toUpperCase()));
 export async function instantiate(options={}) {
   if (typeof WebAssembly.Suspending!=='function' || typeof WebAssembly.promising!=='function') throw new Error('WebAssembly JSPI is required');
   const tasks=new Tasks({...options,asyncExports});
+  ${manifest.childTasks?"const {Children}=await import('./children.mjs');tasks.children=new Children(tasks);":""}
   const delivery=createDelivery(factories);
   const imports={
     ...createHostImports(options,tasks,${JSON.stringify(manifest.imports ?? [])}),
     'wlt:runtime/delivery':delivery,'wlt:runtime/delivery@0.1.0':delivery,
+    'wlt:runtime/tasks':tasks.children?.host()??{},'wlt:runtime/tasks@0.1.0':tasks.children?.host()??{},
   };
   let getCoreModule=options.getCoreModule;
   if (!getCoreModule && typeof process!=='undefined' && process.versions?.node) {
     getCoreModule=async name=>WebAssembly.compile(await (await import('node:fs/promises')).readFile(new URL(name,import.meta.url)));
   }
   const instantiateCore=async(module,imports)=>tasks.capture(await (options.instantiateCore??WebAssembly.instantiate)(module,imports));
-  return tasks.bind(await create(getCoreModule,imports,instantiateCore,{wlt:{read:tasks.read.bind(tasks),disposal:tasks.disposal.bind(tasks),cleaning:()=>tasks.cleaning===true}}));
+  return tasks.bind(await create(getCoreModule,imports,instantiateCore,{wlt:{localCancellation:(e,id)=>tasks.active?.state!=="cancelling"&&!!tasks.active?.children?.scopes.get(id)?.cancelled&&e instanceof WebAssembly.Exception&&e.is(tasks.tag),scope:()=>tasks.scope,enter:id=>tasks.enter(id),read:tasks.read.bind(tasks),disposal:tasks.disposal.bind(tasks),cleaning:()=>tasks.cleaning===true,childrenContexts:clear=>{tasks.clearChildContexts=clear;}}}));
 }
 `,
   );

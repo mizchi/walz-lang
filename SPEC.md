@@ -59,6 +59,7 @@ WAT と同じ数値意味論を使います。整数演算はビット幅で折�
 ```text
 (%let $name [(type T)] initial-value body)
 (%let (($first [(type T)] initial-first) ($second [(type U)] initial-second) ...) body)
+(%let {:field $binding ...} struct-value body)
 (local.get $name)
 (block [(result T)] unit-expression ... result-expression)
 (if [(result T)] condition (then expression) (else expression))
@@ -96,6 +97,9 @@ WAT 形式の struct・array を使用します。フィールド名は任意で
 名前付き初期値の直下では、フィールドの期待型に従った裸の数値・textリテラルも使えます。2つの糖衣は独立で、一般の式位置へ省略を広げません。
 初期値はソース順に一度ずつ評価し、最後に型定義順へ配置します。opaque・effect・所有権・identity・mutableの意味を維持します。
 型引数は `%struct.new` の型オペランドに既存の `(%inst ...)` を使います。[名前付き構築](docs/struct-construction.md)に詳細があります。
+
+`(%let {:field $binding ...} subject body)` は non-null の共有構造体から指定フィールドを取り出します。対象式を一度評価し、記述順に値を読み、本体だけで使える不変ローカルに束縛します。可変フィールドも束縛時の値を保持します。未知・重複フィールド、重複束縛、空のpatternは拒否します。
+`(%struct.update $T object ($field $old new-value))` は、対象を一度評価し、可変フィールドの旧値を一度読んで更新式へ渡し、正常終了した値を一度書きます。unit を返し、共有可能な非unitフィールドに限定します。旧値の束縛は更新式だけで有効です。更新式の中断・例外には通常の規約を適用し、最後の書き込みに至らなければ既存の副作用だけが残ります。原子性は持ちません。どちらも既存の型・effect・所有権・opaque検査を通す糖衣です。[詳細](docs/high-level-forms.md)。
 `array.new_fixed` の要素数は WAT と同様に明示します。`set` は宣言が `mut` の場合だけ認めます。
 null、配列境界、オブジェクトの同一性、割当て失敗は Wasm の意味に従います。
 nullable 参照の検査による暗黙の型絞り込みは行いません。必要なら `ref.as_non_null` を明示します。
@@ -183,6 +187,8 @@ recur は各引数を左から右にすべて評価してから、すべての s
 個数・型は bind と一致させます。この反復は Wasm の loop/br に変換され、呼び出しスタックを増やしません。
 
 ## for マクロ
+
+`(%for-each pattern list-value unit-body)` は共有可能な非unit要素の不変リストを順に走査します。リスト式・長さは一度だけ評価し、各要素を一度読みます。patternは単一名、tuple分解、構造体のフィールド分解。空なら本体を実行せず、本体と全体はunitです。内部ラベルや添字は公開しません。早期脱出には外側のblock/brやreturnを使えます。型付きのlet/list/loop/if/block/recurへ展開し、外側の所有値の反復消費を既存の検査で拒否します。[詳細](docs/high-level-forms.md)。
 
 ```text
 (%for $label
@@ -300,11 +306,11 @@ import には副作用を過小評価する注釈を認めず、読み書き・�
 ```
 
 関数と closure のヘッダに `(%effect ...)` を指定できます。省略時は実装から推論します。
-項目は reads、writes、allocates、suspends、host、`(throws $Tag...)`、`(throws *)` です。pure は空の集合の別名で、他の項目と併記できません。
+項目は reads、writes、allocates、suspends、host、synchronizes、blocks、`(throws $Tag...)`、`(throws *)` です。pure は空の集合の別名で、他の項目と併記できません。
 指定した集合は許可する作用の上限です。実装の作用が上限を超えた場合は、契約の位置と不足する作用を報告します。
 重複、未知の項目・tag、複数の effects 宣言を拒否します。契約は本体より前に置きます。
 
-reads/writes は可変 GC データの読み書き、allocates はソースで identity を観測できる値の生成です。
+reads/writes は可変 GC データや線形メモリの読み書き、allocates はソースで identity を観測できる値の生成です。
 通常の struct/array、既存の参照型 variant、closure の構築は allocates を持ちます。
 Option/Result/pair/own とローカル配送端点の格納用割当て自身は semantic allocates を持ちませんが、payload を評価した際の reads/writes/allocates などは必ず合成します。
 
@@ -393,7 +399,7 @@ if/match の正常に合流する枝は、残っている所有ローカルの�
 ```
 
 Future/Stream は readable end に対応する opaque な所有値です。直接の match・ref 操作、共有 GC フィールドへの格納、暗黙の drop は認めません。
-通常の core Wasm 出力では、Wasm GC に格納した配送済みデータを扱います。Component 出力では pending と JSPI のイベントループにも接続します。writer と言語内 producer task は未実装です。
+通常の core Wasm 出力では、Wasm GC に格納した配送済みデータを扱います。Component 出力では pending と JSPI のイベントループにも接続します。共有 payload の writer とスコープ付き spawn / join も扱います。[writer と子タスク](docs/scoped-tasks.md) を参照してください。
 payload T は共有できるデータに限ります。所有値や別の Future/Stream を含む payload は、終了時に黙って放棄しないよう初版では拒否します。
 Result のような共有データの組合せ、GC 参照、unit は使えます。payload が GC 参照でも、その参照先の共有・変更可能性は維持します。
 
@@ -472,7 +478,7 @@ Rust API check と CLI types/ir/analyze は検査・調査用で、law の証明
 ## 設計規約: effect と WASI 0.3.0 の対応
 
 この節は実装の到達点と次の拡張の設計規約です。値型、effect 契約、所有権、ready-only の Future/Stream と WIT 型の生成、law と Lean による検査、解析結果の `may_suspend`、[WIT の形状契約](interfaces/async-contract.wit) は実装済みです。
-外部 readable handle の pending 読み取り、Component adapter、JSPI 上の timer binding とタスクの協調的な取消しを実装しています。取消し時は進行中の read を終了させます。writer と言語側の producer task は未実装です。
+外部 readable handle の pending 読み取り、Component adapter、JSPI 上の timer binding とタスクの協調的な取消しを実装しています。取消し時は進行中の read を終了させます。共有 payload の writer と言語側の producer / consumer task も実装しています。
 
 参照先は [提示された Verse の effect モデル](https://verselang.github.io/book/13_effects/) と [WASI 0.3.0](https://github.com/WebAssembly/WASI/releases/tag/v0.3.0) です。
 effect を関数の型に含め、許可された作用の上限として検査する方式を採用します。ロールバック付き失敗、prediction、Verse 固有の effect の組合せ制限は初版の規約に含めません。
@@ -560,7 +566,7 @@ WASI package は `@0.3.0` を固定し、Component Model/生成ツール/runtime
 
 `interfaces/async-contract.wit` はこの対応を検証する独自のテスト interface で、wasi:* interface の実装ではありません。
 `just wit-check` は WIT の encode/validate/decode の往復を検査します。これは型の形状の検査であり、WASI runtime 上の非同期実行や GC adapter の完成を意味しません。
-次の拡張は writer と言語側の producer task、WASI の個別 capability、利用者定義の汎用型・関数と effect の対象領域への具体化です。
+共有 payload の writer、スコープ付き spawn / join、WASI 0.3.0 のファイル値 adapter と利用者定義の単相化を実装しています。子だけの取消し・期限と、importしたresourceのnative own/borrowに対応しています。native WASI一式のresource world、select、所有 payload の配送は後続です。
 
 ### 実装した Component と JSPI の契約
 
@@ -635,7 +641,7 @@ Canonical read の完了またはキャンセルの通知を受けるまでは�
 同期の直接 API は同期値を返し、他タスクの実行・解放中の呼び出しは busy で拒否します。start を使えば同期関数もキューへ追加できます。async API の直接呼び出しは従来どおりキューで直列化します。
 
 取消しは CPU 処理を強制停止せず、既に行った副作用を巻き戻しません。ホストの操作や dispose が終了しない場合には、終了確認も完了しないことがあります。
-現行の [Component Model の取消し規約](https://github.com/WebAssembly/component-model/blob/main/design/mvp/Concurrency.md#cancellation) は、callback ABI のタスクへ要求と確認を配送します。この実装は同期 ABI/JSPI 用の wlt の制御層であり、native `subtask.cancel` / `task.cancel` を直接使う実装ではありません。writer、言語側の producer task、ゲストから他タスクを取り消す構文は追加していません。
+現行の [Component Model の取消し規約](https://github.com/WebAssembly/component-model/blob/main/design/mvp/Concurrency.md#cancellation) は、callback ABI のタスクへ要求と確認を配送します。この実装は同期 ABI/JSPI 用の wlt の制御層であり、native `subtask.cancel` / `task.cancel` を直接使う実装ではありません。writer と言語側の producer task は既存の所有権と JSPI に接続します。ゲストから子だけを取り消す構文は追加していません。
 jco の補正には pending-copy のキャンセル接続、取消し完了後にホストの iterator.next を待ち続けない処理、ホスト解放の終了確認を含めます。これらも runtime の TCB です。
 
 `proof/Tasks.lean` は、要求が解放を完了させるわけではないこと、read 終了前のバッファ解放拒否、全資源・ホスト解放の終了前の acknowledgment 拒否、返却後の取消しが無効であることを状態モデル上で検証します。
@@ -886,3 +892,47 @@ Logicalはi32の0/非0を真偽値とし、`&&`・`||`を短絡するifと0/1へ
 `(type $Id (%newtype i64))`、`%newtype.wrap` / `%newtype.unwrap`、平坦な `%result.do` を提供します。
 標準 WAT の `return`、名前付き block、`br`、`br_if` は型付きコアでも検査し、抜ける `%using` の終了処理を実行します。
 型・評価順・所有権証明書・ABI の消去と対応範囲は [数値と制御の規約](docs/core-expressions.md) に定義します。
+
+## Wasm threads と共有メモリ
+
+名前付き memory32 の定義／import と、threads の67 atomic命令、memory.size/grow を型付きIRで扱います。`shared` は最大ページ数が必須です。WAT の命令名とメモリ即値を維持し、整数アドレス・整数 payload・自然アライメントを検査します。
+`%effect synchronizes` は同期、`blocks` は同期的な待機の上限です。Future の `suspends` と区別します。
+所有権検査は既存の GC / 端点の move と消費に適用し、共有領域内の排他所有やホストの競合は証明しません。
+[構文・境界・保証範囲・実行例](docs/threads.md) を参照してください。
+
+## 固定 atomic セルの条件付き証明
+
+`(%race-free)` はエントリーモジュールの全定義を検証モードにします。
+`(%atomic.cell $counter $memory i32 0)` で固定セルを宣言し、`(%atomic.at $counter)` を atomic のアドレス位置に使います。セルの型はi32/i64、メモリは固定サイズのsharedを最大1つ。rawアドレス・狭幅・offset・size/grow・ホスト関数importを拒否します。
+ホストが同じセル契約を守るという前提で、Leanが任意の長さのアクセス列のデータ競合排除・同じ範囲の幅の一致・範囲内アクセスを証明します。コンパイラの抽出／出力とエンジンはTCBです。
+[構文・ホスト契約・機械検査と保証しない範囲](docs/atomic-cells.md) を参照してください。
+
+## 公開後不変の共有領域とWorkerホスト
+
+`(%readonly.region $index $memory byte-offset positive-byte-length)` と `(%readonly.load $index u8/i32/i64/v128 relative-byte-offset)` は、静的に宣言した領域内の動的な読取りを表します。アドレス式を一度だけ評価し、ロード幅を含む符号なしの範囲検査を行います。`reads`を持ち、非atomicなので非整列アクセスもWasmの規則に従います。
+
+`%race-free`と併用するとversion 2の証明書を使い、公開後の不変性をホストの前提として、atomicセルと分離したreadonlyアクセスのtraceをLeanで検査します。このモードでは追加の定義済みunshared memoryを私有として許します。Core＋JSPIのABIはv4、共有ホスト契約は`wlt-readonly-regions-v1`です。`%race-free`なしの宣言は書込みを禁止する所有権やfreezeの証明を追加しません。[規約とTCB](docs/readonly-regions.md)。
+
+Node・ブラウザの`WorkerHost`は言語外の明示的なホストAPIです。driverの初期化、ジョブキュー、個別取消し、join、終了を担当し、データ形式やWasmの関数名はdriverへ分離します。GC参照やFuture端点をWorkerへ暗黙に移しません。`%task.spawn`の協調的実行は維持します。[配送・寿命・取消しの契約](docs/worker-host.md)。
+
+## CLI と拡張の実行範囲
+
+Rust 1.99 を基準とし、`wlt run` / `wlt build --target core-js` でホストとランタイムを明示します。[CLI](docs/cli.md) を参照してください。
+`%abi.type` の record / enum / flags / unsigned と WIT の生成範囲は [WIT binding](docs/wit-bindings.md)、型付きマクロに混在できる数値メモリ命令は [validator との橋渡し](docs/wat-validator.md) に定義します。
+`(%inst $task T)` は `wlt:core` の所有付き子タスク型で、`%task.spawn T $Closure environment` / `%task.join T handle` / `%task.drop T handle` / `%task.cancel T handle` / `%task.join-timeout T milliseconds handle` と `%task.scope (result T) body` を使います。GC 環境・共有結果の同一性と、スコープ退出時の完了待ちを維持します。[契約と制限](docs/scoped-tasks.md)。
+
+## 明示的な Stream batch と deadline
+
+`%stream.read-batch T max stream` は1–65536の上限で読み、所有する tail と不変 list を返す。
+空 list は EOF、非空 list は最大 max 要素の prefix。既存の一要素 next の動作は変えない。
+[ABI・部分進捗](docs/stream-batches.md) と [公開呼出しスコープの期限](docs/scoped-tasks.md) を参照。
+
+## エディターと native Component
+
+stdio の `wlt lsp` は型・effect・所有権の診断、hover、定義への移動を提供する。UTF-16、未保存の相対モジュール、上限付き cache と取消しの契約は [LSP](docs/lsp.md) に定義する。
+WIT の world を指定する Component 出力は、共有 payload の async endpoint と imported resource の typed own/borrow を Canonical ABI に接続する。対応する形と実行条件は [native worlds](docs/native-worlds.md) に定義する。
+
+## 期待型付き文字列と共有値combinator
+
+期待型がsemanticなstring型と確定する式位置では、UTF-8文字列トークンを `%string.lit` と同じtyped Data式へ展開する。期待型がない場合や他の型を要求する場合は `E_LITERAL_TYPE`。暗黙変換、所有権、effectの規則は変更しない。
+`wlt:core` の `$option.ok-or` / `$result.map-err` は通常のshared/nonunit制約を持つ単相化関数。[引数の評価順とcallbackの契約](docs/option-result.md) に従う。

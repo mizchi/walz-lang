@@ -15,6 +15,8 @@ impl Effects {
             may_suspend: self.may_suspend || other.may_suspend,
             may_diverge: self.may_diverge || other.may_diverge,
             host: self.host || other.host,
+            synchronizes: self.synchronizes || other.synchronizes,
+            may_block: self.may_block || other.may_block,
         }
     }
 
@@ -28,6 +30,8 @@ impl Effects {
             may_suspend: true,
             may_diverge: true,
             host: true,
+            synchronizes: true,
+            may_block: true,
         }
     }
 }
@@ -40,6 +44,21 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
     use ExprKind::*;
     let mut effects = Effects::default();
     match &expression.kind {
+        Wasm { instruction, .. } => {
+            effects.reads = instruction.reads();
+            effects.writes = instruction.writes();
+            effects.may_trap = true;
+        }
+        Memory { op, memory, .. } => {
+            effects.reads = op.reads;
+            effects.writes = op.writes;
+            effects.synchronizes =
+                op.synchronizes(memory.is_some_and(|id| module.memories[id.0].shared));
+            effects.may_block = op.blocks;
+            effects.may_diverge = op.blocks;
+            effects.may_trap = op.atomic() && !op.fence();
+            effects.allocates = op.name() == "memory.grow";
+        }
         Data(_) => {
             effects.allocates = true;
             effects.may_trap = true;
@@ -92,7 +111,7 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
             effects.writes = true;
             effects.may_trap = true;
         }
-        Call { function, .. } => {
+        Call { function, .. } | TaskSpawn { function, .. } => {
             calls.insert(*function);
         }
         Throw { .. } => {

@@ -1,0 +1,11 @@
+✔ expense oracle keeps exact signed bounds and rejects overflow without committing a row (0.678708ms)
+✔ oracle distinguishes malformed/wrong-type/fractional rows and the changed policy (0.113292ms)
+✔ evaluation IDs cannot escape or overwrite an existing run (2.296541ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33.450042

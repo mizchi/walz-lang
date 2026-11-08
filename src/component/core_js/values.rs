@@ -10,19 +10,28 @@ pub(super) fn write(ty: &Type, p: &str, v: &str) -> String {
     format!("w_{}({p},{v});", type_key(ty))
 }
 
-fn numeric_array(ty: &Type) -> Option<&'static str> {
+fn numeric_array(a: &Adapter<'_>, ty: &Type) -> Option<&'static str> {
     match ty {
         Type::Num(NumType::I32) => Some("Int32Array"),
         Type::Num(NumType::I64) => Some("BigInt64Array"),
         Type::Num(NumType::F32) => Some("Float32Array"),
         Type::Num(NumType::F64) => Some("Float64Array"),
+        Type::Newtype(_) => match a.interface_type(ty) {
+            Some(crate::interface::AbiType::U8) => Some("Uint8Array"),
+            Some(crate::interface::AbiType::S8) => Some("Int8Array"),
+            Some(crate::interface::AbiType::U16) => Some("Uint16Array"),
+            Some(crate::interface::AbiType::S16) => Some("Int16Array"),
+            Some(crate::interface::AbiType::U32) => Some("Uint32Array"),
+            Some(crate::interface::AbiType::U64) => Some("BigUint64Array"),
+            _ => None,
+        },
         _ => None,
     }
 }
 
 pub(super) fn prelude(a: &Adapter<'_>) -> &'static str {
     if a.types.iter().any(|ty| {
-        matches!(ty, Type::Value(id) if matches!(a.value(*id), ValueType::List(t) if numeric_array(t).is_some()))
+        matches!(ty, Type::Value(id) if matches!(a.value(*id), ValueType::List(t) if numeric_array(a,t).is_some()))
     }) {
         // TypedArray views use native endian, while the ABI is little-endian.
         // Intrinsic getters distinguish actual element types from proxies or
@@ -37,6 +46,9 @@ pub(super) fn prelude(a: &Adapter<'_>) -> &'static str {
 }
 
 pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
+    if a.interface_type(ty).is_some() {
+        return a.interface_codec(ty);
+    }
     let view = "c.view()";
     match ty {
         Type::Num(n) => {
@@ -98,7 +110,7 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                 let limit = (16 * 1024 * 1024) / stride;
                 let r = read(payload, &format!("q+i*{stride}"));
                 let w = write(payload, &format!("q+i*{stride}"), "v[i]");
-                let typed = numeric_array(payload);
+                let typed = numeric_array(a, payload);
                 let read = if let Some(typed) = typed {
                     // Construct an owning copy before post-return frees the ABI
                     // buffer. Identical element types also preserve NaN bits.

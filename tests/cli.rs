@@ -166,11 +166,7 @@ fn rejects_invalid_usage_and_reports_source_diagnostics() {
     let help = command().arg("--help").output().unwrap();
     assert!(help.status.success());
     assert!(String::from_utf8_lossy(&help.stdout).contains("Usage:"));
-    for args in [
-        vec![],
-        vec!["unknown"],
-        vec!["build", "examples/closure.wlt"],
-    ] {
+    for args in [vec![], vec!["unknown"], vec!["build", "--unknown"]] {
         assert_eq!(
             command().args(args).output().unwrap().status.code(),
             Some(2)

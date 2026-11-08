@@ -16,17 +16,20 @@ self.onmessage = async ({ data: { id, source, optimize } }) => {
         const module = await WebAssembly.compile(result.wasm);
         result.exports = WebAssembly.Module.exports(module).filter(item => item.kind === 'function').map(item => item.name);
         const imports = WebAssembly.Module.imports(module);
-        if (imports.length && imports.every(item => item.module === 'wlt:host/event-loop@0.1.0')) {
+        if (!result.execution && imports.length && imports.every(item => item.module === 'wlt:host/event-loop@0.1.0')) {
           const execution = JSON.parse(prepare_execution(source, optimize));
           if (execution.schema !== 'wlt-playground-execution-v1') throw new Error('Unexpected execution response format');
           if (execution.status === 'success') {
             result.execution = execution.program;
-            result.execution.wasm = Uint8Array.from(execution.program.wasm);
-            result.execution.memory = Uint8Array.from(execution.program.memory);
-            transfer.push(result.execution.wasm.buffer, result.execution.memory.buffer);
           } else {
             result.executionError = execution.diagnostic.message;
           }
+        }
+        if(result.execution){
+          result.exports=Object.keys(result.execution.exports);
+          result.execution.wasm=Uint8Array.from(result.execution.wasm);
+          result.execution.memory=Uint8Array.from(result.execution.memory);
+          transfer.push(result.execution.wasm.buffer,result.execution.memory.buffer);
         }
       } catch (error) {
         // Compiler validation and browser feature support are independent.

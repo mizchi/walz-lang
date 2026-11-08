@@ -1,5 +1,6 @@
 //! A statically checked, expression-only WAT extension targeting Wasm GC.
 
+mod abi_limits;
 mod aliases;
 pub mod analysis;
 pub mod benchmark;
@@ -8,17 +9,23 @@ mod bounds;
 mod buffers;
 pub mod component;
 mod construction;
+#[doc(hidden)]
+pub mod distribution;
 pub mod effects;
 mod emit;
+pub mod execution;
 pub mod flow;
 pub mod format;
 mod frontend;
 mod generics;
 mod harness;
 pub mod inspect;
+pub mod interface;
 pub mod ir;
 mod link;
 mod lists;
+#[cfg(not(target_family = "wasm"))]
+pub mod lsp;
 mod modules;
 mod naming;
 pub mod native;
@@ -28,6 +35,8 @@ mod optimize;
 pub mod ownership;
 mod ownership_graph;
 pub mod proof;
+pub mod race;
+pub mod readonly;
 pub mod regions;
 mod resources;
 pub mod runner;
@@ -40,10 +49,13 @@ mod standard;
 mod standard_catalogue;
 mod standard_sources;
 mod syntax;
+mod task_children;
+pub mod threads;
 mod type_syntax;
 mod typeclasses;
 pub mod typing;
 pub mod verified;
+pub mod wasm;
 pub mod wit;
 pub mod wit_bindgen;
 
@@ -65,6 +77,10 @@ pub struct Effects {
     pub may_suspend: bool,
     pub may_diverge: bool,
     pub host: bool,
+    #[serde(skip_serializing_if = "effects::is_false")]
+    pub synchronizes: bool,
+    #[serde(skip_serializing_if = "effects::is_false")]
+    pub may_block: bool,
 }
 
 /// One function or nominal closure's captures, direct calls, and transitive effects.
@@ -134,11 +150,13 @@ pub(crate) fn check_observed<T>(
     let mut syntax = syntax::normalize(source, &syntax)?;
     standard.rewrite(&mut syntax);
     let syntax = modules::expand(source, &syntax).map_err(|e| standard.annotate(e))?;
-    let generics = generics::expand(source, &syntax.syntax).map_err(|e| standard.annotate(e))?;
+    let generics = generics::expand(source, &syntax.syntax)
+        .map_err(|e| standard.annotate(syntax.annotate(e)))?;
     let checked = (|| {
         let aliases = aliases::expand(source, &generics.syntax)?;
         let expanded = scoped::expand(source, &aliases.syntax)?;
         let (mut module, bounds) = frontend::check(source, &expanded, &generics.bounds)?;
+        interface::validate(source, &mut module)?;
         policy.apply(&mut module);
         bindings::validate(source, &module)?;
         frontend::validate_alias_targets(source, &module, &aliases.targets)?;
@@ -146,12 +164,14 @@ pub(crate) fn check_observed<T>(
         resources::validate(source, &module)?;
         bounds::check_effects(source, &module, &bounds)?;
         effects::validate(source, &module)?;
+        task_children::validate(source, &module)?;
         ownership::validate(source, &module)?;
+        race::validate(source, &module)?;
         benchmark::validate(source, &module)?;
         let observation = observe(&module, &generics);
         Ok((module, observation))
     })();
-    checked.map_err(|error| standard.annotate(generics.annotate(source, error)))
+    checked.map_err(|error| standard.annotate(syntax.annotate(generics.annotate(source, error))))
 }
 
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
@@ -197,6 +217,7 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
         Ok(module) => module,
         Err(error) => {
             if error.diagnostic().code == "E_CHECK"
+                && !race::requested(source)
                 && let Some(wat) = native_macros::expand(source)?
             {
                 let wasm = wat::parse_str(&wat).map_err(|e| {
@@ -222,7 +243,7 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
         }
     };
     if !options.optimize {
-        if !module.laws.is_empty() {
+        if !module.laws.is_empty() || module.race_free {
             verified::verify(source, &module)?;
         }
         return emit_module(module, false);
@@ -233,7 +254,7 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
 /// Validate either native WAT or the typed extension syntax.
 pub fn validate(source: &str) -> Result<(), Error> {
     if let Ok(module) = check(source) {
-        if !module.laws.is_empty() {
+        if !module.laws.is_empty() || module.race_free {
             verified::verify(source, &module)?;
         }
         return Ok(());
@@ -247,7 +268,7 @@ pub fn expand(source: &str) -> Result<String, Error> {
 }
 
 pub(crate) fn compile_checked(source: &str, ir: ir::Module) -> Result<Compilation, Error> {
-    if !ir.laws.is_empty() {
+    if !ir.laws.is_empty() || ir.race_free {
         verified::verify(source, &ir)?;
     }
     emit_checked(ir)
@@ -264,6 +285,12 @@ fn emit_module(ir: ir::Module, optimize: bool) -> Result<Compilation, Error> {
     } else {
         ir.clone()
     };
+    if task_children::enabled(&linked) {
+        return Err(
+            Error::message("scoped tasks require --target core-js or component".into())
+                .with_code("E_TASK_BACKEND"),
+        );
+    }
     let wat = emit::emit(&newtypes::lower(&linked));
     let wasm =
         wat::parse_str(&wat).map_err(|error| Error::message(format!("generated WAT: {error}")))?;

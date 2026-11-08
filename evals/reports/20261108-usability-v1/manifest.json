@@ -1,0 +1,9 @@
+{
+  "schema": "wlt-usability-v1",
+  "id": "usability-20261108-v1-r3",
+  "createdAt": "2026-11-08T09:56:44.379Z",
+  "perspective": "nonblind implementer dogfooding; not human timing or a fresh-reader score",
+  "binary": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+  "binarySha256": "43720b1db50db087fd3181e102f07ec9bb6b3aa9e1c846a7d9ff79a44f195dce",
+  "node": "v24.21.0"
+}

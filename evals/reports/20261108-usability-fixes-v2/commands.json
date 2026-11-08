@@ -1,0 +1,204 @@
+[
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/readme.wlt"
+    ],
+    "code": 0,
+    "milliseconds": 7.170957999999985,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "run",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/readme.wlt"
+    ],
+    "code": 0,
+    "milliseconds": 15.051541999999984,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/mixed.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/mixed"
+    ],
+    "code": 0,
+    "milliseconds": 2461.8677079999998,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/mixed\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "run",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/main.wlt",
+      "--target",
+      "core-js"
+    ],
+    "code": 0,
+    "milliseconds": 2558.5692499999996,
+    "stdout": "\"{\\\"accepted\\\":2,\\\"rejected\\\":1,\\\"totals\\\":{\\\"food\\\":42}}\"\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/main.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/expenses-core"
+    ],
+    "code": 0,
+    "milliseconds": 2688.657042,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/expenses-core\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/policy-change/main.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/expenses-nonnegative"
+    ],
+    "code": 0,
+    "milliseconds": 1554.3867919999993,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/expenses-nonnegative\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "test",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt",
+      "--target",
+      "core"
+    ],
+    "code": 0,
+    "milliseconds": 1265.399042000001,
+    "stdout": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt::\"public entry runs\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "bench",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses_bench.wlt",
+      "--target",
+      "core",
+      "--json",
+      "--samples",
+      "2",
+      "--iterations",
+      "1",
+      "--warmup-ms",
+      "0"
+    ],
+    "code": 0,
+    "milliseconds": 1281.6735420000005,
+    "stdout": "{\n  \"schema\": \"wlt-bench-v1\",\n  \"options\": {\n    \"target\": \"core\",\n    \"filter\": null,\n    \"list\": false,\n    \"samples\": 2,\n    \"iterations\": 1,\n    \"warmup_ms\": 0,\n    \"sample_ms\": 10,\n    \"timeout_ms\": 30000\n  },\n  \"benchmarks\": [\n    {\n      \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses_bench.wlt\",\n      \"name\": \"expense aggregation\",\n      \"span\": {\n        \"start\": 51,\n        \"end\": 136\n      },\n      \"outcome\": {\n        \"status\": \"measured\",\n        \"summary\": {\n          \"iterations\": 1,\n          \"samples_ns\": [\n            757165.9999999998,\n            5250.000000000199\n          ],\n          \"min_ns\": 5250.000000000199,\n          \"max_ns\": 757165.9999999998,\n          \"mean_ns\": 381208.0,\n          \"median_ns\": 381208.0,\n          \"std_dev_ns\": 531684.9024826637,\n          \"runtime\": \"Node.js 24.21.0; V8 13.6.233.17-node.53; darwin/arm64\"\n        }\n      }\n    }\n  ],\n  \"errors\": [],\n  \"filtered_out\": 0\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "test",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt",
+      "--target",
+      "core-js"
+    ],
+    "code": 0,
+    "milliseconds": 1237.6868330000034,
+    "stdout": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses.test.wlt::\"public entry runs\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "bench",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses_bench.wlt",
+      "--target",
+      "core-js",
+      "--json",
+      "--samples",
+      "2",
+      "--iterations",
+      "1",
+      "--warmup-ms",
+      "0"
+    ],
+    "code": 0,
+    "milliseconds": 1343.4740839999977,
+    "stdout": "{\n  \"schema\": \"wlt-bench-v1\",\n  \"options\": {\n    \"target\": \"core-js\",\n    \"filter\": null,\n    \"list\": false,\n    \"samples\": 2,\n    \"iterations\": 1,\n    \"warmup_ms\": 0,\n    \"sample_ms\": 10,\n    \"timeout_ms\": 30000\n  },\n  \"benchmarks\": [\n    {\n      \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/expenses/expenses_bench.wlt\",\n      \"name\": \"expense aggregation\",\n      \"span\": {\n        \"start\": 51,\n        \"end\": 136\n      },\n      \"outcome\": {\n        \"status\": \"measured\",\n        \"summary\": {\n          \"iterations\": 1,\n          \"samples_ns\": [\n            1177875.0000000002,\n            30207.999999998236\n          ],\n          \"min_ns\": 30207.999999998236,\n          \"max_ns\": 1177875.0000000002,\n          \"mean_ns\": 604041.4999999992,\n          \"median_ns\": 604041.4999999992,\n          \"std_dev_ns\": 811523.1182440228,\n          \"runtime\": \"Core+JSPI end-to-end; Node.js 24.21.0; V8 13.6.233.17-node.53; darwin/arm64\"\n        }\n      }\n    }\n  ],\n  \"errors\": [],\n  \"filtered_out\": 0\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/async/main.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/async-core"
+    ],
+    "code": 0,
+    "milliseconds": 991.0764999999992,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/async-core\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "bind",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/api.wit",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/policy.json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/generated"
+    ],
+    "code": 0,
+    "milliseconds": 4.890167000001384,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/main.wlt",
+      "--target",
+      "component",
+      "--wit",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/api.wit",
+      "--bindings",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/snapshot/evals/usability/native/generated/bindings.json",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/native/native.wasm"
+    ],
+    "code": 0,
+    "milliseconds": 890.9211670000004,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/native/native.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-unknown-local/main.wlt"
+    ],
+    "code": 1,
+    "milliseconds": 70.29091699999844,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_UNKNOWN_LOCAL\",\"help\":[\"did you mean `$previous`?\"],\"message\":\"unbound local `$prevous`\",\"notes\":[],\"primary\":{\"location\":{\"column\":28,\"line\":59,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-unknown-local/model.wlt\"},\"message\":\"\",\"span\":{\"end\":1768,\"start\":1760}},\"related\":[{\"location\":{\"column\":13,\"line\":54,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-unknown-local/model.wlt\"},\"message\":\"`$previous` is bound here\",\"span\":{\"end\":1561,\"start\":1552}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-wrong-generic/main.wlt"
+    ],
+    "code": 1,
+    "milliseconds": 71.50954199999978,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_TYPE_MISMATCH\",\"help\":[],\"message\":\"type mismatch: expected (ref $dict<i32>), got (ref $dict<i64>)\",\"notes\":[],\"primary\":{\"location\":{\"column\":39,\"line\":56,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/usability-fixes-20261108-v2-r1/work/bad-wrong-generic/model.wlt\"},\"message\":\"\",\"span\":{\"end\":1656,\"start\":1649}},\"related\":[{\"location\":{\"column\":12,\"line\":1855,\"path\":\"wlt:core\"},\"message\":\"argument 1 of `$dict.get<i32>`: parameter `$d` requires (ref $dict<i32>)\",\"span\":{\"end\":66960,\"start\":66958}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  }
+]

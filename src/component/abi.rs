@@ -13,6 +13,10 @@ pub(super) fn type_key(ty: &Type) -> String {
     match ty {
         Type::Num(n) => n.wat().into(),
         Type::Value(id) => format!("v{}", id.0),
+        Type::Newtype(id) => format!("n{}", id.0),
+        Type::Ref { ty: id, .. } => format!("r{}", id.0),
+        Type::Resource(id) => format!("own{}", id.0),
+        Type::Borrow(id) => format!("borrow{}", id.0),
         Type::Unit => "unit".into(),
         _ => unreachable!(),
     }
@@ -21,6 +25,9 @@ pub(super) fn core_type(ty: &Type, module: &Module) -> String {
     match ty {
         Type::Num(n) => n.wat().into(),
         Type::Value(id) => format!("(ref {})", module.types[id.0].name),
+        Type::Newtype(_) | Type::Ref { .. } | Type::Resource(_) | Type::Borrow(_) => {
+            crate::emit::ty(module, ty)
+        }
         _ => unreachable!(),
     }
 }
@@ -46,8 +53,23 @@ pub(super) fn component_type_in(ty: &Type, scope: &str) -> String {
         Type::Num(NumType::I64) => "s64".into(),
         Type::Num(NumType::V128) => unreachable!("v128 is not a portable ABI type"),
         Type::Num(n) => n.wat().into(),
-        Type::Unit => format!("{scope}unit"),
+        Type::Unit => format!("{}unit", if scope == "$api_" { "$" } else { scope }),
         Type::Value(id) => format!("{scope}t{}", id.0),
+        Type::Resource(id) | Type::Borrow(id) => format!(
+            "({} {}t{})",
+            if matches!(ty, Type::Resource(_)) {
+                "own"
+            } else {
+                "borrow"
+            },
+            if scope == "$api_" { "$" } else { scope },
+            id.0
+        ),
+        // Nominal record/enum/flags names on function imports must come from
+        // the imported type instance, not the fresh aliases created by exports.
+        Type::Newtype(id) | Type::Ref { ty: id, .. } => {
+            format!("{}t{}", if scope == "$api_" { "$" } else { scope }, id.0)
+        }
         _ => unreachable!(),
     }
 }
@@ -84,7 +106,12 @@ pub(super) fn coerce(value: &str, have: NumType, want: NumType) -> String {
     }
 }
 
-pub(super) fn component_signature(f: &Function, async_: bool, scope: &str) -> String {
+pub(super) fn component_signature_named(
+    f: &Function,
+    async_: bool,
+    scope: &str,
+    names: Option<&[String]>,
+) -> String {
     format!(
         "{}{}{}",
         if async_ { "async " } else { "" },
@@ -93,9 +120,12 @@ pub(super) fn component_signature(f: &Function, async_: bool, scope: &str) -> St
             .enumerate()
             .map(|(i, id)| format!(
                 "(param \"{}\" {}) ",
-                f.import_contract
-                    .as_ref()
-                    .and_then(|b| b.param_names.get(i))
+                names
+                    .and_then(|n| n.get(i))
+                    .or_else(|| f
+                        .import_contract
+                        .as_ref()
+                        .and_then(|b| b.param_names.get(i)))
                     .cloned()
                     .unwrap_or_else(|| format!("p{i}")),
                 component_type_in(&f.locals[id.0].ty, scope)
@@ -111,6 +141,8 @@ pub(super) fn component_signature(f: &Function, async_: bool, scope: &str) -> St
 impl<'a> Adapter<'a> {
     pub(super) fn new(module: &'a Module) -> Self {
         let mut this = Self {
+            flat_cache: Default::default(),
+            native_resources: false,
             module,
             endpoints: BTreeSet::new(),
             types: BTreeSet::from([Type::Unit]),
@@ -120,7 +152,7 @@ impl<'a> Adapter<'a> {
             this.types.insert(Type::Num(num));
         }
         for index in 0..module.types.len() {
-            let ty = Type::Value(TypeId(index));
+            let ty = module.instance_type(TypeId(index));
             if this.portable(&ty) {
                 this.types.insert(ty);
                 if matches!(
@@ -133,38 +165,93 @@ impl<'a> Adapter<'a> {
         }
         this
     }
+    pub(super) fn new_native(module: &'a Module) -> Self {
+        let mut this = Self::new(module);
+        this.native_resources = true;
+        for (n, t) in module.types.iter().enumerate() {
+            if matches!(t.kind, TypeKind::Resource { .. }) {
+                this.types.insert(Type::Resource(TypeId(n)));
+                this.types.insert(Type::Borrow(TypeId(n)));
+            }
+            let ty = module.instance_type(TypeId(n));
+            if this.portable(&ty) {
+                this.types.insert(ty);
+            }
+        }
+        this
+    }
     pub(super) fn value(&self, id: TypeId) -> &ValueType {
         let TypeKind::Value(v) = &self.module.types[id.0].kind else {
             unreachable!()
         };
         v
     }
-    fn portable(&self, ty: &Type) -> bool {
-        match ty {
-            Type::Num(NumType::V128) => false,
-            Type::Unit | Type::Num(_) => true,
-            Type::Value(id) => match &self.module.types[id.0].kind {
-                TypeKind::Value(ValueType::Bytes | ValueType::Text) => true,
-                TypeKind::Value(ValueType::Own(_)) => false,
-                TypeKind::Value(
-                    ValueType::List(t)
-                    | ValueType::Option(t)
-                    | ValueType::Future(t)
-                    | ValueType::Stream(t),
-                ) => self.portable(t),
-                TypeKind::Value(ValueType::Result { ok, err }) => {
-                    self.portable(ok) && self.portable(err)
+    pub(super) fn validate_boundary(&self) -> Result<(), crate::Error> {
+        for f in &self.module.functions {
+            if f.exports.is_empty() && !matches!(f.kind, FunctionKind::Import { .. }) {
+                continue;
+            }
+            for ty in f
+                .params
+                .iter()
+                .map(|id| &f.locals[id.0].ty)
+                .chain([&f.result])
+            {
+                if !self.portable(ty) {
+                    return Err(crate::Error::message(format!(
+                        "type {} requires a supported ABI adapter",
+                        self.module.type_name(ty)
+                    ))
+                    .with_code("E_ABI_TYPE"));
                 }
-                TypeKind::Value(ValueType::Pair { first, second }) => {
-                    self.portable(first) && self.portable(second)
+            }
+            let mut bytes = 0u32;
+            let mut slots = 0usize;
+            for id in &f.params {
+                let ty = &f.locals[id.0].ty;
+                let layout = self.layout(ty);
+                bytes = bytes
+                    .checked_add(layout.align - 1)
+                    .map(|b| b & !(layout.align - 1))
+                    .and_then(|b| b.checked_add(layout.size))
+                    .unwrap_or(u32::MAX);
+                slots = slots.saturating_add(
+                    crate::abi_limits::facts(self.module, ty)
+                        .map(|f| f.flat)
+                        .unwrap_or(1),
+                );
+                if bytes > super::MEMORY_LIMIT || slots > 1024 {
+                    return Err(crate::Error::message(format!(
+                        "ABI parameter list exceeds implementation limits for {}",
+                        f.name
+                    ))
+                    .with_code("E_ABI_LIMIT"));
                 }
-                _ => false,
-            },
-            _ => false,
+            }
         }
+        Ok(())
+    }
+    fn portable(&self, ty: &Type) -> bool {
+        matches!(
+            ty,
+            Type::Unit | Type::Num(NumType::I32 | NumType::I64 | NumType::F32 | NumType::F64)
+        ) || (self.interface_type(ty).is_some() || matches!(ty, Type::Value(_)))
+            && crate::abi_limits::facts(self.module, ty)
+                .is_some_and(|f| self.native_resources || !f.resource)
+            || self.native_resources && matches!(ty, Type::Resource(_) | Type::Borrow(_))
     }
     pub(super) fn layout(&self, ty: &Type) -> Layout {
+        if let Some(f) = crate::abi_limits::facts(self.module, ty) {
+            return Layout {
+                size: f.size,
+                align: f.align,
+            };
+        }
+        if self.interface_type(ty).is_some() {
+            return self.interface_layout(ty);
+        }
         match ty {
+            Type::Resource(_) | Type::Borrow(_) => Layout { size: 4, align: 4 },
             Type::Unit => Layout { size: 1, align: 1 },
             Type::Num(NumType::V128) => unreachable!("v128 is not a portable ABI type"),
             Type::Num(NumType::I64 | NumType::F64) => Layout { size: 8, align: 8 },
@@ -217,7 +304,19 @@ impl<'a> Adapter<'a> {
         }
     }
     pub(super) fn flat(&self, ty: &Type) -> Vec<NumType> {
+        if let Some(f) = self.flat_cache.borrow().get(ty) {
+            return f.clone();
+        }
+        let f = self.compute_flat(ty);
+        self.flat_cache.borrow_mut().insert(ty.clone(), f.clone());
+        f
+    }
+    fn compute_flat(&self, ty: &Type) -> Vec<NumType> {
+        if self.interface_type(ty).is_some() {
+            return self.interface_flat(ty);
+        }
         match ty {
+            Type::Resource(_) | Type::Borrow(_) => vec![NumType::I32],
             Type::Num(n) => vec![*n],
             Type::Unit => vec![NumType::I32],
             Type::Value(id) => match self.value(*id) {
@@ -252,51 +351,88 @@ impl<'a> Adapter<'a> {
             _ => unreachable!(),
         }
     }
+    pub(super) fn materialized_types(&self) -> String {
+        // Instance-type declarations introduce equality-bound exports; a real
+        // component instead exports the concrete definitions with local aliases.
+        let mut text = self.declarations().replace(
+            "(export \"wlt-unit\" (type $unit (eq $unit_raw)))",
+            "(export $unit \"wlt-unit\" (type $unit_raw))",
+        );
+        let mut declared = std::collections::BTreeSet::new();
+        for ty in self.ordered_types() {
+            if let Type::Resource(id) | Type::Borrow(id) = ty
+                && declared.insert(id)
+            {
+                text=text.replace(&format!("(export \"t{}\" (type $t{} (sub resource)))",id.0,id.0),&format!("(import \"resource{}\" (type $resource{} (sub resource))) (export $t{} \"t{}\" (type $resource{}))",id.0,id.0,id.0,id.0,id.0));
+            }
+            if let Type::Value(id) | Type::Newtype(id) | Type::Ref { ty: id, .. } = ty {
+                text = text.replace(
+                    &format!("(export \"t{}\" (type $t{} (eq $raw{})))", id.0, id.0, id.0),
+                    &format!("(export $t{} \"t{}\" (type $raw{}))", id.0, id.0, id.0),
+                );
+            }
+        }
+        text
+    }
     pub(super) fn declarations(&self) -> String {
         let mut out = String::from(
             "(type $unit_raw (enum \"value\"))\n(export \"wlt-unit\" (type $unit (eq $unit_raw)))\n",
         );
-        for ty in &self.types {
-            let Type::Value(id) = ty else { continue };
-            let def = match self.value(*id) {
-                ValueType::Bytes => "(list u8)".into(),
-                ValueType::Text => "string".into(),
-                ValueType::List(t) => format!("(list {})", component_type(t)),
-                ValueType::Option(t) => format!("(option {})", component_type(t)),
-                ValueType::Result { ok, err } => format!(
-                    "(result {}{})",
-                    if *ok == Type::Unit {
-                        String::new()
-                    } else {
-                        component_type(ok)
-                    },
-                    if *err == Type::Unit {
-                        String::new()
-                    } else {
-                        format!(" (error {})", component_type(err))
-                    }
-                ),
-                ValueType::Pair { first, second } => {
-                    format!(
-                        "(tuple {} {})",
-                        component_type(first),
-                        component_type(second)
-                    )
+        let mut declared = std::collections::BTreeSet::new();
+        for ty in &self.ordered_types() {
+            if let Type::Resource(id) | Type::Borrow(id) = ty {
+                if declared.insert(*id) {
+                    out += &format!("(export \"t{}\" (type $t{} (sub resource)))\n", id.0, id.0);
                 }
-                ValueType::Future(t) | ValueType::Stream(t) => format!(
-                    "({}{})",
-                    if matches!(self.value(*id), ValueType::Future(_)) {
-                        "future"
-                    } else {
-                        "stream"
-                    },
-                    if *t == Type::Unit {
-                        String::new()
-                    } else {
-                        format!(" {}", component_type(t))
+                continue;
+            }
+            let id = match ty {
+                Type::Value(id) | Type::Newtype(id) | Type::Ref { ty: id, .. } => id,
+                _ => continue,
+            };
+            let def = if self.interface_type(ty).is_some() {
+                self.interface_declaration(ty)
+            } else {
+                match self.value(*id) {
+                    ValueType::Bytes => "(list u8)".into(),
+                    ValueType::Text => "string".into(),
+                    ValueType::List(t) => format!("(list {})", component_type(t)),
+                    ValueType::Option(t) => format!("(option {})", component_type(t)),
+                    ValueType::Result { ok, err } => format!(
+                        "(result {}{})",
+                        if *ok == Type::Unit {
+                            String::new()
+                        } else {
+                            component_type(ok)
+                        },
+                        if *err == Type::Unit {
+                            String::new()
+                        } else {
+                            format!(" (error {})", component_type(err))
+                        }
+                    ),
+                    ValueType::Pair { first, second } => {
+                        format!(
+                            "(tuple {} {})",
+                            component_type(first),
+                            component_type(second)
+                        )
                     }
-                ),
-                _ => unreachable!(),
+                    ValueType::Future(t) | ValueType::Stream(t) => format!(
+                        "({}{})",
+                        if matches!(self.value(*id), ValueType::Future(_)) {
+                            "future"
+                        } else {
+                            "stream"
+                        },
+                        if *t == Type::Unit {
+                            String::new()
+                        } else {
+                            format!(" {}", component_type(t))
+                        }
+                    ),
+                    _ => unreachable!(),
+                }
             };
             out.push_str(&format!(
                 "(type $raw{} {def})\n(export \"t{}\" (type $t{} (eq $raw{})))\n",

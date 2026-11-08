@@ -66,6 +66,7 @@ pub(crate) fn parse(source: &str) -> Result<Sexp, Error> {
     let mut reader = Reader {
         source,
         position: 0,
+        recover: false,
     };
     reader.space()?;
     let expression = reader.read(0)?;
@@ -79,6 +80,24 @@ pub(crate) fn parse(source: &str) -> Result<Sexp, Error> {
 struct Reader<'a> {
     source: &'a str,
     position: usize,
+    recover: bool,
+}
+
+/// Editor-only prefix syntax. The returned tree is never passed to checking or
+/// code generation. Strict parsing remains the acceptance boundary.
+#[cfg(not(target_family = "wasm"))]
+pub(crate) fn editor_prefix(source: &str) -> Result<Sexp, Error> {
+    let mut reader = Reader {
+        source,
+        position: 0,
+        recover: true,
+    };
+    reader.space()?;
+    let syntax = reader.read(0)?;
+    if syntax.head() != Some("module") {
+        return Err(reader.error("expected module"));
+    }
+    Ok(syntax)
 }
 
 impl Reader<'_> {
@@ -184,7 +203,13 @@ impl Reader<'_> {
     fn list(&mut self, start: usize, depth: usize) -> Result<Vec<Sexp>, Error> {
         let mut items: Vec<Sexp> = Vec::new();
         loop {
-            self.space()?;
+            if let Err(error) = self.space() {
+                if !self.recover {
+                    return Err(error);
+                }
+                self.position = self.source.len();
+                break;
+            }
             if items.len() == 1 {
                 let prefix = items[0]
                     .atom()
@@ -205,9 +230,25 @@ impl Reader<'_> {
                 }
             }
             if self.rest().starts_with('{') {
+                if items.len() == 1 && matches!(items[0].atom(), Some("%let" | "%for-each")) {
+                    let start = self.position;
+                    let mut fields = vec![Sexp {
+                        kind: Kind::Atom("@fields".into()),
+                        span: Span { start, end: start },
+                    }];
+                    fields.extend(self.fields(depth + 1)?);
+                    items.push(Sexp {
+                        kind: Kind::List(fields),
+                        span: Span {
+                            start,
+                            end: self.position,
+                        },
+                    });
+                    continue;
+                }
                 if items.len() != 2 || items[0].atom() != Some("%struct.new") {
                     return Err(self
-                        .error("field maps belong to %struct.new or %$Type::")
+                        .error("field maps belong to %struct.new, %$Type::, or a %let / %for-each pattern")
                         .with_code("E_STRUCT_LITERAL"));
                 }
                 items.extend(self.fields(depth + 1)?);
@@ -225,13 +266,23 @@ impl Reader<'_> {
                 break;
             }
             if self.rest().is_empty() {
+                if self.recover {
+                    break;
+                }
                 return Err(Error::at(
                     self.source,
                     Span { start, end: start },
                     "unclosed '('; expected ')'",
                 ));
             }
-            items.push(self.read(depth + 1)?);
+            match self.read(depth + 1) {
+                Ok(item) => items.push(item),
+                Err(_) if self.recover => {
+                    self.position = self.source.len();
+                    break;
+                }
+                Err(error) => return Err(error),
+            }
         }
         Ok(items)
     }

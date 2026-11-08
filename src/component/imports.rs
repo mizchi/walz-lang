@@ -24,7 +24,9 @@ impl Adapter<'_> {
         };
         if f.result != Type::Unit {
             let flat = self.flat(&f.result);
-            signature.push_str(&if flat.len() > 1 {
+            signature.push_str(&if flat.is_empty() {
+                String::new()
+            } else if flat.len() > 1 {
                 " (param i32)".into()
             } else {
                 format!(" (result {})", flat[0].wat())
@@ -118,8 +120,12 @@ impl Adapter<'_> {
         out
     }
 
-    fn flat_load(&self, ty: &Type, p: &str) -> Vec<(String, NumType)> {
+    pub(super) fn flat_load(&self, ty: &Type, p: &str) -> Vec<(String, NumType)> {
+        if self.interface_type(ty).is_some() {
+            return self.interface_flat_load(ty, p);
+        }
         match ty {
+            Type::Resource(_) | Type::Borrow(_) => vec![(load(NumType::I32, p), NumType::I32)],
             Type::Num(n) => vec![(load(*n, p), *n)],
             Type::Unit => vec![(format!("(i32.load8_u {p})"), NumType::I32)],
             Type::Value(id) => match self.value(*id) {

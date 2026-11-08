@@ -54,6 +54,22 @@ pub struct Error {
 }
 
 impl Error {
+    /// Rewrite presentation only. Symbol identity, source spans and stable
+    /// diagnostic codes never depend on these rendered names.
+    pub(crate) fn rewrite_names(
+        mut self,
+        names: &std::collections::BTreeMap<String, String>,
+    ) -> Self {
+        let d = &mut self.diagnostic;
+        d.message = display_names(&d.message, names);
+        for label in d.primary.iter_mut().chain(&mut d.related) {
+            label.message = display_names(&label.message, names);
+        }
+        for text in d.notes.iter_mut().chain(&mut d.help) {
+            *text = display_names(text, names);
+        }
+        self
+    }
     pub(crate) fn message(message: String) -> Self {
         Self {
             diagnostic: Box::new(Diagnostic {
@@ -154,3 +170,92 @@ impl fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+fn display_names(text: &str, names: &std::collections::BTreeMap<String, String>) -> String {
+    fn render(
+        text: &str,
+        names: &std::collections::BTreeMap<String, String>,
+        active: &mut Vec<String>,
+        out: &mut String,
+        left: &mut usize,
+        truncated: &mut bool,
+    ) {
+        let mut chars = text.chars().peekable();
+        while let Some(c) = chars.next() {
+            if *left == 0 {
+                *truncated = true;
+                return;
+            }
+            let mut token = c.to_string();
+            if c == '$' {
+                while chars
+                    .peek()
+                    .is_some_and(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'))
+                {
+                    token.push(chars.next().unwrap());
+                }
+                if let Some(replacement) = names.get(&token)
+                    && active.len() < 64
+                    && !active.contains(&token)
+                {
+                    active.push(token.clone());
+                    render(replacement, names, active, out, left, truncated);
+                    active.pop();
+                    continue;
+                }
+            }
+            for c in token.chars() {
+                if c.len_utf8() > *left {
+                    *left = 0;
+                    *truncated = true;
+                    return;
+                }
+                out.push(c);
+                *left -= c.len_utf8();
+            }
+        }
+    }
+    if names.is_empty() {
+        return text.into();
+    }
+    let mut out = String::new();
+    let mut left = 4096;
+    let mut truncated = false;
+    render(
+        text,
+        names,
+        &mut vec![],
+        &mut out,
+        &mut left,
+        &mut truncated,
+    );
+    if truncated {
+        out.push('…');
+    }
+    out
+}
+
+#[cfg(test)]
+mod name_tests {
+    use super::display_names;
+    use std::collections::BTreeMap;
+    #[test]
+    fn source_names_replace_whole_identifiers_and_bound_shared_expansion() {
+        let mut names = BTreeMap::from([
+            ("$A.mono1".into(), "$Box<i32>".into()),
+            ("$A.mono10".into(), "$Box<i64>".into()),
+        ]);
+        assert_eq!(
+            display_names("$A.mono1 / $A.mono10", &names),
+            "$Box<i32> / $Box<i64>"
+        );
+        for i in 0..64 {
+            names.insert(format!("$X{i}"), format!("$Pair<$X{}, $X{}>", i + 1, i + 1));
+        }
+        let text = display_names("$X0", &names);
+        assert!(text.len() <= 4099);
+        assert!(text.ends_with('…'));
+        names.insert("$cycle".into(), "$cycle".into());
+        assert_eq!(display_names("$cycle", &names), "$cycle");
+    }
+}

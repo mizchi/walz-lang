@@ -96,7 +96,7 @@ impl Resolver<'_> {
         let mut output = node.clone();
         if matches!(
             node.head(),
-            Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream")
+            Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream" | "task")
         ) && let Kind::List(items) = &mut output.kind
         {
             let mut nodes = 2; // This list and its constructor atom.

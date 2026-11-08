@@ -1,0 +1,8 @@
+package test:native;
+interface api {
+  ready-text: async func(v: string) -> future<string>;
+  consume: async func(f: future<s32>) -> s32;
+  ready: async func() -> future<s32>;
+  prepend: async func(tail: stream<s32>) -> stream<s32>;
+}
+world guest { export api; }

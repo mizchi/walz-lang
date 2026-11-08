@@ -43,6 +43,12 @@ pub(crate) fn check_browser_component(
     source: &str,
     module: &crate::ir::Module,
 ) -> Result<(), Error> {
+    if module.race_free {
+        return Err(Error::message(
+            "atomic-cell proof verification requires the native Lean kernel".into(),
+        )
+        .with_code("E_HOST_UNAVAILABLE"));
+    }
     if !module.laws.is_empty() {
         return Err(Error::message(
             "Lean verification requires the native CLI and is unavailable in the browser".into(),
@@ -57,6 +63,9 @@ fn check_policy(
     module: &crate::ir::Module,
     component: bool,
 ) -> Result<crate::ownership::Contracts, Error> {
+    if !component && !module.race_free && module.memories.iter().any(|m| m.import.is_some()) {
+        return Err(Error::message("raw verified execution cannot supply imported linear memory; use an explicit Core host boundary".into()).with_code("E_VERIFIED_MEMORY"));
+    }
     let kinds = crate::ownership::Kinds::new(module);
     for (index, function) in module.functions.iter().enumerate() {
         if matches!(function.kind, FunctionKind::Import { .. })
@@ -133,6 +142,9 @@ fn verify_policy(source: &str, module: &crate::ir::Module, component: bool) -> R
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
         )));
+    }
+    if let Some(certificate) = crate::race::certificate(module)? {
+        crate::race::verify_certificate(&certificate)?;
     }
     Ok(())
 }

@@ -110,7 +110,12 @@ impl Expanded {
                 );
             }
         }
-        error
+        let names = self
+            .instances
+            .iter()
+            .map(|(_, _, display, concrete)| (concrete.clone(), display.clone()))
+            .collect();
+        error.rewrite_names(&names)
     }
 }
 
@@ -186,7 +191,7 @@ impl Expander<'_> {
         let mut out = node.clone();
         let head = node.head().unwrap_or("");
         let expected = match head {
-            "list" | "option" | "own" | "future" | "stream" | "borrow" | "resource" => 2,
+            "list" | "option" | "own" | "future" | "stream" | "task" | "borrow" | "resource" => 2,
             "result" | "pair" => 3,
             "ref"
                 if node

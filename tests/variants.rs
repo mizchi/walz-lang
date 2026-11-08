@@ -133,7 +133,7 @@ fn constructor_payloads_run_once_from_left_to_right() {
     assert_eq!(
         run(r#"(module
       (type $Cell (struct (field $value (mut i64))))
-      (type $Pair (%variant (%tuple i64 i64)))
+      (type $Pair (%variant (pair i64 i64)))
       (func $next (param $cell (ref $Cell)) (result i64)
         (block (result i64)
           (struct.set $Cell $value (local.get $cell)

@@ -1,6 +1,16 @@
 {
   "examples": [
     {
+      "path": "examples/high-level.wlt",
+      "pattern": "shared list traversal, named field patterns and single-evaluation updates",
+      "expected": "42"
+    },
+    {
+      "path": "examples/cli/main.wlt",
+      "pattern": "installed CLI project with build, test and bench",
+      "expected": "42"
+    },
+    {
       "path": "examples/closure.wlt",
       "pattern": "escaping closure",
       "expected": "42"

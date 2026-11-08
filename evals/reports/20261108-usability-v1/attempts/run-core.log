@@ -1,0 +1,2 @@
+warning: using `--invoke` with a function that returns values is experimental and may break in the future
+<anyref>

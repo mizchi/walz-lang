@@ -9,7 +9,8 @@ fn types(module: &mut Module, f: &mut impl FnMut(&mut Type)) {
             | ValueType::Option(t)
             | ValueType::Own(t)
             | ValueType::Future(t)
-            | ValueType::Stream(t) => f(t),
+            | ValueType::Stream(t)
+            | ValueType::Task(t) => f(t),
             ValueType::Pair { first, second } => {
                 f(first);
                 f(second);
@@ -76,6 +77,9 @@ pub(crate) fn lower(module: &Module) -> Module {
     let mut out = module.clone();
     types(&mut out, &mut |t| {
         if let Type::Newtype(id) = t {
+            if module.types[id.0].abi.is_some() {
+                return;
+            }
             let TypeKind::Newtype(n) = module.types[id.0].kind else {
                 unreachable!()
             };

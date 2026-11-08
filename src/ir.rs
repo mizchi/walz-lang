@@ -1,6 +1,7 @@
 //! The checked, closed expression language used by analysis and code generation.
 
 pub use crate::simd::SimdOp;
+pub use crate::threads::{MemoryDecl, MemoryId, MemoryOp};
 use serde::Serialize;
 
 #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd, Serialize)]
@@ -15,7 +16,7 @@ macro_rules! ids {
         pub struct $name(pub usize);
     )* };
 }
-ids!(TypeId, FunctionId, LocalId, LoopId, TagId);
+ids!(TypeId, FunctionId, LocalId, LoopId, TagId, AtomicCellId);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -254,6 +255,8 @@ pub enum ValueType {
     Own(Type),
     Future(Type),
     Stream(Type),
+    /// An affine child task. Its handle and shared result stay in Wasm GC.
+    Task(Type),
 }
 
 impl ValueType {
@@ -301,6 +304,10 @@ impl ValueType {
                 name: "ready".into(),
                 payloads: payload(ty),
             }],
+            Self::Task(_) => vec![Variant {
+                name: "task".into(),
+                payloads: vec![Type::Num(NumType::I32)],
+            }],
             Self::Stream(ty) => vec![
                 Variant {
                     name: "end".into(),
@@ -325,6 +332,7 @@ impl ValueType {
             Self::Own(ty) => format!("(own {})", format(ty)),
             Self::Future(ty) => format!("(future {})", format(ty)),
             Self::Stream(ty) => format!("(stream {})", format(ty)),
+            Self::Task(ty) => format!("(task {})", format(ty)),
         }
     }
 }
@@ -339,6 +347,7 @@ pub enum DeliveryOp {
     StreamEmpty,
     StreamCons,
     StreamNext,
+    StreamReadBatch,
     StreamClose,
 }
 
@@ -351,18 +360,26 @@ impl DeliveryOp {
             "stream.empty" => Self::StreamEmpty,
             "stream.cons" => Self::StreamCons,
             "stream.next" => Self::StreamNext,
+            "stream.read-batch" => Self::StreamReadBatch,
             "stream.close" => Self::StreamClose,
             _ => return None,
         })
     }
 
     pub fn suspends(self) -> bool {
-        matches!(self, Self::FutureAwait | Self::StreamNext)
+        matches!(
+            self,
+            Self::FutureAwait | Self::StreamNext | Self::StreamReadBatch
+        )
     }
     pub fn allocates(self) -> bool {
         matches!(
             self,
-            Self::FutureReady | Self::StreamEmpty | Self::StreamCons | Self::StreamNext
+            Self::FutureReady
+                | Self::StreamEmpty
+                | Self::StreamCons
+                | Self::StreamNext
+                | Self::StreamReadBatch
         )
     }
     pub fn may_trap(self) -> bool {
@@ -397,6 +414,10 @@ pub enum TypeKind {
 pub struct TypeDecl {
     pub name: String,
     pub kind: TypeKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub abi: Option<crate::interface::AbiType>,
+    #[serde(skip)]
+    pub(crate) abi_facts: Option<crate::abi_limits::Facts>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -481,6 +502,16 @@ pub struct Module {
     pub benches: Vec<BenchDecl>,
     pub laws: Vec<LawDecl>,
     pub tags: Vec<TagDecl>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub memories: Vec<MemoryDecl>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub atomic_cells: Vec<crate::race::AtomicCellDecl>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub readonly_regions: Vec<crate::readonly::RegionDecl>,
+    #[serde(skip_serializing_if = "crate::effects::is_false")]
+    pub race_free: bool,
+    #[serde(skip)]
+    pub(crate) race_span: Span,
 }
 
 impl Module {
@@ -519,6 +550,19 @@ impl Module {
 
     /// Stable semantic names used by trusted ABI policy contracts.
     pub(crate) fn shape_name(&self, ty: &Type) -> String {
+        if let Type::Borrow(id) = ty
+            && let TypeKind::Resource { kind, .. } = &self.types[id.0].kind
+        {
+            return format!("(borrow {kind})");
+        }
+        if let Some(f) = crate::abi_limits::facts(self, ty) {
+            return f.shape.clone();
+        }
+        if let Type::Ref { ty: id, .. } | Type::Newtype(id) = ty
+            && let Some(shape) = crate::interface::shape(self, *id)
+        {
+            return shape;
+        }
         ty.format_with(|id| match &self.types[id.0].kind {
             TypeKind::Newtype(n) => n.wat().into(),
             TypeKind::Value(value) => value.type_name(|ty| self.shape_name(ty)),
@@ -597,6 +641,31 @@ pub enum ListOp {
 
 #[derive(Clone, Debug, Serialize)]
 pub enum ExprKind {
+    TaskSpawn {
+        function: FunctionId,
+        environment: Box<Expr>,
+    },
+    TaskJoin {
+        task: Box<Expr>,
+        discard: bool,
+        cancel: bool,
+        timeout: Option<Box<Expr>>,
+    },
+    TaskScope {
+        body: Box<Expr>,
+    },
+    Wasm {
+        instruction: crate::wasm::Instruction,
+        args: Vec<Expr>,
+    },
+    Memory {
+        op: MemoryOp,
+        memory: Option<MemoryId>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        cell: Option<AtomicCellId>,
+        offset: u32,
+        args: Vec<Expr>,
+    },
     Label {
         label: LoopId,
         body: Box<Expr>,
@@ -756,7 +825,9 @@ impl Expr {
                 .chain(condition.iter().map(Box::as_ref))
                 .collect(),
             Return(value) => value.iter().map(Box::as_ref).collect(),
-            List { args, .. }
+            Memory { args, .. }
+            | Wasm { args, .. }
+            | List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
             | Simd { args, .. }
@@ -774,6 +845,15 @@ impl Expr {
                 .chain(handlers.iter().map(|handler| &handler.body))
                 .collect(),
             Let { value, body, .. } | Using { value, body, .. } => vec![value, body],
+            TaskJoin { task, timeout, .. } => timeout
+                .iter()
+                .map(|e| e.as_ref())
+                .chain(std::iter::once(task.as_ref()))
+                .collect(),
+            TaskSpawn {
+                environment: body, ..
+            }
+            | TaskScope { body } => vec![body],
             If {
                 condition,
                 then_body,
@@ -821,7 +901,9 @@ impl Expr {
                 .chain(condition.iter_mut().map(Box::as_mut))
                 .collect(),
             Return(value) => value.iter_mut().map(Box::as_mut).collect(),
-            List { args, .. }
+            Memory { args, .. }
+            | Wasm { args, .. }
+            | List { args, .. }
             | Buffer { args, .. }
             | Numeric { args, .. }
             | Simd { args, .. }
@@ -839,6 +921,15 @@ impl Expr {
                 .chain(handlers.iter_mut().map(|handler| &mut handler.body))
                 .collect(),
             Let { value, body, .. } | Using { value, body, .. } => vec![value, body],
+            TaskJoin { task, timeout, .. } => timeout
+                .iter_mut()
+                .map(|e| e.as_mut())
+                .chain(std::iter::once(task.as_mut()))
+                .collect(),
+            TaskSpawn {
+                environment: body, ..
+            }
+            | TaskScope { body } => vec![body],
             If {
                 condition,
                 then_body,

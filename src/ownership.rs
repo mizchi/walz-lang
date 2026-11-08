@@ -76,7 +76,10 @@ impl Kinds {
                 .enumerate()
                 .map(|(index, declaration)| match &declaration.kind {
                     TypeKind::Value(
-                        ValueType::Own(_) | ValueType::Future(_) | ValueType::Stream(_),
+                        ValueType::Own(_)
+                        | ValueType::Future(_)
+                        | ValueType::Stream(_)
+                        | ValueType::Task(_),
                     ) => true,
                     TypeKind::Value(value) => value
                         .variants(TypeId(index))
@@ -424,6 +427,9 @@ fn requires_graph(e: &Expr, owns: bool, effects: &[crate::effects::EffectSet]) -
             | ExprKind::Branch { .. }
             | ExprKind::Return(_)
             | ExprKind::Using { .. }
+            | ExprKind::TaskSpawn { .. }
+            | ExprKind::TaskJoin { .. }
+            | ExprKind::TaskScope { .. }
     ) || (owns
         && (matches!(
             e.kind,
@@ -454,9 +460,9 @@ pub fn validate(source: &str, module: &Module) -> Result<Contracts, Error> {
             TypeKind::Value(ValueType::Own(ty)) if kinds.is_owned(ty) => {
                 return Err(Error::at(source, origin, "own payload must be shared data"));
             }
-            TypeKind::Value(ValueType::Future(ty) | ValueType::Stream(ty))
-                if kinds.is_owned(ty) =>
-            {
+            TypeKind::Value(
+                ValueType::Future(ty) | ValueType::Stream(ty) | ValueType::Task(ty),
+            ) if kinds.is_owned(ty) => {
                 return Err(Error::at(
                     source,
                     origin,

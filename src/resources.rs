@@ -66,7 +66,8 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                 | ValueType::Option(t)
                 | ValueType::Own(t)
                 | ValueType::Future(t)
-                | ValueType::Stream(t) => fields.push(t),
+                | ValueType::Stream(t)
+                | ValueType::Task(t) => fields.push(t),
                 ValueType::Result { ok, err } => fields.extend([ok, err]),
                 ValueType::Pair { first, second } => fields.extend([first, second]),
                 _ => {}
@@ -139,7 +140,10 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                     return Err(fail(e.span, "borrow cannot be carried by a branch"));
                 }
                 ExprKind::Using { body, .. } => {
-                    if kinds.is_owned(&body.ty) || matches!(body.ty, Type::Borrow(_)) {
+                    let independent = matches!(body.ty,Type::Value(id) if matches!(module.types[id.0].kind,TypeKind::Value(ValueType::Future(_) | ValueType::Stream(_) | ValueType::Task(_))));
+                    if (kinds.is_owned(&body.ty) && !independent)
+                        || matches!(body.ty, Type::Borrow(_))
+                    {
                         return Err(fail(
                             e.span,
                             "using cannot return a borrow or an owned value",
@@ -148,11 +152,30 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                 }
                 ExprKind::Call { function, args } => {
                     let b = bindings::lookup(&module.functions[function.0]);
+                    if let Some(resource) = b.as_ref().and_then(|b| b.resource.as_ref()) {
+                        if resource.operation == Op::Close {
+                            return Err(fail(
+                                e.span,
+                                "use resource.close instead of a raw destructor call",
+                            ));
+                        }
+                        if matches!(resource.operation, Op::Use | Op::Reader)
+                            && !matches!(
+                                args.first().map(|a| &a.kind),
+                                Some(ExprKind::ResourceHandle(_))
+                            )
+                        {
+                            return Err(fail(
+                                e.span,
+                                "raw resource operations require resource.handle on a matching borrow",
+                            ));
+                        }
+                    }
                     for (i, arg) in args.iter().enumerate() {
                         let kind = if i == 0 {
                             b.as_ref()
                                 .and_then(|b| b.resource.as_ref())
-                                .filter(|r| r.operation == Op::Use)
+                                .filter(|r| matches!(r.operation, Op::Use | Op::Reader))
                                 .map(|r| r.kind.clone())
                         } else {
                             None

@@ -1,0 +1,49 @@
+cargo run --locked --quiet -- test 'tests' --filter ''
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"dict collision, replacement, unlink and clear" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"dict grows and preserves every key after removals" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"dict Unicode and nested option distinguish missing from stored none" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"list builder empty, order, snapshots, extend and reuse" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"shared reference payloads keep identity across collection snapshots" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/collections.test.wlt::"dict entries survive update and clear" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/library.test.wlt::"concat preserves Unicode and empty text" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/library.test.wlt::"decimal signed and unsigned boundaries" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/library.test.wlt::"JSON escapes quotes, slashes and control bytes but preserves Unicode" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/core.test.wlt::"typed arithmetic" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/core.test.wlt::"simultaneous loop state" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/core.test.wlt::"exhaustive enum and selected arm" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/core.test.wlt::"explicit array mutation" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/delivery.test.wlt::"ready future delivers its value" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/delivery.test.wlt::"EOF returns an owner and repeated EOF stays empty" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/delivery.test.wlt::"future capture moves into a once-call closure" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/gc.test.wlt::"escaping immutable closure" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/gc.test.wlt::"captured mutable reference" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/gc.test.wlt::"recursive GC enum" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/gc.test.wlt::"GC reference identity" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/macros.test.wlt::"for expands to loop and branch" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/macros.test.wlt::"native exception carries GC payload" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/macros.test.wlt::"if is a standard Wasm result expression" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/ownership.test.wlt::"owned values transfer through an option" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/ownership.test.wlt::"unused owned data is explicitly closed" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/ownership.test.wlt::"loop carries its owner explicitly" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/values.test.wlt::"option is a pure value" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/values.test.wlt::"result error is ordinary data" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/values.test.wlt::"none and some unit remain distinct" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/programs/values.test.wlt::"caught throw does not escape" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"fold returns accumulated value" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"callback error closes the unconsumed tail" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"source error is propagated, callback is not entered" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"result.let maps success and preserves errors, including unit" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"empty stream returns the initial state" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"result.let propagates an error without evaluating its body" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"macro temporaries cannot capture user names" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/scoped-macros.test.wlt::"unit input and error payloads use no dummy binding" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"byte search is bounded and compares unsigned octets" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"substring search handles overlap and the empty needle at the end" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"split once preserves empty fields and Unicode" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"bounded decimal rejects invalid ranges, empty fields and overflow" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"unsigned decimal covers all 64 bits without wrapping" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"signed decimal accepts the minimum and rejects signs and overflow" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"builder finish drains fragments and preserves previous immutable results" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"JSON object builder escapes keys and values, nests and resets" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/stdlib.test.wlt::"JSON child aliases are drained before appending the parent key" ... ok
+47 passed; 0 failed; 0 errors; 0 filtered out

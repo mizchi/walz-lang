@@ -31,7 +31,7 @@ fn map_type(
     f(node)?;
     if matches!(
         node.head(),
-        Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream")
+        Some("list" | "option" | "result" | "pair" | "own" | "future" | "stream" | "task")
     ) || node.head().is_some_and(|h| h.starts_with('$'))
     {
         if let Kind::List(items) = &mut node.kind {
@@ -67,11 +67,11 @@ fn map_arguments(
 fn reference(head: &str) -> Option<(ReferenceKind, usize)> {
     Some(match head {
         "call" | "closure.call" => (ReferenceKind::Function, 1),
-        "struct.new" | "struct.named" | "struct.get" | "struct.set" | "closure.new"
-        | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get" | "array.set"
-        | "variant.new" | "ref.null" | "resource.new" | "newtype.wrap" | "newtype.unwrap" => {
-            (ReferenceKind::Type, 1)
-        }
+        "task.spawn" => (ReferenceKind::Function, 2),
+        "struct.new" | "struct.named" | "struct.get" | "struct.set" | "struct.update"
+        | "closure.new" | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get"
+        | "array.set" | "variant.new" | "ref.null" | "resource.new" | "newtype.wrap"
+        | "newtype.unwrap" => (ReferenceKind::Type, 1),
         "list.from-array" => (ReferenceKind::Type, 2),
         _ => return None,
     })
@@ -130,7 +130,19 @@ fn type_argument(node: &Sexp) -> bool {
     }) || node.head().is_some_and(|head| head.starts_with('$'))
         || matches!(
             node.head(),
-            Some("ref" | "list" | "option" | "result" | "pair" | "own" | "future" | "stream")
+            Some(
+                "ref"
+                    | "resource"
+                    | "borrow"
+                    | "list"
+                    | "option"
+                    | "result"
+                    | "pair"
+                    | "own"
+                    | "future"
+                    | "stream"
+                    | "task"
+            )
         )
 }
 
@@ -168,6 +180,14 @@ pub(crate) fn map_types(
 }
 
 fn bind_names(node: &Sexp, locals: &mut BTreeSet<String>) {
+    if node.head() == Some("@fields") {
+        for field in &node.list().unwrap()[1..] {
+            if let Some([_, name]) = field.list() {
+                bind_names(name, locals);
+            }
+        }
+        return;
+    }
     if let Some(name) = node.atom() {
         locals.insert(name.to_owned());
     } else if let Some(names) = node.list() {
@@ -285,7 +305,7 @@ fn walk_types(
             }
         }
         "result" if items.len() == 2 => map_type(&mut items[1], f)?,
-        "let" | "using" => {
+        "let" | "using" | "for-each" => {
             let start = if items.len() == 5 && items[1].atom().is_some() {
                 map_type(&mut items[2], f)?;
                 3
@@ -309,6 +329,29 @@ fn walk_types(
             }
             for expression in items.iter_mut().skip(3) {
                 walk_types(expression, f, locals)?;
+            }
+        }
+        "struct.update" => {
+            if let Some(ty) = items.get_mut(1) {
+                map_arguments(ty, f)?;
+            }
+            if let Some(subject) = items.get_mut(2) {
+                walk_types(subject, f, locals)?;
+            }
+            if let Some(binding) = items.get_mut(3).and_then(|n| {
+                if let Kind::List(parts) = &mut n.kind {
+                    Some(parts)
+                } else {
+                    None
+                }
+            }) {
+                let mut nested = locals.clone();
+                if let Some(name) = binding.get(1) {
+                    bind_names(name, &mut nested);
+                }
+                for expression in binding.iter_mut().skip(2) {
+                    walk_types(expression, f, &nested)?;
+                }
             }
         }
         "match" => {
@@ -400,6 +443,22 @@ fn walk_types(
                 }
             }
         }
+        "task.spawn" | "task.join" | "task.drop" | "task.cancel" | "task.join-timeout" => {
+            if let Some(ty) = items.get_mut(1) {
+                map_type(ty, f)?;
+            }
+            let start = if head == "task.spawn" {
+                if let Some(target) = items.get_mut(2) {
+                    map_arguments(target, f)?;
+                }
+                3
+            } else {
+                2
+            };
+            for child in items.iter_mut().skip(start) {
+                walk_types(child, f, locals)?;
+            }
+        }
         "list.new" | "list.len" | "list.get" | "list.slice" | "list.from-array" => {
             if let Some(ty) = items.get_mut(1) {
                 map_type(ty, f)?;
@@ -465,8 +524,8 @@ fn walk_types(
             }
         }
         "option.none" | "option.some" | "own.new" | "future.ready" | "future.await"
-        | "future.close" | "stream.empty" | "stream.cons" | "stream.next" | "stream.close"
-        | "pair.new" | "result.ok" | "result.err" => {
+        | "future.close" | "stream.empty" | "stream.cons" | "stream.next" | "stream.read-batch"
+        | "stream.close" | "pair.new" | "result.ok" | "result.err" => {
             let count = if matches!(head.as_str(), "pair.new" | "result.ok" | "result.err") {
                 2
             } else {

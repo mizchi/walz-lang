@@ -5,9 +5,59 @@ use std::process::{Command, ExitCode};
 use std::time::Duration;
 
 mod cli_bench;
+mod cli_build;
 mod cli_inspection;
+mod cli_js;
+mod cli_run;
 
-const USAGE: &str = "Usage: wlt <check|types|wat|expand|wit|analyze|ir|contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n       wlt check --json <file.wlt>\n       wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n       wlt <build|component> <file.wlt> <output.wasm>\n       wlt <core-js|profile-text> <file.wlt> <output-directory>\n       wlt test [paths...] [--filter text] [--list] [--timeout-ms N]\n       wlt bench [paths...] [--filter text] [--list] [--json]\n                 [--samples N] [--iterations N] [--warmup-ms N] [--sample-ms N] [--timeout-ms N]";
+const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
+const TEST_USAGE: &str = "Usage: wlt test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.wlt under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
+const COMMANDS: &[&str] = &[
+    "build",
+    "test",
+    "bench",
+    "bind",
+    "type-at",
+    "lsp",
+    "check",
+    "fmt",
+    "fmt-check",
+    "types",
+    "wat",
+    "expand",
+    "wit",
+    "analyze",
+    "ir",
+    "contracts",
+    "race-contracts",
+    "verify",
+    "proof",
+    "run",
+    "run-verified",
+    "component",
+    "component-wat",
+    "core-js",
+    "profile-text",
+];
+
+fn help(command: Option<&str>) -> ExitCode {
+    println!(
+        "{}",
+        match command {
+            Some("build") => cli_build::USAGE,
+            Some("test") => TEST_USAGE,
+            Some("bench") => cli_bench::USAGE,
+            Some("run") => cli_run::USAGE,
+            None | Some("--help" | "-h" | "help") => USAGE,
+            Some(command) if COMMANDS.contains(&command) => USAGE,
+            Some(command) => {
+                eprintln!("unknown command {command:?}\n{USAGE}");
+                return ExitCode::from(2);
+            }
+        }
+    );
+    ExitCode::SUCCESS
+}
 
 fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
     let mut paths = Vec::new();
@@ -15,7 +65,22 @@ fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOp
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         match arg.to_str() {
+            Some("--legacy-syntax") => options.legacy_syntax = true,
             Some("--list") => options.list = true,
+            Some(flag @ ("--target" | "--bindings" | "--host")) => {
+                let value = args
+                    .next()
+                    .filter(|v| !v.to_string_lossy().starts_with('-'))
+                    .ok_or_else(|| format!("{flag} requires a value"))?;
+                match flag {
+                    "--target" => options
+                        .execution
+                        .set_target(value.to_str().ok_or("target must be UTF-8")?)?,
+                    "--bindings" => options.execution.bindings = Some(value.into()),
+                    "--host" => options.execution.host = Some(value.into()),
+                    _ => unreachable!(),
+                }
+            }
             Some("--filter") => {
                 options.filter = Some(
                     args.next()
@@ -43,6 +108,7 @@ fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOp
             _ => paths.push(PathBuf::from(arg)),
         }
     }
+    options.execution.validate()?;
     Ok((paths, options))
 }
 
@@ -55,7 +121,7 @@ fn test_command(args: &[OsString], legacy: bool) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    options.legacy_syntax = legacy;
+    options.legacy_syntax |= legacy;
     let report = wlt::runner::run(&paths, &options);
     for test in &report.tests {
         let path = test.path.display();
@@ -131,6 +197,39 @@ fn execute(
     } else {
         wlt::source::load(path)?
     };
+    if matches!(command, "build" | "component")
+        && let Some(output) = output
+    {
+        let mut outputs = vec![output.to_path_buf()];
+        if command == "component" {
+            let mut metadata = output.as_os_str().to_os_string();
+            metadata.push(".json");
+            outputs.push(metadata.into());
+        }
+        for output in &outputs {
+            match std::fs::metadata(output) {
+                Ok(_) => {
+                    for input in loaded.paths().collect::<std::collections::BTreeSet<_>>() {
+                        if same_file::is_same_file(input, output)? {
+                            return Err(
+                                "output must differ from source path and linked source files"
+                                    .into(),
+                            );
+                        }
+                    }
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        if outputs.len() == 2
+            && outputs[0].exists()
+            && outputs[1].exists()
+            && same_file::is_same_file(&outputs[0], &outputs[1])?
+        {
+            return Err("component and metadata outputs must differ".into());
+        }
+    }
     execute_source(command, path, output, loaded.text(), policy).map_err(|error| {
         match error.downcast::<wlt::Error>() {
             Ok(error) => loaded.diagnostic(*error).into(),
@@ -196,6 +295,9 @@ fn execute_source(
             if metadata == path {
                 return Err("metadata output must differ from source path".into());
             }
+            if let Some(parent) = output.parent().filter(|p| !p.as_os_str().is_empty()) {
+                std::fs::create_dir_all(parent)?;
+            }
             std::fs::write(output, built.wasm)?;
             std::fs::write(metadata, serde_json::to_vec_pretty(&built.manifest)?)?;
         }
@@ -206,6 +308,13 @@ fn execute_source(
             "{}",
             wlt::proof::emit(&wlt::check_with_policy(source, policy)?)?
         );
+        return Ok(true);
+    }
+    if command == "race-contracts" {
+        let module = wlt::check_with_policy(source, policy)?;
+        let certificate =
+            wlt::race::certificate(&module)?.ok_or("race-contracts requires (%race-free)")?;
+        println!("{}", serde_json::to_string_pretty(&certificate)?);
         return Ok(true);
     }
     if command == "contracts" {
@@ -282,9 +391,20 @@ fn execute_source(
             if path == output {
                 return Err("output must differ from source path".into());
             }
+            if let Some(parent) = output.parent().filter(|p| !p.as_os_str().is_empty()) {
+                std::fs::create_dir_all(parent)?;
+            }
             std::fs::write(output, compiled.wasm)?;
         }
-        "verify" => println!("ownership contracts and laws verified; Wasm validated"),
+        "verify" => {
+            if compiled.ir.as_ref().is_some_and(|m| m.race_free) {
+                println!(
+                    "ownership and conditional atomic-cell contracts verified; Wasm validated"
+                );
+            } else {
+                println!("ownership contracts and laws verified; Wasm validated");
+            }
+        }
         "run" | "run-verified" => {
             let mut file = tempfile::Builder::new().suffix(".wasm").tempfile()?;
             file.write_all(&compiled.wasm)?;
@@ -309,8 +429,55 @@ fn execute_source(
 
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    if args.len() == 1 && matches!(args[0].to_str(), Some("--version" | "-V")) {
+        println!("wlt {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
+    if (args.len() == 1 && matches!(args[0].to_str(), Some("--help" | "-h" | "help")))
+        || (args.len() == 2
+            && (args[0] == "help" || matches!(args[1].to_str(), Some("--help" | "-h"))))
+    {
+        return help(
+            if args[0] == "help" {
+                args.get(1)
+            } else if args.len() == 2 {
+                args.first()
+            } else {
+                None
+            }
+            .and_then(|s| s.to_str()),
+        );
+    }
+    if args.first().is_some_and(|s| s == "lsp") {
+        let policy = if args.len() == 1 {
+            Ok(Default::default())
+        } else if args.len() == 3 && args[1] == "--bindings" {
+            std::fs::read_to_string(&args[2])
+                .map_err(|e| e.to_string())
+                .and_then(|s| wlt::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
+        } else {
+            Err("Usage: wlt lsp [--bindings policy.json]".into())
+        };
+        return match policy.and_then(|p| wlt::lsp::serve_stdio(p).map_err(|e| e.to_string())) {
+            Ok(true) => ExitCode::SUCCESS,
+            Ok(false) => ExitCode::FAILURE,
+            Err(e) => {
+                eprintln!("{e}");
+                ExitCode::from(2)
+            }
+        };
+    }
     if args.first().is_some_and(|s| s == "bench") {
         return cli_bench::command(&args[1..]);
+    }
+    if args.first().is_some_and(|s| s == "test") {
+        return test_command(&args[1..], false);
+    }
+    if args.first().is_some_and(|s| s == "build") {
+        return cli_build::command(&args[1..], false);
+    }
+    if args.first().is_some_and(|s| s == "run") {
+        return cli_run::command(&args[1..]);
     }
     let json = args
         .iter()
@@ -328,23 +495,40 @@ fn main() -> ExitCode {
         .map(|i| args.remove(i))
         .is_some();
     if args.first().is_some_and(|s| s == "bind") {
+        let world = if let Some(i) = args.iter().position(|s| s == "--world") {
+            let Some(value) = args.get(i + 1).and_then(|s| s.to_str()).map(str::to_owned) else {
+                eprintln!("--world requires a world name");
+                return ExitCode::from(2);
+            };
+            args.drain(i..i + 2);
+            Some(value)
+        } else {
+            None
+        };
         if args.len() != 4 {
-            eprintln!("Usage: wlt bind <input.wit> <policy.json> <output-directory>");
+            eprintln!(
+                "Usage: wlt bind <input.wit> <policy.json> <output-directory> [--world name]"
+            );
             return ExitCode::from(2);
         }
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
             let generated = wlt::wit_bindgen::generate(
                 Path::new(&args[1]),
-                None,
+                world.as_deref(),
                 &std::fs::read_to_string(&args[2])?,
             )?;
             let out = Path::new(&args[3]);
-            if out.join("bindings.wlt").exists() || out.join("bindings.json").exists() {
+            if ["bindings.wlt", "bindings.json", "types.wlt", "exports.wlt"]
+                .iter()
+                .any(|n| out.join(n).exists())
+            {
                 return Err("binding outputs already exist".into());
             }
             std::fs::create_dir_all(out)?;
-            std::fs::write(out.join("bindings.wlt"), generated.source)?;
+            std::fs::write(out.join("bindings.wlt"), generated.linked_source)?;
             std::fs::write(out.join("bindings.json"), generated.policy)?;
+            std::fs::write(out.join("types.wlt"), generated.types_source)?;
+            std::fs::write(out.join("exports.wlt"), generated.export_source)?;
             Ok(())
         })();
         return match result {
@@ -397,33 +581,13 @@ fn main() -> ExitCode {
     if command == "type-at" {
         return cli_inspection::type_at(&args[1..], &policy);
     }
-    if !matches!(
-        command,
-        "check"
-            | "fmt"
-            | "fmt-check"
-            | "types"
-            | "wat"
-            | "expand"
-            | "wit"
-            | "analyze"
-            | "ir"
-            | "contracts"
-            | "verify"
-            | "proof"
-            | "run"
-            | "run-verified"
-            | "build"
-            | "component"
-            | "component-wat"
-            | "core-js"
-            | "profile-text"
-    ) || args.len()
-        != if matches!(command, "build" | "component" | "core-js" | "profile-text") {
-            3
-        } else {
-            2
-        }
+    if !COMMANDS.contains(&command)
+        || args.len()
+            != if matches!(command, "build" | "component" | "core-js" | "profile-text") {
+                3
+            } else {
+                2
+            }
     {
         eprintln!("{USAGE}");
         return ExitCode::from(2);

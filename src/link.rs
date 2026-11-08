@@ -8,6 +8,8 @@ enum Item {
     Function(usize),
     Type(usize),
     Tag(usize),
+    Memory(usize),
+    Cell(usize),
 }
 
 fn add_type(ty: &Type, pending: &mut Vec<Item>) {
@@ -40,10 +42,23 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
         .filter(|(_, f)| !f.exports.is_empty())
         .map(|(i, _)| Item::Function(i))
         .collect::<Vec<_>>();
+    pending.extend(
+        module
+            .memories
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| !m.exports.is_empty())
+            .map(|(i, _)| Item::Memory(i)),
+    );
     pending.extend(module.laws.iter().map(|law| Item::Function(law.function.0)));
+    if module.race_free {
+        pending.extend((0..module.atomic_cells.len()).map(Item::Cell));
+    }
     if preserve {
         pending.extend((0..module.functions.len()).map(Item::Function));
         pending.extend((0..module.tags.len()).map(Item::Tag));
+        pending.extend((0..module.memories.len()).map(Item::Memory));
+        pending.extend((0..module.atomic_cells.len()).map(Item::Cell));
         let mut shapes = BTreeSet::new();
         for (i, t) in module.types.iter().enumerate() {
             if let TypeKind::Value(v) = &t.kind
@@ -55,6 +70,12 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
         }
     }
     let mut live = BTreeSet::new();
+    pending.extend(
+        module
+            .readonly_regions
+            .iter()
+            .map(|r| Item::Memory(r.memory.0)),
+    );
     while let Some(item) = pending.pop() {
         if !live.insert(item) {
             continue;
@@ -91,8 +112,19 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                 while let Some(e) = expressions.pop() {
                     add_type(&e.ty, &mut pending);
                     use ExprKind::*;
+                    if let ExprKind::Memory { cell: Some(id), .. } = &e.kind {
+                        pending.push(Item::Cell(id.0));
+                    }
                     match &e.kind {
-                        Call { function, .. } => pending.push(Item::Function(function.0)),
+                        Wasm { instruction, .. } => {
+                            pending.extend(instruction.memories.iter().map(|id| Item::Memory(id.0)))
+                        }
+                        Memory {
+                            memory: Some(id), ..
+                        } => pending.push(Item::Memory(id.0)),
+                        Call { function, .. } | TaskSpawn { function, .. } => {
+                            pending.push(Item::Function(function.0))
+                        }
                         List { list, op, .. } => {
                             pending.push(Item::Type(list.0));
                             if let ListOp::FromArray(id) = op {
@@ -154,7 +186,7 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                         }
                     }
                     TypeKind::Value(value) => {
-                        if let ValueType::List(t) = value {
+                        if let ValueType::List(t) | ValueType::Task(t) = value {
                             add_type(t, &mut pending);
                         }
                         if let ValueType::Stream(payload) = value {
@@ -189,6 +221,8 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                     }
                 }
             }
+            Item::Memory(_) => {}
+            Item::Cell(i) => pending.push(Item::Memory(module.atomic_cells[i].memory.0)),
             Item::Tag(i) => {
                 for t in &module.tags[i].payloads {
                     add_type(t, &mut pending);
@@ -214,8 +248,30 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
         functions: map(module.functions.len(), Item::Function),
         types: map(module.types.len(), Item::Type),
         tags: map(module.tags.len(), Item::Tag),
+        memories: map(module.memories.len(), Item::Memory),
+        cells: map(module.atomic_cells.len(), Item::Cell),
     };
     let mut out = module.clone();
+    for region in &mut out.readonly_regions {
+        region.memory.0 = ids.memories[region.memory.0];
+    }
+    out.atomic_cells = out
+        .atomic_cells
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| live.contains(&Item::Cell(*i)))
+        .map(|(_, mut c)| {
+            c.memory.0 = ids.memories[c.memory.0];
+            c
+        })
+        .collect();
+    out.memories = out
+        .memories
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| live.contains(&Item::Memory(*i)))
+        .map(|(_, m)| m)
+        .collect();
     out.functions = out
         .functions
         .into_iter()
@@ -277,7 +333,8 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                     | ValueType::Option(t)
                     | ValueType::Own(t)
                     | ValueType::Future(t)
-                    | ValueType::Stream(t) => ids.ty(t),
+                    | ValueType::Stream(t)
+                    | ValueType::Task(t) => ids.ty(t),
                     ValueType::Result { ok, err } => {
                         ids.ty(ok);
                         ids.ty(err);
@@ -319,6 +376,8 @@ struct Ids {
     functions: Vec<usize>,
     types: Vec<usize>,
     tags: Vec<usize>,
+    memories: Vec<usize>,
+    cells: Vec<usize>,
 }
 impl Ids {
     fn type_id(&self, id: &mut TypeId) {
@@ -338,7 +397,22 @@ impl Ids {
         self.ty(&mut e.ty);
         use ExprKind::*;
         match &mut e.kind {
-            Call { function, .. } => function.0 = self.functions[function.0],
+            Wasm { instruction, .. } => {
+                for id in &mut instruction.memories {
+                    id.0 = self.memories[id.0];
+                }
+            }
+            Memory { memory, cell, .. } => {
+                if let Some(id) = memory {
+                    id.0 = self.memories[id.0];
+                }
+                if let Some(id) = cell {
+                    id.0 = self.cells[id.0];
+                }
+            }
+            Call { function, .. } | TaskSpawn { function, .. } => {
+                function.0 = self.functions[function.0]
+            }
             List { list, op, .. } => {
                 self.type_id(list);
                 if let ListOp::FromArray(id) = op {

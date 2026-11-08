@@ -34,6 +34,7 @@ bytes/stringと任意のGC配列の部分範囲を共有する型は [ゼロコ�
 | `$option` / `$list` | `(%inst $option T)` / `(%inst $list T)` |
 | `$result` / `$tuple` | `(%inst $result T E)` / `(%inst $tuple T U)` |
 | `$box` / `$future` / `$stream` | `(%inst $box T)` / `(%inst $future T)` / `(%inst $stream T)` |
+| `$task` | `(%inst $task T)`。共有結果 T を返す子タスクの所有ハンドル |
 | `$resource-handle` / `$borrow` | リソースの nominal 型 R に対して `(%inst $resource-handle $R)` / `(%inst $borrow $R)` |
 
 これらは既存の検査済み基底型への透明な alias。型引数を取るものも利用者定義の汎用 alias と同じ単相化を使い、新しい nominal identity や追加ランタイムを作らない。`i32`・`i64`・`f32`・`f64`・`ref` は Wasm の構文としてそのまま使う。
@@ -58,3 +59,5 @@ bytes/stringと任意のGC配列の部分範囲を共有する型は [ゼロコ�
 型注釈`(type T)`は束縛ごとに省略可能。`($n (type i64) 42)`はi64の定数を初期値にし、`($copy $n)`は既存のローカルの型を使う。期待型のない`($n 42)`は整数幅が決まらずエラーになる。不変性、初期値の型適合、effect、所有値の move と消費義務は単独の `%let` と同じ。初期値が trap・throw・中断を起こす場合も、ネストした `%let` と同じ順序と既存の終了処理に従う。Wasm の複数戻り値を束縛する構文ではない。pair の分解は `(%let ($first $second) subject body)` を使う。
 
 `just test-standard` で、標準型・関数・別名・可視性と、Core＋JSPI / Component の Future・Result・Option ABI を確認する。
+
+`$task<T>` は同じインスタンス内の子タスクです。`%task.spawn` で作り、明示 move と join / drop で消費します。実行先は Core＋JSPI または Component です。[writer と子タスク](scoped-tasks.md)。

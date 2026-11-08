@@ -13,6 +13,7 @@ pub struct Profile {
 pub fn compile(source: &str) -> Result<Profile, Error> {
     // Share the guest's declaration projection and remapped ABI indices.
     let module = super::checked_module(source)?;
+    crate::wit::validate_memories(&module)?;
     let mut read = None;
     let mut write = None;
     let mut main = None;

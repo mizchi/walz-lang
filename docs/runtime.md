@@ -14,7 +14,8 @@ await/next は suspends を持ち、呼び出し元へ伝播します。WIT の 
 通常の core Wasm 出力では配送済みデータを GC に保持し、読み取りは即時に返ります。
 Component 出力では外部の readable handle も保持でき、await/next は JSPI を通じて Promise/AsyncIterable の配送を待ちます。
 close は端点を消費し、外部端点なら Canonical ABI の drop-readable を実行します。固定したホスト実装では不要になったタイマーを解放します。
-JS ランタイムからの task cancellation と、それに伴う進行中の read の cancel に対応します。writer と言語側の producer task は未実装です。
+JS ランタイムからの task cancellation と、それに伴う進行中の read の cancel に対応します。共有 payload の [writer とスコープ付き spawn / join](scoped-tasks.md) で言語内の producer / consumer も記述できます。
+CLI の単体配布は `wlt build --target core-js`、直接実行は `wlt run --target core-js`。明示したファイルは [WASI 0.3 の値 adapter](wasi-files.md) で接続します。[CLI の規約](cli.md) を参照してください。
 
 ## Component ABI と JavaScript のイベントループ
 
@@ -31,7 +32,7 @@ just test-e2e
 
 Rust/Lean に加え Node.js 24 以降と pnpm を使います。Node 24.21.0、pnpm 12.11.2、jco-transpile 0.23.0、Playwright 1.64.1 の Chromium 156 で確認しています。
 実行環境には Wasm GC、例外機構（try_table）、[JSPI](https://v8.dev/blog/jspi) の `WebAssembly.Suspending` / `WebAssembly.promising` が必要です。
-[jco](https://bytecodealliance.github.io/jco/transpiling.html) が Canonical ABI と JSPI の橋渡しを行い、待機中も JavaScript のタイマーが進みます。同じ Component インスタンスへの呼び出しは順番に実行します。
+[jco](https://bytecodealliance.github.io/jco/transpiling.html) が Canonical ABI と JSPI の橋渡しを行い、待機中も JavaScript のタイマーが進みます。同じインスタンスへの公開呼出しは順番に実行し、一つの呼出し内の子タスクは協調的に並行実行します。
 
 [event-loop.wlt](../tests/component-fixtures/event-loop.wlt) は、GC 参照を待機中も保持する main、非同期 Stream の総和、completion Result の分岐、pending Future の close を実装しています。
 ホストの固定契約は `wlt:host/event-loop@0.1.0` です。
@@ -180,3 +181,7 @@ api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 新しい構文と契約は [SPEC.md](../SPEC.md#文字列ライブラリと配列のコピー) を参照してください。
 `just fmt-wlt file.wlt` でコメントを保持して整形し、`just check-wlt-format file.wlt` で検査できます。
 ログ集計の変更前後は `just compare-log-stats before-directory after-directory` で条件を変えて交互に測定できます。
+
+共有メモリは `imports: { env: { memory } }` から Core＋JSPI へ渡せる。ABI の一時メモリとは別に保持し、ホストの `WebAssembly.Memory` 自体を共有する。[型・所有権・Worker・Component の境界](threads.md)。
+
+別Workerで実行する場合は[汎用WorkerHost](worker-host.md)を明示的に作る。driver内で別のCore＋JSPI／Componentプログラムをinstantiateし、Futureをawaitしてclone可能な結果を戻せる。個別取消しとjoinを提供するが、CPU処理には協調的な取消し検査が必要。`%task.spawn`とGC参照は同じエージェント内に留める。[簡潔索引](succinct.md)も共通ホストを利用する。

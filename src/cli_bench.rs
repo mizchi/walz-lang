@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use wlt::benchmark::{BenchOptions, BenchOutcome};
 
+pub const USAGE: &str = "Usage: wlt bench [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--json]\n                 [--samples N] [--iterations N] [--warmup-ms N] [--sample-ms N] [--timeout-ms N]\n\nRecursively find *_bench.wlt under the current directory by default.\nMeasurement requires Node.js 24+ on PATH; --list does not execute benchmarks.\n-- ends option parsing.";
+
 fn arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, BenchOptions, bool), String> {
     let mut paths = Vec::new();
     let mut options = BenchOptions::default();
@@ -11,6 +13,20 @@ fn arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, BenchOptions, bool), St
     while let Some(arg) = args.next() {
         match arg.to_str() {
             Some("--list") => options.list = true,
+            Some(flag @ ("--target" | "--bindings" | "--host")) => {
+                let value = args
+                    .next()
+                    .filter(|v| !v.to_string_lossy().starts_with('-'))
+                    .ok_or_else(|| format!("{flag} requires a value"))?;
+                match flag {
+                    "--target" => options
+                        .execution
+                        .set_target(value.to_str().ok_or("target must be UTF-8")?)?,
+                    "--bindings" => options.execution.bindings = Some(value.into()),
+                    "--host" => options.execution.host = Some(value.into()),
+                    _ => unreachable!(),
+                }
+            }
             Some("--json") => json = true,
             Some("--filter") => {
                 options.filter = Some(
@@ -60,7 +76,7 @@ pub fn command(args: &[OsString]) -> ExitCode {
     let (paths, options, json) = match arguments(args) {
         Ok(arguments) => arguments,
         Err(error) => {
-            eprintln!("{error}\n{}", super::USAGE);
+            eprintln!("{error}\n{USAGE}");
             return ExitCode::from(2);
         }
     };

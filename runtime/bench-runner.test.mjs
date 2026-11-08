@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { measure } from './bench-runner.mjs';
+import { measure, measureAsync } from './bench-runner.mjs';
 
 test('fixed batches exclude calibration, preserve sample order and divide by operations', () => {
   let clock = 0;
@@ -33,4 +33,10 @@ test('calibration caps counts without wrapping and traps escape immediately', ()
   assert.throws(() => measure(() => { throw new Error('trap'); }, {
     iterations: 1, warmup_ms: 0, samples: 1,
   }, () => 0), /trap/);
+});
+
+test('async batches await completion before starting the next measured batch',async()=>{
+  let clock=0,active=false;const calls=[];
+  const result=await measureAsync(async n=>{assert.equal(active,false);active=true;await Promise.resolve();calls.push(n);clock+=n;active=false;},{iterations:2,warmup_ms:0,samples:3},()=>clock);
+  assert.deepEqual(calls,[2,2,2]);assert.deepEqual(result,{iterations:2,samples_ns:[1e6,1e6,1e6]});
 });

@@ -4,6 +4,7 @@ use crate::{Error, effects::EffectSet};
 
 pub const EVENT_LOOP: &str = "wlt:host/event-loop@0.1.0";
 pub const TEXT_IO: &str = "wlt:host/text-io@0.1.0";
+pub const CLI: &str = "wlt:host/cli@0.1.0";
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -27,6 +28,8 @@ pub fn lookup(function: &Function) -> Option<Binding> {
     };
     let (params, result, suspends, capability): (&'static [&'static str], _, _, _) =
         match (module.as_str(), name.as_str()) {
+            (CLI, "arguments") => (&[], "(list text)", false, "cli-arguments"),
+            (EVENT_LOOP, "after") => (&["i32"], "(future unit)", false, "clock"),
             (EVENT_LOOP, "sleep") => (&["i32"], "unit", true, "clock"),
             (EVENT_LOOP, "yield") => (&[], "unit", true, "clock"),
             (EVENT_LOOP, "defer-i64") => (&["i32", "i64"], "(future i64)", false, "clock"),
@@ -108,6 +111,7 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
         let family = match namespace.as_str() {
             EVENT_LOOP => "event-loop",
             TEXT_IO => "text-io",
+            CLI => "cli",
             _ if function.import_contract.is_some() => "policy",
             _ => continue,
         };
@@ -134,6 +138,11 @@ pub(crate) fn validate(source: &str, module: &Module) -> Result<(), Error> {
                         Use => {
                             binding.params.first().is_some_and(|p| p == "i32")
                                 && !crate::ownership::Kinds::new(module).is_owned(&function.result)
+                        }
+                        Reader => {
+                            !binding.suspends
+                                && binding.params == ["i32"]
+                                && matches!(function.result, Type::Value(id) if matches!(module.types[id.0].kind, TypeKind::Value(ValueType::Future(_) | ValueType::Stream(_))))
                         }
                         Close => {
                             !binding.suspends
@@ -183,7 +192,7 @@ impl BindingPolicy {
                     "binding policy requires unique imports and nonempty capabilities".into(),
                 ));
             }
-            if matches!(item.module.as_str(), EVENT_LOOP | TEXT_IO) {
+            if matches!(item.module.as_str(), EVENT_LOOP | TEXT_IO | CLI) {
                 return Err(Error::message(
                     "binding policy cannot override built-in contracts".into(),
                 ));
@@ -201,6 +210,11 @@ impl BindingPolicy {
             {
                 f.import_contract = Some(item.binding.clone());
             }
+            // CLI arguments are a portable list value, not a readable handle.
+            // Reuse the general value adapter for this fixed host contract.
+            if matches!(&f.kind, FunctionKind::Import { module, .. } if module == CLI) {
+                f.import_contract = lookup(f);
+            }
         }
     }
 }
@@ -216,5 +230,7 @@ pub struct ResourceBinding {
 pub enum ResourceOperation {
     New,
     Use,
+    /// A trusted factory mints an independent affine readable endpoint.
+    Reader,
     Close,
 }

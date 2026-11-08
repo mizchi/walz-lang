@@ -82,4 +82,21 @@ example : acknowledge ⟨.cancelling, true, 0, 0, 0, 1⟩ = none := by decide
 example : acknowledge ⟨.cancelling, true, 0, 0, 0, 0⟩ =
     some ⟨.cancelled, true, 0, 0, 0, 0⟩ := by decide
 
+-- The runtime supplies the subtree selected by its parent relation. Requests
+-- preserve the state of every task outside that subtree. This is a safety
+-- contract on the state model, not a refinement proof of the JS scheduler.
+def requestWithin (selected : Nat → Bool) (tasks : Nat → State) (id : Nat) : State :=
+  if selected id then request (tasks id) else tasks id
+
+theorem cancellation_frame (selected : Nat → Bool) (tasks : Nat → State)
+    (id : Nat) (outside : selected id = false) :
+    requestWithin selected tasks id = tasks id := by
+  simp [requestWithin, outside]
+
+theorem scoped_request_keeps_owners (selected : Nat → Bool) (tasks : Nat → State)
+    (id : Nat) : (requestWithin selected tasks id).owners = (tasks id).owners := by
+  simp only [requestWithin]
+  split <;> simp_all [request]
+  split <;> rfl
+
 end WltTasks

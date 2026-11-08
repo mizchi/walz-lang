@@ -6,7 +6,7 @@
 
 ## 最初に覚える規則
 
-- 式は `(操作 引数...)`。式位置の `$foo` は `(local.get $foo)`。数値は期待型が分かれば `42`、明示するなら `(i64.const 42)`。文字列は `(%string.lit "hello")` と書く。
+- 式は `(操作 引数...)`。式位置の `$foo` は `(local.get $foo)`。数値は期待型が分かれば `42`、明示するなら `(i64.const 42)`。文字列は `(%string.lit "hello")`、期待型が `$string` なら `"hello"` と書く。
 - プログラムは `(module 宣言...)`。関数の本体は1つの式。複数の処理には block を使う。
 - `$name` は識別子、`"text"` は文字列、`;;` は行コメント、`(; ... ;)` は入れ子可能なコメント。
 - 引数と演算は左から右へ評価する。暗黙の数値変換・捕捉・ローカル再代入はない。
@@ -22,7 +22,7 @@
 | 入口 | 意味 |
 |---|---|
 | `func`・`param`・`result`・`if`・`block`・`call` | 標準 WAT の関数・型宣言・式。`if` に `%` は付けない |
-| `%let`・`%for`・`%loop`・`%recur`・`%match`・`%try` | WLT の束縛・制御構文。標準の `loop` / `try` と区別する |
+| `%let`・`%for`・`%for-each`・`%loop`・`%recur`・`%match`・`%try` | WLT の束縛・制御構文。標準の `loop` / `try` と区別する |
 | `(result i64)` / `(result i32 i64)` | 標準 WAT の結果型宣言。後者は標準 WAT の複数戻り値 |
 | `(%inst $result T E)` | 成功 T／エラー E を持つ WLT の値型。返す関数は `(result (%inst $result T E))` |
 | `(import "host" "member" ...)` / `(export "name" ...)` | Wasm のインスタンス化時の import／生成モジュールの export |
@@ -140,6 +140,19 @@ if / block / match の結果宣言がない場合も unit。unit の戻り値は
 複数束縛の `%let` は、初期値を左から右に一度ずつ評価する。後の初期値と body からは前の束縛を参照でき、後の束縛の先行参照はできない。同名の再束縛は、その初期値の評価後から以前の名前を隠す。個々の型注釈は省略できる。これはネストした `%let` と同じ意味であり、Wasm の複数戻り値を分解する指定ではない。
 pair の分解には既存の `(%let ($a $b) subject body)` を使う。どちらの形式も型・effect・所有権を検査し、所有値には明示的な move と消費が必要。
 
+```text
+(%let {:category $key :amount $amount} $row
+  (call $add $key $amount))
+
+(%for-each ($key $amount) $entries
+  (call $add $key $amount))
+
+(%struct.update $State $state
+  ($accepted $old (+ $old 1)))
+```
+
+フィールド分解はnon-nullの共有構造体から必要なフィールドだけ選ぶ。対象を一度評価し、値を記述順に読んで本体に束縛する。`%for-each` は共有可能な非unit要素のlistを順に走査し、全体・本体ともunit。単一名・tuple・フィールドpatternを使え、脱出には外側のblock/brを使う。`%struct.update` は可変フィールドを一度読み、旧値を使って計算した値を一度書く。unitを返し、原子性は持たない。[規約と実行例](docs/high-level-forms.md)。
+
 ```wat
 (module
   (func $main (export "main") (result i32)
@@ -179,6 +192,8 @@ pair の分解には既存の `(%let ($a $b) subject body)` を使う。どち�
 固定の記号演算子には`%`を付けない。`+`は期待型または型の分かるオペランドから型を決める。比較のi32結果はオペランドの幅を決めないので、裸の数値だけなら`(< (i64.const 1) 3)`と一方を明示する。利用者定義class/implはなく、単相化後にWasm命令へ直接展開する。[詳しい規約](docs/typeclasses.md)。
 `&&`・`||`の入力は条件式と同じi32。右辺も静的検査するが、必要な場合だけ実行する。シフト量は左辺と同じ型とし、Wasm同様に下位5bit（i32）/6bit（i64）を使う。`(Logical $T)`・`(Bitwise $T)`・`(Shift $T)`も`%where`に指定できる。
 `Sub`・`Mul`・`Div`も同様に制約に指定する。整数の`/`は0方向へ丸め、ゼロ除算と最小値/-1でtrapする。floatの`/`はWasmの浮動小数点除算に従う。
+
+期待型が `$string` の引数・結果・フィールド・list要素・型付きletでは、裸の文字列も使える。期待型のないlet初期値には `(type $string)` か `%string.lit` を書く。別の型へは変換しない。[Option/Resultの関数と文字列の規約](docs/option-result.md)。
 
 ## GC データと enum
 
@@ -376,7 +391,9 @@ T=unit の束縛は `($state)` だけ。body は同じ関数の loop/match へ�
 | JS からの取消し | ホストの `start` が作った task scope が待機中の操作を中止し、解放完了後に終了を確認する。Result の err へは変換しない |
 | Wasm の throw / trap | Result と別の経路。fold が任意の例外で close する保証はない。trap は catch できない |
 
-task scope は言語のブロック構文ではなく JS ホスト側の実行単位。`task.cancel()` は要求後に解放完了を待つ Promise、`task.result` は取消し時に `TaskCancelledError` で reject する。取消しは待機点での協調的な処理で、CPUだけの処理の強制停止や既存の変更の巻き戻しは行わない。実行例は [タスクの取消し](docs/runtime.md#タスクの取消し) を参照。
+`%task.scope (result T) body` は言語内の子タスクを束ね、退出時に完了を待つ。`%task.cancel T handle` は子と孫の取消し・解放を待ち、親と兄弟を継続する。`%task.join-timeout T ms handle` は完了なら `some`、期限切れの解放後は `none` を返す。両操作は handle を消費する。[子タスクの契約](docs/scoped-tasks.md) を参照。
+
+JS ホスト側にも公開呼出し単位の task scope がある。`task.cancel()` は要求後に解放完了を待つ Promise、`task.result` は取消し時に `TaskCancelledError` で reject する。取消しは待機点での協調的な処理で、CPUだけの処理の強制停止や既存の変更の巻き戻しは行わない。実行例は [タスクの取消し](docs/runtime.md#タスクの取消し) を参照。
 
 ## 型の alias と省略形
 
@@ -677,3 +694,53 @@ JS
 所有値と try/catch を併用できるが、全経路で消費する。後続の引数が例外を投げて先の所有引数が取り残される場合も拒否する。
 newtype は WLT 内で型を区別し、JavaScript/WIT 境界では基底の数値になる。値域検査や JavaScript の brand を自動では追加しない。
 [詳しい制約と例](docs/core-expressions.md)。
+
+## 共有メモリと atomics
+
+```text
+(import "env" "memory" (memory $shared 1 2 shared))
+(i32.atomic.load $shared offset=0 align=4 address)
+(i64.atomic.store $shared address value)
+(i32.atomic.rmw.add $shared address value)
+(i64.atomic.rmw.cmpxchg $shared address expected replacement)
+(memory.atomic.wait32 $shared address expected timeout-i64)
+(memory.atomic.notify $shared address count-i32)
+(atomic.fence)
+(memory.size $shared)
+(memory.grow $shared pages-i32)
+```
+
+atomic load は `reads synchronizes`、store は `writes synchronizes`、RMW は `reads writes synchronizes`。wait は `reads synchronizes blocks`、notify/fence は `synchronizes`。wait の timeout はナノ秒、結果は notified=0 / not-equal=1 / timed-out=2。`blocks` は JSPI の `suspends` と別。
+アドレスは i32、値は命令に応じて i32/i64。GC ref や所有値は格納できない。既存の move 検査は維持するが、領域の排他所有や race-free は証明しない。
+共有メモリをホストと渡すには Core / Core＋JSPI を使う。[全命令・型・制約・Worker 例](docs/threads.md)。
+
+## 固定 atomic セルの検証モード
+
+```text
+(%race-free)
+(import "env" "memory" (memory $m 1 1 shared))
+(%atomic.cell $counter $m i32 0)
+(i32.atomic.rmw.add (%atomic.at $counter) value-i32)
+```
+
+メモリは1つ・固定サイズ・shared、セルは重複しないi32/i64の固定幅。生のアドレス、狭幅アクセス、余分なoffset、size/grow、ホスト関数importを拒否する。`%atomic.at`は整数として取り出せない。セルは`%export (cell $name)` / `%use "./file.wlt" (cell $name $alias)`で別名を付けられる。
+ネイティブのビルドでLeanカーネルを実行する。ホストの契約順守を前提にデータ競合の排除・同一セル幅・範囲を証明し、更新喪失やdeadlockは証明しない。Core＋JSPIのホスト共有では `atomicHostContract: 'wlt-atomic-cells-v1'` が必要。[仕様と証明範囲](docs/atomic-cells.md)。
+
+## 読み取り専用の共有領域
+
+```text
+(%readonly.region $index $m byte-offset positive-byte-length)
+(%readonly.load $index u8 relative-byte-offset-i32)
+(%readonly.load $index i32 relative-byte-offset-i32)
+(%readonly.load $index i64 relative-byte-offset-i32)
+(%readonly.load $index v128 relative-byte-offset-i32)
+```
+
+offsetを一度評価して領域内を検査し、非atomicに読む。`reads`が必要。`%race-free`と併用すると、公開後に書かないホスト契約の下でatomicセルと分離した読取りを検証する。追加の定義済み私有memoryを使える。Core＋JSPIでは`readonlyHostContract: 'wlt-readonly-regions-v1'`を指定する。[詳細](docs/readonly-regions.md)。[汎用Workerホスト](docs/worker-host.md)はJSから明示的に使い、`%task.spawn`を別スレッド化するものではない。
+
+## Option / Result の標準関数
+
+`(%use "wlt:core" (func $option.ok-or) (func $result.map-err))` で明示的に取り込む。
+`(call (%inst $option.ok-or T E) optional error)` はsome→ok、none→err。errorは常に先に評価する。
+`(call (%inst $result.map-err T E U $Closure) result-value mapper)` はerrにだけclosureを一度適用し、okを保つ。
+T/E/Uはshared・nonunit、closureはE→U。unitや所有payloadには `%match` を使う。[契約と実行例](docs/option-result.md)。

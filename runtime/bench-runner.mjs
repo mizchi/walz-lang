@@ -26,6 +26,20 @@ export function measure(batch, options, now = () => performance.now()) {
   return { iterations, samples_ns };
 }
 
+/** Sequential API calls; includes JSPI, codecs and suspension time. */
+export async function measureAsync(batch,options,now=()=>performance.now()) {
+  let iterations=options.iterations??1;
+  const elapsed=async count=>{const start=now();await batch(count);return now()-start;};
+  if(options.iterations==null){
+    while(await elapsed(iterations)<options.sample_ms && iterations<maxIterations)iterations=Math.min(iterations*2,maxIterations);
+  }
+  const warmupEnd=now()+options.warmup_ms;
+  while(now()<warmupEnd)await batch(iterations);
+  const samples_ns=[];
+  for(let i=0;i<options.samples;i++)samples_ns.push(await elapsed(iterations)*1e6/iterations);
+  return {iterations,samples_ns};
+}
+
 async function main() {
   if (Number(process.versions.node.split('.')[0]) < 24) {
     throw new Error('wlt bench requires Node.js 24 or later');

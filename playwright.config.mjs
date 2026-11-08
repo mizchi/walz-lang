@@ -11,7 +11,7 @@ export default defineConfig({
   webServer: {
     command: "node runtime/serve.mjs",
     url: "http://127.0.0.1:41739",
-    timeout: 120000,
+    timeout: 300000,
     reuseExistingServer: false,
   },
 });

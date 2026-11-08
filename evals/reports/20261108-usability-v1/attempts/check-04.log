@@ -1,0 +1,4 @@
+/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/expenses/main.wlt:14:47: effect contract for `$add` exceeded: allocates
+  note: /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/usability/expenses/main.wlt:18:28: allocates required by variant.new
+  note: declared: pure; required: allocates
+  help: remove the operations exceeding the declared bound, or explicitly allow their effects if intended

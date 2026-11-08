@@ -117,6 +117,7 @@ pub(crate) fn emit_component(module: &Module, adapter: &crate::component::Adapte
 }
 
 fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) -> String {
+    let child_tasks = crate::task_children::enabled(module);
     let mut output = String::from("(module\n");
     // One explicit recursion group supports forward and recursive GC types.
     if module
@@ -134,7 +135,8 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             output.push_str("(type $__byte_storage (array (mut i8)))\n");
         }
         if adapter.is_some() {
-            output.push_str("(type $__task_entry (struct (field i32) (field i32) (field (mut i32)) (field (mut (ref null $__task_entry))) (field (mut (ref null $__task_entry)))))\n");
+            output.push_str("(type $__task_entry (struct (field i32) (field i32) (field (mut i32)) (field (mut (ref null $__task_entry))) (field (mut (ref null $__task_entry))) (field (mut i32))))\n");
+            output.push_str(&crate::task_children::types(module));
         }
         for (index, declaration) in module.types.iter().enumerate() {
             let definition = match &declaration.kind {
@@ -155,7 +157,14 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
                         .collect::<String>();
                     format!("(struct{fields})")
                 }
-                TypeKind::Resource { .. } => "(struct (field i32) (field (mut i32)))".into(),
+                TypeKind::Resource { .. } => {
+                    if adapter.is_some_and(|a| a.native_resources) {
+                        "(struct (field i32) (field (mut i32)) (field (ref null $__task_entry)))"
+                            .into()
+                    } else {
+                        "(struct (field i32) (field (mut i32)))".into()
+                    }
+                }
                 TypeKind::Array(field) => format!("(array {})", storage(module, field)),
                 TypeKind::Value(ValueType::List(payload)) => {
                     let element = if *payload == Type::Unit {
@@ -211,6 +220,18 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
     if let Some(adapter) = adapter {
         output.push_str(&adapter.imports());
     }
+    for memory in module.memories.iter().filter(|m| m.import.is_some()) {
+        let import = memory.import.as_ref().unwrap();
+        let maximum = memory.maximum.map(|m| format!(" {m}")).unwrap_or_default();
+        let shared = if memory.shared { " shared" } else { "" };
+        output.push_str(&format!(
+            "(import {} {} (memory {} {}{maximum}{shared}))\n",
+            quoted(&import.module),
+            quoted(&import.name),
+            memory.name,
+            memory.initial
+        ));
+    }
     for function in &module.functions {
         if let FunctionKind::Import {
             module: namespace,
@@ -230,6 +251,23 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             ));
         }
     }
+    for memory in module.memories.iter().filter(|m| m.import.is_none()) {
+        let maximum = memory.maximum.map(|m| format!(" {m}")).unwrap_or_default();
+        let shared = if memory.shared { " shared" } else { "" };
+        output.push_str(&format!(
+            "(memory {} {}{maximum}{shared})\n",
+            memory.name, memory.initial
+        ));
+    }
+    for memory in &module.memories {
+        for export in &memory.exports {
+            output.push_str(&format!(
+                "(export {} (memory {}))\n",
+                quoted(export),
+                memory.name
+            ));
+        }
+    }
     for tag in &module.tags {
         let payloads = tag
             .payloads
@@ -240,11 +278,19 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
     }
     output.push_str(&crate::buffers::helpers(module));
     output.push_str(&crate::lists::helpers(module));
+    output.push_str(&crate::readonly::helpers(module));
     for (i, t) in module.types.iter().enumerate() {
         if let TypeKind::Resource { close, .. } = &t.kind {
             let name = &t.name;
             let close = &module.functions[close.0].name;
-            output.push_str(&format!("(func $__resource_handle_{i} (param $r (ref {name})) (result i32) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.get {name} 0 (local.get $r)))\n(func $__resource_close_{i} (param $r (ref {name})) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.set {name} 1 (local.get $r) (i32.const 1)) (call {close} (struct.get {name} 0 (local.get $r))))\n"));
+            let retire = if adapter.is_some_and(|a| a.native_resources) {
+                format!(
+                    "(call $__task_release (ref.as_non_null (struct.get {name} 2 (local.get $r))))"
+                )
+            } else {
+                String::new()
+            };
+            output.push_str(&format!("(func $__resource_handle_{i} (param $r (ref {name})) (result i32) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.get {name} 0 (local.get $r)))\n(func $__resource_close_{i} (param $r (ref {name})) (if (struct.get {name} 1 (local.get $r)) (then (unreachable))) (struct.set {name} 1 (local.get $r) (i32.const 1)) {retire} (call {close} (struct.get {name} 0 (local.get $r))))\n"));
         }
     }
     for function in &module.functions {
@@ -259,11 +305,16 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             adapter,
             using: vec![],
             labels: vec![],
+            task_scope: "(local.get $__scope)".into(),
+            child_tasks,
         };
         let body = emitter.expression(body);
         output.push_str(&format!("  (func {}", function.name));
         for export in &function.exports {
             output.push_str(&format!(" (export {})", quoted(export)));
+        }
+        if child_tasks {
+            output.push_str(" (param $__scope i32)");
         }
         if let FunctionKind::Closure { environment } = function.kind {
             output.push_str(&format!(
@@ -291,11 +342,15 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
                 ty(module, value)
             ));
         }
+        if child_tasks && adapter.is_some() {
+            output.push_str("    (call $__scope_restore (local.get $__scope))\n");
+        }
         output.push_str(&format!("    {body}\n  )\n"));
     }
     if let Some(adapter) = adapter {
         output.push_str(&adapter.helpers());
     }
+    output.push_str(&crate::component::stream_batch::helpers(module, adapter));
     output.push_str(")\n");
     output
 }
@@ -320,15 +375,53 @@ struct Emitter<'a> {
     temporaries: Vec<Type>,
     next_control: usize,
     adapter: Option<&'a crate::component::Adapter<'a>>,
-    using: Vec<(LocalId, TypeId, usize)>,
-    labels: Vec<(LoopId, usize, Type)>,
+    using: Vec<Cleanup>,
+    labels: Vec<(LoopId, usize, Type, String)>,
+    task_scope: String,
+    child_tasks: bool,
+}
+enum Cleanup {
+    Resource(LocalId, TypeId, usize),
+    Children(usize, usize),
 }
 
 impl Emitter<'_> {
     fn cleanup(&self, depth: usize) -> String {
-        self.using[depth..].iter().rev().map(|(local,ty,flag)|
-            format!(" (if (local.get $__temp{flag}) (then (local.set $__temp{flag} (i32.const 0)) (call $__resource_close_{} (local.get $__v{}))))",ty.0,local.0)
-        ).collect()
+        self.using[depth..].iter().rev().map(|cleanup|match cleanup {
+            Cleanup::Resource(local,ty,flag)=>format!(" (if (local.get $__temp{flag}) (then (local.set $__temp{flag} (i32.const 0)) (call $__resource_close_{} (local.get $__v{}))))",ty.0,local.0),
+            Cleanup::Children(scope,flag)=>format!(" (if (local.get $__temp{flag}) (then (local.set $__temp{flag} (i32.const 0)) (call $__scope_close (local.get $__temp{scope}))))"),
+        }).collect()
+    }
+    // Transfer escaping owners before closing child scopes, then restore the
+    // destination scope for subsequent host operations and ABI allocations.
+    fn exit_scope(
+        &self,
+        depth: usize,
+        scope: &str,
+        values: impl IntoIterator<Item = (Type, usize)>,
+    ) -> String {
+        let crossing = self.adapter.is_some() && self.child_tasks && scope != self.task_scope;
+        let mut out = String::new();
+        if crossing {
+            let kinds = crate::ownership::Kinds::new(self.module);
+            for (ty, temp) in values {
+                if kinds.is_owned(&ty) {
+                    let id = match ty {
+                        Type::Value(id) | Type::Resource(id) | Type::Ref { ty: id, .. } => id,
+                        _ => unreachable!(),
+                    };
+                    out.push_str(&format!(
+                        " (call $__adopt_{} (local.get $__temp{temp}) {scope})",
+                        id.0
+                    ));
+                }
+            }
+        }
+        out.push_str(&self.cleanup(depth));
+        if crossing {
+            out.push_str(&format!(" (call $__scope_restore {scope})"));
+        }
+        out
     }
     fn save(&mut self, value: &Expr, ty: Type) -> (String, usize) {
         let temp = self.temporaries.len();
@@ -348,9 +441,90 @@ impl Emitter<'_> {
     fn expression(&mut self, expression: &Expr) -> String {
         use ExprKind::*;
         let code = match &expression.kind {
+            TaskSpawn {
+                function,
+                environment,
+            } => {
+                let env = self.expression(environment);
+                let Type::Value(task) = expression.ty else {
+                    unreachable!()
+                };
+                format!(
+                    "(call $__spawn_{}_{} {} {env})",
+                    function.0, task.0, self.task_scope
+                )
+            }
+            TaskJoin {
+                task,
+                discard,
+                cancel,
+                timeout,
+            } => {
+                let Type::Value(id) = task.ty else {
+                    unreachable!()
+                };
+                if *cancel {
+                    format!("(call $__cancel_{} {})", id.0, self.expression(task))
+                } else if let Some(timeout) = timeout {
+                    format!(
+                        "(call $__timed_{} {} {})",
+                        id.0,
+                        self.expression(timeout),
+                        self.expression(task)
+                    )
+                } else {
+                    let call = format!("(call $__join_{} {})", id.0, self.expression(task));
+                    if *discard
+                        && !matches!(
+                            self.module.types[id.0].kind,
+                            TypeKind::Value(ValueType::Task(Type::Unit))
+                        )
+                    {
+                        format!("(drop {call})")
+                    } else {
+                        call
+                    }
+                }
+            }
+            TaskScope { body } => {
+                let scope = self.temporaries.len();
+                self.temporaries.push(Type::Num(NumType::I32));
+                let flag = self.temporaries.len();
+                self.temporaries.push(Type::Num(NumType::I32));
+                let parent =
+                    std::mem::replace(&mut self.task_scope, format!("(local.get $__temp{scope})"));
+                self.using.push(Cleanup::Children(scope, flag));
+                let mut b = self.expression(body);
+                if self.adapter.is_some()
+                    && crate::ownership::Kinds::new(self.module).is_owned(&body.ty)
+                {
+                    let temp = self.temporaries.len();
+                    self.temporaries.push(body.ty.clone());
+                    let ty = match &body.ty {
+                        Type::Value(id) | Type::Resource(id) | Type::Ref { ty: id, .. } => id,
+                        _ => unreachable!(),
+                    };
+                    b = format!(
+                        "(block{} (local.set $__temp{temp} {b}) (call $__adopt_{} (local.get $__temp{temp}) {parent}) (local.get $__temp{temp}))",
+                        result(self.module, &body.ty),
+                        ty.0
+                    );
+                }
+                let close = self.cleanup(self.using.len() - 1);
+                self.using.pop();
+                self.task_scope = parent.clone();
+                let r = result(self.module, &expression.ty);
+                format!("(block{r} (local.set $__temp{scope} (call $__scope_new {parent})) (local.set $__temp{flag} (i32.const 1)) (call $__scope_restore (local.get $__temp{scope}))
+                  (block $__scope_done{scope}{r} (block $__scope_caught{scope} (result exnref)
+                    (br $__scope_done{scope} (try_table{r} (catch_all_ref $__scope_caught{scope}) {b}))) (call $__scope_abort (local.get $__temp{scope})) {close} (throw_ref)) {close} (call $__scope_restore {parent}) (call $__checkpoint))")
+            }
             Label { label, body } => {
-                self.labels
-                    .push((*label, self.using.len(), expression.ty.clone()));
+                self.labels.push((
+                    *label,
+                    self.using.len(),
+                    expression.ty.clone(),
+                    self.task_scope.clone(),
+                ));
                 let b = self.expression(body);
                 self.labels.pop();
                 format!(
@@ -365,12 +539,39 @@ impl Emitter<'_> {
                         (self.expression(v), String::new())
                     } else {
                         let (s, t) = self.save(v, self.function.result.clone());
-                        (s, format!(" (local.get $__temp{t})"))
+                        (
+                            if self.adapter.is_some()
+                                && self.child_tasks
+                                && crate::ownership::Kinds::new(self.module).is_owned(&v.ty)
+                            {
+                                let id = match &v.ty {
+                                    Type::Value(id)
+                                    | Type::Resource(id)
+                                    | Type::Ref { ty: id, .. } => id,
+                                    _ => unreachable!(),
+                                };
+                                format!(
+                                    "{s} (call $__adopt_{} (local.get $__temp{t}) (local.get $__scope))",
+                                    id.0
+                                )
+                            } else {
+                                s
+                            },
+                            format!(" (local.get $__temp{t})"),
+                        )
                     }
                 } else {
                     (String::new(), String::new())
                 };
-                format!("(block {evaluation}{} (return{operand}))", self.cleanup(0))
+                format!(
+                    "(block {evaluation}{}{} (return{operand}))",
+                    self.cleanup(0),
+                    if self.adapter.is_some() && self.child_tasks {
+                        " (call $__scope_restore (local.get $__scope))"
+                    } else {
+                        ""
+                    }
+                )
             }
             Branch {
                 label,
@@ -379,11 +580,11 @@ impl Emitter<'_> {
                 bindings,
                 is_loop,
             } => {
-                let (_, depth, target) = self
+                let (_, depth, target, target_scope) = self
                     .labels
                     .iter()
                     .rev()
-                    .find(|(id, _, _)| id == label)
+                    .find(|(id, _, _, _)| id == label)
                     .cloned()
                     .expect("checked label");
                 let mut evaluations = String::new();
@@ -414,7 +615,11 @@ impl Emitter<'_> {
                         .collect()
                 };
                 let name = format!("$__{}{}", if *is_loop { "loop" } else { "label" }, label.0);
-                let close = self.cleanup(depth);
+                let close = self.exit_scope(
+                    depth,
+                    &target_scope,
+                    values.iter().zip(&temps).map(|(v, t)| (v.ty.clone(), *t)),
+                );
                 if let Some(c) = condition {
                     let (s, t) = self.save(c, Type::Num(NumType::I32));
                     evaluations.push_str(&s);
@@ -499,6 +704,35 @@ impl Emitter<'_> {
                 BufferOp::Decode => format!("(call $__text_decode{})", self.arguments(args)),
             },
             Const { ty, literal } => format!("({}.const {literal})", ty.wat()),
+            Wasm { instruction, args } if instruction.readonly.is_some() => {
+                let load = instruction.readonly.as_ref().unwrap();
+                format!(
+                    "(call {} {})",
+                    crate::readonly::helper_name(load.region, &instruction.opcode),
+                    self.expression(&args[0])
+                )
+            }
+            Wasm { instruction, args } => instruction.render(
+                &self.module.memories,
+                &args.iter().map(|e| self.expression(e)).collect::<Vec<_>>(),
+            ),
+            Memory {
+                op,
+                memory,
+                offset,
+                args,
+                ..
+            } => {
+                let memory = memory
+                    .map(|id| format!(" {}", self.module.memories[id.0].name))
+                    .unwrap_or_default();
+                let offset = if op.bytes() > 0 {
+                    format!(" offset={offset}")
+                } else {
+                    String::new()
+                };
+                format!("({}{memory}{offset}{})", op.name(), self.arguments(args))
+            }
             Numeric { op, args } => format!("({}{})", op.signature().name, self.arguments(args)),
             Simd { op, args } => op.wat(&self.arguments(args)),
             Local(id) | Move(id) => match self.function.locals[id.0].kind {
@@ -565,8 +799,12 @@ impl Emitter<'_> {
                         format!(" (local.set $__v{} {})", id.0, self.expression(value))
                     })
                     .collect::<String>();
-                self.labels
-                    .push((*label, self.using.len(), expression.ty.clone()));
+                self.labels.push((
+                    *label,
+                    self.using.len(),
+                    expression.ty.clone(),
+                    self.task_scope.clone(),
+                ));
                 let b = self.expression(body);
                 self.labels.pop();
                 format!(
@@ -581,10 +819,13 @@ impl Emitter<'_> {
             Recur { label, assignments } => {
                 let mut evaluations = String::new();
                 let mut updates = String::new();
+                let mut escaping = Vec::new();
                 // Evaluate all new values before changing any loop binding.
                 for (id, value) in assignments {
                     let temp = self.temporaries.len();
-                    self.temporaries.push(self.function.locals[id.0].ty.clone());
+                    let ty = self.function.locals[id.0].ty.clone();
+                    self.temporaries.push(ty.clone());
+                    escaping.push((ty, temp));
                     evaluations.push_str(&format!(
                         " (local.set $__temp{temp} {})",
                         self.expression(value)
@@ -594,22 +835,32 @@ impl Emitter<'_> {
                         id.0
                     ));
                 }
-                let depth = self
+                let (_, depth, _, scope) = self
                     .labels
                     .iter()
                     .rev()
-                    .find(|(id, _, _)| id == label)
+                    .find(|(id, _, _, _)| id == label)
                     .expect("checked loop")
-                    .1;
+                    .clone();
+                let close = self.exit_scope(depth, &scope, escaping);
                 format!(
-                    "(block{evaluations}{}{updates} (br $__loop{}))",
-                    self.cleanup(depth),
+                    "(block{evaluations}{close}{updates} (br $__loop{}))",
                     label.0
                 )
             }
             Call { function, args } => format!(
-                "(call {}{})",
+                "(call {}{}{})",
                 self.module.functions[function.0].name,
+                if self.child_tasks
+                    && !matches!(
+                        self.module.functions[function.0].kind,
+                        FunctionKind::Import { .. }
+                    )
+                {
+                    format!(" {}", self.task_scope)
+                } else {
+                    String::new()
+                },
                 self.arguments(args)
             ),
             StructNew { ty, values } => format!(
@@ -673,6 +924,13 @@ impl Emitter<'_> {
             AsNonNull(value) => format!("(ref.as_non_null {})", self.expression(value)),
             RefEq(a, b) => format!("(ref.eq {} {})", self.expression(a), self.expression(b)),
             Drop(value) => format!("(drop {})", self.expression(value)),
+            ResourceNew { ty, handle } if self.adapter.is_some_and(|a| a.native_resources) => {
+                format!(
+                    "(call $__resource_new_{} {})",
+                    ty.0,
+                    self.expression(handle)
+                )
+            }
             ResourceNew { ty, handle } => format!(
                 "(struct.new {} {} (i32.const 0))",
                 self.module.types[ty.0].name,
@@ -705,7 +963,7 @@ impl Emitter<'_> {
                 let v = self.expression(value);
                 let flag = self.temporaries.len();
                 self.temporaries.push(Type::Num(NumType::I32));
-                self.using.push((*local, id, flag));
+                self.using.push(Cleanup::Resource(*local, id, flag));
                 let b = self.expression(body);
                 let close = self.cleanup(self.using.len() - 1);
                 self.using.pop();
@@ -738,6 +996,13 @@ impl Emitter<'_> {
         args: &[Expr],
         value: &Type,
     ) -> String {
+        if op == DeliveryOp::StreamReadBatch {
+            return format!(
+                "(call $__read_batch_{} {})",
+                endpoint.0,
+                self.arguments(args)
+            );
+        }
         if let Some(adapter) = self.adapter
             && adapter.endpoints.contains(&endpoint)
             && matches!(

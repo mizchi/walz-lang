@@ -1,0 +1,58 @@
+{
+  "schema": "wlt-succinct-bench-v1",
+  "id": "20261108-r1-scalar",
+  "node": "v24.21.0",
+  "v8": "13.6.233.17-node.53",
+  "cpu": "Apple M5",
+  "logicalCpus": 10,
+  "platform": "darwin",
+  "arch": "arm64",
+  "referenceCommit": "2cf51e8885314764dcb44b6469899d95f204b148",
+  "source": {
+    "api.wlt": "6d8c905df493e3272600fcdcbf99f5af8622113c820d372d985567dd74e31cd8",
+    "build.wlt": "c4580350e413daa65f3336e7b235a558872ed852d1e27537a30c3165d7155118",
+    "memory.wlt": "a056f991c8244deff3fe52a695eb7b7e7582d65cf8a7fe01f110942f1f05ce16",
+    "read.wlt": "c031349303ea3bf0f35d95a39edca9c902d531807a7c987ab09f954f1cd4ec6e",
+    "reader.wlt": "c9aa2ce0f027141fc810ece57b778cb6c0942de7b02f6b0262a81625e630ccc8"
+  },
+  "runner": {
+    "bench.mjs": "550a573fe09dc15c3b5bdcac46cdbbfbba85b5f0d6efd6f6a7f59f35d5b66f81",
+    "build.mjs": "c30c7dd505b8ea41eb4596390ed02b60fe28101f5766e14ba7643d567e2dedac",
+    "index.mjs": "24c10d66c9d60f813cd452ef778cc1bf34cadd8361fb552eb33967bce5707205",
+    "indexed-js.mjs": "79169351d7b088f63a0b3ac7427d9fe0468c5e3fab180296000902d88546c52e",
+    "pool.mjs": "d920a4157febe0d947a4ace05010b975bc958c54632a9da4fedff276e9f7ce10",
+    "worker.mjs": "0c8472074533ec462dd31394dcee99c7aedc1ef529510d183b1d1c78d55f00f5"
+  },
+  "reference": {
+    "internal/allocator.ts": "9cfaf2b17a3aabb901ef7ecf3f7d1eaae8b2a9e1fe9abbcadf96fba3bab47aa8",
+    "internal/mod_test.ts": "8edda49dfdd953b7df2c17d7f2ce11477df1c895aed2bf5eedb91dd393bb8ae3",
+    "internal/monotone-uint32.ts": "238e763bd505202962062ff3a5246ecb5b311bfd20f01bc6ab4b846b210a99ab",
+    "internal/snapshot.ts": "631dec71f897055db5d06da7a4803a3294eb01c6fad678f09f5f6b3d7225ea86",
+    "internal/wavelet_exports.zig": "dede75cd007fb44d6d75df370a001646b9574a3317e64366eba9a11090e3860e",
+    "internal/wavelet_kernel.zig": "70e839a903d367c57ef7aee21cd79ba87e5eb90d209945335b8b9575ab4323b0",
+    "rank-select-bit-vector/README.md": "0ccb12fb08e3da34fd2081e2d12a91fd2c8902bba055fd6c88b3e3b74a415b96",
+    "rank-select-bit-vector/kernels.d.wasm.ts": "37e2e17bfa1db05d8f21b6cbc64fa2994d270d9dd57f19cbb9dc39fdfd08d93e",
+    "rank-select-bit-vector/kernels.raw.wasm": "35f2c57737e8cf362bee5ac23008b4e28fce87b7e4f38fdc2c25b7b25f390d85",
+    "rank-select-bit-vector/kernels.wasm": "cebbab70aa83c92830dd62d74c1f7d7998d29765063a71440bf03486d646854b",
+    "rank-select-bit-vector/kernels.zig": "461f55cc99faabf6101151701ccb48e9f2ab3a00c9c4eb02401da12130be7930",
+    "rank-select-bit-vector/mod.ts": "800b2de4fff7fcfb3aa88313dbd931b71c0a12efef816218ebaa8da2658289e1",
+    "rank-select-bit-vector/mod_test.ts": "6dc2f254baae58b86333eb19bc6405dc49ee30ce6eb6a10db83db74c53976a7a",
+    "wavelet-matrix-uint8/README.md": "37c1bcb4788d3590ad8787c9499c220c719cbea206a5b0f0eab803e8b927611e",
+    "wavelet-matrix-uint8/kernels.d.wasm.ts": "189b1effc69d5e6975faa944ee90766b94402571459b6426a0f199cd6a0a49d3",
+    "wavelet-matrix-uint8/kernels.raw.wasm": "a017e5c3730dba3528b4087a5f28fe133c7f96ff0559ba9be38b7f511993d76d",
+    "wavelet-matrix-uint8/kernels.wasm": "4b6eb972e373bb0a9b9f0880bd5af16f5e927111da1904e0dc4278981abf76b7",
+    "wavelet-matrix-uint8/kernels.zig": "e057ca27986863b120f3e691c5ebe6c962a4d9f8a8f021340cc650cf880eb811",
+    "wavelet-matrix-uint8/mod.ts": "8dcad0b0d158125592163101cc333f3646f521e8c1652db19771deba423c7d2d",
+    "wavelet-matrix-uint8/mod_test.ts": "0684607dc8f67e9a93f9881bb08142903d53f408f188a7fa34b35d8b95548d4e"
+  },
+  "compiler": "675f09f86e653fc2450d4b36c169fa37518077057ade695cb6aaf38a5961ce58",
+  "reader": "2ede4c8a39604bd3fa62da7f18fef631c039a5ae2b10c212173541992a8bc66b",
+  "methods": {
+    "samples": 9,
+    "warmup": 3,
+    "order": "rotated",
+    "calibrationTargetMs": 15,
+    "construction": "single builder, published snapshot copied once",
+    "sharedMemoryCapacity": 16777216
+  }
+}

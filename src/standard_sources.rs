@@ -10,6 +10,8 @@ pub(crate) const LIBRARIES: &[(&str, &str)] = &[
     ("string-view.wlt", include_str!("../stdlib/string-view.wlt")),
     ("array-view.wlt", include_str!("../stdlib/array-view.wlt")),
     ("list.wlt", include_str!("../stdlib/list.wlt")),
+    ("option.wlt", include_str!("../stdlib/option.wlt")),
+    ("result.wlt", include_str!("../stdlib/result.wlt")),
     ("dict.wlt", include_str!("../stdlib/dict.wlt")),
     (
         "list-builder.wlt",

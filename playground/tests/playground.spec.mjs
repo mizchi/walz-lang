@@ -124,3 +124,23 @@ test('Wasm compiler matches the frozen native WAT outputs for all seven frontend
   await page.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(page.getByTestId('run-output')).toHaveText('[7, 42n]');
 });
+
+test('expected strings and core value helpers run while bench entries stay private',async({page})=>{
+ await compile(page,`(module
+  (%use "wlt:core" (type $string) (type $option) (type $result) (func $option.ok-or))
+  (func $main (export "main") (result i32) (%effect pure)
+    (%match (call (%inst $option.ok-or $string i32) (%option.some $string "日本") 7)
+      (case ok ($value) (%string.byte-len $value)) (case err ($code) $code)))
+  (%bench "private" (result i32) 1))`);
+ await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
+ await page.getByRole('button',{name:'Run',exact:true}).click();
+ await expect(page.getByTestId('run-output')).toHaveText('6');
+});
+
+test('list traversal, field patterns and field updates compile in Wasm and run', async ({page}) => {
+  const source = await readFile(new URL('../../examples/high-level.wlt', import.meta.url), 'utf8');
+  await compile(page, source);
+  await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
+  await page.getByRole('button', {name:'Run', exact:true}).click();
+  await expect(page.getByTestId('run-output')).toHaveText('42');
+});

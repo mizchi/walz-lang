@@ -18,7 +18,7 @@ for (const file of ['index.html', 'style.css', 'main.mjs', 'samples.mjs', 'worke
 }
 await cp(join(root, 'playground/samples'), join(output, 'samples'), { recursive: true });
 await mkdir(join(output, 'runtime'), { recursive: true });
-for (const name of ['core.mjs', 'host.mjs', 'tasks.mjs', 'resources.mjs']) {
+for (const name of ['core.mjs', 'host.mjs', 'tasks.mjs', 'resources.mjs', 'children.mjs', 'readables.mjs']) {
   await cp(join(root, 'runtime', name), join(output, 'runtime', name));
 }
 console.log(`Playground: ${output}`);

@@ -1,6 +1,6 @@
 {
   "id": "diagnostics",
-  "version": 4,
+  "version": 6,
   "axes": [
     "location",
     "cause",

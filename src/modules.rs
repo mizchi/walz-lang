@@ -7,13 +7,19 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 enum SymbolKind {
     Function,
+    Memory,
+    Cell,
     Tag,
     Type,
+    Region,
 }
 impl SymbolKind {
     fn parse(name: &str) -> Option<Self> {
         match name {
             "func" => Some(Self::Function),
+            "memory" => Some(Self::Memory),
+            "cell" => Some(Self::Cell),
+            "region" => Some(Self::Region),
             "tag" => Some(Self::Tag),
             "type" => Some(Self::Type),
             _ => None,
@@ -22,6 +28,9 @@ impl SymbolKind {
     fn name(self) -> &'static str {
         match self {
             Self::Function => "func",
+            Self::Memory => "memory",
+            Self::Cell => "cell",
+            Self::Region => "region",
             Self::Tag => "tag",
             Self::Type => "type",
         }
@@ -132,7 +141,7 @@ fn collect(
                         return Err(Error::at(
                             source,
                             export.span,
-                            "expected (public (func/type/tag $name)...)",
+                            "expected (public (func/type/tag/memory $name)...)",
                         ));
                     }
                     let symbol = Symbol::new(kind.unwrap(), identifier(source, &parts[1])?);
@@ -149,6 +158,12 @@ fn collect(
                         ));
                     }
                 }
+            }
+            Some("race-free") if !scope.is_empty() => {
+                return Err(
+                    Error::at(source, node.span, "%race-free belongs to the entry module")
+                        .with_code("E_RACE_MODE"),
+                );
             }
             Some("test") if file.is_some() => {
                 return Err(
@@ -188,6 +203,9 @@ fn collect(
                 let kinds: &[SymbolKind] = match declaration.head() {
                     Some("closure") => &[SymbolKind::Function, SymbolKind::Type],
                     Some("func") => &[SymbolKind::Function],
+                    Some("memory") => &[SymbolKind::Memory],
+                    Some("atomic.cell") => &[SymbolKind::Cell],
+                    Some("readonly.region") => &[SymbolKind::Region],
                     Some("type" | "type.alias") => &[SymbolKind::Type],
                     Some("tag") => &[SymbolKind::Tag],
                     _ => &[],
@@ -252,7 +270,7 @@ fn import_aliases(
         return Err(Error::at(
             source,
             import.span,
-            "expected (use $namespace (func/type/tag $member [$alias])...)",
+            "expected (use $namespace (func/type/tag/memory $member [$alias])...)",
         ));
     }
     let namespace = identifier(source, &parts[1])?;
@@ -269,7 +287,7 @@ fn import_aliases(
             return Err(Error::at(
                 source,
                 binding.span,
-                "expected (func/type/tag $member [$alias])",
+                "expected (func/type/tag/memory $member [$alias])",
             ));
         }
         let symbol = Symbol::new(kind.unwrap(), identifier(source, &parts[1])?);
@@ -451,7 +469,10 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     };
     let kind = match head.as_str() {
         "func" => Some(SymbolKind::Function),
-        "type" | "type.alias" | "closure" => Some(SymbolKind::Type),
+        "memory" => Some(SymbolKind::Memory),
+        "atomic.cell" | "atomic.at" => Some(SymbolKind::Cell),
+        "readonly.region" | "readonly.load" => Some(SymbolKind::Region),
+        "type" | "type.alias" | "closure" | "abi.type" => Some(SymbolKind::Type),
         "tag" | "throw" | "catch" => Some(SymbolKind::Tag),
         _ => None,
     };
@@ -459,6 +480,79 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
         && let Some(name) = items.get_mut(1)
     {
         resolve_application(source, scopes, scope, kind, name, &BTreeSet::new())?;
+    }
+    if crate::wasm::supported(&head) {
+        let required = if head == "memory.copy" { 2 } else { 1 };
+        let mut found = 0;
+        for operand in items.iter_mut().skip(1) {
+            if found == required {
+                break;
+            }
+            let Some(name) = operand.atom().filter(|n| n.starts_with('$')) else {
+                break;
+            };
+            if scopes[scope]
+                .lookup(&Symbol::new(SymbolKind::Memory, name.to_owned()))
+                .is_none()
+            {
+                break;
+            }
+            resolve_application(
+                source,
+                scopes,
+                scope,
+                SymbolKind::Memory,
+                operand,
+                &BTreeSet::new(),
+            )?;
+            found += 1;
+        }
+        if !scope.is_empty() && found != required {
+            return Err(Error::at(
+                source,
+                node.span,
+                "file modules require named memory operands",
+            )
+            .with_code("E_MEMORY_USE"));
+        }
+    }
+    if crate::threads::lookup(&head).is_some_and(|op| !op.fence()) {
+        if let Some(index) = crate::threads::selector(items) {
+            if items[index].atom().is_some_and(|a| a.starts_with('$')) {
+                resolve_application(
+                    source,
+                    scopes,
+                    scope,
+                    SymbolKind::Memory,
+                    &mut items[index],
+                    &BTreeSet::new(),
+                )?;
+            } else if !scope.is_empty() {
+                return Err(Error::at(
+                    source,
+                    node.span,
+                    "file modules require a named memory operand",
+                )
+                .with_code("E_MEMORY_USE"));
+            }
+        } else if !scope.is_empty() && !items.iter().any(|n| n.head() == Some("atomic.at")) {
+            return Err(Error::at(
+                source,
+                node.span,
+                "file modules require a named memory operand",
+            )
+            .with_code("E_MEMORY_USE"));
+        }
+    }
+    if matches!(head.as_str(), "atomic.cell" | "readonly.region") && items.len() == 5 {
+        resolve_application(
+            source,
+            scopes,
+            scope,
+            SymbolKind::Memory,
+            &mut items[2],
+            &BTreeSet::new(),
+        )?;
     }
     if head == "resource" && items.len() == 3 {
         let close = &mut items[2];
@@ -504,6 +598,7 @@ fn resolve_application(
 
 pub(crate) struct Expanded {
     pub syntax: Sexp,
+    names: BTreeMap<String, BTreeMap<String, String>>,
     opaque: BTreeMap<String, Opaque>,
     zones: Vec<(crate::ir::Span, String)>,
 }
@@ -512,6 +607,24 @@ struct Opaque {
     declaration: crate::ir::Span,
 }
 impl Expanded {
+    pub fn annotate(&self, error: Error) -> Error {
+        let scope = error
+            .diagnostic()
+            .primary
+            .as_ref()
+            .and_then(|label| {
+                self.zones
+                    .iter()
+                    .find(|(span, _)| span.start <= label.span.start && label.span.start < span.end)
+            })
+            .map(|(_, scope)| scope.as_str())
+            .unwrap_or("");
+        if let Some(names) = self.names.get(scope) {
+            error.rewrite_names(names)
+        } else {
+            error
+        }
+    }
     pub fn validate(
         &self,
         source: &str,
@@ -586,6 +699,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     let Some(items) = root.list().filter(|_| root.head() == Some("module")) else {
         return Ok(Expanded {
             syntax: root.clone(),
+            names: BTreeMap::new(),
             opaque: BTreeMap::new(),
             zones: vec![],
         });
@@ -606,6 +720,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     }) {
         return Ok(Expanded {
             syntax: root.clone(),
+            names: BTreeMap::new(),
             opaque: BTreeMap::new(),
             zones: vec![],
         });
@@ -613,6 +728,32 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     let mut scopes = Scopes::new();
     collect(source, "", &items[1..], &mut scopes, None)?;
     resolve_imports(source, &mut scopes)?;
+    let display_names = scopes
+        .iter()
+        .map(|(scope, symbols)| {
+            let mut candidates: BTreeMap<String, Option<String>> = BTreeMap::new();
+            for (symbol, concrete) in symbols.definitions.iter().chain(&symbols.aliases) {
+                if concrete == &symbol.name {
+                    continue;
+                }
+                candidates
+                    .entry(concrete.clone())
+                    .and_modify(|name| {
+                        if name.as_ref() != Some(&symbol.name) {
+                            *name = None;
+                        }
+                    })
+                    .or_insert_with(|| Some(symbol.name.clone()));
+            }
+            (
+                scope.clone(),
+                candidates
+                    .into_iter()
+                    .filter_map(|(key, value)| value.map(|v| (key, v)))
+                    .collect(),
+            )
+        })
+        .collect();
     let mut output = vec![items[0].clone()];
     let opaque = scopes
         .iter()
@@ -686,12 +827,12 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         if parts.len() != 3
             || parts[1].text().is_none()
             || descriptor.len() != 2
-            || descriptor[0].atom() != Some("func")
+            || !matches!(descriptor[0].atom(), Some("func" | "memory"))
         {
             return Err(Error::at(
                 source,
                 export.span,
-                "expected (export \"name\" (func $function))",
+                "expected (export \"name\" (func/memory $name))",
             ));
         }
         let target = descriptor[1].atom();
@@ -702,10 +843,27 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         let definition = output
             .iter_mut()
             .find(|n| {
-                n.head() == Some("func")
-                    && n.list().and_then(|p| p.get(1)).and_then(Sexp::atom) == target
+                let declaration = if n.head() == Some("import") {
+                    n.list().and_then(|p| p.get(3)).unwrap_or(n)
+                } else {
+                    n
+                };
+                declaration.head() == descriptor[0].atom()
+                    && declaration
+                        .list()
+                        .and_then(|p| p.get(1))
+                        .and_then(Sexp::atom)
+                        == target
             })
             .ok_or_else(|| Error::at(source, export.span, "exports belong to defined functions"))?;
+        let definition = if definition.head() == Some("import") {
+            let Kind::List(parts) = &mut definition.kind else {
+                unreachable!()
+            };
+            &mut parts[3]
+        } else {
+            definition
+        };
         let Kind::List(items) = &mut definition.kind else {
             unreachable!()
         };
@@ -718,6 +876,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         );
     }
     Ok(Expanded {
+        names: display_names,
         syntax: Sexp {
             kind: Kind::List(output),
             span: root.span,

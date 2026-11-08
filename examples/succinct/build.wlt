@@ -1,0 +1,190 @@
+(module
+  (%use "wlt:core" (type $bytes))
+  (%use "./memory.wlt" (memory $memory))
+  (%use "./read.wlt" (func $get) (func $stride))
+  (%export (func $build-bits) (func $build-wavelet) (func $copy-in) (func $copy-out))
+  (type $Buffer (array (mut i32)))
+  (func $put
+    (param $p i32)
+    (param $v i32)
+    (%effect writes)
+    (i32.store $memory (+ 4096 $p) $v))
+
+  (func $initial
+    (param $kind i32)
+    (param $n i32)
+    (result i32)
+    (%effect writes)
+    (block
+      (result i32)
+      (if (i32.gt_u $n 134000000) (then (unreachable)) (else (nop)))
+      (%let $used (+ 64 (* (call $stride $n) (if (result i32) $kind (then 8) (else 1))))
+        (block
+          (result i32)
+          (if (i32.gt_u $used 16773120) (then (unreachable)) (else (nop)))
+          (memory.fill $memory 4096 0 $used)
+          (call $put 0 1464611889)
+          (call $put 4 $kind)
+          (call $put 8 $n)
+          (call $put 12 $used)
+          $used))))
+
+  (func $directory
+    (param $base i32)
+    (param $n i32)
+    (%effect reads writes)
+    (%let $words (i32.shr_u (+ $n 31) 5)
+      (%loop $scan
+        (bind $word i32 0)
+        (bind $ones i32 0)
+        (block
+          (if
+            (= (i32.and $word 15) 0)
+            (then (call $put (+ $base (* (+ $words (i32.shr_u $word 4)) 4)) $ones))
+            (else (nop)))
+          (if
+            (< $word $words)
+            (then
+              (%recur $scan
+                (+ $word 1)
+                (+ $ones
+                  (i32.popcnt (call $get (+ $base (* $word 4))))
+                )))
+            (else
+              (call $put (+ $base (* (+ $words (i32.shr_u (+ $words 15) 4)) 4)) $ones))))
+      )))
+
+  (func $build-bits
+    (param $input $bytes)
+    (param $n i32)
+    (result i32)
+    (%effect reads writes)
+    (block
+      (result i32)
+      (if
+        (|| (i32.gt_u $n 134000000) (!= (%bytes.len $input) (i32.shr_u (+ $n 7) 3)))
+        (then (unreachable))
+        (else (nop)))
+      (%let $used (call $initial 0 $n)
+        (block
+          (result i32)
+          (%for $copy
+            (bind $i i32 0)
+            (while (< $i (%bytes.len $input)))
+            (step (+ $i 1))
+            (i32.store8 $memory (+ 4160 $i) (%bytes.get $input $i)))
+          (if
+            (!= (i32.and $n 31) 0)
+            (then
+              (%let $p (+ 64 (* (i32.shr_u $n 5) 4))
+                (call $put $p
+                  (i32.and (call $get $p) (- (i32.shl 1 (i32.and $n 31)) 1))))
+            )
+            (else (nop)))
+          (call $directory 64 $n)
+          $used))))
+
+  (func $build-wavelet
+    (param $input $bytes)
+    (result i32)
+    (%effect reads writes allocates)
+    (%let
+      (($n (%bytes.len $input))
+       ($used (call $initial 1 $n))
+       ($a (array.new $Buffer 0 $n))
+       ($b (array.new $Buffer 0 $n))
+       ($stride (call $stride $n)))
+      (block
+        (result i32)
+        (%for $copy
+          (bind $i i32 0)
+          (while (< $i $n))
+          (step (+ $i 1))
+          (array.set $Buffer $a $i (%bytes.get $input $i)))
+        (%loop $levels
+          (bind $level i32 0)
+          (bind $source (ref $Buffer) $a)
+          (bind $target (ref $Buffer) $b)
+          (if
+            (< $level 8)
+            (then
+              (%let
+                (($base (+ 64 (* $level $stride)))
+                 ($shift (- 7 $level)))
+                (%let $zeros
+                  (%loop $bits
+                    (bind $i i32 0)
+                    (bind $zeros i32 0)
+                    (result i32)
+                    (if
+                      (result i32)
+                      (= $i $n)
+                      (then $zeros)
+                      (else
+                        (%let $bit
+                          (i32.and (i32.shr_u (array.get $Buffer $source $i) $shift) 1)
+                          (block
+                            (result i32)
+                            (if $bit
+                              (then
+                                (%let $p (+ $base (* (i32.shr_u $i 5) 4))
+                                  (call $put $p
+                                    (i32.or (call $get $p) (i32.shl 1 (i32.and $i 31))))
+                                ))
+                              (else (nop)))
+                            (%recur $bits (+ $i 1) (+ $zeros (i32.eqz $bit))))
+                        ))))
+                  (block
+                    (call $put (+ 16 (* $level 4)) $zeros)
+                    (call $directory $base $n)
+                    (%loop $scatter
+                      (bind $i i32 0)
+                      (bind $zero i32 0)
+                      (bind $one i32 $zeros)
+                      (if
+                        (< $i $n)
+                        (then
+                          (%let
+                            (($v (array.get $Buffer $source $i))
+                             ($bit (i32.and (i32.shr_u $v $shift) 1)))
+                            (block
+                              (array.set $Buffer $target
+                                (if (result i32) $bit (then $one) (else $zero))
+                                $v)
+                              (%recur $scatter
+                                (+ $i 1)
+                                (+ $zero (i32.eqz $bit))
+                                (+ $one $bit))))
+                        )
+                        (else (nop))))
+                    (%recur $levels (+ $level 1) $target $source))))
+            )
+            (else (nop))))
+        $used)))
+
+  (func $copy-in
+    (param $input $bytes)
+    (%effect writes)
+    (block
+      (if (i32.gt_u (%bytes.len $input) 16773120) (then (unreachable)) (else (nop)))
+      (%for $copy
+        (bind $i i32 0)
+        (while (< $i (%bytes.len $input)))
+        (step (+ $i 1))
+        (i32.store8 $memory (+ 4096 $i) (%bytes.get $input $i))))
+  )
+
+  (func $copy-out
+    (param $length i32)
+    (result $bytes)
+    (%effect reads writes allocates)
+    (%let $out (array.new $Buffer 0 $length)
+      (block
+        (result $bytes)
+        (%for $copy
+          (bind $i i32 0)
+          (while (< $i $length))
+          (step (+ $i 1))
+          (array.set $Buffer $out $i (i32.load8_u $memory (+ 4096 $i))))
+        (%bytes.from-array $Buffer $out))))
+)

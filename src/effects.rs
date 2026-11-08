@@ -5,6 +5,10 @@ use crate::ir::*;
 use serde::Serialize;
 use std::collections::BTreeSet;
 
+pub(crate) fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize)]
 pub struct EffectSet {
     pub reads: bool,
@@ -13,6 +17,10 @@ pub struct EffectSet {
     pub allocates: bool,
     pub suspends: bool,
     pub host: bool,
+    #[serde(skip_serializing_if = "is_false")]
+    pub synchronizes: bool,
+    #[serde(skip_serializing_if = "is_false")]
+    pub blocks: bool,
     pub throws: BTreeSet<TagId>,
     pub throws_unknown: bool,
 }
@@ -30,6 +38,10 @@ pub struct EffectSummary {
     pub allocates: bool,
     pub suspends: bool,
     pub host: bool,
+    #[serde(skip_serializing_if = "is_false")]
+    pub synchronizes: bool,
+    #[serde(skip_serializing_if = "is_false")]
+    pub blocks: bool,
     pub throws: Vec<String>,
     pub throws_unknown: bool,
 }
@@ -42,6 +54,8 @@ impl EffectSet {
             allocates: self.allocates,
             suspends: self.suspends,
             host: self.host,
+            synchronizes: self.synchronizes,
+            blocks: self.blocks,
             throws: self
                 .throws
                 .iter()
@@ -58,6 +72,8 @@ impl EffectSet {
             allocates: true,
             suspends: true,
             host: true,
+            synchronizes: true,
+            blocks: true,
             throws: BTreeSet::new(),
             throws_unknown: true,
         }
@@ -69,6 +85,8 @@ impl EffectSet {
         self.allocates |= other.allocates;
         self.suspends |= other.suspends;
         self.host |= other.host;
+        self.synchronizes |= other.synchronizes;
+        self.blocks |= other.blocks;
         self.throws.extend(&other.throws);
         self.throws_unknown |= other.throws_unknown;
     }
@@ -78,7 +96,39 @@ fn direct(expression: &Expr, module: &Module, functions: &[EffectSet]) -> Effect
     use ExprKind::*;
     let mut effects = EffectSet::default();
     match &expression.kind {
+        Wasm { instruction, .. } => {
+            effects.reads = instruction.reads();
+            effects.writes = instruction.writes();
+        }
+        Memory { op, memory, .. } => {
+            effects.reads = op.reads;
+            effects.writes = op.writes;
+            effects.synchronizes =
+                op.synchronizes(memory.is_some_and(|id| module.memories[id.0].shared));
+            effects.blocks = op.blocks;
+        }
         Call { function, .. } => effects.union(&functions[function.0]),
+        TaskSpawn { function, .. } => {
+            effects.union(&functions[function.0]);
+            effects.host = true;
+            effects.allocates = true;
+            effects.reads = true;
+            effects.writes = true;
+            effects.suspends = true;
+        }
+        TaskJoin { .. } | TaskScope { .. } => {
+            effects.allocates = matches!(
+                expression.kind,
+                TaskJoin {
+                    timeout: Some(_),
+                    ..
+                }
+            );
+            effects.host = true;
+            effects.reads = true;
+            effects.writes = true;
+            effects.suspends = true;
+        }
         Delivery { op, .. } => effects.suspends = op.suspends(),
         StructNew { .. } | ArrayNew { .. } | ArrayFixed { .. } => effects.allocates = true,
         VariantNew { ty, .. } => {
@@ -188,6 +238,8 @@ enum Requirement {
     Host,
     Throws(TagId),
     ThrowsUnknown,
+    Synchronizes,
+    Blocks,
 }
 impl Requirement {
     fn present(self, effects: &EffectSet) -> bool {
@@ -197,6 +249,8 @@ impl Requirement {
             Self::Allocates => effects.allocates,
             Self::Suspends => effects.suspends,
             Self::Host => effects.host,
+            Self::Synchronizes => effects.synchronizes,
+            Self::Blocks => effects.blocks,
             Self::Throws(tag) => effects.throws.contains(&tag),
             Self::ThrowsUnknown => effects.throws_unknown,
         }
@@ -208,6 +262,8 @@ impl Requirement {
             Self::Allocates => "allocates".into(),
             Self::Suspends => "suspends".into(),
             Self::Host => "host".into(),
+            Self::Synchronizes => "synchronizes".into(),
+            Self::Blocks => "blocks".into(),
             Self::ThrowsUnknown => "throws(*)".into(),
             Self::Throws(tag) => format!("throws({})", module.tags[tag.0].name),
         }
@@ -219,6 +275,8 @@ impl Requirement {
             Self::Allocates,
             Self::Suspends,
             Self::Host,
+            Self::Synchronizes,
+            Self::Blocks,
             Self::ThrowsUnknown,
         ];
         kinds.extend(effects.throws.iter().copied().map(Self::Throws));

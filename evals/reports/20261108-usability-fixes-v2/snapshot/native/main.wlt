@@ -1,0 +1,18 @@
+(module
+  (%use "wlt:core" (type $future))
+  (%use "./generated/bindings.wlt"
+    (type $store.ticket)
+    (type $wit-u32)
+    (func $store.open)
+    (func $store.size))
+  (func $run
+    (export "api-run")
+    (result $wit-u32)
+    (%effect host reads writes allocates)
+    (%using $ticket (call $store.open) (call $store.size $ticket)))
+
+  (func $ready
+    (export "api-ready")
+    (result (%inst $future $wit-u32))
+    (%effect allocates)
+    (%future.ready $wit-u32 (%newtype.wrap $wit-u32 42))))

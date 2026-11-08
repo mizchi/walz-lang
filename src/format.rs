@@ -102,7 +102,7 @@ fn flat(n: &Node) -> Option<String> {
                 .collect::<Option<Vec<_>>>()?
                 .join(" ")
         )),
-        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('%'),"let"|"result.let"|"stream.fold-result"|"match")) => {
+        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('%'),"let"|"for-each"|"struct.update"|"result.let"|"stream.fold-result"|"match")) => {
             None
         }
         Node::List(items) if matches!(items.as_slice(), [Node::Token(head), Node::Fields(_)] if head.ends_with("::")) => {
@@ -146,7 +146,17 @@ fn header_end(items: &[Node]) -> usize {
         Node::Token(_) => true,
         _ => matches!(
             head(n),
-            Some("ref" | "inst" | "option" | "result" | "pair" | "own" | "future" | "stream")
+            Some(
+                "ref"
+                    | "inst"
+                    | "option"
+                    | "result"
+                    | "pair"
+                    | "own"
+                    | "future"
+                    | "stream"
+                    | "task"
+            )
         ),
     };
     let name = name.trim_start_matches('%');
@@ -164,6 +174,7 @@ fn header_end(items: &[Node]) -> usize {
         ),
         "case" => Some(3),
         "struct.new" => Some(2),
+        "struct.update" | "for-each" => Some(3),
         "let" if meaningful.len() == 3 => Some(1),
         "let" => Some(
             if items

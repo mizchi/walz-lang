@@ -296,6 +296,7 @@ impl Builder<'_> {
                 nested.handlers = entries;
                 self.expr(body, next, &nested)?
             }
+            TaskScope { body } => self.expr(body, next, env)?,
             Call { function, .. } => {
                 let effect = self.effects[function.0].clone();
                 self.operands(e.children(), env, |b, active| {

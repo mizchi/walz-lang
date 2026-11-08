@@ -3,26 +3,28 @@
 (global $free (mut i32) (i32.const 0))
 (global $live (mut i32) (i32.const 0))
 (global $count (mut i32) (i32.const 0))
+(global $owner (export "scope-owner") (mut i32) (i32.const 0))
 (global (export "cancel-requested") (mut i32) (i32.const 0))
 (func (export "live") (result i32) (global.get $count))
 (func $link (param $block i32) (result i32)
+  (i32.store offset=16 (local.get $block) (global.get $owner))
   (i32.store offset=8 (local.get $block) (i32.const 0))
   (i32.store offset=12 (local.get $block) (global.get $live))
   (if (global.get $live) (then (i32.store offset=8 (global.get $live) (local.get $block))))
   (global.set $live (local.get $block))
   (global.set $count (i32.add (global.get $count) (i32.const 1)))
-  (i32.add (local.get $block) (i32.const 16)))
+  (i32.add (local.get $block) (i32.const 24)))
 (func $alloc (export "alloc") (param $size i32) (result i32)
   (local $block i32) (local $previous i32) (local $end i32) (local $pages i32)
-  (if (i32.gt_u (local.get $size) (i32.const 16777176)) (then unreachable))
-  (local.set $size (i32.and (i32.add (local.get $size) (i32.const 23)) (i32.const -8)))
+  (if (i32.gt_u (local.get $size) (i32.const 16777168)) (then unreachable))
+  (local.set $size (i32.and (i32.add (local.get $size) (i32.const 31)) (i32.const -8)))
   (local.set $block (global.get $free))
   (block $miss (loop $search
     (br_if $miss (i32.eqz (local.get $block)))
     (if (i32.ge_u (i32.load offset=4 (local.get $block)) (local.get $size))
       (then
         ;; Split a large free block instead of losing its capacity to a tiny allocation.
-        (if (i32.ge_u (i32.sub (i32.load offset=4 (local.get $block)) (local.get $size)) (i32.const 24))
+        (if (i32.ge_u (i32.sub (i32.load offset=4 (local.get $block)) (local.get $size)) (i32.const 32))
           (then
             (local.set $end (i32.add (local.get $block) (local.get $size)))
             (i32.store (local.get $end) (i32.load (local.get $block)))
@@ -68,7 +70,7 @@
 (func $free (export "free") (param $pointer i32)
   (local $previous i32) (local $next i32) (local $before i32) (local $after i32)
   (if (local.get $pointer) (then
-    (local.set $pointer (i32.sub (local.get $pointer) (i32.const 16)))
+    (local.set $pointer (i32.sub (local.get $pointer) (i32.const 24)))
     (local.set $previous (i32.load offset=8 (local.get $pointer)))
     (local.set $next (i32.load offset=12 (local.get $pointer)))
     (if (local.get $previous)
@@ -88,7 +90,7 @@
     (call $reclaim))))
 (func (export "free-all")
   (loop $again (if (global.get $live) (then
-    (call $free (i32.add (global.get $live) (i32.const 16))) (br $again)))))
+    (call $free (i32.add (global.get $live) (i32.const 24))) (br $again)))))
 (func (export "realloc") (param $old i32) (param $old-size i32) (param $alignment i32) (param $size i32) (result i32)
   (local $new i32)
   (if (i32.or (i32.eqz (local.get $alignment)) (i32.gt_u (local.get $alignment) (i32.const 8))) (then unreachable))
@@ -99,3 +101,10 @@
       (if (result i32) (i32.lt_u (local.get $old-size) (local.get $size)) (then (local.get $old-size)) (else (local.get $size))))
     (call $free (local.get $old))))
   (local.get $new))
+
+(func (export "free-scope") (param $scope i32) (local $p i32) (local $next i32)
+ (local.set $p (global.get $live)) (loop $again
+  (if (local.get $p) (then
+   (local.set $next (i32.load offset=12 (local.get $p)))
+   (if (i32.eq (i32.load offset=16 (local.get $p)) (local.get $scope)) (then (call $free (i32.add (local.get $p) (i32.const 24)))))
+   (local.set $p (local.get $next)) (br $again)))))

@@ -343,6 +343,27 @@ impl Context<'_> {
     fn eval(&mut self, e: &Expr) -> Points {
         use ExprKind::*;
         let result = match &e.kind {
+            TaskScope { body } => self.eval(body),
+            TaskSpawn { environment, .. } => {
+                let captures = self.eval(environment);
+                self.summary.host.extend(captures);
+                let location = Location {
+                    object: Path::new(Root::Unknown),
+                    member: Member::Any,
+                };
+                self.summary.reads.insert(location.clone());
+                self.summary.writes.insert(location);
+                self.havoc();
+                self.allocate(e, 0, &e.ty)
+            }
+            TaskJoin { task, timeout, .. } => {
+                if let Some(timeout) = timeout {
+                    self.eval(timeout);
+                }
+                self.eval(task);
+                self.havoc();
+                points(Root::Unknown)
+            }
             Label { label, body } => {
                 let mut p = self.eval(body);
                 if let Some(branches) = self.labels.get(label) {
@@ -452,6 +473,42 @@ impl Context<'_> {
             }
             Const { .. } | Null(_) | Nop | Unreachable => Points::new(),
             Local(id) | Move(id) => self.locals[id.0].clone(),
+            Wasm { instruction, args } => {
+                for arg in args {
+                    self.eval(arg);
+                }
+                let unknown = [Path {
+                    root: Root::Unknown,
+                    via: vec![],
+                }]
+                .into_iter()
+                .collect();
+                if instruction.reads() {
+                    self.access(&unknown, Member::Any, false);
+                }
+                if instruction.writes() {
+                    self.access(&unknown, Member::Any, true);
+                }
+                Points::new()
+            }
+            Memory { op, args, .. } => {
+                for arg in args {
+                    self.eval(arg);
+                }
+                let unknown = [Path {
+                    root: Root::Unknown,
+                    via: vec![],
+                }]
+                .into_iter()
+                .collect();
+                if op.reads {
+                    self.access(&unknown, Member::Any, false);
+                }
+                if op.writes {
+                    self.access(&unknown, Member::Any, true);
+                }
+                Points::new()
+            }
             Numeric { args, .. } | Simd { args, .. } => {
                 for arg in args {
                     self.eval(arg);
@@ -666,6 +723,31 @@ impl Context<'_> {
                             },
                             &self.summary.heap,
                         )
+                    }
+                    DeliveryOp::StreamReadBatch => {
+                        self.havoc();
+                        // A batch can contain any shared payload reachable from
+                        // the input stream or supplied by an unknown host.
+                        let pair = self.allocate(e, 0, &e.ty);
+                        self.store(
+                            &pair,
+                            Member::Payload {
+                                variant: 0,
+                                index: 0,
+                            },
+                            values[1].clone(),
+                            true,
+                        );
+                        self.store(
+                            &pair,
+                            Member::Payload {
+                                variant: 0,
+                                index: 1,
+                            },
+                            points(Root::Unknown),
+                            true,
+                        );
+                        pair
                     }
                     DeliveryOp::StreamNext => {
                         self.havoc();

@@ -4,6 +4,8 @@ use crate::{
 };
 use serde::Serialize;
 use std::{collections::BTreeMap, path::Path};
+#[cfg(not(target_family = "wasm"))]
+mod syntax_index;
 
 #[derive(Debug, Serialize)]
 pub struct TypeQuery {
@@ -91,7 +93,7 @@ fn query(
     syntax: &Sexp,
     offsets: &[usize],
     module: &Module,
-    generics: &crate::generics::Expanded,
+    instances: &[(Span, Span, String, String)],
 ) -> Vec<TypeMatch> {
     let source = loaded.text();
     let surface = Surface::collect(syntax, source);
@@ -161,8 +163,7 @@ fn query(
                 .and_then(|n| n.list()?.get(1)?.atom())
                 .unwrap_or(&function.name)
                 .to_owned();
-            let specialization = generics
-                .instances
+            let specialization = instances
                 .iter()
                 .find(|(_, _, _, name)| name == &function.name)
                 .and_then(|(_, _, display, _)| {
@@ -170,8 +171,7 @@ fn query(
                         .find('<')
                         .map(|i| format!("{function_name}{}", &display[i..]))
                 });
-            let instantiations = generics
-                .instances
+            let instantiations = instances
                 .iter()
                 .filter(|(_, _, _, name)| name == &function.name)
                 .filter_map(|(_, request, _, _)| {
@@ -240,7 +240,7 @@ pub fn type_at(
     let offsets = loaded.offsets(path, line, column)?;
     let syntax = crate::sexpr::parse(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
     match crate::check_observed(loaded.text(), policy, |module, generics| {
-        query(loaded, &syntax, &offsets, module, generics)
+        query(loaded, &syntax, &offsets, module, &generics.instances)
     }) {
         Ok((_, matches)) => Ok(TypeQuery {
             schema: "wlt-type-at-v1",
@@ -255,5 +255,165 @@ pub fn type_at(
                 matches: vec![],
             })
         }
+    }
+}
+
+/// One immutable checked IR for editor queries. The protocol owns invalidation.
+#[cfg(not(target_family = "wasm"))]
+pub(crate) struct Snapshot {
+    pub source: Source,
+    pub error: Option<Error>,
+    syntax: Sexp,
+    index: syntax_index::Index,
+    checked: Option<CheckedSnapshot>,
+    links: Vec<(Span, crate::diagnostic::Label, String)>,
+}
+#[cfg(not(target_family = "wasm"))]
+type CheckedSnapshot = (Module, Vec<(Span, Span, String, String)>);
+#[cfg(not(target_family = "wasm"))]
+impl Snapshot {
+    pub fn new(source: Source, policy: &BindingPolicy) -> Result<Self, Error> {
+        let syntax = crate::sexpr::parse(source.text()).map_err(|e| source.diagnostic(e))?;
+        let index = syntax_index::Index::new(&source, &syntax, true);
+        let mut links = vec![];
+        let mut error = None;
+        let checked = match crate::check_observed(source.text(), policy, |module, generics| {
+            fn defs(
+                n: &Sexp,
+                out: &mut BTreeMap<(crate::type_syntax::ReferenceKind, String), Span>,
+            ) {
+                let Some(p) = n.list() else { return };
+                let kind = match n.head() {
+                    Some("func" | "closure") => Some(crate::type_syntax::ReferenceKind::Function),
+                    Some("type" | "type.alias" | "resource") => {
+                        Some(crate::type_syntax::ReferenceKind::Type)
+                    }
+                    _ => None,
+                };
+                if let Some(kind) = kind
+                    && let Some(name) = p.get(1).and_then(Sexp::atom)
+                {
+                    out.insert((kind, name.into()), p[1].span);
+                }
+                for c in p {
+                    defs(c, out)
+                }
+            }
+            let mut declarations = BTreeMap::new();
+            defs(&generics.syntax, &mut declarations);
+            let mut expanded = generics.syntax.clone();
+            let _ = crate::type_syntax::map_references(&mut expanded, &mut |kind, n| {
+                if let Some(name) = n.atom()
+                    && let Some(span) = declarations.get(&(kind, name.into()))
+                    && let Some(label) = source.label(*span, "definition")
+                {
+                    let display = if kind == crate::type_syntax::ReferenceKind::Function {
+                        module
+                            .functions
+                            .iter()
+                            .find(|f| f.name == name)
+                            .map(|f| {
+                                format!(
+                                    "{} ({}) -> {}",
+                                    f.name,
+                                    f.params
+                                        .iter()
+                                        .map(|i| module.type_name(&f.locals[i.0].ty))
+                                        .collect::<Vec<_>>()
+                                        .join(", "),
+                                    module.type_name(&f.result)
+                                )
+                            })
+                            .unwrap_or_else(|| name.into())
+                    } else {
+                        name.into()
+                    };
+                    links.push((n.span, label, display));
+                }
+                Ok(())
+            });
+            generics.instances.clone()
+        }) {
+            Ok(checked) => Some(checked),
+            Err(_) => {
+                if let Err(e) = crate::compile_with_policy(source.text(), policy) {
+                    error = Some(source.diagnostic(e));
+                }
+                None
+            }
+        };
+        Ok(Self {
+            source,
+            error,
+            syntax,
+            index,
+            checked,
+            links,
+        })
+    }
+    pub fn query(&self, path: &Path, line: usize, column: usize) -> Result<TypeQuery, Error> {
+        let offsets = self.source.offsets(Some(path), line, column)?;
+        Ok(TypeQuery {
+            schema: "wlt-type-at-v1",
+            mode: if self.error.is_some() {
+                "syntax"
+            } else if self.checked.is_some() {
+                "typed"
+            } else {
+                "wat"
+            },
+            matches: self
+                .checked
+                .as_ref()
+                .map(|(m, i)| query(&self.source, &self.syntax, &offsets, m, i))
+                .unwrap_or_default(),
+        })
+    }
+    pub fn link(
+        &self,
+        path: &Path,
+        line: usize,
+        column: usize,
+    ) -> Option<(&crate::diagnostic::Label, &str)> {
+        let offsets = self.source.offsets(Some(path), line, column).ok()?;
+        self.links
+            .iter()
+            .find(|(s, _, _)| offsets.iter().any(|o| contains(*s, *o)))
+            .map(|(_, l, t)| (l, t.as_str()))
+    }
+    pub fn declaration(&self, path: &Path, line: usize, column: usize) -> Option<&Label> {
+        self.index
+            .definition(&self.source.offsets(Some(path), line, column).ok()?)
+    }
+    pub fn declaration_hover(&self, path: &Path, line: usize, column: usize) -> Option<String> {
+        let text = self
+            .index
+            .hover(&self.source.offsets(Some(path), line, column).ok()?)?;
+        Some(format!(
+            "{text}\nDeclared syntax (unverified; no checked type is inferred)"
+        ))
+    }
+    pub fn completions(
+        &self,
+        path: &Path,
+        line: usize,
+        column: usize,
+    ) -> Vec<(String, String, u32)> {
+        self.source
+            .offsets(Some(path), line, column)
+            .map(|o| self.index.completions(path, &o))
+            .unwrap_or_default()
+    }
+    pub fn unresolved(source: Source, error: Error) -> Result<Self, Error> {
+        let syntax = crate::sexpr::editor_prefix(source.text()).map_err(|_| error.clone())?;
+        let index = syntax_index::Index::new(&source, &syntax, false);
+        Ok(Self {
+            source,
+            syntax,
+            index,
+            error: Some(error),
+            checked: None,
+            links: vec![],
+        })
     }
 }

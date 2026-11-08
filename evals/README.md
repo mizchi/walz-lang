@@ -7,6 +7,8 @@ struct構築表記を比較する独立した読解課題は [struct-literals](s
 現在の在庫台帳suiteは、制御・所有性の読解とコード変更に加え、標準 WAT と `%` 拡張の区別、`wlt:core` の基本型、単相化、複数束縛の `%let`、解析の境界を質問する。必須回答は各 run の suite.answerKeys に固定する。5軸のルーブリックと各14件の実行検証は維持し、異なる suite 版の点差は比較しない。
 以前の記録は [文法評価](../docs/grammar-eval/REPORT.md)、[可読性](../docs/readability/REPORT.md)、[文法改良後](../docs/readability/implemented/REPORT.md) に残す。
 
+CLI・LSP・非同期・native WITと複雑なJSON処理を一通り試す評価は [開発体験の試用](usability/README.md)。実装者による非初見の試用と、ここで扱う初見の読解評価は区別する。
+
 ## 1. 新しい評価回を作る
 
 `wlt-lang` で、Node 24以降と既存の開発依存を使用する。実行検証には Cargo、Lean（検証付きexport）、Wasm GC/JSPI が必要。
@@ -24,7 +26,7 @@ v9 は effect 契約の表記を `%effect` に統一する。既存の run の�
 v10 は標準型名を `$string` に揃える。課題と検査項目は v9 を維持し、新しい run へ入力を固定する。
 v11 はWITに沿う標準型・関連関数と `%string` / `%tuple` / `%box` の語彙を使う。
 v12 はJSON操作を `$json.*` にまとめる。課題の実行契約は維持し、過去の入力・結果は変更しない。
-v14 は`wlt:core`からの`%use`と相対ファイルモジュールに統一する。`%namespace`は使わない。旧suiteの配布物と改名前の入力アーカイブは変更しない。
+v16 は`wlt:core`からの`%use`と相対ファイルモジュールに統一する。`%namespace`は使わない。threads・固定atomicセルの検証モードを含む文法資料を配布する。旧suiteの配布物と改名前の入力アーカイブは変更しない。
 main の include はコピー先の program.wlt から support を参照するため、後のライブラリ変更で評価コードが変わらない。
 依存ファイルを増やしたら suite.json の support も更新する。
 

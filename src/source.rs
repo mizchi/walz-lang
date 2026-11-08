@@ -2,6 +2,7 @@
 //! statically, preserving original file locations for compiler diagnostics.
 use crate::sexpr::Sexp;
 use crate::{Error, ir::Span};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -21,9 +22,39 @@ pub struct Source {
     migration: Option<crate::syntax::Migration>,
 }
 impl Source {
+    /// A failed editor load still has a current root buffer to index. This
+    /// constructor does not resolve imports or make the source compilable.
+    #[cfg(not(target_family = "wasm"))]
+    pub(crate) fn unresolved(path: PathBuf, text: Arc<str>) -> Self {
+        Self {
+            text: text.to_string(),
+            path: path.clone(),
+            chunks: vec![Chunk {
+                start: 0,
+                end: text.len(),
+                offset: 0,
+                path,
+                original: text,
+                generated: false,
+            }],
+            migration: None,
+        }
+    }
     /// Expanded immutable text; IR spans refer to this compilation unit.
+    #[cfg(not(target_family = "wasm"))]
+    pub(crate) fn original(&self, path: &Path) -> Option<&str> {
+        self.chunks
+            .iter()
+            .find(|c| c.path == path)
+            .map(|c| c.original.as_ref())
+    }
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    /// Files represented by this loaded snapshot, including linked modules.
+    pub fn paths(&self) -> impl Iterator<Item = &Path> {
+        std::iter::once(self.path.as_path()).chain(self.chunks.iter().map(|c| c.path.as_path()))
     }
 
     pub(crate) fn label(&self, span: Span, message: &str) -> Option<crate::diagnostic::Label> {
@@ -282,10 +313,10 @@ fn expand(
     output: &mut Source,
     modules: &mut Modules,
     legacy: bool,
+    overlays: &BTreeMap<PathBuf, Arc<str>>,
 ) -> Result<(), Error> {
-    let canonical = path
-        .canonicalize()
-        .map_err(|e| Error::message(format!("{}: {e}", path.display())))?;
+    let canonical =
+        normalize_path(path).map_err(|e| Error::message(format!("{}: {e}", path.display())))?;
     if stack.contains(&canonical) {
         return Err(Error::message(format!(
             "include cycle: {}",
@@ -300,9 +331,13 @@ fn expand(
     if stack.len() >= 64 {
         return Err(Error::message("include nesting limit exceeded".into()));
     }
-    let original: Arc<str> = std::fs::read_to_string(&canonical)
-        .map_err(|e| Error::message(format!("{}: {e}", canonical.display())))?
-        .into();
+    let original: Arc<str> = if let Some(text) = overlays.get(&canonical) {
+        text.clone()
+    } else {
+        std::fs::read_to_string(&canonical)
+            .map_err(|e| Error::message(format!("{}: {e}", canonical.display())))?
+            .into()
+    };
     if original.len() > MAX_SOURCE {
         return Err(Error::message("source exceeds 16 MiB".into()));
     }
@@ -378,7 +413,7 @@ fn expand(
         output.append("\n", node.span.start, &canonical, &original)?;
         let target = canonical.parent().unwrap().join(relative);
         if import {
-            let target = target.canonicalize().map_err(|e| {
+            let target = normalize_path(&target).map_err(|e| {
                 Error::at(&original, node.span, format!("{}: {e}", target.display()))
                     .with_path(&canonical)
             })?;
@@ -398,7 +433,7 @@ fn expand(
                     chunks: vec![],
                     migration: None,
                 };
-                expand(&target, true, stack, &mut unit, modules, legacy)?;
+                expand(&target, true, stack, &mut unit, modules, legacy, overlays)?;
                 modules.size += unit.text.len() + 64;
                 if modules.size > MAX_SOURCE {
                     return Err(Error::message("expanded source exceeds 16 MiB".into()));
@@ -422,7 +457,7 @@ fn expand(
             )?;
             output.append(")", node.span.end - 1, &canonical, &original)?;
         } else {
-            expand(&target, true, stack, output, modules, legacy)?;
+            expand(&target, true, stack, output, modules, legacy, overlays)?;
         }
         output.append("\n", node.span.start, &canonical, &original)?;
         cursor = node.span.end;
@@ -433,13 +468,13 @@ fn expand(
 }
 /// Load a compilation unit. String-based check/compile never read files.
 pub fn load(path: impl AsRef<Path>) -> Result<Source, Error> {
-    load_mode(path.as_ref(), false)
+    load_mode(path.as_ref(), false, &BTreeMap::new())
 }
 
 /// Internal harness entry for frozen historical evaluation inputs.
 #[doc(hidden)]
 pub fn load_legacy(path: impl AsRef<Path>) -> Result<Source, Error> {
-    let mut source = load_mode(path.as_ref(), true)?;
+    let mut source = load_mode(path.as_ref(), true, &BTreeMap::new())?;
     let migration =
         crate::syntax::convert_legacy(&source.text).map_err(|e| source.diagnostic(e))?;
     source.text = migration.text().into();
@@ -447,7 +482,49 @@ pub fn load_legacy(path: impl AsRef<Path>) -> Result<Source, Error> {
     Ok(source)
 }
 
-fn load_mode(path: &Path, legacy: bool) -> Result<Source, Error> {
+/// Load immutable unsaved buffers through the ordinary static module resolver.
+/// Keys may name files not yet written to disk. No source file is modified.
+pub fn load_with_overlays(
+    path: impl AsRef<Path>,
+    overlays: &BTreeMap<PathBuf, Arc<str>>,
+) -> Result<Source, Error> {
+    let overlays = overlays
+        .iter()
+        .map(|(p, t)| normalize_path(p).map(|p| (p, t.clone())))
+        .collect::<Result<BTreeMap<_, _>, _>>()
+        .map_err(|e| Error::message(e.to_string()))?;
+    load_mode(path.as_ref(), false, &overlays)
+}
+
+pub(crate) fn normalize_path(path: &Path) -> std::io::Result<PathBuf> {
+    if let Ok(path) = path.canonicalize() {
+        return Ok(path);
+    }
+    let path = std::path::absolute(path)?;
+    let mut normalized = PathBuf::new();
+    for part in path.components() {
+        match part {
+            std::path::Component::ParentDir => {
+                normalized.pop();
+            }
+            std::path::Component::CurDir => {}
+            p => normalized.push(p.as_os_str()),
+        }
+    }
+    if let Some(parent) = normalized.parent()
+        && parent != normalized
+        && let Some(name) = normalized.file_name()
+    {
+        return Ok(normalize_path(parent)?.join(name));
+    }
+    Ok(normalized)
+}
+
+fn load_mode(
+    path: &Path,
+    legacy: bool,
+    overlays: &BTreeMap<PathBuf, Arc<str>>,
+) -> Result<Source, Error> {
     let mut source = Source {
         text: String::new(),
         path: path.into(),
@@ -462,6 +539,7 @@ fn load_mode(path: &Path, legacy: bool) -> Result<Source, Error> {
         &mut source,
         &mut modules,
         legacy,
+        overlays,
     )?;
     if modules.units.is_empty() {
         return Ok(source);
