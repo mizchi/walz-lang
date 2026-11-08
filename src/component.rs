@@ -7,6 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 const MEMORY_LIMIT: u32 = 16 * 1024 * 1024;
 
 mod abi;
+mod binary;
 pub mod core_js;
 mod endpoints;
 mod functions;
@@ -164,6 +165,10 @@ fn assemble(
         }
     }
     for (group, (namespace, functions)) in groups.iter().enumerate() {
+        if let Some(linked) = binary::render(module, namespace, group, functions) {
+            text.push_str(&linked);
+            continue;
+        }
         if let Some(world) = world.filter(|w| w.has_resources()) {
             for (i, f) in functions {
                 if let Some(id) = world.close_resource(module, f) {
@@ -433,7 +438,7 @@ fn assemble(
     let text = format!(
         "(component\n{prefix}{delivery}(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{text}"
     );
-    let wasm = wat::parse_str(&text).map_err(|e| Error::message(format!("component WAT: {e}")))?;
+    let (text, wasm) = binary::assemble(module, text)?;
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
         .validate_all(&wasm)
         .map_err(|e| Error::message(format!("component validation: {e}")))?;

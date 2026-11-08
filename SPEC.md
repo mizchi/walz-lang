@@ -722,6 +722,8 @@ import した別名を `%export` で再公開できます。衝突・未定義�
 ネイティブWATの `(import "host" "member" ...)` と `(export "name" ...)` の意味は維持します。`%use` / `%export` とは別です。
 詳細は [静的モジュールとDCE](docs/static-modules.md) を参照してください。
 
+`%use "./library.wasm"`は、ホストimportのないWIT付きComponentから同期・共有値のexportを選択する。world直下の関数は`$name`、interface内は`$interface.name`で指定し、バイナリからWITの型を得る。呼出しは`host` effectを持つ。asyncとFuture／Stream／resource境界は選択位置で拒否し、未選択のexportには影響しない。Component出力へ一度だけ埋め込み、未使用の依存全体はDCEする。内部コードの個別DCEやCore出力への合成は行わない。[型・ABI・取消しの制約](docs/wasm-use.md)。
+
 ## 値だけを渡す text I/O capability
 
 `wlt:host/text-io@0.1.0` は固定した信頼境界です。`read-lines` は `stream<result<text,i32>>`、`write-line(text)` は `future<result<unit,i32>>` を返します。

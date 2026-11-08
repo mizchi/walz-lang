@@ -66,6 +66,7 @@ The detailed documentation linked below is in Japanese.
 | List traversal, field patterns, and field updates | [High-level forms](docs/high-level-forms.md) |
 | Option/Result helpers and expected string literals | [Value operations](docs/option-result.md) |
 | Imports, exports, and dead code elimination | [Static modules and DCE](docs/static-modules.md) |
+| Import typed functions from Component Wasm | [WIT-typed Wasm dependencies](docs/wasm-use.md) |
 | Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
 | Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |
 | Async execution, ABI, and cancellation | [Runtime](docs/runtime.md) · [WIT bindings](docs/wit-bindings.md) |

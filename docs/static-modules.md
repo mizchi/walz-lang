@@ -1,5 +1,7 @@
 # ファイルモジュール・%use / %export と DCE
 
+`.wlt`の定義に加え、WIT付きの閉じたComponent `.wasm`からも同期・共有値のexportを取り込める。`(%use "./math.wasm" (func $math.add $add))`の型・effect・出力先の契約は[Wasmの%use](wasm-use.md)にまとめる。
+
 `%include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
 関数・型・tag・メモリを選んで使うときは、明示的な相対パスの `%use` を使います。
 

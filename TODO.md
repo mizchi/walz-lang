@@ -125,6 +125,10 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 
 ## 4. モジュールと可視性
 
+- [x] WIT付きの閉じたComponent `.wasm`の同期・共有値exportを`%use`する。型・effect検査、選択・別名・再export、同一インスタンス、依存全体のDCEと静的埋込み。
+- [ ] Component依存のasync／Future／Stream／resource境界。取消し例外・join・端点の寿命の契約を定めてから受理する。
+- [ ] Component依存のホストcapabilityの明示的な接続と、Core／Core＋JSPIでの呼出し。現状はComponent出力のみ。
+
 - [x] namespace/public/use と名前空間、相対 include、循環検出、単一 Wasm への静的リンク。
 - [x] 非公開関数・型・tag と、公開する名前の検査。
 - [x] 公開する型の opaque 宣言。別名と推論された参照にも適用。

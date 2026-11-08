@@ -35,6 +35,7 @@ export class TaskTimeoutError extends TaskCancelledError {
 }
 const cancellationError=reason=>reason instanceof TaskTimeoutError?reason:new TaskCancelledError(reason);
 const terminal = new Set(["returned", "cancelled", "failed"]);
+const asyncFunctionPrototype = Object.getPrototypeOf(async function () {});
 function deferred() {
   return Promise.withResolvers();
 }
@@ -95,6 +96,13 @@ export class Tasks {
     if (!this.flag || !this.tag)
       throw new Error("component lacks the cancellation ABI");
     this.raw = component.api;
+    // Cross-component canonical calls can require manual JSPI even when the
+    // WIT function is synchronous. Await the generated async wrapper, while
+    // synchronous functions returning Future/PromiseLike values stay values.
+    for (const [name, fn] of Object.entries(this.raw)) {
+      if (typeof fn === "function" && Object.getPrototypeOf(fn) === asyncFunctionPrototype)
+        this.asyncExports.add(name);
+    }
     const api = Object.fromEntries(
       Object.entries(this.raw).map(([name, fn]) => [
         name,

@@ -1,0 +1,18 @@
+package test:binary;
+
+interface math {
+  record point { x: s32, y: s32 }
+  add: func(a: s32, b: s32) -> s32;
+  next: func() -> s32;
+  echo: func(value: string) -> string;
+  bytes: func(value: list<u8>) -> list<u8>;
+  mirror: func(value: point) -> point;
+  count: func(value: u32) -> u32;
+  maybe: func(value: option<s32>) -> option<s32>;
+  checked: func(value: result<s64, string>) -> result<s64, string>;
+  later: func(value: s64) -> future<s64>;
+  double: async func(value: s64) -> s64;
+  consume: async func(value: future<s64>) -> s64;
+}
+
+world library { export math; }

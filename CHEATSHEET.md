@@ -531,6 +531,8 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 
 ## モジュール・不透明な公開型
 
+WIT付きComponentは`(%use "./math.wasm" (func $math.add $add))`で選択できる。型はバイナリから取得する。初版はホストimportなし・同期・共有値の関数に限定し、呼出しには`host` effectが必要。出力は`--target component`。[制限と例](docs/wasm-use.md)。
+
 ```wat
 ;; stock.wlt: 1ファイルが1モジュール、宣言は既定で非公開
 (module

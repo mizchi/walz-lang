@@ -16,6 +16,7 @@ fn entry(name: &str) -> bool {
             | "atomic.at"
             | "readonly.region"
             | "readonly.load"
+            | "component.binary"
             | "let"
             | "newtype"
             | "for"

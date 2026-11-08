@@ -3,6 +3,7 @@ import { readFile, copyFile, mkdir, writeFile, rm } from "node:fs/promises";
 import { resolve, join, extname } from "node:path";
 import {buildNative} from "./build-native.mjs";
 import {build as buildSuccinct} from './succinct/build.mjs';
+import {buildWasmUse} from './testing/wasm-use.mjs';
 import { build } from "./build.mjs";
 import { build as buildCore } from "./build-core.mjs";
 import {execFile as execFileCallback} from 'node:child_process';
@@ -23,6 +24,7 @@ const privateCells = join(directory, "atomic-cells-private.wlt");
 await writeFile(privateCells, (await readFile("tests/component-fixtures/atomic-cells.wlt", "utf8"))
   .replace('(import "env" "memory" (memory $shared 1 1 shared))', '(memory $shared 1 1 shared)'));
 const jobs=[];
+jobs.push(()=>buildWasmUse(join(directory,'component/wasm-use')));
 for(const backend of ['core','component'])jobs.push(()=>buildSuccinct(join(directory,backend,'succinct'),{backend}));
 for (const [backend, compile] of [
   ["component", build],

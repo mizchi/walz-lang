@@ -1,5 +1,6 @@
 //! The checked, closed expression language used by analysis and code generation.
 
+pub use crate::binary::{Dependency as ComponentDependency, Export as ComponentExport};
 pub use crate::simd::SimdOp;
 pub use crate::threads::{MemoryDecl, MemoryId, MemoryOp};
 use serde::Serialize;
@@ -508,6 +509,8 @@ pub struct Module {
     pub atomic_cells: Vec<crate::race::AtomicCellDecl>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub readonly_regions: Vec<crate::readonly::RegionDecl>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<ComponentDependency>,
     #[serde(skip_serializing_if = "crate::effects::is_false")]
     pub race_free: bool,
     #[serde(skip)]

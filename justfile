@@ -523,3 +523,10 @@ succinct-build output="target/succinct/library" backend="core":
 
 bench-succinct id reference="../jsimd":
     node --expose-gc --experimental-wasm-modules runtime/succinct/bench.mjs {{quote(id)}} {{quote(reference)}}
+
+# WIT-decoded Component dependencies, value ABI copies, and explicit limits.
+test-wasm-use:
+    cargo test --locked --lib binary::tests
+    cargo test --locked --test wasm_use --test static_imports --test modules
+    node --expose-gc --test runtime/wasm-use.test.mjs
+    pnpm exec playwright test runtime/e2e/wasm-use.spec.mjs

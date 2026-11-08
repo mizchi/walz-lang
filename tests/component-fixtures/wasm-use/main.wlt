@@ -1,0 +1,18 @@
+(module
+  (%use "wlt:core" (type $string) (type $bytes) (type $option) (type $result) (type $future))
+  (%use "./library.wasm"
+    (func $math.add $add) (func $math.next $next) (func $math.echo $echo)
+    (func $math.bytes $bytes) (func $math.mirror $mirror) (func $math.count $count)
+    (func $math.maybe $maybe) (func $math.checked $checked)
+    (type $math.point $Point) (type $wit-u32 $Count))
+  (%use "./facade.wlt" (func $forward))
+  (func $main (export "main") (result i32) (%effect host) (call $add (call $next) (call $forward)))
+  (func $text (export "text") (param $value $string) (result $string) (%effect host) (call $echo $value))
+  (func $data (export "data") (param $value $bytes) (result $bytes) (%effect host) (call $bytes $value))
+  (func $point (export "point") (param $value (ref $Point)) (result (ref $Point)) (%effect host) (call $mirror $value))
+  (func $unsigned (export "unsigned") (param $value $Count) (result $Count) (%effect host) (call $count $value))
+  (func $optional (export "optional") (param $value (%inst $option i32)) (result (%inst $option i32)) (%effect host) (call $maybe $value))
+  (func $result (export "result") (param $value (%inst $result i64 $string)) (result (%inst $result i64 $string)) (%effect host) (call $checked $value))
+  (func $local-future (export "local-future") (result (%inst $future i64)) (%effect allocates)
+    (%future.ready i64 42))
+)

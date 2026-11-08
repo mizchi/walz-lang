@@ -10,6 +10,7 @@ test('the language tour covers the main features with explicit outcomes', () => 
     'effects', 'ownership', 'resources', 'futures', 'streams', 'cancellation',
     'strings', 'bytes', 'views', 'array-views', 'json', 'simd', 'tests', 'benchmarks', 'laws',
     'diagnostics',
+    'component-imports', 'for-each', 'struct-patterns', 'field-updates',
   ]);
   const labels = new Set();
   for (const [id, sample] of Object.entries(samples)) {

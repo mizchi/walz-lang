@@ -73,6 +73,7 @@ pub(crate) fn manifest(module: &Module) -> Vec<serde_json::Value> {
     module
         .functions
         .iter()
+        .filter(|f| !matches!(&f.kind, FunctionKind::Import { module, .. } if module.starts_with(crate::binary::PREFIX)))
         .filter_map(|f| {
             let binding = lookup(f)?;
             let FunctionKind::Import { module, name } = &f.kind else {

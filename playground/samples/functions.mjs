@@ -39,6 +39,31 @@ export const functions = {
   (func $main (export "main") (result i32) (%effect pure)
     (call $number (call $make-id 42))))`,
   },
+  'component-imports': {
+    category: 'Functions and modules', label: 'WIT-typed Component Wasm imports (CLI)',
+    description: 'Select typed exports from a closed Component .wasm with %use. The CLI reads WIT types from the binary and embeds the dependency in Component output. This single-file playground cannot resolve relative files.',
+    features: ['modules', 'component-imports', 'effects'],
+    expectation: { kind: 'diagnostic', code: 'E_SOURCE_REQUIRED' },
+    source: `(module
+  ;; math.wit describes a closed library:
+  ;; package example:math;
+  ;; interface math { add: func(a: s32, b: s32) -> s32; }
+  ;; world library { export math; }
+  ;;
+  ;; math.wlt implements the exported function:
+  ;; (module
+  ;;   (func $add (export "math-add") (param $a i32) (param $b i32)
+  ;;     (result i32) (%effect pure) (+ $a $b)))
+  ;;
+  ;; Build a Canonical ABI library with the CLI:
+  ;; wlt build math.wlt --target component --wit math.wit --world library -o math.wasm
+  ;; Then build this file with --target component.
+  ;; Imports currently accept synchronous shared values.
+  ;; WIT does not prove purity, so the call has a host effect.
+  (%use "./math.wasm" (func $math.add $add))
+  (func $main (export "main") (result i32) (%effect host)
+    (call $add 20 22)))`,
+  },
   ownership: {
     category: 'Functions and modules', label: 'Owned values and once-call closures',
     description: 'An owned box must be moved and consumed. Capturing an owned value makes this closure callable once; a shared GC reference alone does not imply ownership.',

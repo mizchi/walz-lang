@@ -564,10 +564,12 @@ pub(crate) fn check<'b>(
     let mut cell_nodes = Vec::new();
     let mut region_nodes = Vec::new();
     let mut abi_nodes = Vec::new();
+    let mut components = Vec::new();
     let mut race_mode = None;
     for node in &declarations[1..] {
         let items = tables.list(node)?;
         match node.head() {
+            Some("component.binary") => components.push(crate::binary::declaration(source, node)?),
             Some("type" | "closure") => {
                 let name_node = items
                     .get(1)
@@ -1147,6 +1149,7 @@ pub(crate) fn check<'b>(
         memories,
         atomic_cells,
         readonly_regions,
+        components,
         race_free: race_mode.is_some(),
         race_span: race_mode.unwrap_or(root.span),
         types,

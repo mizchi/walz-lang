@@ -299,6 +299,11 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
             f
         })
         .collect();
+    out.components.retain(|d| {
+        out.functions.iter().any(
+            |f| matches!(&f.kind, FunctionKind::Import { module, .. } if module == &d.namespace),
+        )
+    });
     out.types = out
         .types
         .into_iter()

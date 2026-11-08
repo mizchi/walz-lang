@@ -78,6 +78,7 @@ pub(crate) fn compile_case(
 }
 
 fn compile_module(module: Module) -> Result<CoreJs, Error> {
+    crate::binary::core(&module)?;
     if module
         .memories
         .iter()

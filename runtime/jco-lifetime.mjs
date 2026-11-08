@@ -2,11 +2,17 @@
 // retirement separate from drop notification: a late producer may still own
 // direct references, but must no longer root a completed channel in the store.
 function replaceOnce(source, before, after) {
-  if (source.split(before).length !== 2)
+  // Closed nested components can change intrinsic-class indentation. Match
+  // the exact tokens while allowing that formatting change.
+  const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = before.split('\n').map((line, i) =>
+    i ? '[ \\t]*' + escape(line.trimStart()) : escape(line)).join('\n');
+  const expression = new RegExp(pattern, 'g');
+  if ([...source.matchAll(expression)].length !== 1)
     throw new Error(
       "jco lifetime patch no longer matches; review the pinned transpiler",
     );
-  return source.replace(before, after);
+  return source.replace(expression, () => after);
 }
 export function releaseEndpoints(source) {
   if (source.includes("class BufferManager {")) {

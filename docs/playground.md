@@ -5,7 +5,7 @@ RustのWLTコンパイラをwasm-packでWasmにビルドし、ブラウザー上
 
 ## 起動とビルド
 
-Rust 1.97以降、Node.js 24以降、pnpm、just、wasm-packと、Wasm GC対応のブラウザーを使用する。
+Rust 1.99以降、Node.js 24以降、pnpm、just、wasm-packと、Wasm GC対応のブラウザーを使用する。
 
 ```sh
 cargo install wasm-pack --locked
@@ -46,27 +46,28 @@ Leanの外部カーネルが必要な`%law`や検証付きコンパイルはブ�
 
 ## 言語機能のサンプル
 
-Exampleメニューから36個のサンプルを選べる。説明と期待結果は画面と同じく英語で表示する。
+Exampleメニューから38個のサンプルを選べる。説明と期待結果は画面と同じく英語で表示する。
 
 | グループ | 数 | 紹介する機能 |
 | --- | ---: | --- |
 | Basics | 3 | 複数束縛、型付きリテラル、演算子、短絡論理、ビット演算、浮動小数点と明示変換 |
 | Control flow | 5 | if、block、return、br、状態を渡すloop、for、相互再帰、Wasm例外 |
-| Data and types | 7 | 名前付きstruct、GC配列、enumと網羅的match、Resultとdo記法、Option、tupleの分解、aliasとnewtype |
-| Functions and modules | 4 | 明示capture、単相化、型クラス制約、ファイルモジュール、選択use、opaque、所有値と一度きりのclosure |
+| Data and types | 8 | 名前付きstruct、GC配列、enumと網羅的match、Resultとdo記法、Option、tuple・フィールドの分解、for-each、フィールド更新、aliasとnewtype |
+| Functions and modules | 5 | 明示capture、単相化、型クラス制約、ファイルモジュール、WIT付きComponentの%use、opaque、所有値と一度きりのclosure |
 | Core library | 7 | 不変listのmap/fold、callable制約、string/bytes、ゼロコピーのstring/bytes/array-view、dict、JSON、v128/SIMD |
 | Ownership and async | 4 | 配送済みFutureと有限Stream、fold-result、端点のclose、ホストの中断境界、resourceとborrow |
 | Checks and interop | 6 | test、bench、型・move・effectの診断、lawの検証境界、標準WATと複数戻り値 |
 
-30個はそのままRunで実行でき、`Expected output`と実際の結果を比較できる。
+31個はそのままRunで実行でき、`Expected output`と実際の結果を比較できる。
 ホストFutureの例も、JSPIによるPromiseの待機をブラウザー内で実行する。
-残る6個は`Expected diagnostic`を示す例。型・所有権・effectの誤りに加え、ファイル解決が必要なモジュール、
+残る7個は`Expected diagnostic`を示す例。型・所有権・effectの誤りに加え、ファイル解決が必要なモジュール、
 resourceに必要な信頼済み`--bindings`設定、lawに必要なLeanカーネルというブラウザー側の制約を紹介する。
 resourceの例はホストimportの宣言だけでは権限が成立しないことを示しており、検査を通すための仮の権限は与えない。
 
 配送済みFuture／Streamの例はローカルに構築した値を読み、言語内のproducerやイベントループは開始しない。
 閉じる例も既に配送済みの端点を放棄するもので、pendingなホストtaskの取消しとは区別する。
 ファイル%use/includeの解決は単一ファイルの画面では扱わない。モジュールの例は2ファイル分の書き方とCLIの利用方法を示し、画面では`E_SOURCE_REQUIRED`を期待する。
+WIT付き`.wasm`の例もCLI向けで、画面からのアップロード・Component実行には対応しない。[Wasmの%use](wasm-use.md)に出力先・同期値・取消しの制限をまとめている。
 
 入力を編集するとサンプルの期待結果を消し、`Custom source`に切り替える。
 別のサンプルを選べば説明・期待結果・ソースが一緒に戻る。
