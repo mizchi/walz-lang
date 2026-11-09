@@ -1,0 +1,219 @@
+{
+  "before": "20261109-macro-authoring-v2-r2",
+  "after": "20261109-macro-authoring-v2-r3",
+  "frozenInputsIdentical": true,
+  "inputFiles": 27,
+  "oldBinarySha256": "1f8460ddd1e2eed0d640fea08b4ab1e5cd13ebcff311fc201bbeb73c29214d0b",
+  "newBinarySha256": "0b64b459ed9a71874ee2a5c4b53c93ad857f85758b51e6a0ef3572b089916b9a",
+  "required": [
+    11,
+    11
+  ],
+  "unmet": [
+    "sequential-binding-dsl",
+    "repeated-result-do",
+    "wrapped-body-delegation"
+  ],
+  "acceptedPrograms": 13,
+  "exportResultsPerEngine": 16,
+  "scale": [
+    {
+      "name": "scale-single-32",
+      "oldMedianMs": 17.553042000000005,
+      "newMedianMs": 6.5831249999999955,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 33,
+        "module_passes": 1,
+        "syntax_node_visits": 21332
+      },
+      "newChecking": {
+        "function_checks": 1,
+        "module_passes": 1,
+        "syntax_node_visits": 1239
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-separate-32",
+      "oldMedianMs": 5.971291000000065,
+      "newMedianMs": 6.268750000000068,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 65,
+        "module_passes": 1,
+        "syntax_node_visits": 1210
+      },
+      "newChecking": {
+        "function_checks": 33,
+        "module_passes": 1,
+        "syntax_node_visits": 1216
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-single-128",
+      "oldMedianMs": 203.0977499999999,
+      "newMedianMs": 17.865374999999972,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 129,
+        "module_passes": 1,
+        "syntax_node_visits": 331028
+      },
+      "newChecking": {
+        "function_checks": 1,
+        "module_passes": 1,
+        "syntax_node_visits": 4887
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-separate-128",
+      "oldMedianMs": 16.550792,
+      "newMedianMs": 18.045415999999932,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 257,
+        "module_passes": 1,
+        "syntax_node_visits": 4762
+      },
+      "newChecking": {
+        "function_checks": 129,
+        "module_passes": 1,
+        "syntax_node_visits": 4768
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-single-256",
+      "oldMedianMs": 776.508292,
+      "newMedianMs": 35.21633300000008,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 257,
+        "module_passes": 1,
+        "syntax_node_visits": 1317396
+      },
+      "newChecking": {
+        "function_checks": 1,
+        "module_passes": 1,
+        "syntax_node_visits": 9751
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-separate-256",
+      "oldMedianMs": 35.716082999999344,
+      "newMedianMs": 36.63512499999979,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 513,
+        "module_passes": 1,
+        "syntax_node_visits": 9498
+      },
+      "newChecking": {
+        "function_checks": 257,
+        "module_passes": 1,
+        "syntax_node_visits": 9504
+      },
+      "sameWasm": true
+    },
+    {
+      "name": "scale-single-512",
+      "oldMedianMs": 1343.0923750000002,
+      "newMedianMs": 77.548,
+      "oldAchieved": false,
+      "newAchieved": true,
+      "newChecking": {
+        "function_checks": 1,
+        "module_passes": 1,
+        "syntax_node_visits": 19479
+      },
+      "sameWasm": null
+    },
+    {
+      "name": "scale-separate-512",
+      "oldMedianMs": 104.4516249999997,
+      "newMedianMs": 95.80420800000002,
+      "oldAchieved": true,
+      "newAchieved": true,
+      "oldChecking": {
+        "function_checks": 1025,
+        "module_passes": 1,
+        "syntax_node_visits": 18970
+      },
+      "newChecking": {
+        "function_checks": 513,
+        "module_passes": 1,
+        "syntax_node_visits": 18976
+      },
+      "sameWasm": true
+    }
+  ],
+  "diagnostics": [
+    {
+      "name": "sequential-binding-dsl",
+      "code": "E_UNKNOWN_LOCAL",
+      "message": "unbound local `$a`",
+      "help": [
+        "if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use",
+        "captured initializers use the caller's scope; introduce dependent values with an ordinary %let outside this macro call, or pass the dependency explicitly"
+      ]
+    },
+    {
+      "name": "repeated-result-do",
+      "code": "E_MACRO",
+      "message": "template repetition must end its list",
+      "help": [
+        "place the repeated term followed by `...` at the end of its list; use recursive macro rules when a final body must follow repeated bindings"
+      ]
+    },
+    {
+      "name": "wrapped-body-delegation",
+      "code": "E_MACRO_BINDING",
+      "message": "declared body is outside its binder's lexical scope",
+      "help": [
+        "forward the captured body unchanged as the callee's entire body argument; put any wrapper inside the callee's binding scope instead"
+      ]
+    }
+  ],
+  "rubric": [
+    {
+      "axis": "consumer-readability",
+      "score": 3,
+      "evidence": "No surface syntax change; ordinary generic calls remain the smallest option-to-result example."
+    },
+    {
+      "axis": "authoring",
+      "score": 3,
+      "evidence": "Public type queries and inferred ordinary calls still pass; diagnostics now explain documented boundaries."
+    },
+    {
+      "axis": "composition",
+      "score": 2,
+      "evidence": "Independent binder composition passes; the same sequential, Result-template and wrapped-body exploratory tasks remain unsupported."
+    },
+    {
+      "axis": "static-guarantees",
+      "score": 4,
+      "evidence": "13 accepted programs, 16 export results per engine match frozen expectations. Caller-scope41 and duplicate rejection pass; paired v1 validates final type/effect/ownership and ABI/cancellation obligations. Tested subset only."
+    },
+    {
+      "axis": "diagnostics-editor",
+      "score": 3,
+      "evidence": "All three remaining cases have actionable help; repetition points at the misplaced ellipsis. Paired v1 LSP passes. Nonblind assessment, no independent reader study."
+    },
+    {
+      "axis": "cost-scale",
+      "score": 3,
+      "evidence": "Single-function512 now passes with the same budgets. Counter and timing comparison retained; complex generic/probe boundaries can still retry a containing expression."
+    }
+  ]
+}

@@ -24,7 +24,7 @@ pub(crate) fn definition_index(items: &[Sexp]) -> usize {
 
 /// Visit a type before its payload types. A visitor may replace the whole type.
 /// Heap names inside `ref` remain nominal names and are resolved by modules.
-fn map_type(
+pub(crate) fn map_type(
     node: &mut Sexp,
     f: &mut impl FnMut(&mut Sexp) -> Result<(), Error>,
 ) -> Result<(), Error> {
@@ -97,7 +97,7 @@ pub(crate) fn map_references(
     {
         f(ReferenceKind::Type, operand)?;
     }
-    for child in items.iter_mut().skip(1) {
+    for child in items.iter_mut().skip(usize::from(!head.is_empty())) {
         map_references(child, f)?;
     }
     Ok(())
@@ -208,6 +208,31 @@ fn walk_types(
     };
     match head.as_str() {
         _ if head.starts_with('@') => {}
+        "macro" => {
+            for rule in items.iter_mut().skip(2) {
+                let Kind::List(fields) = &mut rule.kind else {
+                    continue;
+                };
+                let last = fields.len().saturating_sub(1);
+                for clause in fields.iter_mut().take(last).skip(2) {
+                    if clause.head() == Some("when")
+                        && let Kind::List(guards) = &mut clause.kind
+                    {
+                        for guard in guards.iter_mut().skip(1) {
+                            if guard.head() == Some("type")
+                                && let Kind::List(parts) = &mut guard.kind
+                                && parts.len() == 3
+                            {
+                                map_type(&mut parts[2], f)?;
+                            }
+                        }
+                    }
+                }
+                if let Some(template) = fields.last_mut() {
+                    walk_types(template, f, locals)?;
+                }
+            }
+        }
         "type.alias" => {
             let index = definition_index(items);
             for header in items.iter_mut().take(index).skip(2) {
@@ -305,6 +330,31 @@ fn walk_types(
             }
         }
         "result" if items.len() == 2 => map_type(&mut items[1], f)?,
+        "let" if items.len() == 3 && items[1].list().is_some() => {
+            let mut nested = locals.clone();
+            if let Kind::List(group) = &mut items[1].kind {
+                for binding in group {
+                    if let Kind::List(p) = &mut binding.kind
+                        && (2..=3).contains(&p.len())
+                    {
+                        if p.len() == 3 {
+                            if p[1].head() == Some("type")
+                                && let Kind::List(annotation) = &mut p[1].kind
+                                && annotation.len() == 2
+                            {
+                                map_type(&mut annotation[1], f)?;
+                            } else {
+                                map_type(&mut p[1], f)?;
+                            }
+                        }
+                        let last = p.len() - 1;
+                        walk_types(&mut p[last], f, &nested)?;
+                        bind_names(&p[0], &mut nested);
+                    }
+                }
+            }
+            walk_types(&mut items[2], f, &nested)?;
+        }
         "let" | "using" | "for-each" => {
             let start = if items.len() == 5 && items[1].atom().is_some() {
                 map_type(&mut items[2], f)?;
@@ -547,7 +597,7 @@ fn walk_types(
             }
         }
         _ => {
-            for child in items.iter_mut().skip(1) {
+            for child in items.iter_mut().skip(usize::from(!head.is_empty())) {
                 walk_types(child, f, locals)?;
             }
         }

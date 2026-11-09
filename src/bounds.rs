@@ -9,6 +9,7 @@ use crate::{
 };
 use std::collections::BTreeSet;
 
+#[derive(Clone)]
 pub(crate) struct Site {
     pub generic: String,
     pub request: Span,

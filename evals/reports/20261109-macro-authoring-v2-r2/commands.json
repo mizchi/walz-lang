@@ -1,0 +1,1793 @@
+[
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-function.wlt"
+    ],
+    "milliseconds": 490.3921670000001,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-function.wlt"
+    ],
+    "milliseconds": 9.149457999999981,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-function.wlt"
+    ],
+    "milliseconds": 8.110374999999976,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-function.wlt"
+    ],
+    "milliseconds": 7.327875000000063,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-option-function.json.gz",
+    "stdoutBytes": 218,
+    "stdoutSha256": "d8cf0a26858c3bd4bf13e7706552b5fe2a18cd90528bcb5af54c70c5804e3171"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-function.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-function.wasm"
+    ],
+    "milliseconds": 8.972083999999995,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-function.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-function.wasm"
+    ],
+    "milliseconds": 7.0519579999999,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "fallback",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-function.wasm"
+    ],
+    "milliseconds": 6.13575000000003,
+    "code": 0,
+    "stdout": "-7\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-function.wasm",
+      "main",
+      "fallback"
+    ],
+    "milliseconds": 22.844583000000057,
+    "code": 0,
+    "stdout": "{\"main\":\"42\",\"fallback\":\"-7\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-inferred-macro.wlt"
+    ],
+    "milliseconds": 5.384167000000048,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-inferred-macro.wlt"
+    ],
+    "milliseconds": 4.867624999999975,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-inferred-macro.wlt"
+    ],
+    "milliseconds": 5.168250000000057,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-inferred-macro.wlt"
+    ],
+    "milliseconds": 5.13433299999997,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-option-inferred-macro.json.gz",
+    "stdoutBytes": 3955,
+    "stdoutSha256": "676c0f9fafea4947b7647086c15fa93d84c9ea30063db9def8daddff86de9c5f"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-inferred-macro.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-inferred-macro.wasm"
+    ],
+    "milliseconds": 5.756834000000026,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-inferred-macro.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-inferred-macro.wasm"
+    ],
+    "milliseconds": 5.389540999999895,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "fallback",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-inferred-macro.wasm"
+    ],
+    "milliseconds": 5.064166999999998,
+    "code": 0,
+    "stdout": "-7\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-inferred-macro.wasm",
+      "main",
+      "fallback"
+    ],
+    "milliseconds": 20.994500000000016,
+    "code": 0,
+    "stdout": "{\"main\":\"42\",\"fallback\":\"-7\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-projected-macro.wlt"
+    ],
+    "milliseconds": 5.24837500000001,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-projected-macro.wlt"
+    ],
+    "milliseconds": 4.392500000000041,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-projected-macro.wlt"
+    ],
+    "milliseconds": 4.1881249999999,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-projected-macro.wlt"
+    ],
+    "milliseconds": 4.209291000000007,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-option-projected-macro.json.gz",
+    "stdoutBytes": 4838,
+    "stdoutSha256": "6a92b7cb76ede7ef4aa9fe156ea4b46c5db4ac98fc01fdf48e22b05c435f9354"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/option-projected-macro.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-projected-macro.wasm"
+    ],
+    "milliseconds": 5.259874999999965,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-projected-macro.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-projected-macro.wasm"
+    ],
+    "milliseconds": 4.991624999999999,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "fallback",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-projected-macro.wasm"
+    ],
+    "milliseconds": 5.017541999999935,
+    "code": 0,
+    "stdout": "-7\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/option-projected-macro.wasm",
+      "main",
+      "fallback"
+    ],
+    "milliseconds": 20.22337499999992,
+    "code": 0,
+    "stdout": "{\"main\":\"42\",\"fallback\":\"-7\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/delegated-independent-bindings.wlt"
+    ],
+    "milliseconds": 4.157500000000027,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/delegated-independent-bindings.wlt"
+    ],
+    "milliseconds": 3.6377499999999827,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/delegated-independent-bindings.wlt"
+    ],
+    "milliseconds": 3.4720419999999876,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/delegated-independent-bindings.wlt"
+    ],
+    "milliseconds": 3.5456669999999804,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-delegated-independent-bindings.json.gz",
+    "stdoutBytes": 13073,
+    "stdoutSha256": "839d9c4e17d2adfda756073eb75471bea2a8f92ff3f2247733ab9bf06599d7b2"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/delegated-independent-bindings.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/delegated-independent-bindings.wasm"
+    ],
+    "milliseconds": 3.982208000000014,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/delegated-independent-bindings.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/delegated-independent-bindings.wasm"
+    ],
+    "milliseconds": 6.813415999999961,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/delegated-independent-bindings.wasm",
+      "main"
+    ],
+    "milliseconds": 21.52562499999999,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/initializer-caller-scope.wlt"
+    ],
+    "milliseconds": 4.118290999999999,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/initializer-caller-scope.wlt"
+    ],
+    "milliseconds": 3.7595420000000104,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/initializer-caller-scope.wlt"
+    ],
+    "milliseconds": 3.3734170000000177,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/initializer-caller-scope.wlt"
+    ],
+    "milliseconds": 3.3850830000000087,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-initializer-caller-scope.json.gz",
+    "stdoutBytes": 6102,
+    "stdoutSha256": "51e6f2a324bb0b8382f2914bf5803c1fac777d0c3600b88a57b18d21d533e845"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/initializer-caller-scope.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/initializer-caller-scope.wasm"
+    ],
+    "milliseconds": 3.7544579999999996,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/initializer-caller-scope.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/initializer-caller-scope.wasm"
+    ],
+    "milliseconds": 6.36891700000001,
+    "code": 0,
+    "stdout": "41\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/initializer-caller-scope.wasm",
+      "main"
+    ],
+    "milliseconds": 20.197875000000067,
+    "code": 0,
+    "stdout": "{\"main\":\"41\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+    ],
+    "milliseconds": 4.107540999999969,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"duplicate caller-supplied binders in one body\",\"notes\":[],\"primary\":{\"location\":{\"column\":5,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt\"},\"message\":\"\",\"span\":{\"end\":265,\"start\":210}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "duplicate caller-supplied binders in one body",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 5,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 265,
+          "start": 210
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+    ],
+    "milliseconds": 3.579207999999994,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"duplicate caller-supplied binders in one body\",\"notes\":[],\"primary\":{\"location\":{\"column\":5,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt\"},\"message\":\"\",\"span\":{\"end\":265,\"start\":210}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "duplicate caller-supplied binders in one body",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 5,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 265,
+          "start": 210
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+    ],
+    "milliseconds": 3.3787920000000895,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"duplicate caller-supplied binders in one body\",\"notes\":[],\"primary\":{\"location\":{\"column\":5,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt\"},\"message\":\"\",\"span\":{\"end\":265,\"start\":210}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "duplicate caller-supplied binders in one body",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 5,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/duplicate-binding-rejected.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 265,
+          "start": 210
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+    ],
+    "milliseconds": 3.464790999999991,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_UNKNOWN_LOCAL\",\"help\":[\"if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use\"],\"message\":\"unbound local `$a`\",\"notes\":[],\"primary\":{\"location\":{\"column\":45,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"\",\"span\":{\"end\":252,\"start\":250}},\"related\":[{\"location\":{\"column\":19,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"available local `$macro_scope_0`: i32\",\"span\":{\"end\":226,\"start\":224}},{\"location\":{\"column\":5,\"line\":2,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"in expansion of macro `$bindings`\",\"span\":{\"end\":146,\"start\":30}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_UNKNOWN_LOCAL",
+      "help": [
+        "if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use"
+      ],
+      "message": "unbound local `$a`",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 45,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 252,
+          "start": 250
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 19,
+            "line": 6,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "available local `$macro_scope_0`: i32",
+          "span": {
+            "end": 226,
+            "start": 224
+          }
+        },
+        {
+          "location": {
+            "column": 5,
+            "line": 2,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "in expansion of macro `$bindings`",
+          "span": {
+            "end": 146,
+            "start": 30
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+    ],
+    "milliseconds": 3.5692499999998972,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_UNKNOWN_LOCAL\",\"help\":[\"if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use\"],\"message\":\"unbound local `$a`\",\"notes\":[],\"primary\":{\"location\":{\"column\":45,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"\",\"span\":{\"end\":252,\"start\":250}},\"related\":[{\"location\":{\"column\":19,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"available local `$macro_scope_0`: i32\",\"span\":{\"end\":226,\"start\":224}},{\"location\":{\"column\":5,\"line\":2,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"in expansion of macro `$bindings`\",\"span\":{\"end\":146,\"start\":30}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_UNKNOWN_LOCAL",
+      "help": [
+        "if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use"
+      ],
+      "message": "unbound local `$a`",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 45,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 252,
+          "start": 250
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 19,
+            "line": 6,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "available local `$macro_scope_0`: i32",
+          "span": {
+            "end": 226,
+            "start": 224
+          }
+        },
+        {
+          "location": {
+            "column": 5,
+            "line": 2,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "in expansion of macro `$bindings`",
+          "span": {
+            "end": 146,
+            "start": 30
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+    ],
+    "milliseconds": 3.565625000000068,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_UNKNOWN_LOCAL\",\"help\":[\"if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use\"],\"message\":\"unbound local `$a`\",\"notes\":[],\"primary\":{\"location\":{\"column\":45,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"\",\"span\":{\"end\":252,\"start\":250}},\"related\":[{\"location\":{\"column\":19,\"line\":6,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"available local `$macro_scope_0`: i32\",\"span\":{\"end\":226,\"start\":224}},{\"location\":{\"column\":5,\"line\":2,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt\"},\"message\":\"in expansion of macro `$bindings`\",\"span\":{\"end\":146,\"start\":30}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_UNKNOWN_LOCAL",
+      "help": [
+        "if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use"
+      ],
+      "message": "unbound local `$a`",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 45,
+          "line": 6,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 252,
+          "start": 250
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 19,
+            "line": 6,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "available local `$macro_scope_0`: i32",
+          "span": {
+            "end": 226,
+            "start": 224
+          }
+        },
+        {
+          "location": {
+            "column": 5,
+            "line": 2,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "in expansion of macro `$bindings`",
+          "span": {
+            "end": 146,
+            "start": 30
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+    ],
+    "milliseconds": 4.2314589999999725,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO\",\"help\":[],\"message\":\"repeated variable must occur in a repeated template\",\"notes\":[],\"primary\":{\"location\":{\"column\":43,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt\"},\"message\":\"\",\"span\":{\"end\":166,\"start\":160}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO",
+      "help": [],
+      "message": "repeated variable must occur in a repeated template",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 43,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 166,
+          "start": 160
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+    ],
+    "milliseconds": 4.050916000000029,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO\",\"help\":[],\"message\":\"repeated variable must occur in a repeated template\",\"notes\":[],\"primary\":{\"location\":{\"column\":43,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt\"},\"message\":\"\",\"span\":{\"end\":166,\"start\":160}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO",
+      "help": [],
+      "message": "repeated variable must occur in a repeated template",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 43,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 166,
+          "start": 160
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+    ],
+    "milliseconds": 4.178292000000056,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO\",\"help\":[],\"message\":\"repeated variable must occur in a repeated template\",\"notes\":[],\"primary\":{\"location\":{\"column\":43,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt\"},\"message\":\"\",\"span\":{\"end\":166,\"start\":160}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO",
+      "help": [],
+      "message": "repeated variable must occur in a repeated template",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 43,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 166,
+          "start": 160
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+    ],
+    "milliseconds": 3.1465840000000753,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"declared body is outside its binder's lexical scope\",\"notes\":[],\"primary\":{\"location\":{\"column\":66,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt\"},\"message\":\"\",\"span\":{\"end\":249,\"start\":244}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "declared body is outside its binder's lexical scope",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 66,
+          "line": 5,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 249,
+          "start": 244
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+    ],
+    "milliseconds": 3.167750000000069,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"declared body is outside its binder's lexical scope\",\"notes\":[],\"primary\":{\"location\":{\"column\":66,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt\"},\"message\":\"\",\"span\":{\"end\":249,\"start\":244}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "declared body is outside its binder's lexical scope",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 66,
+          "line": 5,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 249,
+          "start": 244
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+    ],
+    "milliseconds": 3.2692499999999427,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_BINDING\",\"help\":[],\"message\":\"declared body is outside its binder's lexical scope\",\"notes\":[],\"primary\":{\"location\":{\"column\":66,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt\"},\"message\":\"\",\"span\":{\"end\":249,\"start\":244}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_BINDING",
+      "help": [],
+      "message": "declared body is outside its binder's lexical scope",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 66,
+          "line": 5,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 249,
+          "start": 244
+        }
+      },
+      "related": []
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-32.wlt"
+    ],
+    "milliseconds": 17.34445800000003,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-32.wlt"
+    ],
+    "milliseconds": 17.553042000000005,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-32.wlt"
+    ],
+    "milliseconds": 18.708875000000035,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-32.wlt"
+    ],
+    "milliseconds": 21.309834000000023,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-single-32.json.gz",
+    "stdoutBytes": 137843,
+    "stdoutSha256": "4546967ddfc991a9ebb8739307109ef8aeafe3dc288d6b14756b0e74bc3b31e0"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-32.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-32.wasm"
+    ],
+    "milliseconds": 19.23112500000002,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-32.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-32.wasm"
+    ],
+    "milliseconds": 7.725832999999966,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-32.wasm",
+      "main"
+    ],
+    "milliseconds": 24.48662499999989,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-32.wlt"
+    ],
+    "milliseconds": 6.642624999999953,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-32.wlt"
+    ],
+    "milliseconds": 5.917083000000048,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-32.wlt"
+    ],
+    "milliseconds": 5.971291000000065,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-32.wlt"
+    ],
+    "milliseconds": 9.264625000000024,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-separate-32.json.gz",
+    "stdoutBytes": 124968,
+    "stdoutSha256": "6e3b71cc99b527e084a5eff4f190feeb5635353e7c2960b2008657f5bc290da2"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-32.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-32.wasm"
+    ],
+    "milliseconds": 7.19054200000005,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-32.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-32.wasm"
+    ],
+    "milliseconds": 6.6691249999998945,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-32.wasm",
+      "main"
+    ],
+    "milliseconds": 22.009667000000036,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-128.wlt"
+    ],
+    "milliseconds": 203.0977499999999,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-128.wlt"
+    ],
+    "milliseconds": 203.94733399999996,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-128.wlt"
+    ],
+    "milliseconds": 197.61175000000003,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-128.wlt"
+    ],
+    "milliseconds": 261.71562500000005,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-single-128.json.gz",
+    "stdoutBytes": 553495,
+    "stdoutSha256": "90aed885d51534618d1cee5641435cb6adb8d2befe8b0bab142fe8c07095ec55"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-128.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-128.wasm"
+    ],
+    "milliseconds": 209.70212500000002,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-128.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-128.wasm"
+    ],
+    "milliseconds": 7.350165999999717,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-128.wasm",
+      "main"
+    ],
+    "milliseconds": 20.93237500000032,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-128.wlt"
+    ],
+    "milliseconds": 16.952999999999975,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-128.wlt"
+    ],
+    "milliseconds": 16.550792,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-128.wlt"
+    ],
+    "milliseconds": 16.448249999999916,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-128.wlt"
+    ],
+    "milliseconds": 33.5925000000002,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-separate-128.json.gz",
+    "stdoutBytes": 500352,
+    "stdoutSha256": "f9c4bce0d2ae83d8493072e1ca5ce7d2a961a75ae92958a015a3fdc68b224ca9"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-128.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-128.wasm"
+    ],
+    "milliseconds": 17.875749999999698,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-128.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-128.wasm"
+    ],
+    "milliseconds": 5.37216699999999,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-128.wasm",
+      "main"
+    ],
+    "milliseconds": 20.04429200000004,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-256.wlt"
+    ],
+    "milliseconds": 758.8549579999999,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-256.wlt"
+    ],
+    "milliseconds": 800.6523750000001,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-256.wlt"
+    ],
+    "milliseconds": 776.508292,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-256.wlt"
+    ],
+    "milliseconds": 804.6627920000001,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-single-256.json.gz",
+    "stdoutBytes": 1110260,
+    "stdoutSha256": "0665b1809b671bd673f0aed595cedd4ba78bfc18a9e4bb6a014f89aa0d0c76dc"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-256.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-256.wasm"
+    ],
+    "milliseconds": 784.4554169999992,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-256.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-256.wasm"
+    ],
+    "milliseconds": 7.2631250000004,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-single-256.wasm",
+      "main"
+    ],
+    "milliseconds": 24.99962500000038,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-256.wlt"
+    ],
+    "milliseconds": 35.64087500000005,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-256.wlt"
+    ],
+    "milliseconds": 35.716082999999344,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-256.wlt"
+    ],
+    "milliseconds": 35.835917000000336,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-256.wlt"
+    ],
+    "milliseconds": 82.62858300000062,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-separate-256.json.gz",
+    "stdoutBytes": 1006100,
+    "stdoutSha256": "e9a08bb59171f835363c673a733e2ea774c8f711a69cdcf4921de0adcfc4244c"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-256.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-256.wasm"
+    ],
+    "milliseconds": 37.4903749999994,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-256.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-256.wasm"
+    ],
+    "milliseconds": 5.49212499999976,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-256.wasm",
+      "main"
+    ],
+    "milliseconds": 20.33141700000033,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+    ],
+    "milliseconds": 1343.0923750000002,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_LIMIT\",\"help\":[],\"message\":\"macro elaboration work limit exceeded\",\"notes\":[],\"primary\":{\"location\":{\"column\":2245,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"\",\"span\":{\"end\":2431,\"start\":2423}},\"related\":[{\"location\":{\"column\":25,\"line\":1,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"in expansion of macro `$double`\",\"span\":{\"end\":121,\"start\":24}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_LIMIT",
+      "help": [],
+      "message": "macro elaboration work limit exceeded",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 2245,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 2431,
+          "start": 2423
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 25,
+            "line": 1,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+          },
+          "message": "in expansion of macro `$double`",
+          "span": {
+            "end": 121,
+            "start": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+    ],
+    "milliseconds": 1346.3589580000007,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_LIMIT\",\"help\":[],\"message\":\"macro elaboration work limit exceeded\",\"notes\":[],\"primary\":{\"location\":{\"column\":2245,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"\",\"span\":{\"end\":2431,\"start\":2423}},\"related\":[{\"location\":{\"column\":25,\"line\":1,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"in expansion of macro `$double`\",\"span\":{\"end\":121,\"start\":24}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_LIMIT",
+      "help": [],
+      "message": "macro elaboration work limit exceeded",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 2245,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 2431,
+          "start": 2423
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 25,
+            "line": 1,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+          },
+          "message": "in expansion of macro `$double`",
+          "span": {
+            "end": 121,
+            "start": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+    ],
+    "milliseconds": 1304.1468750000004,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_MACRO_LIMIT\",\"help\":[],\"message\":\"macro elaboration work limit exceeded\",\"notes\":[],\"primary\":{\"location\":{\"column\":2245,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"\",\"span\":{\"end\":2431,\"start\":2423}},\"related\":[{\"location\":{\"column\":25,\"line\":1,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt\"},\"message\":\"in expansion of macro `$double`\",\"span\":{\"end\":121,\"start\":24}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null,
+    "protocolValid": true,
+    "diagnostic": {
+      "code": "E_MACRO_LIMIT",
+      "help": [],
+      "message": "macro elaboration work limit exceeded",
+      "notes": [],
+      "primary": {
+        "location": {
+          "column": 2245,
+          "line": 4,
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+        },
+        "message": "",
+        "span": {
+          "end": 2431,
+          "start": 2423
+        }
+      },
+      "related": [
+        {
+          "location": {
+            "column": 25,
+            "line": 1,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+          },
+          "message": "in expansion of macro `$double`",
+          "span": {
+            "end": 121,
+            "start": 24
+          }
+        }
+      ]
+    }
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-512.wlt"
+    ],
+    "milliseconds": 93.6005409999998,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-512.wlt"
+    ],
+    "milliseconds": 130.82866699999977,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-512.wlt"
+    ],
+    "milliseconds": 104.4516249999997,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "protocolValid": true
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-512.wlt"
+    ],
+    "milliseconds": 245.23725000000013,
+    "code": 0,
+    "stderr": "",
+    "stdoutGzip": "work/expansion-scale-separate-512.json.gz",
+    "stdoutBytes": 2018326,
+    "stdoutSha256": "398500731f7a7a4e4732257bcd61743413ded9d6d1d3dccdae45033ba60ee345"
+  },
+  {
+    "executable": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt",
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-separate-512.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-512.wasm"
+    ],
+    "milliseconds": 96.49833299999955,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-512.wasm\n",
+    "stderr": ""
+  },
+  {
+    "executable": "wasmtime",
+    "args": [
+      "run",
+      "-W",
+      "gc=y,function-references=y,exceptions=y",
+      "--invoke",
+      "main",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-512.wasm"
+    ],
+    "milliseconds": 6.068832999999358,
+    "code": 0,
+    "stdout": "42\n",
+    "stderr": "warning: using `--invoke` with a function that returns values is experimental and may break in the future\n"
+  },
+  {
+    "executable": "node",
+    "args": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/suite/run-wasm.mjs",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/work/scale-separate-512.wasm",
+      "main"
+    ],
+    "milliseconds": 20.334665999998833,
+    "code": 0,
+    "stdout": "{\"main\":\"42\"}\n",
+    "stderr": ""
+  }
+]

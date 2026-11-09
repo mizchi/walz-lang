@@ -1,0 +1,27 @@
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.88s
+     Running tests/macro_resume.rs (target/debug/deps/macro_resume-bea32d67cdb502b2)
+
+running 1 test
+test composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack ... FAILED
+
+failures:
+
+---- composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack stdout ----
+
+thread 'composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack' (28416275) panicked at tests/macro_resume.rs:14:5:
+assertion `left == right` failed: 
+thread 'main' (28416276) has overflowed its stack
+fatal runtime error: stack overflow, aborting
+
+  left: None
+ right: Some(1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.00s
+
+error: test failed, to rerun pass `--test macro_resume`

@@ -36,7 +36,7 @@ for (const [backend, compile] of [
       `tests/component-fixtures/${name}.wlt`,
     ]),
     ["interface-types", "tests/component-fixtures/interface-types.wlt"],
-    ...["wit-values","stream-batch","deadlines","local-cancellation","option-result","high-level","high-level-async","worker-job"].map(name=>[name,`tests/component-fixtures/${name}.wlt`]),
+    ...["wit-values","stream-batch","deadlines","local-cancellation","option-result","high-level","high-level-async","worker-job","user-macros"].map(name=>[name,`tests/component-fixtures/${name}.wlt`]),
     ["wasm-bridge", "tests/component-fixtures/wasm-bridge.wlt"],
     ["scoped-tasks", "tests/component-fixtures/scoped-tasks.wlt"],
     ["channels", "examples/channels/main.wlt"],

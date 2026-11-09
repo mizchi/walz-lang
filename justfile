@@ -530,3 +530,41 @@ test-wasm-use:
     cargo test --locked --test wasm_use --test static_imports --test modules
     node --expose-gc --test runtime/wasm-use.test.mjs
     pnpm exec playwright test runtime/e2e/wasm-use.spec.mjs
+
+# Hygienic syntax objects, inferred type queries, static imports and editor scopes.
+test-user-macros:
+    cargo test --locked --test user_macros --test user_macros_lsp --test lsp --test inspection --test generics --test static_imports --test modules --test surface
+    node --expose-gc --test runtime/user-macros.test.mjs
+    pnpm exec playwright test runtime/e2e/user-macros.spec.mjs
+
+expand-macros file="examples/user-macros/main.wlt":
+    cargo run --locked --quiet -- macro-expand {{quote(file)}}
+
+# Freeze a fresh application/oracle/editor/scaling trial; never replace a run.
+eval-user-macros id:
+    cargo build --locked --bin wlt
+    node --expose-gc evals/macro-usability/run.mjs {{quote(id)}}
+
+# Call inference, stable type projections, usage reports and replayable macro fuzzing.
+test-macro-tools:
+    cargo test --locked --test generic_inference --test macro_type_info --test macro_usage --test macro_differential
+
+fuzz-user-macros seed="42" cases="64":
+    WLT_MACRO_FUZZ_SEED={{quote(seed)}} WLT_MACRO_FUZZ_CASES={{quote(cases)}} cargo test --locked --test macro_differential
+
+fuzz-user-macros-replay file:
+    WLT_MACRO_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test macro_differential seeded_user_macros
+
+expand-macros-text file="examples/user-macros/main.wlt":
+    cargo run --locked --quiet -- macro-expand --text {{quote(file)}}
+
+# Function-local elaboration, delegated/repeated binders, and incomplete imported DSLs.
+test-macro-composition:
+    cargo test --locked --test macro_composition --test macro_resume --test user_macros_lsp --test macro_differential
+    cargo run --locked --quiet -- test examples/user-macros/bindings.wlt
+    node --expose-gc --test runtime/user-macros.test.mjs
+
+# Frozen current-API authoring attempts and concentrated vs distributed expansion.
+eval-macro-authoring id:
+    cargo build --locked --bin wlt
+    node --expose-gc evals/macro-usability-v2/run.mjs {{quote(id)}}

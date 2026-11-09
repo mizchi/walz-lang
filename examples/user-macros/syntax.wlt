@@ -1,0 +1,29 @@
+(module
+  (func $identity (%type.params $T) (param $value $T) (result $T)
+    (%effect pure)
+    $value)
+
+  ;; Type queries use the compiler's inferred type. The generated application
+  ;; goes through ordinary monomorphization, type, effect and ownership checks.
+  (%macro $identity
+    (rule (?value:expr)
+      (infer (?T ?value))
+      (call (%inst $identity ?T) ?value)))
+
+  (%macro $twice
+    (rule (?value:expr)
+      (when (Add ?value))
+      (%let $value ?value (+ $value $value))))
+
+  ;; Only ?body can see the supplied binder. ?value uses the caller's scope.
+  (%macro $with
+    (rule (?name:ident ?value:expr ?body:expr)
+      (bind ?name ?body)
+      (%let ?name ?value ?body)))
+
+  (%macro $sum
+    (rule (?value:expr) ?value)
+    (rule (?value:expr ?rest:expr ...)
+      (+ ?value (%$sum ?rest ...))))
+
+  (%export (macro $identity) (macro $twice) (macro $with) (macro $sum)))

@@ -1,0 +1,24 @@
+[WebServer] (node:98291) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:98291) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] Browser fixtures: 8/87 (12s)
+[WebServer] Browser fixtures: 16/87 (21s)
+[WebServer] Browser fixtures: 24/87 (30s)
+[WebServer] Browser fixtures: 32/87 (39s)
+[WebServer] Browser fixtures: 40/87 (49s)
+[WebServer] Browser fixtures: 48/87 (58s)
+[WebServer] Browser fixtures: 56/87 (68s)
+[WebServer] Browser fixtures: 64/87 (78s)
+[WebServer] Browser fixtures: 72/87 (87s)
+[WebServer] Browser fixtures: 80/87 (96s)
+[WebServer] Browser fixtures: 87/87 (103s)
+
+Running 2 tests using 1 worker
+
+(node:22378) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 runtime/e2e/user-macros.spec.mjs:2:45 › core: inferred user syntax runs in Chromium (99ms)
+  ✓  2 runtime/e2e/user-macros.spec.mjs:2:45 › component: inferred user syntax runs in Chromium (83ms)
+
+  2 passed (1.8m)

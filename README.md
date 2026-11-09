@@ -9,7 +9,7 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 `wlt:core` provides built-in data types and portable data operations. OS services and other I/O capabilities are supplied through explicit host imports.
 
 - `%`-prefixed extensions for immutable bindings, loops, enums and pattern matching, named struct construction, and explicit closure captures.
-- Monomorphized generics with explicit type arguments and constraints.
+- Monomorphized generics with constraints, explicit type arguments, and unambiguous call-site inference.
 - Type, effect, and ownership checking for the typed extension core.
 - Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
 
@@ -66,6 +66,7 @@ The detailed documentation linked below is in Japanese.
 | List traversal, field patterns, and field updates | [High-level forms](docs/high-level-forms.md) |
 | Option/Result helpers and expected string literals | [Value operations](docs/option-result.md) |
 | Imports, exports, and dead code elimination | [Static modules and DCE](docs/static-modules.md) |
+| User-defined syntax and inferred type queries | [Hygienic macros](docs/user-macros.md) |
 | Import typed functions from Component Wasm | [WIT-typed Wasm dependencies](docs/wasm-use.md) |
 | Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
 | Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |

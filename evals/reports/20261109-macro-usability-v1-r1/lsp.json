@@ -1,0 +1,1321 @@
+{
+  "observations": [
+    {
+      "name": "valid imported binding macro",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "completionProvider": {
+          "triggerCharacters": [
+            "$",
+            ".",
+            "%"
+          ]
+        },
+        "definitionProvider": true,
+        "experimental": {
+          "wltMacroExpansion": true
+        },
+        "hoverProvider": true,
+        "positionEncoding": "utf-16",
+        "textDocumentSync": {
+          "change": 2,
+          "openClose": true,
+          "save": true
+        }
+      }
+    },
+    {
+      "name": "macro signature and cross-file definition",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "hover": {
+          "method": "textDocument/hover",
+          "milliseconds": 0.18354200000248966,
+          "id": 2,
+          "jsonrpc": "2.0",
+          "result": {
+            "contents": {
+              "kind": "plaintext",
+              "value": "macro $with (?name:ident ?value:expr ?body:expr)"
+            }
+          }
+        },
+        "definition": {
+          "method": "textDocument/definition",
+          "milliseconds": 0.19016700000065612,
+          "id": 3,
+          "jsonrpc": "2.0",
+          "result": [
+            {
+              "range": {
+                "end": {
+                  "character": 14,
+                  "line": 3
+                },
+                "start": {
+                  "character": 9,
+                  "line": 3
+                }
+              },
+              "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "checked argument binding and lexical definition",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "hover": {
+          "method": "textDocument/hover",
+          "milliseconds": 0.13775000000168802,
+          "id": 4,
+          "jsonrpc": "2.0",
+          "result": {
+            "contents": {
+              "kind": "plaintext",
+              "value": "$main: i64"
+            }
+          }
+        },
+        "definition": {
+          "method": "textDocument/definition",
+          "milliseconds": 0.18100000000049477,
+          "id": 5,
+          "jsonrpc": "2.0",
+          "result": [
+            {
+              "range": {
+                "end": {
+                  "character": 31,
+                  "line": 3
+                },
+                "start": {
+                  "character": 24,
+                  "line": 3
+                }
+              },
+              "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "expansion exposes original-file origins",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "method": "wlt/expandMacro",
+        "milliseconds": 0.30483300000196323,
+        "id": 6,
+        "jsonrpc": "2.0",
+        "result": {
+          "definitions": [
+            {
+              "declaration": {
+                "end": 333,
+                "start": 328
+              },
+              "location": {
+                "location": {
+                  "column": 10,
+                  "line": 3,
+                  "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "",
+                "span": {
+                  "end": 99,
+                  "start": 94
+                }
+              },
+              "name": "$wlt-file-0.next",
+              "rules": [
+                "(?value:expr)"
+              ]
+            },
+            {
+              "declaration": {
+                "end": 393,
+                "start": 388
+              },
+              "location": {
+                "location": {
+                  "column": 10,
+                  "line": 4,
+                  "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "",
+                "span": {
+                  "end": 159,
+                  "start": 154
+                }
+              },
+              "name": "$wlt-file-0.with",
+              "rules": [
+                "(?name:ident ?value:expr ?body:expr)"
+              ]
+            }
+          ],
+          "expansions": [
+            {
+              "call": {
+                "end": 210,
+                "start": 146
+              },
+              "call_location": {
+                "location": {
+                  "column": 16,
+                  "line": 4,
+                  "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "",
+                "span": {
+                  "end": 206,
+                  "start": 142
+                }
+              },
+              "definition": {
+                "end": 393,
+                "start": 388
+              },
+              "definition_location": {
+                "location": {
+                  "column": 10,
+                  "line": 4,
+                  "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "",
+                "span": {
+                  "end": 159,
+                  "start": 154
+                }
+              },
+              "expanded": "(let $macro_scope_0 (+ $seed 40) (+ $macro_scope_0 (%$wlt-file-0.next (i64.const 1))))",
+              "head": {
+                "end": 153,
+                "start": 147
+              },
+              "id": 0,
+              "inferred": {},
+              "inputs": [
+                {
+                  "name": "?body",
+                  "outputs": [
+                    7
+                  ],
+                  "source": {
+                    "end": 209,
+                    "start": 175
+                  }
+                },
+                {
+                  "name": "?name",
+                  "outputs": [
+                    2
+                  ],
+                  "source": {
+                    "end": 161,
+                    "start": 154
+                  }
+                },
+                {
+                  "name": "?value",
+                  "outputs": [
+                    3
+                  ],
+                  "source": {
+                    "end": 174,
+                    "start": 162
+                  }
+                }
+              ],
+              "name": "$wlt-file-0.with",
+              "nodes": [
+                {
+                  "context": 0,
+                  "id": 0,
+                  "input": null,
+                  "source": {
+                    "end": 210,
+                    "start": 146
+                  },
+                  "template": {
+                    "end": 481,
+                    "start": 456
+                  }
+                },
+                {
+                  "context": 0,
+                  "id": 1,
+                  "input": null,
+                  "source": {
+                    "end": 153,
+                    "start": 147
+                  },
+                  "template": {
+                    "end": 461,
+                    "start": 457
+                  }
+                },
+                {
+                  "context": 0,
+                  "id": 2,
+                  "input": 18,
+                  "source": {
+                    "end": 161,
+                    "start": 154
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 3,
+                  "input": 19,
+                  "source": {
+                    "end": 174,
+                    "start": 162
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 4,
+                  "input": 20,
+                  "source": {
+                    "end": 164,
+                    "start": 163
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 5,
+                  "input": 21,
+                  "source": {
+                    "end": 170,
+                    "start": 165
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 6,
+                  "input": 22,
+                  "source": {
+                    "end": 173,
+                    "start": 171
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 7,
+                  "input": 23,
+                  "source": {
+                    "end": 209,
+                    "start": 175
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 8,
+                  "input": 24,
+                  "source": {
+                    "end": 177,
+                    "start": 176
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 9,
+                  "input": 25,
+                  "source": {
+                    "end": 185,
+                    "start": 178
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 10,
+                  "input": 26,
+                  "source": {
+                    "end": 208,
+                    "start": 186
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 11,
+                  "input": 27,
+                  "source": {
+                    "end": 193,
+                    "start": 187
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 12,
+                  "input": 28,
+                  "source": {
+                    "end": 207,
+                    "start": 194
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 13,
+                  "input": 29,
+                  "source": {
+                    "end": 204,
+                    "start": 195
+                  },
+                  "template": null
+                },
+                {
+                  "context": 0,
+                  "id": 14,
+                  "input": 30,
+                  "source": {
+                    "end": 206,
+                    "start": 205
+                  },
+                  "template": null
+                }
+              ],
+              "parent": null,
+              "rule": {
+                "end": 482,
+                "start": 394
+              }
+            }
+          ],
+          "schema": "wlt-macro-expansion-v1"
+        }
+      }
+    },
+    {
+      "name": "broken balanced body keeps current declared scope",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "diagnostics": [
+          {
+            "code": "E_UNKNOWN_LOCAL",
+            "message": "unbound local `$missing`\nhelp: if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use",
+            "range": {
+              "end": {
+                "character": 64,
+                "line": 3
+              },
+              "start": {
+                "character": 56,
+                "line": 3
+              }
+            },
+            "relatedInformation": [
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 31,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 24,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "available local `$macro_scope_0`: i64"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 25,
+                      "line": 2
+                    },
+                    "start": {
+                      "character": 20,
+                      "line": 2
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "available local `$seed`: i64"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 103,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 15,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "in expansion of macro `$with`"
+              }
+            ],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "completion": {
+          "method": "textDocument/completion",
+          "milliseconds": 0.137708999998722,
+          "id": 7,
+          "jsonrpc": "2.0",
+          "result": [
+            {
+              "detail": "$main (param $seed i64) (result i64)",
+              "kind": 3,
+              "label": "$main"
+            },
+            {
+              "detail": "binding $seed: i64",
+              "kind": 6,
+              "label": "$seed"
+            },
+            {
+              "detail": "binding $amount (no inferred type)",
+              "kind": 6,
+              "label": "$amount"
+            },
+            {
+              "detail": "macro import selection",
+              "kind": 14,
+              "label": "%$next"
+            },
+            {
+              "detail": "macro import selection",
+              "kind": 14,
+              "label": "%$with"
+            }
+          ]
+        },
+        "hover": {
+          "method": "textDocument/hover",
+          "milliseconds": 0.1218750000007276,
+          "id": 8,
+          "jsonrpc": "2.0",
+          "result": {
+            "contents": {
+              "kind": "plaintext",
+              "value": "binding $amount (no inferred type)\nDeclared syntax (unverified; no checked type is inferred)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "unsaved macro dependency invalidates the checked result",
+      "required": true,
+      "achieved": true,
+      "evidence": {
+        "diagnostics": [
+          {
+            "code": "E_TYPE_MISMATCH",
+            "message": "type mismatch: expected i32, got i64",
+            "range": {
+              "end": {
+                "character": 40,
+                "line": 3
+              },
+              "start": {
+                "character": 35,
+                "line": 3
+              }
+            },
+            "relatedInformation": [
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 34,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 33,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "operand 1 of `+` requires i32"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 114,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 15,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "in expansion of macro `$with`"
+              }
+            ],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "expansion": {
+          "method": "wlt/expandMacro",
+          "milliseconds": 0.1688750000030268,
+          "id": 9,
+          "jsonrpc": "2.0",
+          "result": {
+            "definitions": [],
+            "expansions": [],
+            "schema": "wlt-macro-expansion-v1"
+          }
+        }
+      }
+    },
+    {
+      "name": "unfinished imported macro body still offers its introduced name",
+      "required": false,
+      "achieved": false,
+      "error": "[{\"detail\":\"$main (param $seed i64) (result i64)\",\"kind\":3,\"label\":\"$main\"},{\"detail\":\"binding $seed: i64\",\"kind\":6,\"label\":\"$seed\"},{\"detail\":\"macro import selection\",\"kind\":14,\"label\":\"%$next\"},{\"detail\":\"macro import selection\",\"kind\":14,\"label\":\"%$with\"}]"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "capabilities": {
+          "completionProvider": {
+            "triggerCharacters": [
+              "$",
+              ".",
+              "%"
+            ]
+          },
+          "definitionProvider": true,
+          "experimental": {
+            "wltMacroExpansion": true
+          },
+          "hoverProvider": true,
+          "positionEncoding": "utf-16",
+          "textDocumentSync": {
+            "change": 2,
+            "openClose": true,
+            "save": true
+          }
+        },
+        "serverInfo": {
+          "name": "wlt",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 1
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 1
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 1
+      }
+    },
+    {
+      "id": 2,
+      "jsonrpc": "2.0",
+      "result": {
+        "contents": {
+          "kind": "plaintext",
+          "value": "macro $with (?name:ident ?value:expr ?body:expr)"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "jsonrpc": "2.0",
+      "result": [
+        {
+          "range": {
+            "end": {
+              "character": 14,
+              "line": 3
+            },
+            "start": {
+              "character": 9,
+              "line": 3
+            }
+          },
+          "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "jsonrpc": "2.0",
+      "result": {
+        "contents": {
+          "kind": "plaintext",
+          "value": "$main: i64"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "jsonrpc": "2.0",
+      "result": [
+        {
+          "range": {
+            "end": {
+              "character": 31,
+              "line": 3
+            },
+            "start": {
+              "character": 24,
+              "line": 3
+            }
+          },
+          "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "jsonrpc": "2.0",
+      "result": {
+        "definitions": [
+          {
+            "declaration": {
+              "end": 333,
+              "start": 328
+            },
+            "location": {
+              "location": {
+                "column": 10,
+                "line": 3,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 99,
+                "start": 94
+              }
+            },
+            "name": "$wlt-file-0.next",
+            "rules": [
+              "(?value:expr)"
+            ]
+          },
+          {
+            "declaration": {
+              "end": 393,
+              "start": 388
+            },
+            "location": {
+              "location": {
+                "column": 10,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 159,
+                "start": 154
+              }
+            },
+            "name": "$wlt-file-0.with",
+            "rules": [
+              "(?name:ident ?value:expr ?body:expr)"
+            ]
+          }
+        ],
+        "expansions": [
+          {
+            "call": {
+              "end": 210,
+              "start": 146
+            },
+            "call_location": {
+              "location": {
+                "column": 16,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 206,
+                "start": 142
+              }
+            },
+            "definition": {
+              "end": 393,
+              "start": 388
+            },
+            "definition_location": {
+              "location": {
+                "column": 10,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 159,
+                "start": 154
+              }
+            },
+            "expanded": "(let $macro_scope_0 (+ $seed 40) (+ $macro_scope_0 (%$wlt-file-0.next (i64.const 1))))",
+            "head": {
+              "end": 153,
+              "start": 147
+            },
+            "id": 0,
+            "inferred": {},
+            "inputs": [
+              {
+                "name": "?body",
+                "outputs": [
+                  7
+                ],
+                "source": {
+                  "end": 209,
+                  "start": 175
+                }
+              },
+              {
+                "name": "?name",
+                "outputs": [
+                  2
+                ],
+                "source": {
+                  "end": 161,
+                  "start": 154
+                }
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  3
+                ],
+                "source": {
+                  "end": 174,
+                  "start": 162
+                }
+              }
+            ],
+            "name": "$wlt-file-0.with",
+            "nodes": [
+              {
+                "context": 0,
+                "id": 0,
+                "input": null,
+                "source": {
+                  "end": 210,
+                  "start": 146
+                },
+                "template": {
+                  "end": 481,
+                  "start": 456
+                }
+              },
+              {
+                "context": 0,
+                "id": 1,
+                "input": null,
+                "source": {
+                  "end": 153,
+                  "start": 147
+                },
+                "template": {
+                  "end": 461,
+                  "start": 457
+                }
+              },
+              {
+                "context": 0,
+                "id": 2,
+                "input": 18,
+                "source": {
+                  "end": 161,
+                  "start": 154
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 3,
+                "input": 19,
+                "source": {
+                  "end": 174,
+                  "start": 162
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 4,
+                "input": 20,
+                "source": {
+                  "end": 164,
+                  "start": 163
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 5,
+                "input": 21,
+                "source": {
+                  "end": 170,
+                  "start": 165
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 6,
+                "input": 22,
+                "source": {
+                  "end": 173,
+                  "start": 171
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 7,
+                "input": 23,
+                "source": {
+                  "end": 209,
+                  "start": 175
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 8,
+                "input": 24,
+                "source": {
+                  "end": 177,
+                  "start": 176
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 9,
+                "input": 25,
+                "source": {
+                  "end": 185,
+                  "start": 178
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 10,
+                "input": 26,
+                "source": {
+                  "end": 208,
+                  "start": 186
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 11,
+                "input": 27,
+                "source": {
+                  "end": 193,
+                  "start": 187
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 12,
+                "input": 28,
+                "source": {
+                  "end": 207,
+                  "start": 194
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 13,
+                "input": 29,
+                "source": {
+                  "end": 204,
+                  "start": 195
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 14,
+                "input": 30,
+                "source": {
+                  "end": 206,
+                  "start": 205
+                },
+                "template": null
+              }
+            ],
+            "parent": null,
+            "rule": {
+              "end": 482,
+              "start": 394
+            }
+          }
+        ],
+        "schema": "wlt-macro-expansion-v1"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [
+          {
+            "code": "E_UNKNOWN_LOCAL",
+            "message": "unbound local `$missing`\nhelp: if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use",
+            "range": {
+              "end": {
+                "character": 64,
+                "line": 3
+              },
+              "start": {
+                "character": 56,
+                "line": 3
+              }
+            },
+            "relatedInformation": [
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 31,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 24,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "available local `$macro_scope_0`: i64"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 25,
+                      "line": 2
+                    },
+                    "start": {
+                      "character": 20,
+                      "line": 2
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "available local `$seed`: i64"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 103,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 15,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "in expansion of macro `$with`"
+              }
+            ],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 2
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 1
+      }
+    },
+    {
+      "id": 7,
+      "jsonrpc": "2.0",
+      "result": [
+        {
+          "detail": "$main (param $seed i64) (result i64)",
+          "kind": 3,
+          "label": "$main"
+        },
+        {
+          "detail": "binding $seed: i64",
+          "kind": 6,
+          "label": "$seed"
+        },
+        {
+          "detail": "binding $amount (no inferred type)",
+          "kind": 6,
+          "label": "$amount"
+        },
+        {
+          "detail": "macro import selection",
+          "kind": 14,
+          "label": "%$next"
+        },
+        {
+          "detail": "macro import selection",
+          "kind": 14,
+          "label": "%$with"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "jsonrpc": "2.0",
+      "result": {
+        "contents": {
+          "kind": "plaintext",
+          "value": "binding $amount (no inferred type)\nDeclared syntax (unverified; no checked type is inferred)"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 3
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 1
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [
+          {
+            "code": "E_TYPE_MISMATCH",
+            "message": "type mismatch: expected i32, got i64",
+            "range": {
+              "end": {
+                "character": 40,
+                "line": 3
+              },
+              "start": {
+                "character": 35,
+                "line": 3
+              }
+            },
+            "relatedInformation": [
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 34,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 33,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt"
+                },
+                "message": "operand 1 of `+` requires i32"
+              },
+              {
+                "location": {
+                  "range": {
+                    "end": {
+                      "character": 114,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 15,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt"
+                },
+                "message": "in expansion of macro `$with`"
+              }
+            ],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 3
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 2
+      }
+    },
+    {
+      "id": 9,
+      "jsonrpc": "2.0",
+      "result": {
+        "definitions": [],
+        "expansions": [],
+        "schema": "wlt-macro-expansion-v1"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 3
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 3
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [
+          {
+            "code": "E_CHECK",
+            "message": "unclosed '('; expected ')'",
+            "range": {
+              "end": {
+                "character": 45,
+                "line": 3
+              },
+              "start": {
+                "character": 45,
+                "line": 3
+              }
+            },
+            "relatedInformation": [],
+            "severity": 1,
+            "source": "wlt"
+          }
+        ],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/main.wlt",
+        "version": 4
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "diagnostics": [],
+        "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/work/editor/syntax.wlt",
+        "version": 3
+      }
+    },
+    {
+      "id": 10,
+      "jsonrpc": "2.0",
+      "result": [
+        {
+          "detail": "$main (param $seed i64) (result i64)",
+          "kind": 3,
+          "label": "$main"
+        },
+        {
+          "detail": "binding $seed: i64",
+          "kind": 6,
+          "label": "$seed"
+        },
+        {
+          "detail": "macro import selection",
+          "kind": 14,
+          "label": "%$next"
+        },
+        {
+          "detail": "macro import selection",
+          "kind": 14,
+          "label": "%$with"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "jsonrpc": "2.0",
+      "result": null
+    }
+  ],
+  "stderr": ""
+}

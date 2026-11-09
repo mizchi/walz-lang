@@ -1,0 +1,24 @@
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.31s
+     Running tests/macro_resume.rs (target/debug/deps/macro_resume-bea32d67cdb502b2)
+
+running 1 test
+test resuming_preserves_outer_locals_labels_and_speculative_type_queries ... FAILED
+
+failures:
+
+---- resuming_preserves_outer_locals_labels_and_speculative_type_queries stdout ----
+
+thread 'resuming_preserves_outer_locals_labels_and_speculative_type_queries' (28228138) panicked at tests/macro_resume.rs:52:5:
+assertion `left == right` failed
+  left: 4
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    resuming_preserves_outer_locals_labels_and_speculative_type_queries
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.11s
+
+error: test failed, to rerun pass `--test macro_resume`

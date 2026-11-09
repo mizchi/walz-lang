@@ -1,0 +1,30 @@
+cargo build --locked --bin wlt
+    Finished `dev` profile [unoptimized] target(s) in 0.05s
+node --expose-gc evals/macro-usability/run.mjs '20261109-macro-usability-v1-r4'
+PASS type check application: inline
+PASS type check application: functions
+PASS type check application: macros
+PASS CLI run/test/bench workflow
+PASS inferred generic arguments are visible in expansion
+PASS oracle, changed policy and boundary cleanup: core/inline
+PASS oracle, changed policy and boundary cleanup: core/functions
+PASS oracle, changed policy and boundary cleanup: core/macros
+PASS oracle, changed policy and boundary cleanup: component/inline
+PASS oracle, changed policy and boundary cleanup: component/functions
+PASS oracle, changed policy and boundary cleanup: component/macros
+PASS evaluation order, shadowing and ABI cleanup: core
+PASS macro suspension and queued/running cancellation: core
+PASS evaluation order, shadowing and ABI cleanup: component
+PASS macro suspension and queued/running cancellation: component
+PASS static rejection and diagnostic location: wrong-type
+PASS static rejection and diagnostic location: effect
+PASS static rejection and diagnostic location: double-move
+PASS stdio LSP required behaviors
+PASS frozen inputs and implementation stayed unchanged
+{
+  "output": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4",
+  "passed": true,
+  "required": 20,
+  "failed": [],
+  "unmet": []
+}

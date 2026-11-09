@@ -1,0 +1,208 @@
+{
+  "perspective": "nonblind implementer dogfooding",
+  "environment": {
+    "cpu": "Apple M5",
+    "node": "v24.22.2",
+    "rust": "1.99.0",
+    "cliProfile": "dev; process startup and source loading included"
+  },
+  "requiredPassed": 20,
+  "requiredTotal": 20,
+  "unmet": [
+    "delegated-binder",
+    "repeated-binders",
+    "unfinished imported macro body still offers its introduced name",
+    "scale macro 256"
+  ],
+  "artifactHashes": {
+    "core-inline.wasm": "667e61a2f2fa5eb5e22f2029efbcac4e27bbbce7a3121549dd9b66174e770f22",
+    "core-functions.wasm": "457182f25254f8f619caf9b40e8b228c583da2a1e605f184d3f2b81519de6021",
+    "core-macros.wasm": "9bb03584e85dfb64a320b38553566160c939c41a679da23604c8f6a15f0485e3",
+    "component-inline.wasm": "ba0f01a6ffd6522503e95a0cb22647bb9e8948fada72ae1988bc041ce0e677f5",
+    "component-functions.wasm": "ea568a6d15943d7edb3ca4d691e4ee783516e2376085f4dcb17b714ac1920d9d",
+    "component-macros.wasm": "89dbfc9778c79b46f6f62117d651c8839c312849093fa082bb825bf16c27017b"
+  },
+  "cli": [
+    {
+      "variant": "inline",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 52.14945799999987,
+      "minMs": 50.83270799999809,
+      "maxMs": 64.81674999999814
+    },
+    {
+      "variant": "inline",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 747.0322500000038,
+      "minMs": 739.3394580000022,
+      "maxMs": 1023.2807919999977
+    },
+    {
+      "variant": "functions",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 52.34637500000099,
+      "minMs": 50.75625000000582,
+      "maxMs": 64.64691700000549
+    },
+    {
+      "variant": "functions",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 737.8457080000007,
+      "minMs": 733.2064170000012,
+      "maxMs": 898.7411249999932
+    },
+    {
+      "variant": "macros",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 151.2362079999948,
+      "minMs": 150.48841700000048,
+      "maxMs": 180.88941700000214
+    },
+    {
+      "variant": "macros",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 908.2747500000005,
+      "minMs": 836.2264579999974,
+      "maxMs": 1021.189999999995
+    }
+  ],
+  "runtime": [
+    {
+      "variant": "inline",
+      "backend": "core",
+      "samples": 9,
+      "medianMs": 0.09636874999996507
+    },
+    {
+      "variant": "functions",
+      "backend": "core",
+      "samples": 9,
+      "medianMs": 0.0904916499999672
+    },
+    {
+      "variant": "macros",
+      "backend": "core",
+      "samples": 9,
+      "medianMs": 0.09273749999993015
+    },
+    {
+      "variant": "inline",
+      "backend": "component",
+      "samples": 9,
+      "medianMs": 0.09974165000021458
+    },
+    {
+      "variant": "functions",
+      "backend": "component",
+      "samples": 9,
+      "medianMs": 0.10178330000017013
+    },
+    {
+      "variant": "macros",
+      "backend": "component",
+      "samples": 9,
+      "medianMs": 0.10647085000018705
+    }
+  ],
+  "scaling": [
+    {
+      "name": "scale inline 1",
+      "achieved": true,
+      "medianMs": 3.42412499999773
+    },
+    {
+      "name": "scale macro 1",
+      "achieved": true,
+      "medianMs": 3.07891699999891
+    },
+    {
+      "name": "scale inline 8",
+      "achieved": true,
+      "medianMs": 3.1183749999981956
+    },
+    {
+      "name": "scale macro 8",
+      "achieved": true,
+      "medianMs": 4.810833999996248
+    },
+    {
+      "name": "scale inline 32",
+      "achieved": true,
+      "medianMs": 4.247041000002355
+    },
+    {
+      "name": "scale macro 32",
+      "achieved": true,
+      "medianMs": 24.77929199999926
+    },
+    {
+      "name": "scale inline 64",
+      "achieved": true,
+      "medianMs": 6.782790999997815
+    },
+    {
+      "name": "scale macro 64",
+      "achieved": true,
+      "medianMs": 79.14841700000397
+    },
+    {
+      "name": "scale inline 128",
+      "achieved": true,
+      "medianMs": 9.378083000003244
+    },
+    {
+      "name": "scale macro 128",
+      "achieved": true,
+      "medianMs": 302.06229200000234
+    },
+    {
+      "name": "scale inline 256",
+      "achieved": true,
+      "medianMs": 14.495833000000857
+    },
+    {
+      "name": "scale macro 256",
+      "achieved": false,
+      "medianMs": 1621.9495839999945,
+      "diagnostic": "{\"diagnostics\":[{\"code\":\"E_MACRO_LIMIT\",\"help\":[],\"message\":\"macro elaboration work limit exceeded\",\"notes\":[],\"primary\":{\"location\":{\"column\":22,\"line\":248,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r1/snapshot/suite/scaling/macro-256.wlt\"},\"message\":\"\",\"span\":{\"end\":21242,\"start\":21236}},\"related\":[]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n"
+    }
+  ],
+  "rubric": [
+    {
+      "axis": "Consumer readability",
+      "score": 3,
+      "evidence": "parse-inline: 207 tokens / depth 6; parse-functions: 122 / 5; parse-macros: 188 / 6. Macro hides generic arguments; ordinary domain helpers are more concise in this task."
+    },
+    {
+      "axis": "Macro authoring",
+      "score": 2,
+      "evidence": "app/syntax.wlt needs an inference macro plus a helper matching normalized (option ?T:type). Repeated binding template fails during %let normalization."
+    },
+    {
+      "axis": "Composition and changes",
+      "score": 1,
+      "evidence": "probes/delegated-binder.wlt: E_MACRO_BINDING. probes/repeated-binders.wlt: E_LET_BINDINGS. Both policy variants execute identically across the three implementations."
+    },
+    {
+      "axis": "Static guarantees",
+      "score": 4,
+      "evidence": "Three incorrect programs rejected; both backends preserve evaluation order, shadowing and queued/running cancellation cleanup in the tested cases."
+    },
+    {
+      "axis": "Diagnostics and LSP",
+      "score": 3,
+      "evidence": "Six required stdio LSP tasks pass. An unfinished imported macro body loses the introduced-name completion. No previous checked expansion is shown after an invalid dependency edit."
+    },
+    {
+      "axis": "Cost and scale",
+      "score": 1,
+      "evidence": "App CLI check: macro 151ms vs inline 52ms. Synthetic 128 sites: 302ms vs 9ms; 256 macro sites fail E_MACRO_LIMIT. Runtime shows no consistent advantage in this short trial."
+    }
+  ]
+}

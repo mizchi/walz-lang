@@ -1,0 +1,75 @@
+{
+  "before": "20261109-macro-usability-v1-r3",
+  "after": "20261109-macro-usability-v1-r4",
+  "frozenInputsIdentical": true,
+  "inputFiles": 42,
+  "oldBinarySha256": "1f8460ddd1e2eed0d640fea08b4ab1e5cd13ebcff311fc201bbeb73c29214d0b",
+  "newBinarySha256": "0b64b459ed9a71874ee2a5c4b53c93ad857f85758b51e6a0ef3572b089916b9a",
+  "required": [
+    20,
+    20
+  ],
+  "unmet": [],
+  "scaling": [
+    {
+      "name": "scale inline 1",
+      "medianMs": 5.053124999998545,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 1",
+      "medianMs": 3.864291999998386,
+      "achieved": true
+    },
+    {
+      "name": "scale inline 8",
+      "medianMs": 3.55304199999955,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 8",
+      "medianMs": 4.484832999994978,
+      "achieved": true
+    },
+    {
+      "name": "scale inline 32",
+      "medianMs": 4.975459000001138,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 32",
+      "medianMs": 6.931583000005048,
+      "achieved": true
+    },
+    {
+      "name": "scale inline 64",
+      "medianMs": 6.618708000001789,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 64",
+      "medianMs": 9.71387500000128,
+      "achieved": true
+    },
+    {
+      "name": "scale inline 128",
+      "medianMs": 8.221207999995386,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 128",
+      "medianMs": 18.488332999993872,
+      "achieved": true
+    },
+    {
+      "name": "scale inline 256",
+      "medianMs": 14.857542000005196,
+      "achieved": true
+    },
+    {
+      "name": "scale macro 256",
+      "medianMs": 42.67933300000004,
+      "achieved": true
+    }
+  ]
+}

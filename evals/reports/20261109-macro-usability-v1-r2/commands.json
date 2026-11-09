@@ -1,0 +1,1114 @@
+[
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 448.10220899999996,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 55.377459000000044,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 59.41025000000002,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "run",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core-js"
+    ],
+    "milliseconds": 1388.583291,
+    "code": 0,
+    "stdout": "\"{\\\"accepted\\\":2,\\\"rejected\\\":1,\\\"totals\\\":{\\\"food\\\":42}}\"\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "test",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/macro.test.wlt"
+    ],
+    "milliseconds": 964.1617499999998,
+    "code": 0,
+    "stdout": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/macro.test.wlt::\"macro JSON application\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "bench",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/macro_bench.wlt",
+      "--target",
+      "core-js",
+      "--samples",
+      "3",
+      "--iterations",
+      "5",
+      "--warmup-ms",
+      "0",
+      "--json"
+    ],
+    "milliseconds": 1477.5821659999997,
+    "code": 0,
+    "stdout": "{\n  \"schema\": \"wlt-bench-v1\",\n  \"options\": {\n    \"target\": \"core-js\",\n    \"filter\": null,\n    \"list\": false,\n    \"samples\": 3,\n    \"iterations\": 5,\n    \"warmup_ms\": 0,\n    \"sample_ms\": 10,\n    \"timeout_ms\": 30000\n  },\n  \"benchmarks\": [\n    {\n      \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/macro_bench.wlt\",\n      \"name\": \"macro JSON validation\",\n      \"span\": {\n        \"start\": 49,\n        \"end\": 136\n      },\n      \"outcome\": {\n        \"status\": \"measured\",\n        \"summary\": {\n          \"iterations\": 5,\n          \"samples_ns\": [\n            266458.3999999998,\n            36874.99999999986,\n            13850.000000000053\n          ],\n          \"min_ns\": 13850.000000000053,\n          \"max_ns\": 266458.3999999998,\n          \"mean_ns\": 105727.79999999992,\n          \"median_ns\": 36874.99999999986,\n          \"std_dev_ns\": 139672.0515655153,\n          \"runtime\": \"Core+JSPI end-to-end; Node.js 24.22.2; V8 13.6.233.17-node.63; darwin/arm64\"\n        }\n      }\n    }\n  ],\n  \"errors\": [],\n  \"filtered_out\": 0\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "macro-expand",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 68.81450000000041,
+    "code": 0,
+    "stdout": "{\n  \"checking\": {\n    \"function_checks\": 112,\n    \"module_passes\": 1,\n    \"syntax_node_visits\": 18010\n  },\n  \"definitions\": [\n    {\n      \"declaration\": {\n        \"end\": 2463,\n        \"start\": 2457\n      },\n      \"location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 4,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 147,\n          \"start\": 141\n        }\n      },\n      \"name\": \"$wlt-file-1.ok-or\",\n      \"rules\": [\n        \"(?value:expr ?error:expr)\"\n      ]\n    },\n    {\n      \"declaration\": {\n        \"end\": 2622,\n        \"start\": 2610\n      },\n      \"location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 8,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 306,\n          \"start\": 294\n        }\n      },\n      \"name\": \"$wlt-file-1.ok-or.typed\",\n      \"rules\": [\n        \"((option ?T:type) ?E:type ?value:expr ?error:expr)\"\n      ]\n    }\n  ],\n  \"expansions\": [\n    {\n      \"call\": {\n        \"end\": 3466,\n        \"start\": 3366\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 18,\n          \"line\": 13,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 665,\n          \"start\": 565\n        }\n      },\n      \"definition\": {\n        \"end\": 2463,\n        \"start\": 2457\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 4,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 147,\n          \"start\": 141\n        }\n      },\n      \"expanded\": \"(%$wlt-file-1.ok-or.typed (option text) (ref $wlt-file-0.Error) (call $wlt-core-0-json-value.json.as-string $category-value) (variant.new $wlt-file-0.Error wrong-type \\\"category\\\"))\",\n      \"head\": {\n        \"end\": 3374,\n        \"start\": 3367\n      },\n      \"id\": 0,\n      \"inferred\": {\n        \"?Error\": \"(ref $wlt-file-0.Error)\",\n        \"?Option\": \"(option text)\"\n      },\n      \"inputs\": [\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            12\n          ],\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            8\n          ],\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or\",\n      \"nodes\": [\n        {\n          \"context\": 0,\n          \"id\": 0,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3466,\n            \"start\": 3366\n          },\n          \"template\": {\n            \"end\": 2597,\n            \"start\": 2553\n          }\n        },\n        {\n          \"context\": 0,\n          \"id\": 1,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3374,\n            \"start\": 3367\n          },\n          \"template\": {\n            \"end\": 2567,\n            \"start\": 2554\n          }\n        },\n        {\n          \"context\": 0,\n          \"id\": 2,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 3,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 4,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 5,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 6,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 7,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 8,\n          \"input\": 7584,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 9,\n          \"input\": 7585,\n          \"source\": {\n            \"end\": 3380,\n            \"start\": 3376\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 10,\n          \"input\": 7586,\n          \"source\": {\n            \"end\": 3396,\n            \"start\": 3381\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 11,\n          \"input\": 7587,\n          \"source\": {\n            \"end\": 3412,\n            \"start\": 3397\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 12,\n          \"input\": 7588,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 13,\n          \"input\": 7589,\n          \"source\": {\n            \"end\": 3435,\n            \"start\": 3423\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 14,\n          \"input\": 7590,\n          \"source\": {\n            \"end\": 3442,\n            \"start\": 3436\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 15,\n          \"input\": 7591,\n          \"source\": {\n            \"end\": 3453,\n            \"start\": 3443\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 0,\n          \"id\": 16,\n          \"input\": 7592,\n          \"source\": {\n            \"end\": 3464,\n            \"start\": 3454\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": null,\n      \"rule\": {\n        \"end\": 2598,\n        \"start\": 2468\n      },\n      \"types\": {\n        \"?Error\": {\n          \"kind\": \"ref\",\n          \"name\": \"$wlt-file-0.Error\",\n          \"nullable\": false\n        },\n        \"?Option\": {\n          \"element\": {\n            \"kind\": \"string\"\n          },\n          \"kind\": \"option\"\n        }\n      }\n    },\n    {\n      \"call\": {\n        \"end\": 3466,\n        \"start\": 3366\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 18,\n          \"line\": 13,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 665,\n          \"start\": 565\n        }\n      },\n      \"definition\": {\n        \"end\": 2622,\n        \"start\": 2610\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 8,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 306,\n          \"start\": 294\n        }\n      },\n      \"expanded\": \"(call ($wlt-core-0-option.option.ok-or text (ref $wlt-file-0.Error)) (call $wlt-core-0-json-value.json.as-string $category-value) (variant.new $wlt-file-0.Error wrong-type \\\"category\\\"))\",\n      \"head\": {\n        \"end\": 3374,\n        \"start\": 3367\n      },\n      \"id\": 1,\n      \"inferred\": {},\n      \"inputs\": [\n        {\n          \"name\": \"?E\",\n          \"outputs\": [\n            22\n          ],\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?T\",\n          \"outputs\": [\n            21\n          ],\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            29\n          ],\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            25\n          ],\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or.typed\",\n      \"nodes\": [\n        {\n          \"context\": 1,\n          \"id\": 17,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3466,\n            \"start\": 3366\n          },\n          \"template\": {\n            \"end\": 2738,\n            \"start\": 2690\n          }\n        },\n        {\n          \"context\": 1,\n          \"id\": 18,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3374,\n            \"start\": 3367\n          },\n          \"template\": {\n            \"end\": 2695,\n            \"start\": 2691\n          }\n        },\n        {\n          \"context\": 1,\n          \"id\": 19,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3466,\n            \"start\": 3366\n          },\n          \"template\": {\n            \"end\": 2723,\n            \"start\": 2696\n          }\n        },\n        {\n          \"context\": 1,\n          \"id\": 20,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3374,\n            \"start\": 3367\n          },\n          \"template\": {\n            \"end\": 2716,\n            \"start\": 2703\n          }\n        },\n        {\n          \"context\": 1,\n          \"id\": 21,\n          \"input\": 9485,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 22,\n          \"input\": 9486,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 23,\n          \"input\": 9487,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 24,\n          \"input\": 9488,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 25,\n          \"input\": 9489,\n          \"source\": {\n            \"end\": 3413,\n            \"start\": 3375\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 26,\n          \"input\": 9490,\n          \"source\": {\n            \"end\": 3380,\n            \"start\": 3376\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 27,\n          \"input\": 9491,\n          \"source\": {\n            \"end\": 3396,\n            \"start\": 3381\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 28,\n          \"input\": 9492,\n          \"source\": {\n            \"end\": 3412,\n            \"start\": 3397\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 29,\n          \"input\": 9493,\n          \"source\": {\n            \"end\": 3465,\n            \"start\": 3422\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 30,\n          \"input\": 9494,\n          \"source\": {\n            \"end\": 3435,\n            \"start\": 3423\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 31,\n          \"input\": 9495,\n          \"source\": {\n            \"end\": 3442,\n            \"start\": 3436\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 32,\n          \"input\": 9496,\n          \"source\": {\n            \"end\": 3453,\n            \"start\": 3443\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 1,\n          \"id\": 33,\n          \"input\": 9497,\n          \"source\": {\n            \"end\": 3464,\n            \"start\": 3454\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": 0,\n      \"rule\": {\n        \"end\": 2739,\n        \"start\": 2627\n      },\n      \"types\": {}\n    },\n    {\n      \"call\": {\n        \"end\": 3637,\n        \"start\": 3541\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 21,\n          \"line\": 16,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 836,\n          \"start\": 740\n        }\n      },\n      \"definition\": {\n        \"end\": 2463,\n        \"start\": 2457\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 4,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 147,\n          \"start\": 141\n        }\n      },\n      \"expanded\": \"(%$wlt-file-1.ok-or.typed (option text) (ref $wlt-file-0.Error) (call $wlt-core-0-json-value.json.as-number $amount-value) (variant.new $wlt-file-0.Error wrong-type \\\"amount\\\"))\",\n      \"head\": {\n        \"end\": 3549,\n        \"start\": 3542\n      },\n      \"id\": 2,\n      \"inferred\": {\n        \"?Error\": \"(ref $wlt-file-0.Error)\",\n        \"?Option\": \"(option text)\"\n      },\n      \"inputs\": [\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            46\n          ],\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            42\n          ],\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or\",\n      \"nodes\": [\n        {\n          \"context\": 2,\n          \"id\": 34,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3637,\n            \"start\": 3541\n          },\n          \"template\": {\n            \"end\": 2597,\n            \"start\": 2553\n          }\n        },\n        {\n          \"context\": 2,\n          \"id\": 35,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3549,\n            \"start\": 3542\n          },\n          \"template\": {\n            \"end\": 2567,\n            \"start\": 2554\n          }\n        },\n        {\n          \"context\": 2,\n          \"id\": 36,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 37,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 38,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 39,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 40,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 41,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 42,\n          \"input\": 7604,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 43,\n          \"input\": 7605,\n          \"source\": {\n            \"end\": 3555,\n            \"start\": 3551\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 44,\n          \"input\": 7606,\n          \"source\": {\n            \"end\": 3571,\n            \"start\": 3556\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 45,\n          \"input\": 7607,\n          \"source\": {\n            \"end\": 3585,\n            \"start\": 3572\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 46,\n          \"input\": 7608,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 47,\n          \"input\": 7609,\n          \"source\": {\n            \"end\": 3608,\n            \"start\": 3596\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 48,\n          \"input\": 7610,\n          \"source\": {\n            \"end\": 3615,\n            \"start\": 3609\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 49,\n          \"input\": 7611,\n          \"source\": {\n            \"end\": 3626,\n            \"start\": 3616\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 2,\n          \"id\": 50,\n          \"input\": 7612,\n          \"source\": {\n            \"end\": 3635,\n            \"start\": 3627\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": null,\n      \"rule\": {\n        \"end\": 2598,\n        \"start\": 2468\n      },\n      \"types\": {\n        \"?Error\": {\n          \"kind\": \"ref\",\n          \"name\": \"$wlt-file-0.Error\",\n          \"nullable\": false\n        },\n        \"?Option\": {\n          \"element\": {\n            \"kind\": \"string\"\n          },\n          \"kind\": \"option\"\n        }\n      }\n    },\n    {\n      \"call\": {\n        \"end\": 3637,\n        \"start\": 3541\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 21,\n          \"line\": 16,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 836,\n          \"start\": 740\n        }\n      },\n      \"definition\": {\n        \"end\": 2622,\n        \"start\": 2610\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 8,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 306,\n          \"start\": 294\n        }\n      },\n      \"expanded\": \"(call ($wlt-core-0-option.option.ok-or text (ref $wlt-file-0.Error)) (call $wlt-core-0-json-value.json.as-number $amount-value) (variant.new $wlt-file-0.Error wrong-type \\\"amount\\\"))\",\n      \"head\": {\n        \"end\": 3549,\n        \"start\": 3542\n      },\n      \"id\": 3,\n      \"inferred\": {},\n      \"inputs\": [\n        {\n          \"name\": \"?E\",\n          \"outputs\": [\n            56\n          ],\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?T\",\n          \"outputs\": [\n            55\n          ],\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            63\n          ],\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            59\n          ],\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or.typed\",\n      \"nodes\": [\n        {\n          \"context\": 3,\n          \"id\": 51,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3637,\n            \"start\": 3541\n          },\n          \"template\": {\n            \"end\": 2738,\n            \"start\": 2690\n          }\n        },\n        {\n          \"context\": 3,\n          \"id\": 52,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3549,\n            \"start\": 3542\n          },\n          \"template\": {\n            \"end\": 2695,\n            \"start\": 2691\n          }\n        },\n        {\n          \"context\": 3,\n          \"id\": 53,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3637,\n            \"start\": 3541\n          },\n          \"template\": {\n            \"end\": 2723,\n            \"start\": 2696\n          }\n        },\n        {\n          \"context\": 3,\n          \"id\": 54,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3549,\n            \"start\": 3542\n          },\n          \"template\": {\n            \"end\": 2716,\n            \"start\": 2703\n          }\n        },\n        {\n          \"context\": 3,\n          \"id\": 55,\n          \"input\": 9514,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 56,\n          \"input\": 9515,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 57,\n          \"input\": 9516,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 58,\n          \"input\": 9517,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 59,\n          \"input\": 9518,\n          \"source\": {\n            \"end\": 3586,\n            \"start\": 3550\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 60,\n          \"input\": 9519,\n          \"source\": {\n            \"end\": 3555,\n            \"start\": 3551\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 61,\n          \"input\": 9520,\n          \"source\": {\n            \"end\": 3571,\n            \"start\": 3556\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 62,\n          \"input\": 9521,\n          \"source\": {\n            \"end\": 3585,\n            \"start\": 3572\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 63,\n          \"input\": 9522,\n          \"source\": {\n            \"end\": 3636,\n            \"start\": 3595\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 64,\n          \"input\": 9523,\n          \"source\": {\n            \"end\": 3608,\n            \"start\": 3596\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 65,\n          \"input\": 9524,\n          \"source\": {\n            \"end\": 3615,\n            \"start\": 3609\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 66,\n          \"input\": 9525,\n          \"source\": {\n            \"end\": 3626,\n            \"start\": 3616\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 3,\n          \"id\": 67,\n          \"input\": 9526,\n          \"source\": {\n            \"end\": 3635,\n            \"start\": 3627\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": 2,\n      \"rule\": {\n        \"end\": 2739,\n        \"start\": 2627\n      },\n      \"types\": {}\n    },\n    {\n      \"call\": {\n        \"end\": 3746,\n        \"start\": 3654\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 16,\n          \"line\": 18,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 945,\n          \"start\": 853\n        }\n      },\n      \"definition\": {\n        \"end\": 2463,\n        \"start\": 2457\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 4,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 147,\n          \"start\": 141\n        }\n      },\n      \"expanded\": \"(%$wlt-file-1.ok-or.typed (option i64) (ref $wlt-file-0.Error) (call $wlt-core-0-text.string.parse-s64 $amount-text) (variant.new $wlt-file-0.Error invalid-amount))\",\n      \"head\": {\n        \"end\": 3662,\n        \"start\": 3655\n      },\n      \"id\": 4,\n      \"inferred\": {\n        \"?Error\": \"(ref $wlt-file-0.Error)\",\n        \"?Option\": \"(option i64)\"\n      },\n      \"inputs\": [\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            80\n          ],\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            76\n          ],\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or\",\n      \"nodes\": [\n        {\n          \"context\": 4,\n          \"id\": 68,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3746,\n            \"start\": 3654\n          },\n          \"template\": {\n            \"end\": 2597,\n            \"start\": 2553\n          }\n        },\n        {\n          \"context\": 4,\n          \"id\": 69,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3662,\n            \"start\": 3655\n          },\n          \"template\": {\n            \"end\": 2567,\n            \"start\": 2554\n          }\n        },\n        {\n          \"context\": 4,\n          \"id\": 70,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 71,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 72,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 73,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 74,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 75,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 76,\n          \"input\": 7617,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 77,\n          \"input\": 7618,\n          \"source\": {\n            \"end\": 3668,\n            \"start\": 3664\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 78,\n          \"input\": 7619,\n          \"source\": {\n            \"end\": 3686,\n            \"start\": 3669\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 79,\n          \"input\": 7620,\n          \"source\": {\n            \"end\": 3699,\n            \"start\": 3687\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 80,\n          \"input\": 7621,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 81,\n          \"input\": 7622,\n          \"source\": {\n            \"end\": 3722,\n            \"start\": 3710\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 82,\n          \"input\": 7623,\n          \"source\": {\n            \"end\": 3729,\n            \"start\": 3723\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 4,\n          \"id\": 83,\n          \"input\": 7624,\n          \"source\": {\n            \"end\": 3744,\n            \"start\": 3730\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": null,\n      \"rule\": {\n        \"end\": 2598,\n        \"start\": 2468\n      },\n      \"types\": {\n        \"?Error\": {\n          \"kind\": \"ref\",\n          \"name\": \"$wlt-file-0.Error\",\n          \"nullable\": false\n        },\n        \"?Option\": {\n          \"element\": {\n            \"kind\": \"scalar\",\n            \"name\": \"i64\"\n          },\n          \"kind\": \"option\"\n        }\n      }\n    },\n    {\n      \"call\": {\n        \"end\": 3746,\n        \"start\": 3654\n      },\n      \"call_location\": {\n        \"location\": {\n          \"column\": 16,\n          \"line\": 18,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/parse-macros.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 945,\n          \"start\": 853\n        }\n      },\n      \"definition\": {\n        \"end\": 2622,\n        \"start\": 2610\n      },\n      \"definition_location\": {\n        \"location\": {\n          \"column\": 11,\n          \"line\": 8,\n          \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/syntax.wlt\"\n        },\n        \"message\": \"\",\n        \"span\": {\n          \"end\": 306,\n          \"start\": 294\n        }\n      },\n      \"expanded\": \"(call ($wlt-core-0-option.option.ok-or i64 (ref $wlt-file-0.Error)) (call $wlt-core-0-text.string.parse-s64 $amount-text) (variant.new $wlt-file-0.Error invalid-amount))\",\n      \"head\": {\n        \"end\": 3662,\n        \"start\": 3655\n      },\n      \"id\": 5,\n      \"inferred\": {},\n      \"inputs\": [\n        {\n          \"name\": \"?E\",\n          \"outputs\": [\n            89\n          ],\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?T\",\n          \"outputs\": [\n            88\n          ],\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?error\",\n          \"outputs\": [\n            96\n          ],\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"usage\": \"single\"\n        },\n        {\n          \"name\": \"?value\",\n          \"outputs\": [\n            92\n          ],\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"usage\": \"single\"\n        }\n      ],\n      \"name\": \"$wlt-file-1.ok-or.typed\",\n      \"nodes\": [\n        {\n          \"context\": 5,\n          \"id\": 84,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3746,\n            \"start\": 3654\n          },\n          \"template\": {\n            \"end\": 2738,\n            \"start\": 2690\n          }\n        },\n        {\n          \"context\": 5,\n          \"id\": 85,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3662,\n            \"start\": 3655\n          },\n          \"template\": {\n            \"end\": 2695,\n            \"start\": 2691\n          }\n        },\n        {\n          \"context\": 5,\n          \"id\": 86,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3746,\n            \"start\": 3654\n          },\n          \"template\": {\n            \"end\": 2723,\n            \"start\": 2696\n          }\n        },\n        {\n          \"context\": 5,\n          \"id\": 87,\n          \"input\": null,\n          \"source\": {\n            \"end\": 3662,\n            \"start\": 3655\n          },\n          \"template\": {\n            \"end\": 2716,\n            \"start\": 2703\n          }\n        },\n        {\n          \"context\": 5,\n          \"id\": 88,\n          \"input\": 9543,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 89,\n          \"input\": 9544,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 90,\n          \"input\": 9545,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 91,\n          \"input\": 9546,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 92,\n          \"input\": 9547,\n          \"source\": {\n            \"end\": 3700,\n            \"start\": 3663\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 93,\n          \"input\": 9548,\n          \"source\": {\n            \"end\": 3668,\n            \"start\": 3664\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 94,\n          \"input\": 9549,\n          \"source\": {\n            \"end\": 3686,\n            \"start\": 3669\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 95,\n          \"input\": 9550,\n          \"source\": {\n            \"end\": 3699,\n            \"start\": 3687\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 96,\n          \"input\": 9551,\n          \"source\": {\n            \"end\": 3745,\n            \"start\": 3709\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 97,\n          \"input\": 9552,\n          \"source\": {\n            \"end\": 3722,\n            \"start\": 3710\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 98,\n          \"input\": 9553,\n          \"source\": {\n            \"end\": 3729,\n            \"start\": 3723\n          },\n          \"template\": null\n        },\n        {\n          \"context\": 5,\n          \"id\": 99,\n          \"input\": 9554,\n          \"source\": {\n            \"end\": 3744,\n            \"start\": 3730\n          },\n          \"template\": null\n        }\n      ],\n      \"parent\": 4,\n      \"rule\": {\n        \"end\": 2739,\n        \"start\": 2627\n      },\n      \"types\": {}\n    }\n  ],\n  \"schema\": \"wlt-macro-expansion-v1\",\n  \"type_schema\": \"wlt-type-info-v1\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/inline"
+    ],
+    "milliseconds": 1605.6038750000007,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/inline\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/functions"
+    ],
+    "milliseconds": 1707.357333,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/functions\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/macros"
+    ],
+    "milliseconds": 1437.2352500000006,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/macros\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/order.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/order"
+    ],
+    "milliseconds": 1197.4405420000003,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/order\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/async.wlt",
+      "--target",
+      "core-js",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/async"
+    ],
+    "milliseconds": 2035.3257919999996,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/core/async\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/wrong-type.wlt"
+    ],
+    "milliseconds": 7.8840000000018335,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_TYPE_MISMATCH\",\"help\":[],\"message\":\"type mismatch: expected i32, got i64\",\"notes\":[],\"primary\":{\"location\":{\"column\":16,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/wrong-type.wlt\"},\"message\":\"\",\"span\":{\"end\":155,\"start\":141}},\"related\":[{\"location\":{\"column\":6,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/wrong-type.wlt\"},\"message\":\"operand 1 of `i32.add` requires i32\",\"span\":{\"end\":140,\"start\":131}},{\"location\":{\"column\":20,\"line\":2,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/wrong-type.wlt\"},\"message\":\"in expansion of macro `$add-one`\",\"span\":{\"end\":66,\"start\":27}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt"
+    ],
+    "milliseconds": 6.58366599999863,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_EFFECT_CONTRACT\",\"help\":[\"remove the operations exceeding the declared bound, or explicitly allow their effects if intended\"],\"message\":\"effect contract for `$main` exceeded: reads, writes, allocates, suspends, host, synchronizes, blocks, throws(*)\",\"notes\":[\"declared: pure; required: reads, writes, allocates, suspends, host, synchronizes, blocks, throws(*)\"],\"primary\":{\"location\":{\"column\":44,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"\",\"span\":{\"end\":156,\"start\":142}},\"related\":[{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires reads\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires writes\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires allocates\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires suspends\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires host\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires synchronizes\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires blocks\",\"span\":{\"end\":165,\"start\":157}},{\"location\":{\"column\":59,\"line\":4,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/effect.wlt\"},\"message\":\"call to `$read` requires throws(*)\",\"span\":{\"end\":165,\"start\":157}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/double-move.wlt"
+    ],
+    "milliseconds": 5.753082999999606,
+    "code": 1,
+    "stdout": "{\"diagnostics\":[{\"code\":\"E_OWNERSHIP_MOVED\",\"help\":[],\"message\":\"owned value `$box` is already moved or unavailable\",\"notes\":[],\"primary\":{\"location\":{\"column\":54,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/double-move.wlt\"},\"message\":\"\",\"span\":{\"end\":183,\"start\":171}},\"related\":[{\"location\":{\"column\":11,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/double-move.wlt\"},\"message\":\"`$box` bound here\",\"span\":{\"end\":132,\"start\":128}},{\"location\":{\"column\":54,\"line\":5,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/double-move.wlt\"},\"message\":\"value first moved here\",\"span\":{\"end\":183,\"start\":171}},{\"location\":{\"column\":18,\"line\":3,\"path\":\"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/double-move.wlt\"},\"message\":\"in expansion of macro `$twice`\",\"span\":{\"end\":102,\"start\":57}}]}],\"ok\":false,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": "",
+    "signal": null
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/delegated-binder.wlt"
+    ],
+    "milliseconds": 5.262500000000728,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/probes/repeated-binders.wlt"
+    ],
+    "milliseconds": 5.670958000002429,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 83.09579200000007,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-0.wasm"
+    ],
+    "milliseconds": 1070.4072919999999,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-0.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 71.24995900000067,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-0.wasm"
+    ],
+    "milliseconds": 837.6411249999983,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-0.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 61.64300000000003,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-0.wasm"
+    ],
+    "milliseconds": 822.1511250000003,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-0.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 74.72166600000128,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-1.wasm"
+    ],
+    "milliseconds": 824.2071660000001,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-1.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 62.905040999998164,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-1.wasm"
+    ],
+    "milliseconds": 848.5954170000005,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-1.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 75.76879199999894,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-1.wasm"
+    ],
+    "milliseconds": 1113.783958,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-1.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 72.04699999999866,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-2.wasm"
+    ],
+    "milliseconds": 1048.6222500000003,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-2.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 76.82637499999691,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-2.wasm"
+    ],
+    "milliseconds": 1061.400625000002,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-2.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 86.18204200000037,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-2.wasm"
+    ],
+    "milliseconds": 1175.5299579999992,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-2.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 85.23108299999876,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-3.wasm"
+    ],
+    "milliseconds": 905.4431659999973,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-3.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 53.988750000004075,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-3.wasm"
+    ],
+    "milliseconds": 756.9192079999993,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-3.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 55.89179200000217,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-3.wasm"
+    ],
+    "milliseconds": 765.2547500000001,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-3.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 52.62395899999683,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-4.wasm"
+    ],
+    "milliseconds": 832.9157909999994,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-4.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 67.0052499999947,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-4.wasm"
+    ],
+    "milliseconds": 836.9209590000028,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-4.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 57.63841700000194,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-4.wasm"
+    ],
+    "milliseconds": 860.6878750000033,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-4.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 64.99883400000544,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-5.wasm"
+    ],
+    "milliseconds": 864.427874999994,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-5.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 70.73166700000002,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-5.wasm"
+    ],
+    "milliseconds": 774.6712919999991,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-5.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 54.56324999999924,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-5.wasm"
+    ],
+    "milliseconds": 735.1877500000046,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-5.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt"
+    ],
+    "milliseconds": 53.09429100000125,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-inline.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-6.wasm"
+    ],
+    "milliseconds": 757.7984169999982,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/inline-6.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt"
+    ],
+    "milliseconds": 53.72741600000154,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-functions.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-6.wasm"
+    ],
+    "milliseconds": 740.5568340000027,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/functions-6.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt"
+    ],
+    "milliseconds": 56.636915999995836,
+    "code": 0,
+    "stdout": "ok\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "build",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/app/main-macros.wlt",
+      "--target",
+      "core",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-6.wasm"
+    ],
+    "milliseconds": 969.2668750000012,
+    "code": 0,
+    "stdout": "Built /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/work/macros-6.wasm\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-1.wlt"
+    ],
+    "milliseconds": 5.237916999998561,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-1.wlt"
+    ],
+    "milliseconds": 4.56854100000055,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-1.wlt"
+    ],
+    "milliseconds": 3.778082999997423,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-1.wlt"
+    ],
+    "milliseconds": 4.3133749999979045,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-1.wlt"
+    ],
+    "milliseconds": 3.8766669999968144,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-1.wlt"
+    ],
+    "milliseconds": 4.033167000001413,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-8.wlt"
+    ],
+    "milliseconds": 3.984166999995068,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-8.wlt"
+    ],
+    "milliseconds": 4.038542000002053,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-8.wlt"
+    ],
+    "milliseconds": 4.393374999999651,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-8.wlt"
+    ],
+    "milliseconds": 5.182540999994671,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-8.wlt"
+    ],
+    "milliseconds": 4.4690409999966505,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-8.wlt"
+    ],
+    "milliseconds": 4.825708000003942,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-32.wlt"
+    ],
+    "milliseconds": 5.129708000000392,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-32.wlt"
+    ],
+    "milliseconds": 4.702375000000757,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-32.wlt"
+    ],
+    "milliseconds": 5.248707999999169,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-32.wlt"
+    ],
+    "milliseconds": 7.595084000000497,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-32.wlt"
+    ],
+    "milliseconds": 7.237874999998894,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-32.wlt"
+    ],
+    "milliseconds": 7.0772910000014235,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-64.wlt"
+    ],
+    "milliseconds": 6.688874999999825,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-64.wlt"
+    ],
+    "milliseconds": 6.683833000002778,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-64.wlt"
+    ],
+    "milliseconds": 7.139417000005778,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-64.wlt"
+    ],
+    "milliseconds": 11.684832999999344,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-64.wlt"
+    ],
+    "milliseconds": 12.014832999993814,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-64.wlt"
+    ],
+    "milliseconds": 11.182583000001614,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-128.wlt"
+    ],
+    "milliseconds": 9.46425000000454,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-128.wlt"
+    ],
+    "milliseconds": 9.519374999996217,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-128.wlt"
+    ],
+    "milliseconds": 9.650082999993174,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-128.wlt"
+    ],
+    "milliseconds": 19.503791999995883,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-128.wlt"
+    ],
+    "milliseconds": 19.41337499999645,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-128.wlt"
+    ],
+    "milliseconds": 19.59962500000256,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-256.wlt"
+    ],
+    "milliseconds": 17.818708999999217,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-256.wlt"
+    ],
+    "milliseconds": 14.486916999994719,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/inline-256.wlt"
+    ],
+    "milliseconds": 14.499083000002429,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-256.wlt"
+    ],
+    "milliseconds": 42.604874999997264,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-256.wlt"
+    ],
+    "milliseconds": 41.588167000001704,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "check",
+      "--json",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r2/snapshot/suite/scaling/macro-256.wlt"
+    ],
+    "milliseconds": 41.794167000000016,
+    "code": 0,
+    "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+    "stderr": ""
+  }
+]

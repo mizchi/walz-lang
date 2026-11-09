@@ -1,0 +1,4949 @@
+{
+  "schema": "wlt-macro-usability-result-v1",
+  "checks": [
+    {
+      "name": "type check application: inline",
+      "passed": true,
+      "milliseconds": 428.987625,
+      "evidence": {
+        "args": [
+          "check",
+          "--json",
+          "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/main-inline.wlt"
+        ],
+        "milliseconds": 428.93050000000005,
+        "code": 0,
+        "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "type check application: functions",
+      "passed": true,
+      "milliseconds": 51.81954100000007,
+      "evidence": {
+        "args": [
+          "check",
+          "--json",
+          "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/main-functions.wlt"
+        ],
+        "milliseconds": 51.81354099999999,
+        "code": 0,
+        "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "type check application: macros",
+      "passed": true,
+      "milliseconds": 57.2595,
+      "evidence": {
+        "args": [
+          "check",
+          "--json",
+          "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/main-macros.wlt"
+        ],
+        "milliseconds": 57.2534169999999,
+        "code": 0,
+        "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "CLI run/test/bench workflow",
+      "passed": true,
+      "milliseconds": 3077.4546659999996,
+      "evidence": {
+        "run": {
+          "args": [
+            "run",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/main-macros.wlt",
+            "--target",
+            "core-js"
+          ],
+          "milliseconds": 1091.182542,
+          "code": 0,
+          "stdout": "\"{\\\"accepted\\\":2,\\\"rejected\\\":1,\\\"totals\\\":{\\\"food\\\":42}}\"\n",
+          "stderr": ""
+        },
+        "test": {
+          "args": [
+            "test",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/macro.test.wlt"
+          ],
+          "milliseconds": 919.1095829999999,
+          "code": 0,
+          "stdout": "test /Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/macro.test.wlt::\"macro JSON application\" ... ok\n1 passed; 0 failed; 0 errors; 0 filtered out\n",
+          "stderr": ""
+        },
+        "bench": {
+          "args": [
+            "bench",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/macro_bench.wlt",
+            "--target",
+            "core-js",
+            "--samples",
+            "3",
+            "--iterations",
+            "5",
+            "--warmup-ms",
+            "0",
+            "--json"
+          ],
+          "milliseconds": 1066.29875,
+          "code": 0,
+          "stdout": "{\n  \"schema\": \"wlt-bench-v1\",\n  \"options\": {\n    \"target\": \"core-js\",\n    \"filter\": null,\n    \"list\": false,\n    \"samples\": 3,\n    \"iterations\": 5,\n    \"warmup_ms\": 0,\n    \"sample_ms\": 10,\n    \"timeout_ms\": 30000\n  },\n  \"benchmarks\": [\n    {\n      \"path\": \"/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/macro_bench.wlt\",\n      \"name\": \"macro JSON validation\",\n      \"span\": {\n        \"start\": 49,\n        \"end\": 136\n      },\n      \"outcome\": {\n        \"status\": \"measured\",\n        \"summary\": {\n          \"iterations\": 5,\n          \"samples_ns\": [\n            231483.4000000005,\n            22383.200000000157,\n            12149.999999999747\n          ],\n          \"min_ns\": 12149.999999999747,\n          \"max_ns\": 231483.4000000005,\n          \"mean_ns\": 88672.20000000013,\n          \"median_ns\": 22383.200000000157,\n          \"std_dev_ns\": 123783.91951154268,\n          \"runtime\": \"Core+JSPI end-to-end; Node.js 24.22.2; V8 13.6.233.17-node.63; darwin/arm64\"\n        }\n      }\n    }\n  ],\n  \"errors\": [],\n  \"filtered_out\": 0\n}\n",
+          "stderr": ""
+        }
+      }
+    },
+    {
+      "name": "inferred generic arguments are visible in expansion",
+      "passed": true,
+      "milliseconds": 57.47491600000012,
+      "evidence": {
+        "checking": {
+          "function_checks": 106,
+          "module_passes": 1,
+          "syntax_node_visits": 24322
+        },
+        "definitions": [
+          {
+            "declaration": {
+              "end": 2463,
+              "start": 2457
+            },
+            "location": {
+              "location": {
+                "column": 11,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 147,
+                "start": 141
+              }
+            },
+            "name": "$wlt-file-1.ok-or",
+            "rules": [
+              "(?value:expr ?error:expr)"
+            ]
+          },
+          {
+            "declaration": {
+              "end": 2622,
+              "start": 2610
+            },
+            "location": {
+              "location": {
+                "column": 11,
+                "line": 8,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 306,
+                "start": 294
+              }
+            },
+            "name": "$wlt-file-1.ok-or.typed",
+            "rules": [
+              "((option ?T:type) ?E:type ?value:expr ?error:expr)"
+            ]
+          }
+        ],
+        "expansions": [
+          {
+            "call": {
+              "end": 3466,
+              "start": 3366
+            },
+            "call_location": {
+              "location": {
+                "column": 18,
+                "line": 13,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 665,
+                "start": 565
+              }
+            },
+            "definition": {
+              "end": 2463,
+              "start": 2457
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 147,
+                "start": 141
+              }
+            },
+            "expanded": "(%$wlt-file-1.ok-or.typed (option text) (ref $wlt-file-0.Error) (call $wlt-core-0-json-value.json.as-string $category-value) (variant.new $wlt-file-0.Error wrong-type \"category\"))",
+            "head": {
+              "end": 3374,
+              "start": 3367
+            },
+            "id": 0,
+            "inferred": {
+              "?Error": "(ref $wlt-file-0.Error)",
+              "?Option": "(option text)"
+            },
+            "inputs": [
+              {
+                "name": "?error",
+                "outputs": [
+                  12
+                ],
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  8
+                ],
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or",
+            "nodes": [
+              {
+                "context": 0,
+                "id": 0,
+                "input": null,
+                "source": {
+                  "end": 3466,
+                  "start": 3366
+                },
+                "template": {
+                  "end": 2597,
+                  "start": 2553
+                }
+              },
+              {
+                "context": 0,
+                "id": 1,
+                "input": null,
+                "source": {
+                  "end": 3374,
+                  "start": 3367
+                },
+                "template": {
+                  "end": 2567,
+                  "start": 2554
+                }
+              },
+              {
+                "context": 0,
+                "id": 2,
+                "input": null,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 3,
+                "input": null,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 4,
+                "input": null,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 5,
+                "input": null,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 6,
+                "input": null,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 7,
+                "input": null,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 8,
+                "input": 7584,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 9,
+                "input": 7585,
+                "source": {
+                  "end": 3380,
+                  "start": 3376
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 10,
+                "input": 7586,
+                "source": {
+                  "end": 3396,
+                  "start": 3381
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 11,
+                "input": 7587,
+                "source": {
+                  "end": 3412,
+                  "start": 3397
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 12,
+                "input": 7588,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 13,
+                "input": 7589,
+                "source": {
+                  "end": 3435,
+                  "start": 3423
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 14,
+                "input": 7590,
+                "source": {
+                  "end": 3442,
+                  "start": 3436
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 15,
+                "input": 7591,
+                "source": {
+                  "end": 3453,
+                  "start": 3443
+                },
+                "template": null
+              },
+              {
+                "context": 0,
+                "id": 16,
+                "input": 7592,
+                "source": {
+                  "end": 3464,
+                  "start": 3454
+                },
+                "template": null
+              }
+            ],
+            "parent": null,
+            "rule": {
+              "end": 2598,
+              "start": 2468
+            },
+            "types": {
+              "?Error": {
+                "kind": "ref",
+                "name": "$wlt-file-0.Error",
+                "nullable": false
+              },
+              "?Option": {
+                "element": {
+                  "kind": "string"
+                },
+                "kind": "option"
+              }
+            }
+          },
+          {
+            "call": {
+              "end": 3466,
+              "start": 3366
+            },
+            "call_location": {
+              "location": {
+                "column": 18,
+                "line": 13,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 665,
+                "start": 565
+              }
+            },
+            "definition": {
+              "end": 2622,
+              "start": 2610
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 8,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 306,
+                "start": 294
+              }
+            },
+            "expanded": "(call ($wlt-core-0-option.option.ok-or text (ref $wlt-file-0.Error)) (call $wlt-core-0-json-value.json.as-string $category-value) (variant.new $wlt-file-0.Error wrong-type \"category\"))",
+            "head": {
+              "end": 3374,
+              "start": 3367
+            },
+            "id": 1,
+            "inferred": {},
+            "inputs": [
+              {
+                "name": "?E",
+                "outputs": [
+                  22
+                ],
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?T",
+                "outputs": [
+                  21
+                ],
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?error",
+                "outputs": [
+                  29
+                ],
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  25
+                ],
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or.typed",
+            "nodes": [
+              {
+                "context": 1,
+                "id": 17,
+                "input": null,
+                "source": {
+                  "end": 3466,
+                  "start": 3366
+                },
+                "template": {
+                  "end": 2738,
+                  "start": 2690
+                }
+              },
+              {
+                "context": 1,
+                "id": 18,
+                "input": null,
+                "source": {
+                  "end": 3374,
+                  "start": 3367
+                },
+                "template": {
+                  "end": 2695,
+                  "start": 2691
+                }
+              },
+              {
+                "context": 1,
+                "id": 19,
+                "input": null,
+                "source": {
+                  "end": 3466,
+                  "start": 3366
+                },
+                "template": {
+                  "end": 2723,
+                  "start": 2696
+                }
+              },
+              {
+                "context": 1,
+                "id": 20,
+                "input": null,
+                "source": {
+                  "end": 3374,
+                  "start": 3367
+                },
+                "template": {
+                  "end": 2716,
+                  "start": 2703
+                }
+              },
+              {
+                "context": 1,
+                "id": 21,
+                "input": 9485,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 22,
+                "input": 9486,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 23,
+                "input": 9487,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 24,
+                "input": 9488,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 25,
+                "input": 9489,
+                "source": {
+                  "end": 3413,
+                  "start": 3375
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 26,
+                "input": 9490,
+                "source": {
+                  "end": 3380,
+                  "start": 3376
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 27,
+                "input": 9491,
+                "source": {
+                  "end": 3396,
+                  "start": 3381
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 28,
+                "input": 9492,
+                "source": {
+                  "end": 3412,
+                  "start": 3397
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 29,
+                "input": 9493,
+                "source": {
+                  "end": 3465,
+                  "start": 3422
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 30,
+                "input": 9494,
+                "source": {
+                  "end": 3435,
+                  "start": 3423
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 31,
+                "input": 9495,
+                "source": {
+                  "end": 3442,
+                  "start": 3436
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 32,
+                "input": 9496,
+                "source": {
+                  "end": 3453,
+                  "start": 3443
+                },
+                "template": null
+              },
+              {
+                "context": 1,
+                "id": 33,
+                "input": 9497,
+                "source": {
+                  "end": 3464,
+                  "start": 3454
+                },
+                "template": null
+              }
+            ],
+            "parent": 0,
+            "rule": {
+              "end": 2739,
+              "start": 2627
+            },
+            "types": {}
+          },
+          {
+            "call": {
+              "end": 3637,
+              "start": 3541
+            },
+            "call_location": {
+              "location": {
+                "column": 21,
+                "line": 16,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 836,
+                "start": 740
+              }
+            },
+            "definition": {
+              "end": 2463,
+              "start": 2457
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 147,
+                "start": 141
+              }
+            },
+            "expanded": "(%$wlt-file-1.ok-or.typed (option text) (ref $wlt-file-0.Error) (call $wlt-core-0-json-value.json.as-number $amount-value) (variant.new $wlt-file-0.Error wrong-type \"amount\"))",
+            "head": {
+              "end": 3549,
+              "start": 3542
+            },
+            "id": 2,
+            "inferred": {
+              "?Error": "(ref $wlt-file-0.Error)",
+              "?Option": "(option text)"
+            },
+            "inputs": [
+              {
+                "name": "?error",
+                "outputs": [
+                  46
+                ],
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  42
+                ],
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or",
+            "nodes": [
+              {
+                "context": 2,
+                "id": 34,
+                "input": null,
+                "source": {
+                  "end": 3637,
+                  "start": 3541
+                },
+                "template": {
+                  "end": 2597,
+                  "start": 2553
+                }
+              },
+              {
+                "context": 2,
+                "id": 35,
+                "input": null,
+                "source": {
+                  "end": 3549,
+                  "start": 3542
+                },
+                "template": {
+                  "end": 2567,
+                  "start": 2554
+                }
+              },
+              {
+                "context": 2,
+                "id": 36,
+                "input": null,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 37,
+                "input": null,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 38,
+                "input": null,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 39,
+                "input": null,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 40,
+                "input": null,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 41,
+                "input": null,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 42,
+                "input": 7604,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 43,
+                "input": 7605,
+                "source": {
+                  "end": 3555,
+                  "start": 3551
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 44,
+                "input": 7606,
+                "source": {
+                  "end": 3571,
+                  "start": 3556
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 45,
+                "input": 7607,
+                "source": {
+                  "end": 3585,
+                  "start": 3572
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 46,
+                "input": 7608,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 47,
+                "input": 7609,
+                "source": {
+                  "end": 3608,
+                  "start": 3596
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 48,
+                "input": 7610,
+                "source": {
+                  "end": 3615,
+                  "start": 3609
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 49,
+                "input": 7611,
+                "source": {
+                  "end": 3626,
+                  "start": 3616
+                },
+                "template": null
+              },
+              {
+                "context": 2,
+                "id": 50,
+                "input": 7612,
+                "source": {
+                  "end": 3635,
+                  "start": 3627
+                },
+                "template": null
+              }
+            ],
+            "parent": null,
+            "rule": {
+              "end": 2598,
+              "start": 2468
+            },
+            "types": {
+              "?Error": {
+                "kind": "ref",
+                "name": "$wlt-file-0.Error",
+                "nullable": false
+              },
+              "?Option": {
+                "element": {
+                  "kind": "string"
+                },
+                "kind": "option"
+              }
+            }
+          },
+          {
+            "call": {
+              "end": 3637,
+              "start": 3541
+            },
+            "call_location": {
+              "location": {
+                "column": 21,
+                "line": 16,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 836,
+                "start": 740
+              }
+            },
+            "definition": {
+              "end": 2622,
+              "start": 2610
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 8,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 306,
+                "start": 294
+              }
+            },
+            "expanded": "(call ($wlt-core-0-option.option.ok-or text (ref $wlt-file-0.Error)) (call $wlt-core-0-json-value.json.as-number $amount-value) (variant.new $wlt-file-0.Error wrong-type \"amount\"))",
+            "head": {
+              "end": 3549,
+              "start": 3542
+            },
+            "id": 3,
+            "inferred": {},
+            "inputs": [
+              {
+                "name": "?E",
+                "outputs": [
+                  56
+                ],
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?T",
+                "outputs": [
+                  55
+                ],
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?error",
+                "outputs": [
+                  63
+                ],
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  59
+                ],
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or.typed",
+            "nodes": [
+              {
+                "context": 3,
+                "id": 51,
+                "input": null,
+                "source": {
+                  "end": 3637,
+                  "start": 3541
+                },
+                "template": {
+                  "end": 2738,
+                  "start": 2690
+                }
+              },
+              {
+                "context": 3,
+                "id": 52,
+                "input": null,
+                "source": {
+                  "end": 3549,
+                  "start": 3542
+                },
+                "template": {
+                  "end": 2695,
+                  "start": 2691
+                }
+              },
+              {
+                "context": 3,
+                "id": 53,
+                "input": null,
+                "source": {
+                  "end": 3637,
+                  "start": 3541
+                },
+                "template": {
+                  "end": 2723,
+                  "start": 2696
+                }
+              },
+              {
+                "context": 3,
+                "id": 54,
+                "input": null,
+                "source": {
+                  "end": 3549,
+                  "start": 3542
+                },
+                "template": {
+                  "end": 2716,
+                  "start": 2703
+                }
+              },
+              {
+                "context": 3,
+                "id": 55,
+                "input": 9514,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 56,
+                "input": 9515,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 57,
+                "input": 9516,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 58,
+                "input": 9517,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 59,
+                "input": 9518,
+                "source": {
+                  "end": 3586,
+                  "start": 3550
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 60,
+                "input": 9519,
+                "source": {
+                  "end": 3555,
+                  "start": 3551
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 61,
+                "input": 9520,
+                "source": {
+                  "end": 3571,
+                  "start": 3556
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 62,
+                "input": 9521,
+                "source": {
+                  "end": 3585,
+                  "start": 3572
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 63,
+                "input": 9522,
+                "source": {
+                  "end": 3636,
+                  "start": 3595
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 64,
+                "input": 9523,
+                "source": {
+                  "end": 3608,
+                  "start": 3596
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 65,
+                "input": 9524,
+                "source": {
+                  "end": 3615,
+                  "start": 3609
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 66,
+                "input": 9525,
+                "source": {
+                  "end": 3626,
+                  "start": 3616
+                },
+                "template": null
+              },
+              {
+                "context": 3,
+                "id": 67,
+                "input": 9526,
+                "source": {
+                  "end": 3635,
+                  "start": 3627
+                },
+                "template": null
+              }
+            ],
+            "parent": 2,
+            "rule": {
+              "end": 2739,
+              "start": 2627
+            },
+            "types": {}
+          },
+          {
+            "call": {
+              "end": 3746,
+              "start": 3654
+            },
+            "call_location": {
+              "location": {
+                "column": 16,
+                "line": 18,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 945,
+                "start": 853
+              }
+            },
+            "definition": {
+              "end": 2463,
+              "start": 2457
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 4,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 147,
+                "start": 141
+              }
+            },
+            "expanded": "(%$wlt-file-1.ok-or.typed (option i64) (ref $wlt-file-0.Error) (call $wlt-core-0-text.string.parse-s64 $amount-text) (variant.new $wlt-file-0.Error invalid-amount))",
+            "head": {
+              "end": 3662,
+              "start": 3655
+            },
+            "id": 4,
+            "inferred": {
+              "?Error": "(ref $wlt-file-0.Error)",
+              "?Option": "(option i64)"
+            },
+            "inputs": [
+              {
+                "name": "?error",
+                "outputs": [
+                  80
+                ],
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  76
+                ],
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or",
+            "nodes": [
+              {
+                "context": 4,
+                "id": 68,
+                "input": null,
+                "source": {
+                  "end": 3746,
+                  "start": 3654
+                },
+                "template": {
+                  "end": 2597,
+                  "start": 2553
+                }
+              },
+              {
+                "context": 4,
+                "id": 69,
+                "input": null,
+                "source": {
+                  "end": 3662,
+                  "start": 3655
+                },
+                "template": {
+                  "end": 2567,
+                  "start": 2554
+                }
+              },
+              {
+                "context": 4,
+                "id": 70,
+                "input": null,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 71,
+                "input": null,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 72,
+                "input": null,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 73,
+                "input": null,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 74,
+                "input": null,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 75,
+                "input": null,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 76,
+                "input": 7617,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 77,
+                "input": 7618,
+                "source": {
+                  "end": 3668,
+                  "start": 3664
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 78,
+                "input": 7619,
+                "source": {
+                  "end": 3686,
+                  "start": 3669
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 79,
+                "input": 7620,
+                "source": {
+                  "end": 3699,
+                  "start": 3687
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 80,
+                "input": 7621,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 81,
+                "input": 7622,
+                "source": {
+                  "end": 3722,
+                  "start": 3710
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 82,
+                "input": 7623,
+                "source": {
+                  "end": 3729,
+                  "start": 3723
+                },
+                "template": null
+              },
+              {
+                "context": 4,
+                "id": 83,
+                "input": 7624,
+                "source": {
+                  "end": 3744,
+                  "start": 3730
+                },
+                "template": null
+              }
+            ],
+            "parent": null,
+            "rule": {
+              "end": 2598,
+              "start": 2468
+            },
+            "types": {
+              "?Error": {
+                "kind": "ref",
+                "name": "$wlt-file-0.Error",
+                "nullable": false
+              },
+              "?Option": {
+                "element": {
+                  "kind": "scalar",
+                  "name": "i64"
+                },
+                "kind": "option"
+              }
+            }
+          },
+          {
+            "call": {
+              "end": 3746,
+              "start": 3654
+            },
+            "call_location": {
+              "location": {
+                "column": 16,
+                "line": 18,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/parse-macros.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 945,
+                "start": 853
+              }
+            },
+            "definition": {
+              "end": 2622,
+              "start": 2610
+            },
+            "definition_location": {
+              "location": {
+                "column": 11,
+                "line": 8,
+                "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/app/syntax.wlt"
+              },
+              "message": "",
+              "span": {
+                "end": 306,
+                "start": 294
+              }
+            },
+            "expanded": "(call ($wlt-core-0-option.option.ok-or i64 (ref $wlt-file-0.Error)) (call $wlt-core-0-text.string.parse-s64 $amount-text) (variant.new $wlt-file-0.Error invalid-amount))",
+            "head": {
+              "end": 3662,
+              "start": 3655
+            },
+            "id": 5,
+            "inferred": {},
+            "inputs": [
+              {
+                "name": "?E",
+                "outputs": [
+                  89
+                ],
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?T",
+                "outputs": [
+                  88
+                ],
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?error",
+                "outputs": [
+                  96
+                ],
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "usage": "single"
+              },
+              {
+                "name": "?value",
+                "outputs": [
+                  92
+                ],
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "usage": "single"
+              }
+            ],
+            "name": "$wlt-file-1.ok-or.typed",
+            "nodes": [
+              {
+                "context": 5,
+                "id": 84,
+                "input": null,
+                "source": {
+                  "end": 3746,
+                  "start": 3654
+                },
+                "template": {
+                  "end": 2738,
+                  "start": 2690
+                }
+              },
+              {
+                "context": 5,
+                "id": 85,
+                "input": null,
+                "source": {
+                  "end": 3662,
+                  "start": 3655
+                },
+                "template": {
+                  "end": 2695,
+                  "start": 2691
+                }
+              },
+              {
+                "context": 5,
+                "id": 86,
+                "input": null,
+                "source": {
+                  "end": 3746,
+                  "start": 3654
+                },
+                "template": {
+                  "end": 2723,
+                  "start": 2696
+                }
+              },
+              {
+                "context": 5,
+                "id": 87,
+                "input": null,
+                "source": {
+                  "end": 3662,
+                  "start": 3655
+                },
+                "template": {
+                  "end": 2716,
+                  "start": 2703
+                }
+              },
+              {
+                "context": 5,
+                "id": 88,
+                "input": 9543,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 89,
+                "input": 9544,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 90,
+                "input": 9545,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 91,
+                "input": 9546,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 92,
+                "input": 9547,
+                "source": {
+                  "end": 3700,
+                  "start": 3663
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 93,
+                "input": 9548,
+                "source": {
+                  "end": 3668,
+                  "start": 3664
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 94,
+                "input": 9549,
+                "source": {
+                  "end": 3686,
+                  "start": 3669
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 95,
+                "input": 9550,
+                "source": {
+                  "end": 3699,
+                  "start": 3687
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 96,
+                "input": 9551,
+                "source": {
+                  "end": 3745,
+                  "start": 3709
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 97,
+                "input": 9552,
+                "source": {
+                  "end": 3722,
+                  "start": 3710
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 98,
+                "input": 9553,
+                "source": {
+                  "end": 3729,
+                  "start": 3723
+                },
+                "template": null
+              },
+              {
+                "context": 5,
+                "id": 99,
+                "input": 9554,
+                "source": {
+                  "end": 3744,
+                  "start": 3730
+                },
+                "template": null
+              }
+            ],
+            "parent": 4,
+            "rule": {
+              "end": 2739,
+              "start": 2627
+            },
+            "types": {}
+          }
+        ],
+        "schema": "wlt-macro-expansion-v1",
+        "type_schema": "wlt-type-info-v1"
+      }
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: core/inline",
+      "passed": true,
+      "milliseconds": 1038.659583,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: core/functions",
+      "passed": true,
+      "milliseconds": 1015.3457079999998,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: core/macros",
+      "passed": true,
+      "milliseconds": 1039.3857909999997,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: component/inline",
+      "passed": true,
+      "milliseconds": 1960.206624999999,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: component/functions",
+      "passed": true,
+      "milliseconds": 1897.8945830000011,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "oracle, changed policy and boundary cleanup: component/macros",
+      "passed": true,
+      "milliseconds": 1909.7750419999993,
+      "evidence": [
+        {
+          "case": "empty",
+          "nonnegative": false,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": false,
+          "rows": 3,
+          "actual": "{\"accepted\":3,\"rejected\":0,\"totals\":{\"work\":-3,\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": false,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": false,
+          "rows": 6,
+          "actual": "{\"accepted\":2,\"rejected\":4,\"totals\":{\"min\":-9223372036854775808,\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": false,
+          "rows": 4,
+          "actual": "{\"accepted\":4,\"rejected\":0,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3,\"quote\\\"\\u000a\":-2}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": false,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": false,
+          "rows": 1500,
+          "actual": "{\"accepted\":1363,\"rejected\":137,\"totals\":{\"group-23\":91,\"group-3\":-90,\"group-10\":-42,\"group-17\":-26,\"group-24\":5,\"group-4\":-70,\"group-21\":46,\"group-1\":-97,\"group-15\":-159,\"group-27\":-173,\"group-7\":188,\"group-19\":86,\"group-13\":-69,\"group-16\":-143,\"group-28\":-216,\"group-8\":74,\"group-25\":-84,\"group-5\":47,\"group-22\":76,\"group-2\":-81,\"group-11\":0,\"group-14\":-168,\"group-0\":-113,\"group-20\":102,\"group-18\":110,\"group-12\":-85,\"group-9\":90,\"group-26\":-87,\"group-6\":164}}"
+        },
+        {
+          "case": "empty",
+          "nonnegative": true,
+          "rows": 0,
+          "actual": "{\"accepted\":0,\"rejected\":0,\"totals\":{}}"
+        },
+        {
+          "case": "ordinary and refunds",
+          "nonnegative": true,
+          "rows": 3,
+          "actual": "{\"accepted\":2,\"rejected\":1,\"totals\":{\"food\":42}}"
+        },
+        {
+          "case": "shape and JSON errors",
+          "nonnegative": true,
+          "rows": 10,
+          "actual": "{\"accepted\":0,\"rejected\":10,\"totals\":{}}"
+        },
+        {
+          "case": "signed limits and atomic overflow",
+          "nonnegative": true,
+          "rows": 6,
+          "actual": "{\"accepted\":1,\"rejected\":5,\"totals\":{\"max\":9223372036854775807}}"
+        },
+        {
+          "case": "Unicode escaped and special keys",
+          "nonnegative": true,
+          "rows": 4,
+          "actual": "{\"accepted\":3,\"rejected\":1,\"totals\":{\"\":0,\"日本😀\":7,\"__proto__\":3}}"
+        },
+        {
+          "case": "last duplicate field wins",
+          "nonnegative": true,
+          "rows": 1,
+          "actual": "{\"accepted\":1,\"rejected\":0,\"totals\":{\"last\":2}}"
+        },
+        {
+          "case": "large mixed batch",
+          "nonnegative": true,
+          "rows": 1500,
+          "actual": "{\"accepted\":681,\"rejected\":819,\"totals\":{\"group-23\":632,\"group-3\":542,\"group-10\":601,\"group-17\":585,\"group-24\":581,\"group-4\":559,\"group-21\":607,\"group-1\":538,\"group-15\":506,\"group-27\":488,\"group-7\":691,\"group-19\":616,\"group-13\":553,\"group-16\":521,\"group-8\":618,\"group-28\":494,\"group-25\":529,\"group-5\":625,\"group-22\":625,\"group-2\":535,\"group-11\":608,\"group-14\":499,\"group-20\":624,\"group-0\":540,\"group-18\":656,\"group-12\":555,\"group-9\":634,\"group-26\":524,\"group-6\":681}}"
+        }
+      ]
+    },
+    {
+      "name": "evaluation order, shadowing and ABI cleanup: core",
+      "passed": true,
+      "milliseconds": 839.9494169999998,
+      "evidence": {
+        "result": 42
+      }
+    },
+    {
+      "name": "macro suspension and queued/running cancellation: core",
+      "passed": true,
+      "milliseconds": 839.8536249999997,
+      "evidence": {
+        "events": [
+          {
+            "type": "timer-start",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 60000
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 60000
+          },
+          {
+            "type": "dispose",
+            "milliseconds": 60000
+          },
+          {
+            "type": "dispose",
+            "milliseconds": 60000
+          }
+        ]
+      }
+    },
+    {
+      "name": "evaluation order, shadowing and ABI cleanup: component",
+      "passed": true,
+      "milliseconds": 1706.184874999999,
+      "evidence": {
+        "result": 42
+      }
+    },
+    {
+      "name": "macro suspension and queued/running cancellation: component",
+      "passed": true,
+      "milliseconds": 1732.4768329999988,
+      "evidence": {
+        "events": [
+          {
+            "type": "timer-start",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer",
+            "milliseconds": 0
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 60000
+          },
+          {
+            "type": "timer-start",
+            "milliseconds": 60000
+          },
+          {
+            "type": "dispose",
+            "milliseconds": 60000
+          },
+          {
+            "type": "dispose",
+            "milliseconds": 60000
+          }
+        ]
+      }
+    },
+    {
+      "name": "static rejection and diagnostic location: wrong-type",
+      "passed": true,
+      "milliseconds": 4.582374999998137,
+      "evidence": {
+        "code": "E_TYPE_MISMATCH",
+        "help": [],
+        "message": "type mismatch: expected i32, got i64",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 16,
+            "line": 4,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/wrong-type.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 155,
+            "start": 141
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 6,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/wrong-type.wlt"
+            },
+            "message": "operand 1 of `i32.add` requires i32",
+            "span": {
+              "end": 140,
+              "start": 131
+            }
+          },
+          {
+            "location": {
+              "column": 20,
+              "line": 2,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/wrong-type.wlt"
+            },
+            "message": "in expansion of macro `$add-one`",
+            "span": {
+              "end": 66,
+              "start": 27
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "static rejection and diagnostic location: effect",
+      "passed": true,
+      "milliseconds": 4.010167000000365,
+      "evidence": {
+        "code": "E_EFFECT_CONTRACT",
+        "help": [
+          "remove the operations exceeding the declared bound, or explicitly allow their effects if intended"
+        ],
+        "message": "effect contract for `$main` exceeded: reads, writes, allocates, suspends, host, synchronizes, blocks, throws(*)",
+        "notes": [
+          "declared: pure; required: reads, writes, allocates, suspends, host, synchronizes, blocks, throws(*)"
+        ],
+        "primary": {
+          "location": {
+            "column": 44,
+            "line": 4,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 156,
+            "start": 142
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires reads",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires writes",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires allocates",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires suspends",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires host",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires synchronizes",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires blocks",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          },
+          {
+            "location": {
+              "column": 59,
+              "line": 4,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/effect.wlt"
+            },
+            "message": "call to `$read` requires throws(*)",
+            "span": {
+              "end": 165,
+              "start": 157
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "static rejection and diagnostic location: double-move",
+      "passed": true,
+      "milliseconds": 3.855959000000439,
+      "evidence": {
+        "code": "E_OWNERSHIP_MOVED",
+        "help": [],
+        "message": "owned value `$box` is already moved or unavailable",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 54,
+            "line": 5,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/double-move.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 183,
+            "start": 171
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 11,
+              "line": 5,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/double-move.wlt"
+            },
+            "message": "`$box` bound here",
+            "span": {
+              "end": 132,
+              "start": 128
+            }
+          },
+          {
+            "location": {
+              "column": 54,
+              "line": 5,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/double-move.wlt"
+            },
+            "message": "value first moved here",
+            "span": {
+              "end": 183,
+              "start": 171
+            }
+          },
+          {
+            "location": {
+              "column": 18,
+              "line": 3,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/double-move.wlt"
+            },
+            "message": "in expansion of macro `$twice`",
+            "span": {
+              "end": 102,
+              "start": 57
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "stdio LSP required behaviors",
+      "passed": true,
+      "milliseconds": 13.999082999998791,
+      "evidence": [
+        {
+          "name": "valid imported binding macro",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "completionProvider": {
+              "triggerCharacters": [
+                "$",
+                ".",
+                "%"
+              ]
+            },
+            "definitionProvider": true,
+            "experimental": {
+              "wltMacroExpansion": true
+            },
+            "hoverProvider": true,
+            "positionEncoding": "utf-16",
+            "textDocumentSync": {
+              "change": 2,
+              "openClose": true,
+              "save": true
+            }
+          }
+        },
+        {
+          "name": "macro signature and cross-file definition",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "hover": {
+              "method": "textDocument/hover",
+              "milliseconds": 0.18454200000269338,
+              "id": 2,
+              "jsonrpc": "2.0",
+              "result": {
+                "contents": {
+                  "kind": "plaintext",
+                  "value": "macro $with (?name:ident ?value:expr ?body:expr)"
+                }
+              }
+            },
+            "definition": {
+              "method": "textDocument/definition",
+              "milliseconds": 0.19200000000273576,
+              "id": 3,
+              "jsonrpc": "2.0",
+              "result": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 14,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 9,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "checked argument binding and lexical definition",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "hover": {
+              "method": "textDocument/hover",
+              "milliseconds": 0.1489159999982803,
+              "id": 4,
+              "jsonrpc": "2.0",
+              "result": {
+                "contents": {
+                  "kind": "plaintext",
+                  "value": "$main: i64"
+                }
+              }
+            },
+            "definition": {
+              "method": "textDocument/definition",
+              "milliseconds": 0.19662500000049477,
+              "id": 5,
+              "jsonrpc": "2.0",
+              "result": [
+                {
+                  "range": {
+                    "end": {
+                      "character": 31,
+                      "line": 3
+                    },
+                    "start": {
+                      "character": 24,
+                      "line": 3
+                    }
+                  },
+                  "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/main.wlt"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "expansion exposes original-file origins",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "method": "wlt/expandMacro",
+            "milliseconds": 0.30929099999775644,
+            "id": 6,
+            "jsonrpc": "2.0",
+            "result": {
+              "checking": {
+                "function_checks": 2,
+                "module_passes": 1,
+                "syntax_node_visits": 107
+              },
+              "definitions": [
+                {
+                  "declaration": {
+                    "end": 333,
+                    "start": 328
+                  },
+                  "location": {
+                    "location": {
+                      "column": 10,
+                      "line": 3,
+                      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                    },
+                    "message": "",
+                    "span": {
+                      "end": 99,
+                      "start": 94
+                    }
+                  },
+                  "name": "$wlt-file-0.next",
+                  "rules": [
+                    "(?value:expr)"
+                  ]
+                },
+                {
+                  "declaration": {
+                    "end": 393,
+                    "start": 388
+                  },
+                  "location": {
+                    "location": {
+                      "column": 10,
+                      "line": 4,
+                      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                    },
+                    "message": "",
+                    "span": {
+                      "end": 159,
+                      "start": 154
+                    }
+                  },
+                  "name": "$wlt-file-0.with",
+                  "rules": [
+                    "(?name:ident ?value:expr ?body:expr)"
+                  ]
+                }
+              ],
+              "expansions": [
+                {
+                  "call": {
+                    "end": 210,
+                    "start": 146
+                  },
+                  "call_location": {
+                    "location": {
+                      "column": 16,
+                      "line": 4,
+                      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/main.wlt"
+                    },
+                    "message": "",
+                    "span": {
+                      "end": 206,
+                      "start": 142
+                    }
+                  },
+                  "definition": {
+                    "end": 393,
+                    "start": 388
+                  },
+                  "definition_location": {
+                    "location": {
+                      "column": 10,
+                      "line": 4,
+                      "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                    },
+                    "message": "",
+                    "span": {
+                      "end": 159,
+                      "start": 154
+                    }
+                  },
+                  "expanded": "(let $macro_scope_0 (+ $seed 40) (+ $macro_scope_0 (%$wlt-file-0.next (i64.const 1))))",
+                  "head": {
+                    "end": 153,
+                    "start": 147
+                  },
+                  "id": 0,
+                  "inferred": {},
+                  "inputs": [
+                    {
+                      "name": "?body",
+                      "outputs": [
+                        7
+                      ],
+                      "source": {
+                        "end": 209,
+                        "start": 175
+                      },
+                      "usage": "single"
+                    },
+                    {
+                      "name": "?name",
+                      "outputs": [
+                        2
+                      ],
+                      "source": {
+                        "end": 161,
+                        "start": 154
+                      },
+                      "usage": "single"
+                    },
+                    {
+                      "name": "?value",
+                      "outputs": [
+                        3
+                      ],
+                      "source": {
+                        "end": 174,
+                        "start": 162
+                      },
+                      "usage": "single"
+                    }
+                  ],
+                  "name": "$wlt-file-0.with",
+                  "nodes": [
+                    {
+                      "context": 0,
+                      "id": 0,
+                      "input": null,
+                      "source": {
+                        "end": 210,
+                        "start": 146
+                      },
+                      "template": {
+                        "end": 481,
+                        "start": 456
+                      }
+                    },
+                    {
+                      "context": 0,
+                      "id": 1,
+                      "input": null,
+                      "source": {
+                        "end": 153,
+                        "start": 147
+                      },
+                      "template": {
+                        "end": 461,
+                        "start": 457
+                      }
+                    },
+                    {
+                      "context": 0,
+                      "id": 2,
+                      "input": 18,
+                      "source": {
+                        "end": 161,
+                        "start": 154
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 3,
+                      "input": 19,
+                      "source": {
+                        "end": 174,
+                        "start": 162
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 4,
+                      "input": 20,
+                      "source": {
+                        "end": 164,
+                        "start": 163
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 5,
+                      "input": 21,
+                      "source": {
+                        "end": 170,
+                        "start": 165
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 6,
+                      "input": 22,
+                      "source": {
+                        "end": 173,
+                        "start": 171
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 7,
+                      "input": 23,
+                      "source": {
+                        "end": 209,
+                        "start": 175
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 8,
+                      "input": 24,
+                      "source": {
+                        "end": 177,
+                        "start": 176
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 9,
+                      "input": 25,
+                      "source": {
+                        "end": 185,
+                        "start": 178
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 10,
+                      "input": 26,
+                      "source": {
+                        "end": 208,
+                        "start": 186
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 11,
+                      "input": 27,
+                      "source": {
+                        "end": 193,
+                        "start": 187
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 12,
+                      "input": 28,
+                      "source": {
+                        "end": 207,
+                        "start": 194
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 13,
+                      "input": 29,
+                      "source": {
+                        "end": 204,
+                        "start": 195
+                      },
+                      "template": null
+                    },
+                    {
+                      "context": 0,
+                      "id": 14,
+                      "input": 30,
+                      "source": {
+                        "end": 206,
+                        "start": 205
+                      },
+                      "template": null
+                    }
+                  ],
+                  "parent": null,
+                  "rule": {
+                    "end": 482,
+                    "start": 394
+                  },
+                  "types": {}
+                }
+              ],
+              "schema": "wlt-macro-expansion-v1",
+              "type_schema": "wlt-type-info-v1"
+            }
+          }
+        },
+        {
+          "name": "broken balanced body keeps current declared scope",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "diagnostics": [
+              {
+                "code": "E_UNKNOWN_LOCAL",
+                "message": "unbound local `$missing`\nhelp: if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use",
+                "range": {
+                  "end": {
+                    "character": 64,
+                    "line": 3
+                  },
+                  "start": {
+                    "character": 56,
+                    "line": 3
+                  }
+                },
+                "relatedInformation": [
+                  {
+                    "location": {
+                      "range": {
+                        "end": {
+                          "character": 31,
+                          "line": 3
+                        },
+                        "start": {
+                          "character": 24,
+                          "line": 3
+                        }
+                      },
+                      "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/main.wlt"
+                    },
+                    "message": "available local `$macro_scope_0`: i64"
+                  },
+                  {
+                    "location": {
+                      "range": {
+                        "end": {
+                          "character": 25,
+                          "line": 2
+                        },
+                        "start": {
+                          "character": 20,
+                          "line": 2
+                        }
+                      },
+                      "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/main.wlt"
+                    },
+                    "message": "available local `$seed`: i64"
+                  },
+                  {
+                    "location": {
+                      "range": {
+                        "end": {
+                          "character": 103,
+                          "line": 3
+                        },
+                        "start": {
+                          "character": 15,
+                          "line": 3
+                        }
+                      },
+                      "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                    },
+                    "message": "in expansion of macro `$with`"
+                  }
+                ],
+                "severity": 1,
+                "source": "wlt"
+              }
+            ],
+            "completion": {
+              "method": "textDocument/completion",
+              "milliseconds": 0.16670800000065356,
+              "id": 7,
+              "jsonrpc": "2.0",
+              "result": [
+                {
+                  "detail": "$main (param $seed i64) (result i64)",
+                  "kind": 3,
+                  "label": "$main"
+                },
+                {
+                  "detail": "binding $seed: i64",
+                  "kind": 6,
+                  "label": "$seed"
+                },
+                {
+                  "detail": "binding $amount (no inferred type)",
+                  "kind": 6,
+                  "label": "$amount"
+                },
+                {
+                  "detail": "macro import selection",
+                  "kind": 14,
+                  "label": "%$next"
+                },
+                {
+                  "detail": "macro import selection",
+                  "kind": 14,
+                  "label": "%$with"
+                }
+              ]
+            },
+            "hover": {
+              "method": "textDocument/hover",
+              "milliseconds": 0.12862500000119326,
+              "id": 8,
+              "jsonrpc": "2.0",
+              "result": {
+                "contents": {
+                  "kind": "plaintext",
+                  "value": "binding $amount (no inferred type)\nDeclared syntax (unverified; no checked type is inferred)"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "unsaved macro dependency invalidates the checked result",
+          "required": true,
+          "achieved": true,
+          "evidence": {
+            "diagnostics": [
+              {
+                "code": "E_TYPE_MISMATCH",
+                "message": "type mismatch: expected i32, got i64",
+                "range": {
+                  "end": {
+                    "character": 40,
+                    "line": 3
+                  },
+                  "start": {
+                    "character": 35,
+                    "line": 3
+                  }
+                },
+                "relatedInformation": [
+                  {
+                    "location": {
+                      "range": {
+                        "end": {
+                          "character": 34,
+                          "line": 3
+                        },
+                        "start": {
+                          "character": 33,
+                          "line": 3
+                        }
+                      },
+                      "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/main.wlt"
+                    },
+                    "message": "operand 1 of `+` requires i32"
+                  },
+                  {
+                    "location": {
+                      "range": {
+                        "end": {
+                          "character": 114,
+                          "line": 3
+                        },
+                        "start": {
+                          "character": 15,
+                          "line": 3
+                        }
+                      },
+                      "uri": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/work/editor/syntax.wlt"
+                    },
+                    "message": "in expansion of macro `$with`"
+                  }
+                ],
+                "severity": 1,
+                "source": "wlt"
+              }
+            ],
+            "expansion": {
+              "method": "wlt/expandMacro",
+              "milliseconds": 0.12270800000260351,
+              "id": 9,
+              "jsonrpc": "2.0",
+              "result": {
+                "checking": {
+                  "function_checks": 0,
+                  "module_passes": 0,
+                  "syntax_node_visits": 0
+                },
+                "definitions": [],
+                "expansions": [],
+                "schema": "wlt-macro-expansion-v1",
+                "type_schema": "wlt-type-info-v1"
+              }
+            }
+          }
+        },
+        {
+          "name": "unfinished imported macro body still offers its introduced name",
+          "required": false,
+          "achieved": true,
+          "evidence": {
+            "method": "textDocument/completion",
+            "milliseconds": 0.13224999999874854,
+            "id": 10,
+            "jsonrpc": "2.0",
+            "result": [
+              {
+                "detail": "$main (param $seed i64) (result i64)",
+                "kind": 3,
+                "label": "$main"
+              },
+              {
+                "detail": "binding $seed: i64",
+                "kind": 6,
+                "label": "$seed"
+              },
+              {
+                "detail": "binding $amount (no inferred type)",
+                "kind": 6,
+                "label": "$amount"
+              },
+              {
+                "detail": "macro import selection",
+                "kind": 14,
+                "label": "%$next"
+              },
+              {
+                "detail": "macro import selection",
+                "kind": 14,
+                "label": "%$with"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "frozen inputs and implementation stayed unchanged",
+      "passed": true,
+      "milliseconds": 37.90833399999974,
+      "evidence": {
+        "files": 42
+      }
+    }
+  ],
+  "exploratory": [
+    {
+      "name": "delegated-binder",
+      "desired": "compile and execute the documented authoring task",
+      "achieved": true,
+      "result": {
+        "args": [
+          "check",
+          "--json",
+          "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/delegated-binder.wlt"
+        ],
+        "milliseconds": 3.6329580000019632,
+        "code": 0,
+        "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "repeated-binders",
+      "desired": "compile and execute the documented authoring task",
+      "achieved": true,
+      "result": {
+        "args": [
+          "check",
+          "--json",
+          "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/probes/repeated-binders.wlt"
+        ],
+        "milliseconds": 3.4858339999991586,
+        "code": 0,
+        "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "name": "unfinished imported macro body still offers its introduced name",
+      "required": false,
+      "achieved": true,
+      "evidence": {
+        "method": "textDocument/completion",
+        "milliseconds": 0.13224999999874854,
+        "id": 10,
+        "jsonrpc": "2.0",
+        "result": [
+          {
+            "detail": "$main (param $seed i64) (result i64)",
+            "kind": 3,
+            "label": "$main"
+          },
+          {
+            "detail": "binding $seed: i64",
+            "kind": 6,
+            "label": "$seed"
+          },
+          {
+            "detail": "binding $amount (no inferred type)",
+            "kind": 6,
+            "label": "$amount"
+          },
+          {
+            "detail": "macro import selection",
+            "kind": 14,
+            "label": "%$next"
+          },
+          {
+            "detail": "macro import selection",
+            "kind": 14,
+            "label": "%$with"
+          }
+        ]
+      }
+    },
+    {
+      "name": "scale inline 1",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-1.wlt"
+          ],
+          "milliseconds": 5.422583999999915,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-1.wlt"
+          ],
+          "milliseconds": 3.852707999998529,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-1.wlt"
+          ],
+          "milliseconds": 5.053124999998545,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 1",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-1.wlt"
+          ],
+          "milliseconds": 4.375125000005937,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-1.wlt"
+          ],
+          "milliseconds": 3.864291999998386,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-1.wlt"
+          ],
+          "milliseconds": 3.601583000003302,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale inline 8",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-8.wlt"
+          ],
+          "milliseconds": 3.88262499999837,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-8.wlt"
+          ],
+          "milliseconds": 3.55304199999955,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-8.wlt"
+          ],
+          "milliseconds": 3.5110419999982696,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 8",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-8.wlt"
+          ],
+          "milliseconds": 4.097333000005165,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-8.wlt"
+          ],
+          "milliseconds": 4.676500000001397,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-8.wlt"
+          ],
+          "milliseconds": 4.484832999994978,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale inline 32",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-32.wlt"
+          ],
+          "milliseconds": 4.975459000001138,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-32.wlt"
+          ],
+          "milliseconds": 4.887792000001355,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-32.wlt"
+          ],
+          "milliseconds": 5.095916999998735,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 32",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-32.wlt"
+          ],
+          "milliseconds": 6.867958000002545,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-32.wlt"
+          ],
+          "milliseconds": 6.931583000005048,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-32.wlt"
+          ],
+          "milliseconds": 6.969250000001921,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale inline 64",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-64.wlt"
+          ],
+          "milliseconds": 6.618708000001789,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-64.wlt"
+          ],
+          "milliseconds": 6.5083749999976135,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-64.wlt"
+          ],
+          "milliseconds": 6.661999999996624,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 64",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-64.wlt"
+          ],
+          "milliseconds": 9.893208000001323,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-64.wlt"
+          ],
+          "milliseconds": 9.71387500000128,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-64.wlt"
+          ],
+          "milliseconds": 9.671125000000757,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale inline 128",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-128.wlt"
+          ],
+          "milliseconds": 8.221207999995386,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-128.wlt"
+          ],
+          "milliseconds": 8.300708000002487,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-128.wlt"
+          ],
+          "milliseconds": 8.20945799999754,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 128",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-128.wlt"
+          ],
+          "milliseconds": 18.14229200000409,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-128.wlt"
+          ],
+          "milliseconds": 18.488332999993872,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-128.wlt"
+          ],
+          "milliseconds": 21.16929099999834,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale inline 256",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-256.wlt"
+          ],
+          "milliseconds": 19.638000000006286,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-256.wlt"
+          ],
+          "milliseconds": 14.709999999999127,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/inline-256.wlt"
+          ],
+          "milliseconds": 14.857542000005196,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "name": "scale macro 256",
+      "desired": "all call sites compile within the existing limits",
+      "achieved": true,
+      "samples": [
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-256.wlt"
+          ],
+          "milliseconds": 43.571124999994936,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-256.wlt"
+          ],
+          "milliseconds": 42.67933300000004,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        },
+        {
+          "args": [
+            "check",
+            "--json",
+            "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-usability-v1-r4/snapshot/suite/scaling/macro-256.wlt"
+          ],
+          "milliseconds": 41.65699999999924,
+          "code": 0,
+          "stdout": "{\"diagnostics\":[],\"ok\":true,\"schema\":\"wlt-check-v1\"}\n",
+          "stderr": ""
+        }
+      ]
+    }
+  ],
+  "sourceMetrics": {
+    "inline": {
+      "consumer": {
+        "lines": 21,
+        "tokens": 207,
+        "maxDepth": 6,
+        "match": 0,
+        "patternLets": 0,
+        "groupedLets": 0,
+        "stateTypeOccurrences": 0
+      },
+      "files": {
+        "main-inline.wlt": {
+          "lines": 5,
+          "tokens": 46,
+          "maxDepth": 3,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "model-inline.wlt": {
+          "lines": 125,
+          "tokens": 840,
+          "maxDepth": 11,
+          "match": 3,
+          "patternLets": 1,
+          "groupedLets": 2,
+          "stateTypeOccurrences": 0
+        },
+        "parse-inline.wlt": {
+          "lines": 21,
+          "tokens": 207,
+          "maxDepth": 6,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "schema.wlt": {
+          "lines": 39,
+          "tokens": 395,
+          "maxDepth": 6,
+          "match": 1,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        }
+      },
+      "totalTokens": 1488,
+      "totalLines": 190
+    },
+    "functions": {
+      "consumer": {
+        "lines": 13,
+        "tokens": 122,
+        "maxDepth": 5,
+        "match": 0,
+        "patternLets": 0,
+        "groupedLets": 0,
+        "stateTypeOccurrences": 0
+      },
+      "files": {
+        "main-functions.wlt": {
+          "lines": 5,
+          "tokens": 46,
+          "maxDepth": 3,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "model-functions.wlt": {
+          "lines": 125,
+          "tokens": 840,
+          "maxDepth": 11,
+          "match": 3,
+          "patternLets": 1,
+          "groupedLets": 2,
+          "stateTypeOccurrences": 0
+        },
+        "parse-functions.wlt": {
+          "lines": 13,
+          "tokens": 122,
+          "maxDepth": 5,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "schema.wlt": {
+          "lines": 39,
+          "tokens": 395,
+          "maxDepth": 6,
+          "match": 1,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        }
+      },
+      "totalTokens": 1403,
+      "totalLines": 182
+    },
+    "macros": {
+      "consumer": {
+        "lines": 20,
+        "tokens": 188,
+        "maxDepth": 6,
+        "match": 0,
+        "patternLets": 0,
+        "groupedLets": 0,
+        "stateTypeOccurrences": 0
+      },
+      "files": {
+        "main-macros.wlt": {
+          "lines": 5,
+          "tokens": 46,
+          "maxDepth": 3,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "model-macros.wlt": {
+          "lines": 125,
+          "tokens": 840,
+          "maxDepth": 11,
+          "match": 3,
+          "patternLets": 1,
+          "groupedLets": 2,
+          "stateTypeOccurrences": 0
+        },
+        "parse-macros.wlt": {
+          "lines": 20,
+          "tokens": 188,
+          "maxDepth": 6,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "schema.wlt": {
+          "lines": 39,
+          "tokens": 395,
+          "maxDepth": 6,
+          "match": 1,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        },
+        "syntax.wlt": {
+          "lines": 11,
+          "tokens": 74,
+          "maxDepth": 5,
+          "match": 0,
+          "patternLets": 0,
+          "groupedLets": 0,
+          "stateTypeOccurrences": 0
+        }
+      },
+      "totalTokens": 1543,
+      "totalLines": 200
+    }
+  },
+  "sizes": [
+    {
+      "backend": "core",
+      "variant": "inline",
+      "file": "core.wasm",
+      "bytes": 24387
+    },
+    {
+      "backend": "core",
+      "variant": "inline",
+      "file": "memory.wasm",
+      "bytes": 1188
+    },
+    {
+      "backend": "core",
+      "variant": "functions",
+      "file": "core.wasm",
+      "bytes": 24456
+    },
+    {
+      "backend": "core",
+      "variant": "functions",
+      "file": "memory.wasm",
+      "bytes": 1188
+    },
+    {
+      "backend": "core",
+      "variant": "macros",
+      "file": "core.wasm",
+      "bytes": 24387
+    },
+    {
+      "backend": "core",
+      "variant": "macros",
+      "file": "memory.wasm",
+      "bytes": 1188
+    },
+    {
+      "backend": "component",
+      "variant": "inline",
+      "file": "component.core.wasm",
+      "bytes": 1194
+    },
+    {
+      "backend": "component",
+      "variant": "inline",
+      "file": "component.core2.wasm",
+      "bytes": 27275
+    },
+    {
+      "backend": "component",
+      "variant": "inline",
+      "file": "component.wasm",
+      "bytes": 30110
+    },
+    {
+      "backend": "component",
+      "variant": "functions",
+      "file": "component.core.wasm",
+      "bytes": 1194
+    },
+    {
+      "backend": "component",
+      "variant": "functions",
+      "file": "component.core2.wasm",
+      "bytes": 27348
+    },
+    {
+      "backend": "component",
+      "variant": "functions",
+      "file": "component.wasm",
+      "bytes": 30183
+    },
+    {
+      "backend": "component",
+      "variant": "macros",
+      "file": "component.core.wasm",
+      "bytes": 1194
+    },
+    {
+      "backend": "component",
+      "variant": "macros",
+      "file": "component.core2.wasm",
+      "bytes": 27275
+    },
+    {
+      "backend": "component",
+      "variant": "macros",
+      "file": "component.wasm",
+      "bytes": 30110
+    }
+  ],
+  "timings": [
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 0,
+      "milliseconds": 53.81279100000029,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 0,
+      "milliseconds": 737.4677090000005,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 0,
+      "milliseconds": 51.62987500000236,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 0,
+      "milliseconds": 731.8386659999996,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 0,
+      "milliseconds": 55.99512500000128,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 0,
+      "milliseconds": 734.450332999997,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 1,
+      "milliseconds": 52.12770900000032,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 1,
+      "milliseconds": 731.5317499999983,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 1,
+      "milliseconds": 56.40925000000061,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 1,
+      "milliseconds": 740.3919580000002,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 1,
+      "milliseconds": 52.41041700000278,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 1,
+      "milliseconds": 740.3347500000018,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 2,
+      "milliseconds": 56.226166000000376,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 2,
+      "milliseconds": 735.3603340000009,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 2,
+      "milliseconds": 52.341082999999344,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 2,
+      "milliseconds": 737.8653329999979,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 2,
+      "milliseconds": 52.09950000000026,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 2,
+      "milliseconds": 727.4659169999977,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 3,
+      "milliseconds": 52.18974999999773,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 3,
+      "milliseconds": 736.6243749999994,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 3,
+      "milliseconds": 51.89150000000154,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 3,
+      "milliseconds": 728.2391250000001,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 3,
+      "milliseconds": 56.11095899999782,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 3,
+      "milliseconds": 737.7297920000019,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 4,
+      "milliseconds": 51.89374999999927,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 4,
+      "milliseconds": 728.4884170000005,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 4,
+      "milliseconds": 56.26100000000224,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 4,
+      "milliseconds": 735.2282919999998,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 4,
+      "milliseconds": 52.53895900000134,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 4,
+      "milliseconds": 735.3319169999995,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 5,
+      "milliseconds": 56.26762500000041,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 5,
+      "milliseconds": 736.4121659999983,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 5,
+      "milliseconds": 52.2455000000009,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 5,
+      "milliseconds": 735.445291,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 5,
+      "milliseconds": 52.120584000000235,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 5,
+      "milliseconds": 729.8342909999992,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "inline",
+      "round": 6,
+      "milliseconds": 52.54175000000032,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "inline",
+      "round": 6,
+      "milliseconds": 737.7990839999984,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "functions",
+      "round": 6,
+      "milliseconds": 52.17220800000359,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "functions",
+      "round": 6,
+      "milliseconds": 734.4325420000023,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "check",
+      "variant": "macros",
+      "round": 6,
+      "milliseconds": 58.04791699999623,
+      "code": 0
+    },
+    {
+      "kind": "cli",
+      "operation": "build",
+      "variant": "macros",
+      "round": 6,
+      "milliseconds": 772.4052920000031,
+      "code": 0
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.12475625000006403
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.12087080000019342
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.11588539999975182
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08996670000015002
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09632290000008652
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09022289999993519
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09203959999977088
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09278125000018918
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09904585000003863
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09415834999999788
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08846669999984443
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09651455000021088
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08852499999993597
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08828960000028019
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09137080000000423
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.0797291499999119
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.07762704999986454
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.0752250000001368
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.0776625000002241
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.0767291500000283
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.07901249999995344
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.07914789999995264
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08225209999982326
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08280625000006694
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "macros",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08345625000001747
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "inline",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09183959999973013
+    },
+    {
+      "kind": "warm-call",
+      "backend": "core",
+      "variant": "functions",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.11754375000018627
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.15161874999976135
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.17673334999999496
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 0,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.13258959999984654
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10996455000022251
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10859999999993306
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 1,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10503124999995635
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10967500000006111
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.11215000000011059
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 2,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.11161664999999629
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10094164999973146
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.12127710000022489
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 3,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10670624999984284
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09940624999981082
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10233960000005027
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 4,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10024164999995264
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09279999999998836
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08953545000003942
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 5,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09460419999995792
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09079789999996138
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09127079999998386
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 6,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09057920000013837
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.10406665000009525
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.1094667000001209
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 7,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.11050414999990607
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "macros",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.0971937499998603
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "inline",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.09033954999977141
+    },
+    {
+      "kind": "warm-call",
+      "backend": "component",
+      "variant": "functions",
+      "round": 8,
+      "iterations": 20,
+      "rows": 128,
+      "milliseconds": 0.08738329999978305
+    }
+  ],
+  "passed": true,
+  "unmetTasks": []
+}

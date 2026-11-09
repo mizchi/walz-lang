@@ -1,0 +1,35 @@
+✔ CLI works outside project, reports incomplete as exit 2, and rejects missing/unknown options (298.40075ms)
+✔ diagnostic suite freezes real messages, rejects originals and checks meaningful controls/repairs (4401.711667ms)
+✔ quality is per-case, audited, and invalidated by changed repairs or stale diagnostics (873.987458ms)
+✔ diagnostic comparisons require the same corpus as well as the same rubric (1227.273042ms)
+✔ source inspection ignores strings/nested comments but rejects live includes (0.986208ms)
+✔ frozen sources execute outside checkout; seed is a negative control and completed candidate passes (22084.428625ms)
+✔ a synchronous Wasm loop is killed and cannot retain a successful verification (5100.991584ms)
+✔ prefixed syntax retains evaluation measurements and frozen include checks (0.385958ms)
+✔ standard type applications and grouped lets keep distinct lexical measurements (0.139458ms)
+✔ v2 distinguishes wrong execution from an unmet exploratory authoring task (0.637125ms)
+✔ v2 scaling holds real call counts constant while changing function distribution (0.631042ms)
+✔ v2 has fixed distinct cases and runtime expectations for accepted positive tasks (0.094084ms)
+✔ v2 never counts a crash, timeout or broken check protocol as an unsupported feature (0.06625ms)
+✔ v2 measures every frozen case including the function variant with no helper definition (5.818458ms)
+✔ macro trial oracle preserves exact integer bounds, duplicate keys and transactional overflow (0.747417ms)
+✔ macro trial does not overwrite prior runs or escape the run root (2.326ms)
+✔ scale inputs change the number of equivalent real call sites (0.197208ms)
+✔ prepare works outside the checkout, freezes dependencies, separates roles and refuses overwrite (72.122708ms)
+✔ score needs audited answers and both executions; it rejects stale review and stale candidate results (246.001ms)
+✔ one weak readability axis or incorrect answers cannot be hidden by a high total (126.478041ms)
+✔ invalid scores and tampered input invalidate summary; differing rubrics are not comparable (198.028875ms)
+✔ reader answers follow the frozen suite contract and older runs remain readable (65.843125ms)
+✔ embedded standard WLT sources participate in the implementation fingerprint (1.327875ms)
+✔ struct literal evaluation freezes counterbalanced packets and rejects tampering (10.647583ms)
+✔ expense oracle keeps exact signed bounds and rejects overflow without committing a row (0.677209ms)
+✔ oracle distinguishes malformed/wrong-type/fractional rows and the changed policy (0.391125ms)
+✔ evaluation IDs cannot escape or overwrite an existing run (1.978667ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34965.816417

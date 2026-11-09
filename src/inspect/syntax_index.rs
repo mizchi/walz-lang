@@ -20,6 +20,7 @@ struct Reference {
 pub(super) struct Index {
     references: Vec<Reference>,
     symbols: Vec<Symbol>,
+    macro_bindings: Vec<(Sexp, Sexp)>,
 }
 fn head(n: &Sexp) -> Option<&str> {
     n.head().map(|s| s.trim_start_matches('%'))
@@ -56,6 +57,34 @@ impl Index {
             .map(|(s, n)| (s.as_str(), n))
             .unwrap_or((source.text(), raw));
         let mut index = Self::default();
+        let mut macros = BTreeMap::new();
+        let mut pending = vec![syntax];
+        while let Some(n) = pending.pop() {
+            if matches!(head(n), Some("macro")) {
+                if let Ok(m) = crate::macros::declaration(text, n)
+                    && let Some(name) = n.list().and_then(|p| p.get(1)).and_then(Sexp::atom)
+                {
+                    macros.insert(name.to_owned(), m);
+                }
+            } else if let Some(p) = n.list() {
+                pending.extend(p);
+            }
+        }
+        let mut pending = vec![syntax];
+        while let Some(n) = pending.pop() {
+            if let Some(m) = n
+                .head()
+                .and_then(|h| h.strip_prefix('%'))
+                .and_then(|n| macros.get(n))
+            {
+                index.macro_bindings.extend(m.editor_bindings(n));
+            }
+            if head(n) != Some("macro")
+                && let Some(p) = n.list()
+            {
+                pending.extend(p);
+            }
+        }
         let mut globals = BTreeMap::new();
         index.declarations(source, text, syntax, "", syntax.span, &mut globals);
         index.bodies(source, text, syntax, "", &globals);
@@ -118,7 +147,7 @@ impl Index {
                     self.declarations(source, text, c, scope, visibility, out)
                 }
             }
-            Some("func" | "closure" | "type" | "type.alias" | "tag" | "memory") => {
+            Some("func" | "closure" | "type" | "type.alias" | "tag" | "memory" | "macro") => {
                 let Some(name) = p.get(1).filter(|n| n.atom().is_some()) else {
                     return;
                 };
@@ -126,13 +155,27 @@ impl Index {
                 let headers = p[2..]
                     .iter()
                     .filter(|n| {
-                        matches!(head(n), Some("param" | "result" | "type.params" | "where"))
+                        matches!(
+                            head(n),
+                            Some("param" | "result" | "type.params" | "where" | "rule")
+                        )
                     })
-                    .map(|n| snippet(text, n))
+                    .map(|n| {
+                        snippet(
+                            text,
+                            if head(n) == Some("rule") {
+                                n.list().and_then(|p| p.get(1)).unwrap_or(n)
+                            } else {
+                                n
+                            },
+                        )
+                    })
                     .collect::<Vec<_>>()
                     .join(" ");
                 let kind = if matches!(head(n), Some("func" | "closure")) {
                     3
+                } else if head(n) == Some("macro") {
+                    14
                 } else {
                     22
                 };
@@ -140,7 +183,14 @@ impl Index {
                     source,
                     text,
                     name,
-                    format!("{identifier} {headers}"),
+                    format!(
+                        "{}{identifier} {headers}",
+                        if head(n) == Some("macro") {
+                            "macro "
+                        } else {
+                            ""
+                        }
+                    ),
                     visibility,
                     kind,
                 ) {
@@ -197,9 +247,20 @@ impl Index {
                             source,
                             source.text(),
                             name,
-                            "explicit import selection".into(),
+                            if head(binding) == Some("macro") {
+                                "macro import selection"
+                            } else {
+                                "explicit import selection"
+                            }
+                            .into(),
                             visibility,
-                            if head(binding) == Some("func") { 3 } else { 22 },
+                            if head(binding) == Some("func") {
+                                3
+                            } else if head(binding) == Some("macro") {
+                                14
+                            } else {
+                                22
+                            },
                         )
                     {
                         self.symbols.push(symbol);
@@ -325,7 +386,34 @@ impl Index {
             return;
         };
         let prior = locals.len();
+        let binders = self
+            .macro_bindings
+            .iter()
+            .filter(|(_, body)| body.span == n.span)
+            .map(|(name, _)| name.clone())
+            .collect::<Vec<_>>();
+        for binder in binders {
+            self.bind(source, text, &binder, None, n.span, locals);
+        }
         match head(n) {
+            Some(name)
+                if name.starts_with('$') && n.head().is_some_and(|h| h.starts_with("%$")) =>
+            {
+                self.reference(
+                    &p[0],
+                    globals.get(&(scope.into(), "macro".into(), name.into())),
+                );
+                for child in &p[1..] {
+                    if self
+                        .macro_bindings
+                        .iter()
+                        .any(|(binder, _)| binder.span == child.span)
+                    {
+                        continue;
+                    }
+                    self.walk(source, text, child, scope, globals, locals);
+                }
+            }
             Some("result" | "type" | "type.params" | "where" | "inst") => {}
             Some("let" | "using") => {
                 if let Some(bindings) = p.get(1).filter(|_| p.len() == 3).and_then(Sexp::list) {
@@ -520,10 +608,24 @@ impl Index {
                     .and_then(|l| l.location.path.as_deref())
                     == Some(path)
                     && offsets.iter().any(|o| contains(s.visibility, *o))
-                    && seen.insert(s.name.clone())
+                    && seen.insert(if s.kind == 14 {
+                        format!("%{}", s.name)
+                    } else {
+                        s.name.clone()
+                    })
             })
             .take(1024)
-            .map(|s| (s.name.clone(), s.detail.clone(), s.kind))
+            .map(|s| {
+                (
+                    if s.kind == 14 {
+                        format!("%{}", s.name)
+                    } else {
+                        s.name.clone()
+                    },
+                    s.detail.clone(),
+                    s.kind,
+                )
+            })
             .collect()
     }
 }

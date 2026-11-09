@@ -1,0 +1,8 @@
+{
+  "source": "snapshot/suite/scaling/macro-256.wlt",
+  "sourceSha256": "4551ffb51a1940db8aedd9070cb8bdc7d18fe4100348847a7ab39ce2a4444bdf",
+  "expansions": 256,
+  "function_checks": 512,
+  "module_passes": 1,
+  "syntax_node_visits": 10242
+}

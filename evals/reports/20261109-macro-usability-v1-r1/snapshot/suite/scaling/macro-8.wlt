@@ -1,0 +1,11 @@
+(module
+ (%macro $double (rule (?x:expr) (infer (?T ?x)) (when (Add ?x)) (%let $value (type ?T) ?x (+ $value $value))))
+ (func $f0 (export "f0") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f1 (export "f1") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f2 (export "f2") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f3 (export "f3") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f4 (export "f4") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f5 (export "f5") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f6 (export "f6") (param $x i64) (result i64) (%effect pure) (%$double $x))
+ (func $f7 (export "f7") (param $x i64) (result i64) (%effect pure) (%$double $x))
+)

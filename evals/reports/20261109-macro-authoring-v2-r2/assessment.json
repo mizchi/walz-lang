@@ -1,0 +1,375 @@
+{
+  "perspective": "nonblind implementer authoring evaluation",
+  "requiredPassed": 11,
+  "requiredTotal": 11,
+  "acceptedPrograms": 12,
+  "exportResultsPerEngine": 15,
+  "engines": [
+    "Wasmtime",
+    "V8"
+  ],
+  "unmet": [
+    "sequential-binding-dsl",
+    "repeated-result-do",
+    "wrapped-body-delegation",
+    "scale-single-512"
+  ],
+  "correctnessFailures": [],
+  "optionVariants": [
+    {
+      "name": "option-function",
+      "consumerTokens": 35,
+      "definitionTokens": 0,
+      "totalTokens": 154,
+      "wasmBytes": 592,
+      "wasmSha256": "61f4d6aab235343ce3e739995865b213bdd92da5ad3b8efd14758222cc3400db"
+    },
+    {
+      "name": "option-inferred-macro",
+      "consumerTokens": 34,
+      "definitionTokens": 17,
+      "totalTokens": 170,
+      "wasmBytes": 592,
+      "wasmSha256": "61f4d6aab235343ce3e739995865b213bdd92da5ad3b8efd14758222cc3400db"
+    },
+    {
+      "name": "option-projected-macro",
+      "consumerTokens": 34,
+      "definitionTokens": 36,
+      "totalTokens": 189,
+      "wasmBytes": 592,
+      "wasmSha256": "61f4d6aab235343ce3e739995865b213bdd92da5ad3b8efd14758222cc3400db"
+    }
+  ],
+  "scaling": [
+    {
+      "name": "scale-single-32",
+      "count": 32,
+      "shape": "single",
+      "achieved": true,
+      "medianMs": 17.553042000000005,
+      "checking": {
+        "function_checks": 33,
+        "module_passes": 1,
+        "syntax_node_visits": 21332
+      },
+      "wasmBytes": 694
+    },
+    {
+      "name": "scale-separate-32",
+      "count": 32,
+      "shape": "separate",
+      "achieved": true,
+      "medianMs": 5.971291000000065,
+      "checking": {
+        "function_checks": 65,
+        "module_passes": 1,
+        "syntax_node_visits": 1210
+      },
+      "wasmBytes": 99
+    },
+    {
+      "name": "scale-single-128",
+      "count": 128,
+      "shape": "single",
+      "achieved": true,
+      "medianMs": 203.0977499999999,
+      "checking": {
+        "function_checks": 129,
+        "module_passes": 1,
+        "syntax_node_visits": 331028
+      },
+      "wasmBytes": 2644
+    },
+    {
+      "name": "scale-separate-128",
+      "count": 128,
+      "shape": "separate",
+      "achieved": true,
+      "medianMs": 16.550792,
+      "checking": {
+        "function_checks": 257,
+        "module_passes": 1,
+        "syntax_node_visits": 4762
+      },
+      "wasmBytes": 99
+    },
+    {
+      "name": "scale-single-256",
+      "count": 256,
+      "shape": "single",
+      "achieved": true,
+      "medianMs": 776.508292,
+      "checking": {
+        "function_checks": 257,
+        "module_passes": 1,
+        "syntax_node_visits": 1317396
+      },
+      "wasmBytes": 5844
+    },
+    {
+      "name": "scale-separate-256",
+      "count": 256,
+      "shape": "separate",
+      "achieved": true,
+      "medianMs": 35.716082999999344,
+      "checking": {
+        "function_checks": 513,
+        "module_passes": 1,
+        "syntax_node_visits": 9498
+      },
+      "wasmBytes": 99
+    },
+    {
+      "name": "scale-single-512",
+      "count": 512,
+      "shape": "single",
+      "achieved": false,
+      "medianMs": 1343.0923750000002,
+      "diagnostic": "E_MACRO_LIMIT"
+    },
+    {
+      "name": "scale-separate-512",
+      "count": 512,
+      "shape": "separate",
+      "achieved": true,
+      "medianMs": 104.4516249999997,
+      "checking": {
+        "function_checks": 1025,
+        "module_passes": 1,
+        "syntax_node_visits": 18970
+      },
+      "wasmBytes": 99
+    }
+  ],
+  "unsupported": [
+    {
+      "name": "sequential-binding-dsl",
+      "diagnostic": {
+        "code": "E_UNKNOWN_LOCAL",
+        "help": [
+          "if an existing binding was intended, use one of the available local names; otherwise introduce a binding with let before this use"
+        ],
+        "message": "unbound local `$a`",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 45,
+            "line": 6,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 252,
+            "start": 250
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 19,
+              "line": 6,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+            },
+            "message": "available local `$macro_scope_0`: i32",
+            "span": {
+              "end": 226,
+              "start": 224
+            }
+          },
+          {
+            "location": {
+              "column": 5,
+              "line": 2,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/sequential-binding-dsl.wlt"
+            },
+            "message": "in expansion of macro `$bindings`",
+            "span": {
+              "end": 146,
+              "start": 30
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "repeated-result-do",
+      "diagnostic": {
+        "code": "E_MACRO",
+        "help": [],
+        "message": "repeated variable must occur in a repeated template",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 43,
+            "line": 4,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/repeated-result-do.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 166,
+            "start": 160
+          }
+        },
+        "related": []
+      }
+    },
+    {
+      "name": "wrapped-body-delegation",
+      "diagnostic": {
+        "code": "E_MACRO_BINDING",
+        "help": [],
+        "message": "declared body is outside its binder's lexical scope",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 66,
+            "line": 5,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/wrapped-body-delegation.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 249,
+            "start": 244
+          }
+        },
+        "related": []
+      }
+    },
+    {
+      "name": "scale-single-512",
+      "diagnostic": {
+        "code": "E_MACRO_LIMIT",
+        "help": [],
+        "message": "macro elaboration work limit exceeded",
+        "notes": [],
+        "primary": {
+          "location": {
+            "column": 2245,
+            "line": 4,
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+          },
+          "message": "",
+          "span": {
+            "end": 2431,
+            "start": 2423
+          }
+        },
+        "related": [
+          {
+            "location": {
+              "column": 25,
+              "line": 1,
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2/snapshot/programs/scale-single-512.wlt"
+            },
+            "message": "in expansion of macro `$double`",
+            "span": {
+              "end": 121,
+              "start": 24
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "rubric": [
+    {
+      "axis": "consumer-readability",
+      "score": 3,
+      "evidence": "The ordinary call has 35 consumer tokens, no helper definition and the smallest total source. All three variants execute the same success/failure paths. This task does not establish a macro readability advantage."
+    },
+    {
+      "axis": "authoring",
+      "score": 3,
+      "evidence": "Ordinary generic inference and public option.element avoid internal normalized type patterns; independent repeated binders compose after a documentation lookup."
+    },
+    {
+      "axis": "composition",
+      "score": 2,
+      "evidence": "Independent repeated binders and direct delegation pass. Sequential initializer dependencies, the tested Result.do template and a reconstructed delegated body remain unmet under current documented boundaries."
+    },
+    {
+      "axis": "static-guarantees",
+      "score": 4,
+      "evidence": "Within the tested subset: caller-scope initializer returns 41, duplicate binders are rejected, 12 accepted programs and 15 export results per engine agree with expectations. Paired v1 checks type/effect/ownership rejection, ABI cleanup and cancellation. Not a proof for arbitrary programs."
+    },
+    {
+      "axis": "diagnostics-editor",
+      "score": 2,
+      "evidence": "Paired v1 stdio LSP passes. New unsupported cases have generic or empty help and need documentation/implementation knowledge for trailing repetition and whole-fragment forwarding. No new v2 editor coverage."
+    },
+    {
+      "axis": "cost-scale",
+      "score": 2,
+      "evidence": "512 distributed expansions pass; 512 expansions in one function hit the unchanged work limit. At 256 expansions syntax visits are 1,317,396 versus 9,498. No runtime speed benchmark in v2."
+    }
+  ],
+  "codeSections": {
+    "scale-single-256": [
+      {
+        "id": 1,
+        "length": 5
+      },
+      {
+        "id": 3,
+        "length": 2
+      },
+      {
+        "id": 7,
+        "length": 8
+      },
+      {
+        "id": 10,
+        "length": 3722
+      },
+      {
+        "id": 0,
+        "length": 2087,
+        "name": "name",
+        "contentBytes": 2082
+      }
+    ],
+    "scale-separate-256": [
+      {
+        "id": 1,
+        "length": 10
+      },
+      {
+        "id": 3,
+        "length": 3
+      },
+      {
+        "id": 7,
+        "length": 8
+      },
+      {
+        "id": 10,
+        "length": 25
+      },
+      {
+        "id": 0,
+        "length": 35,
+        "name": "name",
+        "contentBytes": 30
+      }
+    ]
+  },
+  "priorities": [
+    "Reuse checked expressions inside a function with dependency invalidation and final module checks.",
+    "Explain trailing repetition, complete-body forwarding and caller-scope initializer rules in diagnostics.",
+    "Investigate dead scalar let/local elimination while preserving traps, exceptions and ownership checks.",
+    "Evaluate a recursive Result-binding macro before extending language syntax."
+  ],
+  "limitations": [
+    "Nonblind implementer evaluation; no independent reader or human productivity measurement.",
+    "CLI measurements include startup/loading, three repeats and fixed case order. No universal speed claim.",
+    "Single-function and distributed sources have different runtime reachability; code size does not compare identical runtime workloads.",
+    "Unsupported exploratory programs are not automatically compiler defects. Alternative recursive Result macros were not evaluated.",
+    "v2 differs from v1; no score-delta comparison or aggregate rubric score."
+  ],
+  "harnessFailure": {
+    "run": "20261109-macro-authoring-v2-r1",
+    "compilerVerdict": null,
+    "reason": "Empty helper-definition syntax metrics caused unclosed module after the first program executed. Fixed evaluator only (cases.mjs metrics helper and run.mjs), started a new run. Programs, expected values, plan, contract and rubric stayed the same."
+  }
+}

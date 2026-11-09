@@ -1,0 +1,18 @@
+{
+  "verifiedAt": "2026-11-09T03:42:07.812Z",
+  "implementationUnchanged": true,
+  "binarySha256": "1f8460ddd1e2eed0d640fea08b4ab1e5cd13ebcff311fc201bbeb73c29214d0b",
+  "sourceFiles": 274,
+  "legacyFingerprintsVerified": 2830,
+  "priorArchiveInputsVerified": true,
+  "v1InputsIdenticalToR2": true,
+  "v1InputFiles": 42,
+  "v2InputFiles": 27,
+  "v2SameTaskFilesAsAbortedR1": 20,
+  "v2CompressedOutputsVerified": 12,
+  "v2RepeatOutcomesConsistent": true,
+  "harnessTests": {
+    "passed": 27,
+    "failed": 0
+  }
+}

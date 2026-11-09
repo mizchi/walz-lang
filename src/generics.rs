@@ -1,11 +1,14 @@
-//! Explicit, bounded source monomorphization. Only concrete declarations reach
+//! Bounded source monomorphization for explicit applications and inferred calls.
+//! Only concrete declarations reach
 //! the existing type/effect/ownership checkers and executable IR.
+mod inference;
 use crate::{
     Error,
     ir::Span,
     sexpr::{Kind, Sexp},
     type_syntax::{self, ReferenceKind},
 };
+pub(crate) use inference::{Call as InferredCall, Inference};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 const MAX_INSTANCES: usize = 1024;
@@ -90,6 +93,7 @@ pub(crate) struct Expanded {
     pub origins: BTreeMap<String, String>,
     pub bounds: Vec<crate::bounds::Site>,
     pub(crate) instances: Vec<(Span, Span, String, String)>,
+    pub(crate) macros: crate::macros::Report,
 }
 impl Expanded {
     pub fn annotate(&self, source: &str, mut error: Error) -> Error {
@@ -128,11 +132,13 @@ struct Expander<'a> {
     aliases: BTreeMap<String, Sexp>,
     cache: BTreeMap<(usize, Vec<String>), String>,
     active: Vec<usize>,
+    ancestries: BTreeMap<String, Vec<usize>>,
     pending: VecDeque<(Sexp, Vec<usize>, Span)>,
     output: Vec<Sexp>,
     origins: BTreeMap<String, String>,
     instances: Vec<(Span, Span, String, String)>,
     nodes: usize,
+    check_work: usize,
     bounds: Vec<crate::bounds::Site>,
 }
 
@@ -245,6 +251,14 @@ impl Expander<'_> {
             ));
         };
         let template = self.templates[index].clone();
+        // Only ordinary functions can be inferred by the expression checker.
+        // Type applications and closure constructors remain explicit.
+        if node.atom().is_some()
+            && function == ReferenceKind::Function
+            && template.syntax.head() == Some("func")
+        {
+            return Ok(node.clone());
+        }
         let args = node.list().map(|p| &p[1..]).unwrap_or(&[]);
         if node.atom().is_some() || args.len() != template.parameters.len() {
             return Err(self
@@ -347,6 +361,7 @@ impl Expander<'_> {
             }
             let mut ancestry = self.active.clone();
             ancestry.push(index);
+            self.ancestries.insert(concrete.clone(), ancestry.clone());
             self.pending.push_back((syntax, ancestry, node.span));
             concrete
         };
@@ -357,6 +372,7 @@ impl Expander<'_> {
             concrete.clone(),
         ));
         Ok(Sexp {
+            context: node.context,
             kind: Kind::Atom(concrete),
             span: node.span,
         })
@@ -382,6 +398,36 @@ impl Expander<'_> {
 }
 
 pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
+    start(source, root).map(|(expanded, _)| expanded)
+}
+
+pub(crate) struct Session<'a>(Expander<'a>);
+
+impl Session<'_> {
+    /// Macro output may request new concrete applications. Reuse the same
+    /// specialization cache and limits instead of guessing possible types.
+    pub fn refresh(&mut self, expanded: &mut Expanded) -> Result<(), Error> {
+        let e = &mut self.0;
+        e.active.clear();
+        e.walk(&mut expanded.syntax)?;
+        while let Some((mut syntax, ancestry, requested)) = e.pending.pop_front() {
+            e.active = ancestry;
+            e.walk(&mut syntax).map_err(|error| {
+                error.related(e.source, requested, "specialization requested here")
+            })?;
+            e.output.push(syntax);
+        }
+        if let Kind::List(items) = &mut expanded.syntax.kind {
+            items.append(&mut e.output);
+        }
+        expanded.origins.clone_from(&e.origins);
+        expanded.instances.clone_from(&e.instances);
+        expanded.bounds.clone_from(&e.bounds);
+        Ok(())
+    }
+}
+
+pub(crate) fn start<'a>(source: &'a str, root: &Sexp) -> Result<(Expanded, Session<'a>), Error> {
     let Some(items) = root.list().filter(|_| root.head() == Some("module")) else {
         return Err(Error::at(source, root.span, "expected (module ...)"));
     };
@@ -394,11 +440,13 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         aliases: BTreeMap::new(),
         cache: BTreeMap::new(),
         active: vec![],
+        ancestries: BTreeMap::new(),
         pending: VecDeque::new(),
         output: vec![],
         origins: BTreeMap::new(),
         instances: vec![],
         nodes: 0,
+        check_work: 0,
         bounds: vec![],
     };
     e.charge(root)?;
@@ -503,18 +551,22 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         parts.insert(
             2,
             Sexp {
+                context: Default::default(),
                 kind: Kind::List(export.list().unwrap()[..2].to_vec()),
                 span: export.span,
             },
         );
     }
-    Ok(Expanded {
+    let expanded = Expanded {
         syntax: Sexp {
+            context: Default::default(),
             kind: Kind::List(ordinary),
             span: root.span,
         },
-        origins: e.origins,
-        instances: e.instances,
-        bounds: e.bounds,
-    })
+        origins: e.origins.clone(),
+        instances: e.instances.clone(),
+        bounds: e.bounds.clone(),
+        macros: Default::default(),
+    };
+    Ok((expanded, Session(e)))
 }

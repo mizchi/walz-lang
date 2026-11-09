@@ -1,0 +1,161 @@
+{
+  "perspective": "nonblind implementer follow-up; no rubric rescore",
+  "environment": {
+    "cpu": "Apple M5",
+    "node": "v24.22.2",
+    "rust": "1.99.0",
+    "cliProfile": "dev; process startup and source loading included"
+  },
+  "requiredPassed": 20,
+  "requiredTotal": 20,
+  "unmet": [],
+  "sameFrozenSuiteFiles": 38,
+  "cli": [
+    {
+      "variant": "inline",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 75.76879199999894,
+      "minMs": 53.09429100000125,
+      "maxMs": 85.23108299999876
+    },
+    {
+      "variant": "inline",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 905.4431659999973,
+      "minMs": 757.7984169999982,
+      "maxMs": 1113.783958
+    },
+    {
+      "variant": "functions",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 54.56324999999924,
+      "minMs": 52.62395899999683,
+      "maxMs": 86.18204200000037
+    },
+    {
+      "variant": "functions",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 824.2071660000001,
+      "minMs": 735.1877500000046,
+      "maxMs": 1175.5299579999992
+    },
+    {
+      "variant": "macros",
+      "operation": "check",
+      "samples": 7,
+      "medianMs": 62.905040999998164,
+      "minMs": 55.89179200000217,
+      "maxMs": 72.04699999999866
+    },
+    {
+      "variant": "macros",
+      "operation": "build",
+      "samples": 7,
+      "medianMs": 848.5954170000005,
+      "minMs": 765.2547500000001,
+      "maxMs": 1048.6222500000003
+    }
+  ],
+  "scaling": [
+    {
+      "name": "scale inline 1",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.56854100000055
+    },
+    {
+      "name": "scale macro 1",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.033167000001413
+    },
+    {
+      "name": "scale inline 8",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.038542000002053
+    },
+    {
+      "name": "scale macro 8",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.825708000003942
+    },
+    {
+      "name": "scale inline 32",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 5.129708000000392
+    },
+    {
+      "name": "scale macro 32",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 7.237874999998894
+    },
+    {
+      "name": "scale inline 64",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 6.688874999999825
+    },
+    {
+      "name": "scale macro 64",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 11.684832999999344
+    },
+    {
+      "name": "scale inline 128",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 9.519374999996217
+    },
+    {
+      "name": "scale macro 128",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 19.503791999995883
+    },
+    {
+      "name": "scale inline 256",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 14.499083000002429
+    },
+    {
+      "name": "scale macro 256",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 41.794167000000016
+    }
+  ],
+  "counters": {
+    "source": "snapshot/suite/scaling/macro-256.wlt",
+    "sourceSha256": "4551ffb51a1940db8aedd9070cb8bdc7d18fe4100348847a7ab39ce2a4444bdf",
+    "expansions": 256,
+    "function_checks": 512,
+    "module_passes": 1,
+    "syntax_node_visits": 10242
+  },
+  "artifactHashes": {
+    "core-inline.wasm": "667e61a2f2fa5eb5e22f2029efbcac4e27bbbce7a3121549dd9b66174e770f22",
+    "core-functions.wasm": "457182f25254f8f619caf9b40e8b228c583da2a1e605f184d3f2b81519de6021",
+    "core-macros.wasm": "9bb03584e85dfb64a320b38553566160c939c41a679da23604c8f6a15f0485e3",
+    "component-inline.wasm": "ba0f01a6ffd6522503e95a0cb22647bb9e8948fada72ae1988bc041ce0e677f5",
+    "component-functions.wasm": "ea568a6d15943d7edb3ca4d691e4ee783516e2376085f4dcb17b714ac1920d9d",
+    "component-macros.wasm": "89dbfc9778c79b46f6f62117d651c8839c312849093fa082bb825bf16c27017b"
+  },
+  "sameArtifactsAsR1": [
+    "core-inline.wasm",
+    "core-functions.wasm",
+    "core-macros.wasm",
+    "component-inline.wasm",
+    "component-functions.wasm",
+    "component-macros.wasm"
+  ]
+}

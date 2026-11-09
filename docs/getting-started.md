@@ -13,7 +13,7 @@ Wasm GC と静的解析を前提に、標準 WAT を基底として型付きマ�
 
 `$bytes` / `$string` は不変な値で、Component の `list<u8>` / `string` と相互変換できます。
 相対パスの `%use` / `%export` で関数・型・tag を選択し、単一 Wasm に静的リンクできます。[モジュールと DCE](static-modules.md) に規約をまとめています。
-[文法チートシート](../CHEATSHEET.md) に型・式・所有値・固定マクロと実行手順をまとめています。
+[文法チートシート](../CHEATSHEET.md) に型・式・所有値・衛生的マクロと実行手順をまとめています。
 [初見評価の記録](grammar-eval/REPORT.md) は、在庫台帳の読解と変更を固定ルーブリックで確かめたものです。
 [可読性の評価と改善](readability/REPORT.md) では、型の反復・入れ子・配置・変更の追いやすさを別に評価しています。
 [evals/](../evals/README.md) に評価を繰り返す課題・基準・スナップショット作成・実行検証をまとめています。`just eval-prepare ID` で新しい評価回を作れます。

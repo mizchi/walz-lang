@@ -1,0 +1,23 @@
+{
+  "abi": "wlt-core-js-v2",
+  "asyncScopes": true,
+  "imports": [
+    {
+      "capability": "clock",
+      "effects": {
+        "host": true,
+        "suspends": false
+      },
+      "jsName": "deferI64",
+      "module": "wlt:host/event-loop@0.1.0",
+      "name": "defer-i64",
+      "params": [
+        "i32",
+        "i64"
+      ],
+      "resource": null,
+      "result": "(future i64)"
+    }
+  ],
+  "readables": true
+}

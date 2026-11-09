@@ -1,0 +1,32 @@
+{
+  "verifiedAt": "2026-11-09T04:08:07.848Z",
+  "wasmIdenticalForPreviousPrograms": 12,
+  "resultsIdenticalForPreviousPrograms": true,
+  "rust": {
+    "passed": 605,
+    "failed": 0,
+    "ignored": 1
+  },
+  "language": {
+    "passed": 47
+  },
+  "fuzz": {
+    "seed": 20261109,
+    "randomCases": 64,
+    "fixedCases": 13
+  },
+  "runtime": {
+    "passed": 2,
+    "backends": [
+      "core",
+      "component"
+    ]
+  },
+  "chromium": {
+    "passed": 2
+  },
+  "fmt": true,
+  "clippy": true,
+  "wasm32Web": true,
+  "validNested24": true
+}

@@ -1,0 +1,176 @@
+[
+  {
+    "name": "option-function",
+    "required": true,
+    "expected": {
+      "main": "42",
+      "fallback": "-7"
+    },
+    "comparison": "option-to-result",
+    "definitions": "",
+    "consumer": "(func $read (param $value (%inst $option i64))\n    (result (%inst $result i64 i32)) (%effect pure)\n    (call $option.ok-or $value (i32.const 7)))",
+    "file": "programs/option-function.wlt"
+  },
+  {
+    "name": "option-inferred-macro",
+    "required": true,
+    "expected": {
+      "main": "42",
+      "fallback": "-7"
+    },
+    "comparison": "option-to-result",
+    "definitions": "(%macro $ok-or (rule (?value:expr ?error:expr)\n      (call $option.ok-or ?value ?error)))",
+    "consumer": "(func $read (param $value (%inst $option i64))\n    (result (%inst $result i64 i32)) (%effect pure)\n    (%$ok-or $value (i32.const 7)))",
+    "file": "programs/option-inferred-macro.wlt"
+  },
+  {
+    "name": "option-projected-macro",
+    "required": true,
+    "expected": {
+      "main": "42",
+      "fallback": "-7"
+    },
+    "comparison": "option-to-result",
+    "definitions": "(%macro $ok-or (rule (?value:expr ?error:expr)\n      (infer (?T (option.element ?value)) (?E ?error))\n      (call (%inst $option.ok-or ?T ?E) ?value ?error)))",
+    "consumer": "(func $read (param $value (%inst $option i64))\n    (result (%inst $result i64 i32)) (%effect pure)\n    (%$ok-or $value (i32.const 7)))",
+    "file": "programs/option-projected-macro.wlt"
+  },
+  {
+    "name": "delegated-independent-bindings",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "file": "programs/delegated-independent-bindings.wlt"
+  },
+  {
+    "name": "initializer-caller-scope",
+    "required": true,
+    "expected": {
+      "main": "41"
+    },
+    "file": "programs/initializer-caller-scope.wlt"
+  },
+  {
+    "name": "duplicate-binding-rejected",
+    "required": true,
+    "reject": "E_MACRO_BINDING",
+    "file": "programs/duplicate-binding-rejected.wlt"
+  },
+  {
+    "name": "sequential-binding-dsl",
+    "required": false,
+    "expected": {
+      "main": "42"
+    },
+    "desired": "A let-like user DSL allows a later initializer to reference the earlier introduced name. This is beyond the documented caller-scope contract.",
+    "file": "programs/sequential-binding-dsl.wlt"
+  },
+  {
+    "name": "repeated-result-do",
+    "required": false,
+    "expected": {
+      "main": "42",
+      "fallback": "-7"
+    },
+    "desired": "Repeat Result bindings, exposing successful payloads to the final body and short-circuiting errors.",
+    "file": "programs/repeated-result-do.wlt"
+  },
+  {
+    "name": "wrapped-body-delegation",
+    "required": false,
+    "expected": {
+      "main": "42"
+    },
+    "desired": "An outer binding macro wraps the forwarded body in an ordinary block. Current docs promise whole-fragment forwarding only.",
+    "file": "programs/wrapped-body-delegation.wlt"
+  },
+  {
+    "name": "scale-single-32",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "single",
+    "count": 32,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-single-32.wlt"
+  },
+  {
+    "name": "scale-separate-32",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "separate",
+    "count": 32,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-separate-32.wlt"
+  },
+  {
+    "name": "scale-single-128",
+    "required": false,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "single",
+    "count": 128,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-single-128.wlt"
+  },
+  {
+    "name": "scale-separate-128",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "separate",
+    "count": 128,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-separate-128.wlt"
+  },
+  {
+    "name": "scale-single-256",
+    "required": false,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "single",
+    "count": 256,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-single-256.wlt"
+  },
+  {
+    "name": "scale-separate-256",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "separate",
+    "count": 256,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-separate-256.wlt"
+  },
+  {
+    "name": "scale-single-512",
+    "required": false,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "single",
+    "count": 512,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-single-512.wlt"
+  },
+  {
+    "name": "scale-separate-512",
+    "required": true,
+    "expected": {
+      "main": "42"
+    },
+    "shape": "separate",
+    "count": 512,
+    "desired": "Compile and execute a fixed number of macro calls within the existing budgets; vary only their distribution across functions.",
+    "file": "programs/scale-separate-512.wlt"
+  }
+]

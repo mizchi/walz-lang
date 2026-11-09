@@ -1,0 +1,22 @@
+✔ v2 distinguishes wrong execution from an unmet exploratory authoring task (0.565125ms)
+✔ v2 scaling holds real call counts constant while changing function distribution (0.582792ms)
+✔ v2 has fixed distinct cases and runtime expectations for accepted positive tasks (0.085625ms)
+✔ v2 never counts a crash, timeout or broken check protocol as an unsupported feature (0.059708ms)
+✖ v2 measures every frozen case including the function variant with no helper definition (0.316958ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33.214916
+
+✖ failing tests:
+
+test at evals/macro-usability-v2.test.mjs:34:1
+✖ v2 measures every frozen case including the function variant with no helper definition (0.316958ms)
+  TypeError [Error]: describeSyntax is not a function
+      at TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/macro-usability-v2.test.mjs:37:37)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

@@ -13,6 +13,32 @@ pub(crate) struct Expanded {
     /// Expanded targets are checked even when no expression uses their aliases.
     /// They do not become declarations in the executable module.
     pub targets: Vec<Sexp>,
+    resolved: BTreeMap<String, Resolved>,
+}
+
+impl Expanded {
+    pub fn expression(&self, source: &str, node: &Sexp) -> Result<Sexp, Error> {
+        let mut node = node.clone();
+        let (mut nodes, _) = measure(source, &node)?;
+        map_types(&mut node, &mut |n| {
+            if let Some(resolved) = n.atom().and_then(|name| self.resolved.get(name)) {
+                nodes += resolved.nodes - 1;
+                if nodes > MAX_NODES {
+                    return Err(Error::at(
+                        source,
+                        n.span,
+                        "type alias expansion limit exceeded",
+                    ));
+                }
+                let span = n.span;
+                *n = resolved.node.clone();
+                n.span = span;
+            }
+            Ok(())
+        })?;
+        measure(source, &node)?;
+        Ok(node)
+    }
 }
 
 #[derive(Clone)]
@@ -210,7 +236,11 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         Ok(())
     })?;
     measure(source, &syntax)?;
-    Ok(Expanded { syntax, targets })
+    Ok(Expanded {
+        syntax,
+        targets,
+        resolved: resolver.resolved,
+    })
 }
 
 #[cfg(test)]

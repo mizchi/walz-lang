@@ -1,0 +1,97 @@
+{
+  "perspective": "nonblind implementer dogfooding",
+  "requiredPassed": 20,
+  "requiredTotal": 20,
+  "unmet": [],
+  "sameFrozenSuiteFiles": 42,
+  "sameCompilerAsPrevious": true,
+  "cli": [
+    {
+      "variant": "inline",
+      "checkMedianMs": 52.440708000001905
+    },
+    {
+      "variant": "functions",
+      "checkMedianMs": 52.08250000000044
+    },
+    {
+      "variant": "macros",
+      "checkMedianMs": 55.47945900000195
+    }
+  ],
+  "scaling": [
+    {
+      "name": "scale inline 1",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 3.36737500000163
+    },
+    {
+      "name": "scale macro 1",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 3.2403750000012224
+    },
+    {
+      "name": "scale inline 8",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 3.458249999996042
+    },
+    {
+      "name": "scale macro 8",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.312374999994063
+    },
+    {
+      "name": "scale inline 32",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 4.53966699999728
+    },
+    {
+      "name": "scale macro 32",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 6.097165999999561
+    },
+    {
+      "name": "scale inline 64",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 5.549999999995634
+    },
+    {
+      "name": "scale macro 64",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 9.441457999993872
+    },
+    {
+      "name": "scale inline 128",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 8.171958999999333
+    },
+    {
+      "name": "scale macro 128",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 17.82512499999575
+    },
+    {
+      "name": "scale inline 256",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 13.508291999998619
+    },
+    {
+      "name": "scale macro 256",
+      "achieved": true,
+      "samples": 3,
+      "medianMs": 40.99358299999585
+    }
+  ],
+  "interpretation": "Same frozen suite and implementation as r2. Small timing changes are repeat variation, not a compiler improvement. No independent reader evaluation."
+}

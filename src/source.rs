@@ -184,10 +184,11 @@ impl Source {
                 .find(|c| c.start <= offset && offset < c.end)
                 .or_else(|| self.chunks.last().filter(|c| offset == c.end));
             if let Some(chunk) = chunk {
-                let start = chunk.offset + offset - chunk.start;
+                let start = (chunk.offset + offset - chunk.start).min(chunk.original.len());
                 // A label may cross an include boundary: retain its contiguous
                 // portion in this file rather than pointing into another file.
-                let end = chunk.offset + label.span.end.min(chunk.end) - chunk.start;
+                let end = (chunk.offset + label.span.end.min(chunk.end) - chunk.start)
+                    .min(chunk.original.len());
                 *label = crate::diagnostic::Label::new(
                     &chunk.original,
                     Span { start, end },
@@ -544,6 +545,34 @@ pub fn load_with_overlays(
         .collect::<Result<BTreeMap<_, _>, _>>()
         .map_err(|e| Error::message(e.to_string()))?;
     load_mode(path.as_ref(), false, &overlays)
+}
+
+/// Read declarations from current editor buffers with missing closing parens.
+/// This snapshot is used exclusively by unverified editor indexing.
+#[cfg(not(target_family = "wasm"))]
+pub(crate) fn load_editor(
+    path: &Path,
+    overlays: &BTreeMap<PathBuf, Arc<str>>,
+) -> Result<Source, Error> {
+    let mut repaired = overlays.clone();
+    let mut originals = BTreeMap::new();
+    for (path, text) in overlays {
+        if crate::sexpr::parse(text).is_err()
+            && let Some(closed) = crate::sexpr::editor_closed(text)
+        {
+            let path = normalize_path(path).map_err(|e| Error::message(e.to_string()))?;
+            repaired.insert(path.clone(), Arc::from(closed));
+            originals.insert(path, text.clone());
+        }
+    }
+    let mut source = load_with_overlays(path, &repaired)?;
+    for chunk in &mut source.chunks {
+        if let Some(original) = originals.get(&chunk.path) {
+            chunk.original = original.clone();
+            chunk.offset = chunk.offset.min(original.len());
+        }
+    }
+    Ok(source)
 }
 
 pub(crate) fn normalize_path(path: &Path) -> std::io::Result<PathBuf> {

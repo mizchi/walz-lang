@@ -66,6 +66,7 @@ impl Expander {
                     name.clone()
                 } else if name.atom().is_some_and(|name| name.starts_with('$')) {
                     Sexp {
+                        context: Default::default(),
                         kind: Kind::List(vec![name.clone()]),
                         span: name.span,
                     }

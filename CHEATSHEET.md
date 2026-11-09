@@ -1,6 +1,6 @@
 # wlt 文法チートシート
 
-標準 WAT を基底に、型付きの式・GC データ・所有値・固定マクロを追加した言語。
+標準 WAT を基底に、型付きの式・GC データ・所有値・衛生的マクロを追加した言語。
 ここでは拡張を使う型付きコアを扱う。WLT の拡張入口には `%` を付ける。標準 WAT 単体はそのまま受理し、コア外の WAT と構文マクロの混在は opaque として全体を検証する。[構文の境界](docs/syntax.md) を参照。
 詳しい意味論は [SPEC.md](SPEC.md)、実用例は [在庫台帳](examples/apps/stock-ledger/README.md)。
 
@@ -36,6 +36,50 @@
 コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `%let` / `%loop` / `%for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`%effect pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
 型付きコアの戻り値は0個（unit）または1値。pair も1値として返す。標準 WAT の `(result i32 i64)` は標準 WAT 経路で扱い、型付きコアの pair 分解へは変換しない。
 
+## ユーザー定義マクロ
+
+`%macro` は衛生的な式マクロを宣言し、`%$name` で呼ぶ。`?name:expr/ident/type/literal` で構文を捕捉し、末尾の `...` で1段の繰り返しを表す。展開後も通常の型・effect・所有権検査を通る。[詳しい規約](docs/user-macros.md)。
+
+```wat
+(module
+  (%macro $twice
+    (rule (?value:expr)
+      (infer (?T ?value))
+      (when (Add ?value))
+      (%let $saved (type ?T) ?value (+ $saved $saved))))
+  (%macro $with
+    (rule (?name:ident ?value:expr ?body:expr)
+      (bind ?name ?body)
+      (%let ?name ?value ?body)))
+  (func $main (export "main") (result i32)
+    (%effect pure)
+    (%$with $x (i32.const 21) (%$twice $x))))
+```
+
+`infer` は通常の型推論から具体的な型の構文を取得する。`(infer (?T expected))` は呼び出しの期待型、`(infer (?T ?value expected))` はその期待型を明示的なヒントにして引数を検査する。整数幅を値から推測しない。`when` は具体型 `(type ?value i32)` や既存の型クラスでルールを選ぶ。`bind` は呼び出し側の名前が有効になる本体を宣言する。
+
+`(%export (macro $twice))` と `(%use "./syntax.wlt" (macro $twice $double))` で選択・別名・再公開ができる。`wlt macro-expand file.wlt` は構造化した型情報と展開元を含むJSON、`--text` は入力の single / duplicated / discarded と構文出現数を表示する。実行回数は制御フローによる。`wlt expand` は従来どおり最終WATを出力する。
+
+`(infer (?T (option.element ?value)))` のように型構造を問い合わせられる。
+selector は `option.element` / `list.element` / `result.ok` / `result.err` / `tuple.first` / `tuple.second` /
+`box.element` / `future.element` / `stream.element` / `task.element` / `array.element` / `ref.heap`。
+実行はせず、opaque な配列の内部型は外部から読めない。[型情報・差分fuzzと再現手順](docs/user-macros.md)。
+
+`bind` の ident は反復も使える。テンプレートの let グループは反復を展開してから下げる。
+
+```text
+(%macro $bindings
+  (rule (((?name:ident ?value:expr) ...) ?body:expr)
+    (bind ?name ?body)
+    (%let ((?name ?value) ...) ?body)))
+(%$bindings (($a (i32.const 20)) ($b (i32.const 22))) (+ $a $b))
+```
+
+呼び出し先と同じ `bind` を宣言すると束縛を委譲できる。新しい名前が見えるのは指定した本体だけで、
+初期値は caller のスコープ。空列は本体を評価し、同名の重複は拒否する。
+`macro-expand` の `checking` で全体のパス数・関数の検査数・予算に数えるノード訪問数を確認できる。
+[多段の実行例](examples/user-macros/bindings.wlt)。
+
 ## `wlt:core` と基本データ型
 
 WLT の基本型は `wlt:core` から明示的に import する。`i32` などの Wasm の型はそのまま使う。
@@ -52,7 +96,7 @@ WLT の基本型は `wlt:core` から明示的に import する。`i32` など�
 (call $format (i64.const 42))
 ```
 
-型も汎用関数も `(%inst $name T...)` で適用する。`$string` / `$bytes` / `$unit` は型引数なしの alias なので、その名前で参照する。`(type $result $Outcome)` のような別名も使える。
+型も汎用関数も `(%inst $name T...)` で適用する。通常の `call $generic` は引数・期待型から一意に決まる型引数を省略できる。`$string` / `$bytes` / `$unit` は型引数なしの alias なので、その名前で参照する。`(type $result $Outcome)` のような別名も使える。
 名前は import したスコープにだけ束縛される。暗黙の prelude はなく、別ファイル で使う名前もそこで import する。標準関数は `$string.*`、`$bytes.*`、`$list.map` / `$list.fold`、`$string-builder.*`、`$json.*` から選ぶ。`wlt:core` はファイルパスやホスト import ではなく、通常のライブラリの静的リンクと DCE を使う。
 `%string.lit`・`%result.ok`・`%future.await` などは値を操作するコンパイラの固定構文。型の参照には import した名前と `%inst` を使う。
 関数の完全な型・型制約・effect は、公開宣言から生成する [標準 API 一覧](docs/stdlib-api.md) を参照する。
@@ -441,7 +485,7 @@ pattern let で own 成分を含む pair を分解するときは `(%move $tuple
 ## 所有値・クロージャ・effect
 
 汎用関数・型・alias・クロージャは名前の直後に `(%type.params $T ...)` を宣言し、
-`(%inst $name T...)` で具体化する。型引数は明示し、具体化後も型・effect・所有権を検査する。
+`(%inst $name T...)` で具体化する。通常の関数の `call` では一意に決まる型引数を省略でき、具体化後も型・effect・所有権を検査する。
 具体的なクロージャ型も渡せる。[詳細と map/fold](docs/generics.md)。
 
 ```wat
@@ -466,8 +510,8 @@ type.params の直後に `(%where (shared $T) (nonunit $T))` を置くと、具�
 `(callable $F (param $T) (result $U) (%effect pure))` と書ける。
 引数・戻り値が一致する共有・再呼出し可能なクロージャに限定し、effect は本体から推論する。
 effects を省略すれば effect の制限は課さない。未使用の適用も DCE 前に検査する。
-適用は常に `(%inst $name T...)`。関数では `(call (%inst $identity i64) value)`、汎用型では `(ref (%inst $Box i64))`、汎用 alias では型の位置に `(%inst $Values i64)` と書く。
-型引数の推論や型クラス・実装探索は行わない。型・effect・所有権は具体化した本体で検査し、未適用の汎用本体が任意の型引数で正しいという保証は与えない。
+明示的な適用は `(%inst $name T...)`。関数では `(call (%inst $identity i64) value)`、汎用型では `(ref (%inst $Box i64))`、汎用 alias では型の位置に `(%inst $Values i64)` と書く。
+関数呼び出しでは引数・期待型・callable のシグネチャから型引数を決める。曖昧なら `E_GENERIC_INFERENCE`。数値幅は推測せず、実装探索は行わない。型・effect・所有権は具体化した本体で検査し、未適用の汎用本体が任意の型引数で正しいという保証は与えない。
 
 ```text
 (%box.new T value)
@@ -648,7 +692,7 @@ JS
 `just bench` で計測する。paramとresultは省略可能で、省略時は引数なし・unit。
 `just list-benches` は一覧のみ。ウォームアップ・バッチ反復・JSON出力は[ベンチマーク](docs/benchmarking.md)を参照。
 実行用の stdin/stdout 接続は既存の text I/O capability。read-lines は stream<result<text,i32>>、write-line は future<result<unit,i32>> を返す。
-暗黙の型引数推論・trait、任意のマクロ定義、一般的な borrow/lifetime、汎用の WASI binding は含まない。
+全域型推論・利用者定義trait・手続き的なマクロ、一般的な borrow/lifetime、汎用の WASI binding は含まない。
 
 ## 数値・平坦な Result 連鎖・newtype・早期脱出
 

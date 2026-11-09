@@ -27,6 +27,7 @@ mod link;
 mod lists;
 #[cfg(not(target_family = "wasm"))]
 pub mod lsp;
+pub mod macros;
 mod modules;
 mod naming;
 pub mod native;
@@ -151,29 +152,74 @@ pub(crate) fn check_observed<T>(
     let mut syntax = syntax::normalize(source, &syntax)?;
     standard.rewrite(&mut syntax);
     let syntax = modules::expand(source, &syntax).map_err(|e| standard.annotate(e))?;
-    let generics = generics::expand(source, &syntax.syntax)
+    let (macros, ordinary) = macros::Environment::prepare(source, &syntax.syntax)
         .map_err(|e| standard.annotate(syntax.annotate(e)))?;
-    let checked = (|| {
-        let aliases = aliases::expand(source, &generics.syntax)?;
-        let expanded = scoped::expand(source, &aliases.syntax)?;
-        let (mut module, bounds) = frontend::check(source, &expanded, &generics.bounds)?;
-        interface::validate(source, &mut module)?;
-        policy.apply(&mut module);
-        binary::apply(&mut module)?;
-        bindings::validate(source, &module)?;
-        frontend::validate_alias_targets(source, &module, &aliases.targets)?;
-        syntax.validate(source, &module, &generics.origins)?;
-        resources::validate(source, &module)?;
-        bounds::check_effects(source, &module, &bounds)?;
-        effects::validate(source, &module)?;
-        task_children::validate(source, &module)?;
-        ownership::validate(source, &module)?;
-        race::validate(source, &module)?;
-        benchmark::validate(source, &module)?;
-        let observation = observe(&module, &generics);
-        Ok((module, observation))
-    })();
-    checked.map_err(|error| standard.annotate(syntax.annotate(generics.annotate(source, error))))
+    let (mut generics, mut specializations) =
+        generics::start(source, &ordinary).map_err(|e| standard.annotate(syntax.annotate(e)))?;
+    let mut observe = Some(observe);
+    loop {
+        if !macros.definitions.is_empty() || specializations.has_templates() {
+            sexpr::identify(&mut generics.syntax);
+            macros.clear_edits();
+        }
+        let inference = specializations.inference();
+        let checked: Result<(ir::Module, T), Error> = (|| {
+            let aliases = aliases::expand(source, &generics.syntax)?;
+            let expanded = scoped::expand(source, &aliases.syntax)?;
+            macros.charge_check(source, &expanded)?;
+            specializations.charge_check(&expanded)?;
+            let (mut module, bounds) = frontend::check(
+                source,
+                &expanded,
+                &generics.bounds,
+                &macros,
+                &inference,
+                (&syntax, &generics.origins),
+                &aliases,
+            )?;
+            interface::validate(source, &mut module)?;
+            policy.apply(&mut module);
+            binary::apply(&mut module)?;
+            bindings::validate(source, &module)?;
+            frontend::validate_alias_targets(source, &module, &aliases.targets)?;
+            syntax.validate(source, &module, &generics.origins)?;
+            resources::validate(source, &module)?;
+            bounds::check_effects(source, &module, &bounds)?;
+            effects::validate(source, &module)?;
+            task_children::validate(source, &module)?;
+            ownership::validate(source, &module)?;
+            race::validate(source, &module)?;
+            benchmark::validate(source, &module)?;
+            macros.apply_expansions(&mut generics.syntax);
+            inference.apply_resolved(&mut generics);
+            generics.macros = macros.report();
+            let observation = observe.take().unwrap()(&module, &generics);
+            Ok((module, observation))
+        })();
+        match checked {
+            Err(error) if error.diagnostic().code == "E_GENERIC_PENDING" => {
+                macros.apply_expansions(&mut generics.syntax);
+                specializations
+                    .resume_inference(&mut generics, &inference)
+                    .map_err(|e| standard.annotate(syntax.annotate(macros.annotate(source, e))))?;
+            }
+            Err(error) if error.diagnostic().code == "E_MACRO_PENDING" => {
+                macros.apply_expansions(&mut generics.syntax);
+                let request = macros.take_pending().expect("pending expansion request");
+                macros
+                    .resume(source, &mut generics.syntax, request)
+                    .and_then(|()| specializations.refresh(&mut generics))
+                    .map_err(|e| standard.annotate(syntax.annotate(macros.annotate(source, e))))?;
+            }
+            result => {
+                return result.map_err(|error| {
+                    standard.annotate(
+                        syntax.annotate(generics.annotate(source, macros.annotate(source, error))),
+                    )
+                });
+            }
+        }
+    }
 }
 
 /// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
@@ -219,6 +265,7 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
         Ok(module) => module,
         Err(error) => {
             if error.diagnostic().code == "E_CHECK"
+                && !macros::requested(source)
                 && !race::requested(source)
                 && let Some(wat) = native_macros::expand(source)?
             {

@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-11-09T04:05:40.502Z",
+  "frozenInputsVerified": true,
+  "inputFiles": 42,
+  "implementationVerified": true,
+  "sourceFiles": 276,
+  "olderReportFilesUnchanged": 744,
+  "legacyFingerprintsUnchanged": 2830,
+  "binarySha256": "0b64b459ed9a71874ee2a5c4b53c93ad857f85758b51e6a0ef3572b089916b9a"
+}

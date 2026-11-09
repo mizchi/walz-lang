@@ -10,7 +10,7 @@ mod cli_inspection;
 mod cli_js;
 mod cli_run;
 
-const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
+const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
 const TEST_USAGE: &str = "Usage: wlt test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.wlt under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
 const COMMANDS: &[&str] = &[
     "build",
@@ -25,6 +25,7 @@ const COMMANDS: &[&str] = &[
     "types",
     "wat",
     "expand",
+    "macro-expand",
     "wit",
     "analyze",
     "ir",
@@ -197,6 +198,15 @@ fn execute(
     } else {
         wlt::source::load(path)?
     };
+    if command == "macro-expand" {
+        let report =
+            wlt::macros::report(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report.located(&loaded))?
+        );
+        return Ok(true);
+    }
     if matches!(command, "build" | "component")
         && let Some(output) = output
     {
@@ -577,6 +587,35 @@ fn main() -> ExitCode {
     };
     if command == "test" {
         return test_command(&args[1..], legacy);
+    }
+    if command == "macro-expand" && args.iter().any(|a| a == "--text") {
+        let paths = args
+            .iter()
+            .skip(1)
+            .filter(|a| *a != "--text")
+            .collect::<Vec<_>>();
+        if paths.len() != 1 || args.len() != 3 {
+            eprintln!("Usage: wlt macro-expand [--text] <file.wlt>");
+            return ExitCode::from(2);
+        }
+        let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+            let loaded = if legacy {
+                wlt::source::load_legacy(Path::new(paths[0]))?
+            } else {
+                wlt::source::load(Path::new(paths[0]))?
+            };
+            let report =
+                wlt::macros::report(loaded.text(), &policy).map_err(|e| loaded.diagnostic(e))?;
+            print!("{}", report.render(&loaded));
+            Ok(())
+        })();
+        return match result {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                eprintln!("{e}");
+                ExitCode::FAILURE
+            }
+        };
     }
     if command == "type-at" {
         return cli_inspection::type_at(&args[1..], &policy);

@@ -6,6 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 enum SymbolKind {
+    Macro,
     Function,
     Memory,
     Cell,
@@ -16,6 +17,7 @@ enum SymbolKind {
 impl SymbolKind {
     fn parse(name: &str) -> Option<Self> {
         match name {
+            "macro" => Some(Self::Macro),
             "func" => Some(Self::Function),
             "memory" => Some(Self::Memory),
             "cell" => Some(Self::Cell),
@@ -27,6 +29,7 @@ impl SymbolKind {
     }
     fn name(self) -> &'static str {
         match self {
+            Self::Macro => "macro",
             Self::Function => "func",
             Self::Memory => "memory",
             Self::Cell => "cell",
@@ -49,6 +52,7 @@ impl Symbol {
 #[derive(Default)]
 struct Scope {
     declarations: Vec<Sexp>,
+    macro_definitions: BTreeMap<String, Sexp>,
     definitions: BTreeMap<Symbol, String>,
     aliases: BTreeMap<Symbol, String>,
     public: BTreeMap<Symbol, crate::ir::Span>,
@@ -201,6 +205,7 @@ fn collect(
                     node
                 };
                 let kinds: &[SymbolKind] = match declaration.head() {
+                    Some("macro") => &[SymbolKind::Macro],
                     Some("closure") => &[SymbolKind::Function, SymbolKind::Type],
                     Some("func") => &[SymbolKind::Function],
                     Some("memory") => &[SymbolKind::Memory],
@@ -216,6 +221,11 @@ fn collect(
                             Error::at(source, node.span, "missing declaration name")
                         })?;
                     let name = identifier(source, name)?;
+                    if declaration.head() == Some("macro") {
+                        current
+                            .macro_definitions
+                            .insert(qualified(scope, &name), declaration.clone());
+                    }
                     for kind in kinds {
                         if current
                             .definitions
@@ -467,7 +477,59 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     let Kind::List(items) = &mut node.kind else {
         return Ok(());
     };
+    if let Some(name) = head.strip_prefix('%').filter(|n| n.starts_with('$')) {
+        let mut operand = items[0].clone();
+        operand.kind = Kind::Atom(name.into());
+        items[0].kind = Kind::Atom(format!(
+            "%{}",
+            resolve(source, scopes, scope, SymbolKind::Macro, &operand)
+                .map_err(|e| e.with_code("E_MACRO_UNKNOWN"))?
+        ));
+        let concrete = items[0].atom().unwrap().trim_start_matches('%');
+        let definition = scopes
+            .values()
+            .find_map(|s| s.macro_definitions.get(concrete));
+        if let Some(definition) = definition {
+            let mut call = Sexp {
+                kind: Kind::List(items.clone()),
+                span: node.span,
+                context: node.context,
+            };
+            let spans = crate::macros::declaration(source, definition)?.type_arguments(&call);
+            fn types(
+                source: &str,
+                scopes: &Scopes,
+                scope: &str,
+                n: &mut Sexp,
+                spans: &[crate::ir::Span],
+            ) -> Result<(), Error> {
+                if spans.contains(&n.span) {
+                    crate::type_syntax::map_type(n, &mut |ty| {
+                        resolve_application(
+                            source,
+                            scopes,
+                            scope,
+                            SymbolKind::Type,
+                            ty,
+                            &BTreeSet::new(),
+                        )
+                    })?;
+                } else if let Kind::List(parts) = &mut n.kind {
+                    let start = usize::from(parts.first().and_then(Sexp::atom).is_some());
+                    for child in parts.iter_mut().skip(start) {
+                        types(source, scopes, scope, child, spans)?;
+                    }
+                }
+                Ok(())
+            }
+            types(source, scopes, scope, &mut call, &spans)?;
+            if let Kind::List(parts) = call.kind {
+                *items = parts;
+            }
+        }
+    }
     let kind = match head.as_str() {
+        "macro" => Some(SymbolKind::Macro),
         "func" => Some(SymbolKind::Function),
         "memory" => Some(SymbolKind::Memory),
         "atomic.cell" | "atomic.at" => Some(SymbolKind::Cell),
@@ -565,7 +627,7 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
             }
         }
     }
-    for item in items.iter_mut().skip(1) {
+    for item in items.iter_mut().skip(usize::from(!head.is_empty())) {
         rewrite(source, scopes, scope, item)?;
     }
     Ok(())
@@ -592,6 +654,7 @@ fn resolve_application(
         .is_some_and(|a| a.starts_with('$') && !parameters.contains(a))
     {
         name.kind = Kind::Atom(resolve(source, scopes, scope, kind, name)?);
+        name.context.global = true;
     }
     Ok(())
 }
@@ -607,6 +670,40 @@ struct Opaque {
     declaration: crate::ir::Span,
 }
 impl Expanded {
+    pub fn validate_representation(
+        &self,
+        source: &str,
+        name: &str,
+        span: crate::ir::Span,
+        origins: &BTreeMap<String, String>,
+    ) -> Result<(), Error> {
+        if let Some(opaque) = self
+            .opaque
+            .get(origins.get(name).map(String::as_str).unwrap_or(name))
+        {
+            let caller = self
+                .zones
+                .iter()
+                .find(|(s, _)| s.start <= span.start && span.end <= s.end)
+                .map(|(_, name)| name.as_str())
+                .unwrap_or("");
+            if caller != opaque.owner {
+                let owner = if opaque.owner.is_empty() {
+                    "the root module".to_owned()
+                } else {
+                    format!("module `${}`", opaque.owner)
+                };
+                return Err(Error::at(
+                            source,
+                            span,
+                            format!("opaque type representation is private to its module: `{name}` belongs to {owner}"),
+                        ).with_code("E_OPAQUE_REPRESENTATION")
+                            .related(source, opaque.declaration, format!("opaque type `{name}` declared here"))
+                            .help(format!("use public functions of {owner} to access this value")));
+            }
+        }
+        Ok(())
+    }
     pub fn annotate(&self, error: Error) -> Error {
         let scope = error
             .diagnostic()
@@ -662,31 +759,13 @@ impl Expanded {
                     } => Some(*ty),
                     _ => None,
                 };
-                let declaration = ty.map(|id| &module.types[id.0]);
-                if let Some(opaque) = declaration
-                    .and_then(|ty| self.opaque.get(origins.get(&ty.name).unwrap_or(&ty.name)))
-                {
-                    let caller = self
-                        .zones
-                        .iter()
-                        .find(|(s, _)| s.start <= e.span.start && e.span.end <= s.end)
-                        .map(|(_, name)| name.as_str())
-                        .unwrap_or("");
-                    if caller != opaque.owner {
-                        let name = &declaration.unwrap().name;
-                        let owner = if opaque.owner.is_empty() {
-                            "the root module".to_owned()
-                        } else {
-                            format!("module `${}`", opaque.owner)
-                        };
-                        return Err(Error::at(
-                            source,
-                            e.span,
-                            format!("opaque type representation is private to its module: `{name}` belongs to {owner}"),
-                        ).with_code("E_OPAQUE_REPRESENTATION")
-                            .related(source, opaque.declaration, format!("opaque type `{name}` declared here"))
-                            .help(format!("use public functions of {owner} to access this value")));
-                    }
+                if let Some(id) = ty {
+                    self.validate_representation(
+                        source,
+                        &module.types[id.0].name,
+                        e.span,
+                        origins,
+                    )?;
                 }
                 pending.extend(e.children());
             }
@@ -709,6 +788,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
             n.head(),
             Some(
                 "namespace"
+                    | "macro"
                     | "file.namespace"
                     | "use"
                     | "public"
@@ -870,6 +950,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
         items.insert(
             2,
             Sexp {
+                context: Default::default(),
                 kind: Kind::List(vec![parts[0].clone(), parts[1].clone()]),
                 span: export.span,
             },
@@ -878,6 +959,7 @@ pub(crate) fn expand(source: &str, root: &Sexp) -> Result<Expanded, Error> {
     Ok(Expanded {
         names: display_names,
         syntax: Sexp {
+            context: Default::default(),
             kind: Kind::List(output),
             span: root.span,
         },

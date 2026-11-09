@@ -1,0 +1,7 @@
+{
+  "phase": "harness metrics",
+  "exitCode": 1,
+  "compilerVerdict": null,
+  "reason": "metrics(empty helper definition) rejected the ordinary-function variant; no compiler/runtime change",
+  "log": "cargo build --locked --bin wlt\n    Finished `dev` profile [unoptimized] target(s) in 0.08s\nnode --expose-gc evals/macro-usability-v2/run.mjs '20261109-macro-authoring-v2-r1'\nfile:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:78\n  if (stack.length || !root) throw new Error(\"unclosed module\");\n                                   ^\n\nError: unclosed module\n    at tree (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:78:36)\n    at metrics (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/lib/source.mjs:103:12)\n    at file:///Users/mz/ghq/github.com/mizchi/wlt-lang/evals/macro-usability-v2/run.mjs:76:139\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n\nNode.js v24.22.2\nerror: Recipe `eval-macro-authoring` failed on line 570 with exit code 1\n"
+}

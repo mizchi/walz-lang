@@ -9,7 +9,7 @@ WLT は、S式の WAT（WebAssembly Text Format）のスーパーセットを維
 `wlt:core` は組み込みのデータ型とポータブルなデータ操作を提供します。OSの機能やI/O capabilityは、明示的なホストimportを通じて受け取ります。
 
 - `%` で区別する拡張構文。不変の束縛、ループ、enum/match、名前付きstruct構築、明示的なクロージャ捕捉。
-- 明示的な型引数・制約を持つジェネリクスと、その単相化。
+- 制約付きジェネリクスの単相化。一意に決まる関数の型引数は省略可能。
 - 型付き拡張コアでの型・effect・所有権の検査。
 - Core Wasm / Core＋JSPI / Component への出力。
 
@@ -66,6 +66,7 @@ Git から直接入れる場合は `cargo install --git https://github.com/mizch
 | リスト走査・フィールド分解・フィールド更新 | [高水準の糖衣](docs/high-level-forms.md) |
 | Option/Result操作・期待型付き文字列 | [値操作と文字列](docs/option-result.md) |
 | import/export と生成物の除去 | [静的モジュールと DCE](docs/static-modules.md) |
+| ユーザー定義構文と推論した型の利用 | [衛生的マクロ](docs/user-macros.md) |
 | Component Wasmの型付きexportを取り込む | [WIT付きWasmの%use](docs/wasm-use.md) |
 | effect・型・メモリ領域の解析 | [型検査と静的解析](docs/analysis.md) |
 | 所有権と証明 | [検証付き実行](docs/verification.md)・[外部リソース](docs/resources.md) |

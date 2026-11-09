@@ -11,6 +11,7 @@ fn entry(name: &str) -> bool {
     matches!(
         name,
         "race-free"
+            | "macro"
             | "abi.type"
             | "atomic.cell"
             | "atomic.at"
@@ -264,6 +265,7 @@ fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
         };
         items.push(body);
         body = Sexp {
+            context: Default::default(),
             kind: Kind::List(items),
             span,
         };
@@ -276,6 +278,8 @@ fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
 struct Plan<'a> {
     source: &'a str,
     legacy: bool,
+    template: bool,
+    macro_arguments: bool,
     old_json_object: bool,
     marked: BTreeSet<Span>,
     edits: BTreeMap<usize, String>,
@@ -286,6 +290,8 @@ impl<'a> Plan<'a> {
         Self {
             source,
             legacy,
+            template: false,
+            macro_arguments: false,
             old_json_object: false,
             marked: BTreeSet::new(),
             edits: BTreeMap::new(),
@@ -333,7 +339,32 @@ impl<'a> Plan<'a> {
                     .with_code("E_LET_BINDINGS"),
             );
         }
-        lower_let_group(self.source, node)?;
+        // Patterns and binding/type-query clauses form a separate grammar.
+        // Only each rule's output is ordinary WLT surface syntax.
+        if matches!(node.head(), Some("macro" | "%macro")) {
+            if node.head() == Some("macro") {
+                self.require(node, "macro")?;
+            }
+            let Kind::List(parts) = &mut node.kind else {
+                unreachable!()
+            };
+            parts[0].kind = Kind::Atom("macro".into());
+            for rule in parts.iter_mut().skip(2) {
+                if let Kind::List(fields) = &mut rule.kind
+                    && fields.len() >= 3
+                    && let Some(template) = fields.last_mut()
+                {
+                    let previous = self.template;
+                    self.template = true;
+                    self.walk(template, false, depth + 1)?;
+                    self.template = previous;
+                }
+            }
+            return Ok(());
+        }
+        if !self.template {
+            lower_let_group(self.source, node)?;
+        }
         // `(type T)` marks a let annotation at the surface; the checked core
         // and the native macro expander share the existing type operand.
         if matches!(node.head(), Some("let" | "%let"))
@@ -484,6 +515,8 @@ impl<'a> Plan<'a> {
                 );
             }
             items.remove(0);
+        } else if head.starts_with("%$") {
+            // Macro identity is resolved in its own module namespace.
         } else if let Some(bare) = head.strip_prefix('%') {
             let core = crate::naming::core(bare);
             if crate::naming::public(&core) != bare
@@ -510,7 +543,7 @@ impl<'a> Plan<'a> {
                 }
                 .into(),
             );
-        } else if head.starts_with('$') {
+        } else if head.starts_with('$') && !self.macro_arguments {
             if !self.legacy {
                 return Err(prefix_error(self.source, node, "inst"));
             }
@@ -539,8 +572,19 @@ impl<'a> Plan<'a> {
         if normalized == "abi.type" {
             return Ok(());
         }
+        let previous_arguments = self.macro_arguments;
+        self.macro_arguments |= head.starts_with("%$");
         let count = items.len();
-        for (i, child) in items.iter_mut().enumerate().skip(1) {
+        for (i, child) in items
+            .iter_mut()
+            .enumerate()
+            .skip(usize::from(!normalized.is_empty()))
+        {
+            if matches!(normalized.as_str(), "use" | "public" | "export")
+                && child.head() == Some("macro")
+            {
+                continue;
+            }
             if normalized == "variant" {
                 // Case labels are data, even if they share an extension name.
                 if let Kind::List(case) = &mut child.kind {
@@ -586,6 +630,7 @@ impl<'a> Plan<'a> {
                 )?;
             }
         }
+        self.macro_arguments = previous_arguments;
         Ok(())
     }
 }

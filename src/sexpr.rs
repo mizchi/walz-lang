@@ -23,6 +23,30 @@ pub(crate) fn parse_key(source: &str) -> (usize, u64) {
 pub(crate) struct Sexp {
     pub kind: Kind,
     pub span: Span,
+    pub context: SyntaxContext,
+}
+
+/// Identity is snapshot-local. Expansion context survives syntax cloning and
+/// lowering; source byte ranges alone cannot distinguish duplicated arguments.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct SyntaxContext {
+    pub id: usize,
+    pub expansion: Option<usize>,
+    pub template: Option<Span>,
+    pub global: bool,
+}
+
+pub(crate) fn identify(root: &mut Sexp) {
+    fn walk(node: &mut Sexp, next: &mut usize) {
+        node.context.id = *next;
+        *next += 1;
+        if let Kind::List(items) = &mut node.kind {
+            for child in items {
+                walk(child, next);
+            }
+        }
+    }
+    walk(root, &mut 1);
 }
 
 #[derive(Clone, Debug)]
@@ -144,6 +168,7 @@ impl Reader<'_> {
             }
             let value = self.read(depth + 1)?;
             fields.push(Sexp {
+                context: SyntaxContext::default(),
                 span: Span {
                     start: key.span.start,
                     end: value.span.end,
@@ -222,6 +247,7 @@ impl Reader<'_> {
                             .with_code("E_STRUCT_LITERAL"));
                     }
                     let ty = Sexp {
+                        context: SyntaxContext::default(),
                         kind: Kind::Atom(name.to_owned()),
                         span: items[0].span,
                     };
@@ -233,11 +259,13 @@ impl Reader<'_> {
                 if items.len() == 1 && matches!(items[0].atom(), Some("%let" | "%for-each")) {
                     let start = self.position;
                     let mut fields = vec![Sexp {
+                        context: SyntaxContext::default(),
                         kind: Kind::Atom("@fields".into()),
                         span: Span { start, end: start },
                     }];
                     fields.extend(self.fields(depth + 1)?);
                     items.push(Sexp {
+                        context: SyntaxContext::default(),
                         kind: Kind::List(fields),
                         span: Span {
                             start,
@@ -332,11 +360,61 @@ impl Reader<'_> {
                 None => return Err(self.error("expected module")),
             };
         Ok(Sexp {
+            context: SyntaxContext::default(),
             kind,
             span: Span {
                 start,
                 end: self.position,
             },
         })
+    }
+}
+
+/// Editor-only delimiter completion. Tokens are never invented and strings /
+/// nested comments are lexed by WAT's lexer. The result must not be compiled.
+#[cfg(not(target_family = "wasm"))]
+pub(crate) fn editor_closed(source: &str) -> Option<String> {
+    let lexer = wast::lexer::Lexer::new(source);
+    let mut offset = 0;
+    let mut depth = 0usize;
+    while let Some(token) = lexer.parse(&mut offset).ok()? {
+        match token.kind {
+            wast::lexer::TokenKind::LParen => {
+                depth += 1;
+                if depth > 256 {
+                    return None;
+                }
+            }
+            wast::lexer::TokenKind::RParen => {
+                depth = depth.checked_sub(1)?;
+            }
+            _ => {}
+        }
+    }
+    if depth == 0 {
+        return None;
+    }
+    let completed = format!("{source}\n{}", ")".repeat(depth));
+    parse(&completed).ok()?;
+    Some(completed)
+}
+
+#[cfg(test)]
+mod editor_completion_tests {
+    #[test]
+    fn only_missing_parentheses_are_completed_and_lexical_contents_are_preserved() {
+        let source = "(module (; nested (; ( ;) ;) (func $f (result i32) (i32.const 42)) ;; )";
+        let closed = super::editor_closed(source).unwrap();
+        assert!(closed.starts_with(source));
+        assert!(super::parse(source).is_err());
+        assert!(super::parse(&closed).is_ok());
+        for source in [
+            "(module)",
+            "(module))",
+            "(module (func $f \"unterminated",
+            "(module (; unclosed",
+        ] {
+            assert!(super::editor_closed(source).is_none(), "{source}");
+        }
     }
 }

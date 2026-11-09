@@ -5,7 +5,11 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 
+mod generic_calls;
 mod high_level;
+mod lexical;
+mod macro_expansion;
+mod macro_types;
 
 type Names = BTreeMap<String, usize>;
 type Scope = BTreeMap<String, LocalId>;
@@ -42,6 +46,10 @@ struct FunctionSite {
 
 struct Tables<'a> {
     source: &'a str,
+    macros: Option<&'a crate::macros::Environment>,
+    inference: Option<&'a crate::generics::Inference>,
+    aliases: Option<&'a crate::aliases::Expanded>,
+    privacy: Option<(&'a crate::modules::Expanded, &'a BTreeMap<String, String>)>,
     types: Names,
     newtypes: BTreeMap<TypeId, NumType>,
     functions: Names,
@@ -63,6 +71,10 @@ impl Tables<'_> {
     fn new(source: &str) -> Tables<'_> {
         Tables {
             source,
+            macros: None,
+            inference: None,
+            aliases: None,
+            privacy: None,
             types: Names::new(),
             newtypes: BTreeMap::new(),
             functions: Names::new(),
@@ -545,8 +557,17 @@ pub(crate) fn check<'b>(
     source: &str,
     root: &Sexp,
     bounds: &'b [crate::bounds::Site],
+    macros: &crate::macros::Environment,
+    inference: &crate::generics::Inference,
+    privacy: (&crate::modules::Expanded, &BTreeMap<String, String>),
+    aliases: &crate::aliases::Expanded,
 ) -> Result<(Module, Vec<crate::bounds::EffectObligation<'b>>), Error> {
     let mut tables = Tables::new(source);
+    tables.macros = Some(macros);
+    macros.begin_check(root);
+    tables.inference = Some(inference);
+    tables.aliases = Some(aliases);
+    tables.privacy = Some(privacy);
     let declarations = tables.list(root)?;
     if root.head() != Some("module") {
         return Err(tables.error(root, "expected (module ...)"));
@@ -1181,6 +1202,10 @@ pub(crate) fn check<'b>(
             continue;
         }
         let function = &headers.functions[index];
+        if let Some(body) = body {
+            macros.function_check(source, body)?;
+        }
+
         let mut checker = Checker {
             tables: &tables,
             module: &headers,
@@ -1188,7 +1213,10 @@ pub(crate) fn check<'b>(
             next_loop: 0,
             function_result: function.result.clone(),
             remaining_work: 1_000_000,
+            probing: false,
+            expression_depth: 0,
             closure: matches!(function.kind, FunctionKind::Closure { .. }),
+            function_name: function.name.clone(),
         };
         let scope = checker
             .locals
@@ -1197,28 +1225,27 @@ pub(crate) fn check<'b>(
             .map(|(id, b)| (b.name.clone(), LocalId(id)))
             .collect();
         let expression = if let Some(body) = body {
-            checker
-                .expr_as(body, &scope, &[], true, &function.result)
-                .map_err(|error| {
-                    if let Some(site) = tables.function_sites.get(&function.name) {
-                        error.expected_at(
-                            source,
-                            site.result.unwrap_or(site.name),
-                            format!(
-                                "result of `{}` declared as {}{}",
-                                function.name,
-                                tables.type_name(&function.result),
-                                if site.result.is_none() {
-                                    " (omitted result means unit)"
-                                } else {
-                                    ""
-                                }
-                            ),
-                        )
-                    } else {
-                        error
-                    }
-                })?
+            let checked = checker.expr_as(body, &scope, &[], true, &function.result);
+            checked.map_err(|error| {
+                if let Some(site) = tables.function_sites.get(&function.name) {
+                    error.expected_at(
+                        source,
+                        site.result.unwrap_or(site.name),
+                        format!(
+                            "result of `{}` declared as {}{}",
+                            function.name,
+                            tables.type_name(&function.result),
+                            if site.result.is_none() {
+                                " (omitted result means unit)"
+                            } else {
+                                ""
+                            }
+                        ),
+                    )
+                } else {
+                    error
+                }
+            })?
         } else {
             Expr {
                 ty: Type::Unit,
@@ -1257,6 +1284,9 @@ pub(crate) fn check<'b>(
         }
         module.functions[index].body = Some(expression);
         module.functions[index].locals = checker.locals;
+        if let Some(body) = body {
+            macros.finish_function(source, body)?;
+        }
     }
     let mut export_names = module
         .functions
@@ -1336,10 +1366,45 @@ struct Checker<'a, 's> {
     next_loop: usize,
     function_result: Type,
     remaining_work: usize,
+    probing: bool,
+    expression_depth: usize,
     closure: bool,
+    function_name: String,
 }
 
 impl Checker<'_, '_> {
+    fn inferred_syntax(&self, node: &Sexp, ty: &Type) -> Result<crate::macros::Inferred, Error> {
+        if *ty == Type::Never {
+            return Err(self
+                .tables
+                .error(
+                    node,
+                    "cannot reify the bottom type; supply a value with a concrete type",
+                )
+                .with_code("E_MACRO_INFERENCE"));
+        }
+        let mut syntax = crate::sexpr::parse(&self.tables.type_name(ty))?;
+        fn locate(n: &mut Sexp, span: Span) {
+            n.span = span;
+            if let crate::sexpr::Kind::List(p) = &mut n.kind {
+                for c in p {
+                    locate(c, span);
+                }
+            }
+        }
+        locate(&mut syntax, node.span);
+        let classes = [
+            "Add", "Sub", "Mul", "Div", "Eq", "Ord", "Logical", "Bitwise", "Shift",
+        ]
+        .into_iter()
+        .filter(|n| crate::typeclasses::Class::parse(n).unwrap().supports(ty))
+        .collect();
+        Ok(crate::macros::Inferred {
+            syntax,
+            classes,
+            info: self.type_info(ty),
+        })
+    }
     fn unknown_local(&self, node: &Sexp, name: &str, scope: &Scope) -> Error {
         let mut error = self
             .tables
@@ -1402,6 +1467,14 @@ impl Checker<'_, '_> {
             if self.closure {
                 error = error.note("captures must be explicit: declare (capture $name Type) on this closure and provide its value in closure.new");
             }
+        }
+        if let Some(rule) = self
+            .tables
+            .macros
+            .and_then(|m| m.caller_scope_binding(self.tables.source, node, name))
+        {
+            error = error.related(self.tables.source, rule, "bind makes the supplied names visible only to the declared body")
+                .help("captured initializers use the caller's scope; introduce dependent values with an ordinary %let outside this macro call, or pass the dependency explicitly");
         }
         error
     }
@@ -1686,11 +1759,16 @@ impl Checker<'_, '_> {
     ) -> Result<Type, Error> {
         let locals = self.locals.len();
         let next_loop = self.next_loop;
+        let probing = self.probing;
+        // A probe must not commit a macro expansion against temporary lexical
+        // IDs. Let the nearest non-probing expression retry with ordinary syntax.
+        self.probing = true;
         let result = self
             .expr_expected(node, scope, loops, false, expected)
             .map(|e| e.ty);
         self.locals.truncate(locals);
         self.next_loop = next_loop;
+        self.probing = probing;
         result
     }
 
@@ -2035,9 +2113,11 @@ impl Checker<'_, '_> {
                         .help("use an explicit expression for bytes and other non-text values"));
                 }
                 expanded = Sexp {
+                    context: Default::default(),
                     span: initializer.span,
                     kind: Kind::List(vec![
                         Sexp {
+                            context: Default::default(),
                             span: initializer.span,
                             kind: Kind::Atom("text.lit".into()),
                         },
@@ -2091,7 +2171,7 @@ impl Checker<'_, '_> {
         Ok((body.ty, body.kind))
     }
 
-    fn expr_expected(
+    fn expr_expected_once(
         &mut self,
         node: &Sexp,
         scope: &Scope,
@@ -2103,6 +2183,30 @@ impl Checker<'_, '_> {
             self.tables
                 .error(node, "local type elaboration limit exceeded")
         })?;
+        if node.head() == Some("call")
+            && let Some(callee) = node.list().and_then(|p| p.get(1))
+            && let Some(call) = callee
+                .atom()
+                .and_then(|name| self.tables.inference?.call(name))
+        {
+            return self.infer_call(node, call, scope, loops, tail, expected);
+        }
+        if node.head().is_some_and(|n| n.starts_with("%$")) {
+            let environment = self.tables.macros.expect("checker macro environment");
+            let context = expected
+                .map(|ty| self.inferred_syntax(node, ty))
+                .transpose()?;
+            environment.request(
+                self.tables.source,
+                node,
+                context.as_ref(),
+                |value, hint, projection| {
+                    let ty = self.probe(value, scope, loops, if hint { expected } else { None })?;
+                    self.project_type(value, &ty, projection)
+                },
+            )?;
+            unreachable!("expansion restarts checking with ordinary syntax")
+        }
         if matches!(
             node.kind,
             crate::sexpr::Kind::Text(_) | crate::sexpr::Kind::Bytes(_)
@@ -2175,6 +2279,12 @@ impl Checker<'_, '_> {
                     kind,
                     span: node.span,
                 });
+        }
+        match node.head() {
+            Some("let") => return self.let_expr(node, scope, loops, tail, expected),
+            Some("block") => return self.block_expr(node, scope, loops, tail, expected),
+            Some("if") => return self.if_expr(node, scope, loops, tail, expected),
+            _ => {}
         }
         // Recursive operator elaboration does not need a stack frame containing
         // the entire instruction dispatcher, especially in debug builds.
@@ -2688,116 +2798,8 @@ impl Checker<'_, '_> {
                         },
                     )
                 }
-                "let" => {
-                    if !(4..=5).contains(&items.len()) {
-                        return Err(
-                            tables.error(node, "expected (let $name [type] initializer body)")
-                        );
-                    }
-                    if items[1].list().is_some() {
-                        if items[1].head() == Some("@fields") {
-                            return self.struct_let(node, items, scope, loops, tail, expected);
-                        }
-                        return self.pair_let(node, items, scope, loops, tail, expected);
-                    }
-                    let name = self.tables.name(&items[1])?;
-                    let (annotation, start) = if items.len() == 5 {
-                        (Some(tables.ty(&items[2])?), 3)
-                    } else {
-                        (None, 2)
-                    };
-                    let value = self.expr_expected(
-                        &items[start],
-                        scope,
-                        loops,
-                        false,
-                        annotation.as_ref(),
-                    )?;
-                    if matches!(value.ty, Type::Unit | Type::Never) {
-                        return Err(self
-                            .tables
-                            .error(&items[start], "let initializer must produce a value"));
-                    }
-                    let binding_type = annotation.unwrap_or_else(|| value.ty.clone());
-                    self.check(&items[start], &binding_type, &value)?;
-                    let id =
-                        self.local(name.clone(), items[1].span, binding_type, BindingKind::Let);
-                    let mut nested = scope.clone();
-                    nested.insert(name, id);
-                    let body =
-                        self.expr_expected(&items[start + 1], &nested, loops, tail, expected)?;
-                    (
-                        body.ty.clone(),
-                        Let {
-                            local: id,
-                            value: Box::new(value),
-                            body: Box::new(body),
-                        },
-                    )
-                }
-                "block" => {
-                    let named = items
-                        .get(1)
-                        .and_then(Sexp::atom)
-                        .is_some_and(|n| n.starts_with('$'));
-                    let (result, start) = self.result(items, if named { 2 } else { 1 })?;
-                    let mut nested_labels = loops.to_vec();
-                    let label = if named {
-                        let id = LoopId(self.next_loop);
-                        self.next_loop += 1;
-                        nested_labels.push(LoopContext {
-                            name: tables.name(&items[1])?,
-                            id,
-                            bindings: vec![],
-                            block: Some(result.clone()),
-                        });
-                        Some(id)
-                    } else {
-                        None
-                    };
-                    let mut expressions = Vec::new();
-                    for (i, expression) in items[start..].iter().enumerate() {
-                        let last = i + start + 1 == items.len();
-                        let expression = self.expr_expected(
-                            expression,
-                            scope,
-                            &nested_labels,
-                            last && tail,
-                            Some(if last { &result } else { &Type::Unit }),
-                        )?;
-                        if !last && self.is_owned(&expression.ty) {
-                            return Err(
-                                tables.error(&items[start + i], "cannot discard an owned value")
-                            );
-                        }
-                        let expected = if last { &result } else { &Type::Unit };
-                        self.check(&items[start + i], expected, &expression)?;
-                        expressions.push(expression);
-                    }
-                    if expressions.is_empty() && result != Type::Unit {
-                        return Err(self.tables.error(node, "block result needs a value"));
-                    }
-                    let ty = if expressions.last().is_some_and(|e| e.ty == Type::Never) {
-                        Type::Never
-                    } else {
-                        result.clone()
-                    };
-                    if let Some(label) = label {
-                        (
-                            result.clone(),
-                            Label {
-                                label,
-                                body: Box::new(Expr {
-                                    ty: result,
-                                    span: node.span,
-                                    kind: Block(expressions),
-                                }),
-                            },
-                        )
-                    } else {
-                        (ty, Block(expressions))
-                    }
-                }
+                "let" => return self.let_expr(node, scope, loops, tail, expected),
+                "block" => return self.block_expr(node, scope, loops, tail, expected),
                 "return" => {
                     let result = self.function_result.clone();
                     let value = if result == Type::Unit && items.len() == 1 {
@@ -2875,24 +2877,7 @@ impl Checker<'_, '_> {
                         },
                     )
                 }
-                "if" => {
-                    let (result, start) = self.result(items, 1)?;
-                    count(start + 3)?;
-                    let condition =
-                        self.expr_as(&items[start], scope, loops, false, &Type::Num(NumType::I32))?;
-                    let then_node = self.tables.branch(&items[start + 1], "then")?;
-                    let else_node = self.tables.branch(&items[start + 2], "else")?;
-                    let then_body = self.expr_as(then_node, scope, loops, tail, &result)?;
-                    let else_body = self.expr_as(else_node, scope, loops, tail, &result)?;
-                    (
-                        result,
-                        If {
-                            condition: Box::new(condition),
-                            then_body: Box::new(then_body),
-                            else_body: Box::new(else_body),
-                        },
-                    )
-                }
+                "if" => return self.if_expr(node, scope, loops, tail, expected),
                 "option.none" | "option.some" | "result.ok" | "result.err" | "pair.new"
                 | "own.new" => self.value_expr(node, items, scope, loops, expected)?,
                 "result.let" => self.result_let(node, items, scope, loops, tail, expected)?,
@@ -3623,10 +3608,12 @@ impl Checker<'_, '_> {
             end: node.span.start,
         };
         let atom = |text: &str| Sexp {
+            context: Default::default(),
             kind: Kind::Atom(text.into()),
             span: synthetic,
         };
         let list = |items: Vec<Sexp>| Sexp {
+            context: Default::default(),
             kind: Kind::List(items),
             span: synthetic,
         };

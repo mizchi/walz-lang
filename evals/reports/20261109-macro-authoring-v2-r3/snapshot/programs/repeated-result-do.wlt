@@ -1,0 +1,12 @@
+(module
+  (%use "wlt:core" (type $result))
+  (%macro $bind-results (rule (((?name:ident ?value:expr) ...) ?body:expr)
+    (bind ?name ?body) (%result.do (?name ?value) ... ?body)))
+  (func $main (export "main") (result i32) (%effect pure)
+    (%match (%inst $result i32 i32) (result i32)
+      (%$bind-results (($a (%result.ok i32 i32 20)) ($b (%result.ok i32 i32 22))) (%result.ok (+ $a $b)))
+      (case ok ($n) $n) (case err ($e) (- 0 $e))))
+  (func $fallback (export "fallback") (result i32) (%effect pure)
+    (%match (%inst $result i32 i32) (result i32)
+      (%$bind-results (($a (%result.err i32 i32 7)) ($b (%result.ok i32 i32 22))) (%result.ok (+ $a $b)))
+      (case ok ($n) $n) (case err ($e) (- 0 $e)))))

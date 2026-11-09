@@ -1,0 +1,42 @@
+{
+  "workspace": {
+    "passed": 598,
+    "failed": 0,
+    "ignored": 1,
+    "log": "target/macro-composition-workspace-done.log"
+  },
+  "additionalTypedFragmentRegression": {
+    "passed": 1,
+    "log": "target/macro-composition-type-fragments.log"
+  },
+  "language": {
+    "passed": 47
+  },
+  "evaluationHarness": {
+    "passed": 22
+  },
+  "nodeAbi": {
+    "passed": 2,
+    "backends": [
+      "core",
+      "component"
+    ],
+    "cleanup": true
+  },
+  "chromium": {
+    "passed": 2
+  },
+  "fmtClippy": true,
+  "wasm32WebCheck": true,
+  "fuzz": {
+    "seed": 20261109,
+    "randomCases": 64,
+    "fixedCases": 13,
+    "reducedReplayPassed": true
+  },
+  "frozenPriorFiles": {
+    "checked": 2830,
+    "changed": 0
+  },
+  "sameFrozenSuiteFiles": 38
+}

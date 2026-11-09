@@ -240,7 +240,13 @@ pub fn type_at(
     let offsets = loaded.offsets(path, line, column)?;
     let syntax = crate::sexpr::parse(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
     match crate::check_observed(loaded.text(), policy, |module, generics| {
-        query(loaded, &syntax, &offsets, module, &generics.instances)
+        query(
+            loaded,
+            &syntax,
+            &crate::macros::checked_offsets(&generics.macros, &offsets),
+            module,
+            &generics.instances,
+        )
     }) {
         Ok((_, matches)) => Ok(TypeQuery {
             schema: "wlt-type-at-v1",
@@ -267,6 +273,7 @@ pub(crate) struct Snapshot {
     index: syntax_index::Index,
     checked: Option<CheckedSnapshot>,
     links: Vec<(Span, crate::diagnostic::Label, String)>,
+    macros: crate::macros::Report,
 }
 #[cfg(not(target_family = "wasm"))]
 type CheckedSnapshot = (Module, Vec<(Span, Span, String, String)>);
@@ -277,7 +284,9 @@ impl Snapshot {
         let index = syntax_index::Index::new(&source, &syntax, true);
         let mut links = vec![];
         let mut error = None;
+        let mut macros = crate::macros::Report::default();
         let checked = match crate::check_observed(source.text(), policy, |module, generics| {
+            macros = generics.macros.clone();
             fn defs(
                 n: &Sexp,
                 out: &mut BTreeMap<(crate::type_syntax::ReferenceKind, String), Span>,
@@ -349,6 +358,7 @@ impl Snapshot {
             index,
             checked,
             links,
+            macros,
         })
     }
     pub fn query(&self, path: &Path, line: usize, column: usize) -> Result<TypeQuery, Error> {
@@ -365,7 +375,15 @@ impl Snapshot {
             matches: self
                 .checked
                 .as_ref()
-                .map(|(m, i)| query(&self.source, &self.syntax, &offsets, m, i))
+                .map(|(m, i)| {
+                    query(
+                        &self.source,
+                        &self.syntax,
+                        &crate::macros::checked_offsets(&self.macros, &offsets),
+                        m,
+                        i,
+                    )
+                })
                 .unwrap_or_default(),
         })
     }
@@ -393,6 +411,25 @@ impl Snapshot {
             "{text}\nDeclared syntax (unverified; no checked type is inferred)"
         ))
     }
+    pub fn macro_info(&self, path: &Path, line: usize, column: usize) -> Option<(Label, String)> {
+        let offsets = self.source.offsets(Some(path), line, column).ok()?;
+        let text = self.index.hover(&offsets)?;
+        if !text.starts_with("macro ") {
+            return None;
+        }
+        Some((self.index.definition(&offsets)?.clone(), text.to_owned()))
+    }
+    pub fn macro_expansion(&self, path: &Path, line: usize, column: usize) -> serde_json::Value {
+        let offsets = self
+            .source
+            .offsets(Some(path), line, column)
+            .unwrap_or_default();
+        let mut report = self.macros.clone();
+        report
+            .expansions
+            .retain(|e| offsets.iter().any(|o| contains(e.call, *o)));
+        report.located(&self.source)
+    }
     pub fn completions(
         &self,
         path: &Path,
@@ -406,7 +443,7 @@ impl Snapshot {
     }
     pub fn unresolved(source: Source, error: Error) -> Result<Self, Error> {
         let syntax = crate::sexpr::editor_prefix(source.text()).map_err(|_| error.clone())?;
-        let index = syntax_index::Index::new(&source, &syntax, false);
+        let index = syntax_index::Index::new(&source, &syntax, true);
         Ok(Self {
             source,
             syntax,
@@ -414,6 +451,7 @@ impl Snapshot {
             error: Some(error),
             checked: None,
             links: vec![],
+            macros: Default::default(),
         })
     }
 }

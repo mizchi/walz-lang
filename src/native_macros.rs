@@ -440,6 +440,7 @@ impl Lower<'_> {
             let next = self
                 .expr(
                     &Sexp {
+                        context: Default::default(),
                         kind: Kind::List(args),
                         span: node.span,
                     },

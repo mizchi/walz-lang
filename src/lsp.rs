@@ -151,7 +151,9 @@ impl Session {
                 .or_else(|error| {
                     if let Some(doc) = self.documents.get(path) {
                         Snapshot::unresolved(
-                            source::Source::unresolved(path.into(), doc.text.clone()),
+                            source::load_editor(path, &overlays).unwrap_or_else(|_| {
+                                source::Source::unresolved(path.into(), doc.text.clone())
+                            }),
                             error,
                         )
                     } else {
@@ -342,6 +344,9 @@ impl Session {
         let Ok(snapshot) = self.snapshot(&path) else {
             return Ok(Value::Null);
         };
+        if method == "wlt/expandMacro" {
+            return Ok(snapshot.macro_expansion(&path, scalar.line + 1, column));
+        }
         if method == "textDocument/completion" {
             return Ok(json!(
                 snapshot
@@ -357,19 +362,27 @@ impl Session {
         let link = snapshot
             .link(&path, scalar.line + 1, column)
             .map(|(l, t)| (l.clone(), t.to_owned()));
+        let macro_info = snapshot.macro_info(&path, scalar.line + 1, column);
         if method == "textDocument/definition" {
             let local = q.matches.iter().find_map(|m| m.declaration.clone());
-            if let Some(label) = local.or_else(|| link.map(|(l, _)| l)).or_else(|| {
-                snapshot
-                    .declaration(&path, scalar.line + 1, column)
-                    .cloned()
-            }) && let Some(path) = &label.location.path
+            if let Some(label) = macro_info
+                .map(|(l, _)| l)
+                .or(local)
+                .or_else(|| link.map(|(l, _)| l))
+                .or_else(|| {
+                    snapshot
+                        .declaration(&path, scalar.line + 1, column)
+                        .cloned()
+                })
+                && let Some(path) = &label.location.path
             {
                 return Ok(json!([{"uri":file_uri(path)?,"range":self.range(&label)}]));
             }
             Ok(Value::Null)
         } else {
-            let values = if let Some((_, display)) = link {
+            let values = if let Some((_, display)) = macro_info {
+                vec![display]
+            } else if let Some((_, display)) = link {
                 vec![display]
             } else {
                 q.matches
@@ -407,9 +420,9 @@ impl Session {
             return id.map(|id|vec![json!({"jsonrpc":"2.0","id":id,"error":{"code":-32600,"message":"server has shut down"}})]).unwrap_or_default();
         }
         let result=match method {
-            "initialize"=>Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"completionProvider":{"triggerCharacters":["$","."]}},"serverInfo":{"name":"wlt","version":env!("CARGO_PKG_VERSION")}})),
+            "initialize"=>Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"experimental":{"wltMacroExpansion":true},"completionProvider":{"triggerCharacters":["$",".","%"]}},"serverInfo":{"name":"wlt","version":env!("CARGO_PKG_VERSION")}})),
             "shutdown"=>{self.shutdown=true;Ok(Value::Null)},
-            "textDocument/hover"|"textDocument/definition"|"textDocument/completion"=>self.query(method,params),
+            "textDocument/hover"|"textDocument/definition"|"textDocument/completion"|"wlt/expandMacro"=>self.query(method,params),
             "textDocument/didOpen"|"textDocument/didChange"|"textDocument/didClose"|"textDocument/didSave"=>return self.edit(method,params).unwrap_or_else(|message|vec![json!({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":1,"message":message}})]),
             "workspace/didChangeWatchedFiles"=>{self.cache.clear();return self.publish()},
             "initialized"|"$/cancelRequest"|"exit"=>return vec![],

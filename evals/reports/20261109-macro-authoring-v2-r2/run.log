@@ -1,0 +1,35 @@
+cargo build --locked --bin wlt
+    Finished `dev` profile [unoptimized] target(s) in 0.05s
+node --expose-gc evals/macro-usability-v2/run.mjs '20261109-macro-authoring-v2-r2'
+PASS option-function
+PASS option-inferred-macro
+PASS option-projected-macro
+PASS delegated-independent-bindings
+PASS initializer-caller-scope
+PASS duplicate-binding-rejected: E_MACRO_BINDING duplicate caller-supplied binders in one body
+UNMET sequential-binding-dsl: E_UNKNOWN_LOCAL unbound local `$a`
+UNMET repeated-result-do: E_MACRO repeated variable must occur in a repeated template
+UNMET wrapped-body-delegation: E_MACRO_BINDING declared body is outside its binder's lexical scope
+PASS scale-single-32
+PASS scale-separate-32
+PASS scale-single-128
+PASS scale-separate-128
+PASS scale-single-256
+PASS scale-separate-256
+UNMET scale-single-512: E_MACRO_LIMIT macro elaboration work limit exceeded
+PASS scale-separate-512
+{
+  "output": "/Users/mz/ghq/github.com/mizchi/wlt-lang/evals/runs/20261109-macro-authoring-v2-r2",
+  "passed": true,
+  "required": [
+    11,
+    11
+  ],
+  "unmet": [
+    "sequential-binding-dsl",
+    "repeated-result-do",
+    "wrapped-body-delegation",
+    "scale-single-512"
+  ],
+  "failures": []
+}

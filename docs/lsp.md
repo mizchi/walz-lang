@@ -21,3 +21,13 @@ Diagnostics still come from the strict compiler. An error does not make the curr
 The editor-only prefix parser also keeps available declarations when an input ends inside a list. Broken tokens/comments can limit recovery to the preceding prefix. If an import cannot be resolved, recovery is limited to available local declarations; it does not guess foreign symbol identity or privacy. Implicit local bindings have no inferred type in this mode. Lexical shadowing is preserved. The index is bounded to 4,096 global symbols, 32,768 references/bindings, and 1,024 completion results.
 
 Completion proposes visible declarations and explicit import selections. Inside `%use "wlt:core" ...`, it also lists exports from the compiler's embedded catalogue. It does not insert imports or change source automatically. Details from syntax are declarations, not evidence that a document has passed type/effect/ownership checks.
+
+## User-defined syntax
+
+[`%macro`](user-macros.md) declarations expose their patterns to hover and definition queries. Their explicit `bind` clauses supply lexical scope for completion and definition even when a current body fails checking. Type-directed rules with incompatible binding structures do not supply a guessed recovery scope. Checked argument types still come from the normal compiler.
+
+The experimental `wlt/expandMacro` request uses hover-style `textDocument` and `position` parameters and returns `wlt-macro-expansion-v1`, including the selected rules, inferred types and source origins. It uses the current checked snapshot; an invalid revision returns no stale expansion. The server advertises `experimental.wltMacroExpansion` during initialization.
+
+Macro expansion reports include `type_schema: "wlt-type-info-v1"`, a structured `types` map and each input's `usage` (`single`, `duplicated`, `discarded`). Counts describe syntax occurrences rather than runtime evaluations. Ordinary inferred generic calls use the same checked types and concrete specialization links as explicit calls; an ambiguous call produces `E_GENERIC_INFERENCE` rather than a guessed numeric type.
+
+When parentheses are missing, recovery resolves current filesystem imports and unsaved library buffers using an editor-only delimiter completion snapshot. Completions and definitions include imported macros' declared single/repeated binders and preserve original source locations. This snapshot supplies only unverified syntax, never checked types or an expansion history. Changing/removing the imported macro invalidates those bindings immediately; incomplete strings/comments and invalid imports use conservative declaration recovery.
