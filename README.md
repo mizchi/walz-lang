@@ -10,6 +10,7 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 
 - `%`-prefixed extensions for immutable bindings, loops, enums and pattern matching, named struct construction, and explicit closure captures.
 - Monomorphized generics with constraints, explicit type arguments, and unambiguous call-site inference.
+- Hygienic expression macros with explicit binding scopes and queries to the ordinary type checker.
 - Type, effect, and ownership checking for the typed extension core.
 - Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
 
@@ -22,13 +23,13 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 
   (func $main (export "main") (result i64) (%effect pure)
     (%let $answer (%inst $result i64 i32)
-      (%result.ok (call (%inst $add i64) 40 2))
+      (%result.ok (call $add 40 2))
       (%match $answer
         (case ok ($value) $value)
         (case err ($code) 0)))))
 ```
 
-`%inst` supplies concrete type arguments, `%let` introduces an immutable binding, and `%match` handles both Result cases. The `main` function returns 42.
+`%inst` supplies concrete type arguments; ordinary generic calls can infer them from arguments and the expected result. `%let` introduces an immutable binding, and `%match` handles both Result cases. The `main` function returns 42.
 
 ## Try it
 
@@ -45,11 +46,11 @@ wlt bench examples/benchmarks/stdlib_v2_bench.wlt
 
 You can also install directly with `cargo install --git https://github.com/mizchi/wlt-lang --locked --bin wlt`. Tests require Wasmtime with Wasm GC support; benchmarks require Node.js 24 or later. Verified builds also use Lean. See the [CLI guide](docs/cli.md) for defaults and options, and [Getting started](docs/getting-started.md) for development setup.
 
-For an interactive language tour, run `just playground` (requires wasm-pack). The [browser playground](docs/playground.md) compiles WLT locally using the Rust compiler built to Wasm.
+Try the [hosted playground](https://mizchi.github.io/wlt-lang/) for an interactive language tour, or run `just playground` locally (requires wasm-pack). The [browser playground](docs/playground.md) compiles WLT locally using the Rust compiler built to Wasm.
 
 ## Documentation
 
-The detailed documentation linked below is in Japanese.
+The guides are primarily in Japanese; the macro and LSP references are in English.
 
 | Topic | Documentation |
 | --- | --- |

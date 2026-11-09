@@ -3,6 +3,8 @@
 RustのWLTコンパイラをwasm-packでWasmにビルドし、ブラウザー上で編集・コンパイル・実行する。
 コンパイルのためにソースをサーバーへ送信しない。JavaScriptのバンドラーやサーバー側のRust実行は不要。
 
+[公開版を開く](https://mizchi.github.io/wlt-lang/)。画面のDocumentationからREADMEと各言語機能のガイドへ進める。
+
 ## 起動とビルド
 
 Rust 1.99以降、Node.js 24以降、pnpm、just、wasm-packと、Wasm GC対応のブラウザーを使用する。
@@ -26,9 +28,16 @@ wasm-packは`--target web --release`を使用する。初回は対応するwasm-
 生成JSとWasmの組み合わせは同じビルドのものを配信する。
 オプションの詳細は[wasm-packのbuild資料](https://rustwasm.github.io/docs/wasm-pack/commands/build.html)を参照。
 
+## GitHub Pagesへの公開
+
+[Pagesワークフロー](../.github/workflows/pages.yml)は、`main`へのpushで同じコミットのコンパイラをWasmにビルドし、サンプル・Rustアダプター・Chromiumの検査後に`target/playground/`を公開する。pull requestではビルドと検査だけを行い、公開はしない。Actionsから手動実行もできる。
+
+公開元はリポジトリのSettings → PagesでGitHub Actionsに設定する。生成物をソースブランチへコミットする必要はない。ページ内のサンプルや説明は英語、詳細な言語資料はリポジトリ内のMarkdownを参照する。
+
 ## 対応範囲
 
 - 単一ファイルのWLT・標準WAT・同梱された`wlt:core`のコンパイル。
+- 通常の汎用呼び出しの型引数推論、衛生的なユーザーマクロ、公開型情報の問い合わせと明示的な束縛スコープ。
 - CLIと共通の名前・型・effect・所有権検査、最適化・DCE、Wasm validator。
 - 生成WAT、解析JSON、エラーコードと位置・関連位置・note・helpを含む診断の表示。
 - 最適化の切り替えとCore Wasmのダウンロード。
@@ -46,21 +55,22 @@ Leanの外部カーネルが必要な`%law`や検証付きコンパイルはブ�
 
 ## 言語機能のサンプル
 
-Exampleメニューから38個のサンプルを選べる。説明と期待結果は画面と同じく英語で表示する。
+Exampleメニューから44個のサンプルを選べる。説明と期待結果は画面と同じく英語で表示する。
 
 | グループ | 数 | 紹介する機能 |
 | --- | ---: | --- |
 | Basics | 3 | 複数束縛、型付きリテラル、演算子、短絡論理、ビット演算、浮動小数点と明示変換 |
 | Control flow | 5 | if、block、return、br、状態を渡すloop、for、相互再帰、Wasm例外 |
 | Data and types | 8 | 名前付きstruct、GC配列、enumと網羅的match、Resultとdo記法、Option、tuple・フィールドの分解、for-each、フィールド更新、aliasとnewtype |
-| Functions and modules | 5 | 明示capture、単相化、型クラス制約、ファイルモジュール、WIT付きComponentの%use、opaque、所有値と一度きりのclosure |
+| Functions and modules | 5 | 明示capture、型引数推論と単相化、型クラス制約、ファイルモジュール、WIT付きComponentの%use、opaque、所有値と一度きりのclosure |
+| Syntax extensions | 6 | 衛生的マクロ、推論した型の利用、反復束縛と委譲、公開selector、初期化式・反復位置・body転送の診断 |
 | Core library | 7 | 不変listのmap/fold、callable制約、string/bytes、ゼロコピーのstring/bytes/array-view、dict、JSON、v128/SIMD |
 | Ownership and async | 4 | 配送済みFutureと有限Stream、fold-result、端点のclose、ホストの中断境界、resourceとborrow |
 | Checks and interop | 6 | test、bench、型・move・effectの診断、lawの検証境界、標準WATと複数戻り値 |
 
-31個はそのままRunで実行でき、`Expected output`と実際の結果を比較できる。
+34個はそのままRunで実行でき、`Expected output`と実際の結果を比較できる。
 ホストFutureの例も、JSPIによるPromiseの待機をブラウザー内で実行する。
-残る7個は`Expected diagnostic`を示す例。型・所有権・effectの誤りに加え、ファイル解決が必要なモジュール、
+残る10個は`Expected diagnostic`を示す例。型・所有権・effectの誤り、マクロのスコープと反復の制約に加え、ファイル解決が必要なモジュール、
 resourceに必要な信頼済み`--bindings`設定、lawに必要なLeanカーネルというブラウザー側の制約を紹介する。
 resourceの例はホストimportの宣言だけでは権限が成立しないことを示しており、検査を通すための仮の権限は与えない。
 
@@ -108,6 +118,7 @@ PlaywrightはWasmコンパイラの読み込み、GCを含むサンプル、実�
 イベントループのFuture・Stream、最適化off、Resultの失敗側、export名の変換、引数個数、待機の停止後の再実行も検査する。
 固定7入力では、Wasm版コンパイラのWATが変更前のnative版の記録と一致することも確認する。
 ビルド済みのときは`pnpm test:playground`でブラウザー検査だけを実行できる。
+別のローカルサーバーが既定のポートを使っている場合は、`WLT_PLAYGROUND_TEST_PORT=41741 pnpm test:playground`で検査用ポートを変更できる。
 
 サンプルの定義は`playground/samples/`に機能別に分け、`samples.mjs`で集める。
 追加するときは`category`、`label`、`description`、`features`、`expectation`、単独で扱える`source`を指定する。

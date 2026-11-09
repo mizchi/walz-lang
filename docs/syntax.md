@@ -12,8 +12,11 @@ WLT が追加する構文の入口には `%` を付ける。接頭辞のない `
 | 宣言・注釈 | `%closure`、`%capture`、`%effect`、`%newtype`、`%type.alias`、`%type.params`、`%where`、`%test`、`%law` |
 | 静的モジュール | `%include`、`%use`、`%export`、`%public` |
 | 型引数の適用 | `(%inst $name T...)`。関数・型・alias・クロージャで共通 |
+| ユーザー定義構文 | `%macro` で宣言し `%$name` で呼ぶ。`rule`・`infer`・`when`・`bind` は宣言内の構文 |
 
 拡張の内部にある `case`、`bind`、`while`、`step`、`catch`と`%where`の制約名は、その入口に属するデータ構文なので接頭辞を付けない。`if`、`then`、`else`、`block`、`param`、結果宣言の `result` は WAT の構文を使う。
+
+ユーザー定義マクロは型付きの式へ展開し、標準WATの命令やリーダーは変更しない。struct構築の `(%$T::{...})` はコンパイラ固定の糖衣で、`%$name` による利用者マクロの呼び出しとは区別する。[構文・衛生性・束縛の規約](user-macros.md) を参照。
 
 型付きコアの式位置では、`$foo`を`local.get`の省略形、期待するスカラー型が分かる数値を`.const`の省略形として使える。letの型注釈は`(%let $x (type i32) 1 body)`と書ける。この`(type T)`は`%let`に属する注釈であり、独立した命令ではない。[規約と例](core-expressions.md#ローカル参照と数値の省略形)。
 

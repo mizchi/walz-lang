@@ -12,6 +12,18 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
 });
 
+test('documentation and repository links remain accessible on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const docs = page.getByRole('link', { name: 'Documentation', exact: true });
+  await expect(docs).toBeVisible();
+  await expect(docs).toHaveAttribute('href', 'https://github.com/mizchi/wlt-lang#readme');
+  await expect(page.getByRole('link', { name: 'WLT on GitHub' })).toBeVisible();
+  const title = await page.getByRole('heading', { name: 'WLT Playground' }).boundingBox();
+  const link = await docs.boundingBox();
+  expect(link.y).toBeGreaterThanOrEqual(title.y + title.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
 test('loads the Wasm compiler, compiles GC/std syntax, executes i64 and downloads Wasm', async ({ page }) => {
   const requests = [];
   page.on('request', request => requests.push(request.url()));

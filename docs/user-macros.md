@@ -2,6 +2,8 @@
 
 WLT provides declarative, hygienic expression macros. A macro consumes S-expression syntax and expands into existing checked WLT. The reader, standard WAT instructions, type system, effect rules and ownership rules remain compiler-defined. Macro expansion does not run guest code, invoke host imports, or expose file/network/time/random APIs.
 
+Use an ordinary function to abstract values. Ordinary generic calls already infer unambiguous type arguments, so a macro that only supplies `%inst` is usually unnecessary. Use a macro when the abstraction needs syntax, a declared binding scope, or type-directed expansion. For example, `call $option.ok-or` can infer its arguments without a macro; `%$with` below introduces a caller-named local into a body.
+
 Run the complete example:
 
 ```sh
@@ -11,7 +13,7 @@ wlt macro-expand examples/user-macros/main.wlt
 wlt macro-expand --text examples/user-macros/main.wlt
 ```
 
-The last command emits JSON with the `wlt-macro-expansion-v1` schema. `wlt expand` continues to emit final standard WAT.
+`wlt macro-expand` emits JSON with the `wlt-macro-expansion-v1` schema; `--text` prints a readable expansion history. `wlt expand` continues to emit final standard WAT. `macro-expand` and `expand` check the program without running the guest.
 
 ## Patterns and templates
 
@@ -158,6 +160,14 @@ The template keeps its binding group until repetition is expanded, then lowers i
 
 Delegation checks the callee's declared binding interface before substitution. Every syntactically matching callee rule must agree on its binder/body inputs, even when type guards differ. The enclosing rule must advertise the same `bind` relationship. Forward the captured expression as an entire body argument; arbitrary reconstructed binding scopes are not inferred. The callee still verifies that it actually introduces the binders in the promised scope. Forwarding cannot expose a name to the initializer or to a second occurrence outside that body position. This composes across multiple layers and repeated binder groups.
 
+| Task | Current boundary | Practical choice |
+| --- | --- | --- |
+| A later initializer uses an earlier caller-supplied binder | Captured initializers retain the caller's scope | Compute dependencies with an ordinary outer `%let`, then pass them in |
+| Forward a body while wrapping it in a block | Only the whole captured body is forwarded | Put the wrapper inside the callee's binding scope |
+| Repeat bindings before a final Result body | A template repetition must end its list | Use built-in `%result.do` for sequencing; a recursive user DSL needs separate design and evaluation |
+
+These limits do not change the sequential scope of ordinary grouped `%let`. A rejected direct Result template is not evidence that every recursive macro definition is impossible.
+
 Run the complete [binding example](../examples/user-macros/bindings.wlt) with `wlt test examples/user-macros/bindings.wlt`.
 
 ## Static modules
@@ -203,6 +213,8 @@ just fuzz-user-macros-replay target/macro-fuzz/failures/<run>/reduced.json
 ```
 
 The seeded corpus compares user macro calls, independently rendered manual expansions and a Rust value/trace model. It exercises hygiene, repeated captures, single/duplicate/discarded inputs, wrapping i64 arithmetic, branches, caught exceptions, owned boxes, generic calls and delegated/repeated binder scopes (including caller-name collisions). Both optimized and unoptimized Wasm run in Wasmtime and V8; effects are compared, and negative programs compare type/effect/exception/ownership diagnostics. Failures preserve their classification during structural shrinking. Original and reduced JSON ASTs, macro/manual WLT, seed, case and diagnostics are written under ignored `target/macro-fuzz/failures/`. These are regression evidence, not a proof of all macro transformations.
+
+Application, editor, authoring and scale evaluations use fresh run IDs. See the [evaluation guide](../evals/README.md#マクロの実用性と規模の評価) for the separate v1/v2 tasks and [the expression-resumption comparison](../evals/reports/20261109-macro-authoring-v2-r3/REPORT.md) for fixed inputs, remaining limitations and measured compiler costs.
 
 ## Design references
 

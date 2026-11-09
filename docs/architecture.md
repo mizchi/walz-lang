@@ -1,26 +1,30 @@
 # 実装
 
 ```text
-ファイル import / include → wlt:core の静的展開 → S 式・固定構文の正規化
-  → 名前解決・単相化・型検査 → 型付き IR
-                              ├─ 全ソースの解析・契約検査
-                              └─ 到達性による宣言の除去 → WAT → Wasm
+ファイル解決・wlt:core の静的展開 → S 式の正規化・静的な名前解決
+  → マクロ宣言・汎用テンプレートの収集
+  → 具体化・マクロ展開・型検査（必要な型がそろうまで再開）
+  → 型付き IR → 全ソースの解析・契約検査
+              → 到達性による宣言の除去 → WAT → Wasm
 ```
 
 - `src/ir.rs`: 型、ローカル・関数・ループの ID、閉じた式の列挙型。解析と出力の共通コントラクト。
-- `src/sexpr.rs`: 位置情報付きの S 式リーダー。`;;` と入れ子の `(; ;)` コメントに対応。
+- `src/sexpr.rs`: 位置情報・スナップショット内のノードID・展開コンテキストを持つ S 式。`;;` と入れ子の `(; ;)` コメントに対応。
 - `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
 - [src/standard.rs](../src/standard.rs): 同梱する `wlt:core` の型 alias と標準関数を選択し、通常の静的モジュールへ展開。ファイル探索や実行時の初期化は行わない。
 - `build.rs` / `src/standard_catalogue.rs`: 標準APIの公開名と型aliasの位置をビルド時に索引化する。`standard.rs` は必要な実装だけを読み、immutableな構文を共有する。[Rust側の計測](frontend-performance.md)を参照。
 - `crates/wlt-web` / `playground/`: 共通コンパイラをwasm-bindgenで公開し、コンパイルとゲスト実行を別のWeb Workerで動かす。[ブラウザー用ビルド](playground.md)を参照。
 - [src/syntax.rs](../src/syntax.rs): `%` で始まる入口の正規化と、複数束縛の `%let` から既存のネストした束縛への展開。
 - `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
-- `src/generics.rs`: 明示した型引数ごとの具体化、再利用、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
+- `src/macros.rs` / `src/macros/`: 宣言的な式マクロ、衛生的な束縛、委譲、構造化した型情報、入力と展開先の対応、展開予算。既存の式構文を返し、検査済みIRは生成しない。
+- `src/generics.rs` / `src/generics/inference.rs`: 明示または推論した型引数ごとの具体化と再利用、型の等式、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
 - `src/bounds.rs`: where の shared/nonunit/callable と effect 上限を、具体的な型・署名・推論 effect で検査。
 - `src/type_syntax.rs`: 値型の位置と nominal な関数・heap 型の参照を区別する共通 visitor。
 - `src/link.rs`: 検査済みの全 IR から到達する宣言を選び、生成用の ID を振り直す。
 - `src/buffers.rs`: bytes/text の private GC storage、UTF-8 検証と値操作。
 - `src/frontend.rs`: 型・名前・捕捉・可変性・match の網羅性・tail position の検査。
+- `src/frontend/generic_calls.rs` / `macro_types.rs`: 通常の汎用呼び出しの型推論と、マクロ向けの読み取り専用の型問い合わせ。
+- `src/frontend/macro_expansion.rs` / `lexical.rs`: マクロ展開後に式から検査を再開し、仮のローカルIDを破棄。let/block/if の検査は大きな命令ディスパッチから分離する。
 - `src/typing.rs`: 宣言・推論した型の一覧と、ソース位置からの型の問い合わせ。
 - `src/inspect.rs`: 元ファイルの行・列から、検査済みIRと元の型注釈・具体化位置を照合する読み取り専用API。
 - `src/cli_inspection.rs`: JSON診断とtype-atのCLI入出力。検査ロジックと表示用メタデータを分離する。
@@ -57,6 +61,7 @@
 
 列挙型はタグとケース別の GC subtype へ変換します。bytes/text は private な packed GC 配列を使い、text は UTF-8 を検証します。
 利用者定義の関数・型・alias・クロージャは、`(%type.params $T ...)` と `(%inst $name T...)` により単相化します。
+通常の汎用 `call` は引数・期待型から一意に決まる型引数を省略できます。マクロによる構文の変更では検査済みの先行式を保持し、新しい具体化で型環境が変わると全体を検査し直します。いずれも最終的な型・effect・所有権・race の契約検査を通してから最適化します。[マクロの境界と検査方式](user-macros.md#checking-scope-and-work-counters)を参照してください。
 具体的なクロージャ型を引数にする [map/fold の実例](../examples/generic-lists.wlt) と
 [具体化時の検査規則](generics.md) を参照してください。
 異なるクロージャ型を共通のインターフェースで呼ぶ糖衣、finally、共有 GC ヒープのスレッド間利用の糖衣は、この核の外に置いています。

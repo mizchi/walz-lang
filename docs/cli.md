@@ -126,6 +126,19 @@ wlt --version
 
 CLI 開発時には `just test-cli`、パッケージからのインストール検査には `just test-install` を使う。後者は一時領域へインストールし、ビルド元を削除して別ディレクトリで3コマンドと失敗時の終了コードを検査する。通常のインストールは `just install` でも実行できる。
 
+## マクロ展開と型の確認
+
+```sh
+wlt check --json examples/user-macros/main.wlt
+wlt macro-expand examples/user-macros/main.wlt
+wlt macro-expand --text examples/user-macros/main.wlt
+wlt expand examples/user-macros/main.wlt
+```
+
+`macro-expand` は型検査を通した展開履歴を出し、ゲストを実行しない。既定は `wlt-macro-expansion-v1` のJSONで、宣言・展開元・推論型・入力の利用状況・`checking` の仕事量を含む。`--text` は展開元・推論型・入力の構文出現数を人が読む形式で表示する。`expand` は全拡張を下げた最終WATを出す。
+
+`single` / `duplicated` / `discarded` は入力構文の出現数の分類で、ループや分岐を含む実行回数ではない。`checking` のカウンタも検査予算の指標であり、CPU時間ではない。構文の使い分けと上限は [ユーザー定義マクロ](user-macros.md)、編集時の型・定義・展開照会は [LSP](lsp.md) を参照。
+
 ## Core＋JSPI のテスト・計測
 
 `wlt test --target core-js --bindings policy.json --host host.mjs` と

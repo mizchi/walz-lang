@@ -29,6 +29,7 @@
 | `(%use "./file.wlt" ...)` / `(%export ...)` | WLT ソースの選択的な静的リンク／ソース API の公開 |
 | `(%use "wlt:core" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
 | `%closure`・`%capture`・`%effect`・`%type.params`・`%where` | WLT が追加した宣言・注釈 |
+| `%macro` / `%$name` | 衛生的な式マクロの宣言／呼び出し。標準 WAT の命令は再定義しない |
 
 `%` は拡張の入口に付ける。内部の `case`、`bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
 
@@ -53,7 +54,8 @@
       (%let ?name ?value ?body)))
   (func $main (export "main") (result i32)
     (%effect pure)
-    (%$with $x (i32.const 21) (%$twice $x))))
+    (%$with $x (i32.const 21) (%$twice $x)))
+  (%test "explicit binding and inferred arithmetic" (= (call $main) 42)))
 ```
 
 `infer` は通常の型推論から具体的な型の構文を取得する。`(infer (?T expected))` は呼び出しの期待型、`(infer (?T ?value expected))` はその期待型を明示的なヒントにして引数を検査する。整数幅を値から推測しない。`when` は具体型 `(type ?value i32)` や既存の型クラスでルールを選ぶ。`bind` は呼び出し側の名前が有効になる本体を宣言する。
@@ -77,7 +79,12 @@ selector は `option.element` / `list.element` / `result.ok` / `result.err` / `t
 
 呼び出し先と同じ `bind` を宣言すると束縛を委譲できる。新しい名前が見えるのは指定した本体だけで、
 初期値は caller のスコープ。空列は本体を評価し、同名の重複は拒否する。
-`macro-expand` の `checking` で全体のパス数・関数の検査数・予算に数えるノード訪問数を確認できる。
+本体を委譲するときは `?body` を丸ごと渡す。`(block ... ?body)` のように組み直したスコープは推定しない。
+マクロの初期値で先に生成した名前を参照したい場合は、依存する値を通常の `%let` で先に束縛して渡す。
+
+`wlt macro-expand --text examples/user-macros/main.wlt` で展開・型・入力の利用状況を確認できる。
+JSON の `checking` は全体の検査パス数、関数本体へ入った回数、予算で数える構文走査を表し、実行時間や全検査操作数ではない。
+通常は展開した式から検査を再開し、具体化で型環境が変わる場合は全体を検査し直す。
 [多段の実行例](examples/user-macros/bindings.wlt)。
 
 ## `wlt:core` と基本データ型

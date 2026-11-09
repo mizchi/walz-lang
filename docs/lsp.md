@@ -28,6 +28,8 @@ Completion proposes visible declarations and explicit import selections. Inside 
 
 The experimental `wlt/expandMacro` request uses hover-style `textDocument` and `position` parameters and returns `wlt-macro-expansion-v1`, including the selected rules, inferred types and source origins. It uses the current checked snapshot; an invalid revision returns no stale expansion. The server advertises `experimental.wltMacroExpansion` during initialization.
 
+The result keeps the report structure and filters `expansions` to calls covering the requested position. For a whole-file report outside the editor, run `wlt macro-expand file.wlt` or `wlt macro-expand --text file.wlt`; see the [CLI guide](cli.md#マクロ展開と型の確認). Positions in the request use zero-based UTF-16, just like standard hover requests.
+
 Macro expansion reports include `type_schema: "wlt-type-info-v1"`, a structured `types` map and each input's `usage` (`single`, `duplicated`, `discarded`). Counts describe syntax occurrences rather than runtime evaluations. Ordinary inferred generic calls use the same checked types and concrete specialization links as explicit calls; an ambiguous call produces `E_GENERIC_INFERENCE` rather than a guessed numeric type.
 
 When parentheses are missing, recovery resolves current filesystem imports and unsaved library buffers using an editor-only delimiter completion snapshot. Completions and definitions include imported macros' declared single/repeated binders and preserve original source locations. This snapshot supplies only unverified syntax, never checked types or an expansion history. Changing/removing the imported macro invalidates those bindings immediately; incomplete strings/comments and invalid imports use conservative declaration recovery.

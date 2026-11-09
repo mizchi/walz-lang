@@ -13,14 +13,16 @@ export const functions = {
   },
   generics: {
     category: 'Functions and modules', label: 'Generic functions and type-class bounds',
-    description: 'Instantiate type arguments explicitly. %where checks primitive type-class constraints, and each concrete function is monomorphized.',
-    features: ['generics', 'type-bounds'], expectation: { kind: 'run', output: '42n' },
+    description: 'Ordinary calls infer unique type arguments from arguments and the expected result. %where checks primitive type-class constraints; inferred and explicit calls share monomorphized instances.',
+    features: ['generics', 'generic-inference', 'type-bounds'], expectation: { kind: 'run', output: '42n' },
     source: `(module
   (func $add (%type.params $T) (%where (Add $T) (shared $T))
     (param $a $T) (param $b $T) (result $T) (%effect pure)
     (+ $a $b))
   (func $main (export "main") (result i64) (%effect pure)
-    (call (%inst $add i64) 40 2)))`,
+    ;; The expected i64 result fixes T; 40 and 2 are also i64.
+    ;; Explicit form: (call (%inst $add i64) 40 2)
+    (call $add 40 2)))`,
   },
   modules: {
     category: 'Functions and modules', label: 'File modules, selective uses and opaque types',

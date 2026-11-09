@@ -31,6 +31,8 @@ just run examples/variants.wlt
 just run examples/ast-interpreter.wlt
 just run examples/bytes-text.wlt
 just run examples/modules.wlt
+just run examples/user-macros/main.wlt  # ファイルをまたぐ衛生的マクロ → 42
+just expand-macros-text                # マクロの型・入力利用・展開履歴
 just wat                     # 通常の .wat へ変換
 just expand examples/exceptions.wlt  # try/catch などの展開を確認
 just build                   # target/program.wasm を生成
@@ -53,6 +55,8 @@ just check
 just samples                 # 実行サンプルと期待値を一覧で確認
 just probes                  # 未対応機能を再現する検査
 ```
+
+ユーザー定義構文は [マクロの実行例](../examples/user-macros/main.wlt) と [反復束縛・委譲の例](../examples/user-macros/bindings.wlt) から試せます。値の共通化には通常関数、名前の導入や構文の拡張にはマクロを使います。汎用関数の型引数は、一意に決まる通常の `call` なら省略できます。[ジェネリクス](generics.md)、[マクロの規約](user-macros.md)、[エディターの設定](lsp.md) を参照してください。
 
 Rust 1.99 以降と just を使用します。実行と実行テストには Wasm GC 対応の `wasmtime`、WIT のテストには `wasm-tools` が PATH 上に必要です。
 契約付き実行・law を含むモジュール・Rust の検証テストには、elan 経由の `lean +v4.34.1` も必要です。

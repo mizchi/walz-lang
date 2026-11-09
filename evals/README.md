@@ -9,6 +9,8 @@ struct構築表記を比較する独立した読解課題は [struct-literals](s
 
 CLI・LSP・非同期・native WITと複雑なJSON処理を一通り試す評価は [開発体験の試用](usability/README.md)。実装者による非初見の試用と、ここで扱う初見の読解評価は区別する。
 
+ユーザー定義構文の作成・合成・性能は [マクロの実用性と規模の評価](#マクロの実用性と規模の評価)。通常関数とマクロの比較、未対応の書き方、単一関数に集中した展開を扱う。
+
 ## 1. 新しい評価回を作る
 
 `wlt-lang` で、Node 24以降と既存の開発依存を使用する。実行検証には Cargo、Lean（検証付きexport）、Wasm GC/JSPI が必要。
@@ -108,6 +110,30 @@ just eval-compare trial-01 trial-02
 
 保存した評価記録は [`%` 構文の v6](reports/20261106-prefix-v6/REPORT.md) と [標準型 import・複数束縛の v7](reports/20261106-standard-bindings-v7/REPORT.md) を参照。各記録には配布物、読解回答、変更候補、監査と実行結果を含める。
 整形・命名・API資料の修正と、API選択・i64化の追加課題の結果は [v8の評価記録](reports/20261106-readability-v8/REPORT.md) に保存している。
+
+## マクロの実用性と規模の評価
+
+実装者による非盲検の試用であり、独立した初見読者の理解度や人間の作業時間の測定とは区別する。
+
+| suite | 試す内容 | 実行 |
+| --- | --- | --- |
+| [マクロv1](macro-usability/README.md) | JSONアプリの3実装、CLI、Core＋JSPI／ComponentのABI解放・取消し、stdio LSP、展開規模 | `just eval-user-macros ID` |
+| [作成・規模v2](macro-usability-v2/README.md) | 通常関数と型推論／公開型情報を使うマクロ、束縛の合成、単一関数と分散した展開 | `just eval-macro-authoring ID` |
+
+それぞれ別の新しいIDを使う。Node.js 24以降、Rust 1.99、Wasm GC対応Wasmtime、既存の開発依存が必要。2つのsuiteは課題が違うため点差を比較せず、v2だけでABI・取消し・エディタまで検査したとは扱わない。
+
+```sh
+just eval-user-macros my-macros-v1-01
+just eval-macro-authoring my-macros-v2-01
+```
+
+課題・期待値・資料を `snapshot/` と `inputs.json` に固定し、処理系のハッシュを `manifest.json` に記録する。`commands.json` は引数・終了コード・出力・時間、`result.json` は判定と計測、`work/` はWasmなどの成果物。出力は `evals/runs/ID/`。必要な記録を保存するときは、無視対象の `work/` も含めて保存し、ハッシュが指す生成物を欠落させない。
+
+必須検査が成功しても、探索課題の未達は残り得る。v1は `unmetTasks`、v2は `unmet` を併せて読む。探索課題の仕様上の拒否と、受理したプログラムの誤動作を区別し、後者は探索課題でも正しさの失敗とする。v2は受理した各プログラムをWasmtimeとV8の両方で実行する。
+
+評価中に処理系を直して結果を継ぎ足さない。変更後は別IDで実行し、課題を変える場合はsuiteの版も変える。時間はCLI起動・読み込みを含み、少数の短い計測から普遍的な速度や人間の作業効率は主張しない。
+
+式からの検査再開後の記録は [v1 r4](reports/20261109-macro-usability-v1-r4/REPORT.md) と [v2 r3](reports/20261109-macro-authoring-v2-r3/REPORT.md)。既存20検査・追加必須11検査が成功し、単一関数512展開も成功した。残る逐次初期化・Result反復テンプレート・本体を包む委譲の3課題は、現行のスコープと構文の制約として記録している。
 
 ## ハーネスのテスト
 

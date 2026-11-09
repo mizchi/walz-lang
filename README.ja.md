@@ -10,6 +10,7 @@ WLT は、S式の WAT（WebAssembly Text Format）のスーパーセットを維
 
 - `%` で区別する拡張構文。不変の束縛、ループ、enum/match、名前付きstruct構築、明示的なクロージャ捕捉。
 - 制約付きジェネリクスの単相化。一意に決まる関数の型引数は省略可能。
+- 束縛スコープを明示し、通常の型検査器へ型を問い合わせられる衛生的な式マクロ。
 - 型付き拡張コアでの型・effect・所有権の検査。
 - Core Wasm / Core＋JSPI / Component への出力。
 
@@ -22,13 +23,13 @@ WLT は、S式の WAT（WebAssembly Text Format）のスーパーセットを維
 
   (func $main (export "main") (result i64) (%effect pure)
     (%let $answer (%inst $result i64 i32)
-      (%result.ok (call (%inst $add i64) 40 2))
+      (%result.ok (call $add 40 2))
       (%match $answer
         (case ok ($value) $value)
         (case err ($code) 0)))))
 ```
 
-`%inst` で型引数を具体化し、`%let` で不変の値を束縛し、`%match` で Result の両ケースを処理します。この例の `main` は42を返します。
+`%inst` は型引数の具体化です。通常の汎用関数の呼び出しでは、引数と期待する結果から型引数を推論できます。`%let` で不変の値を束縛し、`%match` で Result の両ケースを処理します。この例の `main` は42を返します。
 
 ## 試す
 
@@ -45,7 +46,7 @@ wlt bench examples/benchmarks/stdlib_v2_bench.wlt
 
 Git から直接入れる場合は `cargo install --git https://github.com/mizchi/wlt-lang --locked --bin wlt` を使います。テストには Wasm GC 対応の Wasmtime、ベンチには Node.js 24以降、検証付きビルドには Lean が必要です。既定値とオプションは [CLI ガイド](docs/cli.md)、開発環境は [導入手順](docs/getting-started.md) にまとめています。
 
-言語機能をブラウザーで試すには `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) は、WasmにビルドしたRustコンパイラでローカルにコンパイルします。
+[公開プレイグラウンド](https://mizchi.github.io/wlt-lang/) で言語機能を試せます。手元では `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) は、WasmにビルドしたRustコンパイラでローカルにコンパイルします。
 
 ## ドキュメント
 

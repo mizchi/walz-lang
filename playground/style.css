@@ -3,7 +3,8 @@
 body { margin: 0; }
 header, main, footer { max-width: 1600px; margin: auto; padding: 24px 32px; }
 header { position: relative; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
-.github-link { position: absolute; top: 24px; right: 32px; color: #315bc1; font-size: 13px; font-weight: 600; text-underline-offset: 3px; }
+.project-links { position: absolute; top: 24px; right: 32px; display: flex; gap: 16px; }
+.project-links a { color: #315bc1; font-size: 13px; font-weight: 600; text-underline-offset: 3px; }
 h1 { margin: 6px 0 0; font-size: 28px; letter-spacing: -.04em; }
 header p, .hint, .pane-title span { color: #516477; font-size: 13px; }
 .eyebrow { font: 600 11px ui-monospace, monospace; letter-spacing: .12em; color: #315bc1; }
@@ -37,7 +38,7 @@ footer { padding-top: 0; color: #516477; font-size: 11px; }
 @media (max-width: 800px) {
   header, main, footer { padding-left: 16px; padding-right: 16px; }
   header { display: block; }
-  .github-link { right: 16px; }
+  .project-links { position: static; margin-top: 16px; }
   .workspace { grid-template-columns: 1fr; }
   .editor-pane { border-right: 0; border-bottom: 1px solid #c6d1df; }
   textarea, .output-pane pre { height: 40vh; min-height: 240px; }

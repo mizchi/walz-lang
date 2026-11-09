@@ -49,3 +49,16 @@ Rust API は `wlt::runner::run(paths, options)` で、各テストの結果・�
 
 Core＋JSPI のベンチは、各呼出しを順番に await する end-to-end 計測。codec・JSPI・待機時間を含み、結果は ABI 対応の共有値または unit に限定する。
 既定の `core` の Wasm 内バッチ計測とは別の測定条件で、JSON の `options.target` と `summary.runtime` に区別を残す。
+
+## ユーザー定義マクロの回帰と評価
+
+```sh
+just test-user-macros
+just test-macro-tools
+just test-macro-composition
+just fuzz-user-macros 20261109 64
+```
+
+構文・衛生性・推論・LSPのほか、反復束縛・委譲、式からの検査再開、推論の仮ローカルとラベル、深い展開の拒否を検査する。差分fuzzはマクロ／独立した手書き展開／値と作用のモデルを、最適化あり・なし、Wasmtime／V8で照合する。最初のタスクにはCore／ComponentとChromiumの検査も含み、Node.js 24以降とインストール済みの開発依存が必要。
+
+ユーザーが書きたい処理を実装できるか、診断が次の修正につながるか、規模を増やすとどうなるかは [マクロの実用性評価](../evals/README.md#マクロの実用性と規模の評価)で別に確認する。必須の正しさと未達の探索課題を分け、固定した入力・期待値・ルーブリックは上書きしない。
