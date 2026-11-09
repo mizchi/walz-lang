@@ -40,6 +40,14 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           cargo install wasm-pack --version 0.15.0 --locked
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            target/ci-tools
+            ~/.elan
+          key: tools-${{ runner.os }}-${{ hashFiles('ci/tools.json', 'ci/install-tools.py') }}
+      - name: Native comparison tools
+        run: python3 ci/install-tools.py
       - name: Build and check the browser compiler
         run: |
           pnpm playground:build

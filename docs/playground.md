@@ -111,6 +111,7 @@ just test-playground
 ```
 
 Rustのアダプターテストはnative WAT・GC拡張・最適化on/offの生成物と診断を既存APIと照合する。
+native版のCore＋JSPI生成との比較では所有権カーネルを実行するため、検査環境には`lean +v4.34.1`も必要。PagesのCIは既存の`ci/install-tools.py`で固定版を準備する。公開したWasmコンパイラの実行にLeanは不要。
 `playground/samples.test.mjs`は機能の網羅と説明・期待結果のメタデータを検査する。
 `playground/tests/samples.spec.mjs`は全サンプルをブラウザーでコンパイルし、実行値・不足するホストimport・意図した診断を照合する。
 PlaywrightはWasmコンパイラの読み込み、GCを含むサンプル、実行・保存、診断と復帰、
