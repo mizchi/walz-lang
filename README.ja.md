@@ -74,6 +74,8 @@ Git から直接入れる場合は `cargo install --git https://github.com/mizch
 | 非同期実行・ABI・取消し | [ランタイム](docs/runtime.md)・[WIT バインディング](docs/wit-bindings.md) |
 | テスト・ベンチマークと初見評価 | [テスト](docs/testing.md)・[ベンチマーク](docs/benchmarking.md)・[evals](evals/README.md) |
 | Rust側の型検査・コンパイルの計測 | [フロントエンドの性能](docs/frontend-performance.md) |
+| JavaScript・TypeScriptからWLTをimport | [Vite ESM連携](docs/vite.md) |
+| 型宣言ファイルを生成せずにWLT importを検査 | [TS7 Content Mapper](docs/content-mapper.md) |
 | 最適化しやすい Wasm GC 出力と Binaryen の計測 | [wasm-opt](docs/wasm-opt.md) |
 | エディターと native Component | [LSP](docs/lsp.md) · [Native WIT worlds](docs/native-worlds.md) |
 | 実装の構成 | [アーキテクチャ](docs/architecture.md) |

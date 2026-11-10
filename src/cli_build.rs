@@ -182,9 +182,20 @@ pub fn command(args: &[OsString], legacy: bool) -> ExitCode {
             } else {
                 wlt::source::load(&source)?
             };
-            let built = wlt::component::core_js::compile_with_policy(loaded.text(), &policy)
+            let mut built = wlt::component::core_js::compile_with_policy(loaded.text(), &policy)
                 .map_err(|e| loaded.diagnostic(e))?;
-            let inputs = loaded.paths().collect::<std::collections::BTreeSet<_>>();
+            let inputs = loaded
+                .paths()
+                .map(Path::to_path_buf)
+                .chain(
+                    parsed
+                        .bindings
+                        .as_ref()
+                        .map(|path| path.canonicalize())
+                        .transpose()?,
+                )
+                .collect::<std::collections::BTreeSet<_>>();
+            built.manifest["sourceFiles"] = serde_json::to_value(&inputs)?;
             for name in super::cli_js::FILES {
                 let path = output.join(name);
                 if path.exists() {

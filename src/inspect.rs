@@ -7,6 +7,44 @@ use std::{collections::BTreeMap, path::Path};
 #[cfg(not(target_family = "wasm"))]
 mod syntax_index;
 
+/// Checked public JavaScript signatures and original export-token locations.
+/// Source loading (including unsaved buffers) remains owned by the caller.
+pub fn esm(loaded: &Source, policy: &BindingPolicy) -> Result<serde_json::Value, Error> {
+    let mut metadata = crate::component::core_js::metadata_with_policy(loaded.text(), policy)
+        .map_err(|e| loaded.diagnostic(e))?;
+    fn locate(node: &Sexp, loaded: &Source, exports: &mut serde_json::Value) {
+        // A template's export-shaped data is not a declaration in this source.
+        // Only the checked expansion may introduce a real public binding.
+        if node.head() == Some("%macro") {
+            return;
+        }
+        if let Some(items) = node.list() {
+            if node.head() == Some("export")
+                && let Some(name) = items.get(1)
+                && let Some(binding) = name.text().and_then(|s| exports.get_mut(s))
+                && let Some(label) = loaded.label(
+                    Span {
+                        start: name.span.start + 1,
+                        end: name.span.end - 1,
+                    },
+                    "export",
+                )
+            {
+                binding["declaration"] = serde_json::to_value(label).unwrap();
+            }
+            for item in items {
+                locate(item, loaded, exports);
+            }
+        }
+    }
+    locate(
+        &crate::sexpr::parse(loaded.text())?,
+        loaded,
+        &mut metadata["exports"],
+    );
+    Ok(metadata)
+}
+
 #[derive(Debug, Serialize)]
 pub struct TypeQuery {
     pub schema: &'static str,

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowArbitraryExtensions": true,
+    "types": ["../../vite/client.d.ts"],
+    "paths": {"@mizchi/wlt-runtime/vite/types": ["../../vite/runtime.d.ts"]}
+  },
+  "include": ["main.ts"]
+}

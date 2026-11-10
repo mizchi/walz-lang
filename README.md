@@ -55,6 +55,8 @@ The guides are primarily in Japanese; the macro and LSP references are in Englis
 | Topic | Documentation |
 | --- | --- |
 | Edit, compile and run in the browser | [Playground](docs/playground.md) |
+| Import WLT functions from JavaScript and TypeScript | [Vite ESM integration](docs/vite.md) |
+| Check WLT imports without generated declarations | [TS7 Content Mapper](docs/content-mapper.md) |
 | Scalar instructions, Result sequencing, newtypes and early exits | [Core expressions](docs/core-expressions.md) |
 | Syntax overview | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) |
 | Shared memory, atomics, and host workers | [Wasm threads](docs/threads.md) · [Atomic-cell verification](docs/atomic-cells.md) |

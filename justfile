@@ -585,3 +585,31 @@ test-performance-warnings:
 
 check-performance file="examples/ast-interpreter.wlt":
     cargo run --locked --quiet -- check --warn-performance {{quote(file)}}
+
+test-vite:
+    cargo build --locked --bin wlt
+    cargo test --locked --test esm_metadata
+    node --test vite/*.test.mjs
+    pnpm exec playwright test --config playwright.vite.config.mjs
+
+vite:
+    cargo build --locked --bin wlt
+    WLT={{quote(justfile_directory() + "/target/debug/wlt")}} pnpm dev:vite
+
+build-vite:
+    cargo build --locked --bin wlt
+    WLT={{quote(justfile_directory() + "/target/debug/wlt")}} pnpm build:vite
+    pnpm exec tsc -p examples/vite/tsconfig.json
+
+test-content-mapper:
+    cargo build --locked --bin wlt
+    cargo test --locked --test esm_inspection
+    node --test content-mapper/*.test.mjs
+
+build-content-mapper-tsgo:
+    python3 tools/build-content-mapper-tsgo.py
+
+test-content-mapper-tsgo:
+    just build-content-mapper-tsgo
+    cargo build --locked --bin wlt
+    TSGO={{quote(justfile_directory() + "/target/content-mapper-tools/tsgo")}} node --test content-mapper/tsgo.test.mjs

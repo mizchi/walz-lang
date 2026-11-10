@@ -6,11 +6,12 @@ use std::time::Duration;
 
 mod cli_bench;
 mod cli_build;
+mod cli_esm;
 mod cli_inspection;
 mod cli_js;
 mod cli_run;
 
-const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
+const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt esm-metadata <file.wlt> [--stdin]       Checked JavaScript ABI as JSON\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
 const TEST_USAGE: &str = "Usage: wlt test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.wlt under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
 const COMMANDS: &[&str] = &[
     "build",
@@ -18,6 +19,7 @@ const COMMANDS: &[&str] = &[
     "bench",
     "bind",
     "type-at",
+    "esm-metadata",
     "lsp",
     "check",
     "fmt",
@@ -52,6 +54,7 @@ fn help(command: Option<&str>) -> ExitCode {
             Some("bench") => cli_bench::USAGE,
             Some("run") => cli_run::USAGE,
             Some("check") => CHECK_USAGE,
+            Some("esm-metadata") => cli_esm::USAGE,
             None | Some("--help" | "-h" | "help") => USAGE,
             Some(command) if COMMANDS.contains(&command) => USAGE,
             Some(command) => {
@@ -460,6 +463,9 @@ fn main() -> ExitCode {
             }
             .and_then(|s| s.to_str()),
         );
+    }
+    if args.first().is_some_and(|s| s == "esm-metadata") {
+        return cli_esm::command(&args[1..]);
     }
     if args.first().is_some_and(|s| s == "lsp") {
         let policy = if args.len() == 1 {

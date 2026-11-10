@@ -72,16 +72,24 @@ jobs:
       - name: Dependencies
         if: matrix.suite == 'runtime'
         run: pnpm install --frozen-lockfile
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: matrix.suite == 'runtime'
+        with:
+          path: target/content-mapper-tools/
+          key: tsgo-${{ runner.os }}-${{ hashFiles('content-mapper/upstream.json', 'tools/build-content-mapper-tsgo.py') }}
       - name: JS and evaluation harnesses
         if: matrix.suite == 'runtime'
         run: |
           node --expose-gc --test --test-force-exit runtime/*.test.mjs
           just test-evals
+          just test-content-mapper
+          just test-content-mapper-tsgo
       - name: Browser
         if: matrix.suite == 'runtime'
         run: |
           pnpm exec playwright install --with-deps chromium
           just test-e2e
+          just test-vite
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

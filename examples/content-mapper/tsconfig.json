@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "preserve",
+    "strict": true,
+    "noEmit": true,
+    "types": []
+  },
+  "contentMappers": [
+    {
+      "package": "../..",
+      "extensions": [".wlt"]
+    }
+  ],
+  "include": ["*.ts", "*.wlt"]
+}

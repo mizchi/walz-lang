@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WLT + Vite</title></head>
+  <body>
+    <h1>WLT + Vite</h1>
+    <p>Named ESM exports with strings, bytes, BigInt, and Promises.</p>
+    <dl>
+      <dt>Answer</dt><dd><output id="answer"></output></dd>
+      <dt>Text</dt><dd><output id="text"></output></dd>
+      <dt>Bytes</dt><dd><output id="bytes"></output></dd>
+      <dt>BigInt</dt><dd><output id="wide"></output></dd>
+      <dt>Promise</dt><dd><output id="future"></output></dd>
+    </dl>
+    <p><button id="new-instances">Create two instances</button> <output id="instances"></output></p>
+    <p><button id="trap-button">Test a Wasm trap</button> <output id="trap"></output></p>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

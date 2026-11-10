@@ -77,8 +77,8 @@ pub(crate) fn compile_case(
     )?)
 }
 
-fn compile_module(module: Module) -> Result<CoreJs, Error> {
-    crate::binary::core(&module)?;
+fn validate_module(module: &Module) -> Result<(), Error> {
+    crate::binary::core(module)?;
     if module
         .memories
         .iter()
@@ -89,8 +89,42 @@ fn compile_module(module: Module) -> Result<CoreJs, Error> {
                 .with_code("E_MEMORY_IMPORT"),
         );
     }
+    Adapter::new(module).validate_boundary()
+}
+
+/// Check the same contracts and portable boundary as code generation, without
+/// emitting Wasm or JavaScript. Used by read-only editor integrations.
+pub(crate) fn metadata_with_policy(
+    source: &str,
+    policy: &crate::bindings::BindingPolicy,
+) -> Result<serde_json::Value, Error> {
+    let module = super::checked_module_with_policy(source, policy)?;
+    validate_module(&module)?;
+    Ok(esm_metadata(&module))
+}
+
+fn esm_metadata(module: &Module) -> serde_json::Value {
+    let boundary_effects = crate::effects::boundary(module);
+    let mut exports = BTreeMap::new();
+    for (i, function) in module.functions.iter().enumerate() {
+        if module.tests.iter().any(|t| t.function.0 == i) {
+            continue;
+        }
+        for name in &function.exports {
+            exports.insert(name.clone(), serde_json::json!({
+                "jsName": crate::bindings::js_name(name),
+                "params": function.params.iter().map(|local| module.shape_name(&function.locals[local.0].ty)).collect::<Vec<_>>(),
+                "result": module.shape_name(&function.result),
+                "suspends": boundary_effects[i].suspends,
+            }));
+        }
+    }
+    serde_json::json!({"schema":"wlt-esm-v1", "exports":exports})
+}
+
+fn compile_module(module: Module) -> Result<CoreJs, Error> {
+    validate_module(&module)?;
     let mut adapter = Adapter::new(&module);
-    adapter.validate_boundary()?;
     adapter.memory_exports = true;
     // Only boundary types and endpoint payloads need lifting/lowering helpers.
     let mut used = BTreeSet::new();
@@ -134,6 +168,7 @@ fn compile_module(module: Module) -> Result<CoreJs, Error> {
         .collect();
     let mut manifest =
         serde_json::json!({"abi":"wlt-core-js-v2","imports":crate::bindings::manifest(&module)});
+    manifest["esm"] = esm_metadata(&module);
     if module
         .functions
         .iter()
