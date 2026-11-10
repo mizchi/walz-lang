@@ -22,31 +22,60 @@ pub fn failure(schema: &str, error: &(dyn std::error::Error + 'static)) -> ExitC
     ExitCode::FAILURE
 }
 
-pub fn check(path: &Path, policy: &BindingPolicy, legacy: bool) -> ExitCode {
-    let result = (|| -> Result<(), Box<dyn std::error::Error>> {
+pub fn check(
+    path: &Path,
+    policy: &BindingPolicy,
+    legacy: bool,
+    json: bool,
+    performance: bool,
+) -> ExitCode {
+    let result = (|| -> Result<Option<wlt::performance::Report>, Box<dyn std::error::Error>> {
         let loaded = if legacy {
             wlt::source::load_legacy(path)?
         } else {
             wlt::source::load(path)?
         };
-        if policy.imports.is_empty() {
+        if performance {
+            let report = wlt::performance::check_with_policy(loaded.text(), policy)
+                .map_err(|e| loaded.diagnostic(e))?
+                .located(&loaded);
+            return Ok(Some(report));
+        } else if policy.imports.is_empty() {
             wlt::validate(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
         } else {
             // Compile with the policy so laws and all existing contracts are
             // checked as well; no host code is executed.
             wlt::compile_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
         }
-        Ok(())
+        Ok(None)
     })();
     match result {
-        Ok(()) => {
-            println!(
-                "{}",
-                serde_json::json!({"schema":"wlt-check-v1","ok":true,"diagnostics":[]})
-            );
+        Ok(report) => {
+            if json {
+                let mut output =
+                    serde_json::json!({"schema":"wlt-check-v1","ok":true,"diagnostics":[]});
+                if let Some(report) = report {
+                    output["performance"] = serde_json::to_value(report).unwrap();
+                }
+                println!("{output}");
+            } else if let Some(report) = report {
+                for warning in report.warnings {
+                    eprintln!("warning[{}]: {warning}", warning.code);
+                }
+                if report.coverage == "opaque_wat" {
+                    eprintln!(
+                        "performance advice unavailable: native WAT has no typed expression IR"
+                    );
+                }
+                println!("ok");
+            }
             ExitCode::SUCCESS
         }
-        Err(error) => failure("wlt-check-v1", error.as_ref()),
+        Err(error) if json => failure("wlt-check-v1", error.as_ref()),
+        Err(error) => {
+            eprintln!("{error}");
+            ExitCode::FAILURE
+        }
     }
 }
 

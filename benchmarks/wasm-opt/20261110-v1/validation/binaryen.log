@@ -1,0 +1,14 @@
+WLT_WASM_OPT='target/wasm-opt-research/binaryen-version_133/bin/wasm-opt' cargo test --locked --test match_dispatch -- --include-ignored
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.93s
+     Running tests/match_dispatch.rs (target/debug/deps/match_dispatch-dfad7b8e8d489331)
+
+running 5 tests
+test nullary_cases_still_validate_the_runtime_subtype ... ok
+test large_dense_matches_use_one_tag_load_and_keep_every_case_cast ... ok
+test raw_wasm_callers_keep_tag_and_subtype_validation ... ok
+test dense_branches_preserve_return_labels_exceptions_unit_and_owned_results ... ok
+test wasm_opt_open_world_preserves_values_and_traps ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+

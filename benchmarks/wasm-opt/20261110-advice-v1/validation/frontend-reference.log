@@ -1,0 +1,10 @@
+✔ the core package rename preserves v1 WAT apart from generated namespace names (914.863083ms)
+✔ frontend tuning preserves frozen inputs, typed IR, analysis, WAT and diagnostics (2326.986958ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3285.887333

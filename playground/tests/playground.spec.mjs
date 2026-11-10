@@ -24,6 +24,18 @@ test('documentation and repository links remain accessible on a narrow screen', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
+test('dense enum matches use a table and evaluate the subject once', async ({ page }) => {
+  const source = await readFile(new URL('../../tests/component-fixtures/match-dispatch.wlt', import.meta.url), 'utf8');
+  for (const optimize of [false, true]) {
+    await page.getByLabel('Optimize').setChecked(optimize);
+    await compile(page, source);
+    await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
+    await expect(page.getByTestId('wat')).toContainText('br_table');
+    await page.getByRole('button', { name: 'Run', exact: true }).click();
+    await expect(page.getByTestId('run-output')).toHaveText('42');
+  }
+});
+
 test('loads the Wasm compiler, compiles GC/std syntax, executes i64 and downloads Wasm', async ({ page }) => {
   const requests = [];
   page.on('request', request => requests.push(request.url()));

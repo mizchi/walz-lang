@@ -568,3 +568,20 @@ test-macro-composition:
 eval-macro-authoring id:
     cargo build --locked --bin wlt
     node --expose-gc evals/macro-usability-v2/run.mjs {{quote(id)}}
+
+# Compare fixed inputs under open-world Binaryen 133; never overwrite a run.
+wasm-opt-capture id optimizer="wasm-opt":
+    cargo build --locked --bin wlt
+    node tools/wasm-opt-capture.mjs {{quote(id)}} {{quote(optimizer)}}
+
+test-wasm-opt optimizer="wasm-opt":
+    WLT_WASM_OPT={{quote(optimizer)}} cargo test --locked --test match_dispatch --test performance_warnings -- --include-ignored
+
+wasm-opt-compare before after id:
+    node tools/wasm-opt-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(id)}}
+
+test-performance-warnings:
+    cargo test --locked --test performance_warnings --test inspection --test lsp --test diagnostics
+
+check-performance file="examples/ast-interpreter.wlt":
+    cargo run --locked --quiet -- check --warn-performance {{quote(file)}}

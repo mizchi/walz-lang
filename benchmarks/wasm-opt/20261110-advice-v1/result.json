@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "name": "loop-copy",
+      "warnings": 1,
+      "variants": [
+        {
+          "profile": "raw",
+          "bytes": 1109,
+          "codeBytes": 681,
+          "sha256": "1e33ca32fe18795f960b6e9e18d8b293dd60959c671dd8ff79e7c84406a44e3f"
+        },
+        {
+          "profile": "o3",
+          "bytes": 253,
+          "codeBytes": 175,
+          "sha256": "0a647eee0ad24075892be51dce913d82eaeed2993a0b810be055bf873ec1104f"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "name": "loop-indexed",
+      "warnings": 0,
+      "variants": [
+        {
+          "profile": "raw",
+          "bytes": 1048,
+          "codeBytes": 649,
+          "sha256": "a429424b121c2d183f7bba5057aada963ff040e5630b7f048f54795cded63a55"
+        },
+        {
+          "profile": "o3",
+          "bytes": 214,
+          "codeBytes": 136,
+          "sha256": "4d2f92c68f0460384907345ba5a4cec2820bf5fe681267e2d379aa72220b718e"
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

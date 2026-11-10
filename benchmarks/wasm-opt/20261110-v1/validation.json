@@ -1,0 +1,39 @@
+{
+  "workspace": {
+    "command": "cargo test --locked --workspace",
+    "passed": 609,
+    "failed": 0,
+    "ignored": 2
+  },
+  "binaryen": {
+    "command": "just test-wasm-opt target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  "language": {
+    "command": "just test-language",
+    "passed": 47,
+    "failed": 0,
+    "errors": 0
+  },
+  "runtime": {
+    "command": "node --test runtime/match-dispatch.test.mjs",
+    "passed": 2,
+    "failed": 0
+  },
+  "frontendReferences": {
+    "command": "node --test runtime/match-dispatch.test.mjs runtime/frontend-reference.test.mjs",
+    "frontendReferencePassed": 2,
+    "note": "Both frozen frontend references passed on this combined invocation; the new fixture initially failed and was subsequently corrected in a separate run. See runtime-final.log."
+  },
+  "playground": {
+    "command": "WLT_PLAYGROUND_TEST_PORT=41741 node node_modules/@playwright/test/cli.js test --config playwright.playground.config.mjs",
+    "passed": 62,
+    "failed": 0
+  },
+  "check": {
+    "command": "just check",
+    "passed": true
+  }
+}

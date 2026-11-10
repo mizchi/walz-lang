@@ -1,0 +1,122 @@
+(module
+ (rec
+  (type $E (sub (struct (field i32))))
+  (type $__variant_0_0 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_1 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_2 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_3 (sub final $E (struct (field i32) (field i32))))
+ )
+ (type $5 (func (param i32) (result (ref $E))))
+ (type $6 (func (param (ref $E)) (result i32)))
+ (export "read" (func $read))
+ (export "make0" (func $make0))
+ (export "make1" (func $make1))
+ (export "make2" (func $make2))
+ (export "make3" (func $make3))
+ (func $read (type $6) (param $0 (ref $E)) (result i32)
+  (local $1 (ref null $E))
+  (block $block5 (result i32)
+   (block $block4
+    (block $block3
+     (block $block2
+      (block $block1
+       (block $block
+        (br_table $block $block1 $block2 $block3 $block4
+         (struct.get $E 0
+          (local.tee $1
+           (local.get $0)
+          )
+         )
+        )
+       )
+       (br $block5
+        (struct.get $__variant_0_0 1
+         (ref.cast (ref $__variant_0_0)
+          (local.get $0)
+         )
+        )
+       )
+      )
+      (br $block5
+       (i32.add
+        (struct.get $__variant_0_1 1
+         (ref.cast (ref $__variant_0_1)
+          (local.get $0)
+         )
+        )
+        (i32.const 1)
+       )
+      )
+     )
+     (br $block5
+      (i32.add
+       (struct.get $__variant_0_2 1
+        (ref.cast (ref $__variant_0_2)
+         (local.get $0)
+        )
+       )
+       (i32.const 2)
+      )
+     )
+    )
+    (br $block5
+     (i32.add
+      (struct.get $__variant_0_3 1
+       (ref.cast (ref $__variant_0_3)
+        (local.get $0)
+       )
+      )
+      (i32.const 3)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $make0 (type $5) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_0
+   (i32.const 0)
+   (local.get $0)
+  )
+ )
+ (func $make1 (type $5) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_1
+   (i32.const 1)
+   (local.get $0)
+  )
+ )
+ (func $make2 (type $5) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_2
+   (i32.const 2)
+   (local.get $0)
+  )
+ )
+ (func $make3 (type $5) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_3
+   (i32.const 3)
+   (local.get $0)
+  )
+ )
+)
+Metrics
+total
+ [exports]      : 5       
+ [funcs]        : 5       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 45      
+ [vars]         : 1       
+ Binary         : 3       
+ Block          : 6       
+ Break          : 4       
+ Const          : 7       
+ LocalGet       : 9       
+ LocalSet       : 1       
+ RefCast        : 4       
+ StructGet      : 5       
+ StructNew      : 4       
+ Switch         : 1       
+ Unreachable    : 1       

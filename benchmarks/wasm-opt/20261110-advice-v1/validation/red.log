@@ -1,0 +1,114 @@
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 1.04s
+     Running tests/performance_warnings.rs (target/debug/deps/performance_warnings-37aa8ca48acbbcaa)
+
+running 5 tests
+test lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable ... FAILED
+test native_wat_coverage_and_errors_remain_explicit ... FAILED
+test host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not ... FAILED
+test cold_initializers_dead_functions_and_scalar_mutability_are_quiet ... FAILED
+test loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check ... FAILED
+
+failures:
+
+---- lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable stdout ----
+
+thread 'lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable' (30295851) panicked at tests/performance_warnings.rs:112:27:
+index out of bounds: the len is 0 but the index is 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- native_wat_coverage_and_errors_remain_explicit stdout ----
+
+thread 'native_wat_coverage_and_errors_remain_explicit' (30295852) panicked at tests/performance_warnings.rs:41:5:
+Usage: wlt <command> [options]
+
+  build [file.wlt|directory] [-o output] [--target core|core-js|component]
+  test [paths...]                              Run *.test.wlt (default: tests/)
+  bench [paths...]                             Run *_bench.wlt (default: .)
+
+  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>
+  wlt check --json <file.wlt>
+  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio
+  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON
+  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]
+  wlt component <file.wlt> <output.wasm>
+  wlt <core-js|profile-text> <file.wlt> <output-directory>
+  wlt bind <input.wit> <policy.json> <output-directory> [--world name]
+
+Use wlt <command> --help for options; wlt --version for the version.
+
+
+---- host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not stdout ----
+
+thread 'host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not' (30295849) panicked at tests/performance_warnings.rs:41:5:
+Usage: wlt <command> [options]
+
+  build [file.wlt|directory] [-o output] [--target core|core-js|component]
+  test [paths...]                              Run *.test.wlt (default: tests/)
+  bench [paths...]                             Run *_bench.wlt (default: .)
+
+  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>
+  wlt check --json <file.wlt>
+  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio
+  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON
+  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]
+  wlt component <file.wlt> <output.wasm>
+  wlt <core-js|profile-text> <file.wlt> <output-directory>
+  wlt bind <input.wit> <policy.json> <output-directory> [--world name]
+
+Use wlt <command> --help for options; wlt --version for the version.
+
+
+---- cold_initializers_dead_functions_and_scalar_mutability_are_quiet stdout ----
+
+thread 'cold_initializers_dead_functions_and_scalar_mutability_are_quiet' (30295848) panicked at tests/performance_warnings.rs:41:5:
+Usage: wlt <command> [options]
+
+  build [file.wlt|directory] [-o output] [--target core|core-js|component]
+  test [paths...]                              Run *.test.wlt (default: tests/)
+  bench [paths...]                             Run *_bench.wlt (default: .)
+
+  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>
+  wlt check --json <file.wlt>
+  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio
+  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON
+  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]
+  wlt component <file.wlt> <output.wasm>
+  wlt <core-js|profile-text> <file.wlt> <output-directory>
+  wlt bind <input.wit> <policy.json> <output-directory> [--world name]
+
+Use wlt <command> --help for options; wlt --version for the version.
+
+
+---- loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check stdout ----
+
+thread 'loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check' (30295850) panicked at tests/performance_warnings.rs:41:5:
+Usage: wlt <command> [options]
+
+  build [file.wlt|directory] [-o output] [--target core|core-js|component]
+  test [paths...]                              Run *.test.wlt (default: tests/)
+  bench [paths...]                             Run *_bench.wlt (default: .)
+
+  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>
+  wlt check --json <file.wlt>
+  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio
+  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON
+  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]
+  wlt component <file.wlt> <output.wasm>
+  wlt <core-js|profile-text> <file.wlt> <output-directory>
+  wlt bind <input.wit> <policy.json> <output-directory> [--world name]
+
+Use wlt <command> --help for options; wlt --version for the version.
+
+
+
+failures:
+    cold_initializers_dead_functions_and_scalar_mutability_are_quiet
+    host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not
+    loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check
+    lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable
+    native_wat_coverage_and_errors_remain_explicit
+
+test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+error: test failed, to rerun pass `--test performance_warnings`

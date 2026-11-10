@@ -1,0 +1,30 @@
+WLT_WASM_OPT='target/wasm-opt-research/binaryen-version_133/bin/wasm-opt' cargo test --locked --test match_dispatch --test performance_warnings -- --include-ignored
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.31s
+     Running tests/match_dispatch.rs (target/debug/deps/match_dispatch-dfad7b8e8d489331)
+
+running 5 tests
+test nullary_cases_still_validate_the_runtime_subtype ... ok
+test large_dense_matches_use_one_tag_load_and_keep_every_case_cast ... ok
+test raw_wasm_callers_keep_tag_and_subtype_validation ... ok
+test dense_branches_preserve_return_labels_exceptions_unit_and_owned_results ... ok
+test wasm_opt_open_world_preserves_values_and_traps ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+     Running tests/performance_warnings.rs (target/debug/deps/performance_warnings-37aa8ca48acbbcaa)
+
+running 10 tests
+test lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable ... ok
+test native_wat_coverage_and_errors_remain_explicit ... ok
+test warnings_preserve_module_identities_and_original_import_locations ... ok
+test host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not ... ok
+test cold_initializers_dead_functions_and_scalar_mutability_are_quiet ... ok
+test loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check ... ok
+test macro_generated_duplicates_share_one_warning_and_async_check_does_not_require_a_backend ... ok
+test list_copies_nested_loop_initializers_and_unreachable_branches_are_distinguished ... ok
+test wasm_opt_advice_examples_preserve_values_traps_and_host_identity ... ok
+test documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.46s
+

@@ -160,12 +160,17 @@ impl Source {
             error.diagnostic.message =
                 format!("{}:{}", self.path.display(), error.diagnostic.message);
         }
-        for label in error
-            .diagnostic
-            .primary
-            .iter_mut()
-            .chain(&mut error.diagnostic.related)
-        {
+        *error.diagnostic = self.locate_diagnostic(*error.diagnostic);
+        error
+    }
+
+    /// Map a structured error, warning, or informational diagnostic back to
+    /// original files without changing its severity or rendered message.
+    pub fn locate_diagnostic(
+        &self,
+        mut diagnostic: crate::diagnostic::Diagnostic,
+    ) -> crate::diagnostic::Diagnostic {
+        for label in diagnostic.primary.iter_mut().chain(&mut diagnostic.related) {
             // Already-localized loader errors must not be mapped a second time.
             if label.location.path.is_some() {
                 continue;
@@ -197,7 +202,7 @@ impl Source {
                 label.location.path = Some(chunk.path.clone());
             }
         }
-        error
+        diagnostic
     }
     fn append(
         &mut self,

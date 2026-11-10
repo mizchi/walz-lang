@@ -36,6 +36,7 @@ mod newtypes;
 mod optimize;
 pub mod ownership;
 mod ownership_graph;
+pub mod performance;
 pub mod proof;
 pub mod race;
 pub mod readonly;

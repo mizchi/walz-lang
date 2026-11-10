@@ -1,0 +1,67 @@
+(module
+  (rec
+(type $__byte_storage (array (mut i8)))
+    (type $Input (array i32))
+    (type $__value1 (struct (field (ref $__byte_storage))))
+    (type $__value2 (struct (field (ref $__byte_storage))))
+  )
+
+      (func $__bytes_slice (param $v (ref $__value1)) (param $start i32) (param $n i32) (result (ref $__value1))
+        (local $a (ref $__byte_storage)) (local $r (ref $__byte_storage))
+        (local.set $a (struct.get $__value1 0 (local.get $v)))
+        (if (i32.gt_u (local.get $start) (array.len (local.get $a))) (then (unreachable)))
+        (if (i32.gt_u (local.get $n) (i32.sub (array.len (local.get $a)) (local.get $start))) (then (unreachable)))
+        (local.set $r (array.new_default $__byte_storage (local.get $n)))
+        (array.copy $__byte_storage $__byte_storage
+          (local.get $r) (i32.const 0) (local.get $a) (local.get $start) (local.get $n))
+        (struct.new $__value1 (local.get $r)))
+      (func $__text_bytes (param $v (ref $__value2)) (result (ref $__value1))
+        (struct.new $__value1 (struct.get $__value2 0 (local.get $v))))
+      (func $__utf8 (param $a (ref $__byte_storage)) (result i32)
+        (local $i i32) (local $b i32) (local $remaining i32) (local $lo i32) (local $hi i32)
+        (local.set $lo (i32.const 128)) (local.set $hi (i32.const 191))
+        (loop $next
+          (if (i32.lt_u (local.get $i) (array.len (local.get $a))) (then
+            (local.set $b (array.get_u $__byte_storage (local.get $a) (local.get $i)))
+            (if (local.get $remaining) (then
+              (if (i32.or (i32.lt_u (local.get $b) (local.get $lo)) (i32.gt_u (local.get $b) (local.get $hi))) (then (return (i32.const 0))))
+              (local.set $remaining (i32.sub (local.get $remaining) (i32.const 1)))
+              (local.set $lo (i32.const 128)) (local.set $hi (i32.const 191)))
+            (else
+              (if (i32.ge_u (local.get $b) (i32.const 128)) (then
+                (if (i32.or (i32.lt_u (local.get $b) (i32.const 194)) (i32.gt_u (local.get $b) (i32.const 244))) (then (return (i32.const 0))))
+                (local.set $remaining (i32.const 1))
+                (if (i32.ge_u (local.get $b) (i32.const 224)) (then (local.set $remaining (i32.const 2))))
+                (if (i32.ge_u (local.get $b) (i32.const 240)) (then (local.set $remaining (i32.const 3))))
+                (if (i32.eq (local.get $b) (i32.const 224)) (then (local.set $lo (i32.const 160))))
+                (if (i32.eq (local.get $b) (i32.const 237)) (then (local.set $hi (i32.const 159))))
+                (if (i32.eq (local.get $b) (i32.const 240)) (then (local.set $lo (i32.const 144))))
+                (if (i32.eq (local.get $b) (i32.const 244)) (then (local.set $hi (i32.const 143)))))
+              (else
+                (if (i32.ge_u (i32.sub (array.len (local.get $a)) (local.get $i)) (i32.const 8)) (then
+                  (if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 1))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 2))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 2))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 3))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 3))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 4))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 4))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 5))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 5))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 6))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 6))) (br $next)))(if (i32.ge_u (array.get_u $__byte_storage (local.get $a) (i32.add (local.get $i) (i32.const 7))) (i32.const 128)) (then (local.set $i (i32.add (local.get $i) (i32.const 7))) (br $next)))
+                  (local.set $i (i32.add (local.get $i) (i32.const 8))) (br $next)))))))
+            (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $next))))
+        (i32.eqz (local.get $remaining)))
+    (func $__bytes_from_array_0 (param $a (ref $Input)) (result (ref $__value1))
+              (local $r (ref $__byte_storage)) (local $i i32) (local $v i32)
+              (local.set $r (array.new_default $__byte_storage (array.len (local.get $a))))
+              (loop $copy (if (i32.lt_u (local.get $i) (array.len (local.get $a))) (then
+                (local.set $v (array.get $Input (local.get $a) (local.get $i)))
+                (if (i32.gt_u (local.get $v) (i32.const 255)) (then unreachable))
+                (array.set $__byte_storage (local.get $r) (local.get $i) (local.get $v))
+                (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $copy))))
+              (struct.new $__value1 (local.get $r)))  (func $make (export "make") (param $__v0 i32) (result (ref $__value1))
+    (call $__bytes_from_array_0 (array.new $Input (i32.const 21) (local.get $__v0)))
+  )
+  (func $sum (export "sum") (param $__v0 (ref $__value1)) (param $__v1 i32) (result i32)
+    (local $__v2 i32)
+    (local $__v3 i32)
+    (local $__temp0 i32)
+    (local $__temp1 i32)
+    (block (result i32) (local.set $__v2 (i32.const 0)) (local.set $__v3 (i32.const 0)) (loop $__loop0 (result i32) (if (result i32) (i32.eq (local.get $__v2) (local.get $__v1)) (then (local.get $__v3)) (else (block (local.set $__temp0 (i32.add (local.get $__v2) (i32.const 1))) (local.set $__temp1 (i32.add (local.get $__v3) (array.get_u $__byte_storage (struct.get $__value1 0 (local.get $__v0)) (i32.const 0)))) (local.set $__v2 (local.get $__temp0)) (local.set $__v3 (local.get $__temp1)) (br $__loop0)) (unreachable)))))
+  )
+  (func $main (export "main") (result i32)
+    (call $sum (call $make (i32.const 2)) (i32.const 2))
+  )
+)

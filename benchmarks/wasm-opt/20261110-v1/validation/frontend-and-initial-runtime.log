@@ -1,0 +1,52 @@
+✔ the core package rename preserves v1 WAT apart from generated namespace names (2238.595042ms)
+✔ frontend tuning preserves frozen inputs, typed IR, analysis, WAT and diagnostics (2180.928375ms)
+✖ core: dense match dispatch preserves values and evaluates its subject once (522.944792ms)
+✖ component: dense match dispatch preserves values and evaluates its subject once (1038.803167ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4457.799834
+
+✖ failing tests:
+
+test at runtime/match-dispatch.test.mjs:10:3
+✖ core: dense match dispatch preserves values and evaluates its subject once (522.944792ms)
+  Error: Command failed: cargo run --locked --quiet -- build /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt --target core-js -o /var/folders/_h/_rf455xj4h3_3g6z86pg244c0000gn/T/wlt-match-dispatch-4s7RHB
+  /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt:21:33: unsupported expression `==`
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 1,
+    killed: false,
+    signal: null,
+    cmd: 'cargo run --locked --quiet -- build /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt --target core-js -o /var/folders/_h/_rf455xj4h3_3g6z86pg244c0000gn/T/wlt-match-dispatch-4s7RHB',
+    stdout: '',
+    stderr: '/Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt:21:33: unsupported expression `==`\n'
+  }
+
+test at runtime/match-dispatch.test.mjs:10:3
+✖ component: dense match dispatch preserves values and evaluates its subject once (1038.803167ms)
+  Error: Command failed: cargo run --locked --quiet -- component /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt /var/folders/_h/_rf455xj4h3_3g6z86pg244c0000gn/T/wlt-match-dispatch-W4GtU1/component.wasm
+  /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt:21:33: unsupported expression `==`
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1172:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+    code: 1,
+    killed: false,
+    signal: null,
+    cmd: 'cargo run --locked --quiet -- component /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt /var/folders/_h/_rf455xj4h3_3g6z86pg244c0000gn/T/wlt-match-dispatch-W4GtU1/component.wasm',
+    stdout: '',
+    stderr: '/Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/match-dispatch.wlt:21:33: unsupported expression `==`\n'
+  }

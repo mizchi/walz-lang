@@ -1,0 +1,483 @@
+Metrics
+total
+ [exports]      : 18      
+ [funcs]        : 18      
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 209     
+ [vars]         : 0       
+ Binary         : 30      
+ Call           : 1       
+ Const          : 48      
+ If             : 16      
+ LocalGet       : 48      
+ RefCast        : 16      
+ StructGet      : 32      
+ StructNew      : 17      
+ Unreachable    : 1       
+(module
+ (rec
+  (type $E (sub (struct (field i32))))
+  (type $__variant_0_0 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_1 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_2 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_3 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_4 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_5 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_6 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_7 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_8 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_9 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_10 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_11 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_12 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_13 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_14 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_15 (sub final $E (struct (field i32) (field i32))))
+ )
+ (type $17 (func (param i32) (result (ref $E))))
+ (type $18 (func (param (ref $E)) (result i32)))
+ (type $19 (func (result i32)))
+ (export "read" (func $read))
+ (export "make0" (func $make0))
+ (export "make1" (func $make1))
+ (export "make2" (func $make2))
+ (export "make3" (func $make3))
+ (export "make4" (func $make4))
+ (export "make5" (func $make5))
+ (export "make6" (func $make6))
+ (export "make7" (func $make7))
+ (export "make8" (func $make8))
+ (export "make9" (func $make9))
+ (export "make10" (func $make10))
+ (export "make11" (func $make11))
+ (export "make12" (func $make12))
+ (export "make13" (func $make13))
+ (export "make14" (func $make14))
+ (export "make15" (func $make15))
+ (export "main" (func $main))
+ (func $read (type $18) (param $0 (ref $E)) (result i32)
+  (if (result i32)
+   (i32.eq
+    (struct.get $E 0
+     (local.get $0)
+    )
+    (i32.const 15)
+   )
+   (then
+    (i32.add
+     (struct.get $__variant_0_15 1
+      (ref.cast (ref $__variant_0_15)
+       (local.get $0)
+      )
+     )
+     (i32.const 15)
+    )
+   )
+   (else
+    (if (result i32)
+     (i32.eq
+      (struct.get $E 0
+       (local.get $0)
+      )
+      (i32.const 14)
+     )
+     (then
+      (i32.add
+       (struct.get $__variant_0_14 1
+        (ref.cast (ref $__variant_0_14)
+         (local.get $0)
+        )
+       )
+       (i32.const 14)
+      )
+     )
+     (else
+      (if (result i32)
+       (i32.eq
+        (struct.get $E 0
+         (local.get $0)
+        )
+        (i32.const 13)
+       )
+       (then
+        (i32.add
+         (struct.get $__variant_0_13 1
+          (ref.cast (ref $__variant_0_13)
+           (local.get $0)
+          )
+         )
+         (i32.const 13)
+        )
+       )
+       (else
+        (if (result i32)
+         (i32.eq
+          (struct.get $E 0
+           (local.get $0)
+          )
+          (i32.const 12)
+         )
+         (then
+          (i32.add
+           (struct.get $__variant_0_12 1
+            (ref.cast (ref $__variant_0_12)
+             (local.get $0)
+            )
+           )
+           (i32.const 12)
+          )
+         )
+         (else
+          (if (result i32)
+           (i32.eq
+            (struct.get $E 0
+             (local.get $0)
+            )
+            (i32.const 11)
+           )
+           (then
+            (i32.add
+             (struct.get $__variant_0_11 1
+              (ref.cast (ref $__variant_0_11)
+               (local.get $0)
+              )
+             )
+             (i32.const 11)
+            )
+           )
+           (else
+            (if (result i32)
+             (i32.eq
+              (struct.get $E 0
+               (local.get $0)
+              )
+              (i32.const 10)
+             )
+             (then
+              (i32.add
+               (struct.get $__variant_0_10 1
+                (ref.cast (ref $__variant_0_10)
+                 (local.get $0)
+                )
+               )
+               (i32.const 10)
+              )
+             )
+             (else
+              (if (result i32)
+               (i32.eq
+                (struct.get $E 0
+                 (local.get $0)
+                )
+                (i32.const 9)
+               )
+               (then
+                (i32.add
+                 (struct.get $__variant_0_9 1
+                  (ref.cast (ref $__variant_0_9)
+                   (local.get $0)
+                  )
+                 )
+                 (i32.const 9)
+                )
+               )
+               (else
+                (if (result i32)
+                 (i32.eq
+                  (struct.get $E 0
+                   (local.get $0)
+                  )
+                  (i32.const 8)
+                 )
+                 (then
+                  (i32.add
+                   (struct.get $__variant_0_8 1
+                    (ref.cast (ref $__variant_0_8)
+                     (local.get $0)
+                    )
+                   )
+                   (i32.const 8)
+                  )
+                 )
+                 (else
+                  (if (result i32)
+                   (i32.eq
+                    (struct.get $E 0
+                     (local.get $0)
+                    )
+                    (i32.const 7)
+                   )
+                   (then
+                    (i32.add
+                     (struct.get $__variant_0_7 1
+                      (ref.cast (ref $__variant_0_7)
+                       (local.get $0)
+                      )
+                     )
+                     (i32.const 7)
+                    )
+                   )
+                   (else
+                    (if (result i32)
+                     (i32.eq
+                      (struct.get $E 0
+                       (local.get $0)
+                      )
+                      (i32.const 6)
+                     )
+                     (then
+                      (i32.add
+                       (struct.get $__variant_0_6 1
+                        (ref.cast (ref $__variant_0_6)
+                         (local.get $0)
+                        )
+                       )
+                       (i32.const 6)
+                      )
+                     )
+                     (else
+                      (if (result i32)
+                       (i32.eq
+                        (struct.get $E 0
+                         (local.get $0)
+                        )
+                        (i32.const 5)
+                       )
+                       (then
+                        (i32.add
+                         (struct.get $__variant_0_5 1
+                          (ref.cast (ref $__variant_0_5)
+                           (local.get $0)
+                          )
+                         )
+                         (i32.const 5)
+                        )
+                       )
+                       (else
+                        (if (result i32)
+                         (i32.eq
+                          (struct.get $E 0
+                           (local.get $0)
+                          )
+                          (i32.const 4)
+                         )
+                         (then
+                          (i32.add
+                           (struct.get $__variant_0_4 1
+                            (ref.cast (ref $__variant_0_4)
+                             (local.get $0)
+                            )
+                           )
+                           (i32.const 4)
+                          )
+                         )
+                         (else
+                          (if (result i32)
+                           (i32.eq
+                            (struct.get $E 0
+                             (local.get $0)
+                            )
+                            (i32.const 3)
+                           )
+                           (then
+                            (i32.add
+                             (struct.get $__variant_0_3 1
+                              (ref.cast (ref $__variant_0_3)
+                               (local.get $0)
+                              )
+                             )
+                             (i32.const 3)
+                            )
+                           )
+                           (else
+                            (if (result i32)
+                             (i32.eq
+                              (struct.get $E 0
+                               (local.get $0)
+                              )
+                              (i32.const 2)
+                             )
+                             (then
+                              (i32.add
+                               (struct.get $__variant_0_2 1
+                                (ref.cast (ref $__variant_0_2)
+                                 (local.get $0)
+                                )
+                               )
+                               (i32.const 2)
+                              )
+                             )
+                             (else
+                              (if (result i32)
+                               (i32.eq
+                                (struct.get $E 0
+                                 (local.get $0)
+                                )
+                                (i32.const 1)
+                               )
+                               (then
+                                (i32.add
+                                 (struct.get $__variant_0_1 1
+                                  (ref.cast (ref $__variant_0_1)
+                                   (local.get $0)
+                                  )
+                                 )
+                                 (i32.const 1)
+                                )
+                               )
+                               (else
+                                (if (result i32)
+                                 (struct.get $E 0
+                                  (local.get $0)
+                                 )
+                                 (then
+                                  (unreachable)
+                                 )
+                                 (else
+                                  (struct.get $__variant_0_0 1
+                                   (ref.cast (ref $__variant_0_0)
+                                    (local.get $0)
+                                   )
+                                  )
+                                 )
+                                )
+                               )
+                              )
+                             )
+                            )
+                           )
+                          )
+                         )
+                        )
+                       )
+                      )
+                     )
+                    )
+                   )
+                  )
+                 )
+                )
+               )
+              )
+             )
+            )
+           )
+          )
+         )
+        )
+       )
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $make0 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_0
+   (i32.const 0)
+   (local.get $0)
+  )
+ )
+ (func $make1 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_1
+   (i32.const 1)
+   (local.get $0)
+  )
+ )
+ (func $make2 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_2
+   (i32.const 2)
+   (local.get $0)
+  )
+ )
+ (func $make3 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_3
+   (i32.const 3)
+   (local.get $0)
+  )
+ )
+ (func $make4 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_4
+   (i32.const 4)
+   (local.get $0)
+  )
+ )
+ (func $make5 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_5
+   (i32.const 5)
+   (local.get $0)
+  )
+ )
+ (func $make6 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_6
+   (i32.const 6)
+   (local.get $0)
+  )
+ )
+ (func $make7 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_7
+   (i32.const 7)
+   (local.get $0)
+  )
+ )
+ (func $make8 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_8
+   (i32.const 8)
+   (local.get $0)
+  )
+ )
+ (func $make9 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_9
+   (i32.const 9)
+   (local.get $0)
+  )
+ )
+ (func $make10 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_10
+   (i32.const 10)
+   (local.get $0)
+  )
+ )
+ (func $make11 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_11
+   (i32.const 11)
+   (local.get $0)
+  )
+ )
+ (func $make12 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_12
+   (i32.const 12)
+   (local.get $0)
+  )
+ )
+ (func $make13 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_13
+   (i32.const 13)
+   (local.get $0)
+  )
+ )
+ (func $make14 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_14
+   (i32.const 14)
+   (local.get $0)
+  )
+ )
+ (func $make15 (type $17) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_15
+   (i32.const 15)
+   (local.get $0)
+  )
+ )
+ (func $main (type $19) (result i32)
+  (call $read
+   (struct.new $__variant_0_15
+    (i32.const 15)
+    (i32.const 27)
+   )
+  )
+ )
+)

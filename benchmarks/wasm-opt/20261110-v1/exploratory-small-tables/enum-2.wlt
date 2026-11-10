@@ -1,0 +1,1 @@
+(module (type $E (%variant (v0 i32) (v1 i32))) (func $read (export "read") (param $v (ref $E)) (result i32) (%match $E (result i32) $v (case v0 ($x) (+ $x 0)) (case v1 ($x) (+ $x 1)))) (func $make0 (export "make0") (param $n i32) (result (ref $E)) (%variant.new $E v0 $n)) (func $make1 (export "make1") (param $n i32) (result (ref $E)) (%variant.new $E v1 $n)))

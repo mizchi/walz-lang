@@ -113,6 +113,7 @@ pub struct Session {
     cache: BTreeMap<PathBuf, Cached>,
     clock: usize,
     analyses: usize,
+    performance_warnings: bool,
     pub(crate) shutdown: bool,
 }
 impl Session {
@@ -124,6 +125,7 @@ impl Session {
             analyses: 0,
             clock: 0,
             shutdown: false,
+            performance_warnings: false,
         }
     }
     pub fn analysis_count(&self) -> usize {
@@ -199,31 +201,58 @@ impl Session {
         let paths = self.documents.keys().cloned().collect::<Vec<_>>();
         let mut output = vec![];
         for path in paths {
-            let error = match self.snapshot(&path) {
-                Ok(snapshot) => snapshot.error.clone(),
-                Err(error) => Some(error.clone()),
+            let performance = self.performance_warnings;
+            let (error, warnings) = match self.snapshot(&path) {
+                Ok(snapshot) => (
+                    snapshot.error.clone(),
+                    if performance && snapshot.error.is_none() {
+                        snapshot.performance_warnings().to_vec()
+                    } else {
+                        vec![]
+                    },
+                ),
+                Err(error) => (Some(error.clone()), vec![]),
             };
             let doc = &self.documents[&path];
             let mut diagnostics = vec![];
             if let Some(e) = error {
-                let d = e.diagnostic();
-                let primary = d.primary.as_ref();
-                let in_root = primary
-                    .and_then(|l| l.location.path.as_deref())
-                    .is_none_or(|p| p == path);
-                let range = if in_root {
-                    primary.map(|l| self.range(l)).unwrap_or(
-                        json!({"start":{"line":0,"character":0},"end":{"line":0,"character":0}}),
-                    )
-                } else {
-                    json!({"start":{"line":0,"character":0},"end":{"line":0,"character":0}})
-                };
-                let related=d.related.iter().chain(primary.filter(|_|!in_root)).filter_map(|l|Some(json!({"location":{"uri":file_uri(l.location.path.as_deref()?).ok()?,"range":self.range(l)},"message":if l.message.is_empty(){d.message.as_str()}else{&l.message}}))).collect::<Vec<_>>();
-                diagnostics.push(json!({"range":range,"severity":1,"code":d.code,"source":"wlt","message":std::iter::once(d.message.clone()).chain(d.notes.iter().cloned()).chain(d.help.iter().map(|h|format!("help: {h}"))).collect::<Vec<_>>().join("\n"),"relatedInformation":related}));
+                diagnostics.push(self.diagnostic(&path, e.diagnostic(), 1));
             }
+            diagnostics.extend(
+                warnings
+                    .iter()
+                    .filter(|d| {
+                        d.primary
+                            .as_ref()
+                            .and_then(|l| l.location.path.as_deref())
+                            .is_some_and(|p| p == path)
+                    })
+                    .map(|d| self.diagnostic(&path, d, 2)),
+            );
             output.push(json!({"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":doc.uri,"version":doc.version,"diagnostics":diagnostics}}));
         }
         output
+    }
+
+    fn diagnostic(&self, path: &Path, d: &crate::diagnostic::Diagnostic, severity: u8) -> Value {
+        let primary = d.primary.as_ref();
+        let in_root = primary
+            .and_then(|l| l.location.path.as_deref())
+            .is_none_or(|p| p == path);
+        let fallback = json!({"start":{"line":0,"character":0},"end":{"line":0,"character":0}});
+        let range = if in_root {
+            primary.map(|l| self.range(l)).unwrap_or(fallback)
+        } else {
+            fallback
+        };
+        let related = d.related.iter().chain(primary.filter(|_| !in_root)).filter_map(|l| {
+            Some(json!({"location":{"uri":file_uri(l.location.path.as_deref()?).ok()?,"range":self.range(l)},
+                "message":if l.message.is_empty() { d.message.as_str() } else { &l.message }}))
+        }).collect::<Vec<_>>();
+        json!({"range":range,"severity":severity,"code":d.code,"source":"wlt",
+            "message":std::iter::once(d.message.clone()).chain(d.notes.iter().cloned())
+                .chain(d.help.iter().map(|h| format!("help: {h}"))).collect::<Vec<_>>().join("\n"),
+            "relatedInformation":related})
     }
     fn edit(&mut self, method: &str, p: &Value) -> Result<Vec<Value>, String> {
         let td = &p["textDocument"];
@@ -420,11 +449,21 @@ impl Session {
             return id.map(|id|vec![json!({"jsonrpc":"2.0","id":id,"error":{"code":-32600,"message":"server has shut down"}})]).unwrap_or_default();
         }
         let result=match method {
-            "initialize"=>Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"experimental":{"wltMacroExpansion":true},"completionProvider":{"triggerCharacters":["$",".","%"]}},"serverInfo":{"name":"wlt","version":env!("CARGO_PKG_VERSION")}})),
+            "initialize"=>{
+                self.performance_warnings=params["initializationOptions"]["performanceWarnings"].as_bool().unwrap_or(false);
+                Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"experimental":{"wltMacroExpansion":true,"wltPerformanceWarnings":true},"completionProvider":{"triggerCharacters":["$",".","%"]}},"serverInfo":{"name":"wlt","version":env!("CARGO_PKG_VERSION")}}))
+            },
             "shutdown"=>{self.shutdown=true;Ok(Value::Null)},
             "textDocument/hover"|"textDocument/definition"|"textDocument/completion"|"wlt/expandMacro"=>self.query(method,params),
             "textDocument/didOpen"|"textDocument/didChange"|"textDocument/didClose"|"textDocument/didSave"=>return self.edit(method,params).unwrap_or_else(|message|vec![json!({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":1,"message":message}})]),
             "workspace/didChangeWatchedFiles"=>{self.cache.clear();return self.publish()},
+            "workspace/didChangeConfiguration"=>{
+                if let Some(enabled)=params["settings"]["wlt"]["performanceWarnings"].as_bool() {
+                    self.performance_warnings=enabled;
+                    return self.publish();
+                }
+                return vec![];
+            },
             "initialized"|"$/cancelRequest"|"exit"=>return vec![],
             _=>return id.map(|id|vec![json!({"jsonrpc":"2.0","id":id,"error":{"code":-32601,"message":"method not found"}})]).unwrap_or_default(),
         };

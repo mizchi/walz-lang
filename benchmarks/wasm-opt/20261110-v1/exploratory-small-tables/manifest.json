@@ -1,0 +1,50 @@
+{
+  "description": "Exploratory forward-arm inputs; table WAT manually lowered from old compiler output, not the final reverse-arm measurement corpus. Size only, no speed claims.",
+  "optimizer": "Binaryen 133 --enable-gc --enable-reference-types -O3",
+  "files": {
+    "enum-2.wlt": "cdb163dc93639410819fccf354c935a2b31fe5b7a8fcb4c7eb95b54af0d7bfcf",
+    "enum-2.wat": "610519b335dace423c7da5117019d232eff4f0c07bf38e7d6acc10aee4ef66ee",
+    "enum-2.wasm": "07948b7208ce22e65b5e98143eb2137fe1348b39f045128580c7d7fd0e3a827b",
+    "enum-2.o3.wasm": "64c503e7dffe2e938e1a3b092850988feb7ef926761e869bd380b3b57b8fb0fa",
+    "enum-2.o3.txt": "5d42a38e210ab3c68e8878903b4d27e5d81514cb89dbf8acf70f4c74596e3407",
+    "enum-2.table.wat": "0e26d8139ea55eb77507dbc8a454ecbef54b3d39255ad778bce448c8c492823a",
+    "enum-2.table.wasm": "dd6a96ae819a1cbe153d2b9ffc2db28aaaba56816d1706f5d8b8bb0f00a37e07",
+    "enum-2.table.o3.wasm": "c690d74213e34d18d161353fffa28cb226d56763171eba40148aeb972eaf3c3b",
+    "enum-2.table.o3.txt": "8f05743e3d672ed56ed26d1972c1c336319ed9d2d7c53e991a6ef466b2258296",
+    "enum-4.wlt": "2281fb70b6baa16801df3d6befd0f0bded45e0603dc14ca2c938cfa35931a435",
+    "enum-4.wat": "0130167fb868fda1b13c39e0245b813eaeb9bd124a7951dbe6f25f567d75f49a",
+    "enum-4.wasm": "4dd0f6c792d2798d69d6f581ba0a495b48940c795ff021d4118c625cd41e9561",
+    "enum-4.o3.wasm": "f1cd871bde18705a1aa2d31e6d8cfdddcde634993b90758b689f1b804baea1a2",
+    "enum-4.o3.txt": "2aa031cb65832dd7f4016418ea0c87a1ae62fd9459e54394bf000fff8668b6d6",
+    "enum-4.table.wat": "afa635f3549d5a700f7bc9d21934b3f2e20547494f5a409f61bebd654f33ad69",
+    "enum-4.table.wasm": "2ce7930c92dccb730094cffb88c39590011ab02c7fa16d89a9614ef6461a2a3a",
+    "enum-4.table.o3.wasm": "607906fa1a86e78206a59413a154b47bbdfb5b36f765a82e90f61a50e9360120",
+    "enum-4.table.o3.txt": "1bf7e3c4035369adfccf69c3d6501eda7e28f6035e8dd9be18bcc063697100f5",
+    "enum-6.wlt": "5fc193f6f7697f09547a4c94dea3ca0c38f9b00aedec1939facb27c2b8700acf",
+    "enum-6.wat": "68b0548f579d41e3ecd911b4e95f1fa3709fb2240e9aa766f7938a95e4e31bf3",
+    "enum-6.wasm": "2ad4f2bb13fbc57443f18b9c439c3aec09f0128710ae93ff6c6fc75d37b9b91a",
+    "enum-6.o3.wasm": "82ebeb78b0a0333b85f04ceb61840082558f2bb7156fd9c44b088ce7dce34eb0",
+    "enum-6.o3.txt": "1bad3a1c56ee8f396c05164b7af883b0b2c169e6b3c5c6cb582684aa115b7c5c",
+    "enum-6.table.wat": "da13a322d98c469c4362360f9dfe591fdb0526a3ea8921353235f9e2031301eb",
+    "enum-6.table.wasm": "67efecfbe6513bfe43b5af21cde33e6f572d63a4e0c1183f6d09fffab2ebb099",
+    "enum-6.table.o3.wasm": "3280b99e6c06345aa4c81db7e699f9526011cb851cc3be5f290745327d636b3e",
+    "enum-6.table.o3.txt": "8c746d560b03d56090b15adde2bf0d2367f2343773924e61dcba6e997c1d760b"
+  },
+  "results": [
+    {
+      "cases": 2,
+      "chainO3Bytes": 152,
+      "tableO3Bytes": 161
+    },
+    {
+      "cases": 4,
+      "chainO3Bytes": 259,
+      "tableO3Bytes": 254
+    },
+    {
+      "cases": 6,
+      "chainO3Bytes": 366,
+      "tableO3Bytes": 347
+    }
+  ]
+}

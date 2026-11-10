@@ -1,0 +1,82 @@
+(module
+ (rec
+  (type $E (sub (struct (field i32))))
+  (type $__variant_0_0 (sub final $E (struct (field i32) (field i32))))
+  (type $__variant_0_1 (sub final $E (struct (field i32) (field i32))))
+ )
+ (type $3 (func (param i32) (result (ref $E))))
+ (type $4 (func (param (ref $E)) (result i32)))
+ (export "read" (func $read))
+ (export "make0" (func $make0))
+ (export "make1" (func $make1))
+ (func $read (type $4) (param $0 (ref $E)) (result i32)
+  (local $1 (ref null $E))
+  (block $block3 (result i32)
+   (block $block2
+    (block $block1
+     (block $block
+      (br_table $block $block1 $block2
+       (struct.get $E 0
+        (local.tee $1
+         (local.get $0)
+        )
+       )
+      )
+     )
+     (br $block3
+      (struct.get $__variant_0_0 1
+       (ref.cast (ref $__variant_0_0)
+        (local.get $0)
+       )
+      )
+     )
+    )
+    (br $block3
+     (i32.add
+      (struct.get $__variant_0_1 1
+       (ref.cast (ref $__variant_0_1)
+        (local.get $0)
+       )
+      )
+      (i32.const 1)
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $make0 (type $3) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_0
+   (i32.const 0)
+   (local.get $0)
+  )
+ )
+ (func $make1 (type $3) (param $0 i32) (result (ref $E))
+  (struct.new $__variant_0_1
+   (i32.const 1)
+   (local.get $0)
+  )
+ )
+)
+Metrics
+total
+ [exports]      : 3       
+ [funcs]        : 3       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 25      
+ [vars]         : 1       
+ Binary         : 1       
+ Block          : 4       
+ Break          : 2       
+ Const          : 3       
+ LocalGet       : 5       
+ LocalSet       : 1       
+ RefCast        : 2       
+ StructGet      : 3       
+ StructNew      : 2       
+ Switch         : 1       
+ Unreachable    : 1       

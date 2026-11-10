@@ -76,6 +76,7 @@ The guides are primarily in Japanese; the macro and LSP references are in Englis
 | Typed macros with numeric WAT memory instructions | [Validator bridge](docs/wat-validator.md) |
 | Tests, benchmarks and first-time reader evaluations | [Testing](docs/testing.md) · [Benchmarking](docs/benchmarking.md) · [Evaluation harness](evals/README.md) |
 | Rust compiler benchmarks and profiling | [Frontend performance](docs/frontend-performance.md) |
+| Optimizable Wasm GC output and Binaryen measurements | [wasm-opt](docs/wasm-opt.md) |
 | Editor and native components | [LSP](docs/lsp.md) · [Native WIT worlds](docs/native-worlds.md) |
 | Implementation structure | [Architecture](docs/architecture.md) |
 

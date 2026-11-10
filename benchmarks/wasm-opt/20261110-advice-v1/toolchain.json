@@ -1,0 +1,10 @@
+{
+  "optimizer": "wasm-opt version 133 (version_133)",
+  "optimizerBinarySha256": "81041e09f332df94db1c2009a64d8f3b85f0431a2c920ccd014d3ceebb343402",
+  "archiveSha256": "ad66da82ac13f163e424b1643f16c6dfcccc98b5966296b43e52d3cab04f84a8",
+  "assetUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_133/binaryen-version_133-arm64-macos.tar.gz",
+  "cpu": "Apple M5",
+  "macOS": "26.6.2",
+  "wasmtime": "wasmtime 42.0.1 (6844a83b5 2026-02-25)",
+  "node": "v24.22.2"
+}

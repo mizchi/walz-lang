@@ -17,6 +17,10 @@ stdoutに `wlt-check-v1` のJSONを1つ出力する。通常の `check` と同�
 
 成功は終了コード0、検証・入出力の失敗は1。引数の誤りは2で、使い方をstderrへ出す。`--json` はcheck用のオプションで、従来のテキスト出力は `wlt check FILE` で使う。
 
+`--warn-performance` を併用すると、任意の性能診断を `performance` に追加する。
+警告は `diagnostics` に混ぜず、警告だけでは失敗にしない。検出対象・解析範囲・改善例は
+[wasm-opt向けの性能警告](wasm-opt.md#最適化しにくいソースへの任意警告)を参照。
+
 ## type-at
 
 ```sh

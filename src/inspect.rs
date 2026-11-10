@@ -274,6 +274,7 @@ pub(crate) struct Snapshot {
     checked: Option<CheckedSnapshot>,
     links: Vec<(Span, crate::diagnostic::Label, String)>,
     macros: crate::macros::Report,
+    performance_warnings: std::sync::OnceLock<Vec<crate::diagnostic::Diagnostic>>,
 }
 #[cfg(not(target_family = "wasm"))]
 type CheckedSnapshot = (Module, Vec<(Span, Span, String, String)>);
@@ -359,6 +360,19 @@ impl Snapshot {
             checked,
             links,
             macros,
+            performance_warnings: Default::default(),
+        })
+    }
+    pub fn performance_warnings(&self) -> &[crate::diagnostic::Diagnostic] {
+        self.performance_warnings.get_or_init(|| {
+            self.checked
+                .as_ref()
+                .map(|(module, _)| {
+                    crate::performance::analyze(self.source.text(), module)
+                        .located(&self.source)
+                        .warnings
+                })
+                .unwrap_or_default()
         })
     }
     pub fn query(&self, path: &Path, line: usize, column: usize) -> Result<TypeQuery, Error> {
@@ -452,6 +466,7 @@ impl Snapshot {
             checked: None,
             links: vec![],
             macros: Default::default(),
+            performance_warnings: Default::default(),
         })
     }
 }

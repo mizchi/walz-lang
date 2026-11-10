@@ -1,0 +1,91 @@
+diff --git i/src/emit.rs w/src/emit.rs
+index dd99bc8..3342145 100644
+--- i/src/emit.rs
++++ w/src/emit.rs
+@@ -1148,20 +1148,15 @@ impl Emitter<'_> {
+         self.temporaries.push(self.module.instance_type(ty));
+         let subject = self.expression(subject);
+         let result = result(self.module, value);
++        // Binaryen's open-world -O3 retains long tag-comparison chains. Checked
++        // matches are exhaustive with dense zero-based tags, so expose their
++        // switch directly. Keep conditional branches to avoid small-table overhead.
++        if arms.len() >= 8 {
++            return self.match_table(ty, temp, &subject, arms, value);
++        }
+         let mut dispatch = String::new();
+         for arm in arms {
+-            let concrete = variant_type(ty, arm.variant);
+-            let mut bindings = arm.bindings.iter().enumerate().map(|(index, local)| {
+-                format!(" (local.set $__v{} (struct.get {concrete} {} (ref.cast (ref {concrete}) (local.get $__temp{temp}))))",
+-                    local.0, index + 1)
+-            }).collect::<String>();
+-            // Payload reads already cast their receiver. Nullary cases also
+-            // need to reject a foreign base value carrying a valid case tag.
+-            if arm.bindings.is_empty() {
+-                bindings.push_str(&format!(
+-                    " (drop (ref.cast (ref {concrete}) (local.get $__temp{temp})))"
+-                ));
+-            }
++            let bindings = self.match_bindings(ty, temp, arm);
+             dispatch.push_str(&format!(
+                 "(if{result} (i32.eq (struct.get {} 0 (local.get $__temp{temp})) (i32.const {})) (then{bindings} {}) (else ",
+                 self.module.types[ty.0].name, arm.variant, self.expression(&arm.body)
+@@ -1175,4 +1170,58 @@ impl Emitter<'_> {
+         }
+         format!("(block{result} (local.set $__temp{temp} {subject}) {dispatch})")
+     }
++
++    fn match_bindings(&self, ty: TypeId, temp: usize, arm: &MatchArm) -> String {
++        let concrete = variant_type(ty, arm.variant);
++        let mut bindings = arm.bindings.iter().enumerate().map(|(index, local)| {
++            format!(" (local.set $__v{} (struct.get {concrete} {} (ref.cast (ref {concrete}) (local.get $__temp{temp}))))",
++                local.0, index + 1)
++        }).collect::<String>();
++        // Even a nullary case must reject a foreign base value with a valid tag.
++        if arm.bindings.is_empty() {
++            bindings.push_str(&format!(
++                " (drop (ref.cast (ref {concrete}) (local.get $__temp{temp})))"
++            ));
++        }
++        bindings
++    }
++
++    fn match_table(
++        &mut self,
++        ty: TypeId,
++        temp: usize,
++        subject: &str,
++        arms: &[MatchArm],
++        value: &Type,
++    ) -> String {
++        let done = format!("$__match_end{temp}");
++        let bad = format!("$__match_bad{temp}");
++        let case = |variant| format!("$__match_case{temp}_{variant}");
++        let mut code = format!(
++            "(block {done}{} (local.set $__temp{temp} {subject}) (block {bad}",
++            result(self.module, value)
++        );
++        for arm in arms.iter().rev() {
++            code.push_str(&format!(" (block {}", case(arm.variant)));
++        }
++        // Table order follows declaration tags, independently of source arms.
++        let targets = (0..arms.len()).map(case).collect::<Vec<_>>().join(" ");
++        code.push_str(&format!(
++            " (br_table {targets} {bad} (struct.get {} 0 (local.get $__temp{temp})))",
++            self.module.types[ty.0].name
++        ));
++        for arm in arms {
++            code.push(')');
++            code.push_str(&self.match_bindings(ty, temp, arm));
++            let body = self.expression(&arm.body);
++            if matches!(value, Type::Unit | Type::Never) {
++                code.push_str(&format!(" {body} (br {done})"));
++            } else {
++                code.push_str(&format!(" (br {done} {body})"));
++            }
++        }
++        // An out-of-range (including negative) foreign tag must still trap.
++        code.push_str(") (unreachable))");
++        code
++    }
+ }

@@ -14,6 +14,12 @@ The server retains at most eight checked snapshots. Open document text is shared
 
 This server performs the type/effect/ownership checks used by `type-at`. Run `wlt check`, `wlt build`, and the proof commands for compilation and law verification. Rename, formatting requests, and cross-workspace indexing are outside this interface.
 
+## Optional performance warnings
+
+Set `initializationOptions: {"performanceWarnings": true}` when initializing, or send `workspace/didChangeConfiguration` with `settings: {"wlt": {"performanceWarnings": true}}`. The server advertises `experimental.wltPerformanceWarnings`. The default is disabled.
+
+Warnings identify range copies in loop bodies, including checked helper calls, and GC allocations in loops that may escape to a host. They use severity 2, original UTF-16 ranges, and related locations for helper copies. They are conservative advice based on Binaryen 133, rather than measured hotspots or optimizer failure reports. Each checked revision computes them at most once; disabling them clears the published warnings. Invalid revisions keep strict errors and do not reuse prior advice. See [the rules and examples](wasm-opt.md#最適化しにくいソースへの任意警告).
+
 ## Editing incomplete or erroneous code
 
 Diagnostics still come from the strict compiler. An error does not make the current document compilable. Alongside checked IR, the server indexes declaration syntax and lexical scopes from the current revision. When checking fails, hover can show **Declared syntax (unverified; no checked type is inferred)**, and definition can point to a declaration whose current position is known. This index is never supplied to code generation or the proof checker. No previous revision's inferred types or offsets are reused.

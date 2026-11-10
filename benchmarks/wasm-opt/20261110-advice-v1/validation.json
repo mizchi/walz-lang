@@ -1,0 +1,34 @@
+{
+  "workspace": {
+    "command": "cargo test --locked --workspace",
+    "passed": 618,
+    "failed": 0,
+    "ignored": 3
+  },
+  "targeted": {
+    "command": "just test-performance-warnings",
+    "passed": 38,
+    "failed": 0,
+    "ignored": 1
+  },
+  "binaryen": {
+    "command": "just test-wasm-opt target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+    "passed": 15,
+    "failed": 0,
+    "ignored": 0
+  },
+  "check": {
+    "command": "just check",
+    "passed": true
+  },
+  "wasm32": {
+    "command": "cargo check --locked -p wlt-web --target wasm32-unknown-unknown",
+    "passed": true
+  },
+  "frontendReferences": {
+    "command": "node --test runtime/frontend-reference.test.mjs",
+    "passed": 2,
+    "failed": 0
+  },
+  "note": "The complete workspace run was followed by focused tests and checks after adding the empty-related-span guard and further import/generic/law cases. Current emitter and frozen frontend outputs are unchanged by performance analysis."
+}

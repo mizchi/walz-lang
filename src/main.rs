@@ -41,6 +41,8 @@ const COMMANDS: &[&str] = &[
     "profile-text",
 ];
 
+const CHECK_USAGE: &str = "Usage: wlt check <file.wlt> [--json] [--warn-performance] [--bindings policy.json]\n\nCheck types, effects, ownership, race contracts, and laws without running host code.\n--warn-performance adds advisory loop-copy and GC host-escape warnings for typed WLT.\nWarnings do not fail the check; --json keeps errors in diagnostics and advice in performance.\nNative WAT remains accepted; opaque expression coverage is reported explicitly.";
+
 fn help(command: Option<&str>) -> ExitCode {
     println!(
         "{}",
@@ -49,6 +51,7 @@ fn help(command: Option<&str>) -> ExitCode {
             Some("test") => TEST_USAGE,
             Some("bench") => cli_bench::USAGE,
             Some("run") => cli_run::USAGE,
+            Some("check") => CHECK_USAGE,
             None | Some("--help" | "-h" | "help") => USAGE,
             Some(command) if COMMANDS.contains(&command) => USAGE,
             Some(command) => {
@@ -494,6 +497,15 @@ fn main() -> ExitCode {
         .position(|s| s == "--json")
         .map(|i| args.remove(i))
         .is_some();
+    let performance = args
+        .iter()
+        .position(|s| s == "--warn-performance")
+        .map(|i| args.remove(i))
+        .is_some();
+    if performance && !args.first().is_some_and(|s| s == "check") {
+        eprintln!("--warn-performance is supported by check\n{USAGE}");
+        return ExitCode::from(2);
+    }
     if json && !args.first().is_some_and(|s| s == "check") {
         eprintln!("--json is supported by check; type-at always returns JSON\n{USAGE}");
         return ExitCode::from(2);
@@ -632,8 +644,8 @@ fn main() -> ExitCode {
         return ExitCode::from(2);
     }
     let path = Path::new(&args[1]);
-    if json {
-        return cli_inspection::check(path, &policy, legacy);
+    if json || performance {
+        return cli_inspection::check(path, &policy, legacy, json, performance);
     }
     match execute(command, path, args.get(2).map(Path::new), &policy, legacy) {
         Ok(true) => ExitCode::SUCCESS,

@@ -1,0 +1,78 @@
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.31s
+     Running tests/match_dispatch.rs (target/debug/deps/match_dispatch-dfad7b8e8d489331)
+
+running 5 tests
+test wasm_opt_open_world_preserves_values_and_traps ... ignored, requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt
+test large_dense_matches_use_one_tag_load_and_keep_every_case_cast ... FAILED
+test nullary_cases_still_validate_the_runtime_subtype ... ok
+test raw_wasm_callers_keep_tag_and_subtype_validation ... ok
+test dense_branches_preserve_return_labels_exceptions_unit_and_owned_results ... ok
+
+failures:
+
+---- large_dense_matches_use_one_tag_load_and_keep_every_case_cast stdout ----
+
+thread 'large_dense_matches_use_one_tag_load_and_keep_every_case_cast' (30123604) panicked at tests/match_dispatch.rs:57:13:
+8 cases: (module
+  (rec
+    (type $E (sub (struct (field i32))))
+    (type $__variant_0_0 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_1 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_2 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_3 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_4 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_5 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_6 (sub final $E (struct (field i32) (field i32))))
+    (type $__variant_0_7 (sub final $E (struct (field i32) (field i32))))
+  )
+  (func $read (export "read") (param $__v0 (ref $E)) (result i32)
+    (local $__v1 i32)
+    (local $__v2 i32)
+    (local $__v3 i32)
+    (local $__v4 i32)
+    (local $__v5 i32)
+    (local $__v6 i32)
+    (local $__v7 i32)
+    (local $__v8 i32)
+    (local $__temp0 (ref $E))
+    (block (result i32) (local.set $__temp0 (local.get $__v0)) (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 7)) (then (local.set $__v1 (struct.get $__variant_0_7 1 (ref.cast (ref $__variant_0_7) (local.get $__temp0)))) (i32.add (local.get $__v1) (i32.const 7))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 6)) (then (local.set $__v2 (struct.get $__variant_0_6 1 (ref.cast (ref $__variant_0_6) (local.get $__temp0)))) (i32.add (local.get $__v2) (i32.const 6))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 5)) (then (local.set $__v3 (struct.get $__variant_0_5 1 (ref.cast (ref $__variant_0_5) (local.get $__temp0)))) (i32.add (local.get $__v3) (i32.const 5))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 4)) (then (local.set $__v4 (struct.get $__variant_0_4 1 (ref.cast (ref $__variant_0_4) (local.get $__temp0)))) (i32.add (local.get $__v4) (i32.const 4))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 3)) (then (local.set $__v5 (struct.get $__variant_0_3 1 (ref.cast (ref $__variant_0_3) (local.get $__temp0)))) (i32.add (local.get $__v5) (i32.const 3))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 2)) (then (local.set $__v6 (struct.get $__variant_0_2 1 (ref.cast (ref $__variant_0_2) (local.get $__temp0)))) (i32.add (local.get $__v6) (i32.const 2))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 1)) (then (local.set $__v7 (struct.get $__variant_0_1 1 (ref.cast (ref $__variant_0_1) (local.get $__temp0)))) (i32.add (local.get $__v7) (i32.const 1))) (else (if (result i32) (i32.eq (struct.get $E 0 (local.get $__temp0)) (i32.const 0)) (then (local.set $__v8 (struct.get $__variant_0_0 1 (ref.cast (ref $__variant_0_0) (local.get $__temp0)))) (i32.add (local.get $__v8) (i32.const 0))) (else (unreachable))))))))))))))))))
+  )
+  (func $make0 (export "make0") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_0 (i32.const 0) (local.get $__v0))
+  )
+  (func $make1 (export "make1") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_1 (i32.const 1) (local.get $__v0))
+  )
+  (func $make2 (export "make2") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_2 (i32.const 2) (local.get $__v0))
+  )
+  (func $make3 (export "make3") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_3 (i32.const 3) (local.get $__v0))
+  )
+  (func $make4 (export "make4") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_4 (i32.const 4) (local.get $__v0))
+  )
+  (func $make5 (export "make5") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_5 (i32.const 5) (local.get $__v0))
+  )
+  (func $make6 (export "make6") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_6 (i32.const 6) (local.get $__v0))
+  )
+  (func $make7 (export "make7") (param $__v0 i32) (result (ref $E))
+    (struct.new $__variant_0_7 (i32.const 7) (local.get $__v0))
+  )
+  (func $main (export "main") (result i32)
+    (call $read (call $make7 (i32.const 35)))
+  )
+)
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    large_dense_matches_use_one_tag_load_and_keep_every_case_cast
+
+test result: FAILED. 3 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+error: test failed, to rerun pass `--test match_dispatch`

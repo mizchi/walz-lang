@@ -1,0 +1,33 @@
+cargo build --locked --bin wlt
+    Finished `dev` profile [unoptimized] target(s) in 0.29s
+node tools/wasm-opt-capture.mjs 'before-20261110' 'target/wasm-opt-research/binaryen-version_133/bin/wasm-opt'
+{"name":"scalar","variants":[{"name":"raw","bytes":76,"codeBytes":18,"sha256":"57ed55197cfb4a944df2d522a92d48dd000f89ddda02e66e528b983e043b7e75","actual":42},{"name":"o3","bytes":37,"codeBytes":6,"sha256":"70eaface115ced46dab817b5b79b844c7f04b5078a08834d3bd7c39d466d8c9f","actual":42},{"name":"o3-twice","bytes":37,"codeBytes":6,"sha256":"70eaface115ced46dab817b5b79b844c7f04b5078a08834d3bd7c39d466d8c9f","actual":42}]}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: /Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt build /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt --target core -o /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/artifacts/local-struct.wasm
+/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt:1:84: effect contract for `$main` exceeded: allocates
+  note: /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt:1:108: allocates required by struct.new
+  note: declared: pure; required: allocates
+  help: remove the operations exceeding the declared bound, or explicitly allow their effects if intended
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at ChildProcess.exithandler (node:child_process:417:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1172:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:335:5) {
+  code: 1,
+  killed: false,
+  signal: null,
+  cmd: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/debug/wlt build /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt --target core -o /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/artifacts/local-struct.wasm',
+  stdout: '',
+  stderr: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt:1:84: effect contract for `$main` exceeded: allocates\n' +
+    '  note: /Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt/before-20261110/inputs/local-struct.wlt:1:108: allocates required by struct.new\n' +
+    '  note: declared: pure; required: allocates\n' +
+    '  help: remove the operations exceeding the declared bound, or explicitly allow their effects if intended\n'
+}
+
+Node.js v24.22.2
+error: Recipe `wasm-opt-capture` failed on line 575 with exit code 1

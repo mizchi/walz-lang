@@ -1,0 +1,174 @@
+Metrics
+total
+ [exports]      : 3       
+ [funcs]        : 3       
+ [globals]      : 0       
+ [imports]      : 0       
+ [memories]     : 0       
+ [tables]       : 0       
+ [tags]         : 0       
+ [total]        : 74      
+ [vars]         : 8       
+ ArrayCopy      : 1       
+ ArrayGet       : 2       
+ ArrayLen       : 4       
+ ArrayNew       : 3       
+ ArraySet       : 1       
+ Binary         : 7       
+ Block          : 3       
+ Break          : 2       
+ Call           : 2       
+ Const          : 9       
+ If             : 4       
+ LocalGet       : 21      
+ LocalSet       : 9       
+ Loop           : 2       
+ StructGet      : 1       
+ StructNew      : 1       
+ Unreachable    : 2       
+(module
+ (rec
+  (type $__byte_storage (array (mut i8)))
+  (type $Input (array i32))
+  (type $__value1 (struct (field (ref $__byte_storage))))
+  (type $__value2 (struct (field (ref $__byte_storage))))
+ )
+ (type $4 (func (param i32) (result (ref $__value1))))
+ (type $5 (func (param (ref $__value1) i32) (result i32)))
+ (type $6 (func (result i32)))
+ (export "make" (func $make))
+ (export "sum" (func $sum))
+ (export "main" (func $main))
+ (func $make (type $4) (param $0 i32) (result (ref $__value1))
+  (local $1 i32)
+  (local $2 (ref (exact $Input)))
+  (local $3 (ref (exact $__byte_storage)))
+  (local.set $3
+   (array.new_default $__byte_storage
+    (array.len
+     (local.tee $2
+      (array.new $Input
+       (i32.const 21)
+       (local.get $0)
+      )
+     )
+    )
+   )
+  )
+  (loop $label
+   (if
+    (i32.lt_u
+     (local.get $1)
+     (array.len
+      (local.get $2)
+     )
+    )
+    (then
+     (if
+      (i32.gt_u
+       (local.tee $0
+        (array.get $Input
+         (local.get $2)
+         (local.get $1)
+        )
+       )
+       (i32.const 255)
+      )
+      (then
+       (unreachable)
+      )
+     )
+     (array.set $__byte_storage
+      (local.get $3)
+      (local.get $1)
+      (local.get $0)
+     )
+     (local.set $1
+      (i32.add
+       (local.get $1)
+       (i32.const 1)
+      )
+     )
+     (br $label)
+    )
+   )
+  )
+  (struct.new $__value1
+   (local.get $3)
+  )
+ )
+ (func $sum (type $5) (param $0 (ref $__value1)) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 (ref $__byte_storage))
+  (local $5 i32)
+  (local $6 (ref (exact $__byte_storage)))
+  (loop $label (result i32)
+   (if (result i32)
+    (i32.eq
+     (local.get $1)
+     (local.get $2)
+    )
+    (then
+     (local.get $3)
+    )
+    (else
+     (local.set $2
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+     )
+     (if
+      (i32.lt_u
+       (array.len
+        (local.tee $4
+         (struct.get $__value1 0
+          (local.get $0)
+         )
+        )
+       )
+       (local.tee $5
+        (array.len
+         (local.get $4)
+        )
+       )
+      )
+      (then
+       (unreachable)
+      )
+     )
+     (array.copy $__byte_storage $__byte_storage
+      (local.tee $6
+       (array.new_default $__byte_storage
+        (local.get $5)
+       )
+      )
+      (i32.const 0)
+      (local.get $4)
+      (i32.const 0)
+      (local.get $5)
+     )
+     (local.set $3
+      (i32.add
+       (local.get $3)
+       (array.get_u $__byte_storage
+        (local.get $6)
+        (i32.const 0)
+       )
+      )
+     )
+     (br $label)
+    )
+   )
+  )
+ )
+ (func $main (type $6) (result i32)
+  (call $sum
+   (call $make
+    (i32.const 2)
+   )
+   (i32.const 2)
+  )
+ )
+)

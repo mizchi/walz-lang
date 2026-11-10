@@ -1,0 +1,66 @@
+cargo test --locked --test performance_warnings --test inspection --test lsp --test diagnostics
+   Compiling wlt v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.62s
+     Running tests/diagnostics.rs (target/debug/deps/diagnostics-df86c5f47565fdc3)
+
+running 16 tests
+test alias_cycle_reports_the_ordered_edges_and_a_non_prescriptive_repair ... ok
+test alias_cycle_edges_keep_their_individual_include_locations ... ok
+test distant_unknown_names_list_visible_bindings_without_guessing_a_replacement ... ok
+test call_arity_counts_only_source_arguments_and_names_the_callee ... ok
+test effect_diagnostic_explains_declared_bound_and_transitive_cause ... ok
+test inner_type_errors_do_not_blame_an_outer_call_or_result_bound ... ok
+test moved_value_diagnostic_identifies_binding_and_first_move ... ok
+test effect_provenance_ignores_caught_throws_and_finds_handler_rethrows ... ok
+test numeric_repair_hint_uses_the_surrounding_type_without_implying_a_cast ... ok
+test opaque_diagnostic_identifies_type_owner_and_declaration ... ok
+test effect_provenance_handles_recursive_calls_and_unknown_imports ... ok
+test type_errors_explain_numeric_operand_parameter_and_declared_result_origins ... ok
+test included_primary_and_related_spans_map_independently_with_unicode_columns ... ok
+test branch_move_provenance_retains_each_reachable_origin ... ok
+test unknown_local_suggests_only_visible_bindings_and_limits_capture_advice ... ok
+test included_cli_errors_keep_related_locations_and_do_not_panic_at_eof ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+
+     Running tests/inspection.rs (target/debug/deps/inspection-543fe6748f3e7bf4)
+
+running 5 tests
+test loaded_snapshot_queries_do_not_require_the_file_to_still_exist ... ok
+test equal_result_types_do_not_hide_distinct_generic_instances ... ok
+test type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances ... ok
+test type_queries_validate_coordinates_errors_and_native_limits ... ok
+test json_check_keeps_success_failure_and_native_validation_machine_readable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
+
+     Running tests/lsp.rs (target/debug/deps/lsp-834988e0e9211545)
+
+running 8 tests
+test utf16_positions_round_trip_and_reject_half_surrogates ... ok
+test incomplete_edits_keep_current_declarations_and_offer_core_imports ... ok
+test declaration_recovery_keeps_wat_type_function_and_local_names_separate ... ok
+test incremental_changes_use_utf16_and_invalidate_importers ... ok
+test recovery_uses_current_positions_and_lexical_shadowing_without_old_types ... ok
+test unsaved_modules_share_checked_snapshots_and_utf16_definitions ... ok
+test erroneous_current_revisions_keep_declarations_navigation_and_completion ... ok
+test stdio_framing_shutdown_and_cancellation_are_protocol_only ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s
+
+     Running tests/performance_warnings.rs (target/debug/deps/performance_warnings-37aa8ca48acbbcaa)
+
+running 10 tests
+test wasm_opt_advice_examples_preserve_values_traps_and_host_identity ... ignored, requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt
+test lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable ... ok
+test host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not ... ok
+test native_wat_coverage_and_errors_remain_explicit ... ok
+test warnings_preserve_module_identities_and_original_import_locations ... ok
+test cold_initializers_dead_functions_and_scalar_mutability_are_quiet ... ok
+test macro_generated_duplicates_share_one_warning_and_async_check_does_not_require_a_backend ... ok
+test loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check ... ok
+test list_copies_nested_loop_initializers_and_unreachable_branches_are_distinguished ... ok
+test documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.91s
+

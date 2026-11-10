@@ -146,9 +146,9 @@ fn location(f: &mut fmt::Formatter<'_>, label: &Label) -> fmt::Result {
     write!(f, "{}:{}", label.location.line, label.location.column)
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for Diagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let diagnostic = &self.diagnostic;
+        let diagnostic = self;
         if let Some(primary) = &diagnostic.primary {
             location(f, primary)?;
             f.write_str(": ")?;
@@ -166,6 +166,12 @@ impl fmt::Display for Error {
             write!(f, "\n  help: {help}")?;
         }
         Ok(())
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.diagnostic.fmt(f)
     }
 }
 
