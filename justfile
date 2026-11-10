@@ -178,6 +178,9 @@ workflow-compare before="target/workflow-tune/before" after="target/workflow-tun
 test-cheatsheet:
     cargo test --locked --test cheatsheet
 
+test-docs:
+    cargo test --locked --test documentation --test cheatsheet
+
 # Frozen inputs and isolated writer directories for a fresh evaluation round.
 grammar-eval-prepare round:
     node runtime/grammar-eval-prepare.mjs {{quote(round)}}

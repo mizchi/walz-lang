@@ -13,6 +13,7 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 - Hygienic expression macros with explicit binding scopes and queries to the ordinary type checker.
 - Type, effect, and ownership checking for the typed extension core.
 - Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
+- CLI, browser playground, LSP, Vite ESM imports, and a TS7 Content Mapper.
 
 ```wat
 (module
@@ -39,48 +40,30 @@ Install the CLI with Cargo (Rust 1.99 or later).
 git clone https://github.com/mizchi/wlt-lang.git
 cd wlt-lang
 cargo install --path . --locked --bin wlt
+wlt run examples/closure.wlt              # 42
 wlt build examples/closure.wlt -o target/closure.wasm
-wlt test tests/programs
-wlt bench examples/benchmarks/stdlib_v2_bench.wlt
+wlt test examples/cli/tests
+wlt bench examples/cli/answer_bench.wlt
 ```
 
-You can also install directly with `cargo install --git https://github.com/mizchi/wlt-lang --locked --bin wlt`. Tests require Wasmtime with Wasm GC support; benchmarks require Node.js 24 or later. Verified builds also use Lean. See the [CLI guide](docs/cli.md) for defaults and options, and [Getting started](docs/getting-started.md) for development setup.
+You can also install directly with `cargo install --git https://github.com/mizchi/wlt-lang --locked --bin wlt`. Tests require Wasmtime with Wasm GC support; benchmarks require Node.js 24 or later. Laws, race-free contracts, and verified execution also use Lean. See the [CLI guide](docs/cli.md) for defaults and options, and [Getting started](docs/getting-started.md) for your first project.
 
 Try the [hosted playground](https://mizchi.github.io/wlt-lang/) for an interactive language tour, or run `just playground` locally (requires wasm-pack). The [browser playground](docs/playground.md) compiles WLT locally using the Rust compiler built to Wasm.
 
 ## Documentation
 
-The guides are primarily in Japanese; the macro and LSP references are in English.
+Start with the installation guide, then the language guide. The feature list records both implemented behavior and its limits.
+Detailed guides are primarily in Japanese; the macro and LSP references are in English.
 
-| Topic | Documentation |
+| Read about | Documentation |
 | --- | --- |
-| Edit, compile and run in the browser | [Playground](docs/playground.md) |
-| Import WLT functions from JavaScript and TypeScript | [Vite ESM integration](docs/vite.md) |
-| Check WLT imports without generated declarations | [TS7 Content Mapper](docs/content-mapper.md) |
-| Scalar instructions, Result sequencing, newtypes and early exits | [Core expressions](docs/core-expressions.md) |
-| Syntax overview | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) |
-| Shared memory, atomics, and host workers | [Wasm threads](docs/threads.md) · [Atomic-cell verification](docs/atomic-cells.md) |
-| Async Worker pools and immutable parallel indexes | [Worker host](docs/worker-host.md) · [Readonly regions](docs/readonly-regions.md) · [Succinct indexes](docs/succinct.md) |
-| Built-in types, Future, and grouped bindings | [Core module](docs/standard.md) |
-| Type parameters, bounds, and monomorphization | [Generics](docs/generics.md) |
-| Built-in type classes, short-circuit logic and bit operations | [Type classes](docs/typeclasses.md) |
-| v128 and vector operations | [SIMD](docs/simd.md) · [Kernels and benchmarks](docs/simd-kernels.md) |
-| Named struct construction | [Struct construction](docs/struct-construction.md) |
-| List traversal, field patterns, and field updates | [High-level forms](docs/high-level-forms.md) |
-| Option/Result helpers and expected string literals | [Value operations](docs/option-result.md) |
-| Imports, exports, and dead code elimination | [Static modules and DCE](docs/static-modules.md) |
-| User-defined syntax and inferred type queries | [Hygienic macros](docs/user-macros.md) |
-| Import typed functions from Component Wasm | [WIT-typed Wasm dependencies](docs/wasm-use.md) |
-| Effects, types, and memory regions | [Type checking and static analysis](docs/analysis.md) |
-| Ownership and proofs | [Verified execution](docs/verification.md) · [External resources](docs/resources.md) |
-| Async execution, ABI, and cancellation | [Runtime](docs/runtime.md) · [WIT bindings](docs/wit-bindings.md) |
-| CLI bundles, explicit file I/O, and child tasks | [CLI](docs/cli.md) · [WASI adapter](docs/wasi-files.md) · [Spawn/join](docs/scoped-tasks.md) |
-| Typed macros with numeric WAT memory instructions | [Validator bridge](docs/wat-validator.md) |
-| Tests, benchmarks and first-time reader evaluations | [Testing](docs/testing.md) · [Benchmarking](docs/benchmarking.md) · [Evaluation harness](evals/README.md) |
-| Rust compiler benchmarks and profiling | [Frontend performance](docs/frontend-performance.md) |
-| Optimizable Wasm GC output and Binaryen measurements | [wasm-opt](docs/wasm-opt.md) |
-| Editor and native components | [LSP](docs/lsp.md) · [Native WIT worlds](docs/native-worlds.md) |
-| Implementation structure | [Architecture](docs/architecture.md) |
+| Install, run, test, and benchmark a first project | [Getting started](docs/getting-started.md) · [CLI](docs/cli.md) |
+| Learn the language through executable examples | [Language guide](docs/language-guide.md) |
+| See features, supported boundaries, and limitations | [Feature list](docs/features.md) |
+| Find a guide for a particular topic | [Documentation index](docs/README.md) |
+| Look up syntax and contracts | [Cheat sheet](CHEATSHEET.md) · [Specification](SPEC.md) · [Core API](docs/stdlib-api.md) |
+| Use WLT from JavaScript and TypeScript | [Vite ESM](docs/vite.md) · [TS7 Content Mapper](docs/content-mapper.md) |
+| Change the compiler or runtime | [Development](docs/development.md) · [Architecture](docs/architecture.md) |
 
 See the [example catalog](examples/catalog.json), [initial sample assessment](ASSESSMENT.md), and [current limitations and TODO](TODO.md).
 The move from the original Wasmtime prototype and the former name, gcwat, are documented in [MIGRATION.md](MIGRATION.md).

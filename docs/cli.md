@@ -1,5 +1,8 @@
 # CLI のインストールと使い方
 
+最初のプロジェクトを作る手順は[導入](getting-started.md)、構文は[言語ガイド](language-guide.md)、
+対応機能と制限は[機能一覧](features.md)を参照。このページは各コマンドの詳細を扱う。
+
 Rust 1.99以降の Cargo からインストールする。
 
 ```sh
@@ -138,6 +141,18 @@ wlt expand examples/user-macros/main.wlt
 `macro-expand` は型検査を通した展開履歴を出し、ゲストを実行しない。既定は `wlt-macro-expansion-v1` のJSONで、宣言・展開元・推論型・入力の利用状況・`checking` の仕事量を含む。`--text` は展開元・推論型・入力の構文出現数を人が読む形式で表示する。`expand` は全拡張を下げた最終WATを出す。
 
 `single` / `duplicated` / `discarded` は入力構文の出現数の分類で、ループや分岐を含む実行回数ではない。`checking` のカウンタも検査予算の指標であり、CPU時間ではない。構文の使い分けと上限は [ユーザー定義マクロ](user-macros.md)、編集時の型・定義・展開照会は [LSP](lsp.md) を参照。
+
+### JS公開ABIの検査
+
+```sh
+wlt esm-metadata main.wlt
+wlt esm-metadata main.wlt --stdin < edited.wlt
+```
+
+`esm-metadata`はCore＋JSPIの型・契約・公開ABIを検査し、`wlt-esm-metadata-v1`のJSONを返す。
+引数・結果の型、JS名、非同期かどうか、export位置、読み込んだファイルを含む。
+`--stdin`は指定したパスの未保存内容として検査し、相対依存はそのパスから解決する。ソースや生成物を変更しない。
+ホストimportがあれば`--bindings policy.json`を指定する。[Content Mapper](content-mapper.md)もこの入口を使う。
 
 ## Core＋JSPI のテスト・計測
 
