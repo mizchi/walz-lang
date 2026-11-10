@@ -1,0 +1,14 @@
+(module
+  (@use "walz:core" (type $option) (type $result))
+  (@export (func $option.ok-or))
+  ;; Both arguments are evaluated before entry, including the fallback error.
+  (func $option.ok-or
+    (@type.params $T $E)
+    (@where (shared $T $E) (nonunit $T $E))
+    (param $value (@inst $option $T))
+    (param $error $E)
+    (result (@inst $result $T $E))
+    (@effect pure)
+    (@match $value
+      (case none () (@result.err $error))
+      (case some ($payload) (@result.ok $payload)))))

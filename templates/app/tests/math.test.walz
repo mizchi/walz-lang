@@ -1,0 +1,4 @@
+(module
+  (@use "../src/math.walz" (func $add))
+  (@test "add returns 42" (= (call $add 40 2) 42))
+  (@test "add handles negative values" (= (call $add -2 2) 0)))

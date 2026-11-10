@@ -264,12 +264,12 @@ fn invoke(wasm: &Path, driver: &Path, options: &BenchOptions) -> Result<BenchOut
     })
 }
 
-/// Discover `*_bench.wlt` recursively (default: current directory). Explicit
+/// Discover `*_bench.walz` recursively (default: current directory). Explicit
 /// files may have any name. Every case has its own process and Wasm instance;
 /// warmup, calibration, and samples share that instance. Errors do not stop peers.
 pub fn run(paths: &[PathBuf], options: &BenchOptions) -> BenchReport {
     let mut report = BenchReport {
-        schema: "wlt-bench-v1",
+        schema: "walz-bench-v1",
         options: options.clone(),
         benchmarks: vec![],
         errors: vec![],
@@ -286,7 +286,7 @@ pub fn run(paths: &[PathBuf], options: &BenchOptions) -> BenchReport {
             return report;
         }
     };
-    let discovery = crate::harness::discover(paths, ".", "_bench.wlt");
+    let discovery = crate::harness::discover(paths, ".", "_bench.walz");
     report.errors.extend(discovery.errors);
     for path in discovery.files {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
@@ -312,12 +312,12 @@ pub fn run(paths: &[PathBuf], options: &BenchOptions) -> BenchReport {
                                 source,
                                 &module,
                                 bench.function,
-                                "wlt-case",
+                                "walz-case",
                             )
                             .map_err(|e| loaded.diagnostic(e))?;
                             let report = crate::execution::invoke(
                                 &built,
-                                "wlt-case",
+                                "walz-case",
                                 &options.execution,
                                 "bench",
                                 Duration::from_millis(options.timeout_ms),

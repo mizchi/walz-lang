@@ -238,12 +238,12 @@ impl Reader<'_> {
             if items.len() == 1 {
                 let prefix = items[0]
                     .atom()
-                    .and_then(|s| s.strip_prefix('%'))
+                    .and_then(|s| s.strip_prefix('@'))
                     .and_then(|s| s.strip_suffix("::"));
                 if let Some(name) = prefix.filter(|_| self.rest().starts_with('{')) {
                     if !name.starts_with('$') || name.len() == 1 {
                         return Err(self
-                            .error("compact construction requires a $type identifier; use %$Type::{...}")
+                            .error("compact construction requires a $type identifier; use @$Type::{...}")
                             .with_code("E_STRUCT_LITERAL"));
                     }
                     let ty = Sexp {
@@ -251,12 +251,12 @@ impl Reader<'_> {
                         kind: Kind::Atom(name.to_owned()),
                         span: items[0].span,
                     };
-                    items[0].kind = Kind::Atom("%struct.new".into());
+                    items[0].kind = Kind::Atom("@struct.new".into());
                     items.push(ty);
                 }
             }
             if self.rest().starts_with('{') {
-                if items.len() == 1 && matches!(items[0].atom(), Some("%let" | "%for-each")) {
+                if items.len() == 1 && matches!(items[0].atom(), Some("@let" | "@for-each")) {
                     let start = self.position;
                     let mut fields = vec![Sexp {
                         context: SyntaxContext::default(),
@@ -274,9 +274,9 @@ impl Reader<'_> {
                     });
                     continue;
                 }
-                if items.len() != 2 || items[0].atom() != Some("%struct.new") {
+                if items.len() != 2 || items[0].atom() != Some("@struct.new") {
                     return Err(self
-                        .error("field maps belong to %struct.new, %$Type::, or a %let / %for-each pattern")
+                        .error("field maps belong to @struct.new, @$Type::, or a @let / @for-each pattern")
                         .with_code("E_STRUCT_LITERAL"));
                 }
                 items.extend(self.fields(depth + 1)?);

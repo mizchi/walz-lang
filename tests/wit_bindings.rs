@@ -1,4 +1,4 @@
-use wlt::bindings::BindingPolicy;
+use walz::bindings::BindingPolicy;
 
 #[test]
 fn wit_generation_rejects_flags_exceeding_the_component_limit() {
@@ -10,7 +10,7 @@ fn wit_generation_rejects_flags_exceeding_the_component_limit() {
         .join(",");
     std::fs::write(&input,format!("package example:host@1.0.0; interface service {{ flags many {{ {names} }} echo: func(value: many) -> many; }} world guest {{ import service; }}")).unwrap();
     let grants = r#"{"imports":[{"module":"example:host/service@1.0.0","name":"echo","suspends":false,"capability":"flags"}]}"#;
-    let error = wlt::wit_bindgen::generate(&input, None, grants)
+    let error = walz::wit_bindgen::generate(&input, None, grants)
         .err()
         .unwrap();
     assert!(
@@ -37,7 +37,7 @@ fn generated_imports_require_separate_trusted_policy() {
       {"module":"example:host/service@1.0.0","name":"echo","suspends":false,"capability":"echo"},
       {"module":"example:host/service@1.0.0","name":"later","suspends":false,"capability":"clock"}
     ]}"#;
-    let generated = wlt::wit_bindgen::generate(&input, None, grants).unwrap();
+    let generated = walz::wit_bindgen::generate(&input, None, grants).unwrap();
     assert!(
         generated
             .policy
@@ -46,23 +46,23 @@ fn generated_imports_require_separate_trusted_policy() {
     assert!(
         generated
             .source
-            .contains("(%inst $tuple i64 (%inst $option $string))")
+            .contains("(@inst $tuple i64 (@inst $option $string))")
     );
-    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (%result (%inst $tuple i64 (%inst $option $string)) i32)) (%effect host) (call $service.echo (%string.lit \"日本語\")))", 1);
-    assert!(wlt::component::compile(&source).is_err());
+    let source = generated.source.replacen("(module", "(module (func $main (export \"main\") (result (@result (@inst $tuple i64 (@inst $option $string)) i32)) (@effect host) (call $service.echo (@string.lit \"日本語\")))", 1);
+    assert!(walz::component::compile(&source).is_err());
     let policy = BindingPolicy::parse(&generated.policy).unwrap();
-    let module = wlt::check_with_policy(&source, &policy).unwrap();
+    let module = walz::check_with_policy(&source, &policy).unwrap();
     assert!(
-        wlt::effects::infer(&module)
+        walz::effects::infer(&module)
             .iter()
             .any(|e| e.host && !e.suspends)
     );
-    wlt::component::compile_with_policy(&source, &policy).unwrap();
-    wlt::component::core_js::compile_with_policy(&source, &policy).unwrap();
+    walz::component::compile_with_policy(&source, &policy).unwrap();
+    walz::component::core_js::compile_with_policy(&source, &policy).unwrap();
     let mut wrong = policy.clone();
     wrong.imports[0].binding.params[0] = "bytes".into();
     assert!(
-        wlt::check_with_policy(&source, &wrong)
+        walz::check_with_policy(&source, &wrong)
             .unwrap_err()
             .to_string()
             .contains("binding signature")
@@ -87,20 +87,20 @@ fn wit_records_enums_flags_unsigned_and_export_scaffolds_share_checked_types() {
     )
     .unwrap();
     let grants = r#"{"imports":[{"module":"example:shapes/io@1.0.0","name":"echo","suspends":false,"capability":"echo"}]}"#;
-    let generated = wlt::wit_bindgen::generate(&path, Some("guest"), grants).unwrap();
-    assert!(generated.source.contains("%abi.type"));
+    let generated = walz::wit_bindgen::generate(&path, Some("guest"), grants).unwrap();
+    assert!(generated.source.contains("@abi.type"));
     assert!(
         generated
             .source
             .contains("(record \"label\" \"count\" \"wide\" \"color\" \"access\")")
     );
     let policy = BindingPolicy::parse(&generated.policy).unwrap();
-    let source=generated.source.replacen("(module",r#"(module (func $main (export "main") (param $v (ref $io.item)) (result (ref $io.item)) (%effect host) (call $io.echo $v))"#,1);
-    wlt::component::compile_with_policy(&source, &policy).unwrap();
-    wlt::component::core_js::compile_with_policy(&source, &policy).unwrap();
-    assert!(wlt::wit_bindgen::generate(&path, Some("empty"), grants).is_err());
+    let source=generated.source.replacen("(module",r#"(module (func $main (export "main") (param $v (ref $io.item)) (result (ref $io.item)) (@effect host) (call $io.echo $v))"#,1);
+    walz::component::compile_with_policy(&source, &policy).unwrap();
+    walz::component::core_js::compile_with_policy(&source, &policy).unwrap();
+    assert!(walz::wit_bindgen::generate(&path, Some("empty"), grants).is_err());
     std::fs::write(dir.path().join("grants.json"), grants).unwrap();
-    let out = std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_walz"))
         .args([
             "bind",
             path.to_str().unwrap(),
@@ -116,13 +116,13 @@ fn wit_records_enums_flags_unsigned_and_export_scaffolds_share_checked_types() {
         "{}",
         String::from_utf8_lossy(&out.stderr)
     );
-    let export = std::fs::read_to_string(dir.path().join("generated/exports.wlt")).unwrap();
+    let export = std::fs::read_to_string(dir.path().join("generated/exports.walz")).unwrap();
     assert!(
         export.contains("unreachable") && export.contains("export \"io-echo\""),
         "{export}"
     );
-    let loaded = wlt::source::load(dir.path().join("generated/exports.wlt")).unwrap();
-    wlt::component::core_js::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load(dir.path().join("generated/exports.walz")).unwrap();
+    walz::component::core_js::compile(loaded.text()).unwrap();
 }
 
 #[test]
@@ -135,14 +135,14 @@ fn wit_generation_rejects_missing_authority_and_unsupported_shapes() {
     )
     .unwrap();
     assert!(
-        wlt::wit_bindgen::generate(&input, None, r#"{"imports":[]}"#)
+        walz::wit_bindgen::generate(&input, None, r#"{"imports":[]}"#)
             .unwrap_err()
             .to_string()
             .contains("policy")
     );
     let grants = r#"{"imports":[{"module":"example:host/io","name":"read","suspends":false,"capability":"input"}]}"#;
     assert!(
-        wlt::wit_bindgen::generate(&input, None, grants)
+        walz::wit_bindgen::generate(&input, None, grants)
             .unwrap_err()
             .to_string()
             .contains("unsupported WIT")
@@ -155,15 +155,15 @@ fn generated_lists_resolve_aliases_and_reject_owned_elements_early() {
     let input = dir.path().join("list.wit");
     let grants = r#"{"imports":[{"module":"example:lists/io","name":"read","suspends":false,"capability":"input"}]}"#;
     std::fs::write(&input,"package example:lists; interface io { type element = result<tuple<s64,string>,s32>; read: func() -> list<element>; } world guest { import io; }").unwrap();
-    let generated = wlt::wit_bindgen::generate(&input, None, grants).unwrap();
+    let generated = walz::wit_bindgen::generate(&input, None, grants).unwrap();
     assert!(
         generated
             .source
-            .contains("(%inst $list (%inst $result (%inst $tuple i64 $string) i32))")
+            .contains("(@inst $list (@inst $result (@inst $tuple i64 $string) i32))")
     );
     std::fs::write(&input,"package example:lists; interface io { read: func() -> list<option<future<s64>>>; } world guest { import io; }").unwrap();
     assert!(
-        wlt::wit_bindgen::generate(&input, None, grants)
+        walz::wit_bindgen::generate(&input, None, grants)
             .unwrap_err()
             .to_string()
             .contains("shared data")

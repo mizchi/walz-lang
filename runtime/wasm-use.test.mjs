@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {buildWasmUse} from './testing/wasm-use.mjs';
 
 test('WIT-typed binary uses link one stateful instance and copy Canonical ABI values',async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'wlt-wasm-use-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-wasm-use-'));
   try{
     await buildWasmUse(directory);
     await rm(join(directory,'source'),{recursive:true,force:true});

@@ -28,26 +28,26 @@ async function hashes(dir,prefix=''){
     if(entry.isDirectory())Object.assign(out,await hashes(p,key+'/'));else out[key]=sha(await readFile(p));
   }return out;
 }
-await cp(resolve(root,'examples/succinct'),join(run,'wlt-source'),{recursive:true});
+await cp(resolve(root,'examples/succinct'),join(run,'walz-source'),{recursive:true});
 await cp(resolve(root,'runtime/succinct'),join(run,'runner-source'),{recursive:true});
 await cp(resolve(root,'runtime/workers'),join(run,'worker-host-source'),{recursive:true});
-await cp(resolve(root,'target/debug/wlt'),join(run,'wlt-compiler'));
+await cp(resolve(root,'target/debug/walz'),join(run,'walz-compiler'));
 for(const part of ['rank-select-bit-vector','wavelet-matrix-uint8','internal'])
   await cp(join(reference,'packages/jsimd/src',part),join(run,'reference',part),{recursive:true});
-await build(join(run,'wlt'));
-const manifest={schema:'wlt-succinct-bench-v1',id,node:process.version,v8:process.versions.v8,cpu:cpus()[0]?.model,logicalCpus:cpus().length,platform:platform(),arch:arch(),
+await build(join(run,'walz'));
+const manifest={schema:'walz-succinct-bench-v1',id,node:process.version,v8:process.versions.v8,cpu:cpus()[0]?.model,logicalCpus:cpus().length,platform:platform(),arch:arch(),
   referenceCommit:(await execFile('git',['-C',reference,'rev-parse','HEAD'])).stdout.trim(),
-  source:await hashes(join(run,'wlt-source')),runner:await hashes(join(run,'runner-source')),workerHost:await hashes(join(run,'worker-host-source')),generated:await hashes(join(run,'wlt')),reference:await hashes(join(run,'reference')),
-  compiler:sha(await readFile(resolve(root,'target/debug/wlt'))),reader:sha(await readFile(join(run,'wlt/reader.wasm'))),
+  source:await hashes(join(run,'walz-source')),runner:await hashes(join(run,'runner-source')),workerHost:await hashes(join(run,'worker-host-source')),generated:await hashes(join(run,'walz')),reference:await hashes(join(run,'reference')),
+  compiler:sha(await readFile(resolve(root,'target/debug/walz'))),reader:sha(await readFile(join(run,'walz/reader.wasm'))),
   methods:{samples:9,warmup:3,order:'rotated',calibrationTargetMs:15,construction:'single builder, published snapshot copied once',sharedMemoryCapacity:16777216}};
 await writeFile(join(reportDir,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-const loadStart=performance.now(),sdk=await instantiate(pathToFileURL(join(run,'wlt')+'/'));
-const wltLoadMs=performance.now()-loadStart;
+const loadStart=performance.now(),sdk=await instantiate(pathToFileURL(join(run,'walz')+'/'));
+const walzLoadMs=performance.now()-loadStart;
 const referenceStart=performance.now();
 const {RankSelectBitVector}=await import(pathToFileURL(join(run,'reference/rank-select-bit-vector/mod.ts')));
 const {WaveletMatrixUint8}=await import(pathToFileURL(join(run,'reference/wavelet-matrix-uint8/mod.ts')));
 const referenceLoadMs=performance.now()-referenceStart;
-const module=await WebAssembly.compile(await readFile(join(run,'wlt/reader.wasm')));
+const module=await WebAssembly.compile(await readFile(join(run,'walz/reader.wasm')));
 let seed=0x5eed1234,sink=0;
 const random=()=>seed=(Math.imul(seed,1664525)+1013904223)>>>0;
 function queryInput(kind,n,count){
@@ -100,35 +100,35 @@ for(const spec of [
     const out=new Int32Array(count);for(let i=0;i<count;i++)out[i]=ref.rangeFreq(queries.a[i],queries.b[i],queries.c[i]&65535,queries.c[i]>>>16);return out;
   };
   assert.deepEqual([...referenceQuery()],[...expected]);
-  const indexes=[],prepare={};let wltBuild;
+  const indexes=[],prepare={};let walzBuild;
   try{
     for(const workers of [1,2,4]){
       start=now();const index=isBits?sdk.buildBits(input,n):sdk.buildWavelet(input);const built=now()-start;
-      if(workers===1)wltBuild=built;
+      if(workers===1)walzBuild=built;
       indexes.push(index);start=now();await index.prepare({workers});prepare[workers]=now()-start;
     }
     const synchronous=local(indexes[0].snapshot());
     const runners=[{name:'js-indexed',f:()=>js.queryMany(queries.q)},{name:'jsimd-public',f:referenceQuery},
-      {name:'wlt-local',f:()=>synchronous(queries.q)},
-      ...indexes.map((index,i)=>({name:`wlt-${[1,2,4][i]}-worker`,f:()=>index.queryMany(queries.q,{workers:[1,2,4][i]})}))];
+      {name:'walz-local',f:()=>synchronous(queries.q)},
+      ...indexes.map((index,i)=>({name:`walz-${[1,2,4][i]}-worker`,f:()=>index.queryMany(queries.q,{workers:[1,2,4][i]})}))];
     for(const runner of runners){const first=now();const firstOutput=await runner.f();runner.firstMs=now()-first;assert.deepEqual([...firstOutput],[...expected]);for(let i=0;i<3;i++)await runner.f();runner.iterations=Math.max(1,Math.min(100,Math.ceil(15/await timing(runner.f,1))));runner.samples=[];}
     for(let sample=0;sample<9;sample++)for(let j=0;j<runners.length;j++){
       const runner=runners[(j+sample)%runners.length];globalThis.gc?.();runner.samples.push(await timing(runner.f,runner.iterations));
     }
     for(const runner of runners)assert.deepEqual([...await runner.f()],[...expected]);
-    const row={...spec,dataHash,queryHash,indexBytes:indexes[0].byteLength,buildMs:{js:jsBuild,jsimd:refBuild,wlt:wltBuild},prepareMs:prepare,
+    const row={...spec,dataHash,queryHash,indexBytes:indexes[0].byteLength,buildMs:{js:jsBuild,jsimd:refBuild,walz:walzBuild},prepareMs:prepare,
       results:runners.map(({name,samples,iterations,firstMs})=>({name,iterations,firstMs,samples,medianMs:[...samples].sort((a,b)=>a-b)[4],minMs:Math.min(...samples),maxMs:Math.max(...samples)}))};
     const jsMedian=row.results[0].medianMs;
-    row.estimatedBreakEvenBatches=Object.fromEntries([1,2,4].map((workers,i)=>{const saved=jsMedian-row.results[i+3].medianMs;return [workers,saved>0?Math.max(1,Math.ceil((wltBuild+prepare[workers]-jsBuild)/saved)):null];}));
+    row.estimatedBreakEvenBatches=Object.fromEntries([1,2,4].map((workers,i)=>{const saved=jsMedian-row.results[i+3].medianMs;return [workers,saved>0?Math.max(1,Math.ceil((walzBuild+prepare[workers]-jsBuild)/saved)):null];}));
     rows.push(row);console.log(kind,n,count,Object.fromEntries(row.results.map(r=>[r.name,r.medianMs.toFixed(4)])));
   }finally{await Promise.all(indexes.map(index=>index.close()));ref.dispose();}
 }
-const report={...manifest,wltLoadMs,referenceLoadMs,sink,rows};
+const report={...manifest,walzLoadMs,referenceLoadMs,sink,rows};
 await writeFile(join(reportDir,'report.json'),JSON.stringify(report,null,2)+'\n');
 const lines=['# Succinct index benchmark', '',`Node ${process.version}, V8 ${process.versions.v8}, ${manifest.cpu}. Nine rotated samples; milliseconds per batch.`,
-  '', 'Construction/worker startup are excluded from steady-state rows and recorded separately in report.json. WLT rows include query copy, execution and output copy; worker rows also include messages and result merging. jsimd is its captured public API. Range queries use its scalar API loop. WLT quantile outputs i32; jsimd outputs u8.',
-  '', '| Workload | N | Q | Indexed JS | jsimd | WLT local | WLT 1 worker | WLT 2 | WLT 4 |','|---|---:|---:|---:|---:|---:|---:|---:|---:|'];
+  '', 'Construction/worker startup are excluded from steady-state rows and recorded separately in report.json. Walz rows include query copy, execution and output copy; worker rows also include messages and result merging. jsimd is its captured public API. Range queries use its scalar API loop. Walz quantile outputs i32; jsimd outputs u8.',
+  '', '| Workload | N | Q | Indexed JS | jsimd | Walz local | Walz 1 worker | Walz 2 | Walz 4 |','|---|---:|---:|---:|---:|---:|---:|---:|---:|'];
 for(const row of rows)lines.push(`| ${row.kind}${row.shape?' ('+row.shape+')':''} | ${row.n} | ${row.count} | ${row.results.map(r=>r.medianMs.toFixed(4)).join(' | ')} |`);
-lines.push('', 'No comparison attributes the indexed-select algorithm improvement over linear jsimd select to WLT alone. The indexed JS baseline uses the same directory, tail mask and upper_bound strategy.', '', `Load/compile: WLT ${wltLoadMs.toFixed(2)} ms; jsimd ${referenceLoadMs.toFixed(2)} ms. These are single observations, not steady-state medians.`);
+lines.push('', 'No comparison attributes the indexed-select algorithm improvement over linear jsimd select to Walz alone. The indexed JS baseline uses the same directory, tail mask and upper_bound strategy.', '', `Load/compile: Walz ${walzLoadMs.toFixed(2)} ms; jsimd ${referenceLoadMs.toFixed(2)} ms. These are single observations, not steady-state medians.`);
 await writeFile(join(reportDir,'report.md'),lines.join('\n')+'\n');
 console.log(reportDir);

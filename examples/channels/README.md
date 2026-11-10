@@ -1,6 +1,8 @@
 # Channels and structured concurrency
 
-`main.wlt` and `policy.json` declare the typed boundary; the host supplies `runtime/channels.mjs`'s `createChannels()`.
+English | [日本語](README.ja.md)
+
+`main.walz` and `policy.json` declare the typed boundary; the host supplies `runtime/channels.mjs`'s `createChannels()`.
 
 - `produce`: a rendezvous stream with an explicitly supplied host consumer.
 - `pipeline`: a guest consumer closure runs concurrently with its producer; writer close sends EOF before join.

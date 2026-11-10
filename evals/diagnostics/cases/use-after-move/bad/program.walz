@@ -1,0 +1,7 @@
+(module
+  (func $identity (param $value i32) (result i32)
+    (@let $owner (@box.new i32 (local.get $value))
+      (block (result i32)
+        (@box.close (@move $owner))
+        (@box.close (@move $owner))
+        (local.get $value)))))

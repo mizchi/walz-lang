@@ -355,8 +355,8 @@ impl<'a> Adapter<'a> {
         // Instance-type declarations introduce equality-bound exports; a real
         // component instead exports the concrete definitions with local aliases.
         let mut text = self.declarations().replace(
-            "(export \"wlt-unit\" (type $unit (eq $unit_raw)))",
-            "(export $unit \"wlt-unit\" (type $unit_raw))",
+            "(export \"walz-unit\" (type $unit (eq $unit_raw)))",
+            "(export $unit \"walz-unit\" (type $unit_raw))",
         );
         let mut declared = std::collections::BTreeSet::new();
         for ty in self.ordered_types() {
@@ -376,7 +376,7 @@ impl<'a> Adapter<'a> {
     }
     pub(super) fn declarations(&self) -> String {
         let mut out = String::from(
-            "(type $unit_raw (enum \"value\"))\n(export \"wlt-unit\" (type $unit (eq $unit_raw)))\n",
+            "(type $unit_raw (enum \"value\"))\n(export \"walz-unit\" (type $unit (eq $unit_raw)))\n",
         );
         let mut declared = std::collections::BTreeSet::new();
         for ty in &self.ordered_types() {

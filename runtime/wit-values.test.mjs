@@ -7,16 +7,16 @@ import {pathToFileURL} from 'node:url';
 
 const clean=v=>ArrayBuffer.isView(v)?Array.from(v):Array.isArray(v)?v.map(clean):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).filter(([,v])=>v!==undefined).map(([k,v])=>[k,clean(v)])):v;
 for(const backend of ['core','component'])test(`${backend}: WIT scalars, tuples and joined variant payloads round trip and release`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-wit-values-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-wit-values-'));
   try{
-    let source=(await readFile('tests/component-fixtures/wit-values.wlt','utf8')).trimEnd();
+    let source=(await readFile('tests/component-fixtures/wit-values.walz','utf8')).trimEnd();
     source=source.slice(0,-1)+`
       (import "host" "echo" (func $echo (param $v (ref $Value)) (result (ref $Value))))
-      (func $forward (export "forward") (param $v (ref $Value)) (result (ref $Value)) (%effect host) (call $echo $v))
-      (func $bad (export "bad-bool") (result $Bool) (%effect pure) (%newtype.wrap $Bool 2)))`;
+      (func $forward (export "forward") (param $v (ref $Value)) (result (ref $Value)) (@effect host) (call $echo $v))
+      (func $bad (export "bad-bool") (result $Bool) (@effect pure) (@newtype.wrap $Bool 2)))`;
     const shape='(variant (empty) (text text) (number f64) (items (list i32)))';
     const policy={imports:[{module:'host',name:'echo',params:[shape],result:shape,suspends:false,capability:'echo'}]};
-    const input=join(dir,'input.wlt'),bindings=join(dir,'policy.json');
+    const input=join(dir,'input.walz'),bindings=join(dir,'policy.json');
     await writeFile(input,source);await writeFile(bindings,JSON.stringify(policy));
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
     await build(input,dir,{bindings});

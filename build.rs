@@ -38,13 +38,13 @@ fn main() -> Result<(), Box<dyn StdError>> {
         "src/sexpr.rs",
         "src/standard_catalogue.rs",
         "src/standard_sources.rs",
-        "stdlib/types.wlt",
+        "walz/core/types.walz",
     ] {
         println!("cargo:rerun-if-changed={file}");
     }
     let mut members = BTreeMap::new();
     for (file, source) in sources::LIBRARIES {
-        println!("cargo:rerun-if-changed=stdlib/{file}");
+        println!("cargo:rerun-if-changed=walz/core/{file}");
         let mut exports = Default::default();
         catalogue::exports(&sexpr::parse(source)?, "", &mut exports);
         for (kind, name) in exports {
@@ -55,7 +55,7 @@ fn main() -> Result<(), Box<dyn StdError>> {
         }
     }
     for (file, source) in sources::INTERNAL_LIBRARIES {
-        println!("cargo:rerun-if-changed=stdlib/{file}");
+        println!("cargo:rerun-if-changed=walz/core/{file}");
         assert!(
             !sources::LIBRARIES.iter().any(|(name, _)| name == file),
             "internal module in public catalogue"
@@ -75,7 +75,7 @@ fn main() -> Result<(), Box<dyn StdError>> {
         .unwrap()
         .iter()
         .skip(1)
-        .filter(|n| n.head() == Some("%type.alias"))
+        .filter(|n| n.head() == Some("@type.alias"))
     {
         let name = node.list().unwrap()[1].atom().unwrap();
         if !exported_types.contains(&("type".to_owned(), name.to_owned())) {

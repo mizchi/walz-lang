@@ -1,50 +1,50 @@
-# 公開後不変の共有領域
+# Shared Regions Immutable After Publication
 
-`%race-free`の固定atomicセル契約を、読み取り専用の範囲とchecked loadへ拡張する。共有前に初期化が完了し、公開後はホストも内容を変更しないという前提の下で、任意のエージェント数・長さのtraceにデータ競合がないことをLeanで検査する。
+This extends the fixed atomic-cell contract of `@race-free` with readonly ranges and checked loads. Under the assumption that initialization completes before sharing and that the host never changes contents after publication, Lean checks data-race freedom for traces of arbitrary length with any number of agents.
 
 ```wat
 (module
-  (%race-free)
+  (@race-free)
   (import "env" "memory" (memory $shared 1 1 shared))
-  (%atomic.cell $cancel $shared i32 0)
-  (%readonly.region $index $shared 4096 8192)
-  (func $read (export "read") (param $offset i32) (result i32) (%effect reads)
-    (%readonly.load $index i32 $offset)))
+  (@atomic.cell $cancel $shared i32 0)
+  (@readonly.region $index $shared 4096 8192)
+  (func $read (export "read") (param $offset i32) (result i32) (@effect reads)
+    (@readonly.load $index i32 $offset)))
 ```
 
-`(%readonly.region $name $memory byte-offset positive-byte-length)`は初期メモリ内の固定範囲を宣言する。`(%readonly.load $name u8/i32/i64/v128 relative-byte-offset)`は、その範囲内から1・4・8・16byteを読む。u8の結果型はi32。アドレス式を一度だけ評価し、符号なしで`relative <= length - width`を検査してからロードする。i32のビットパターンは符号なしoffsetとして扱い、論理範囲を越えるアクセスはtrapする。Wasm全体のメモリ内にあっても、宣言領域を越えれば拒否する。
+`(@readonly.region $name $memory byte-offset positive-byte-length)` declares a fixed range within initial memory. `(@readonly.load $name u8/i32/i64/v128 relative-byte-offset)` reads 1/4/8/16 bytes from that range. The u8 result type is i32. It evaluates the address expression once, checks unsigned `relative <= length - width`, then loads. i32 bit patterns are unsigned offsets; accesses beyond the logical range trap. Access outside the declared region is rejected even when within the overall Wasm memory.
 
-非atomicロードなので、アドレスの自然アライメントは要求しない。`reads`を持ち、暗黙の同期・停止・型変換は追加しない。通常の`i32.load`や`v128.load`をこのモードで使っても、検証を迂回できない。
+These are non-atomic loads, so natural address alignment is unnecessary. They have `reads` without implicit synchronization, blocking, or conversions. Ordinary `i32.load` or `v128.load` cannot bypass verification in this mode.
 
-ファイルでは`(%export (region $index))`と`(%use "./layout.wlt" (region $index $alias))`を使える。region名は値・整数ポインタとして取り出す型ではなく、静的なロードの指定先である。
+Files can use `(@export (region $index))` and `(@use "./layout.walz" (region $index $alias))`. A region name statically selects a load target; it is not a type extractable as a value or integer pointer.
 
-## 構造検査と独立カーネル
+## Structural Checks and Independent Kernel
 
-readonly領域を持つ`%race-free`のモジュールでは次を検査する。
+A `@race-free` module with readonly regions checks the following:
 
-- 共有元は固定limitsのshared memory一つ。共有メモリのraw exportとホスト関数importを拒否する。
-- 領域は正の長さ、初期メモリ内、最大256。atomic制御セルと重ならない。readonly領域同士の重なりは許す。
-- 共有payloadの通常アクセスはchecked readonly loadだけ。書込み・raw load・memory.copyによる共有先への書込みを拒否する。
-- Worker自身が定義するunshared memoryは私有として扱い、通常のロード・ストア・grow・exportを許す。私有メモリをimportすることは許さない。
-- ABIの公開関数は数値引数・数値/unit結果。GCオブジェクトはエージェント内に留める。
+- One backing shared memory with fixed limits. Raw shared-memory exports and host-function imports are rejected.
+- Regions have positive lengths, lie within initial memory, and number at most 256. They cannot overlap atomic control cells; readonly regions may overlap one another.
+- Ordinary shared-payload accesses use only checked readonly loads. Writes, raw loads, and writes to shared destinations through memory.copy are rejected.
+- Unshared memory defined by a Worker is private and allows ordinary loads, stores, grow, and export. Importing private memory is not allowed.
+- Public ABI functions have numeric parameters and numeric/unit results. GC objects stay within an agent.
 
-証明書version 2にはatomicセルとアクセスに加え、readonlyRegionsとreadonlyAccessesを含める。従来のversion 1の規則・証明は残す。カーネルはロードopcodeのwhitelist、幅、領域番号、範囲、制御セルとの非重複を独立に検査する。[AtomicCells.lean](../proof/AtomicCells.lean)のReadonly名前空間が、許された動的アドレスのロードを含むtraceの`race_free`と`readonly_in_bounds`を証明する。偽造したstore・幅・領域番号・重なり・versionを拒否するテストを持つ。
+Certificate version 2 includes readonlyRegions and readonlyAccesses in addition to atomic cells and accesses. Version 1 rules/proofs remain available. The kernel independently checks the load-opcode whitelist, width, region index, bounds, and non-overlap with control cells. The Readonly namespace in [AtomicCells.lean](../proof/AtomicCells.lean) proves `race_free` and `readonly_in_bounds` for traces including loads at permitted dynamic addresses. Tests reject forged stores, widths, region indices, overlaps, and versions.
 
-私有メモリとGC操作は共有payloadのtraceから除く。Wasmエンジンのメモリ分離、抽出器、unsigned guardとloadの出力、初期化・公開の順序、ホストの契約順守はTCB／前提に残る。Builderの静的なfreeze所有権、任意のJSコード、Workerスケジューラ全体を証明したものではない。
+Private-memory and GC operations are excluded from shared-payload traces. Wasm-engine memory isolation, the extractor, emission of unsigned guards and loads, initialization/publication order, and host compliance remain in the TCB or assumptions. This does not prove static freeze ownership for Builders, arbitrary JS code, or the entire Worker scheduler.
 
-## ABIとホスト契約
+## ABI and Host Contract
 
-Core＋JSPI成果物は`wlt-core-js-v4`と`wlt-readonly-regions-v1`を使う。旧runtimeが新しい契約を無視して実行しないためのversionで、値codecは既存のものを使う。
+Core+JSPI artifacts use `walz-core-js-v4` and `walz-readonly-regions-v1`. These versions prevent older runtimes from ignoring the new contract; value codecs are unchanged.
 
 ```js
 const { api } = await instantiate({
   imports: { env: { memory } },
-  readonlyHostContract: 'wlt-readonly-regions-v1',
+  readonlyHostContract: 'walz-readonly-regions-v1',
 });
 ```
 
-ホストは公開前に初期化し、公開後はreadonly領域へ書かない。制御セルへは同じ幅のAtomicsだけを使い、全Workerの終了確認前に領域を再利用しない。指定文字列はJSコードの検証やOSのメモリ保護ではない。raw Coreを直接instantiateする場合も同じ前提が必要。
+The host initializes before publication and never writes readonly regions afterward. It uses only same-width Atomics for control cells and does not reuse regions until every Worker has acknowledged completion. The selection string is neither JS-code verification nor OS memory protection. Direct raw Core instantiation requires the same assumptions.
 
-Core＋JSPIのhost契約handshake、論理範囲末尾・負offset、アドレス式の評価回数、偽造証明書、実際のWorkerでの処理を`just test-succinct`で検査する。Componentでのshared memory import/exportは引き続き対象外。並列SDKはCore Workerを使い、単体のprivate-memory APIはCore＋JSPI・Componentの両方に出力する。
+`just test-succinct` checks the Core+JSPI host-contract handshake, logical range ends/negative offsets, address-expression evaluation counts, forged certificates, and execution with real Workers. Shared-memory import/export in Components remains unsupported. The parallel SDK uses Core Workers; standalone private-memory APIs target both Core+JSPI and Component.
 
-`%race-free`なしではregionの宣言とchecked loadは使えるが、公開後不変や競合排除を検証済みとは扱わない。通常モードの書込みを禁止する構文ではない。
+Without `@race-free`, region declarations and checked loads are available, but immutability after publication and race freedom are not considered verified. This syntax does not prohibit writes in ordinary mode.

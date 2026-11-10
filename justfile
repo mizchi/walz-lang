@@ -1,7 +1,7 @@
 default: run
 
 install:
-    cargo install --locked --path . --bin wlt
+    cargo install --locked --path . --bin walz
 
 test-cli:
     cargo test --locked --test cli --test cli_build --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test runner --test benchmarks --test inspection --test lsp
@@ -21,28 +21,28 @@ playground: playground-build
 
 test-playground: playground-build
     node --test playground/samples.test.mjs
-    cargo test --locked -p wlt-web
+    cargo test --locked -p walz-web
     pnpm exec playwright test --config playwright.playground.config.mjs
 
-run file="examples/closure.wlt":
+run file="examples/closure.walz":
     cargo run --locked --quiet -- run {{quote(file)}}
 
-wat file="examples/closure.wlt":
+wat file="examples/closure.walz":
     cargo run --locked --quiet -- wat {{quote(file)}}
 
-expand file="examples/exceptions.wlt":
+expand file="examples/exceptions.walz":
     cargo run --locked --quiet -- expand {{quote(file)}}
 
-analyze file="examples/closure.wlt":
+analyze file="examples/closure.walz":
     cargo run --locked --quiet -- analyze {{quote(file)}}
 
-ir file="examples/closure.wlt":
+ir file="examples/closure.walz":
     cargo run --locked --quiet -- ir {{quote(file)}}
 
-contracts file="examples/ownership.wlt":
+contracts file="examples/ownership.walz":
     cargo run --locked --quiet -- contracts {{quote(file)}}
 
-proof file="examples/verified-laws.wlt":
+proof file="examples/verified-laws.walz":
     cargo run --locked --quiet -- proof {{quote(file)}}
 
 proof-check:
@@ -52,16 +52,16 @@ proof-check:
     lean +v4.34.1 proof/Flow.lean
     lean +v4.34.1 proof/AtomicCells.lean
 
-verify file="examples/verified-laws.wlt":
+verify file="examples/verified-laws.walz":
     cargo run --locked --quiet -- verify {{quote(file)}}
 
-run-verified file="examples/verified-laws.wlt":
+run-verified file="examples/verified-laws.walz":
     cargo run --locked --quiet -- run-verified {{quote(file)}}
 
-types file="examples/variants.wlt":
+types file="examples/variants.walz":
     cargo run --locked --quiet -- types {{quote(file)}}
 
-check-json file="examples/result.wlt":
+check-json file="examples/result.walz":
     cargo run --locked --quiet -- check --json {{quote(file)}}
 
 type-at file line column:
@@ -92,30 +92,30 @@ simd-kernels-bench snapshot="target/simd-kernels/current" rounds="9" sizes="16,1
 simd-kernels-compare before after output rounds="9" sizes="4096,16384,262144":
     node --expose-gc runtime/simd-kernels-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(output)}} {{quote(rounds)}} {{quote(sizes)}}
 
-wit file="examples/value-types.wlt":
+wit file="examples/value-types.walz":
     cargo run --locked --quiet -- wit {{quote(file)}}
 
-validate file="examples/closure.wlt":
+validate file="examples/closure.walz":
     cargo run --locked --quiet -- check {{quote(file)}}
 
-build file="examples/closure.wlt" output="target/program.wasm":
+build file="examples/closure.walz" output="target/program.wasm":
     cargo run --locked --quiet -- build {{quote(file)}} {{quote(output)}}
 
-component file="tests/component-fixtures/event-loop.wlt" output="target/component.wasm":
+component file="tests/component-fixtures/event-loop.walz" output="target/component.wasm":
     mkdir -p target
     cargo run --locked --quiet -- component {{quote(file)}} {{quote(output)}}
 
-component-wat file="tests/component-fixtures/event-loop.wlt":
+component-wat file="tests/component-fixtures/event-loop.walz":
     cargo run --locked --quiet -- component-wat {{quote(file)}}
 
-build-js file="tests/component-fixtures/event-loop.wlt" output="target/event-loop":
+build-js file="tests/component-fixtures/event-loop.walz" output="target/event-loop":
     node runtime/build.mjs {{quote(file)}} {{quote(output)}}
 
-build-core-js file="tests/component-fixtures/event-loop.wlt" output="target/core-event-loop":
+build-core-js file="tests/component-fixtures/event-loop.walz" output="target/core-event-loop":
     node runtime/build-core.mjs {{quote(file)}} {{quote(output)}}
 
 build-text output="target/text-filter":
-    node runtime/build-core.mjs examples/io/text-filter.wlt {{quote(output)}}
+    node runtime/build-core.mjs examples/io/text-filter.walz {{quote(output)}}
 
 text-filter program="target/text-filter":
     @node runtime/text-cli.mjs {{quote(program)}}
@@ -124,7 +124,7 @@ text-file input output program="target/text-filter":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}} --output {{quote(output)}}
 
 build-log-stats output="target/log-stats":
-    node runtime/build-core.mjs examples/apps/log-stats/main.wlt {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/log-stats/main.walz {{quote(output)}}
 
 log-stats input="examples/apps/log-stats/sample.tsv" program="target/log-stats":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -140,7 +140,7 @@ compare-log-stats before="target/profile/log-stats-before-12346" after="target/p
     node runtime/log-stats-bench.mjs {{quote(before)}} {{quote(after)}}
 
 build-stock-ledger output="target/stock-ledger":
-    node runtime/build-core.mjs examples/apps/stock-ledger/main.wlt {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/stock-ledger/main.walz {{quote(output)}}
 
 stock-ledger input="examples/apps/stock-ledger/sample.tsv" program="target/stock-ledger":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -150,7 +150,7 @@ test-stock-ledger:
     node --test runtime/stock-ledger.test.mjs
 
 build-workflow output="target/workflow":
-    node runtime/build-core.mjs examples/apps/workflow/main.wlt {{quote(output)}}
+    node runtime/build-core.mjs examples/apps/workflow/main.walz {{quote(output)}}
 
 workflow input="examples/apps/workflow/sample.tsv" program="target/workflow":
     @node runtime/text-cli.mjs {{quote(program)}} --input {{quote(input)}}
@@ -162,7 +162,7 @@ test-workflow:
 
 # Also send the full 65,795-line workload through both host stream adapters.
 test-workflow-stress:
-    WLT_WORKFLOW_STRESS=1 node --expose-gc --test runtime/workflow.test.mjs
+    WALZ_WORKFLOW_STRESS=1 node --expose-gc --test runtime/workflow.test.mjs
 
 # Save production artifacts before changing sources; compare in alternating order.
 workflow-capture output="target/workflow-tune/current":
@@ -180,6 +180,12 @@ test-cheatsheet:
 
 test-docs:
     cargo test --locked --test documentation --test cheatsheet
+
+test-new:
+    cargo test --locked --test cli_new
+
+test-skill:
+    cargo test --locked --test skill
 
 # Frozen inputs and isolated writer directories for a fresh evaluation round.
 grammar-eval-prepare round:
@@ -249,13 +255,13 @@ test-modules:
     node --test runtime/modules.test.mjs
 
 fuzz seed="42" cases="64":
-    WLT_FUZZ_SEED={{quote(seed)}} WLT_FUZZ_CASES={{quote(cases)}} cargo test --locked --test differential
+    WALZ_FUZZ_SEED={{quote(seed)}} WALZ_FUZZ_CASES={{quote(cases)}} cargo test --locked --test differential
 
 fuzz-replay file:
-    WLT_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test differential seeded_programs
+    WALZ_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test differential seeded_programs
 
 fuzz-cancel seed="42":
-    WLT_FUZZ_SEED={{quote(seed)}} node --expose-gc --test runtime/fuzz.test.mjs
+    WALZ_FUZZ_SEED={{quote(seed)}} node --expose-gc --test runtime/fuzz.test.mjs
 
 stdlib-capture output="target/stdlib/before":
     node runtime/stdlib-bench.mjs capture {{quote(output)}}
@@ -272,11 +278,11 @@ profile-compare before="before" after="after":
     node runtime/profile.mjs compare {{quote("target/profile/" + before)}} {{quote("target/profile/" + after)}}
 
 test-core-js:
-    WLT_BACKEND=core node --test runtime/runtime.test.mjs runtime/tasks.test.mjs runtime/core.test.mjs
+    WALZ_BACKEND=core node --test runtime/runtime.test.mjs runtime/tasks.test.mjs runtime/core.test.mjs
 
 memory-core-js:
     node --expose-gc --test runtime/core.test.mjs
-    WLT_BACKEND=core node --expose-gc runtime/memory-audit.mjs
+    WALZ_BACKEND=core node --expose-gc runtime/memory-audit.mjs
 
 run-js output="target/event-loop" export="main" arg="1":
     node runtime/run.mjs {{quote(output)}} {{quote(export)}} {{quote(arg)}}
@@ -306,7 +312,7 @@ test-bench:
     cargo test --locked --test benchmarks --test runner --lib
     node --test runtime/bench-runner.test.mjs
 
-# Freeze %bench Wasm before changing std. All outputs require fresh paths.
+# Freeze @bench Wasm before changing std. All outputs require fresh paths.
 bench-capture source output:
     node runtime/bench-tune.mjs capture {{quote(source)}} {{quote(output)}}
 
@@ -335,7 +341,7 @@ frontend-profile id output seconds="5":
 test-frontend:
     cargo test --locked --lib standard::performance_contracts
     cargo test --locked --bench frontend
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --test runtime/frontend-reference.test.mjs
 
 wit-check:
@@ -359,10 +365,10 @@ check: check-stdlib-docs
 fmt:
     cargo fmt
 
-fmt-wlt file="examples/apps/log-stats/main.wlt":
+fmt-walz file="examples/apps/log-stats/main.walz":
     cargo run --locked --quiet -- fmt {{quote(file)}}
 
-check-wlt-format file="examples/apps/log-stats/main.wlt":
+check-walz-format file="examples/apps/log-stats/main.walz":
     cargo run --locked --quiet -- fmt-check {{quote(file)}}
 
 # Check exact ownership entries and GC reachability; then sample retained memory.
@@ -407,10 +413,10 @@ test-lists:
 
 test-generics:
     cargo test --locked --test generics --test generic_bounds
-    cargo run --locked --quiet -- test examples/generic-lists.wlt
+    cargo run --locked --quiet -- test examples/generic-lists.walz
     node --expose-gc --test runtime/generics.test.mjs
 
-# Inspect explicit % extension syntax and native WAT boundaries.
+# Inspect explicit @ extension syntax and native WAT boundaries.
 test-syntax:
     cargo test --locked --test surface
 
@@ -428,9 +434,9 @@ test-core-expressions:
 memory-core-expressions output="target/core-expressions-memory/current":
     node --expose-gc runtime/core-expressions-memory.mjs {{quote(output)}}
 
-# The JSON parser and serializer execute in WLT; this adapter only handles I/O.
+# The JSON parser and serializer execute in Walz; this adapter only handles I/O.
 build-json-parser output="target/json-parser":
-    node runtime/build-core.mjs examples/json-parser/main.wlt {{quote(output)}}
+    node runtime/build-core.mjs examples/json-parser/main.walz {{quote(output)}}
 
 json-parser program="target/json-parser":
     @node runtime/json-parser.mjs {{quote(program)}}
@@ -465,12 +471,12 @@ test-atomic-cells:
 
 # First generate the example WIT bindings as documented in examples/wasi-files.
 bench-stream-file input samples="5":
-    WLT_BENCH_INPUT={{quote(input)}} cargo run --locked --quiet -- bench examples/wasi-files/io_bench.wlt --target core-js --bindings examples/wasi-files/generated/bindings.json --host examples/wasi-files/bench-host.mjs --samples {{samples}} --iterations 1 --warmup-ms 0
+    WALZ_BENCH_INPUT={{quote(input)}} cargo run --locked --quiet -- bench examples/wasi-files/io_bench.walz --target core-js --bindings examples/wasi-files/generated/bindings.json --host examples/wasi-files/bench-host.mjs --samples {{samples}} --iterations 1 --warmup-ms 0
 
-# Memoized ABI graph limits and independently cancellable WLT children.
+# Memoized ABI graph limits and independently cancellable Walz children.
 test-local-cancellation:
     cargo test --locked --test abi_limits --test local_cancellation --test scoped_tasks
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc --test runtime/local-cancellation.test.mjs runtime/scoped-tasks.test.mjs runtime/deadlines.test.mjs
 
 # Stdio LSP framing, unsaved modules, incremental UTF-16 edits and IR caching.
@@ -478,20 +484,20 @@ test-lsp:
     cargo test --locked --lib lsp
     cargo test --locked --test lsp --test inspection --test modules
 
-# Native Canonical ABI execution requires Wasmtime 50+ (WLT_WASMTIME overrides PATH).
+# Native Canonical ABI execution requires Wasmtime 50+ (WALZ_WASMTIME overrides PATH).
 test-native-engine:
     cargo test --locked --test native_async -- --include-ignored
 
 # Original WIT identities, standard async producers and typed resource handles.
 test-native-worlds:
     cargo test --locked --test native_async --test native_resources --test wit_world --test wit_bindings
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc --test runtime/native-async.test.mjs runtime/native-resources.test.mjs
     pnpm exec playwright test runtime/e2e/native-world.spec.mjs
 
 # End-to-end developer workflows; records observed failures as well as successes.
 eval-usability id:
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc evals/usability/run.mjs {{quote(id)}}
 
 # Production ABI roots, readable generics, editor recovery, and typed value sugar.
@@ -500,14 +506,14 @@ test-usability-fixes:
 
 test-value-sugar:
     cargo test --locked --test string_sugar --test option_result --test expression_sugar --test struct_construction
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc --test runtime/option-result.test.mjs
     pnpm exec playwright test runtime/e2e/option-result.spec.mjs
 
 # Checked list traversal, field destructuring, and non-atomic field updates.
 test-high-level:
     cargo test --locked --test high_level --test lsp --test struct_construction --test readable_syntax
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc --test runtime/high-level.test.mjs
     pnpm exec playwright test runtime/e2e/high-level.spec.mjs
 
@@ -540,12 +546,12 @@ test-user-macros:
     node --expose-gc --test runtime/user-macros.test.mjs
     pnpm exec playwright test runtime/e2e/user-macros.spec.mjs
 
-expand-macros file="examples/user-macros/main.wlt":
+expand-macros file="examples/user-macros/main.walz":
     cargo run --locked --quiet -- macro-expand {{quote(file)}}
 
 # Freeze a fresh application/oracle/editor/scaling trial; never replace a run.
 eval-user-macros id:
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc evals/macro-usability/run.mjs {{quote(id)}}
 
 # Call inference, stable type projections, usage reports and replayable macro fuzzing.
@@ -553,32 +559,32 @@ test-macro-tools:
     cargo test --locked --test generic_inference --test macro_type_info --test macro_usage --test macro_differential
 
 fuzz-user-macros seed="42" cases="64":
-    WLT_MACRO_FUZZ_SEED={{quote(seed)}} WLT_MACRO_FUZZ_CASES={{quote(cases)}} cargo test --locked --test macro_differential
+    WALZ_MACRO_FUZZ_SEED={{quote(seed)}} WALZ_MACRO_FUZZ_CASES={{quote(cases)}} cargo test --locked --test macro_differential
 
 fuzz-user-macros-replay file:
-    WLT_MACRO_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test macro_differential seeded_user_macros
+    WALZ_MACRO_FUZZ_REPLAY={{quote(file)}} cargo test --locked --test macro_differential seeded_user_macros
 
-expand-macros-text file="examples/user-macros/main.wlt":
+expand-macros-text file="examples/user-macros/main.walz":
     cargo run --locked --quiet -- macro-expand --text {{quote(file)}}
 
 # Function-local elaboration, delegated/repeated binders, and incomplete imported DSLs.
 test-macro-composition:
     cargo test --locked --test macro_composition --test macro_resume --test user_macros_lsp --test macro_differential
-    cargo run --locked --quiet -- test examples/user-macros/bindings.wlt
+    cargo run --locked --quiet -- test examples/user-macros/bindings.walz
     node --expose-gc --test runtime/user-macros.test.mjs
 
 # Frozen current-API authoring attempts and concentrated vs distributed expansion.
 eval-macro-authoring id:
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node --expose-gc evals/macro-usability-v2/run.mjs {{quote(id)}}
 
 # Compare fixed inputs under open-world Binaryen 133; never overwrite a run.
 wasm-opt-capture id optimizer="wasm-opt":
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     node tools/wasm-opt-capture.mjs {{quote(id)}} {{quote(optimizer)}}
 
 test-wasm-opt optimizer="wasm-opt":
-    WLT_WASM_OPT={{quote(optimizer)}} cargo test --locked --test match_dispatch --test performance_warnings -- --include-ignored
+    WALZ_WASM_OPT={{quote(optimizer)}} cargo test --locked --test match_dispatch --test performance_warnings -- --include-ignored
 
 wasm-opt-compare before after id:
     node tools/wasm-opt-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(id)}}
@@ -586,26 +592,26 @@ wasm-opt-compare before after id:
 test-performance-warnings:
     cargo test --locked --test performance_warnings --test inspection --test lsp --test diagnostics
 
-check-performance file="examples/ast-interpreter.wlt":
+check-performance file="examples/ast-interpreter.walz":
     cargo run --locked --quiet -- check --warn-performance {{quote(file)}}
 
 test-vite:
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     cargo test --locked --test esm_metadata
     node --test vite/*.test.mjs
     pnpm exec playwright test --config playwright.vite.config.mjs
 
 vite:
-    cargo build --locked --bin wlt
-    WLT={{quote(justfile_directory() + "/target/debug/wlt")}} pnpm dev:vite
+    cargo build --locked --bin walz
+    WALZ={{quote(justfile_directory() + "/target/debug/walz")}} pnpm dev:vite
 
 build-vite:
-    cargo build --locked --bin wlt
-    WLT={{quote(justfile_directory() + "/target/debug/wlt")}} pnpm build:vite
+    cargo build --locked --bin walz
+    WALZ={{quote(justfile_directory() + "/target/debug/walz")}} pnpm build:vite
     pnpm exec tsc -p examples/vite/tsconfig.json
 
 test-content-mapper:
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     cargo test --locked --test esm_inspection
     node --test content-mapper/*.test.mjs
 
@@ -614,5 +620,5 @@ build-content-mapper-tsgo:
 
 test-content-mapper-tsgo:
     just build-content-mapper-tsgo
-    cargo build --locked --bin wlt
+    cargo build --locked --bin walz
     TSGO={{quote(justfile_directory() + "/target/content-mapper-tools/tsgo")}} node --test content-mapper/tsgo.test.mjs

@@ -5,10 +5,10 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 for(const backend of ['core','component'])test(`${backend}: validated memory and SIMD operations use the named guest memory`,async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'wlt-wat-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-wat-'));
   try {
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/wasm-bridge.wlt',directory);
+    await build('tests/component-fixtures/wasm-bridge.walz',directory);
     const {instantiate}=await import(pathToFileURL(join(directory,'index.js')));
     let allocator;
     const {api}=await instantiate({instantiateCore:async(module,imports)=>{

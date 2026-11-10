@@ -18,7 +18,7 @@ for tool in configuration["tools"]:
     binary = destination / tool["binary"]
     if binary.exists():
         continue
-    request = urllib.request.Request(tool["url"], headers={"User-Agent": "wlt-ci"})
+    request = urllib.request.Request(tool["url"], headers={"User-Agent": "walz-ci"})
     with urllib.request.urlopen(request, timeout=120) as response:
         data = response.read()
     if hashlib.sha256(data).hexdigest() != tool["sha256"]:

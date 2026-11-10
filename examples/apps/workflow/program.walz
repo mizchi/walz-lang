@@ -1,0 +1,73 @@
+(module
+  (@use "./domain.walz" (type $Error $domain.Error))
+  (@use "./graph.walz"
+    (func $add $graph.add)
+    (func $after $graph.after)
+    (func $new $graph.new)
+    (type $Graph $graph.Graph))
+  (@use "./parse.walz" (func $command $parse.command))
+  (@use "./planner.walz" (func $run $planner.run))
+  (@use "./report.walz" (func $failure $report.failure) (func $plan $report.plan))
+  (@use "walz:core"
+    (type $result)
+    (type $stream)
+    (type $string)
+    (type $tuple)
+    (type $unit))
+  (import "walz:host/text-io@0.1.0" "read-lines"
+    (func $read-lines (result (@inst $stream (@inst $result $string i32))))
+  )
+  (@export (type $app.State) (func $app.advance))
+  (@type.alias $app.State (@inst $tuple (ref $graph.Graph) i32))
+  (func $app.mutation
+    (param $n i32)
+    (param $result (@inst $result $unit (ref $domain.Error)))
+    (result (@inst $result $unit i32))
+    (@effect reads writes allocates host suspends)
+    (@match (local.get $result)
+      (case ok () (@result.ok))
+      (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+  )
+
+  (func $app.process
+    (param $g (ref $graph.Graph))
+    (param $n i32)
+    (param $line $string)
+    (result (@inst $result $unit i32))
+    (@effect reads writes allocates host suspends)
+    (@match (call $parse.command (local.get $line))
+      (case skip () (@result.ok))
+      (case invalid ()
+        (call $report.failure
+          (local.get $n)
+          (@variant.new $domain.Error invalid (@string.lit "format"))))
+      (case task ($id $duration)
+        (call $app.mutation
+          (local.get $n)
+          (call $graph.add (local.get $g) (local.get $id) (local.get $duration))))
+      (case after ($id $dependency)
+        (call $app.mutation
+          (local.get $n)
+          (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))))
+      (case plan ($workers)
+        (@match (call $planner.run (local.get $g) (local.get $workers))
+          (case ok ($run)
+            (call $report.plan
+              (local.get $n)
+              (local.get $g)
+              (local.get $run)
+              (local.get $workers)))
+          (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+      )))
+
+  (func $app.advance
+    (param $state $app.State)
+    (param $line $string)
+    (result (@inst $result $app.State i32))
+    (@effect reads writes allocates host suspends)
+    (@let ($g $previous) (local.get $state)
+      (@let $n (i32.add (local.get $previous) (i32.const 1))
+        (@result.let ()
+          (call $app.process (local.get $g) (local.get $n) (local.get $line))
+          (@result.ok (@tuple.new (local.get $g) (local.get $n))))
+      ))))

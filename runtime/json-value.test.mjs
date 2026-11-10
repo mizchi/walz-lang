@@ -23,10 +23,10 @@ export function corpus() {
 }
 
 for(const backend of ['core','component'])test(`${backend}: JSON library matches an independent parser`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-json-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-json-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/json-value.wlt',dir);
+    await build('tests/component-fixtures/json-value.walz',dir);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));
     let memory;
     const {api}=await instantiate({instantiateCore:async(module,imports)=>{const instance=await WebAssembly.instantiate(module,imports);if(instance.exports.live)memory=instance.exports;return instance;}});

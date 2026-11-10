@@ -1,24 +1,24 @@
 #[test]
 fn json_parser_is_a_checked_library_without_new_language_primitives() {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/component-fixtures/json-value.wlt");
-    let loaded = wlt::source::load(&path).unwrap();
-    wlt::check(loaded.text()).unwrap();
-    wlt::component::compile(loaded.text()).unwrap();
-    wlt::component::core_js::compile(loaded.text()).unwrap();
+        .join("tests/component-fixtures/json-value.walz");
+    let loaded = walz::source::load(&path).unwrap();
+    walz::check(loaded.text()).unwrap();
+    walz::component::compile(loaded.text()).unwrap();
+    walz::component::core_js::compile(loaded.text()).unwrap();
 }
 
 #[test]
 fn published_json_values_remain_immutable_for_effect_analysis() {
-    wlt::compile(
+    walz::compile(
         r#"(module
-          (%use "wlt:core" (type $json-value $Value) (type $option)
+          (@use "walz:core" (type $json-value $Value) (type $option)
             (func $json.get) (func $json.at))
           (func $get (param $value (ref $Value))
-            (result (%inst $option (ref $Value))) (%effect pure)
-            (call $json.get (local.get $value) (%string.lit "key")))
+            (result (@inst $option (ref $Value))) (@effect pure)
+            (call $json.get (local.get $value) (@string.lit "key")))
           (func $at (param $value (ref $Value))
-            (result (%inst $option (ref $Value))) (%effect pure)
+            (result (@inst $option (ref $Value))) (@effect pure)
             (call $json.at (local.get $value) (i32.const 0))))"#,
     )
     .unwrap();
@@ -46,7 +46,7 @@ fn parser_boundaries_and_unicode_execute_in_native_wasm() {
     ] {
         tests.push(format!(
             r#"(func $case{} (export "case{}") (result i32)
-          (%match (call $json.parse (%string.lit "{}"))
+          (@match (call $json.parse (@string.lit "{}"))
             (case ok ($value) (i32.const {}))
             (case err ($offset) (i32.const {}))))"#,
             tests.len(),
@@ -57,10 +57,10 @@ fn parser_boundaries_and_unicode_execute_in_native_wasm() {
         ));
     }
     let source = format!(
-        "(module (%use \"wlt:core\" (func $json.parse)) {})",
+        "(module (@use \"walz:core\" (func $json.parse)) {})",
         tests.join("\n")
     );
-    let compiled = wlt::compile(&source).unwrap();
+    let compiled = walz::compile(&source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("json.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();

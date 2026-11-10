@@ -1,9 +1,9 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::ExitCode;
-use wlt::benchmark::{BenchOptions, BenchOutcome};
+use walz::benchmark::{BenchOptions, BenchOutcome};
 
-pub const USAGE: &str = "Usage: wlt bench [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--json]\n                 [--samples N] [--iterations N] [--warmup-ms N] [--sample-ms N] [--timeout-ms N]\n\nRecursively find *_bench.wlt under the current directory by default.\nMeasurement requires Node.js 24+ on PATH; --list does not execute benchmarks.\n-- ends option parsing.";
+pub const USAGE: &str = "Usage: walz bench [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--json]\n                 [--samples N] [--iterations N] [--warmup-ms N] [--sample-ms N] [--timeout-ms N]\n\nRecursively find *_bench.walz under the current directory by default.\nMeasurement requires Node.js 24+ on PATH; --list does not execute benchmarks.\n-- ends option parsing.";
 
 fn arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, BenchOptions, bool), String> {
     let mut paths = Vec::new();
@@ -80,7 +80,7 @@ pub fn command(args: &[OsString]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    let report = wlt::benchmark::run(&paths, &options);
+    let report = walz::benchmark::run(&paths, &options);
     if json {
         println!("{}", serde_json::to_string_pretty(&report).unwrap());
     } else {

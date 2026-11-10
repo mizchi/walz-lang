@@ -59,9 +59,9 @@ function inspectState(ir, name, counterType, text, groupedBindings) {
   );
   assert.equal(calls[0].args[0].kind.Const.literal, "4096");
 
-  assert.match(text, /\(%?stream\.fold-result\s/);
-  assert.match(text, /\(%?result\.let\s/);
-  if (groupedBindings) assert.ok(functionForms(text, name)?.["let.group"] > 0, "main initialization must use a grouped %let");
+  assert.match(text, /\(@?stream\.fold-result\s/);
+  assert.match(text, /\(@?result\.let\s/);
+  if (groupedBindings) assert.ok(functionForms(text, name)?.["let.group"] > 0, "main initialization must use a grouped @let");
   return { pairType, stockNewCalls: calls.length, outsideLoopBody: true };
 }
 export async function verifyStock({ source, output, checkInputs, groupedBindings = false, extended = false, legacySyntax = false }) {

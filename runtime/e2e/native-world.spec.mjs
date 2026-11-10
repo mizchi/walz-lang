@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-test('native WIT async producers and resource own/borrow work without the WLT SDK',async({page})=>{
+test('native WIT async producers and resource own/borrow work without the Walz SDK',async({page})=>{
  await page.goto('/');
  const result=await page.evaluate(async()=>{
   const load=async name=>{const url=new URL(`/native/${name}/native.js`,location.href);const {instantiate}=await import(url.href);return instantiate(async file=>WebAssembly.compile(await(await fetch(new URL(file,url))).arrayBuffer()),name==='resources'?{'test:resources/host':host}:{});};

@@ -1,15 +1,18 @@
-# WLT の開発
+# Developing Walz
 
-ユーザーには日本語で答える。
+Respond to the user in Japanese.
 
-- 探索 → Red → Green → Refactoring の順で開発する。変更する振る舞いを先に検査する。
-- タスクは `justfile` に置く。JavaScript は Node.js 24 以降と pnpm、ブラウザ検査は Playwright を使う。
-- 状態とロジック、公開 API・型の契約と実装を分離する。小さい仕様と静的解析のしやすさを優先する。
-- 標準 WAT を受け付ける性質を維持する。拡張を Wasm の型・例外・GC の意味に沿って展開する。
-- 型・effect・所有権の検査を省略して最適化しない。Lean の契約を変更した場合は生成側・モデル・検査をそろえる。
-- GC オブジェクト、ABI 変換用の線形メモリ、ホストの外部資源を区別する。取消し・例外・正常終了の解放経路を検査する。
-- ランタイムの変更は Core＋JSPI と Component の両方で検査し、ブラウザに関わる変更は E2E でも確かめる。
-- 評価の入力・ルーブリック・結果・計測スナップショットを後から書き換えない。課題を変更したら suite の版を上げ、新しい run を作る。
+- Use exploration → Red → Green → Refactoring. Demonstrate the changed behavior before implementing it.
+- Put project tasks in `justfile`. Use Node.js 24+, pnpm, and Playwright for browser checks.
+- Separate state, logic, and public API/type contracts. Prefer a small language and straightforward static analysis.
+- Preserve standard WAT acceptance and Wasm type/exception/GC semantics. Do not bypass type, effect, ownership, or proof checks for optimization.
+- If a Lean contract changes, update its producer, model, and checks together.
+- Distinguish GC objects, linear ABI buffers, and external host resources; test normal, exceptional, and cancelled cleanup paths.
+- Exercise runtime changes with both Core＋JSPI and Component; browser changes also need E2E checks.
+- Write maintained docs in English. Keep English/Japanese README files, cheat sheets, and specifications consistent. See [the language policy](docs/development.md#documentation-language).
+- Preserve recorded measurements, results, and input provenance. Harness names and source-path handling may be updated to keep historical workflows runnable; record adaptations rather than presenting a new run as the original measurement. Change the suite version and create a fresh run when a task or reference input changes.
+- For Walz application source, use the [local Walz skill](.agents/skills/walz/SKILL.md); it is separate from compiler implementation guidance.
 
-主な検査は `just check`、`just test`、`just test-language`、`just test-js`、`just test-e2e`、`just test-evals`、`just proof-check`、`just wit-check`。
-`just test-workflow` は GC 到達性も検査する。改名前の記録と環境の詳細は [MIGRATION.md](MIGRATION.md) を参照する。
+Main checks: `just check`, `just test`, `just test-language`, `just test-js`, `just test-e2e`, `just test-evals`, `just proof-check`, `just wit-check`, and `just test-docs`.
+`just test-workflow` also checks GC reachability. Historical names and environment records are in [MIGRATION.md](MIGRATION.md).
+The core module is implemented in `walz/core/` and exposed as `walz:core`.

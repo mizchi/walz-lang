@@ -8,10 +8,10 @@ import { instrument } from "./testing/memory.mjs";
 
 for (const backend of ["core", "component"])
   test(`${backend}: generic collections match Map and preserve immutable snapshots`, { timeout: 60000 }, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "wlt-collections-"));
+    const dir = await mkdtemp(join(tmpdir(), "walz-collections-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/collections.wlt", dir);
+      await build("tests/component-fixtures/collections.walz", dir);
       await instrument(dir, backend);
       const { instantiate } = await import(pathToFileURL(join(dir, "index.js")));
       let memory;

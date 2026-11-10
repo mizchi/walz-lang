@@ -2,33 +2,33 @@ use serde_json::{Value, json};
 use std::process::{Command, Output};
 
 const COPY: &str = r#"(module
-  (%use "wlt:core" (type $bytes))
+  (@use "walz:core" (type $bytes))
   (func $copy (param $input $bytes) (result $bytes)
-    (%bytes.slice $input 0 (%bytes.len $input)))
+    (@bytes.slice $input 0 (@bytes.len $input)))
   (func $forward (param $input $bytes) (result $bytes) (call $copy $input))
   (func $main (export "main") (param $input $bytes) (param $limit i32) (result i32)
-    (%loop $again (bind $i i32 0) (bind $sum i32 0) (result i32)
+    (@loop $again (bind $i i32 0) (bind $sum i32 0) (result i32)
       (if (result i32) (= $i $limit)
         (then $sum)
-        (else (%let $part (call $forward $input)
-          (%recur $again (+ $i 1) (+ $sum (%bytes.get $part 0)))))))))"#;
+        (else (@let $part (call $forward $input)
+          (@recur $again (+ $i 1) (+ $sum (@bytes.get $part 0)))))))))"#;
 
 const HOST: &str = r#"(module
   (type $Node (struct (field i32)))
   (import "host" "save" (func $save (param $node (ref $Node))))
   (func $main (export "main") (param $limit i32) (result i32)
-    (%loop $again (bind $i i32 0) (result i32)
+    (@loop $again (bind $i i32 0) (result i32)
       (if (result i32) (= $i $limit)
         (then $i)
         (else (block (result i32)
-          (%let $node (struct.new $Node $i) (call $save $node))
-          (%recur $again (+ $i 1))))))))"#;
+          (@let $node (struct.new $Node $i) (call $save $node))
+          (@recur $again (+ $i 1))))))))"#;
 
 fn check(source: &str, flags: &[&str]) -> Output {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("sample.wlt");
+    let path = dir.path().join("sample.walz");
     std::fs::write(&path, source).unwrap();
-    Command::new(env!("CARGO_BIN_EXE_wlt"))
+    Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("check")
         .args(flags)
         .arg(path)
@@ -87,18 +87,18 @@ fn cold_initializers_dead_functions_and_scalar_mutability_are_quiet() {
     let initializer = COPY
         .replace(
             "(bind $sum i32 0)",
-            "(bind $sum i32 (%bytes.len (call $forward $input)))",
+            "(bind $sum i32 (@bytes.len (call $forward $input)))",
         )
         .replace(
-            "(call $forward $input)\n          (%recur",
-            "$input\n          (%recur",
+            "(call $forward $input)\n          (@recur",
+            "$input\n          (@recur",
         );
     assert_eq!(report(&initializer)["performance"]["warnings"], json!([]));
     assert_eq!(
         report(&COPY.replace("(export \"main\")", ""))["performance"]["warnings"],
         json!([])
     );
-    let scalar = "(module (type $Cell (struct (field (mut i32)))) (func $main (export \"main\") (result i32) (%let $c (struct.new $Cell 42) (struct.get $Cell 0 $c))))";
+    let scalar = "(module (type $Cell (struct (field (mut i32)))) (func $main (export \"main\") (result i32) (@let $c (struct.new $Cell 42) (struct.get $Cell 0 $c))))";
     assert_eq!(report(scalar)["performance"]["warnings"], json!([]));
 }
 
@@ -122,17 +122,17 @@ fn native_wat_coverage_and_errors_remain_explicit() {
 fn list_copies_nested_loop_initializers_and_unreachable_branches_are_distinguished() {
     let list = COPY
         .replace("(type $bytes)", "(type $list)")
-        .replace("$input $bytes", "$input (%inst $list i32)")
-        .replace("(result $bytes)", "(result (%inst $list i32))")
-        .replace("%bytes.slice", "%list.slice i32")
-        .replace("%bytes.len", "%list.len i32")
-        .replace("%bytes.get", "%list.get i32");
+        .replace("$input $bytes", "$input (@inst $list i32)")
+        .replace("(result $bytes)", "(result (@inst $list i32))")
+        .replace("@bytes.slice", "@list.slice i32")
+        .replace("@bytes.len", "@list.len i32")
+        .replace("@bytes.get", "@list.get i32");
     assert_eq!(
         report(&list)["performance"]["warnings"][0]["code"],
         "W_OPT_LOOP_COPY"
     );
-    let nested = COPY.replace("(call $forward $input)\n          (%recur",
-        "(%loop $inner (bind $warm $bytes (call $forward $input)) (result $bytes) $warm)\n          (%recur");
+    let nested = COPY.replace("(call $forward $input)\n          (@recur",
+        "(@loop $inner (bind $warm $bytes (call $forward $input)) (result $bytes) $warm)\n          (@recur");
     assert_eq!(
         report(&nested)["performance"]["warnings"]
             .as_array()
@@ -140,34 +140,34 @@ fn list_copies_nested_loop_initializers_and_unreachable_branches_are_distinguish
             .len(),
         1
     );
-    let unreachable = COPY.replace("(call $forward $input)\n          (%recur",
-        "(if (result $bytes) (i32.const 0) (then (call $forward $input)) (else $input))\n          (%recur");
+    let unreachable = COPY.replace("(call $forward $input)\n          (@recur",
+        "(if (result $bytes) (i32.const 0) (then (call $forward $input)) (else $input))\n          (@recur");
     assert_eq!(report(&unreachable)["performance"]["warnings"], json!([]));
 }
 
 #[test]
 fn warnings_preserve_module_identities_and_original_import_locations() {
     let dir = tempfile::tempdir().unwrap();
-    let part = dir.path().join("copy.wlt");
-    let root = dir.path().join("main.wlt");
-    let library = "(module (%use \"wlt:core\" (type $bytes)) (%export (func $copy)) (func $copy (param $input $bytes) (result $bytes) (%bytes.slice $input 0 (%bytes.len $input))))";
+    let part = dir.path().join("copy.walz");
+    let root = dir.path().join("main.walz");
+    let library = "(module (@use \"walz:core\" (type $bytes)) (@export (func $copy)) (func $copy (param $input $bytes) (result $bytes) (@bytes.slice $input 0 (@bytes.len $input))))";
     std::fs::write(&part, library).unwrap();
     let start = COPY.find("  (func $copy").unwrap();
     let end = COPY.find("  (func $forward").unwrap();
     let source = format!(
-        "{}  (%use \"./copy.wlt\" (func $copy $aliased))\n{}",
+        "{}  (@use \"./copy.walz\" (func $copy $aliased))\n{}",
         &COPY[..start],
         &COPY[end..]
     )
     .replace("(call $copy $input)", "(call $aliased $input)");
     std::fs::write(&root, source).unwrap();
-    let loaded = wlt::source::load(&root).unwrap();
-    let before = wlt::compile(loaded.text()).unwrap();
-    let module = wlt::check(loaded.text()).unwrap();
+    let loaded = walz::source::load(&root).unwrap();
+    let before = walz::compile(loaded.text()).unwrap();
+    let module = walz::check(loaded.text()).unwrap();
     let identity = serde_json::to_value(&module).unwrap();
-    let report = wlt::performance::analyze(loaded.text(), &module).located(&loaded);
+    let report = walz::performance::analyze(loaded.text(), &module).located(&loaded);
     assert_eq!(serde_json::to_value(&module).unwrap(), identity);
-    assert_eq!(before.wasm, wlt::compile(loaded.text()).unwrap().wasm);
+    assert_eq!(before.wasm, walz::compile(loaded.text()).unwrap().wasm);
     assert_eq!(report.warnings.len(), 1);
     let warning = &report.warnings[0];
     assert_eq!(
@@ -179,11 +179,11 @@ fn warnings_preserve_module_identities_and_original_import_locations() {
         related.location.path.as_deref(),
         Some(part.canonicalize().unwrap().as_path())
     );
-    assert!(library[related.span.start..related.span.end].contains("%bytes.slice"));
+    assert!(library[related.span.start..related.span.end].contains("@bytes.slice"));
 
-    let uri = wlt::lsp::file_uri(&root).unwrap();
-    let part_uri = wlt::lsp::file_uri(&part).unwrap();
-    let mut session = wlt::lsp::Session::new(Default::default());
+    let uri = walz::lsp::file_uri(&root).unwrap();
+    let part_uri = walz::lsp::file_uri(&part).unwrap();
+    let mut session = walz::lsp::Session::new(Default::default());
     session.handle(json!({"id":1,"method":"initialize","params":{"initializationOptions":{"performanceWarnings":true}}}));
     let opened = session.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":std::fs::read_to_string(&root).unwrap()}}}));
     let diagnostics = &opened[0]["params"]["diagnostics"];
@@ -192,7 +192,7 @@ fn warnings_preserve_module_identities_and_original_import_locations() {
         diagnostics[0]["relatedInformation"][0]["location"]["uri"],
         part_uri
     );
-    let changed = library.replace("(%bytes.slice $input 0 (%bytes.len $input))", "$input");
+    let changed = library.replace("(@bytes.slice $input 0 (@bytes.len $input))", "$input");
     let changed = session.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":part_uri,"version":1,"text":changed}}}));
     assert!(
         changed
@@ -209,13 +209,13 @@ fn macro_generated_duplicates_share_one_warning_and_async_check_does_not_require
         .replacen(
             "(module",
             r#"(module
-      (%macro $copies (rule (?source:expr)
+      (@macro $copies (rule (?source:expr)
         (block (result $bytes) (drop (call $forward ?source)) (call $forward ?source))))"#,
             1,
         )
         .replace(
-            "(call $forward $input)\n          (%recur",
-            "(%$copies $input)\n          (%recur",
+            "(call $forward $input)\n          (@recur",
+            "(@$copies $input)\n          (@recur",
         );
     let warnings = report(&expanded);
     assert_eq!(
@@ -226,11 +226,11 @@ fn macro_generated_duplicates_share_one_warning_and_async_check_does_not_require
         1,
         "{warnings}"
     );
-    let source = include_str!("component-fixtures/scoped-tasks.wlt");
+    let source = include_str!("component-fixtures/scoped-tasks.walz");
     assert_eq!(report(source)["performance"]["coverage"], "typed_core");
     let generic = COPY
-        .replace("(func $copy (param", "(func $copy (%type.params $T) (param")
-        .replace("(call $copy $input)", "(call (%inst $copy i32) $input)");
+        .replace("(func $copy (param", "(func $copy (@type.params $T) (param")
+        .replace("(call $copy $input)", "(call (@inst $copy i32) $input)");
     assert_eq!(
         report(&generic)["performance"]["warnings"]
             .as_array()
@@ -242,16 +242,16 @@ fn macro_generated_duplicates_share_one_warning_and_async_check_does_not_require
 
 #[test]
 fn documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks() {
-    let copied = report(include_str!("../examples/optimization/loop-copy.wlt"));
+    let copied = report(include_str!("../examples/optimization/loop-copy.walz"));
     assert_eq!(
         copied["performance"]["warnings"].as_array().unwrap().len(),
         1
     );
-    let indexed = report(include_str!("../examples/optimization/loop-indexed.wlt"));
+    let indexed = report(include_str!("../examples/optimization/loop-indexed.walz"));
     assert_eq!(indexed["performance"]["warnings"], json!([]));
     let bad = HOST.replace(
         "(param $limit i32) (result i32)",
-        "(param $limit i32) (result i32) (%effect pure)",
+        "(param $limit i32) (result i32) (@effect pure)",
     );
     let output = check(&bad, &["--warn-performance", "--json"]);
     assert!(!output.status.success());
@@ -264,7 +264,7 @@ fn documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks()
     );
     assert!(output.get("performance").is_none());
     let false_law = check(
-        "(module (%law \"false\" (i32.const 0)))",
+        "(module (@law \"false\" (i32.const 0)))",
         &["--warn-performance", "--json"],
     );
     assert!(!false_law.status.success());
@@ -277,12 +277,12 @@ fn documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks()
 #[test]
 #[ignore = "requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt"]
 fn wasm_opt_advice_examples_preserve_values_traps_and_host_identity() {
-    let optimizer = std::env::var_os("WLT_WASM_OPT").expect("set WLT_WASM_OPT to wasm-opt 133");
+    let optimizer = std::env::var_os("WALZ_WASM_OPT").expect("set WALZ_WASM_OPT to wasm-opt 133");
     let version = Command::new(&optimizer).arg("--version").output().unwrap();
     assert!(String::from_utf8_lossy(&version.stdout).contains("version 133"));
     for (index, source) in [
-        include_str!("../examples/optimization/loop-copy.wlt"),
-        include_str!("../examples/optimization/loop-indexed.wlt"),
+        include_str!("../examples/optimization/loop-copy.walz"),
+        include_str!("../examples/optimization/loop-indexed.walz"),
         HOST,
     ]
     .iter()
@@ -291,7 +291,7 @@ fn wasm_opt_advice_examples_preserve_values_traps_and_host_identity() {
         let dir = tempfile::tempdir().unwrap();
         let input = dir.path().join("in.wasm");
         let output = dir.path().join("out.wasm");
-        std::fs::write(&input, wlt::compile(source).unwrap().wasm).unwrap();
+        std::fs::write(&input, walz::compile(source).unwrap().wasm).unwrap();
         let optimized = Command::new(&optimizer)
             .arg(&input)
             .args([
@@ -371,14 +371,14 @@ fn wasm_opt_advice_examples_preserve_values_traps_and_host_identity() {
 #[test]
 fn lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable() {
     let dir = tempfile::tempdir().unwrap();
-    let uri = wlt::lsp::file_uri(&dir.path().join("main.wlt")).unwrap();
+    let uri = walz::lsp::file_uri(&dir.path().join("main.walz")).unwrap();
     let text = COPY.replace("(call $forward $input)", "(; 🦀 ;) (call $forward $input)");
-    let mut session = wlt::lsp::Session::new(Default::default());
+    let mut session = walz::lsp::Session::new(Default::default());
     session.handle(json!({"id":1,"method":"initialize","params":{}}));
     let opened = session.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":text}}}));
     assert_eq!(opened[0]["params"]["diagnostics"], json!([]));
     let analyses = session.analysis_count();
-    let settings = |enabled| json!({"method":"workspace/didChangeConfiguration","params":{"settings":{"wlt":{"performanceWarnings":enabled}}}});
+    let settings = |enabled| json!({"method":"workspace/didChangeConfiguration","params":{"settings":{"walz":{"performanceWarnings":enabled}}}});
     let enabled = session.handle(settings(true));
     let warning = &enabled[0]["params"]["diagnostics"][0];
     assert_eq!(warning["code"], "W_OPT_LOOP_COPY", "{enabled:?}");

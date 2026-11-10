@@ -17,7 +17,7 @@ test('macro trial oracle preserves exact integer bounds, duplicate keys and tran
   assert.deepEqual(oracle(['{"category":"x","amount":-1}'],true),{accepted:0n,rejected:1n,totals:{}});
 });
 test('macro trial does not overwrite prior runs or escape the run root',async()=>{
-  const root=await mkdtemp(join(tmpdir(),'wlt-macro-eval-'));
+  const root=await mkdtemp(join(tmpdir(),'walz-macro-eval-'));
   try{
     for(const id of ['','..','../x','/tmp/x','a/b'])await assert.rejects(createRunDirectory(root,id));
     assert.equal(await createRunDirectory(root,'round-1'),join(root,'round-1'));
@@ -29,7 +29,7 @@ test('scale inputs change the number of equivalent real call sites',()=>{
     for(const macros of [false,true]){
       const source=scalingSource(n,macros);
       assert.equal((source.match(/\(func \$f\d+/g)??[]).length,n);
-      assert.equal((source.match(/\(%\$double \$x\)/g)??[]).length,macros?n:0);
+      assert.equal((source.match(/\(@\$double \$x\)/g)??[]).length,macros?n:0);
     }
   }
 });

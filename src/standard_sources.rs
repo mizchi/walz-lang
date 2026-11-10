@@ -1,23 +1,37 @@
 //! Single catalogue shared by the resolver and documentation generator.
-pub(crate) const TYPES: &str = include_str!("../stdlib/types.wlt");
-/// Shared dependencies that are not members of the public `wlt:core` facade.
-pub(crate) const INTERNAL_LIBRARIES: &[(&str, &str)] =
-    &[("json-string.wlt", include_str!("../stdlib/json-string.wlt"))];
+pub(crate) const TYPES: &str = include_str!("../walz/core/types.walz");
+/// Shared dependencies that are not members of the public `walz:core` facade.
+pub(crate) const INTERNAL_LIBRARIES: &[(&str, &str)] = &[(
+    "json-string.walz",
+    include_str!("../walz/core/json-string.walz"),
+)];
 pub(crate) const LIBRARIES: &[(&str, &str)] = &[
-    ("bytes.wlt", include_str!("../stdlib/bytes.wlt")),
-    ("text.wlt", include_str!("../stdlib/text.wlt")),
-    ("bytes-view.wlt", include_str!("../stdlib/bytes-view.wlt")),
-    ("string-view.wlt", include_str!("../stdlib/string-view.wlt")),
-    ("array-view.wlt", include_str!("../stdlib/array-view.wlt")),
-    ("list.wlt", include_str!("../stdlib/list.wlt")),
-    ("option.wlt", include_str!("../stdlib/option.wlt")),
-    ("result.wlt", include_str!("../stdlib/result.wlt")),
-    ("dict.wlt", include_str!("../stdlib/dict.wlt")),
+    ("bytes.walz", include_str!("../walz/core/bytes.walz")),
+    ("text.walz", include_str!("../walz/core/text.walz")),
     (
-        "list-builder.wlt",
-        include_str!("../stdlib/list-builder.wlt"),
+        "bytes-view.walz",
+        include_str!("../walz/core/bytes-view.walz"),
     ),
-    ("builder.wlt", include_str!("../stdlib/builder.wlt")),
-    ("json.wlt", include_str!("../stdlib/json.wlt")),
-    ("json-value.wlt", include_str!("../stdlib/json-value.wlt")),
+    (
+        "string-view.walz",
+        include_str!("../walz/core/string-view.walz"),
+    ),
+    (
+        "array-view.walz",
+        include_str!("../walz/core/array-view.walz"),
+    ),
+    ("list.walz", include_str!("../walz/core/list.walz")),
+    ("option.walz", include_str!("../walz/core/option.walz")),
+    ("result.walz", include_str!("../walz/core/result.walz")),
+    ("dict.walz", include_str!("../walz/core/dict.walz")),
+    (
+        "list-builder.walz",
+        include_str!("../walz/core/list-builder.walz"),
+    ),
+    ("builder.walz", include_str!("../walz/core/builder.walz")),
+    ("json.walz", include_str!("../walz/core/json.walz")),
+    (
+        "json-value.walz",
+        include_str!("../walz/core/json-value.walz"),
+    ),
 ];

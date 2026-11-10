@@ -1,2 +1,2 @@
 //! CLI facade for the shared standalone distribution.
-pub use wlt::distribution::{FILES, write};
+pub use walz::distribution::{FILES, write};

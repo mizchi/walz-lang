@@ -27,10 +27,10 @@ function counted(method, fn) {
 
 for (const backend of ["core", "component"])
   test(`${backend}: numeric lists copy typed views, keep snapshots and validate fallback values`, { timeout: 60000 }, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "wlt-numeric-lists-"));
+    const dir = await mkdtemp(join(tmpdir(), "walz-numeric-lists-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/numeric-lists.wlt", dir);
+      await build("tests/component-fixtures/numeric-lists.walz", dir);
       await instrument(dir, backend);
       const { instantiate } = await import(pathToFileURL(join(dir, "index.js")));
       const create = async (factory = instantiate) => {
@@ -100,9 +100,9 @@ for (const backend of ["core", "component"])
 
         // Force the endian fallback without requiring a big-endian CI machine.
         const bindings = await readFile(join(dir, "bindings.mjs"), "utf8");
-        const marker = "const __wltLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;";
+        const marker = "const __walzLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;";
         assert.ok(bindings.includes(marker));
-        await writeFile(join(dir, "bindings-be.mjs"), bindings.replace(marker, "const __wltLE=false;"));
+        await writeFile(join(dir, "bindings-be.mjs"), bindings.replace(marker, "const __walzLE=false;"));
         const index = await readFile(join(dir, "index.js"), "utf8");
         await writeFile(join(dir, "index-be.js"), index.replace("'./bindings.mjs'", "'./bindings-be.mjs'"));
         const { instantiate: be } = await import(pathToFileURL(join(dir, "index-be.js")));

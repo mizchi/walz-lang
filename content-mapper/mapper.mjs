@@ -20,7 +20,7 @@ async function configuration(root, extras, argv) {
       if (['node_modules','target','.git','.cache','dist'].includes(file.name) || file.isSymbolicLink()) continue;
       const path=join(directory,file.name);
       if (file.isDirectory()) await walk(path);
-      else if (/\.(wlt|wit|wasm)$/.test(file.name)) files.add(path);
+      else if (/\.(walz|wit|wasm)$/.test(file.name)) files.add(path);
     }
   }
   await walk(root);
@@ -40,9 +40,9 @@ export function createMapper() {
   return {
     async handle(method, params={}) {
       if (method === 'initialize') {
-        if (!params.positionEncodings?.includes('utf-8')) throw invalid('WLT Content Mapper requires UTF-8 positions');
+        if (!params.positionEncodings?.includes('utf-8')) throw invalid('Walz Content Mapper requires UTF-8 positions');
         initialized=true;
-        return {positionEncoding:'utf-8',diagnosticSource:'wlt'};
+        return {positionEncoding:'utf-8',diagnosticSource:'walz'};
       }
       if (!initialized) throw invalid('Content Mapper must be initialized first');
       if (typeof params.projectHandle !== 'string' || !params.projectHandle) throw invalid('projectHandle must be a nonempty string');
@@ -53,16 +53,16 @@ export function createMapper() {
         const options=params.options ?? {}, optionDiagnostics=[];
         const report=(path,messageText)=>optionDiagnostics.push({path,messageText,code:1});
         const object=typeof options === 'object' && options !== null && !Array.isArray(options);
-        if (!object) report([],'WLT mapper options must be an object');
+        if (!object) report([],'Walz mapper options must be an object');
         const values=object ? options : {};
         for (const [key,value] of Object.entries(values)) {
-          if (!['compiler','timeoutMs','bindings','root','watchFiles'].includes(key)) report([key],`Unknown WLT mapper option: ${key}`);
+          if (!['compiler','timeoutMs','bindings','root','watchFiles'].includes(key)) report([key],`Unknown Walz mapper option: ${key}`);
           else if (['bindings','root'].includes(key) && (typeof value !== 'string' || !value)) report([key],`${key} must be a nonempty path`);
           else if (key === 'timeoutMs' && (!Number.isSafeInteger(value) || value <= 0)) report([key],'timeoutMs must be a positive integer');
           else if (key === 'watchFiles' && (!Array.isArray(value) || value.some(p=>typeof p !== 'string' || !p))) report([key],'watchFiles must be an array of paths');
           else if (key === 'compiler' && !(typeof value === 'string' && value || Array.isArray(value) && value.length && value.every(p=>typeof p === 'string' && p))) report([key],'compiler must be an executable or an array of executable and arguments');
         }
-        const command=values.compiler ?? process.env.WLT ?? 'wlt';
+        const command=values.compiler ?? process.env.WALZ ?? 'walz';
         const argv=typeof command === 'string' ? [command] : command;
         const project={base,argv,timeout:values.timeoutMs ?? 60000,invalid:optionDiagnostics.length>0};
         projects.set(params.projectHandle,project);
@@ -76,8 +76,8 @@ export function createMapper() {
       }
       if (method !== 'transform') throw Object.assign(new Error(`Unknown method: ${method}`),{code:-32601});
       const project=projects.get(params.projectHandle);
-      if (!project) throw invalid('Unknown or closed WLT project');
-      if (project.invalid) return failure('Fix the invalid WLT mapper options before checking sources');
+      if (!project) throw invalid('Unknown or closed Walz project');
+      if (project.invalid) return failure('Fix the invalid Walz mapper options before checking sources');
       if (typeof params.fileName !== 'string' || !isAbsolute(params.fileName) || typeof params.content !== 'string') throw invalid('transform requires an absolute fileName and string content');
       const abort=new AbortController(); running.add(abort);
       try {
@@ -90,7 +90,7 @@ export function createMapper() {
         let output;
         try { output=(await pending).stdout; } catch(error) { if (!error.stdout) throw error; output=error.stdout; }
         const report=JSON.parse(output);
-        if (report.schema !== 'wlt-esm-metadata-v1') throw new Error('Install a matching wlt compiler with esm-metadata support');
+        if (report.schema !== 'walz-esm-metadata-v1') throw new Error('Install a matching walz compiler with esm-metadata support');
         if (!report.ok) {
           const d=report.diagnostics[0], label=d.primary;
           const local=label?.location.path === fileName;
@@ -99,13 +99,13 @@ export function createMapper() {
           return failure(prefix+[`[${d.code}] ${d.message}`,...d.notes,...d.help.map(s=>`help: ${s}`)].join('\n'),9001,
             local?label.span.start:0,local?label.span.end-label.span.start:0);
         }
-        // Changes to native WLT dependencies must also invalidate TS's cached
+        // Changes to native Walz dependencies must also invalidate TS's cached
         // projection. Refuse unseen external inputs instead of returning stale types.
         const missing=report.sourceFiles.filter(path=>path!==fileName && !project.watched.has(path.replaceAll('\\','/')));
-        if (missing.length) return failure(`WLT dependency outside mapper root; add to watchFiles: ${missing.join(', ')}`);
+        if (missing.length) return failure(`Walz dependency outside mapper root; add to watchFiles: ${missing.join(', ')}`);
         return {...projection(report.esm.exports,fileName),diagnostics:[]};
       } catch(error) {
-        return failure(error.code === 'ENOENT' ? `WLT compiler not found: ${project.argv[0]}. Install wlt or configure compiler.` : error.message);
+        return failure(error.code === 'ENOENT' ? `Walz compiler not found: ${project.argv[0]}. Install walz or configure compiler.` : error.message);
       } finally { running.delete(abort); }
     },
     close() { for (const abort of running) abort.abort(); projects.clear(); },

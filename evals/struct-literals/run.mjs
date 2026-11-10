@@ -10,16 +10,16 @@ const same=(a,b)=>{try{assert.deepEqual(a,b);return true;}catch{return false;}};
 export async function prepare(output) {
   await mkdir(dirname(output),{recursive:true});
   await mkdir(output);
-  const manifest={schema:'wlt-struct-readability-v7',cases:cases.map(c=>c.id),axes,labels:{readerA:labelsFor(variants),readerB:labelsFor([...variants].reverse())},hashes:{}};
+  const manifest={schema:'walz-struct-readability-v8',cases:cases.map(c=>c.id),axes,labels:{readerA:labelsFor(variants),readerB:labelsFor([...variants].reverse())},hashes:{}};
   const put=async(name,text)=>{await writeFile(join(output,name),text,{flag:'wx'});manifest.hashes[name]=hash(text);};
   await mkdir(join(output,'support'));
   for(const name of ['run.mjs','cases.mjs','rubric.md'])await put('support/'+name,await readFile(new URL(name,import.meta.url),'utf8'));
   await put('oracle.json',JSON.stringify(oracle,null,2)+'\n');
-  await put('baseline.wlt',baseline());
+  await put('baseline.walz',baseline());
   const rubric=await readFile(new URL('rubric.md',import.meta.url),'utf8');
   for(const [role,labels] of Object.entries(manifest.labels)) {
     await mkdir(join(output,role));
-    const text=`# structの構築を読む\n\nこの資料だけを読む。構文の出自・既存/新規・ユーザーの好みを推測して優劣を付けない。各表記を独立に採点し、最後に用途別の推薦を述べる。全て同じ固定フィールドのGC structを表す。汎用mapやJSON値ではない。全fieldが必要で、重複・余剰・欠落を拒否する。mutableの意味は宣言に従う。暗黙のdefault、spread、keyword値はない。%letの複数束縛は上から順に初期値を各1回評価して束縛し、後の初期値とbodyから前の束縛を参照できる。全ての式は左から右に評価する。\n\n以下の宣言と束縛の文脈を利用できる。$markは番号をtraceへ記録してその番号を返す。各caseは独立。\n\n\`\`\`wat\n${declarations}\n\`\`\`\n\n${rubric}\n\n`+
+    const text=`# structの構築を読む\n\nこの資料だけを読む。構文の出自・既存/新規・ユーザーの好みを推測して優劣を付けない。各表記を独立に採点し、最後に用途別の推薦を述べる。全て同じ固定フィールドのGC structを表す。汎用mapやJSON値ではない。全fieldが必要で、重複・余剰・欠落を拒否する。mutableの意味は宣言に従う。暗黙のdefault、spread、keyword値はない。@letの複数束縛は上から順に初期値を各1回評価して束縛し、後の初期値とbodyから前の束縛を参照できる。全ての式は左から右に評価する。\n\n以下の宣言と束縛の文脈を利用できる。$markは番号をtraceへ記録してその番号を返す。各caseは独立。\n\n\`\`\`wat\n${declarations}\n\`\`\`\n\n${rubric}\n\n`+
       Object.entries(labels).map(([label,variant])=>`## 表記${label}\n\n${rules[variant]}\n\n`+cases.map(c=>`### ${label}.${c.id}\n\n${c.question}\n\n\`\`\`text\n${render(c.expression,variant)}\n\`\`\`\n`).join('\n')).join('\n')+
       `\n## 回答\n\n各表記について6ケースへ回答し、bucketのtotalだけ100へ変えた構築式全体をeditに書く。他の値や型を変えない。各軸の根拠をevidenceへ記す。未記載の規則や迷いはunclearに列挙する。時間や速度を測ったとは主張しない。コンパイラや他の資料は使わない。\n\nJSON形式:\n\`\`\`json\n{"variants":{"R":{"answers":{"user":{"name":"...","age":0,"email":"..."},"bucket":{"count":0,"total":0,"max":0,"totalType":"i32 or i64"},"nested":{"accepted":0,"warnTotal":0,"errorMax":0},"order":{"trace":[],"left":0,"right":0},"cell":{"value":0,"mutable":false},"job":{"index":0,"durationType":"i32 or i64","depsNull":false,"keyFrom":"id or index or duration"}},"edit":"bucketの式全体","scores":{"fields":0,"types":0,"order":0,"layout":0,"changes":0},"evidence":"各軸をcase IDと箇所に対応させた根拠","unclear":[]},"S":{},"T":{},"U":{}},"recommendation":"用途と理由","limitations":["評価の限界"]}\n\`\`\`\nS/T/UもRと同じ完全な形式で書く。説明文の長さでは加点しない。\n`;
     await put(role+'/packet.md',text);

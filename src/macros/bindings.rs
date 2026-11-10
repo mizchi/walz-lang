@@ -182,7 +182,7 @@ pub(super) fn delegation(
     }
     let Some(target) = node
         .head()
-        .and_then(|h| h.strip_prefix('%'))
+        .and_then(|h| h.strip_prefix('@'))
         .and_then(|n| definitions.get(n))
     else {
         return Ok(BTreeSet::new());

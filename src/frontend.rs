@@ -612,7 +612,7 @@ pub(crate) fn check<'b>(
             Some("race-free") => {
                 if items.len() != 1 || race_mode.replace(node.span).is_some() {
                     return Err(tables
-                        .error(node, "expected one (%race-free) declaration")
+                        .error(node, "expected one (@race-free) declaration")
                         .with_code("E_RACE_MODE"));
                 }
             }
@@ -1029,7 +1029,7 @@ pub(crate) fn check<'b>(
     let mut tests = Vec::new();
     for (index, node) in test_nodes.into_iter().enumerate() {
         let items = tables.list(node)?;
-        let base = format!("__wlt_test_{index}");
+        let base = format!("__walz_test_{index}");
         let mut export = base.clone();
         let mut suffix = 0;
         while !exported_names.insert(export.clone()) {
@@ -1092,7 +1092,7 @@ pub(crate) fn check<'b>(
         if items.len() != cursor + 1 {
             return Err(tables.error(node, "expected one benchmark body after optional (param $iteration i32) and (result type)"));
         }
-        let base = format!("__wlt_bench_{index}");
+        let base = format!("__walz_bench_{index}");
         let mut export = base.clone();
         let mut suffix = 0;
         while !exported_names.insert(export.clone()) {
@@ -1474,7 +1474,7 @@ impl Checker<'_, '_> {
             .and_then(|m| m.caller_scope_binding(self.tables.source, node, name))
         {
             error = error.related(self.tables.source, rule, "bind makes the supplied names visible only to the declared body")
-                .help("captured initializers use the caller's scope; introduce dependent values with an ordinary %let outside this macro call, or pass the dependency explicitly");
+                .help("captured initializers use the caller's scope; introduce dependent values with an ordinary @let outside this macro call, or pass the dependency explicitly");
         }
         error
     }
@@ -2191,7 +2191,7 @@ impl Checker<'_, '_> {
         {
             return self.infer_call(node, call, scope, loops, tail, expected);
         }
-        if node.head().is_some_and(|n| n.starts_with("%$")) {
+        if node.head().is_some_and(|n| n.starts_with("@$")) {
             let environment = self.tables.macros.expect("checker macro environment");
             let context = expected
                 .map(|ty| self.inferred_syntax(node, ty))
@@ -2215,13 +2215,13 @@ impl Checker<'_, '_> {
             if expected != Some(&ty) {
                 return Err(self.tables.error(node,"bare string literal requires an expected $string type")
                     .with_code("E_LITERAL_TYPE")
-                    .help("add (type $string) or write an explicit (%string.lit \"...\"); strings are not converted to other types"));
+                    .help("add (type $string) or write an explicit (@string.lit \"...\"); strings are not converted to other types"));
             }
             let text = node.text().ok_or_else(|| {
                 self.tables
                     .error(node, "string literal must contain valid UTF-8")
                     .with_code("E_LITERAL_TYPE")
-                    .help("use %bytes.lit for arbitrary bytes")
+                    .help("use @bytes.lit for arbitrary bytes")
             })?;
             return Ok(Expr {
                 ty,
@@ -2363,7 +2363,7 @@ impl Checker<'_, '_> {
             if fields.len() != 2 {
                 return Err(self
                     .tables
-                    .error(address, "expected (%atomic.at $cell)")
+                    .error(address, "expected (@atomic.at $cell)")
                     .with_code("E_ATOMIC_CELL"));
             }
             let name = self.tables.atom(&fields[1])?;
@@ -3210,15 +3210,15 @@ impl Checker<'_, '_> {
                     let surface = items
                         .first()
                         .and_then(|n| self.tables.source.get(n.span.start..n.span.end))
-                        .filter(|s| s.starts_with('%'))
+                        .filter(|s| s.starts_with('@'))
                         .unwrap_or(head);
                     let error = self
                         .tables
                         .error(node, format!("unsupported expression `{surface}`"));
-                    return Err(if surface == "%string.len" {
+                    return Err(if surface == "@string.len" {
                         error
                             .with_code("E_BUFFER_OP")
-                            .help("use (%string.byte-len value) for the UTF-8 byte length")
+                            .help("use (@string.byte-len value) for the UTF-8 byte length")
                     } else {
                         error
                     });

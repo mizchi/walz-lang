@@ -9,11 +9,13 @@ mod cli_build;
 mod cli_esm;
 mod cli_inspection;
 mod cli_js;
+mod cli_new;
 mod cli_run;
 
-const USAGE: &str = "Usage: wlt <command> [options]\n\n  build [file.wlt|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.wlt (default: tests/)\n  bench [paths...]                             Run *_bench.wlt (default: .)\n\n  wlt <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.wlt>\n  wlt check --json <file.wlt>\n  wlt esm-metadata <file.wlt> [--stdin]       Checked JavaScript ABI as JSON\n  wlt lsp [--bindings policy.json]            Language Server Protocol over stdio\n  wlt macro-expand [--text] <file.wlt>                 Checked expansion history as JSON\n  wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]\n  wlt component <file.wlt> <output.wasm>\n  wlt <core-js|profile-text> <file.wlt> <output-directory>\n  wlt bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse wlt <command> --help for options; wlt --version for the version.";
-const TEST_USAGE: &str = "Usage: wlt test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.wlt under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
+const USAGE: &str = "Usage: walz <command> [options]\n\n  new <directory>                              Create a Walz application\n  build [file.walz|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.walz (default: tests/)\n  bench [paths...]                             Run *_bench.walz (default: .)\n\n  walz <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.walz>\n  walz check --json <file.walz>\n  walz esm-metadata <file.walz> [--stdin]       Checked JavaScript ABI as JSON\n  walz lsp [--bindings policy.json]            Language Server Protocol over stdio\n  walz macro-expand [--text] <file.walz>                 Checked expansion history as JSON\n  walz type-at <file.walz> <line> <column> [--source <file.walz>]\n  walz component <file.walz> <output.wasm>\n  walz <core-js|profile-text> <file.walz> <output-directory>\n  walz bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse walz <command> --help for options; walz --version for the version.";
+const TEST_USAGE: &str = "Usage: walz test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.walz under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
 const COMMANDS: &[&str] = &[
+    "new",
     "build",
     "test",
     "bench",
@@ -43,12 +45,13 @@ const COMMANDS: &[&str] = &[
     "profile-text",
 ];
 
-const CHECK_USAGE: &str = "Usage: wlt check <file.wlt> [--json] [--warn-performance] [--bindings policy.json]\n\nCheck types, effects, ownership, race contracts, and laws without running host code.\n--warn-performance adds advisory loop-copy and GC host-escape warnings for typed WLT.\nWarnings do not fail the check; --json keeps errors in diagnostics and advice in performance.\nNative WAT remains accepted; opaque expression coverage is reported explicitly.";
+const CHECK_USAGE: &str = "Usage: walz check <file.walz> [--json] [--warn-performance] [--bindings policy.json]\n\nCheck types, effects, ownership, race contracts, and laws without running host code.\n--warn-performance adds advisory loop-copy and GC host-escape warnings for typed Walz.\nWarnings do not fail the check; --json keeps errors in diagnostics and advice in performance.\nNative WAT remains accepted; opaque expression coverage is reported explicitly.";
 
 fn help(command: Option<&str>) -> ExitCode {
     println!(
         "{}",
         match command {
+            Some("new") => cli_new::USAGE,
             Some("build") => cli_build::USAGE,
             Some("test") => TEST_USAGE,
             Some("bench") => cli_bench::USAGE,
@@ -66,9 +69,9 @@ fn help(command: Option<&str>) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOptions), String> {
+fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, walz::runner::RunOptions), String> {
     let mut paths = Vec::new();
-    let mut options = wlt::runner::RunOptions::default();
+    let mut options = walz::runner::RunOptions::default();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         match arg.to_str() {
@@ -120,7 +123,7 @@ fn test_arguments(args: &[OsString]) -> Result<(Vec<PathBuf>, wlt::runner::RunOp
 }
 
 fn test_command(args: &[OsString], legacy: bool) -> ExitCode {
-    use wlt::runner::TestOutcome;
+    use walz::runner::TestOutcome;
     let (paths, mut options) = match test_arguments(args) {
         Ok(args) => args,
         Err(error) => {
@@ -129,7 +132,7 @@ fn test_command(args: &[OsString], legacy: bool) -> ExitCode {
         }
     };
     options.legacy_syntax |= legacy;
-    let report = wlt::runner::run(&paths, &options);
+    let report = walz::runner::run(&paths, &options);
     for test in &report.tests {
         let path = test.path.display();
         match &test.outcome {
@@ -180,13 +183,13 @@ fn execute(
     command: &str,
     path: &Path,
     output: Option<&Path>,
-    policy: &wlt::bindings::BindingPolicy,
+    policy: &walz::bindings::BindingPolicy,
     legacy: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
         let formatted =
-            wlt::format::source(&original).map_err(|e| format!("{}:{e}", path.display()))?;
+            walz::format::source(&original).map_err(|e| format!("{}:{e}", path.display()))?;
         if command == "fmt" {
             if original != formatted {
                 std::fs::write(path, formatted)?;
@@ -200,13 +203,13 @@ fn execute(
         return Ok(true);
     }
     let loaded = if legacy {
-        wlt::source::load_legacy(path)?
+        walz::source::load_legacy(path)?
     } else {
-        wlt::source::load(path)?
+        walz::source::load(path)?
     };
     if command == "macro-expand" {
         let report =
-            wlt::macros::report(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
+            walz::macros::report(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
         println!(
             "{}",
             serde_json::to_string_pretty(&report.located(&loaded))?
@@ -246,11 +249,11 @@ fn execute(
             return Err("component and metadata outputs must differ".into());
         }
     }
-    execute_source(command, path, output, loaded.text(), policy).map_err(|error| {
-        match error.downcast::<wlt::Error>() {
-            Ok(error) => loaded.diagnostic(*error).into(),
-            Err(error) => error,
-        }
+    execute_source(command, path, output, loaded.text(), policy).map_err(|error| match error
+        .downcast::<walz::Error>(
+    ) {
+        Ok(error) => loaded.diagnostic(*error).into(),
+        Err(error) => error,
     })
 }
 
@@ -259,12 +262,12 @@ fn execute_source(
     path: &Path,
     output: Option<&Path>,
     source: &str,
-    policy: &wlt::bindings::BindingPolicy,
+    policy: &walz::bindings::BindingPolicy,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "core-js" | "profile-text") {
-        let built = wlt::component::core_js::compile_with_policy(source, policy)?;
+        let built = walz::component::core_js::compile_with_policy(source, policy)?;
         let profile = if command == "profile-text" {
-            Some(wlt::component::profiling::compile(source)?)
+            Some(walz::component::profiling::compile(source)?)
         } else {
             None
         };
@@ -297,7 +300,7 @@ fn execute_source(
         return Ok(true);
     }
     if matches!(command, "component" | "component-wat") {
-        let built = wlt::component::compile_with_policy(source, policy)?;
+        let built = walz::component::compile_with_policy(source, policy)?;
         if command == "component-wat" {
             print!("{}", built.wat);
         } else {
@@ -322,49 +325,49 @@ fn execute_source(
     if command == "proof" {
         print!(
             "{}",
-            wlt::proof::emit(&wlt::check_with_policy(source, policy)?)?
+            walz::proof::emit(&walz::check_with_policy(source, policy)?)?
         );
         return Ok(true);
     }
     if command == "race-contracts" {
-        let module = wlt::check_with_policy(source, policy)?;
+        let module = walz::check_with_policy(source, policy)?;
         let certificate =
-            wlt::race::certificate(&module)?.ok_or("race-contracts requires (%race-free)")?;
+            walz::race::certificate(&module)?.ok_or("race-contracts requires (@race-free)")?;
         println!("{}", serde_json::to_string_pretty(&certificate)?);
         return Ok(true);
     }
     if command == "contracts" {
-        let module = wlt::check_with_policy(source, policy)?;
+        let module = walz::check_with_policy(source, policy)?;
         println!(
             "{}",
-            serde_json::to_string_pretty(&wlt::ownership::validate(source, &module)?)?
+            serde_json::to_string_pretty(&walz::ownership::validate(source, &module)?)?
         );
         return Ok(true);
     }
     if command == "wit" {
-        let module = wlt::check_with_policy(source, policy)?;
-        print!("{}", wlt::wit::emit(&module)?);
+        let module = walz::check_with_policy(source, policy)?;
+        print!("{}", walz::wit::emit(&module)?);
         return Ok(true);
     }
     if command == "check" {
         if policy.imports.is_empty() {
-            wlt::validate(source)?;
+            walz::validate(source)?;
         } else {
-            wlt::check_with_policy(source, policy)?;
+            walz::check_with_policy(source, policy)?;
         }
         println!("ok");
         return Ok(true);
     }
     // Source inspection depends only on the front end, not on Wasm emission.
     if matches!(command, "check" | "types" | "ir" | "analyze") {
-        let module = match wlt::check_with_policy(source, policy) {
+        let module = match walz::check_with_policy(source, policy) {
             Ok(module) => module,
             Err(_) => {
-                let compilation = wlt::compile_with_policy(source, policy)?;
+                let compilation = walz::compile_with_policy(source, policy)?;
                 match command {
                     "types" => println!(
                         "{}",
-                        serde_json::to_string_pretty(&wlt::native::types(&compilation.wasm)?)?
+                        serde_json::to_string_pretty(&walz::native::types(&compilation.wasm)?)?
                     ),
                     "ir" => println!(
                         "{}",
@@ -384,21 +387,21 @@ fn execute_source(
             "check" => println!("ok"),
             "types" => println!(
                 "{}",
-                serde_json::to_string_pretty(&wlt::typing::report(&module))?
+                serde_json::to_string_pretty(&walz::typing::report(&module))?
             ),
             "ir" => println!("{}", serde_json::to_string_pretty(&module)?),
             "analyze" => println!(
                 "{}",
-                serde_json::to_string_pretty(&wlt::analysis::analyze(&module))?
+                serde_json::to_string_pretty(&walz::analysis::analyze(&module))?
             ),
             _ => unreachable!(),
         }
         return Ok(true);
     }
     let compiled = if matches!(command, "verify" | "run-verified") {
-        wlt::verified::compile(source)?
+        walz::verified::compile(source)?
     } else {
-        wlt::compile_with_policy(source, policy)?
+        walz::compile_with_policy(source, policy)?
     };
     match command {
         "wat" | "expand" => print!("{}", compiled.wat),
@@ -446,7 +449,7 @@ fn execute_source(
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
     if args.len() == 1 && matches!(args[0].to_str(), Some("--version" | "-V")) {
-        println!("wlt {}", env!("CARGO_PKG_VERSION"));
+        println!("walz {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
     }
     if (args.len() == 1 && matches!(args[0].to_str(), Some("--help" | "-h" | "help")))
@@ -464,6 +467,9 @@ fn main() -> ExitCode {
             .and_then(|s| s.to_str()),
         );
     }
+    if args.first().is_some_and(|s| s == "new") {
+        return cli_new::command(&args[1..]);
+    }
     if args.first().is_some_and(|s| s == "esm-metadata") {
         return cli_esm::command(&args[1..]);
     }
@@ -473,11 +479,11 @@ fn main() -> ExitCode {
         } else if args.len() == 3 && args[1] == "--bindings" {
             std::fs::read_to_string(&args[2])
                 .map_err(|e| e.to_string())
-                .and_then(|s| wlt::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
+                .and_then(|s| walz::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
         } else {
-            Err("Usage: wlt lsp [--bindings policy.json]".into())
+            Err("Usage: walz lsp [--bindings policy.json]".into())
         };
-        return match policy.and_then(|p| wlt::lsp::serve_stdio(p).map_err(|e| e.to_string())) {
+        return match policy.and_then(|p| walz::lsp::serve_stdio(p).map_err(|e| e.to_string())) {
             Ok(true) => ExitCode::SUCCESS,
             Ok(false) => ExitCode::FAILURE,
             Err(e) => {
@@ -535,28 +541,33 @@ fn main() -> ExitCode {
         };
         if args.len() != 4 {
             eprintln!(
-                "Usage: wlt bind <input.wit> <policy.json> <output-directory> [--world name]"
+                "Usage: walz bind <input.wit> <policy.json> <output-directory> [--world name]"
             );
             return ExitCode::from(2);
         }
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
-            let generated = wlt::wit_bindgen::generate(
+            let generated = walz::wit_bindgen::generate(
                 Path::new(&args[1]),
                 world.as_deref(),
                 &std::fs::read_to_string(&args[2])?,
             )?;
             let out = Path::new(&args[3]);
-            if ["bindings.wlt", "bindings.json", "types.wlt", "exports.wlt"]
-                .iter()
-                .any(|n| out.join(n).exists())
+            if [
+                "bindings.walz",
+                "bindings.json",
+                "types.walz",
+                "exports.walz",
+            ]
+            .iter()
+            .any(|n| out.join(n).exists())
             {
                 return Err("binding outputs already exist".into());
             }
             std::fs::create_dir_all(out)?;
-            std::fs::write(out.join("bindings.wlt"), generated.linked_source)?;
+            std::fs::write(out.join("bindings.walz"), generated.linked_source)?;
             std::fs::write(out.join("bindings.json"), generated.policy)?;
-            std::fs::write(out.join("types.wlt"), generated.types_source)?;
-            std::fs::write(out.join("exports.wlt"), generated.export_source)?;
+            std::fs::write(out.join("types.walz"), generated.types_source)?;
+            std::fs::write(out.join("exports.walz"), generated.export_source)?;
             Ok(())
         })();
         return match result {
@@ -567,7 +578,7 @@ fn main() -> ExitCode {
             }
         };
     }
-    let mut policy = wlt::bindings::BindingPolicy::default();
+    let mut policy = walz::bindings::BindingPolicy::default();
     if let Some(i) = args.iter().position(|s| s == "--bindings") {
         let Some(path) = args.get(i + 1) else {
             eprintln!("--bindings requires a policy file");
@@ -575,16 +586,16 @@ fn main() -> ExitCode {
         };
         match std::fs::read_to_string(path)
             .map_err(|e| e.to_string())
-            .and_then(|s| wlt::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
+            .and_then(|s| walz::bindings::BindingPolicy::parse(&s).map_err(|e| e.to_string()))
         {
             Ok(p) => policy = p,
             Err(e) => {
                 if json || args.first().is_some_and(|s| s == "type-at") {
                     return cli_inspection::failure(
                         if json {
-                            "wlt-check-v1"
+                            "walz-check-v1"
                         } else {
-                            "wlt-type-at-v1"
+                            "walz-type-at-v1"
                         },
                         &std::io::Error::other(e),
                     );
@@ -613,17 +624,17 @@ fn main() -> ExitCode {
             .filter(|a| *a != "--text")
             .collect::<Vec<_>>();
         if paths.len() != 1 || args.len() != 3 {
-            eprintln!("Usage: wlt macro-expand [--text] <file.wlt>");
+            eprintln!("Usage: walz macro-expand [--text] <file.walz>");
             return ExitCode::from(2);
         }
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
             let loaded = if legacy {
-                wlt::source::load_legacy(Path::new(paths[0]))?
+                walz::source::load_legacy(Path::new(paths[0]))?
             } else {
-                wlt::source::load(Path::new(paths[0]))?
+                walz::source::load(Path::new(paths[0]))?
             };
             let report =
-                wlt::macros::report(loaded.text(), &policy).map_err(|e| loaded.diagnostic(e))?;
+                walz::macros::report(loaded.text(), &policy).map_err(|e| loaded.diagnostic(e))?;
             print!("{}", report.render(&loaded));
             Ok(())
         })();

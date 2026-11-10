@@ -8,10 +8,10 @@ import {instrument} from './testing/memory.mjs';
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: inferred hygienic macros preserve ABI values and release copies`, {timeout:60000}, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-user-macros-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-user-macros-'));
     try {
       const {build} = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/user-macros.wlt', directory);
+      await build('tests/component-fixtures/user-macros.walz', directory);
       await instrument(directory, backend);
       const {instantiate} = await import(pathToFileURL(join(directory, 'index.js')));
       let memory;

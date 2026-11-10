@@ -1,4 +1,4 @@
-// Same 512-bit directory and eight-level wavelet layout as WLT. This is the
+// Same 512-bit directory and eight-level wavelet layout as Walz. This is the
 // algorithm-matched JS competitor, not the independent unpacked test oracle.
 export function popcount(x){x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);return (((x+(x>>>4))&0x0f0f0f0f)*0x01010101)>>>24;}
 const stride=n=>{const words=Math.ceil(n/32);return (words*4+(Math.ceil(words/16)+1)*4+15)&~15;};

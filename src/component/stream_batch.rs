@@ -1,5 +1,5 @@
 //! The batch primitive consumes one stream and returns its remaining owner.
-//! Ready-only order is modeled by WltDelivery.readMany_preserves_order.
+//! Ready-only order is modeled by WalzDelivery.readMany_preserves_order.
 use super::{Adapter, MEMORY_LIMIT, abi::core_type};
 use crate::ir::*;
 use std::collections::BTreeSet;

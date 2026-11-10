@@ -42,12 +42,12 @@ export async function measureAsync(batch,options,now=()=>performance.now()) {
 
 async function main() {
   if (Number(process.versions.node.split('.')[0]) < 24) {
-    throw new Error('wlt bench requires Node.js 24 or later');
+    throw new Error('walz bench requires Node.js 24 or later');
   }
   const options = JSON.parse(process.argv[3]);
   const module = await WebAssembly.compile(await readFile(process.argv[2]));
   const instance = await WebAssembly.instantiate(module, {});
-  const measurement = measure(instance.exports.__wlt_bench_batch, options);
+  const measurement = measure(instance.exports.__walz_bench_batch, options);
   // Do not read a v128 global through JS: it is a valid observable Wasm value,
   // but the JS API deliberately cannot represent it.
   process.stdout.write(JSON.stringify({

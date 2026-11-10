@@ -20,7 +20,7 @@ test("benchmark controls cover integer overflow, high bits and search positions"
 });
 test("benchmark rejects wrong answers and mutated frozen artifacts", async () => {
   assert.throws(() => measure({ broken: () => 41 }, 42, 5, 1), /reference mismatch/);
-  const dir = await mkdtemp(join(tmpdir(), "wlt-simd-freeze-"));
+  const dir = await mkdtemp(join(tmpdir(), "walz-simd-freeze-"));
   try {
     await writeFile(join(dir, "kernel"), "original");
     await writeFile(join(dir, "capture.json"), JSON.stringify({ hashes: { kernel: hash("original") } }));

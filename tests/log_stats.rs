@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests() {
-    let loaded = wlt::source::load("examples/apps/log-stats/main.wlt").unwrap();
-    let compiled = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load("examples/apps/log-stats/main.walz").unwrap();
+    let compiled = walz::compile(loaded.text()).unwrap();
     assert!(!compiled.analysis.opaque);
     for (name, reads, writes, host, suspends) in [
         (".line", false, false, false, false),
@@ -32,8 +32,8 @@ fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests(
             "{name}"
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "examples/apps/log-stats/model.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "examples/apps/log-stats/model.test.walz"])
         .output()
         .unwrap();
     assert!(
@@ -47,8 +47,8 @@ fn log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests(
 
 #[test]
 fn native_log_workload_checks_all_rows_and_resets_state_between_rounds() {
-    let loaded = wlt::source::load("examples/apps/log-stats/benchmark.wlt").unwrap();
-    let compiled = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load("examples/apps/log-stats/benchmark.walz").unwrap();
+    let compiled = walz::compile(loaded.text()).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("compute.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();

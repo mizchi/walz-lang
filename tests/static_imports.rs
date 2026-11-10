@@ -1,35 +1,35 @@
 use std::path::Path;
 
-fn compile_file(path: &Path) -> Result<wlt::Compilation, wlt::Error> {
-    let source = wlt::source::load(path)?;
-    wlt::compile(source.text()).map_err(|e| source.diagnostic(e))
+fn compile_file(path: &Path) -> Result<walz::Compilation, walz::Error> {
+    let source = walz::source::load(path)?;
+    walz::compile(source.text()).map_err(|e| source.diagnostic(e))
 }
 
 #[test]
 fn named_file_imports_are_private_cached_and_selectively_linked() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("math.wlt"),
+        dir.path().join("math.walz"),
         r#"(module
-      (%export (func $answer) (func $other))
+      (@export (func $answer) (func $other))
       (func $helper (result i32) (i32.const 42))
       (func $answer (result i32) (call $helper))
       (func $other (result i32) (i32.const 9)))"#,
     )
     .unwrap();
     std::fs::write(
-        dir.path().join("facade.wlt"),
+        dir.path().join("facade.walz"),
         r#"(module
-      (%use "./math.wlt" (func $answer $forward))
-      (%export (func $forward)))"#,
+      (@use "./math.walz" (func $answer $forward))
+      (@export (func $forward)))"#,
     )
     .unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
         &main,
         r#"(module
-      (%use "./math.wlt" (func $answer $direct))
-      (%use "./facade.wlt" (func $forward))
+      (@use "./math.walz" (func $answer $direct))
+      (@use "./facade.walz" (func $forward))
       (func $main (export "main") (result i32)
         (i32.add (call $direct) (call $forward))))"#,
     )
@@ -58,7 +58,7 @@ fn named_file_imports_are_private_cached_and_selectively_linked() {
     );
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "84");
     for reference in ["$helper", "$answer", "$other"] {
-        std::fs::write(&main, format!("(module (%use \"./math.wlt\" (func $answer $chosen)) (func $main (export \"main\") (result i32) (call {reference})))")).unwrap();
+        std::fs::write(&main, format!("(module (@use \"./math.walz\" (func $answer $chosen)) (func $main (export \"main\") (result i32) (call {reference})))")).unwrap();
         assert!(compile_file(&main).is_err(), "{reference}");
     }
 }
@@ -66,23 +66,23 @@ fn named_file_imports_are_private_cached_and_selectively_linked() {
 #[test]
 fn file_import_diagnostics_and_graph_failures_are_reported_at_the_source() {
     let dir = tempfile::tempdir().unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module\n (%export (func $f))\n (func $f (result i32) (i64.const 1)))",
+        dir.path().join("lib.walz"),
+        "(module\n (@export (func $f))\n (func $f (result i32) (i64.const 1)))",
     )
     .unwrap();
-    std::fs::write(&main, "(module (%use \"./lib.wlt\" (func $f)) (func $main (export \"main\") (result i32) (call $f)))").unwrap();
+    std::fs::write(&main, "(module (@use \"./lib.walz\" (func $f)) (func $main (export \"main\") (result i32) (call $f)))").unwrap();
     assert!(
         compile_file(&main)
             .err()
             .unwrap()
             .to_string()
-            .contains("lib.wlt:3:")
+            .contains("lib.walz:3:")
     );
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module (%use \"./main.wlt\" (func $main)) (%export (func $f)) (func $f (nop)))",
+        dir.path().join("lib.walz"),
+        "(module (@use \"./main.walz\" (func $main)) (@export (func $f)) (func $f (nop)))",
     )
     .unwrap();
     assert!(
@@ -92,7 +92,7 @@ fn file_import_diagnostics_and_graph_failures_are_reported_at_the_source() {
             .to_string()
             .contains("cycle")
     );
-    std::fs::write(&main, "(module (%use \"./lib.wlt\"))").unwrap();
+    std::fs::write(&main, "(module (@use \"./lib.walz\"))").unwrap();
     assert!(compile_file(&main).is_err());
 }
 
@@ -100,26 +100,26 @@ fn file_import_diagnostics_and_graph_failures_are_reported_at_the_source() {
 fn file_types_share_identity_and_opaque_representations_stay_private() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("state.wlt"),
+        dir.path().join("state.walz"),
         r#"(module
-      (%export (opaque $State) (func $new) (func $get))
+      (@export (opaque $State) (func $new) (func $get))
       (type $State (struct (field $n i32)))
       (func $new (result (ref $State)) (struct.new $State (i32.const 42)))
       (func $get (param $s (ref $State)) (result i32) (struct.get $State $n (local.get $s))))"#,
     )
     .unwrap();
     std::fs::write(
-        dir.path().join("facade.wlt"),
+        dir.path().join("facade.walz"),
         r#"(module
-      (%use "./state.wlt" (func $get $read)) (%export (func $read)))"#,
+      (@use "./state.walz" (func $get $read)) (@export (func $read)))"#,
     )
     .unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
         &main,
         r#"(module
-      (%use "./state.wlt" (type $State $S) (func $new))
-      (%use "./facade.wlt" (func $read))
+      (@use "./state.walz" (type $State $S) (func $new))
+      (@use "./facade.walz" (func $read))
       (func $main (export "main") (result i32) (call $read (call $new))))"#,
     )
     .unwrap();
@@ -137,7 +137,7 @@ fn file_types_share_identity_and_opaque_representations_stay_private() {
     std::fs::write(
         &main,
         r#"(module
-      (%use "./state.wlt" (type $State $S) (func $new))
+      (@use "./state.walz" (type $State $S) (func $new))
       (func $main (export "main") (result i32) (struct.get $S $n (call $new))))"#,
     )
     .unwrap();
@@ -154,14 +154,14 @@ fn file_types_share_identity_and_opaque_representations_stay_private() {
 fn wasm_export_can_name_a_statically_imported_function_without_a_wrapper() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module (%export (func $f)) (func $f (result i32) (i32.const 42)))",
+        dir.path().join("lib.walz"),
+        "(module (@export (func $f)) (func $f (result i32) (i32.const 42)))",
     )
     .unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
         &main,
-        "(module (%use \"./lib.wlt\" (func $f $chosen)) (export \"answer\" (func $chosen)))",
+        "(module (@use \"./lib.walz\" (func $f $chosen)) (export \"answer\" (func $chosen)))",
     )
     .unwrap();
     let compiled = compile_file(&main).unwrap();
@@ -173,52 +173,52 @@ fn wasm_export_can_name_a_statically_imported_function_without_a_wrapper() {
 fn generated_file_identities_are_hygienic_and_missing_exports_have_locations() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module (%export (func $f)) (func $f (result i32) (i32.const 42)))",
+        dir.path().join("lib.walz"),
+        "(module (@export (func $f)) (func $f (result i32) (i32.const 42)))",
     )
     .unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
         &main,
         r#"(module
-      (func $wlt-file-0.f (nop))
-      (%use "./lib.wlt" (func $f))
+      (func $walz-file-0.f (nop))
+      (@use "./lib.walz" (func $f))
       (export "answer" (func $f)))"#,
     )
     .unwrap();
     assert!(compile_file(&main).is_ok());
     std::fs::write(
         &main,
-        ";; 🦀\n(module\n (import \"lib.wlt\" (func $missing)))",
+        ";; 🦀\n(module\n (import \"lib.walz\" (func $missing)))",
     )
     .unwrap();
     let error = compile_file(&main).err().unwrap().to_string();
-    assert!(error.contains("main.wlt:3:"), "{error}");
+    assert!(error.contains("main.walz:3:"), "{error}");
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module\n (%export (func $missing)))",
+        dir.path().join("lib.walz"),
+        "(module\n (@export (func $missing)))",
     )
     .unwrap();
-    std::fs::write(&main, "(module (%use \"./lib.wlt\" (func $missing)))").unwrap();
+    std::fs::write(&main, "(module (@use \"./lib.walz\" (func $missing)))").unwrap();
     let error = compile_file(&main).err().unwrap().to_string();
-    assert!(error.contains("lib.wlt:2:"), "{error}");
+    assert!(error.contains("lib.walz:2:"), "{error}");
 }
 
 #[test]
 fn file_modules_do_not_introduce_initialization_or_imported_test_roots() {
     let dir = tempfile::tempdir().unwrap();
-    let main = dir.path().join("main.wlt");
+    let main = dir.path().join("main.walz");
     std::fs::write(
         &main,
-        "(module (%use \"./lib.wlt\" (func $f)) (export \"main\" (func $f)))",
+        "(module (@use \"./lib.walz\" (func $f)) (export \"main\" (func $f)))",
     )
     .unwrap();
     for declaration in [
         "(start $init)",
-        "(%test \"not an imported API\" (i32.const 1))",
+        "(@test \"not an imported API\" (i32.const 1))",
         "(export \"leak\" (func $f))",
     ] {
-        std::fs::write(dir.path().join("lib.wlt"), format!("(module (%export (func $f)) (func $init (nop)) (func $f (result i32) (i32.const 42)) {declaration})")).unwrap();
+        std::fs::write(dir.path().join("lib.walz"), format!("(module (@export (func $f)) (func $init (nop)) (func $f (result i32) (i32.const 42)) {declaration})")).unwrap();
         assert!(compile_file(&main).is_err(), "{declaration}");
     }
 }
@@ -227,12 +227,12 @@ fn file_modules_do_not_introduce_initialization_or_imported_test_roots() {
 fn dotted_private_bindings_are_not_implicitly_reexported() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("lib.wlt"),
-        "(module (%export (func $f)) (func $f (result i32) (i32.const 42)))",
+        dir.path().join("lib.walz"),
+        "(module (@export (func $f)) (func $f (result i32) (i32.const 42)))",
     )
     .unwrap();
-    std::fs::write(dir.path().join("facade.wlt"), "(module (%use \"./lib.wlt\" (func $f $hidden.f)) (func $public (result i32) (call $hidden.f)) (%export (func $public)))").unwrap();
-    let main = dir.path().join("main.wlt");
-    std::fs::write(&main, "(module (%use \"./facade.wlt\" (func $hidden.f $leaked)) (export \"main\" (func $leaked)))").unwrap();
+    std::fs::write(dir.path().join("facade.walz"), "(module (@use \"./lib.walz\" (func $f $hidden.f)) (func $public (result i32) (call $hidden.f)) (@export (func $public)))").unwrap();
+    let main = dir.path().join("main.walz");
+    std::fs::write(&main, "(module (@use \"./facade.walz\" (func $hidden.f $leaked)) (export \"main\" (func $leaked)))").unwrap();
     assert!(compile_file(&main).is_err());
 }

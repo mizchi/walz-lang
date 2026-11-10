@@ -36,10 +36,10 @@ pub(super) fn prelude(a: &Adapter<'_>) -> &'static str {
         // TypedArray views use native endian, while the ABI is little-endian.
         // Intrinsic getters distinguish actual element types from proxies or
         // objects with a forged prototype, without consulting user properties.
-        "const __wltLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;\n\
-         const __wltTA=Object.getPrototypeOf(Uint8Array.prototype);\n\
-         const __wltTag=Object.getOwnPropertyDescriptor(__wltTA,Symbol.toStringTag).get;\n\
-         const __wltLen=Object.getOwnPropertyDescriptor(__wltTA,'length').get;\n"
+        "const __walzLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;\n\
+         const __walzTA=Object.getPrototypeOf(Uint8Array.prototype);\n\
+         const __walzTag=Object.getOwnPropertyDescriptor(__walzTA,Symbol.toStringTag).get;\n\
+         const __walzLen=Object.getOwnPropertyDescriptor(__walzTA,'length').get;\n"
     } else {
         ""
     }
@@ -115,7 +115,7 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                     // Construct an owning copy before post-return frees the ABI
                     // buffer. Identical element types also preserve NaN bits.
                     format!(
-                        "if(__wltLE)return new {typed}(new {typed}(c.memory.buffer,q,n));const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;"
+                        "if(__walzLE)return new {typed}(new {typed}(c.memory.buffer,q,n));const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;"
                     )
                 } else {
                     format!("return Array.from({{length:n}},(_,i)=>{r});")
@@ -127,7 +127,7 @@ pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
                     // The intrinsic length must match the validated length:
                     // TypedArray subclasses can shadow their length property.
                     // Empty detached views retain the existing empty-list path.
-                    format!("if(__wltLE&&__wltTag.call(v)==='{typed}'&&__wltLen.call(v)===n){{if(n)new {typed}(c.memory.buffer,q,n).set(v);return;}}")
+                    format!("if(__walzLE&&__walzTag.call(v)==='{typed}'&&__walzLen.call(v)===n){{if(n)new {typed}(c.memory.buffer,q,n).set(v);return;}}")
                 }).unwrap_or_default();
                 (
                     format!(

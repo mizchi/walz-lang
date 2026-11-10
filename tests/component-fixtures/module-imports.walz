@@ -1,0 +1,4 @@
+(module
+  (@use "./import-library.walz" (func $answer $library.answer))
+  (@use "./import-library.walz" (func $answer $answer))
+  (export "answer" (func $answer)))

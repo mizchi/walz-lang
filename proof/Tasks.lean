@@ -3,7 +3,7 @@ import Lean
 /- Cooperative request/acknowledgment model. Counts describe resources still
 owned by a task; transferred results belong to its caller. No liveness or
 compiler/runtime refinement theorem is assumed. -/
-namespace WltTasks
+namespace WalzTasks
 
 inductive Phase where
   | queued | running | cancelling | returned | cancelled | failed
@@ -99,4 +99,4 @@ theorem scoped_request_keeps_owners (selected : Nat → Bool) (tasks : Nat → S
   split <;> simp_all [request]
   split <;> rfl
 
-end WltTasks
+end WalzTasks

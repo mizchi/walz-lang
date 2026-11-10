@@ -1,0 +1,10 @@
+(module
+  (@use "./syntax.walz"
+    (macro $identity) (macro $twice) (macro $with) (macro $sum))
+
+  (func $main (export "main") (result i32)
+    (@effect pure)
+    (@$with $base (@$identity (i32.const 20))
+      (@$sum (@$twice $base) (i32.const 1) (i32.const 1))))
+
+  (@test "inferred macros compose through a file boundary" (= (call $main) 42)))

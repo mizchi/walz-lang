@@ -10,8 +10,8 @@ import { build } from './build-core.mjs';
 import { instantiate as create } from './core.mjs';
 import { validate } from './core-contracts.mjs';
 
-const schema = 'wlt-atomic-cells-v1';
-const fixture = 'tests/component-fixtures/atomic-cells.wlt';
+const schema = 'walz-atomic-cells-v1';
+const fixture = 'tests/component-fixtures/atomic-cells.walz';
 
 test('the certified ABI rejects missing or unsupported contracts before loading Wasm', async () => {
   const contract = { hostContract: schema, hostRequired: true, cells: [{ offset: 0, width: 4 }] };
@@ -22,17 +22,17 @@ test('the certified ABI rejects missing or unsupported contracts before loading 
     { ...contract, hostRequired: undefined }, { ...contract, hostRequired: false },
     { ...contract, cells: null }, { ...contract, cells: [null] },
     { ...contract, cells: [{ offset: 0, width: 2 }] }]) {
-    await assert.rejects(create(import.meta.url, 'wlt-core-js-v3', () => {}, options, [], memories, invalid, null, null, validate), /invalid atomic-cell contract/);
+    await assert.rejects(create(import.meta.url, 'walz-core-js-v3', () => {}, options, [], memories, invalid, null, null, validate), /invalid atomic-cell contract/);
   }
-  await assert.rejects(create(import.meta.url, 'wlt-core-js-v3', () => {}, options, [], memories, contract), /contract validator is required/);
-  await assert.rejects(create(import.meta.url, 'wlt-core-js-v2', () => {}, options, [], memories, contract), /requires Core JS ABI v3/);
+  await assert.rejects(create(import.meta.url, 'walz-core-js-v3', () => {}, options, [], memories, contract), /contract validator is required/);
+  await assert.rejects(create(import.meta.url, 'walz-core-js-v2', () => {}, options, [], memories, contract), /requires Core JS ABI v3/);
   assert.equal(loads, 0);
 });
 const workerSource = `
 const { parentPort, workerData } = require('node:worker_threads');
 (async () => {
   const { instantiate } = await import(workerData.url);
-  const { api } = await instantiate({ imports: { env: { memory: workerData.memory } }, atomicHostContract: 'wlt-atomic-cells-v1' });
+  const { api } = await instantiate({ imports: { env: { memory: workerData.memory } }, atomicHostContract: 'walz-atomic-cells-v1' });
   if (workerData.split) {
     const value = api.load();
     parentPort.postMessage(value);
@@ -44,12 +44,12 @@ const { parentPort, workerData } = require('node:worker_threads');
 })().catch(error => { throw error; });`;
 
 test('certified cells require a host contract and share one canonical layout across workers', { timeout: 60000 }, async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'wlt-atomic-cells-'));
+  const dir = await mkdtemp(join(tmpdir(), 'walz-atomic-cells-'));
   const workers = [];
   try {
     await build(fixture, dir);
     const manifest = JSON.parse(await readFile(join(dir, 'manifest.json')));
-    assert.equal(manifest.abi, 'wlt-core-js-v3');
+    assert.equal(manifest.abi, 'walz-core-js-v3');
     assert.deepEqual(manifest.raceFree.cells, [{ offset: 0, width: 4 }, { offset: 4, width: 4 }, { offset: 8, width: 8 }]);
     const url = pathToFileURL(join(dir, 'index.js')).href;
     const { instantiate } = await import(url);
@@ -94,9 +94,9 @@ test('certified cells require a host contract and share one canonical layout acr
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: private certified cells need no external host contract`, { timeout: 60000 }, async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'wlt-private-atomic-cells-'));
+    const dir = await mkdtemp(join(tmpdir(), 'walz-private-atomic-cells-'));
     try {
-      const input = join(dir, 'private.wlt');
+      const input = join(dir, 'private.walz');
       await writeFile(input, (await readFile(fixture, 'utf8')).replace('(import "env" "memory" (memory $shared 1 1 shared))', '(memory $shared 1 1 shared)'));
       const { build: compile } = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
       const output = join(dir, 'out');

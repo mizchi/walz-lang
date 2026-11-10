@@ -8,10 +8,10 @@ import {instrument} from './testing/memory.mjs';
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: dense match dispatch preserves values and evaluates its subject once`, {timeout:60000}, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-match-dispatch-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-match-dispatch-'));
     try {
       const {build} = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/match-dispatch.wlt', directory);
+      await build('tests/component-fixtures/match-dispatch.walz', directory);
       await instrument(directory, backend);
       const {instantiate} = await import(pathToFileURL(join(directory, 'index.js')));
       const {api, __memory} = await instantiate();

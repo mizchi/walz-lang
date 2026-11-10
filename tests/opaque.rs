@@ -1,21 +1,21 @@
-// Compiler scope fixtures use private expanded forms; public files use %use paths.
+// Compiler scope fixtures use private expanded forms; public files use @use paths.
 #[test]
 fn opaque_types_hide_representation_through_aliases_and_inferred_references() {
-    let declarations = r#"(%legacy.namespace $lib (%public (opaque $State) (func $new) (func $get))
+    let declarations = r#"(@legacy.namespace $lib (@public (opaque $State) (func $new) (func $get))
       (type $State (struct (field $n (mut i32))))
       (func $new (result (ref $State)) (struct.new $State (i32.const 42)))
       (func $get (param $s (ref $State)) (result i32) (struct.get $State $n (local.get $s))))"#;
     let valid = format!(
         "(module {declarations} (func $main (result i32) (call $lib.get (call $lib.new))))"
     );
-    wlt::compile(&valid).unwrap();
+    walz::compile(&valid).unwrap();
     for body in [
         "(struct.new $S (i32.const 0))",
         "(struct.get $S $n (call $lib.new))",
         "(struct.set $S $n (call $lib.new) (i32.const 0))",
     ] {
         let source = format!(
-            "(module {declarations} (%file.use $lib (type $State $S)) (func $bad (drop {body})))"
+            "(module {declarations} (@file.use $lib (type $State $S)) (func $bad (drop {body})))"
         );
         // Unit-producing struct.set needs no drop.
         let source = source.replace(
@@ -23,18 +23,18 @@ fn opaque_types_hide_representation_through_aliases_and_inferred_references() {
             "(struct.set $S $n (call $lib.new) (i32.const 0))",
         );
         assert!(
-            wlt::check(&source)
+            walz::check(&source)
                 .unwrap_err()
                 .to_string()
                 .contains("opaque"),
             "{source}"
         );
     }
-    let source = r#"(module (%legacy.namespace $a (%public (opaque $A) (func $new)) (type $A (array i32))
+    let source = r#"(module (@legacy.namespace $a (@public (opaque $A) (func $new)) (type $A (array i32))
       (func $new (result (ref $A)) (array.new $A (i32.const 0) (i32.const 2))))
       (func $bad (result i32) (array.len (call $a.new))))"#;
     assert!(
-        wlt::check(source)
+        walz::check(source)
             .unwrap_err()
             .to_string()
             .contains("opaque")

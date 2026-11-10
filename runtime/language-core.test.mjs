@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 for (const backend of ['core','component']) test(`${backend}: scalar newtypes erase through collections and delivery ABIs`,async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-language-core-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-language-core-'));
   try {
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/language-core.wlt',dir);
+    await build('tests/component-fixtures/language-core.walz',dir);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));
     const {api}=await instantiate();
     for(const value of [0n,-1n,9223372036854775807n]) assert.equal(api.id(value),value);

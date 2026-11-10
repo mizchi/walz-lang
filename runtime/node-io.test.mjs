@@ -11,12 +11,12 @@ const execFile = promisify(execFileCallback);
 const cli = resolve("runtime/text-cli.mjs");
 
 test("text CLI preserves application error codes without labelling them as I/O failures", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "wlt-app-error-"));
+  const dir = await mkdtemp(join(tmpdir(), "walz-app-error-"));
   try {
-    const source = join(dir, "error.wlt");
+    const source = join(dir, "error.walz");
     await writeFile(
       source,
-      "(module (func $main (export \"main\") (result (%result i32 i32)) (%effect pure) (%result.err i32 i32 (i32.const 1001))))",
+      "(module (func $main (export \"main\") (result (@result i32 i32)) (@effect pure) (@result.err i32 i32 (i32.const 1001))))",
     );
     await build(source, join(dir, "app"));
     await assert.rejects(
@@ -33,10 +33,10 @@ test(
   "text CLI filters UTF-8 from pipes and files, reports I/O errors and acknowledges SIGINT",
   { timeout: 60000 },
   async () => {
-    const dir = await mkdtemp(join(tmpdir(), "wlt-cli-"));
+    const dir = await mkdtemp(join(tmpdir(), "walz-cli-"));
     try {
       const app = join(dir, "app");
-      await build("examples/io/text-filter.wlt", app);
+      await build("examples/io/text-filter.walz", app);
       const input = join(dir, "input.txt"),
         output = join(dir, "output.txt");
       await writeFile(input, "日本語🦀\r\n\nend");

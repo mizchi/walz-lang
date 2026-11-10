@@ -452,7 +452,7 @@ pub(crate) fn start<'a>(source: &'a str, root: &Sexp) -> Result<(Expanded, Sessi
     e.charge(root)?;
     let mut ordinary = vec![items[0].clone()];
     for node in &items[1..] {
-        if node.head().is_some_and(|h| h.starts_with('@')) {
+        if node.head().is_some_and(crate::syntax::annotation) {
             ordinary.push(node.clone());
             continue;
         }

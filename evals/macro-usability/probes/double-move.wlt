@@ -1,5 +1,0 @@
-(module
-  (%use "wlt:core" (type $box))
-  (%macro $twice (rule (?action:expr) (block ?action ?action)))
-  (func $main
-    (%let $box (%box.new i32 1) (%$twice (%box.close (%move $box))))))

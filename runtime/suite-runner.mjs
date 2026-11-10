@@ -22,7 +22,7 @@ try {
     const batch=async count=>{for(let i=0;i<count;i++)sink=await invoke(i);};
     const measurement=await measureAsync(batch,config.measurement);
     // Keep the last portable result observable, retaining at most one value.
-    globalThis.__wlt_bench_sink=sink;
+    globalThis.__walz_bench_sink=sink;
     report={status:'measured',measurement:{...measurement,runtime:`Core+JSPI end-to-end; Node.js ${process.versions.node}; V8 ${process.versions.v8}; ${process.platform}/${process.arch}`}};
   }
 } catch(error){report={status:'failed',message:error.stack??String(error)};}

@@ -220,7 +220,7 @@ impl Call<'_> {
     pub fn error(&self, source: &str, node: &Sexp, message: impl std::fmt::Display) -> Error {
         Error::at(source,node.span,message).with_code("E_GENERIC_INFERENCE")
             .related(source,self.template.syntax.span,"generic declaration")
-            .help("specify type arguments with (call (%inst $function type...) arguments...) or add a type annotation; numeric widths are never guessed")
+            .help("specify type arguments with (call (@inst $function type...) arguments...) or add a type annotation; numeric widths are never guessed")
     }
     pub fn hint(&self, pattern: &Sexp) -> Result<Option<Sexp>, String> {
         let out = self
@@ -472,7 +472,7 @@ impl Session<'_> {
 mod tests {
     #[test]
     fn cached_inferred_call_sites_survive_a_later_specialization_restart() {
-        let source = "(module (func $id (%type.params $T) (param $x $T) (result $T) $x) (func $f (block (drop (call $id (i64.const 1))) (drop (call $id (i64.const 2))) (drop (call $id (i32.const 3))))))";
+        let source = "(module (func $id (@type.params $T) (param $x $T) (result $T) $x) (func $f (block (drop (call $id (i64.const 1))) (drop (call $id (i64.const 2))) (drop (call $id (i32.const 3))))))";
         let (_, instances) =
             crate::check_observed(source, &Default::default(), |_, g| g.instances.clone()).unwrap();
         assert_eq!(instances.len(), 3, "{instances:?}");

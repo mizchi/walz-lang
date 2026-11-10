@@ -3,7 +3,7 @@
 use crate::{Error, ir::*, sexpr::Sexp};
 use serde::{Deserialize, Serialize};
 
-pub const HOST_CONTRACT: &str = "wlt-readonly-regions-v1";
+pub const HOST_CONTRACT: &str = "walz-readonly-regions-v1";
 
 #[derive(Clone, Debug, Serialize)]
 pub struct RegionDecl {
@@ -57,7 +57,7 @@ pub(crate) fn declaration(
 ) -> Result<RegionDecl, Error> {
     let error = || {
         Error::at(source, node.span,
-        "expected (%readonly.region $name $memory byte-offset positive-byte-length), contained in initial memory")
+        "expected (@readonly.region $name $memory byte-offset positive-byte-length), contained in initial memory")
         .with_code("E_READONLY_REGION")
     };
     let Some([_, name, memory, offset, length]) = node.list() else {

@@ -18,10 +18,10 @@ const close = (actual, a, b) => {
 };
 
 test("jsimd-style GC kernels handle tails, wide sums, snapshots and invalid lengths", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "wlt-kernels-core-"));
+  const dir = await mkdtemp(join(tmpdir(), "walz-kernels-core-"));
   try {
     const path = join(dir, "kernels.wasm");
-    await execFile("cargo", ["run", "--locked", "--quiet", "--", "build", "examples/simd-kernels/resident.wlt", path], { cwd: root });
+    await execFile("cargo", ["run", "--locked", "--quiet", "--", "build", "examples/simd-kernels/resident.walz", path], { cwd: root });
     const { instance: { exports: api } } = await WebAssembly.instantiate(await readFile(path));
     const load = (kind, xs) => {
       const value = api[`${kind}-new`](xs.length);
@@ -62,10 +62,10 @@ test("jsimd-style GC kernels handle tails, wide sums, snapshots and invalid leng
 
 for (const backend of ["core", "component"])
   test(`${backend}: jsimd-style kernels include portable copies and reclaim ABI allocations`, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "wlt-kernels-abi-"));
+    const dir = await mkdtemp(join(tmpdir(), "walz-kernels-abi-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("examples/simd-kernels/portable.wlt", dir);
+      await build("examples/simd-kernels/portable.walz", dir);
       await instrument(dir, backend);
       const { instantiate } = await import(pathToFileURL(join(dir, "index.js")));
       const create = async () => {

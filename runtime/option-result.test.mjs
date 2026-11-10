@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {instrument} from './testing/memory.mjs';
 for(const backend of ['core','component'])test(`${backend}: string sugar and core combinators preserve evaluation and identity`,{timeout:60000},async()=>{
- const directory=await mkdtemp(join(tmpdir(),'wlt-option-result-'));
+ const directory=await mkdtemp(join(tmpdir(),'walz-option-result-'));
  try{
   const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-  await build('tests/component-fixtures/option-result.wlt',directory);await instrument(directory,backend);
+  await build('tests/component-fixtures/option-result.walz',directory);await instrument(directory,backend);
   const {instantiate}=await import(pathToFileURL(join(directory,'index.js')));let memory;
   const {api,__memory}=await instantiate({instantiateCore:async(m,i)=>{const instance=await WebAssembly.instantiate(m,i);if(instance.exports.live)memory=instance.exports;return instance;}});
   for(let i=0;i<10;i++){

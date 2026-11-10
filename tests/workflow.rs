@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
-    let loaded = wlt::source::load("examples/apps/workflow/main.wlt").unwrap();
-    let module = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load("examples/apps/workflow/main.walz").unwrap();
+    let module = walz::compile(loaded.text()).unwrap();
     assert!(!module.analysis.opaque);
     for (name, host, suspends) in [
         (".command", false, false),
@@ -31,8 +31,8 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
             "{name}"
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "examples/apps/workflow/model.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "examples/apps/workflow/model.test.walz"])
         .output()
         .unwrap();
     assert!(
@@ -42,16 +42,16 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(String::from_utf8_lossy(&output.stdout).contains("12 passed; 0 failed; 0 errors"));
-    let input = std::fs::read_to_string("examples/apps/workflow/main.wlt").unwrap();
+    let input = std::fs::read_to_string("examples/apps/workflow/main.walz").unwrap();
     let prefix = input.trim_end().strip_suffix(')').unwrap();
     let check_probe = |text: &str| {
         let path = tempfile::Builder::new()
-            .suffix(".wlt")
+            .suffix(".walz")
             .tempfile_in("examples/apps/workflow")
             .unwrap();
         std::fs::write(path.path(), text).unwrap();
-        let loaded = wlt::source::load(path.path()).unwrap();
-        wlt::check(loaded.text())
+        let loaded = walz::source::load(path.path()).unwrap();
+        walz::check(loaded.text())
     };
     let probe = format!(
         "{prefix} (func $forge (param $g (ref $graph.Graph)) (result i32) (struct.get $graph.Graph $size (local.get $g))))"
@@ -63,7 +63,7 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
             .contains("opaque")
     );
     let probe = format!(
-        "{prefix} (%use \"./planner.wlt\" (type $Run $planner.Run)) (func $impure (param $g (ref $graph.Graph)) (result (%result (ref $planner.Run) (ref $domain.Error))) (%effect pure) (call $planner.run (local.get $g) (i32.const 2))))"
+        "{prefix} (@use \"./planner.walz\" (type $Run $planner.Run)) (func $impure (param $g (ref $graph.Graph)) (result (@result (ref $planner.Run) (ref $domain.Error))) (@effect pure) (call $planner.run (local.get $g) (i32.const 2))))"
     );
     assert!(
         check_probe(&probe)
@@ -75,8 +75,8 @@ fn workflow_has_checked_effect_boundaries_and_runs_its_model_tests() {
 
 #[test]
 fn workflow_stress_workloads_run_natively_and_keep_wide_timestamps() {
-    let loaded = wlt::source::load("examples/apps/workflow/benchmark.wlt").unwrap();
-    let compiled = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load("examples/apps/workflow/benchmark.walz").unwrap();
+    let compiled = walz::compile(loaded.text()).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("compute.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();
@@ -108,8 +108,8 @@ fn workflow_stress_workloads_run_natively_and_keep_wide_timestamps() {
 
 #[test]
 fn workflow_ready_queue_handles_ordering_and_interleaved_updates() {
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "examples/apps/workflow/queue.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "examples/apps/workflow/queue.test.walz"])
         .output()
         .unwrap();
     assert!(

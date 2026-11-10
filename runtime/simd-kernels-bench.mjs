@@ -36,7 +36,7 @@ async function capture(directory, reference) {
   for (const feature of features) await stat(join(reference, "packages/jsimd/src", feature, "kernels.wasm"));
   await mkdir(dirname(directory), { recursive: true });
   await mkdir(directory); // Captures are immutable; never overwrite an old run.
-  for (const folder of ["src", "stdlib", "examples/simd-kernels"])
+  for (const folder of ["src", "walz/core", "examples/simd-kernels"])
     for (const path of await files(join(root, folder))) await copy(path, join(directory, "source", relative(root, path)));
   for (const name of ["Cargo.toml", "Cargo.lock"]) await copy(join(root, name), join(directory, "source", name));
   for (const name of ["runner.mjs", "workloads.mjs"]) await copy(join(root, "runtime/simd-kernels", name), join(directory, name));
@@ -46,16 +46,16 @@ async function capture(directory, reference) {
     for (const name of ["kernels.wasm", feature === "bytes" ? "kernels.wat" : "kernels.zig", "README.md"])
       await copy(join(reference, "packages/jsimd/src", feature, name), join(directory, "reference", feature, name));
   const start = performance.now();
-  await execFile("cargo", ["run", "--locked", "--quiet", "--", "build", "examples/simd-kernels/resident.wlt", join(directory, "resident.wasm")], { cwd: root });
-  await buildCore(join(root, "examples/simd-kernels/portable.wlt"), join(directory, "core"));
-  await buildComponent(join(root, "examples/simd-kernels/portable.wlt"), join(directory, "component"));
+  await execFile("cargo", ["run", "--locked", "--quiet", "--", "build", "examples/simd-kernels/resident.walz", join(directory, "resident.wasm")], { cwd: root });
+  await buildCore(join(root, "examples/simd-kernels/portable.walz"), join(directory, "core"));
+  await buildComponent(join(root, "examples/simd-kernels/portable.walz"), join(directory, "component"));
   const sizesBytes = {};
   for (const path of await files(directory)) if (path.endsWith(".wasm")) {
     const bytes = await readFile(path);
     sizesBytes[relative(directory, path)] = { raw: bytes.length, gzip: gzipSync(bytes).length };
   }
   const manifest = {
-    schema: "wlt-simd-capture-v1", created: new Date().toISOString(),
+    schema: "walz-simd-capture-v1", created: new Date().toISOString(),
     node: process.version, cpu: cpus()[0]?.model, compiler: await git(root),
     reference: { ...await git(reference), description: "local jsimd checkout, captured generated binaries; raw kernels, no public JS wrappers", upstream: "https://github.com/mizchi/jsimd" },
     buildMs: performance.now() - start, sizesBytes, hashes: {},

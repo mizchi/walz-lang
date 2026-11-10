@@ -9,10 +9,10 @@ import { instrument } from './testing/memory.mjs';
 const quote = text => '"' + text.replace(/["\\\x00-\x1f]/g, c => c === '"' || c === '\\' ? '\\' + c : '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + '"';
 for (const backend of ['core', 'component']) {
   test(`${backend}: tuned std keeps exact escaping, Unicode and cleanup semantics`, { timeout: 60000 }, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-stdlib-tuning-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-stdlib-tuning-'));
     try {
       const { build } = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/stdlib-tuning.wlt', directory);
+      await build('tests/component-fixtures/stdlib-tuning.walz', directory);
       await instrument(directory, backend);
       const { instantiate } = await import(pathToFileURL(join(directory, 'index.js')));
       let arena;

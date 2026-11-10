@@ -31,7 +31,7 @@ for(const backend of ['core','component']){
     });
     expect(result).toEqual({deadline:'TaskTimeoutError',grouped:'TaskTimeoutError',value:42,disposed:4,live:0,children:0});
   });
-  test(`${backend}: WLT child cancellation isolates siblings and retires descendants`,async({page})=>{
+  test(`${backend}: Walz child cancellation isolates siblings and retires descendants`,async({page})=>{
     await page.goto(`/${backend}/`);
     const result=await page.evaluate(async()=>{
       const {instantiate}=await import(new URL('local-cancellation/index.js',location.href).href);let guest,memory;

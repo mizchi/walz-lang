@@ -16,7 +16,7 @@ test('oracle distinguishes malformed/wrong-type/fractional rows and the changed 
  assert.deepEqual(expenseOracle(rows,true),{accepted:1n,rejected:7n,totals:Object.fromEntries([['__proto__',2n]])});
 });
 test('evaluation IDs cannot escape or overwrite an existing run',async()=>{
- const root=await mkdtemp(join(tmpdir(),'wlt-usability-'));
+ const root=await mkdtemp(join(tmpdir(),'walz-usability-'));
  try{
   for(const id of ['..','../x','/tmp/x','a/b',''])await assert.rejects(createRunDirectory(root,id));
   assert.equal(await createRunDirectory(root,'trial-1'),join(root,'trial-1'));

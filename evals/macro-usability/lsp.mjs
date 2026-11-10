@@ -47,38 +47,38 @@ function client(binary){
 
 export async function probe(binary,directory){
   const c=client(binary),observations=[];
-  const uri=pathToFileURL(join(directory,'main.wlt')).href,library=pathToFileURL(join(directory,'syntax.wlt')).href;
-  const syntax='(module\n (func $private (param $value i64) (result i64) (%effect pure) (+ $value 1))\n (%macro $next (rule (?value:expr) (call $private ?value)))\n (%macro $with (rule (?name:ident ?value:expr ?body:expr) (bind ?name ?body) (%let ?name ?value ?body)))\n (%export (macro $next) (macro $with)))';
-  const text='(module\n (%use "./syntax.wlt" (macro $next) (macro $with))\n (func $main (param $seed i64) (result i64) (%effect pure)\n   (; 日本語 🦀 ;) (%$with $amount (+ $seed 40) (+ $amount (%$next (i64.const 1))))))';
+  const uri=pathToFileURL(join(directory,'main.walz')).href,library=pathToFileURL(join(directory,'syntax.walz')).href;
+  const syntax='(module\n (func $private (param $value i64) (result i64) (@effect pure) (+ $value 1))\n (@macro $next (rule (?value:expr) (call $private ?value)))\n (@macro $with (rule (?name:ident ?value:expr ?body:expr) (bind ?name ?body) (@let ?name ?value ?body)))\n (@export (macro $next) (macro $with)))';
+  const text='(module\n (@use "./syntax.walz" (macro $next) (macro $with))\n (func $main (param $seed i64) (result i64) (@effect pure)\n   (; 日本語 🦀 ;) (@$with $amount (+ $seed 40) (+ $amount (@$next (i64.const 1))))))';
   function query(source,needle){const before=source.slice(0,source.lastIndexOf(needle));return {textDocument:{uri},position:{line:before.split('\n').length-1,character:before.split('\n').at(-1).length}};}
   async function observe(name,required,fn){try{const evidence=await fn();observations.push({name,required,achieved:true,evidence});}catch(e){observations.push({name,required,achieved:false,error:e.message});}}
   const wait=(document,version)=>c.notification(m=>m.method==='textDocument/publishDiagnostics'&&m.params.uri===document&&m.params.version===version);
   async function change(document,version,source){c.send({method:'textDocument/didChange',params:{textDocument:{uri:document,version},contentChanges:[{text:source}]}});return (await wait(uri,document===uri?version:1)).params.diagnostics;}
   try{
     const initialized=await c.request('initialize',{});c.send({method:'initialized',params:{}});
-    c.send({method:'textDocument/didOpen',params:{textDocument:{uri:library,version:1,text:syntax,languageId:'wlt'}}});
-    c.send({method:'textDocument/didOpen',params:{textDocument:{uri,version:1,text,languageId:'wlt'}}});
+    c.send({method:'textDocument/didOpen',params:{textDocument:{uri:library,version:1,text:syntax,languageId:'walz'}}});
+    c.send({method:'textDocument/didOpen',params:{textDocument:{uri,version:1,text,languageId:'walz'}}});
     await observe('valid imported binding macro',true,async()=>{assert.deepEqual((await wait(uri,1)).params.diagnostics,[]);return initialized.result.capabilities;});
     await observe('macro signature and cross-file definition',true,async()=>{
-      const hover=await c.request('textDocument/hover',query(text,'%$with'));
-      const definition=await c.request('textDocument/definition',query(text,'%$with'));
+      const hover=await c.request('textDocument/hover',query(text,'@$with'));
+      const definition=await c.request('textDocument/definition',query(text,'@$with'));
       assert.match(hover.result.contents.value,/macro.*\$with/);assert.equal(definition.result[0].uri,library);
       return {hover,definition};
     });
     await observe('checked argument binding and lexical definition',true,async()=>{
-      const hover=await c.request('textDocument/hover',query(text,'$amount (%$next'));
-      const definition=await c.request('textDocument/definition',query(text,'$amount (%$next'));
+      const hover=await c.request('textDocument/hover',query(text,'$amount (@$next'));
+      const definition=await c.request('textDocument/definition',query(text,'$amount (@$next'));
       assert.match(hover.result.contents.value,/i64/);assert.equal(definition.result[0].uri,uri);
       assert.deepEqual(definition.result[0].range.start,query(text,'$amount (+ $seed').position);
       return {hover,definition};
     });
     await observe('expansion exposes original-file origins',true,async()=>{
-      const result=await c.request('wlt/expandMacro',query(text,'%$with'));
-      assert.equal(result.result.schema,'wlt-macro-expansion-v1');assert.ok(result.result.expansions.length>0);
-      assert.ok(result.result.expansions.every(e=>e.definition_location.location.path.endsWith('syntax.wlt')));
+      const result=await c.request('walz/expandMacro',query(text,'@$with'));
+      assert.equal(result.result.schema,'walz-macro-expansion-v1');assert.ok(result.result.expansions.length>0);
+      assert.ok(result.result.expansions.every(e=>e.definition_location.location.path.endsWith('syntax.walz')));
       return result;
     });
-    const broken=text.replace('(+ $amount (%$next (i64.const 1)))','(+ $amount $missing)');
+    const broken=text.replace('(+ $amount (@$next (i64.const 1)))','(+ $amount $missing)');
     await observe('broken balanced body keeps current declared scope',true,async()=>{
       const diagnostics=await change(uri,2,broken);assert.ok(diagnostics.length);
       const completion=await c.request('textDocument/completion',query(broken,'$missing'));
@@ -89,10 +89,10 @@ export async function probe(binary,directory){
     // Restore before changing the dependency; publish carries the root version.
     await change(uri,3,text);
     await observe('unsaved macro dependency invalidates the checked result',true,async()=>{
-      const altered=syntax.replace('(%let ?name ?value ?body)','(%let ?name (type i32) ?value ?body)');
+      const altered=syntax.replace('(@let ?name ?value ?body)','(@let ?name (type i32) ?value ?body)');
       c.send({method:'textDocument/didChange',params:{textDocument:{uri:library,version:2},contentChanges:[{text:altered}]}});
       const diagnostics=(await wait(uri,3)).params.diagnostics;assert.ok(diagnostics.length);
-      const expansion=await c.request('wlt/expandMacro',query(text,'%$with'));assert.equal(expansion.result.expansions.length,0);
+      const expansion=await c.request('walz/expandMacro',query(text,'@$with'));assert.equal(expansion.result.expansions.length,0);
       return {diagnostics,expansion};
     });
     c.send({method:'textDocument/didChange',params:{textDocument:{uri:library,version:3},contentChanges:[{text:syntax}]}});

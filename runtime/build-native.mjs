@@ -1,4 +1,4 @@
-// Development adapter: a standard WIT Component, transpiled without a WLT SDK.
+// Development adapter: a standard WIT Component, transpiled without a Walz SDK.
 import {transpileBytes} from '@bytecodealliance/jco-transpile';
 import {execFile as callback} from 'node:child_process';
 import {promisify} from 'node:util';

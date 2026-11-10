@@ -21,7 +21,7 @@ if (
   const [source, output] = process.argv.slice(2);
   if (!source || !output)
     throw new Error(
-      "usage: node runtime/build-core.mjs source.wlt output-directory",
+      "usage: node runtime/build-core.mjs source.walz output-directory",
     );
   await build(source, output);
 }

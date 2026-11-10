@@ -8,9 +8,9 @@ import {execFile as callback} from 'node:child_process';
 import {promisify} from 'node:util';
 const execFile=promisify(callback);
 for(const backend of ['core','component'])test(`${backend}: WIT lists traverse import, result, future and indirect argument adapters`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-list-binding-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-list-binding-'));
   try{
-    const wit=join(dir,'host.wit'),policy=join(dir,'grants.json'),gen=join(dir,'gen'),source=join(dir,'main.wlt');
+    const wit=join(dir,'host.wit'),policy=join(dir,'grants.json'),gen=join(dir,'gen'),source=join(dir,'main.walz');
     const namespace='example:lists/collections@1.0.0';
     const extra=Array.from({length:14},(_,i)=>`p${i}: s32`).join(',');
     await writeFile(wit,`package example:lists@1.0.0; interface collections {
@@ -20,12 +20,12 @@ for(const backend of ['core','component'])test(`${backend}: WIT lists traverse i
     } world guest { import collections; }`);
     await writeFile(policy,JSON.stringify({imports:['echo','wide','later'].map(name=>({module:namespace,name,suspends:false,capability:'collections'}))}));
     await execFile('cargo',['run','--quiet','--','bind',wit,policy,gen]);
-    const ty="(%list (%result (%tuple i64 %string) (%list %string)))";
-    await writeFile(source,`(module (%include "gen/bindings.wlt")
-      (func $echo (export "echo") (param $v ${ty}) (result ${ty}) (%effect host) (call $collections.echo (local.get $v)))
-      (func $wide (export "wide") (param $a (%list i64)) (param $b (%list %string)) (result (%list i64)) (%effect host)
+    const ty="(@list (@result (@tuple i64 @string) (@list @string)))";
+    await writeFile(source,`(module (@include "gen/bindings.walz")
+      (func $echo (export "echo") (param $v ${ty}) (result ${ty}) (@effect host) (call $collections.echo (local.get $v)))
+      (func $wide (export "wide") (param $a (@list i64)) (param $b (@list @string)) (result (@list i64)) (@effect host)
         (call $collections.wide (local.get $a) (local.get $b) ${Array.from({length:14},(_,i)=>`(i32.const ${i})`).join(' ')}))
-      (func $later (export "later") (result (%list %string)) (%effect host suspends) (%future.await (%list %string) (call $collections.later))))`);
+      (func $later (export "later") (result (@list @string)) (@effect host suspends) (@future.await (@list @string) (call $collections.later))))`);
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');const out=join(dir,'out');
     await build(source,out,{bindings:join(gen,'bindings.json')});
     const {instantiate}=await import(pathToFileURL(join(out,'index.js')));let memory;

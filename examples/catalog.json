@@ -1,47 +1,47 @@
 {
   "examples": [
     {
-      "path": "examples/high-level.wlt",
+      "path": "examples/high-level.walz",
       "pattern": "shared list traversal, named field patterns and single-evaluation updates",
       "expected": "42"
     },
     {
-      "path": "examples/cli/main.wlt",
+      "path": "examples/cli/main.walz",
       "pattern": "installed CLI project with build, test and bench",
       "expected": "42"
     },
     {
-      "path": "examples/closure.wlt",
+      "path": "examples/closure.walz",
       "pattern": "escaping closure",
       "expected": "42"
     },
     {
-      "path": "examples/counter.wlt",
+      "path": "examples/counter.walz",
       "pattern": "captured mutable state",
       "expected": "42"
     },
     {
-      "path": "examples/collections.wlt",
+      "path": "examples/collections.walz",
       "pattern": "array traversal",
       "expected": "42"
     },
     {
-      "path": "examples/list.wlt",
+      "path": "examples/list.walz",
       "pattern": "recursive nullable list",
       "expected": "42"
     },
     {
-      "path": "examples/list-batch.wlt",
+      "path": "examples/list-batch.walz",
       "pattern": "immutable lists with array-backed map and list traversal",
       "expected": "42"
     },
     {
-      "path": "examples/generic-lists.wlt",
+      "path": "examples/generic-lists.walz",
       "pattern": "monomorphized list map/fold with concrete closure types",
       "expected": "42"
     },
     {
-      "path": "examples/factorial.wlt",
+      "path": "examples/factorial.walz",
       "pattern": "numeric loop",
       "expected": "3628800",
       "checks": [
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "path": "examples/mutual-recursion.wlt",
+      "path": "examples/mutual-recursion.walz",
       "pattern": "mutually recursive functions",
       "expected": "1",
       "checks": [
@@ -83,12 +83,12 @@
       ]
     },
     {
-      "path": "examples/ast-interpreter.wlt",
+      "path": "examples/ast-interpreter.walz",
       "pattern": "recursive variant AST with exhaustive match",
       "expected": "42"
     },
     {
-      "path": "examples/variants.wlt",
+      "path": "examples/variants.walz",
       "pattern": "Option with nullary and unary cases",
       "expected": "42",
       "checks": [
@@ -116,12 +116,12 @@
       ]
     },
     {
-      "path": "examples/graph-cycle.wlt",
+      "path": "examples/graph-cycle.walz",
       "pattern": "cyclic mutable graph",
       "expected": "42"
     },
     {
-      "path": "examples/sorting.wlt",
+      "path": "examples/sorting.walz",
       "pattern": "insertion sort",
       "expected": "12345",
       "checks": [
@@ -138,7 +138,7 @@
       ]
     },
     {
-      "path": "examples/binary-search.wlt",
+      "path": "examples/binary-search.walz",
       "pattern": "early loop exit",
       "expected": "3",
       "checks": [
@@ -166,7 +166,7 @@
       ]
     },
     {
-      "path": "examples/matrix.wlt",
+      "path": "examples/matrix.walz",
       "pattern": "nested loops and matrix product",
       "expected": "134",
       "checks": [
@@ -205,17 +205,17 @@
       ]
     },
     {
-      "path": "examples/higher-order.wlt",
+      "path": "examples/higher-order.walz",
       "pattern": "map and fold with a concrete closure type",
       "expected": "42"
     },
     {
-      "path": "examples/closure-compose.wlt",
+      "path": "examples/closure-compose.walz",
       "pattern": "closure capturing other closures",
       "expected": "42"
     },
     {
-      "path": "examples/result.wlt",
+      "path": "examples/result.walz",
       "pattern": "explicit checked errors",
       "expected": "42",
       "checks": [
@@ -246,12 +246,12 @@
       ]
     },
     {
-      "path": "examples/state-machine.wlt",
+      "path": "examples/state-machine.walz",
       "pattern": "mutable state machine",
       "expected": "204"
     },
     {
-      "path": "examples/text-parser.wlt",
+      "path": "examples/text-parser.walz",
       "pattern": "ASCII number and expression parser",
       "expected": "42",
       "checks": [
@@ -283,7 +283,7 @@
       ]
     },
     {
-      "path": "examples/hash-map.wlt",
+      "path": "examples/hash-map.walz",
       "pattern": "hash table with collision chains",
       "expected": "42",
       "checks": [
@@ -311,7 +311,7 @@
       ]
     },
     {
-      "path": "examples/numeric.wlt",
+      "path": "examples/numeric.walz",
       "pattern": "floating point iterative algorithm",
       "expected": "42",
       "checks": [
@@ -332,37 +332,37 @@
       ]
     },
     {
-      "path": "examples/host-import.wlt",
+      "path": "examples/host-import.walz",
       "pattern": "external I/O boundary",
       "runtime_error": "unknown import"
     },
     {
-      "path": "examples/tagged-invalid.wlt",
+      "path": "examples/tagged-invalid.walz",
       "pattern": "manual variant invariant is not statically enforced",
       "runtime_error": "null reference"
     },
     {
-      "path": "examples/numeric-conversion.wlt",
+      "path": "examples/numeric-conversion.walz",
       "pattern": "standard Wasm numeric conversion",
       "expected": "42"
     },
     {
-      "path": "examples/math-intrinsic.wlt",
+      "path": "examples/math-intrinsic.walz",
       "pattern": "standard Wasm sqrt",
       "expected": "42"
     },
     {
-      "path": "examples/tail-call.wlt",
+      "path": "examples/tail-call.walz",
       "pattern": "standard Wasm tail call",
       "expected": "42"
     },
     {
-      "path": "examples/for-loop.wlt",
+      "path": "examples/for-loop.walz",
       "pattern": "for macro with explicit induction state",
       "expected": "42"
     },
     {
-      "path": "examples/exceptions.wlt",
+      "path": "examples/exceptions.walz",
       "pattern": "native Wasm exceptions with lexical catch bindings",
       "expected": "42",
       "checks": [
@@ -385,84 +385,84 @@
       ]
     },
     {
-      "path": "examples/value-types.wlt",
+      "path": "examples/value-types.walz",
       "pattern": "semantic Option/Result values and checked pure effects",
       "expected": "42"
     },
     {
-      "path": "examples/ownership.wlt",
+      "path": "examples/ownership.walz",
       "pattern": "explicit move, owned pair and once-call closure",
       "expected": "42"
     },
     {
-      "path": "examples/verified-laws.wlt",
+      "path": "examples/verified-laws.walz",
       "pattern": "universal bitvector laws gate owned execution",
       "expected": "42"
     },
     {
-      "path": "examples/ready-delivery.wlt",
+      "path": "examples/ready-delivery.walz",
       "pattern": "owned ready future, finite stream and independent completion",
       "expected": "42"
     },
     {
-      "path": "examples/modules.wlt",
+      "path": "examples/modules.walz",
       "pattern": "named file imports, private helpers and selective exports",
       "expected": "42"
     },
     {
-      "path": "examples/bytes-text.wlt",
+      "path": "examples/bytes-text.walz",
       "pattern": "immutable bytes, UTF-8 validation and slicing",
       "expected": "42"
     },
     {
-      "path": "examples/simd.wlt",
+      "path": "examples/simd.walz",
       "pattern": "typed v128 and fixed SIMD lane operations",
       "expected": "42"
     },
     {
-      "path": "examples/simd-kernels/demo.wlt",
+      "path": "examples/simd-kernels/demo.walz",
       "pattern": "resident packed GC arrays and wide SIMD integer sums",
       "expected": "42"
     },
     {
-      "path": "examples/json-parser/main.wlt",
-      "pattern": "WLT recursive-descent JSON parser and opaque GC AST lookup",
+      "path": "examples/json-parser/main.walz",
+      "pattern": "Walz recursive-descent JSON parser and opaque GC AST lookup",
       "expected": "42"
     },
     {
-      "path": "examples/struct-literals.wlt",
+      "path": "examples/struct-literals.walz",
       "pattern": "named structs with independent field maps and literal elision",
       "expected": "42"
     },
     {
-      "path": "examples/expression-sugar.wlt",
+      "path": "examples/expression-sugar.walz",
       "pattern": "bare local reads and expected-type constants with explicit let annotations",
       "expected": "42"
     },
     {
-      "path": "examples/typeclasses.wlt",
+      "path": "examples/typeclasses.walz",
       "pattern": "sealed scalar Add/Eq/Ord instances with statically resolved operators",
       "expected": "42"
     },
     {
-      "path": "examples/views.wlt",
+      "path": "examples/views.walz",
       "pattern": "zero-copy UTF-8 views with relative ranges and explicit ABI materialization",
       "expected": "42"
     }
   ],
   "probes": [
     {
-      "path": "examples/probes/heterogeneous-closures.wlt",
+      "path": "examples/probes/heterogeneous-closures.walz",
       "diagnostic": "type mismatch",
       "limitation": "no common callable interface"
     },
     {
-      "path": "examples/probes/outer-recur.wlt",
+      "path": "examples/probes/outer-recur.walz",
       "diagnostic": "innermost loop",
       "limitation": "no nonlocal loop transfer"
     },
     {
-      "path": "examples/probes/readonly-array-view.wlt",
+      "path": "examples/probes/readonly-array-view.walz",
       "diagnostic": "type mismatch",
       "limitation": "no read-only view or ownership freeze"
     }

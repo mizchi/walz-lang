@@ -4,26 +4,26 @@ use std::process::Command;
 fn relative_file_uses_select_exports_and_aliases_without_namespace_declarations() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("math.wlt"),
+        directory.path().join("math.walz"),
         r#"(module
-      (%export (func $answer))
+      (@export (func $answer))
       (func $private (result i64) 40)
       (func $answer (result i64) (+ (call $private) 2)))"#,
     )
     .unwrap();
-    let path = directory.path().join("main.wlt");
+    let path = directory.path().join("main.walz");
     std::fs::write(
         &path,
         r#"(module
-      (%use "wlt:core" (type $result))
-      (%use "./math.wlt" (func $answer $calculate))
+      (@use "walz:core" (type $result))
+      (@use "./math.walz" (func $answer $calculate))
       (func $main (export "main") (result i64)
-        (%match (%result.ok i64 i32 (call $calculate))
+        (@match (@result.ok i64 i32 (call $calculate))
           (case ok ($n) $n) (case err ($code) 0))))"#,
     )
     .unwrap();
-    let loaded = wlt::source::load(&path).unwrap();
-    let compiled = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load(&path).unwrap();
+    let compiled = walz::compile(loaded.text()).unwrap();
     let wasm = directory.path().join("main.wasm");
     std::fs::write(&wasm, compiled.wasm).unwrap();
     let output = Command::new("wasmtime")
@@ -48,22 +48,22 @@ fn relative_file_uses_select_exports_and_aliases_without_namespace_declarations(
 #[test]
 fn namespaces_atom_uses_old_imports_and_ambiguous_file_names_are_rejected() {
     let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("main.wlt");
+    let path = directory.path().join("main.walz");
     for (source, code) in [
-        ("(module (%namespace $math))", "E_WLT_EXTENSION"),
-        ("(module (%use $math (func $f)))", "E_USE_PATH"),
-        ("(module (%use \"math.wlt\" (func $f)))", "E_USE_PATH"),
+        ("(module (@namespace $math))", "E_WALZ_EXTENSION"),
+        ("(module (@use $math (func $f)))", "E_USE_PATH"),
+        ("(module (@use \"math.walz\" (func $f)))", "E_USE_PATH"),
         (
-            "(module (%import \"wlt:core\" (type $result)))",
-            "E_WLT_EXTENSION",
+            "(module (@import \"walz:core\" (type $result)))",
+            "E_WALZ_EXTENSION",
         ),
     ] {
-        let error = wlt::check(source).unwrap_err();
+        let error = walz::check(source).unwrap_err();
         assert_eq!(error.diagnostic().code, code, "{source}: {error}");
         std::fs::write(&path, source).unwrap();
-        let error = wlt::source::load(&path).err().unwrap();
+        let error = walz::source::load(&path).err().unwrap();
         assert_eq!(error.diagnostic().code, code, "{source}: {error}");
     }
-    let native = r#"(module (import "./math.wlt" "answer" (func $answer (result i32))))"#;
-    assert_eq!(wlt::compile(native).unwrap().wat, native);
+    let native = r#"(module (import "./math.walz" "answer" (func $answer (result i32))))"#;
+    assert_eq!(walz::compile(native).unwrap().wat, native);
 }

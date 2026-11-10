@@ -1,16 +1,16 @@
-use wlt::ir::{BindingKind, Type};
-use wlt::{check, typing};
+use walz::ir::{BindingKind, Type};
+use walz::{check, typing};
 
 const SOURCE: &str = r#"(module
-  (type $Option (%variant (none) (some i64)))
-  (%closure $Add (%capture $base i64) (param $x i64) (result i64)
+  (type $Option (@variant (none) (some i64)))
+  (@closure $Add (@capture $base i64) (param $x i64) (result i64)
     (i64.add (local.get $base) (local.get $x)))
   (func $main (result i64)
-    (%let $option (%variant.new $Option some (i64.const 40))
-      (%let $add (%closure.new $Add (i64.const 2))
-        (%match $Option (result i64) (local.get $option)
+    (@let $option (@variant.new $Option some (i64.const 40))
+      (@let $add (@closure.new $Add (i64.const 2))
+        (@match $Option (result i64) (local.get $option)
           (case none () (i64.const 0))
-          (case some ($value) (%closure.call $Add (local.get $add) (local.get $value))))))))"#;
+          (case some ($value) (@closure.call $Add (local.get $add) (local.get $value))))))))"#;
 
 #[test]
 fn infers_let_and_pattern_bindings_and_reports_function_boundaries() {
@@ -32,9 +32,9 @@ fn infers_let_and_pattern_bindings_and_reports_function_boundaries() {
     assert_eq!(closure.locals[closure.captures[0].0].name, "$base");
     assert_eq!(closure.locals[closure.captures[0].0].ty, "i64");
     for (needle, expected) in [
-        ("(%variant.new", "(ref $Option)"),
-        ("(%closure.new", "(ref $Add)"),
-        ("(%match", "i64"),
+        ("(@variant.new", "(ref $Option)"),
+        ("(@closure.new", "(ref $Add)"),
+        ("(@match", "i64"),
         ("(local.get $value)", "i64"),
     ] {
         let offset = SOURCE.find(needle).unwrap() + 1;
@@ -50,7 +50,7 @@ fn infers_let_and_pattern_bindings_and_reports_function_boundaries() {
 
 #[test]
 fn expression_queries_respect_shadowing_and_utf8_byte_offsets() {
-    let source = "(module\n ;; 型の問い合わせは UTF-8 の byte offset\n (func $empty)\n (func $main (result i64) (%let $x (i64.const 42) (block (result i64) (drop (%let $x (i32.const 1) (local.get $x))) (local.get $x)))))";
+    let source = "(module\n ;; 型の問い合わせは UTF-8 の byte offset\n (func $empty)\n (func $main (result i64) (@let $x (i64.const 42) (block (result i64) (drop (@let $x (i32.const 1) (local.get $x))) (local.get $x)))))";
     let module = check(source).unwrap();
     for (offset, expected) in [
         (source.find("(local.get $x)").unwrap() + 5, "i32"),
@@ -72,11 +72,11 @@ fn expression_queries_respect_shadowing_and_utf8_byte_offsets() {
 #[test]
 fn type_queries_include_parameter_capture_let_loop_and_case_declarations() {
     let source = r#"(module
-      (type $T (%variant (some i64)))
-      (%closure $C (%capture $captured i32) (param $argument i64) (result i64)
-        (%let $reference (%variant.new $T some (local.get $argument))
-          (%loop $walk (bind $state (ref $T) (local.get $reference)) (result i64)
-            (%match $T (result i64) (local.get $state)
+      (type $T (@variant (some i64)))
+      (@closure $C (@capture $captured i32) (param $argument i64) (result i64)
+        (@let $reference (@variant.new $T some (local.get $argument))
+          (@loop $walk (bind $state (ref $T) (local.get $reference)) (result i64)
+            (@match $T (result i64) (local.get $state)
               (case some ($payload) (local.get $payload)))))))"#;
     let module = check(source).unwrap();
     let report = typing::report(&module);
@@ -106,7 +106,7 @@ fn unit_never_and_nullable_references_are_distinct_static_types() {
     let source = "(module (type $T (struct)) (func $unit (nop)) (func $die (result i64) (unreachable)) (func $none (result (ref null $T)) (ref.null $T)))";
     let module = check(source).unwrap();
     for (needle, expected) in [
-        ("(nop)", "%unit"),
+        ("(nop)", "@unit"),
         ("(unreachable)", "never"),
         ("(ref.null", "(ref null $T)"),
     ] {
@@ -119,7 +119,7 @@ fn unit_never_and_nullable_references_are_distinct_static_types() {
 
 #[test]
 fn optional_let_annotations_are_checked_and_preserved() {
-    let source = "(module (type $T (struct)) (func $main (result (ref null $T)) (%let $x (ref null $T) (struct.new $T) (local.get $x))))";
+    let source = "(module (type $T (struct)) (func $main (result (ref null $T)) (@let $x (ref null $T) (struct.new $T) (local.get $x))))";
     let module = check(source).unwrap();
     let report = typing::report(&module);
     assert_eq!(report.functions[0].locals[0].ty, "(ref null $T)");
@@ -130,15 +130,15 @@ fn optional_let_annotations_are_checked_and_preserved() {
         );
     }
     // The declared storage type must also lower to valid Wasm.
-    wlt::compile(source).unwrap();
-    let error = check("(module (func $f (result i64) (%let $x i64 (i32.const 1) (local.get $x))))")
+    walz::compile(source).unwrap();
+    let error = check("(module (func $f (result i64) (@let $x i64 (i32.const 1) (local.get $x))))")
         .unwrap_err()
         .to_string();
     assert!(
         error.contains("type mismatch: expected i64, got i32"),
         "{error}"
     );
-    let error = check("(module (type $T (struct)) (func $f (result (ref $T)) (%let $x (ref $T) (ref.null $T) (local.get $x))))").unwrap_err().to_string();
+    let error = check("(module (type $T (struct)) (func $f (result (ref $T)) (@let $x (ref $T) (ref.null $T) (local.get $x))))").unwrap_err().to_string();
     assert!(
         error.contains("expected (ref $T), got (ref null $T)"),
         "{error}"
@@ -165,19 +165,19 @@ fn check_rejects_incompatible_types_before_emission() {
             "expected i64, got i32",
         ),
         (
-            "(module (%closure $C (%capture $x i64) (local.get $x)) (func $f (result (ref $C)) (%closure.new $C (i32.const 1))))",
+            "(module (@closure $C (@capture $x i64) (local.get $x)) (func $f (result (ref $C)) (@closure.new $C (i32.const 1))))",
             "expected unit, got i64",
         ),
         (
-            "(module (%closure $C (%capture $x i64) (result i64) (local.get $x)) (func $f (result (ref $C)) (%closure.new $C (i32.const 1))))",
+            "(module (@closure $C (@capture $x i64) (result i64) (local.get $x)) (func $f (result (ref $C)) (@closure.new $C (i32.const 1))))",
             "expected i64, got i32",
         ),
         (
-            "(module (type $T (%variant (a))) (func $f (result i64) (%match $T (result i64) (%variant.new $T a) (case a () (i32.const 1)))))",
+            "(module (type $T (@variant (a))) (func $f (result i64) (@match $T (result i64) (@variant.new $T a) (case a () (i32.const 1)))))",
             "expected i64, got i32",
         ),
         (
-            "(module (func $f (%loop $l (bind $n i64 (i64.const 0)) (%recur $l (i32.const 1)))))",
+            "(module (func $f (@loop $l (bind $n i64 (i64.const 0)) (@recur $l (i32.const 1)))))",
             "expected i64, got i32",
         ),
     ] {
@@ -213,7 +213,7 @@ fn suspension_is_conservative_at_unknown_imports_and_propagates() {
       (func $forward (result i64) (call $call)))"#,
     )
     .unwrap();
-    let analysis = wlt::analysis::analyze(&module);
+    let analysis = walz::analysis::analyze(&module);
     assert!(!analysis.functions[1].effects.may_suspend);
     for index in [0, 2, 3] {
         assert!(analysis.functions[index].effects.may_suspend);

@@ -166,7 +166,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
                 );
                 source.push_str(&format!(" (result {ty})"));
             }
-            source.push_str(&format!("))\n  (%export (func {local}))\n"));
+            source.push_str(&format!("))\n  (@export (func {local}))\n"));
             policy.imports.push(PolicyImport {
                 module: namespace.clone(),
                 name: function.name.clone(),
@@ -234,7 +234,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
                     }
                 })
                 .collect::<String>();
-            export_functions.push_str(&format!("  ;; Replace unreachable with the implementation.\n  (func ${local} (export {name:?}){params}{result} (%effect pure) (unreachable))\n"));
+            export_functions.push_str(&format!("  ;; Replace unreachable with the implementation.\n  (func ${local} (export {name:?}){params}{result} (@effect pure) (unreachable))\n"));
         }
     }
     for (module, name, kind) in &schema.drops {
@@ -263,7 +263,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
     let core = if imports.is_empty() {
         String::new()
     } else {
-        format!("  (%use \"wlt:core\"{imports})\n")
+        format!("  (@use \"walz:core\"{imports})\n")
     };
     let defs = schema.declarations.join("");
     let type_exports = schema
@@ -274,12 +274,12 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
     let public = if type_exports.is_empty() {
         String::new()
     } else {
-        format!("  (%export{type_exports})\n")
+        format!("  (@export{type_exports})\n")
     };
     let type_use = if type_exports.is_empty() {
         String::new()
     } else {
-        format!("  (%use \"./types.wlt\"{type_exports})\n")
+        format!("  (@use \"./types.walz\"{type_exports})\n")
     };
     let start = source.find("(module\n").unwrap() + "(module\n".len();
     let mut linked_source = source.clone();
@@ -354,7 +354,7 @@ pub(crate) fn component_exports(
                     .is_some_and(|t| contains_owned(resolve, t, 0));
             if function.kind.is_async() || owned {
                 unavailable.push(crate::binary::Unavailable { selector, reason:
-                    "Component %use currently accepts synchronous shared-value exports; async functions, future, stream and resource need a cross-component cancellation/lifetime contract".into() });
+                    "Component @use currently accepts synchronous shared-value exports; async functions, future, stream and resource need a cross-component cancellation/lifetime contract".into() });
                 continue;
             }
             let params = function
@@ -391,7 +391,7 @@ pub(crate) fn component_exports(
     }
     if !schema.drops.is_empty() {
         return Err(Error::message(
-            "component %use does not yet transfer resource handles".into(),
+            "component @use does not yet transfer resource handles".into(),
         ));
     }
     let core = schema
@@ -410,13 +410,13 @@ pub(crate) fn component_exports(
             if core.is_empty() {
                 String::new()
             } else {
-                format!("(%use \"wlt:core\"{core})\n")
+                format!("(@use \"walz:core\"{core})\n")
             },
             schema.declarations.join(""),
             if types.is_empty() {
                 String::new()
             } else {
-                format!("(%export{types})\n")
+                format!("(@export{types})\n")
             },
         ),
         exports,
@@ -519,7 +519,7 @@ impl<'a> Schema<'a> {
                 .unwrap_or_else(|| (namespace, self.r.types[id].name.clone().unwrap()));
             let drop = format!("[resource-drop]{resource_name}");
             let local = format!("$wit-drop-resource{}", id.index());
-            self.declarations.push(format!("  (import {namespace:?} {drop:?} (func {local} (param $handle i32)))\n  (type {name} (%resource {kind:?} {local}))\n"));
+            self.declarations.push(format!("  (import {namespace:?} {drop:?} (func {local} (param $handle i32)))\n  (type {name} (@resource {kind:?} {local}))\n"));
             self.drops.push((namespace, drop, kind));
         }
         Ok(name)
@@ -528,7 +528,7 @@ impl<'a> Schema<'a> {
         let name = format!("$wit-u{bits}");
         if self.names.insert(name.clone()) {
             self.declarations.push(format!(
-                "  (type {name} (%newtype i{}))\n  (%abi.type {name} (u{bits}))\n",
+                "  (type {name} (@newtype i{}))\n  (@abi.type {name} (u{bits}))\n",
                 bits.max(32)
             ));
         }
@@ -538,7 +538,7 @@ impl<'a> Schema<'a> {
         let local = format!("$wit-{name}");
         if self.names.insert(local.clone()) {
             self.declarations.push(format!(
-                "  (type {local} (%newtype i32))\n  (%abi.type {local} ({name}))\n"
+                "  (type {local} (@newtype i32))\n  (@abi.type {local} ({name}))\n"
             ));
         }
         local
@@ -612,7 +612,7 @@ impl<'a> Schema<'a> {
                     .iter()
                     .map(|c| format!(" {:?}", c.name))
                     .collect::<String>();
-                (format!("(%variant{cases})"), format!("(variant{names})"))
+                (format!("(@variant{cases})"), format!("(variant{names})"))
             }
             TypeDefKind::Record(record) => {
                 if record.fields.is_empty() {
@@ -649,7 +649,7 @@ impl<'a> Schema<'a> {
                     .iter()
                     .map(|c| format!(" {:?}", c.name))
                     .collect::<String>();
-                (format!("(%variant{cases})"), format!("(enum{names})"))
+                (format!("(@variant{cases})"), format!("(enum{names})"))
             }
             TypeDefKind::Flags(f) => {
                 if f.flags.is_empty() || f.flags.len() > crate::interface::MAX_FLAGS {
@@ -662,12 +662,12 @@ impl<'a> Schema<'a> {
                     .iter()
                     .map(|f| format!(" {:?}", f.name))
                     .collect::<String>();
-                ("(%newtype i32)".into(), format!("(flags{names})"))
+                ("(@newtype i32)".into(), format!("(flags{names})"))
             }
             _ => unreachable!(),
         };
         self.declarations.push(format!(
-            "  (type {name} {definition})\n  (%abi.type {name} {annotation})\n"
+            "  (type {name} {definition})\n  (@abi.type {name} {annotation})\n"
         ));
         Ok(name)
     }
@@ -690,7 +690,7 @@ impl<'a> Schema<'a> {
             if prefix.is_empty() {
                 name.to_owned()
             } else {
-                format!("%inst ${name}")
+                format!("@inst ${name}")
             }
         };
         Ok(match ty {
@@ -871,7 +871,7 @@ impl<'a> Schema<'a> {
                     if prefix.is_empty() {
                         format!("(resource {kind})")
                     } else {
-                        format!("(%resource {})", self.ensure_resource(id)?)
+                        format!("(@resource {})", self.ensure_resource(id)?)
                     }
                 }
                 TypeDefKind::Handle(
@@ -886,7 +886,7 @@ impl<'a> Schema<'a> {
                         format!("({} {kind})", if borrow { "borrow" } else { "resource" })
                     } else {
                         format!(
-                            "(%{} {})",
+                            "(@{} {})",
                             if borrow { "borrow" } else { "resource" },
                             self.ensure_resource(resource)?
                         )

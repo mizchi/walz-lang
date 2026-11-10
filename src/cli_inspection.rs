@@ -1,9 +1,9 @@
 //! CLI transport for structured diagnostics and read-only type queries.
 use std::{ffi::OsString, path::Path, process::ExitCode};
-use wlt::{bindings::BindingPolicy, diagnostic::Diagnostic};
+use walz::{bindings::BindingPolicy, diagnostic::Diagnostic};
 
 pub fn failure(schema: &str, error: &(dyn std::error::Error + 'static)) -> ExitCode {
-    let diagnostic = if let Some(error) = error.downcast_ref::<wlt::Error>() {
+    let diagnostic = if let Some(error) = error.downcast_ref::<walz::Error>() {
         error.diagnostic().clone()
     } else {
         Diagnostic {
@@ -29,23 +29,23 @@ pub fn check(
     json: bool,
     performance: bool,
 ) -> ExitCode {
-    let result = (|| -> Result<Option<wlt::performance::Report>, Box<dyn std::error::Error>> {
+    let result = (|| -> Result<Option<walz::performance::Report>, Box<dyn std::error::Error>> {
         let loaded = if legacy {
-            wlt::source::load_legacy(path)?
+            walz::source::load_legacy(path)?
         } else {
-            wlt::source::load(path)?
+            walz::source::load(path)?
         };
         if performance {
-            let report = wlt::performance::check_with_policy(loaded.text(), policy)
+            let report = walz::performance::check_with_policy(loaded.text(), policy)
                 .map_err(|e| loaded.diagnostic(e))?
                 .located(&loaded);
             return Ok(Some(report));
         } else if policy.imports.is_empty() {
-            wlt::validate(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
+            walz::validate(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
         } else {
             // Compile with the policy so laws and all existing contracts are
             // checked as well; no host code is executed.
-            wlt::compile_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
+            walz::compile_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
         }
         Ok(None)
     })();
@@ -53,7 +53,7 @@ pub fn check(
         Ok(report) => {
             if json {
                 let mut output =
-                    serde_json::json!({"schema":"wlt-check-v1","ok":true,"diagnostics":[]});
+                    serde_json::json!({"schema":"walz-check-v1","ok":true,"diagnostics":[]});
                 if let Some(report) = report {
                     output["performance"] = serde_json::to_value(report).unwrap();
                 }
@@ -71,7 +71,7 @@ pub fn check(
             }
             ExitCode::SUCCESS
         }
-        Err(error) if json => failure("wlt-check-v1", error.as_ref()),
+        Err(error) if json => failure("walz-check-v1", error.as_ref()),
         Err(error) => {
             eprintln!("{error}");
             ExitCode::FAILURE
@@ -81,7 +81,7 @@ pub fn check(
 
 pub fn type_at(args: &[OsString], policy: &BindingPolicy) -> ExitCode {
     let invalid = || {
-        eprintln!("Usage: wlt type-at <file.wlt> <line> <column> [--source <file.wlt>]");
+        eprintln!("Usage: walz type-at <file.walz> <line> <column> [--source <file.walz>]");
         ExitCode::from(2)
     };
     if !matches!(args.len(), 3 | 5) || (args.len() == 5 && args[3] != "--source") {
@@ -91,8 +91,8 @@ pub fn type_at(args: &[OsString], policy: &BindingPolicy) -> ExitCode {
     let (Some(line), Some(column)) = (coordinate(1), coordinate(2)) else {
         return invalid();
     };
-    let result = wlt::source::load(Path::new(&args[0])).and_then(|source| {
-        wlt::inspect::type_at(&source, args.get(4).map(Path::new), line, column, policy)
+    let result = walz::source::load(Path::new(&args[0])).and_then(|source| {
+        walz::inspect::type_at(&source, args.get(4).map(Path::new), line, column, policy)
     });
     match result {
         Ok(report) => {
@@ -102,6 +102,6 @@ pub fn type_at(args: &[OsString], policy: &BindingPolicy) -> ExitCode {
             );
             ExitCode::SUCCESS
         }
-        Err(error) => failure("wlt-type-at-v1", &error),
+        Err(error) => failure("walz-type-at-v1", &error),
     }
 }

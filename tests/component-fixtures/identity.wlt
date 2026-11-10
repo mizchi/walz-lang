@@ -1,6 +1,0 @@
-(module
-  (%use "wlt:core" (type $bytes) (type $string))
-  (%export (func $bytes) (func $text))
-  (func $bytes (param $value $bytes) (result $bytes) (%effect pure) (local.get $value))
-
-  (func $text (param $value $string) (result $string) (%effect pure) (local.get $value)))

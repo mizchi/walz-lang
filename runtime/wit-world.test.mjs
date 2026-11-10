@@ -8,15 +8,15 @@ import {execFile as callback} from 'node:child_process';
 import {promisify} from 'node:util';
 import {transpileBytes} from '@bytecodealliance/jco-transpile';
 const execFile=promisify(callback);
-test('native world works without WLT JS wrappers or delivery imports',{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-native-world-'));
+test('native world works without Walz JS wrappers or delivery imports',{timeout:60000},async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'walz-native-world-'));
   try{
-    const input=join(dir,'main.wlt'),wit=join(dir,'world.wit'),binary=join(dir,'component.wasm');
+    const input=join(dir,'main.walz'),wit=join(dir,'world.wit'),binary=join(dir,'component.wasm');
     await writeFile(input,`(module
-      (type $Item (struct (field $n i32))) (%abi.type $Item (record "n"))
+      (type $Item (struct (field $n i32))) (@abi.type $Item (record "n"))
       (import "test:adapter/host" "increment" (func $inc (param $n i32) (result i32)))
-      (func $echo (export "api-echo") (param $v (ref $Item)) (result (ref $Item)) (%effect pure) $v)
-      (func $add (export "add") (param $n i32) (result i32) (%effect host) (call $inc $n)))`);
+      (func $echo (export "api-echo") (param $v (ref $Item)) (result (ref $Item)) (@effect pure) $v)
+      (func $add (export "add") (param $n i32) (result i32) (@effect host) (call $inc $n)))`);
     await writeFile(wit,`package test:adapter; interface host { increment: func(n: s32) -> s32; }
       interface api { record item { n: s32 } type unused = tuple<bool,char,s8>; echo: func(v: item) -> item; }
       world guest { import host; export api; export add: func(n: s32) -> s32; }`);

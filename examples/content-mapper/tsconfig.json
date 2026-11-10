@@ -9,8 +9,8 @@
   "contentMappers": [
     {
       "package": "../..",
-      "extensions": [".wlt"]
+      "extensions": [".walz"]
     }
   ],
-  "include": ["*.ts", "*.wlt"]
+  "include": ["*.ts", "*.walz"]
 }

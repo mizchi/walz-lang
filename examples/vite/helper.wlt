@@ -1,3 +1,0 @@
-(module
-  (%export (func $answer))
-  (func $answer (result i32) (%effect pure) 42))

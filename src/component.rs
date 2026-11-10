@@ -75,7 +75,7 @@ pub fn compile_with_world(
     adapter.validate_boundary()?;
     if crate::task_children::enabled(&module) {
         return Err(Error::message(
-            "native WIT worlds do not yet provide the WLT child scheduler".into(),
+            "native WIT worlds do not yet provide the Walz child scheduler".into(),
         )
         .with_code("E_WIT_WORLD"));
     }
@@ -188,7 +188,7 @@ fn assemble(
             continue;
         }
         let scope = format!("$host{group}_");
-        let mut exports = format!("(export \"wlt-unit\" (type {scope}unit (eq $unit)))\n");
+        let mut exports = format!("(export \"walz-unit\" (type {scope}unit (eq $unit)))\n");
         for ty in &adapter.types {
             if let Type::Resource(id)
             | Type::Value(id)
@@ -266,7 +266,7 @@ fn assemble(
     text.push_str(&factory_lowers);
     if crate::task_children::enabled(module) {
         text.push_str(
-            "(import \"wlt:runtime/tasks@0.1.0\" (instance $children
+            "(import \"walz:runtime/tasks@0.1.0\" (instance $children
           (export \"scope-new\" (func (param \"parent\" s32) (result s32)))
           (export \"scope-close\" (func async (param \"id\" s32)))
           (export \"scope-abort\" (func (param \"id\" s32)))
@@ -318,7 +318,7 @@ fn assemble(
         ")\n(core instance $guest (instantiate $guest (with \"__component\" (instance $env))))\n",
     );
     if crate::task_children::enabled(module) {
-        text.push_str("(func $child_run async (param \"id\" s32) (param \"scope\" s32) (canon lift (core func $guest \"__child_run\")))\n(export \"wlt-child-run\" (func $child_run))\n");
+        text.push_str("(func $child_run async (param \"id\" s32) (param \"scope\" s32) (canon lift (core func $guest \"__child_run\")))\n(export \"walz-child-run\" (func $child_run))\n");
     }
     let used = module
         .functions
@@ -334,7 +334,7 @@ fn assemble(
     };
     let mut api_types = format!(
         "(export $api_unit \"{}\" (type $unit))\n",
-        type_name("wlt-unit".into())
+        type_name("walz-unit".into())
     );
     for ty in &adapter.types {
         if let Type::Resource(id) | Type::Value(id) | Type::Newtype(id) | Type::Ref { ty: id, .. } =
@@ -405,7 +405,7 @@ fn assemble(
     } else {
         (
             exports,
-            "(export \"wlt:generated/api@0.1.0\" (instance $api))\n".into(),
+            "(export \"walz:generated/api@0.1.0\" (instance $api))\n".into(),
         )
     };
     if world.is_some() {
@@ -413,7 +413,7 @@ fn assemble(
         text.push(')');
     } else {
         text.push_str(&format!(
-        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{api_exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n{outer_exports})\n",
+        "(component $api_component\n(import \"types\" (instance $delivery {}))\n(alias export $delivery \"walz-unit\" (type $unit))\n{aliases}{api_types}{api_imports}{api_exports})\n(instance $api (instantiate $api_component (with \"types\" (instance $delivery)){api_arguments}))\n{outer_exports})\n",
         adapter.declarations()
     ));
     }
@@ -426,7 +426,7 @@ fn assemble(
         )
     } else {
         format!(
-            "(import \"wlt:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n",
+            "(import \"walz:runtime/delivery@0.1.0\" (instance $delivery {}{factories}))\n",
             adapter.declarations()
         )
     };
@@ -436,7 +436,7 @@ fn assemble(
         .transpose()?
         .unwrap_or_default();
     let text = format!(
-        "(component\n{prefix}{delivery}(alias export $delivery \"wlt-unit\" (type $unit))\n{aliases}{text}"
+        "(component\n{prefix}{delivery}(alias export $delivery \"walz-unit\" (type $unit))\n{aliases}{text}"
     );
     let (text, wasm) = binary::assemble(module, text)?;
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())

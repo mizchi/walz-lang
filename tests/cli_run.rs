@@ -11,10 +11,10 @@ fn interrupting_the_parent_waits_for_node_guest_and_host_disposal() {
     let closed = dir.path().join("closed");
     let closing = dir.path().join("closing");
     std::fs::write(
-        dir.path().join("main.wlt"),
+        dir.path().join("main.walz"),
         r#"(module
-      (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $n i32)))
-      (func $main (export "main") (%effect host suspends) (call $sleep 10000)))"#,
+      (import "walz:host/event-loop@0.1.0" "sleep" (func $sleep (param $n i32)))
+      (func $main (export "main") (@effect host suspends) (call $sleep 10000)))"#,
     )
     .unwrap();
     let host = format!(
@@ -28,7 +28,7 @@ fn interrupting_the_parent_waits_for_node_guest_and_host_disposal() {
         serde_json::to_string(&closed).unwrap()
     );
     std::fs::write(dir.path().join("host.mjs"), host).unwrap();
-    let mut child = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(dir.path())
         .args(["run", "--target", "core-js", "--host", "host.mjs"])
         .stdout(Stdio::null())
@@ -78,7 +78,7 @@ fn interrupting_the_parent_waits_for_node_guest_and_host_disposal() {
 }
 
 fn run(directory: &Path, args: &[&str], input: &str) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(directory)
         .args(args)
         .stdin(Stdio::piped())
@@ -108,7 +108,7 @@ fn success(output: Output) -> String {
 fn native_run_selects_an_export_passes_arguments_and_supports_exit_codes() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("main.wlt"),
+        dir.path().join("main.walz"),
         r#"(module
       (func $main (export "main") (result i32) 7)
       (func $add (export "add") (param $a i64) (param $b i64) (result i64) (+ $a $b)))"#,
@@ -132,7 +132,7 @@ fn native_run_selects_an_export_passes_arguments_and_supports_exit_codes() {
 #[test]
 fn jspi_run_works_with_arguments_and_gc_values_across_suspension() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let file = root.join("tests/component-fixtures/event-loop.wlt");
+    let file = root.join("tests/component-fixtures/event-loop.walz");
     let out = run(
         root,
         &[
@@ -167,7 +167,7 @@ fn jspi_run_works_with_arguments_and_gc_values_across_suspension() {
 #[test]
 fn text_io_requires_explicit_capabilities_and_leaves_stdout_for_program_output() {
     let dir = tempfile::tempdir().unwrap();
-    let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/io/text-filter.wlt");
+    let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/io/text-filter.walz");
     let denied = run(
         dir.path(),
         &["run", source.to_str().unwrap(), "--target", "core-js"],
@@ -234,12 +234,12 @@ fn text_io_requires_explicit_capabilities_and_leaves_stdout_for_program_output()
 fn cli_arguments_are_available_through_a_typed_host_binding() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("main.wlt"),
+        dir.path().join("main.walz"),
         r#"(module
-      (%use "wlt:core" (type $list) (type $string))
-      (import "wlt:host/cli@0.1.0" "arguments" (func $args (result (%inst $list $string))))
-      (func $main (export "main") (result i32) (%effect host)
-        (%list.len $string (call $args))))"#,
+      (@use "walz:core" (type $list) (type $string))
+      (import "walz:host/cli@0.1.0" "arguments" (func $args (result (@inst $list $string))))
+      (func $main (export "main") (result i32) (@effect host)
+        (@list.len $string (call $args))))"#,
     )
     .unwrap();
     assert_eq!(
@@ -275,10 +275,10 @@ fn run_usage_errors_are_distinct_from_guest_failures() {
 fn explicit_host_modules_use_the_checked_policy_and_bigint_arguments() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("main.wlt"),
+        dir.path().join("main.walz"),
         r#"(module
       (import "example:host/math@1.0.0" "double" (func $double (param $value i64) (result i64)))
-      (func $main (export "main") (param $n i64) (result i64) (%effect host) (call $double $n)))"#,
+      (func $main (export "main") (param $n i64) (result i64) (@effect host) (call $double $n)))"#,
     )
     .unwrap();
     std::fs::write(dir.path().join("policy.json"), r#"{"imports":[{"module":"example:host/math@1.0.0","name":"double","params":["i64"],"result":"i64","suspends":false,"capability":"math"}]}"#).unwrap();
@@ -318,16 +318,16 @@ fn explicit_host_modules_use_the_checked_policy_and_bigint_arguments() {
 
 #[test]
 fn cli_argument_contract_cannot_be_retyped_or_overridden() {
-    let source = r#"(module (import "wlt:host/cli@0.1.0" "arguments" (func $args (result i32))))"#;
-    assert!(wlt::check(source).is_err());
-    assert!(wlt::bindings::BindingPolicy::parse(r#"{"imports":[{"module":"wlt:host/cli@0.1.0","name":"arguments","params":[],"result":"i32","suspends":false,"capability":"lie"}]}"#).is_err());
+    let source = r#"(module (import "walz:host/cli@0.1.0" "arguments" (func $args (result i32))))"#;
+    assert!(walz::check(source).is_err());
+    assert!(walz::bindings::BindingPolicy::parse(r#"{"imports":[{"module":"walz:host/cli@0.1.0","name":"arguments","params":[],"result":"i32","suspends":false,"capability":"lie"}]}"#).is_err());
 }
 
 #[test]
 fn filesystem_value_adapter_requires_named_file_grants_and_closes_both_endpoints() {
     let dir = tempfile::tempdir().unwrap();
     let example = Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/wasi-files");
-    for name in ["main.wlt", "batch.wlt", "filesystem.wit", "policy.json"] {
+    for name in ["main.walz", "batch.walz", "filesystem.wit", "policy.json"] {
         std::fs::copy(example.join(name), dir.path().join(name)).unwrap();
     }
     success(run(

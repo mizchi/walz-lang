@@ -4,7 +4,7 @@ import Lean
    not the Rust parser/extractor, Wasm lowering, engine, or arbitrary JavaScript.
    Traces overapproximate control flow: any agent can execute any admitted site,
    any number of times. Host events must obey the same fixed-cell contract. -/
-namespace WltAtomicCells
+namespace WalzAtomicCells
 
 structure Cell where
   offset : Nat
@@ -219,7 +219,7 @@ def loadCheck (regions : List Region) (s : Load) : Bool :=
     | some r => decide (s.width ≤ r.length)
 
 def check (c : Cert) : Bool :=
-  WltAtomicCells.check c.atomicCells &&
+  WalzAtomicCells.check c.atomicCells &&
   decide (0 < c.regions.length ∧ c.regions.length ≤ 256) &&
   c.regions.all (regionCheck c.atomicCells.memoryBytes) &&
   layout c && c.loads.all (loadCheck c.regions)
@@ -358,4 +358,4 @@ def run (args : List String) : IO UInt32 := do
   | .ok c => IO.println s!"atomic-cell contracts verified: {c.cells.length} cells, {c.accesses.length} sites"; return 0
   | .error message => IO.eprintln message; return 1
 
-end WltAtomicCells
+end WalzAtomicCells

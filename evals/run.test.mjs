@@ -23,14 +23,14 @@ const reader = (score = 3) => ({
   scores: Object.fromEntries(
     ["flow", "types", "scope", "layout", "changes"].map((k) => [
       k,
-      { score, evidence: "counted.wlt:5 の契約と7行目の束縛を対応させた" },
+      { score, evidence: "counted.walz:5 の契約と7行目の束縛を対応させた" },
     ]),
   ),
   issues: [],
   limitations: [],
 });
 const temporary = async (run) => {
-  const parent = await mkdtemp(join(tmpdir(), "wlt-eval-"));
+  const parent = await mkdtemp(join(tmpdir(), "walz-eval-"));
   try {
     await run(parent);
   } finally {
@@ -63,10 +63,10 @@ async function fakeVerification(directory) {
       node: process.version,
       inputsFingerprint: sha256(JSON.stringify(hashes)),
       candidateSha256: sha256(
-        await readFile(join(directory, "writer/candidate.wlt")),
+        await readFile(join(directory, "writer/candidate.walz")),
       ),
       sampleSha256: sha256(
-        await readFile(join(directory, "reader/counted.wlt")),
+        await readFile(join(directory, "reader/counted.walz")),
       ),
       subjects: Object.fromEntries(
         ["sample", "candidate"].map((k) => [
@@ -92,22 +92,22 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
       await readFile(join(directory, "manifest.json"), "utf8"),
     );
     assert.equal(manifest.id, "round-99");
-    assert.ok(manifest.roles.reader.includes("reader/counted.wlt"));
+    assert.ok(manifest.roles.reader.includes("reader/counted.walz"));
     assert.ok(manifest.roles.reader.includes("reader/api.md"));
     assert.ok(manifest.roles.writer.includes("writer/api.md"));
     const api = await readFile(join(directory, "writer/api.md"), "utf8");
     assert.match(api, /\(func \$string.parse-u64/);
-    assert.match(api, /具体化時に推論/);
+    assert.match(api, /inferred at specialization/);
     assert.ok(!api.includes("(func $bytes.matches"));
     assert.ok(!manifest.roles.writer.some((p) => p.includes("counted")));
-    await assert.rejects(access(join(directory, "writer/counted.wlt")));
+    await assert.rejects(access(join(directory, "writer/counted.walz")));
     const bridge = await readFile(
-      join(directory, "writer/program.wlt"),
+      join(directory, "writer/program.walz"),
       "utf8",
     );
     assert.equal(
       bridge,
-      '(module (%include "../support/examples/apps/stock-ledger/program.wlt"))\n',
+      '(module (@include "../support/examples/apps/stock-ledger/program.walz"))\n',
     );
     await checkInputs(directory);
     await writeFile(join(directory, "reader.json"), "keep");
@@ -116,8 +116,8 @@ test("prepare works outside the checkout, freezes dependencies, separates roles 
       await readFile(join(directory, "reader.json"), "utf8"),
       "keep",
     );
-    await writeFile(join(directory, "support/stdlib/text.wlt"), "changed");
-    await assert.rejects(checkInputs(directory), /text.wlt/);
+    await writeFile(join(directory, "support/walz/core/text.walz"), "changed");
+    await assert.rejects(checkInputs(directory), /text.walz/);
   }));
 
 test("score needs audited answers and both executions; it rejects stale review and stale candidate results", () =>
@@ -151,7 +151,7 @@ test("score needs audited answers and both executions; it rejects stale review a
       correct: true,
       reason: "更新した回答も再照合した",
     });
-    await writeFile(join(directory, "writer/candidate.wlt"), "changed");
+    await writeFile(join(directory, "writer/candidate.walz"), "changed");
     assert.equal((await scoreRun(directory)).status, "incomplete");
   }));
 
@@ -217,7 +217,7 @@ test("reader answers follow the frozen suite contract and older runs remain read
     manifest.suite.answerKeys = [...Object.keys(data.answers), "syntax"];
     await writeFile(manifestPath, JSON.stringify(manifest));
     await assert.rejects(readReader(directory), /missing answer: syntax/);
-    data.answers.syntax = "WAT and WLT syntax distinguished using the cheatsheet";
+    data.answers.syntax = "WAT and Walz syntax distinguished using the cheatsheet";
     await writeFile(join(directory, "reader.json"), JSON.stringify(data));
     await readReader(directory);
     delete manifest.suite.answerKeys;
@@ -227,13 +227,13 @@ test("reader answers follow the frozen suite contract and older runs remain read
     await readReader(directory);
   }));
 
-test("embedded standard WLT sources participate in the implementation fingerprint", () =>
+test("embedded standard Walz sources participate in the implementation fingerprint", () =>
   temporary(async (parent) => {
-    await mkdir(join(parent, "stdlib"));
-    const path=join(parent, "stdlib/types.wlt");
+    await mkdir(join(parent, "walz/core"), {recursive:true});
+    const path=join(parent, "walz/core/types.walz");
     await writeFile(path, "before");
     const before=await implementationFingerprint(parent);
-    assert.ok(before.files["stdlib/types.wlt"]);
+    assert.ok(before.files["walz/core/types.walz"]);
     await writeFile(path, "after");
     const after=await implementationFingerprint(parent);
     assert.notEqual(before.sha256, after.sha256);

@@ -9,10 +9,10 @@ import {createEventLoop} from './host.mjs';
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: local cancellation preserves siblings and releases captures`, {timeout: 60000}, async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'wlt-local-cancel-'));
+    const dir = await mkdtemp(join(tmpdir(), 'walz-local-cancel-'));
     try {
       const {build} = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/local-cancellation.wlt', dir);
+      await build('tests/component-fixtures/local-cancellation.walz', dir);
       await instrument(dir, backend);
       const {instantiate} = await import(pathToFileURL(join(dir, 'index.js')));
       const events = [], lowered = [], owners = new Map(), acknowledged = [];

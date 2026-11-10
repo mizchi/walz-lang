@@ -3,12 +3,12 @@ use std::process::Command;
 #[test]
 fn unescaped_json_strings_do_not_call_escape_helpers() {
     let source = r#"(module
-      (%use "wlt:core" (func $json.stringify) (func $json.from-string))
+      (@use "walz:core" (func $json.stringify) (func $json.from-string))
       (func $clean (export "clean") (result i32)
-        (%string.byte-len (call $json.stringify (call $json.from-string (%string.lit "abc日本語🦀/XYZ")))))
+        (@string.byte-len (call $json.stringify (call $json.from-string (@string.lit "abc日本語🦀/XYZ")))))
       (func $escaped (export "escaped") (result i32)
-        (%string.byte-len (call $json.stringify (call $json.from-string (%string.lit "a\22b"))))))"#;
-    let compiled = wlt::compile(source).unwrap();
+        (@string.byte-len (call $json.stringify (call $json.from-string (@string.lit "a\22b"))))))"#;
+    let compiled = walz::compile(source).unwrap();
     let width = compiled
         .ir
         .as_ref()

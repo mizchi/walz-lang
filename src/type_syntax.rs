@@ -82,7 +82,7 @@ pub(crate) fn map_references(
     f: &mut impl FnMut(ReferenceKind, &mut Sexp) -> Result<(), Error>,
 ) -> Result<(), Error> {
     let head = node.head().unwrap_or("").to_owned();
-    if head.starts_with('@') {
+    if crate::syntax::annotation(&head) {
         return Ok(());
     }
     let Kind::List(items) = &mut node.kind else {
@@ -207,7 +207,7 @@ fn walk_types(
         return Ok(());
     };
     match head.as_str() {
-        _ if head.starts_with('@') => {}
+        _ if crate::syntax::annotation(&head) => {}
         "macro" => {
             for rule in items.iter_mut().skip(2) {
                 let Kind::List(fields) = &mut rule.kind else {

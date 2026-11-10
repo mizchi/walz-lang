@@ -3,7 +3,7 @@
 正しい拒否と、診断を読んで原因・修正が分かることを別に評価する。
 [10ケース](suite.json)のソース、意図、正常対照、非公開テストと[5軸の基準](rubric.md)を固定して繰り返す。
 prepare ごとに現状の診断を記録し、結果から実装を改善する。
-現在はsuite v6で、組み込みモジュールの名前を`wlt:core`に統一した入力・説明を使う。ケースは維持し、threadsのeffectとatomicセル検証を含む文法資料を配布する。改名前のv2の入力はアーカイブに保持する。
+現在はsuite v8で、`@` 接頭辞、`.walz` と `walz:core` を使う。`%` 接頭辞の直前の suite は [versions/v7.json](versions/v7.json) に保存する。ケースは維持し、threadsのeffectとatomicセル検証を含む文法資料を配布する。直前の WLT suite は [versions/v6.json](versions/v6.json)、それ以前の入力はアーカイブに保持する。
 compiler の[診断データ契約](../../docs/diagnostics.md)は表示から独立しているが、この評価では利用者が実際に読む CLI の表示を使う。
 
 | ケース | 確認すること |
@@ -15,19 +15,19 @@ compiler の[診断データ契約](../../docs/diagnostics.md)は表示から独
 | match-exhaustiveness | 足りないcaseと対象の型 |
 | alias-cycle | 循環するaliasと定義位置 |
 | effect-contract | 宣言した作用と必要な作用の違い |
-| include-location | include元ではなく実際のmath.wltの問題位置 |
+| include-location | include元ではなく実際のmath.walzの問題位置 |
 | unclosed-delimiter | 閉じられていない括弧と開始位置 |
 | opaque-representation | 公開APIと非公開の表現操作の区別 |
 
 ## 準備・評価・修正
 
-`wlt-lang` で実行する。Node 24以降、Cargo、Wasm GC対応Wasmtimeが必要。
-Cargoが報告する実際のwlt実行ファイルを使用するため、CARGO_TARGET_DIRや作業ディレクトリの深さに依存しない。
+`walz-lang` で実行する。Node 24以降、Cargo、Wasm GC対応Wasmtimeが必要。
+Cargoが報告する実際のwalz実行ファイルを使用するため、CARGO_TARGET_DIRや作業ディレクトリの深さに依存しない。
 
 ```sh
 just eval-diagnostics-prepare errors-01
 # または任意の場所へ
-node evals/run.mjs prepare errors-02 --suite diagnostics --output /tmp/wlt-errors-02
+node evals/run.mjs prepare errors-02 --suite diagnostics --output /tmp/walz-errors-02
 ```
 
 prepareはcompilerをビルドし、各badソースにcheckを実行する。診断のstdout/stderr、終了状態、ソースと基準を評価回へ保存し、SHA-256で固定する。

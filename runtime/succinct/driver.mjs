@@ -1,6 +1,6 @@
 // The adapter knows the index layout. The general host knows only jobs/joins.
 export async function create({module,memory,length,contract}){
-  if(contract!=='wlt-readonly-regions-v1')throw new Error('readonly host contract is required');
+  if(contract!=='walz-readonly-regions-v1')throw new Error('readonly host contract is required');
   let api=(await WebAssembly.instantiate(module,{env:{memory}})).exports;
   if(api.batch.length!==2)throw new Error('incompatible succinct worker kernel');
   api.init(length);

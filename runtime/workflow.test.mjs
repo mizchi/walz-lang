@@ -11,13 +11,13 @@ import { instrument, collect } from "./testing/memory.mjs";
 import { workflowOracle } from "./workflow-oracle.mjs";
 const encode = (s) => new TextEncoder().encode(s);
 const exec = promisify(execFile);
-const stress = process.env.WLT_WORKFLOW_STRESS === "1";
+const stress = process.env.WALZ_WORKFLOW_STRESS === "1";
 
 test(
   "keeping one workflow job does not retain unrelated jobs through the hash index",
   { skip: typeof global.gc !== "function" },
   async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-job-reachability-"));
+    const directory = await mkdtemp(join(tmpdir(), "walz-job-reachability-"));
     try {
       const path = join(directory, "module.wasm");
       await exec("cargo", [
@@ -26,7 +26,7 @@ test(
         "--quiet",
         "--",
         "build",
-        "tests/component-fixtures/workflow-reachability.wlt",
+        "tests/component-fixtures/workflow-reachability.walz",
         path,
       ]);
       const { instance } = await WebAssembly.instantiate(await readFile(path));
@@ -73,12 +73,12 @@ for (const backend of ["core", "component"])
     `${backend}: workflow plans match an independent event simulation and close I/O scopes`,
     { timeout: 180000 },
     async (t) => {
-      const directory = await mkdtemp(join(tmpdir(), "wlt-workflow-"));
+      const directory = await mkdtemp(join(tmpdir(), "walz-workflow-"));
       try {
         const { build } = await import(
           backend === "core" ? "./build-core.mjs" : "./build.mjs"
         );
-        await build("examples/apps/workflow/main.wlt", directory);
+        await build("examples/apps/workflow/main.walz", directory);
         await instrument(directory, backend);
         const runtime = await import(
           pathToFileURL(join(directory, "index.js"))
@@ -426,7 +426,7 @@ for (const backend of ["core", "component"])
         // The same graph operations without per-line I/O help distinguish
         // guest algorithm costs from the text/stream/ABI path above.
         const computeDirectory = join(directory, "compute");
-        await build("examples/apps/workflow/benchmark.wlt", computeDirectory);
+        await build("examples/apps/workflow/benchmark.walz", computeDirectory);
         const computeRuntime = await import(
           pathToFileURL(join(computeDirectory, "index.js"))
         );

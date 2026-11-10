@@ -1,0 +1,3 @@
+(module
+  (@use "./src/math.walz" (func $add))
+  (@bench "add" (param $i i32) (result i64) (call $add (i64.extend_i32_u $i) 2)))

@@ -1,0 +1,37 @@
+(module
+  (@use "walz:core"
+    (type $future)
+    (type $option)
+    (type $tuple)
+    (type $result)
+    (type $stream)
+    (type $unit))
+  ;; Already-ready local endpoints; no producer task or host I/O is started.
+  (func $sum (param $input (@inst $stream i64)) (result i64) (@effect suspends)
+    (@loop $read
+      (bind $stream (@inst $stream i64) (@move $input))
+      (bind $sum i64 (i64.const 0)) (result i64)
+      (@match (@inst $tuple (@inst $stream i64) (@inst $option i64)) (result i64)
+        (@stream.next i64 (@move $stream))
+        (case pair ($next $item)
+          (@match (@inst $option i64) (result i64) (local.get $item)
+            (case none ()
+              (block (result i64)
+                (@stream.close i64 (@move $next))
+                (local.get $sum)))
+            (case some ($value)
+              (@recur $read (@move $next) (i64.add (local.get $sum) (local.get $value)))))))))
+
+  (func $main (export "main") (result i64) (@effect suspends)
+    (@let $transfer
+      (@tuple.new (@inst $stream i64) (@inst $future (@inst $result $unit i32))
+        (@stream.cons i64 (i64.const 40)
+          (@stream.cons i64 (i64.const 2) (@stream.empty i64)))
+        (@future.ready (@inst $result $unit i32) (@result.ok $unit i32)))
+      (@match (@inst $tuple (@inst $stream i64) (@inst $future (@inst $result $unit i32))) (result i64) (@move $transfer)
+        (case pair ($stream $completion)
+          (@let $total (call $sum (@move $stream))
+            (@match (@inst $result $unit i32) (result i64)
+              (@future.await (@inst $result $unit i32) (@move $completion))
+              (case ok () (local.get $total))
+              (case err ($error) (i64.const -1)))))))))

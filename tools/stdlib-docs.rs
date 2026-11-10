@@ -1,6 +1,6 @@
 //! Development tool; not part of the language API or runtime.
 use std::{collections::BTreeMap, error::Error as StdError, path::Path};
-use wlt::ir;
+use walz::ir;
 
 // The shared parser's diagnostic constructor is private to its owning crate.
 // This development tool needs only a location and message, not the CLI API.
@@ -44,7 +44,7 @@ fn print(node: &sexpr::Sexp, source: &str, names: &BTreeMap<String, String>) -> 
     source[node.span.start..node.span.end].into()
 }
 
-fn effect_text(e: &wlt::effects::EffectSet, module: &ir::Module) -> String {
+fn effect_text(e: &walz::effects::EffectSet, module: &ir::Module) -> String {
     let mut names = Vec::new();
     for (name, enabled) in [
         ("reads", e.reads),
@@ -66,7 +66,7 @@ fn effect_text(e: &wlt::effects::EffectSet, module: &ir::Module) -> String {
     if names.is_empty() {
         names.push("pure".into());
     }
-    format!("(%effect {})", names.join(" "))
+    format!("(@effect {})", names.join(" "))
 }
 
 fn append_scope(
@@ -74,7 +74,7 @@ fn append_scope(
     source: &str,
     namespace: &str,
     module: &ir::Module,
-    inferred: &[wlt::effects::EffectSet],
+    inferred: &[walz::effects::EffectSet],
     out: &mut String,
 ) -> Result<(), Box<dyn StdError>> {
     let parts = node.list().ok_or("expected module or namespace")?;
@@ -86,7 +86,7 @@ fn append_scope(
     let mut exports = BTreeMap::new();
     for item in declarations
         .iter()
-        .filter(|n| matches!(n.head(), Some("%export" | "%public")))
+        .filter(|n| matches!(n.head(), Some("@export" | "@public")))
     {
         for export in &item.list().unwrap()[1..] {
             let fields = export.list().ok_or("invalid export")?;
@@ -122,14 +122,14 @@ fn append_scope(
             .ok_or_else(|| format!("missing declaration for {public_name}"))?;
         out.push_str(&format!("### `{public_name}`\n\n"));
         if kind != "func" {
-            out.push_str(&format!("import: `(type {public_name})`。"));
+            out.push_str(&format!("import: `(type {public_name})`. "));
             if kind == "opaque" {
-                out.push_str("不透明な公開型。内部表現は非公開。\n\n");
+                out.push_str("Opaque public type. Its representation is private.\n\n");
                 let constraints = declaration
                     .list()
                     .unwrap()
                     .iter()
-                    .filter(|n| matches!(n.head(), Some("%type.params" | "%where")))
+                    .filter(|n| matches!(n.head(), Some("@type.params" | "@where")))
                     .collect::<Vec<_>>();
                 if !constraints.is_empty() {
                     out.push_str(&format!("```text\n(type {public_name}\n"));
@@ -139,28 +139,28 @@ fn append_scope(
                     out.push_str(")\n```\n\n");
                 }
             } else {
-                out.push_str("表現を公開する型。\n\n```text\n");
+                out.push_str("Public type with an exposed representation.\n\n```text\n");
                 out.push_str(&print(declaration, source, &types));
                 out.push_str("\n```\n\n");
             }
             continue;
         }
         let fields = declaration.list().unwrap();
-        let generic = fields.iter().any(|n| n.head() == Some("%type.params"));
-        let explicit = fields.iter().any(|n| n.head() == Some("%effect"));
-        out.push_str(&format!("import: `(func {public_name})`。"));
+        let generic = fields.iter().any(|n| n.head() == Some("@type.params"));
+        let explicit = fields.iter().any(|n| n.head() == Some("@effect"));
+        out.push_str(&format!("import: `(func {public_name})`. "));
         out.push_str(if explicit {
-            "effect は宣言した上限（本体を検査）。\n\n"
+            "Effects are the declared upper bound; the body is checked.\n\n"
         } else if generic {
-            "effect は具体化時に推論。渡した closure の effect も含む。\n\n"
+            "Effects are inferred at specialization, including the supplied closure effects.\n\n"
         } else {
-            "effect は現在の本体からの推論値。\n\n"
+            "Effects are inferred from the current body.\n\n"
         });
         out.push_str(&format!("```text\n(func {public_name}\n"));
         let signature = fields.iter().skip(2).filter(|n| {
             matches!(
                 n.head(),
-                Some("param" | "result" | "%type.params" | "%where" | "%effect")
+                Some("param" | "result" | "@type.params" | "@where" | "@effect")
             )
         });
         for field in signature {
@@ -178,7 +178,7 @@ fn append_scope(
     }
     for child in declarations
         .iter()
-        .filter(|n| n.head() == Some("%namespace"))
+        .filter(|n| n.head() == Some("@namespace"))
     {
         let name = qualify(child.list().unwrap()[1].atom().unwrap());
         append_scope(child, source, &name, module, inferred, out)?;
@@ -197,20 +197,20 @@ fn document() -> Result<String, Box<dyn StdError>> {
     }
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut out = String::from(
-        "# コア API の型と effect\n\n<!-- Generated by just stdlib-docs. Do not edit signatures manually. -->\n\n`wlt:core` の公開宣言から生成する。更新は `just stdlib-docs`、整合性の確認は `just check-stdlib-docs`。\n`(%use \"wlt:core\" (type $string) (func $string.u64))` のように必要な名前を列挙する。\n汎用関数は `(%inst $name T...)` で適用する。result 宣言の省略は unit。\n\n`pure` は semantic effect が空という意味で、無 trap・停止・物理的割当てなしを保証しない。\n汎用関数の注釈省略は effect 制限なしで、具体化した本体を型・effect・所有権検査する。\n\n## 基本型\n\n型の性質と所有性は [組み込みコアモジュール](standard.md) を参照。\n\n| import | 型パラメータ | 参照形 |\n| --- | --- | --- |\n",
+        "# Core API types and effects\n\n<!-- Generated by just stdlib-docs. Do not edit signatures manually. -->\n\nGenerated from public declarations in `walz:core`, implemented in `walz/core/`. Update with `just stdlib-docs` and verify with `just check-stdlib-docs`.\nSelect names explicitly, for example `(@use \"walz:core\" (type $string) (func $string.u64))`.\nApply generics with `(@inst $name T...)`. Omitting a result declaration means unit.\n\n`pure` means an empty semantic effect set, not a guarantee of trap freedom, termination, or zero physical allocation.\nAn unannotated generic has no declared effect restriction; each specialization is checked for types, effects, and ownership.\n\n## Built-in types\n\nSee the [core module](standard.md) for type properties and ownership.\n\n| Import | Type parameters | Application |\n| --- | --- | --- |\n",
     );
     let types = sexpr::parse(standard_sources::TYPES)?;
     for alias in types
         .list()
         .unwrap()
         .iter()
-        .filter(|n| n.head() == Some("%type.alias"))
+        .filter(|n| n.head() == Some("@type.alias"))
     {
         let fields = alias.list().unwrap();
         let name = fields[1].atom().unwrap();
         let parameters = fields
             .iter()
-            .find(|n| n.head() == Some("%type.params"))
+            .find(|n| n.head() == Some("@type.params"))
             .map(|n| {
                 n.list().unwrap()[1..]
                     .iter()
@@ -221,7 +221,7 @@ fn document() -> Result<String, Box<dyn StdError>> {
         let application = if parameters.is_empty() {
             name.to_owned()
         } else {
-            format!("(%inst {name} {})", parameters.join(" "))
+            format!("(@inst {name} {})", parameters.join(" "))
         };
         out.push_str(&format!(
             "| `(type {name})` | {} | `{application}` |\n",
@@ -234,11 +234,11 @@ fn document() -> Result<String, Box<dyn StdError>> {
     }
     for (file, source) in standard_sources::LIBRARIES {
         out.push_str(&format!(
-            "\n## `{file}`\n\n実装: [stdlib/{file}](../stdlib/{file})。\n\n"
+            "\n## `{file}`\n\nImplementation: [walz/core/{file}](../walz/core/{file}).\n\n"
         ));
-        let loaded = wlt::source::load(root.join("stdlib").join(file))?;
-        let module = wlt::check(loaded.text())?;
-        let inferred = wlt::effects::infer(&module);
+        let loaded = walz::source::load(root.join("walz/core").join(file))?;
+        let module = walz::check(loaded.text())?;
+        let inferred = walz::effects::infer(&module);
         append_scope(
             &sexpr::parse(source)?,
             source,
@@ -278,14 +278,14 @@ mod tests {
             "$string-builder",
             "(func $string-builder.new",
             "(param $s $string)",
-            "(%effect allocates)",
+            "(@effect allocates)",
             "(func $list.map",
-            "(type $dict\n  (%type.params $T)\n  (%where (shared $T) (nonunit $T))",
+            "(type $dict\n  (@type.params $T)\n  (@where (shared $T) (nonunit $T))",
             "(func $dict.remove",
             "(func $list-builder.finish",
-            "(%type.params $T $U $F)",
+            "(@type.params $T $U $F)",
             "(callable $F",
-            "具体化時に推論",
+            "inferred at specialization",
             "(func $json.parse",
         ] {
             assert!(text.contains(required), "missing {required}");

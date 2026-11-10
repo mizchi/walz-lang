@@ -132,7 +132,7 @@ async function verifyCollected(refs,label,maxPasses=8) {
 
 async function rawGc() {
   const path=join(directory,"raw.wasm");
-  await run("cargo",["run","--locked","--quiet","--","build","tests/gc-fixtures/core-expressions.wlt",path]);
+  await run("cargo",["run","--locked","--quiet","--","build","tests/gc-fixtures/core-expressions.walz",path]);
   const bytes=await readFile(path);artifacts.raw=hash(bytes);
   const {instance}=await WebAssembly.instantiate(bytes);const api=instance.exports;
   const root=api.root();
@@ -151,7 +151,7 @@ async function rawGc() {
 }
 await rawGc();
 for(const backend of ["core","component"]) {
-  const runtime=await build(backend,"tests/component-fixtures/core-expressions-memory.wlt","values");
+  const runtime=await build(backend,"tests/component-fixtures/core-expressions-memory.walz","values");
   const {state,options}=capture();const program=await runtime.instantiate(options);const {api}=program;
   // Positive control proves live() observes an intentionally held ABI buffer.
   const pointer=state.allocator.alloc(64);assert.equal(state.allocator.live(),1);state.allocator.free(pointer);
@@ -173,7 +173,7 @@ for(const backend of ["core","component"]) {
       sameIds(await api.first([input]),input);
     }
   },program,state.allocator);
-  const resources=await build(backend,"examples/resources/main.wlt","resources","examples/resources/policy.json");
+  const resources=await build(backend,"examples/resources/main.walz","resources","examples/resources/policy.json");
   const files=new Files(),captured=capture({imports:files.imports()});
   const managed=await resources.instantiate(captured.options);
   let collectedResources=0;
@@ -199,8 +199,8 @@ for(const backend of ["core","component"]) {
 }
 report.artifacts=artifacts;report.inspectionArtifacts=inspectionArtifacts;
 report.sources={};
-const sourceFiles=(await run("git",["ls-files","-co","--exclude-standard","src","stdlib","runtime"])).stdout.trim().split("\n");
-for(const file of [...new Set([...sourceFiles,"tests/gc-fixtures/core-expressions.wlt","tests/component-fixtures/core-expressions-memory.wlt","examples/resources/main.wlt","examples/resources/policy.json","Cargo.lock","pnpm-lock.yaml"])].sort())
+const sourceFiles=(await run("git",["ls-files","-co","--exclude-standard","src","walz/core","runtime"])).stdout.trim().split("\n");
+for(const file of [...new Set([...sourceFiles,"tests/gc-fixtures/core-expressions.walz","tests/component-fixtures/core-expressions-memory.walz","examples/resources/main.walz","examples/resources/policy.json","Cargo.lock","pnpm-lock.yaml"])].sort())
   report.sources[file]=hash(await readFile(join(root,file)));
 await writeFile(join(directory,"report.json"),JSON.stringify(report,null,2)+"\n");
 console.log(`memory checks passed: ${join(directory,"report.json")}`);

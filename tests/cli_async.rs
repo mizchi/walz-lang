@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::{Command, Output};
 fn cli(dir: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_wlt"))
+    Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(dir)
         .args(args)
         .output()
@@ -17,17 +17,17 @@ fn text(out: &Output) -> String {
 fn fixture(dir: &Path) {
     std::fs::write(dir.join("policy.json"), r#"{"imports":[{"module":"host","name":"tick","params":["i32"],"result":"i32","suspends":true,"capability":"tick"}]}"#).unwrap();
     std::fs::write(dir.join("host.mjs"), r#"import {appendFileSync} from 'node:fs'; export default ({signal})=>({imports:{host:{tick:async n=>{await new Promise(r=>setTimeout(r,1));return n+1;}}},async [Symbol.asyncDispose](){appendFileSync(new URL('./closed',import.meta.url),'x');}});"#).unwrap();
-    std::fs::write(dir.join("suite.test.wlt"), r#"(module
+    std::fs::write(dir.join("suite.test.walz"), r#"(module
       (import "host" "tick" (func $tick (param $n i32) (result i32)))
-      (%closure $Work (%capture $n i32) (result i32) (%effect host suspends) (call $tick $n))
-      (%test "task" (%task.scope (result i32) (%let $t (%task.spawn i32 $Work (%closure.new $Work 40)) (= (%task.join i32 (%move $t)) 41))))
-      (%test "false" (i32.const 0))
-      (%test "after" (= (call $tick 41) 42)))"#).unwrap();
+      (@closure $Work (@capture $n i32) (result i32) (@effect host suspends) (call $tick $n))
+      (@test "task" (@task.scope (result i32) (@let $t (@task.spawn i32 $Work (@closure.new $Work 40)) (= (@task.join i32 (@move $t)) 41))))
+      (@test "false" (i32.const 0))
+      (@test "after" (= (call $tick 41) 42)))"#).unwrap();
     std::fs::write(
-        dir.join("suite_bench.wlt"),
+        dir.join("suite_bench.walz"),
         r#"(module
       (import "host" "tick" (func $tick (param $n i32) (result i32)))
-      (%bench "async" (param $i i32) (result i32) (call $tick $i)))"#,
+      (@bench "async" (param $i i32) (result i32) (call $tick $i)))"#,
     )
     .unwrap();
 }
@@ -39,7 +39,7 @@ fn async_cli_cases_share_checked_host_configuration_and_isolate_instances() {
         dir.path(),
         &[
             "test",
-            "suite.test.wlt",
+            "suite.test.walz",
             "--target",
             "core-js",
             "--bindings",
@@ -62,7 +62,7 @@ fn async_cli_cases_share_checked_host_configuration_and_isolate_instances() {
         dir.path(),
         &[
             "bench",
-            "suite_bench.wlt",
+            "suite_bench.walz",
             "--target",
             "core-js",
             "--bindings",
@@ -101,7 +101,7 @@ fn async_deadlines_cancel_and_dispose_before_reporting_and_listing_does_not_load
         dir.path(),
         &[
             "test",
-            "suite.test.wlt",
+            "suite.test.walz",
             "--target",
             "core-js",
             "--bindings",
@@ -124,7 +124,7 @@ fn async_deadlines_cancel_and_dispose_before_reporting_and_listing_does_not_load
         dir.path(),
         &[
             "bench",
-            "suite_bench.wlt",
+            "suite_bench.walz",
             "--target",
             "core-js",
             "--bindings",
@@ -151,7 +151,7 @@ fn async_deadlines_cancel_and_dispose_before_reporting_and_listing_does_not_load
         dir.path(),
         &[
             "test",
-            "suite.test.wlt",
+            "suite.test.walz",
             "--target",
             "core-js",
             "--bindings",
@@ -164,7 +164,7 @@ fn async_deadlines_cancel_and_dispose_before_reporting_and_listing_does_not_load
     assert!(out.status.success(), "{}", text(&out));
     let out = cli(
         dir.path(),
-        &["test", "suite.test.wlt", "--host", "host.mjs"],
+        &["test", "suite.test.walz", "--host", "host.mjs"],
     );
     assert_eq!(out.status.code(), Some(2), "{}", text(&out));
 }

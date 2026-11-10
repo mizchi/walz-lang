@@ -1,64 +1,66 @@
-# WLT の JSON パーサーを動かす
+# Running the Walz JSON Parser
 
-JSON の読み取り、GC 上の AST 構築、シリアライズはすべて WLT で実行する。
-実装は [stdlib/json-value.wlt](../../stdlib/json-value.wlt)、入口は [main.wlt](main.wlt)。
-Node 側の [CLI](../../runtime/json-parser.mjs) は UTF-8 の入出力と診断表示を担当し、`JSON.parse` は呼ばない。
+English | [日本語](README.ja.md)
+
+JSON parsing, construction of the GC-backed AST, and serialization all run in Walz.
+The implementation is [walz/core/json-value.walz](../../walz/core/json-value.walz); the entry point is [main.walz](main.walz).
+The Node [CLI](../../runtime/json-parser.mjs) handles UTF-8 input/output and diagnostic display without calling `JSON.parse`.
 
 ```sh
 just build-json-parser
 just json-parser < examples/json-parser/sample.json
 ```
 
-出力:
+Output:
 
 ```json
 {"answer":42,"items":[null,true,"日本語🦀"],"large":9007199254740993,"decimal":1.2300e-2}
 ```
 
-ファイルを引数に渡す場合:
+To pass a file as an argument:
 
 ```sh
 node runtime/json-parser.mjs target/json-parser examples/json-parser/sample.json
 ```
 
-空白を除去するが、キーの順番・重複と数値の字句は保持する。`9007199254740993` は浮動小数点に変換しない。
-パーサーは null / boolean / number / string / array / object と Unicode escape、UTF-16 surrogate pair を扱う。
-対応のない surrogate、末尾カンマ、余計な文字、壊れた数値・escape は拒否する。
+Whitespace is removed, while key order, duplicate keys, and numeric lexemes are preserved. `9007199254740993` is not converted to floating point.
+The parser supports null/boolean/number/string/array/object, Unicode escapes, and UTF-16 surrogate pairs.
+It rejects unpaired surrogates, trailing commas, extra characters, malformed numbers, and malformed escapes.
 
-`normalize(text)` は `result<text,i32>`。err は0始まりの UTF-8 バイト位置。
-CLI は不正なJSONで終了コード1、標準出力は空にし、標準エラーへ位置を出す。
-表示の行・列は1始まりで、列は Unicode scalar 数。CRLF は1改行として数える。
-正常時は0。入力は1文書で、複数行でもよい。JSON Lines を個別に読むインターフェースではない。
+`normalize(text)` returns `result<text,i32>`; err is a zero-based UTF-8 byte position.
+For invalid JSON, the CLI exits with code 1, leaves standard output empty, and reports the position on standard error.
+Displayed lines/columns are one-based; columns count Unicode scalar values. CRLF counts as one line break.
+Success exits with code 0. Input is one document, which may span multiple lines. This is not an interface that reads JSON Lines individually.
 
 ```text
 JSON parse error at byte 3 (line 1, column 4)
 ```
 
-上は `[1,]` の例。入力上限は65,536 bytes、array/object のネストは128。
-空のcontainerも深さへ数える。CLI は上限を超えた時点で読み取りを止め、UTF-8の不正も拒否する。
-BOMは黙って除去せず、パーサーが不正な先頭文字として扱う。
+The example above is for `[1,]`. Input is limited to 65,536 bytes and array/object nesting to 128.
+Empty containers count toward depth. The CLI stops reading when the limit is exceeded and also rejects invalid UTF-8.
+A BOM is not silently removed; the parser treats it as an invalid leading character.
 
-## 実装の読み方
+## Reading the Implementation
 
-- `$parse-value`: 先頭byteで値を振り分ける。深さと各値の入口を早期 `return` で表す。
-- `$parse-number`: 整数部・小数部・指数部を `%result.do` で順に読む。成功位置を次の段階へ渡す。
-- `$string-end` / `$parse-string`: 通常の文字列をまとめて走査し、エスケープがある場合だけbuilderを使う。
-- `$escape-unicode`: Unicode escapeをUTF-8へ変換する。
-- `$parse-array` / `$parse-object`: 兄弟要素はloopで読む。再帰はネストした値を読むときだけ使う。
-- `$parse`: 最後の空白まで読んで入力が尽きたことを検査し、ASTを返す。
+- `$parse-value`: Dispatches on the first byte. Early `return` expresses depth checks and each value's entry path.
+- `$parse-number`: Reads the integer, fraction, and exponent parts in sequence with `@result.do`, passing each successful position to the next stage.
+- `$string-end` / `$parse-string`: Scans ordinary string contents in batches and uses a builder only when escapes occur.
+- `$escape-unicode`: Converts Unicode escapes to UTF-8.
+- `$parse-array` / `$parse-object`: Reads sibling elements with loops; recursion is used only for nested values.
+- `$parse`: Consumes final whitespace, checks that input is exhausted, and returns the AST.
 
-ASTはopaqueなvariantと不変のGC listで、ホストのobjectや独自ヒープを使わない。
-`main.wlt` の `$answer` は、公開された `get`・`as-number` と整数解析だけでASTを調べる例。
+The AST uses opaque variants and immutable GC lists, without host objects or a custom heap.
+`$answer` in `main.walz` demonstrates inspecting the AST using only public `get`, `as-number`, and integer parsing.
 
 ```sh
-just run examples/json-parser/main.wlt  # 42
+just run examples/json-parser/main.walz  # 42
 just test-json
 ```
 
-Wasmtimeで境界とUnicodeを実行し、NodeのCore＋JSPI / Componentでは独立したJSONパーサーと照合する。
-CLIの標準入力・ファイル・エラー表示、各呼出し後の未解放ABIバッファ数0、Chromiumの両backendも検査する。
-EOFまでの入力を一度に読む再帰下降パーサーであり、増分のストリーミングパーサーではない。
+Wasmtime executes boundary and Unicode checks; Node's Core+JSPI/Component backends compare against an independent JSON parser.
+Tests also check CLI standard input/files/error display, zero outstanding ABI buffers after each call, and both Chromium backends.
+This is a recursive-descent parser that reads all input through EOF at once, rather than an incremental streaming parser.
 
 
-速度比較は [JSONパーサーのベンチマーク](../../docs/json-parser-bench.md) を参照。JSON.parse、serde_json releaseと、解析本体・入力ABI・再シリアライズを分けて測定できる。
-改善した箇所と採用しなかったSIMD方式は [チューニング結果](../../docs/json-parser-tuning.md) に記録している。
+See [JSON parser benchmarks](../../docs/json-parser-bench.md) for speed comparisons. JSON.parse, serde_json release, parsing itself, input ABI conversion, and reserialization can be measured separately.
+The [tuning results](../../docs/json-parser-tuning.md) record improvements and the SIMD approach that was not adopted.

@@ -7,16 +7,16 @@ import { pathToFileURL } from 'node:url';
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: nominal portable types preserve records, enum names, flags and unsigned limits`, { timeout: 60000 }, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-interface-types-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-interface-types-'));
     try {
       const { build } = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
       const names=Array.from({length:32},(_,i)=>`f${i}`);
-      const source=(await readFile('tests/component-fixtures/interface-types.wlt','utf8')).trimEnd();
-      const input=join(directory,'input.wlt');
+      const source=(await readFile('tests/component-fixtures/interface-types.walz','utf8')).trimEnd();
+      const input=join(directory,'input.walz');
       await writeFile(input,source.slice(0,-1)+`
-        (type $Flags32 (%newtype i32))
-        (%abi.type $Flags32 (flags ${names.map(n=>JSON.stringify(n)).join(' ')}))
-        (func $flags32 (export "flags32") (param $v $Flags32) (result $Flags32) (%effect pure) $v))`);
+        (type $Flags32 (@newtype i32))
+        (@abi.type $Flags32 (flags ${names.map(n=>JSON.stringify(n)).join(' ')}))
+        (func $flags32 (export "flags32") (param $v $Flags32) (result $Flags32) (@effect pure) $v))`);
       await build(input, directory);
       const { instantiate } = await import(pathToFileURL(join(directory, 'index.js')));
       let allocator;

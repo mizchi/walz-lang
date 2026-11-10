@@ -1,73 +1,73 @@
-# 実装
+# Implementation
 
 ```text
-ファイル解決・wlt:core の静的展開 → S 式の正規化・静的な名前解決
+ファイル解決・walz:core の静的展開 → S 式の正規化・静的な名前解決
   → マクロ宣言・汎用テンプレートの収集
   → 具体化・マクロ展開・型検査（必要な型がそろうまで再開）
   → 型付き IR → 全ソースの解析・契約検査
               → 到達性による宣言の除去 → WAT → Wasm
 ```
 
-- `src/ir.rs`: 型、ローカル・関数・ループの ID、閉じた式の列挙型。解析と出力の共通コントラクト。
-- `src/sexpr.rs`: 位置情報・スナップショット内のノードID・展開コンテキストを持つ S 式。`;;` と入れ子の `(; ;)` コメントに対応。
-- `src/source.rs`: 相対 import / include、ファイルの共有と循環検出、診断の元ファイルへの対応。
-- [src/standard.rs](../src/standard.rs): 同梱する `wlt:core` の型 alias と標準関数を選択し、通常の静的モジュールへ展開。ファイル探索や実行時の初期化は行わない。
-- `build.rs` / `src/standard_catalogue.rs`: 標準APIの公開名と型aliasの位置をビルド時に索引化する。`standard.rs` は必要な実装だけを読み、immutableな構文を共有する。[Rust側の計測](frontend-performance.md)を参照。
-- `crates/wlt-web` / `playground/`: 共通コンパイラをwasm-bindgenで公開し、コンパイルとゲスト実行を別のWeb Workerで動かす。[ブラウザー用ビルド](playground.md)を参照。
-- [src/syntax.rs](../src/syntax.rs): `%` で始まる入口の正規化と、複数束縛の `%let` から既存のネストした束縛への展開。
-- `src/modules.rs`: 種類付きの名前表で定義と import 別名を分け、収集・import 解決・宣言の展開の順に処理。
-- `src/macros.rs` / `src/macros/`: 宣言的な式マクロ、衛生的な束縛、委譲、構造化した型情報、入力と展開先の対応、展開予算。既存の式構文を返し、検査済みIRは生成しない。
-- `src/generics.rs` / `src/generics/inference.rs`: 明示または推論した型引数ごとの具体化と再利用、型の等式、再帰・展開上限と診断。実行用 IR に汎用宣言を残さない。
-- `src/bounds.rs`: where の shared/nonunit/callable と effect 上限を、具体的な型・署名・推論 effect で検査。
-- `src/type_syntax.rs`: 値型の位置と nominal な関数・heap 型の参照を区別する共通 visitor。
-- `src/link.rs`: 検査済みの全 IR から到達する宣言を選び、生成用の ID を振り直す。
-- `src/buffers.rs`: bytes/text の private GC storage、UTF-8 検証と値操作。
-- `src/frontend.rs`: 型・名前・捕捉・可変性・match の網羅性・tail position の検査。
-- `src/frontend/generic_calls.rs` / `macro_types.rs`: 通常の汎用呼び出しの型推論と、マクロ向けの読み取り専用の型問い合わせ。
-- `src/frontend/macro_expansion.rs` / `lexical.rs`: マクロ展開後に式から検査を再開し、仮のローカルIDを破棄。let/block/if の検査は大きな命令ディスパッチから分離する。
-- `src/typing.rs`: 宣言・推論した型の一覧と、ソース位置からの型の問い合わせ。
-- `src/inspect.rs`: 元ファイルの行・列から、検査済みIRと元の型注釈・具体化位置を照合する読み取り専用API。
-- `src/cli_inspection.rs`: JSON診断とtype-atのCLI入出力。検査ロジックと表示用メタデータを分離する。
-- `src/native.rs`: 型付きコア外の標準 WAT の関数シグネチャ。
-- [src/native_macros.rs](../src/native_macros.rs): コア外の WAT と構文だけのマクロの混在。全体を Wasm validator で検証し、解析結果を opaque とする。
-- `src/runner.rs`: テスト探索、分離した実行、タイムアウト、構造化した結果。
-- `src/benchmark.rs`: bench の結果型検査、ケースごとのリンク、計測と統計。`src/harness.rs` はテストと共通の探索・プロセス管理。
-- `runtime/bench-runner.mjs`: 常駐する Wasm インスタンスのウォームアップ・バッチ校正・単調時計による計測。
-- `src/analysis.rs`: 副作用と呼び出しグラフの解析。文字列の WAT を再解析せず、型付き IR を走査します。
-- `src/regions.rs`: 対象別の読み書き、参照の流れ、割当て箇所と escape の解析。
-- `src/flow.rs`: 正常な制御フロー上の non-null、i32 区間と配列境界の解析。
-- `src/effects.rs`: ソースで観測できる作用、関数外へ出る例外、宣言した effect 上限の検査。
-- `src/ownership.rs`: 所有性の伝播、明示 move、分岐・ループ・終了時の所有集合の契約。
-- `src/proof.rs`: 型付き IR から BitVec による law の証明義務を生成。
-- `src/verified.rs`: Lean の検査を通した同じ IR を Wasm へ出力する経路。
-- `proof/Ownership.lean`: 所有権の小さな検査器、宣言的な規則、検査の健全性と二重消費拒否の証明。
-- `proof/Delivery.lean`: 配送済み Future/Stream の操作、順序・終端・close のモデルと証明。
-- `src/wit.rs`: 公開関数の型から WIT 契約を生成。
-- `src/bindings.rs`: event-loop import の固定した型と作用。
-- `src/component.rs`: 検査済みの型と core Wasm から Component と manifest を組み立てる。
-- `src/component/abi.rs`: portable な型、Canonical ABI のレイアウト・flattening・シグネチャ。
-- `src/component/values.rs`: GC 値と ABI 値の変換、bytes/text と複合値のコピー・バッファ解放。
-- `src/component/endpoints.rs`: readable handle の転送・read・close。
-- `src/component/functions.rs`: core import/export の境界とタスクの cleanup。
-- `src/component/core_js.rs`: 検査済みの IR から JS 専用の core Wasm と bindings を生成。
-- `src/component/core_js/values.rs`: 必要な具体型の JS codec を生成。
-- `src/component-memory.wat`: 変換用バッファの確保・解放。
-- `runtime/text-io.mjs` / `node-io.mjs` / `text-cli.mjs`: 値だけを渡す行 I/O と、Node の handle・CLI。
-- `runtime/core.mjs` / `build-core.mjs`: JS 専用の Core/JSPI ホストとビルド。状態はインスタンスごとに分離。
-- `runtime/`: Component の JSPI 向けの生成、共通の Promise/AsyncIterable ホスト、タスクの要求・終了確認・解放、Node とブラウザの実行テスト。
-- `proof/Tasks.lean`: 取消し要求と終了確認の状態モデル、read 終了前のバッファ解放拒否、解放前の終了確認拒否の証明。
-- `src/emit.rs`: GC 型、let、for、クロージャ、enum/match、try/catch を通常の WAT に変換。
-- `src/lib.rs`: `check(&str)` は型付きコアの IR、`compile(&str)` は標準 WAT と拡張の両方に対応します。Wasm は wasmparser でも検証します。
+- `src/ir.rs`: Types, local/function/loop IDs, and a closed expression enum. The shared contract for analysis and emission.
+- `src/sexpr.rs`: S-expressions with locations, snapshot-local node IDs, and expansion contexts. Supports `;;` and nested `(; ;)` comments.
+- `src/source.rs`: Relative imports/includes, file sharing and cycle detection, and mapping diagnostics back to original files.
+- [src/standard.rs](../src/standard.rs): Selects bundled `walz:core` type aliases and standard functions, expanding them into ordinary static modules. Does not search files or perform runtime initialization.
+- `build.rs` / `src/standard_catalogue.rs`: Indexes public standard API names and type-alias locations at build time. `standard.rs` reads only the required implementations and shares immutable syntax. See [Rust-side measurements](frontend-performance.md).
+- `crates/walz-web` / `playground/`: Exposes the shared compiler through wasm-bindgen and runs compilation and guest execution in separate Web Workers. See [browser builds](playground.md).
+- [src/syntax.rs](../src/syntax.rs): Normalizes entry points beginning with `@` and expands multiple-binding `@let` into existing nested bindings.
+- `src/modules.rs`: Separates definitions and import aliases in a kinded symbol table, processing collection, import resolution, and declaration expansion in that order.
+- `src/macros.rs` / `src/macros/`: Declarative expression macros, hygienic bindings, delegation, structured type information, input-to-expansion mappings, and expansion budgets. Returns existing expression syntax rather than generating checked IR.
+- `src/generics.rs` / `src/generics/inference.rs`: Instantiation and reuse for explicit or inferred type arguments, type equalities, recursion/expansion limits, and diagnostics. Leaves no generic declarations in executable IR.
+- `src/bounds.rs`: Checks where-clause shared/nonunit/callable constraints and effect bounds against concrete types, signatures, and inferred effects.
+- `src/type_syntax.rs`: A shared visitor distinguishing value-type positions from nominal function/heap-type references.
+- `src/link.rs`: Selects reachable declarations from all checked IR and reassigns IDs for emission.
+- `src/buffers.rs`: Private GC storage for bytes/text, UTF-8 validation, and value operations.
+- `src/frontend.rs`: Checks types, names, captures, mutability, match exhaustiveness, and tail positions.
+- `src/frontend/generic_calls.rs` / `macro_types.rs`: Type inference for ordinary generic calls and read-only type queries for macros.
+- `src/frontend/macro_expansion.rs` / `lexical.rs`: Resumes checking from expressions after macro expansion and discards provisional local IDs. Separates let/block/if checking from the large instruction dispatcher.
+- `src/typing.rs`: Listings of declared/inferred types and type queries by source location.
+- `src/inspect.rs`: A read-only API matching checked IR against original type annotations and instantiation sites using original-file lines and columns.
+- `src/cli_inspection.rs`: CLI input/output for JSON diagnostics and type-at. Separates checking logic from display metadata.
+- `src/native.rs`: Function signatures for standard WAT outside the typed core.
+- [src/native_macros.rs](../src/native_macros.rs): Mixes WAT outside the core with syntax-only macros. Validates the whole module with a Wasm validator and marks analysis opaque.
+- `src/runner.rs`: Test discovery, isolated execution, timeouts, and structured results.
+- `src/benchmark.rs`: Checks bench result types, links each case, and performs measurement and statistics. `src/harness.rs` provides discovery and process management shared with tests.
+- `runtime/bench-runner.mjs`: Warm-up, batch calibration, and monotonic-clock measurement for a persistent Wasm instance.
+- `src/analysis.rs`: Effect and call-graph analysis. Traverses typed IR without reparsing WAT strings.
+- `src/regions.rs`: Target-specific reads/writes, reference flow, allocation sites, and escape analysis.
+- `src/flow.rs`: Analysis of non-nullness, i32 intervals, and array bounds along normal control flow.
+- `src/effects.rs`: Source-observable effects, exceptions escaping functions, and declared effect-bound checks.
+- `src/ownership.rs`: Ownership propagation, explicit moves, and ownership-set contracts at branches, loops, and exits.
+- `src/proof.rs`: Generates BitVec law proof obligations from typed IR.
+- `src/verified.rs`: Emits the same IR that passed Lean checking to Wasm.
+- `proof/Ownership.lean`: A small ownership checker, declarative rules, and proofs of checker soundness and rejection of double consumption.
+- `proof/Delivery.lean`: Models and proofs for operations, ordering, termination, and close on delivered Futures/Streams.
+- `src/wit.rs`: Generates WIT contracts from public function types.
+- `src/bindings.rs`: Fixed types and effects for event-loop imports.
+- `src/component.rs`: Builds a Component and manifest from checked types and core Wasm.
+- `src/component/abi.rs`: Portable types and Canonical ABI layouts, flattening, and signatures.
+- `src/component/values.rs`: Converts GC values and ABI values; copies bytes/text and compound values and releases buffers.
+- `src/component/endpoints.rs`: Transfer, read, and close for readable handles.
+- `src/component/functions.rs`: Core import/export boundaries and task cleanup.
+- `src/component/core_js.rs`: Generates JS-specific core Wasm and bindings from checked IR.
+- `src/component/core_js/values.rs`: Generates JS codecs for the required concrete types.
+- `src/component-memory.wat`: Allocation and release of conversion buffers.
+- `runtime/text-io.mjs` / `node-io.mjs` / `text-cli.mjs`: Value-only line I/O and Node handles/CLI.
+- `runtime/core.mjs` / `build-core.mjs`: JS-specific Core/JSPI host and builds. Isolates state per instance.
+- `runtime/`: JSPI generation for Components, a shared Promise/AsyncIterable host, task requests/completion acknowledgement/release, and Node/browser execution tests.
+- `proof/Tasks.lean`: State models for cancellation requests and completion acknowledgement, with proofs rejecting buffer release before read completion and completion acknowledgement before release.
+- `src/emit.rs`: Converts GC types, let, for, closures, enum/match, and try/catch to ordinary WAT.
+- `src/lib.rs`: `check(&str)` returns typed-core IR; `compile(&str)` supports both standard WAT and extensions. Also validates Wasm with wasmparser.
 
-列挙型はタグとケース別の GC subtype へ変換します。bytes/text は private な packed GC 配列を使い、text は UTF-8 を検証します。
-利用者定義の関数・型・alias・クロージャは、`(%type.params $T ...)` と `(%inst $name T...)` により単相化します。
-通常の汎用 `call` は引数・期待型から一意に決まる型引数を省略できます。マクロによる構文の変更では検査済みの先行式を保持し、新しい具体化で型環境が変わると全体を検査し直します。いずれも最終的な型・effect・所有権・race の契約検査を通してから最適化します。[マクロの境界と検査方式](user-macros.md#checking-scope-and-work-counters)を参照してください。
-具体的なクロージャ型を引数にする [map/fold の実例](../examples/generic-lists.wlt) と
-[具体化時の検査規則](generics.md) を参照してください。
-異なるクロージャ型を共通のインターフェースで呼ぶ糖衣、finally、共有 GC ヒープのスレッド間利用の糖衣は、この核の外に置いています。
+Enums become tags and case-specific GC subtypes. bytes/text uses private packed GC arrays, with UTF-8 validation for text.
+User-defined functions, types, aliases, and closures are monomorphized through `(@type.params $T ...)` and `(@inst $name T...)`.
+Ordinary generic `call` can omit type arguments uniquely determined by arguments and the expected type. Syntax changes made by macros preserve previously checked expressions; when a new instantiation changes the type environment, the whole module is checked again. In both cases, optimization follows the final type, effect, ownership, and race contract checks. See [macro boundaries and checking](user-macros.md#checking-scope-and-work-counters).
+See the [map/fold example](../examples/generic-lists.walz), which takes concrete closure types, and the
+[instantiation checking rules](generics.md).
+Sugar for calling different closure types through a common interface, finally, and sugar for sharing a GC heap across threads remain outside this core.
 
-次の型・effect 設計は Verse の effect family と WASI 0.3.0 の WIT に合わせます。
-Option/Result は値、Future/Stream は所有する配送ハンドル、suspends は制御上の作用として分けます。
-設計規約・実装範囲は [SPEC.md](../SPEC.md)、形状契約は [async-contract.wit](../interfaces/async-contract.wit) を参照してください。
-値型・effect 契約・所有権・law・配送済み/外部の Future/Stream、WIT 生成、Component ABI adapter、JSPI でのタイマー実行と task cancellation は実装済みです。writer と言語側の producer task は今後の範囲です。
-`just wit-check` と WIT のテストには `wasm-tools` が必要で、検証済みバージョンは1.245.1です。
+The following type/effect design aligns with Verse's effect family and WASI 0.3.0 WIT.
+It distinguishes Option/Result values, owned Future/Stream delivery handles, and suspends as a control effect.
+See [SPEC.md](../SPEC.md) for design rules and implementation scope, and [async-contract.wit](../interfaces/async-contract.wit) for the shape contract.
+Value types, effect contracts, ownership, laws, delivered/external Futures/Streams, WIT generation, Component ABI adapters, timer execution with JSPI, and task cancellation are implemented. Writers and language-side producer tasks remain future work.
+`just wit-check` and WIT tests require `wasm-tools`; the verified version is 1.245.1.

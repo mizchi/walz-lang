@@ -24,8 +24,8 @@ export async function createRunDirectory(root,id){
 }
 export function scalingSource(count,macros){
   if(!Number.isInteger(count)||count<1||count>512)throw new Error('count must be 1..512');
-  const header=macros?'(%macro $double (rule (?x:expr) (infer (?T ?x)) (when (Add ?x)) (%let $value (type ?T) ?x (+ $value $value))))\n':'';
-  return `(module\n ${header}${Array.from({length:count},(_,i)=>` (func $f${i} (export "f${i}") (param $x i64) (result i64) (%effect pure) ${macros?'(%$double $x)':'(+ $x $x)'})`).join('\n')}\n)`;
+  const header=macros?'(@macro $double (rule (?x:expr) (infer (?T ?x)) (when (Add ?x)) (@let $value (type ?T) ?x (+ $value $value))))\n':'';
+  return `(module\n ${header}${Array.from({length:count},(_,i)=>` (func $f${i} (export "f${i}") (param $x i64) (result i64) (@effect pure) ${macros?'(@$double $x)':'(+ $x $x)'})`).join('\n')}\n)`;
 }
 export const cases=[
   {name:'empty',rows:[]},

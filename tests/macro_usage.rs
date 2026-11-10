@@ -1,19 +1,19 @@
 use std::process::Command;
 const SOURCE: &str = r#"(module
-  (%macro $twice (rule (?x:expr) (+ ?x ?x)))
-  (%macro $once (rule (?x:expr) (%let $saved ?x (+ $saved $saved))))
-  (%macro $drop (rule (?x:expr) (i32.const 0)))
-  (%macro $loop (rule (?x:expr) (%loop $again (bind $n i32 0)
-    (if (< $n 2) (then (block (drop ?x) (%recur $again (+ $n 1)))) (else (nop))))))
+  (@macro $twice (rule (?x:expr) (+ ?x ?x)))
+  (@macro $once (rule (?x:expr) (@let $saved ?x (+ $saved $saved))))
+  (@macro $drop (rule (?x:expr) (i32.const 0)))
+  (@macro $loop (rule (?x:expr) (@loop $again (bind $n i32 0)
+    (if (< $n 2) (then (block (drop ?x) (@recur $again (+ $n 1)))) (else (nop))))))
   (func $f (result i32) (block (result i32)
-    (drop (%$twice (i32.const 1)))
-    (drop (%$once (i32.const 2)))
-    (%$loop (i32.const 3))
-    (%$drop (i32.const 4)))))"#;
+    (drop (@$twice (i32.const 1)))
+    (drop (@$once (i32.const 2)))
+    (@$loop (i32.const 3))
+    (@$drop (i32.const 4)))))"#;
 
 #[test]
 fn report_distinguishes_syntax_usage_from_runtime_evaluations() {
-    let report = wlt::macros::report(SOURCE, &Default::default()).unwrap();
+    let report = walz::macros::report(SOURCE, &Default::default()).unwrap();
     let json = serde_json::to_value(&report).unwrap();
     for (i, kind, count) in [
         (0, "duplicated", 2),
@@ -30,9 +30,9 @@ fn report_distinguishes_syntax_usage_from_runtime_evaluations() {
 #[test]
 fn cli_has_a_readable_usage_view_and_keeps_default_json() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("usage.wlt");
+    let path = dir.path().join("usage.walz");
     std::fs::write(&path, SOURCE).unwrap();
-    let json = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let json = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("macro-expand")
         .arg(&path)
         .output()
@@ -44,7 +44,7 @@ fn cli_has_a_readable_usage_view_and_keeps_default_json() {
     );
     let json: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
     assert_eq!(json["expansions"].as_array().unwrap().len(), 4);
-    let out = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let out = Command::new(env!("CARGO_BIN_EXE_walz"))
         .args(["macro-expand", "--text"])
         .arg(&path)
         .output()
@@ -60,7 +60,7 @@ fn cli_has_a_readable_usage_view_and_keeps_default_json() {
         "discarded (0 syntax occurrences)",
         "single (1 syntax occurrence)",
         "runtime evaluation depends on control flow",
-        "usage.wlt:",
+        "usage.walz:",
     ] {
         assert!(text.contains(required), "missing {required}: {text}");
     }
@@ -70,11 +70,11 @@ fn cli_has_a_readable_usage_view_and_keeps_default_json() {
 fn lsp_expansion_returns_usage_and_structured_types() {
     use serde_json::json;
     let dir = tempfile::tempdir().unwrap();
-    let uri = wlt::lsp::file_uri(&dir.path().join("main.wlt")).unwrap();
-    let source = "(module (%macro $m (rule (?x:expr) (infer (?T ?x)) (+ ?x ?x))) (func $f (result i64) (%$m (i64.const 1))))";
-    let mut session = wlt::lsp::Session::new(Default::default());
+    let uri = walz::lsp::file_uri(&dir.path().join("main.walz")).unwrap();
+    let source = "(module (@macro $m (rule (?x:expr) (infer (?T ?x)) (+ ?x ?x))) (func $f (result i64) (@$m (i64.const 1))))";
+    let mut session = walz::lsp::Session::new(Default::default());
     session.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"text":source,"version":1}}}));
-    let response=session.handle(json!({"id":1,"method":"wlt/expandMacro","params":{"textDocument":{"uri":uri},"position":{"line":0,"character":source.find("%$m").unwrap()}}}));
+    let response=session.handle(json!({"id":1,"method":"walz/expandMacro","params":{"textDocument":{"uri":uri},"position":{"line":0,"character":source.find("@$m").unwrap()}}}));
     let expansion = &response[0]["result"]["expansions"][0];
     assert_eq!(
         expansion["inputs"][0]["usage"], "duplicated",

@@ -33,7 +33,7 @@ enum Clause<'a> {
 
 fn parse<'a>(source: &str, node: &'a Sexp) -> Result<Clause<'a>, Error> {
     let fail = || {
-        Error::at(source, node.span, "expected shared/nonunit or built-in type-class constraints, or (callable $F (param types...) (result type) [(%effect ...)])").with_code("E_GENERIC_CONSTRAINT")
+        Error::at(source, node.span, "expected shared/nonunit or built-in type-class constraints, or (callable $F (param types...) (result type) [(@effect ...)])").with_code("E_GENERIC_CONSTRAINT")
     };
     let items = node.list().ok_or_else(fail)?;
     Ok(match node.head() {

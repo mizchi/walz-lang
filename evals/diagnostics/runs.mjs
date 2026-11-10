@@ -33,7 +33,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 async function compiler() {
   const output = await exec(
     "cargo",
-    ["build", "--locked", "--quiet", "--bin", "wlt", "--message-format=json"],
+    ["build", "--locked", "--quiet", "--bin", "walz", "--message-format=json"],
     { cwd: projectRoot, timeout: 120000, maxBuffer: 8 * 1024 * 1024 },
   );
   const artifact = output.stdout
@@ -43,10 +43,10 @@ async function compiler() {
     .findLast(
       (x) =>
         x.reason === "compiler-artifact" &&
-        x.target.name === "wlt" &&
+        x.target.name === "walz" &&
         x.executable,
     );
-  if (!artifact) throw new Error("Cargo did not report the wlt executable");
+  if (!artifact) throw new Error("Cargo did not report the walz executable");
   return {
     path: artifact.executable,
     sha256: sha256(await readFile(artifact.executable)),
@@ -92,7 +92,7 @@ async function invoke(cli, args, root) {
   };
 }
 function locations(text) {
-  return [...text.matchAll(/([^\s"'<>]+\.wlt):(\d+):(\d+):?/gu)].map((m) => ({
+  return [...text.matchAll(/([^\s"'<>]+\.walz):(\d+):(\d+):?/gu)].map((m) => ({
     file: m[1],
     line: Number(m[2]),
     column: Number(m[3]),
@@ -241,7 +241,7 @@ export async function prepareDiagnostics(
       }
       const packet = await invoke(
         cli,
-        ["check", join(target, "bad/program.wlt")],
+        ["check", join(target, "bad/program.walz")],
         join(target, "bad"),
       );
       if (packet.signal || packet.timedOut)
@@ -252,15 +252,15 @@ export async function prepareDiagnostics(
           packet,
         );
       await mkdir(join(directory, "private/drivers"), { recursive: true });
-      const template = await readFile(join(target, "tests.wlt"), "utf8");
+      const template = await readFile(join(target, "tests.walz"), "utf8");
       for (const [kind, program] of [
-        ["control", join(target, "fixed/program.wlt")],
-        ["repair", join(directory, "writer/cases", c.id, "program.wlt")],
+        ["control", join(target, "fixed/program.walz")],
+        ["repair", join(directory, "writer/cases", c.id, "program.walz")],
       ]) {
         const driver = join(
           directory,
           "private/drivers",
-          c.id + "-" + kind + ".wlt",
+          c.id + "-" + kind + ".walz",
         );
         const include = relative(dirname(driver), program).replaceAll(
           "\\",
@@ -317,7 +317,7 @@ export async function prepareDiagnostics(
         relative(directory, f),
       );
     await save(join(directory, "manifest.json"), {
-      schema: "wlt-eval-v1",
+      schema: "walz-eval-v1",
       id,
       suite,
       preparedAt: new Date().toISOString(),
@@ -348,8 +348,8 @@ export async function prepareDiagnostics(
 async function testProgram(cli, directory, c, kind) {
   const program =
     kind === "control"
-      ? join(directory, "corpus", c.id, "fixed/program.wlt")
-      : join(directory, "writer/cases", c.id, "program.wlt");
+      ? join(directory, "corpus", c.id, "fixed/program.walz")
+      : join(directory, "writer/cases", c.id, "program.walz");
   if (kind === "repair") {
     const root = dirname(program),
       expected = (await files(join(directory, "corpus", c.id, "bad"))).map(
@@ -401,7 +401,7 @@ async function testProgram(cli, directory, c, kind) {
           cli,
           [
             "test",
-            join(directory, "private/drivers", c.id + "-" + kind + ".wlt"),
+            join(directory, "private/drivers", c.id + "-" + kind + ".walz"),
             "--timeout-ms",
             "1000",
           ],
@@ -424,7 +424,7 @@ async function testProgram(cli, directory, c, kind) {
     if (check.exitCode !== 0) invariantsPassed = false;
     else {
       const source = await readFile(
-        join(dirname(program), c.guardFile ?? "program.wlt"),
+        join(dirname(program), c.guardFile ?? "program.walz"),
         "utf8",
       );
       for (const [name, counts] of Object.entries(c.guards)) {
@@ -459,7 +459,7 @@ export async function verifyDiagnostics(directory) {
     for (const c of manifest.suite.cases) {
       const actual = await invoke(
         cli,
-        ["check", join(directory, "corpus", c.id, "bad/program.wlt")],
+        ["check", join(directory, "corpus", c.id, "bad/program.walz")],
         join(directory, "corpus", c.id, "bad"),
       );
       const packet = await json(
@@ -493,7 +493,7 @@ export async function verifyDiagnostics(directory) {
     )
       throw new Error("compiler changed during verification");
     const out = {
-      schema: "wlt-diagnostics-verification-v1",
+      schema: "walz-diagnostics-verification-v1",
       passed: Object.values(cases).every((c) => c.passed),
       inputsFingerprint,
       implementation,
@@ -652,7 +652,7 @@ export async function scoreDiagnostics(directory) {
       writer.extraDocumentsRead.length === 0
     );
     result = {
-      schema: "wlt-eval-summary-v1",
+      schema: "walz-eval-summary-v1",
       id: manifest.id,
       suite: manifest.suite.id,
       status: incomplete ? "incomplete" : passed ? "pass" : "fail",
@@ -677,7 +677,7 @@ export async function scoreDiagnostics(directory) {
     };
   } catch (e) {
     result = {
-      schema: "wlt-eval-summary-v1",
+      schema: "walz-eval-summary-v1",
       status: "invalid",
       passed: false,
       error: e.message,

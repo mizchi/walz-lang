@@ -1,4 +1,4 @@
 {"imports":[
-  {"module":"wlt:filesystem/files@0.3.0","name":"read-file","suspends":false,"capability":"filesystem-read"},
-  {"module":"wlt:filesystem/files@0.3.0","name":"write-file","suspends":false,"capability":"filesystem-write"}
+  {"module":"walz:filesystem/files@0.3.0","name":"read-file","suspends":false,"capability":"filesystem-read"},
+  {"module":"walz:filesystem/files@0.3.0","name":"write-file","suspends":false,"capability":"filesystem-write"}
 ]}

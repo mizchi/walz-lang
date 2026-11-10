@@ -40,16 +40,16 @@ export async function probeLsp(binary,directory){
    const timer=setTimeout(()=>{const at=waiters.indexOf(waiter);if(at>=0)waiters.splice(at,1);reject(new Error('LSP diagnostics timeout'));},10000);waiters.push(waiter);
   });
  }
- const uri=pathToFileURL(join(directory,'main.wlt')).href,dependency=pathToFileURL(join(directory,'calc.wlt')).href;
- const text='(module (%use "./calc.wlt" (func $sum))\n  (func $main (result i32)\n    (; 日本😀 ;) (%let $answer (call $sum 40 2) $answer)))';
+ const uri=pathToFileURL(join(directory,'main.walz')).href,dependency=pathToFileURL(join(directory,'calc.walz')).href;
+ const text='(module (@use "./calc.walz" (func $sum))\n  (func $main (result i32)\n    (; 日本😀 ;) (@let $answer (call $sum 40 2) $answer)))';
  const position=needle=>{const before=text.slice(0,text.lastIndexOf(needle));return {line:before.split('\n').length-1,character:before.split('\n').at(-1).length};};
  const query=needle=>({textDocument:{uri},position:position(needle)});
  const diagnostics=version=>notification(v=>v.method==='textDocument/publishDiagnostics'&&v.params.uri===uri&&v.params.version===version);
  try{
   const initialized=await request('initialize',{});assert.ok(initialized.result.capabilities.hoverProvider);
   send({method:'initialized',params:{}});
-  send({method:'textDocument/didOpen',params:{textDocument:{uri:dependency,version:1,languageId:'wlt',text:'(module (%export (func $sum)) (func $sum (param $a i32) (param $b i32) (result i32) (+ $a $b)))'}}});
-  send({method:'textDocument/didOpen',params:{textDocument:{uri,version:1,languageId:'wlt',text}}});
+  send({method:'textDocument/didOpen',params:{textDocument:{uri:dependency,version:1,languageId:'walz',text:'(module (@export (func $sum)) (func $sum (param $a i32) (param $b i32) (result i32) (+ $a $b)))'}}});
+  send({method:'textDocument/didOpen',params:{textDocument:{uri,version:1,languageId:'walz',text}}});
   assert.deepEqual((await diagnostics(1)).params.diagnostics,[]);
   const hover=await request('textDocument/hover',query('$answer'));
   assert.match(hover.result.contents.value,/i32/);

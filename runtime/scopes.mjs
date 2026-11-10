@@ -1,4 +1,4 @@
-// Host grouping of public call scopes. WLT children retain their affine rules.
+// Host grouping of public call scopes. Walz children retain their affine rules.
 import {TaskCancelledError,TaskTimeoutError} from './tasks.mjs';
 const errorFor=reason=>reason instanceof Error?reason:new TaskCancelledError(reason);
 function view(record){return Object.freeze({

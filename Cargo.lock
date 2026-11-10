@@ -614,6 +614,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "walz"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "ctrlc",
+ "rustix",
+ "same-file",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "wasm-encoder",
+ "wasmparser",
+ "wasmprinter",
+ "wast",
+ "wat",
+ "wit-parser",
+]
+
+[[package]]
+name = "walz-web"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "walz",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "wasm-bindgen"
 version = "0.2.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -776,35 +805,6 @@ dependencies = [
  "serde_json",
  "unicode-ident",
  "wasmparser",
-]
-
-[[package]]
-name = "wlt"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "ctrlc",
- "rustix",
- "same-file",
- "serde",
- "serde_json",
- "tempfile",
- "wasm-encoder",
- "wasmparser",
- "wasmprinter",
- "wast",
- "wat",
- "wit-parser",
-]
-
-[[package]]
-name = "wlt-web"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "wasm-bindgen",
- "wlt",
 ]
 
 [[package]]

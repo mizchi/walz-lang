@@ -1,8 +1,8 @@
 use std::process::Command;
 fn run(body: &str, expected: &str) {
     let source =
-        format!("(module (func $main (export \"main\") (result i32) (%effect pure) {body}))");
-    let compiled = wlt::compile(&source).unwrap();
+        format!("(module (func $main (export \"main\") (result i32) (@effect pure) {body}))");
+    let compiled = walz::compile(&source).unwrap();
     assert!(!compiled.analysis.opaque);
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("control.wasm");
@@ -55,29 +55,29 @@ fn early_exits_cannot_discard_owners_or_cross_mismatched_label_types() {
         "(block $done (result i32) (br $done (i64.const 42)))",
         "(br $unknown)",
     ] {
-        assert!(wlt::check(&format!("(module (func $f (result i32) {body}))")).is_err());
+        assert!(walz::check(&format!("(module (func $f (result i32) {body}))")).is_err());
     }
-    let bad = "(module (func $f (param $x (%box i32)) (result i32) (%effect pure) (return (i32.const 42))))";
-    assert!(wlt::check(bad).is_err());
-    let good = "(module (func $f (param $x (%box i32)) (result (%box i32)) (%effect pure) (return (%move $x))))";
-    wlt::check(good).unwrap();
+    let bad = "(module (func $f (param $x (@box i32)) (result i32) (@effect pure) (return (i32.const 42))))";
+    assert!(walz::check(bad).is_err());
+    let good = "(module (func $f (param $x (@box i32)) (result (@box i32)) (@effect pure) (return (@move $x))))";
+    walz::check(good).unwrap();
 }
 
 #[test]
 fn named_loop_branches_and_owned_block_results_are_checked() {
     run(
-        "(%loop $again (bind $n i32 (i32.const 0)) (result i32) (if (result i32) (i32.lt_s (local.get $n) (i32.const 42)) (then (br $again (i32.add (local.get $n) (i32.const 1)))) (else (local.get $n))))",
+        "(@loop $again (bind $n i32 (i32.const 0)) (result i32) (if (result i32) (i32.lt_s (local.get $n) (i32.const 42)) (then (br $again (i32.add (local.get $n) (i32.const 1)))) (else (local.get $n))))",
         "42",
     );
-    let good = r#"(module (func $main (export "main") (result i32) (%effect pure)
-      (%let $x (%box.new i32 (i32.const 42))
-        (%match (%box i32) (result i32)
-          (block $done (result (%box i32)) (br $done (%move $x)))
+    let good = r#"(module (func $main (export "main") (result i32) (@effect pure)
+      (@let $x (@box.new i32 (i32.const 42))
+        (@match (@box i32) (result i32)
+          (block $done (result (@box i32)) (br $done (@move $x)))
           (case own ($n) (return (local.get $n)))))))"#;
-    let compiled = wlt::verified::compile(good).unwrap();
+    let compiled = walz::verified::compile(good).unwrap();
     assert!(!compiled.analysis.opaque);
     let bad = r#"(module (func $f (result i32)
-      (block $done (result i32) (%let $x (%box.new i32 (i32.const 1)) (br $done (i32.const 42))))))"#;
-    let error = wlt::check(bad).unwrap_err().to_string();
+      (block $done (result i32) (@let $x (@box.new i32 (i32.const 1)) (br $done (i32.const 42))))))"#;
+    let error = walz::check(bad).unwrap_err().to_string();
     assert!(error.contains("unconsumed"), "{error}");
 }

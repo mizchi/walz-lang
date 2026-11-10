@@ -6,7 +6,7 @@ use crate::{
     sexpr::{Kind, Sexp},
 };
 
-pub(crate) const PREFIX: &str = "wlt:component/";
+pub(crate) const PREFIX: &str = "walz:component/";
 pub(crate) const MAX_BINARY: usize = 4 * 1024 * 1024;
 
 #[derive(Clone, Debug, serde::Serialize)]
@@ -37,7 +37,7 @@ pub(crate) struct Interface {
 }
 
 fn failure(message: impl std::fmt::Display) -> Error {
-    Error::message(format!("Wasm %use: {message}")).with_code("E_WASM_USE")
+    Error::message(format!("Wasm @use: {message}")).with_code("E_WASM_USE")
 }
 
 fn inspect(bytes: &[u8]) -> Result<Interface, Error> {
@@ -72,13 +72,13 @@ pub(crate) fn source(bytes: &[u8], identity: &str) -> Result<(String, Vec<Unavai
     let interface = inspect(bytes)?;
     let namespace = format!("{PREFIX}{identity}");
     let mut text = format!(
-        "(%component.binary {namespace:?} {})\n{}",
+        "(@component.binary {namespace:?} {})\n{}",
         quoted(bytes),
         interface.source
     );
     for (i, export) in interface.exports.iter().enumerate() {
         text.push_str(&format!(
-            "(import {namespace:?} \"export-{i}\" (func {}{}))\n(%export (func {}))\n",
+            "(import {namespace:?} \"export-{i}\" (func {}{}))\n(@export (func {}))\n",
             export.selector, export.declaration, export.selector
         ));
     }
@@ -153,7 +153,7 @@ pub(crate) fn core(module: &Module) -> Result<(), Error> {
     if module.components.is_empty() {
         Ok(())
     } else {
-        Err(Error::message("%use of Component Wasm requires --target component; Core and Core+JSPI cannot instantiate components".into()).with_code("E_COMPONENT_USE_BACKEND"))
+        Err(Error::message("@use of Component Wasm requires --target component; Core and Core+JSPI cannot instantiate components".into()).with_code("E_COMPONENT_USE_BACKEND"))
     }
 }
 

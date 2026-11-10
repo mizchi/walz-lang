@@ -119,7 +119,7 @@ fn esm_metadata(module: &Module) -> serde_json::Value {
             }));
         }
     }
-    serde_json::json!({"schema":"wlt-esm-v1", "exports":exports})
+    serde_json::json!({"schema":"walz-esm-v1", "exports":exports})
 }
 
 fn compile_module(module: Module) -> Result<CoreJs, Error> {
@@ -167,7 +167,7 @@ fn compile_module(module: Module) -> Result<CoreJs, Error> {
         })
         .collect();
     let mut manifest =
-        serde_json::json!({"abi":"wlt-core-js-v2","imports":crate::bindings::manifest(&module)});
+        serde_json::json!({"abi":"walz-core-js-v2","imports":crate::bindings::manifest(&module)});
     manifest["esm"] = esm_metadata(&module);
     if module
         .functions
@@ -193,21 +193,21 @@ fn compile_module(module: Module) -> Result<CoreJs, Error> {
         // Old runtimes must reject certified artifacts instead of ignoring the
         // host-contract handshake. The value codec is unchanged from v2.
         manifest["abi"] = serde_json::json!(if certificate.version == 2 {
-            "wlt-core-js-v4"
+            "walz-core-js-v4"
         } else {
-            "wlt-core-js-v3"
+            "walz-core-js-v3"
         });
         manifest["raceFree"] = serde_json::json!({
             "hostContract": if certificate.version == 2 { crate::readonly::HOST_CONTRACT } else { crate::race::HOST_CONTRACT },
             "hostRequired": module.memories.iter().any(|m| m.import.is_some()),
             "cells": certificate.cells,
-            "kernel": "WltAtomicCells.race_free+uniform_cells",
+            "kernel": "WalzAtomicCells.race_free+uniform_cells",
         });
         if certificate.version == 2 {
             manifest["raceFree"]["readonlyRegions"] =
                 serde_json::json!(certificate.readonly_regions);
             manifest["raceFree"]["kernel"] =
-                serde_json::json!("WltAtomicCells.Readonly.race_free+readonly_in_bounds");
+                serde_json::json!("WalzAtomicCells.Readonly.race_free+readonly_in_bounds");
         }
     }
     Ok(CoreJs {

@@ -1,4 +1,4 @@
-// JSON grammar, AST and serialization live in WLT. This is only the CLI I/O.
+// JSON grammar, AST and serialization live in Walz. This is only the CLI I/O.
 import {createReadStream} from "node:fs";
 import {resolve} from "node:path";
 import {pathToFileURL} from "node:url";
@@ -28,7 +28,7 @@ export async function main(args) {
   const bytes=await readInput(file);
   let source;
   try {
-    // Keep a BOM for the WLT parser to reject; do not silently strip input.
+    // Keep a BOM for the Walz parser to reject; do not silently strip input.
     source=new TextDecoder("utf-8",{fatal:true,ignoreBOM:true}).decode(bytes);
   } catch {
     throw new Error("JSON input is not valid UTF-8");

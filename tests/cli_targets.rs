@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::{Command, Output};
 fn cli(dir: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_wlt"))
+    Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(dir)
         .args(args)
         .output()
@@ -20,7 +20,7 @@ fn success(out: Output) {
 fn core_js_build_is_a_standalone_runtime_bundle() {
     let dir = tempfile::tempdir().unwrap();
     let source =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/component-fixtures/event-loop.wlt");
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/component-fixtures/event-loop.walz");
     success(cli(
         dir.path(),
         &[
@@ -63,8 +63,8 @@ fn core_js_build_is_a_standalone_runtime_bundle() {
 fn build_targets_have_distinct_default_outputs_and_reject_unknown_targets() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
-        dir.path().join("main.wlt"),
-        "(module (func $main (export \"main\") (result i32) (%effect pure) 42))",
+        dir.path().join("main.walz"),
+        "(module (func $main (export \"main\") (result i32) (@effect pure) 42))",
     )
     .unwrap();
     for target in ["component", "core", "core-js"] {
@@ -89,7 +89,7 @@ fn build_targets_have_distinct_default_outputs_and_reject_unknown_targets() {
 #[test]
 fn bundled_outputs_cannot_overwrite_the_source_or_its_links() {
     let dir = tempfile::tempdir().unwrap();
-    let source = "(module (func $main (export \"main\") (result i32) (%effect pure) 42))";
+    let source = "(module (func $main (export \"main\") (result i32) (@effect pure) 42))";
     std::fs::write(dir.path().join("core.wasm"), source).unwrap();
     assert_eq!(
         cli(
@@ -109,10 +109,10 @@ fn bundled_outputs_cannot_overwrite_the_source_or_its_links() {
 #[test]
 fn component_metadata_cannot_overwrite_an_aliased_source() {
     let dir = tempfile::tempdir().unwrap();
-    let source = "(module (func $main (export \"main\") (result i32) (%effect pure) 42))";
-    std::fs::write(dir.path().join("main.wlt"), source).unwrap();
+    let source = "(module (func $main (export \"main\") (result i32) (@effect pure) 42))";
+    std::fs::write(dir.path().join("main.walz"), source).unwrap();
     std::fs::hard_link(
-        dir.path().join("main.wlt"),
+        dir.path().join("main.walz"),
         dir.path().join("app.wasm.json"),
     )
     .unwrap();
@@ -120,7 +120,7 @@ fn component_metadata_cannot_overwrite_an_aliased_source() {
         dir.path(),
         &[
             "build",
-            "main.wlt",
+            "main.walz",
             "--target",
             "component",
             "-o",
@@ -129,7 +129,7 @@ fn component_metadata_cannot_overwrite_an_aliased_source() {
     );
     assert_eq!(result.status.code(), Some(1));
     assert_eq!(
-        std::fs::read_to_string(dir.path().join("main.wlt")).unwrap(),
+        std::fs::read_to_string(dir.path().join("main.walz")).unwrap(),
         source
     );
     assert!(!dir.path().join("app.wasm").exists());

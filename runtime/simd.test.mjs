@@ -8,10 +8,10 @@ import { instrument } from "./testing/memory.mjs";
 
 for (const backend of ["core", "component"])
   test(`${backend}: SIMD uses portable scalar/list boundaries and survives JSPI`, { timeout: 60000 }, async () => {
-    const dir = await mkdtemp(join(tmpdir(), "wlt-simd-"));
+    const dir = await mkdtemp(join(tmpdir(), "walz-simd-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/simd.wlt", dir);
+      await build("tests/component-fixtures/simd.walz", dir);
       await instrument(dir, backend);
       const { instantiate } = await import(pathToFileURL(join(dir, "index.js")));
       let memory, yields = 0;

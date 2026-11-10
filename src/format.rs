@@ -1,4 +1,4 @@
-//! Token-preserving formatter for both native WAT and wlt. String escapes and
+//! Token-preserving formatter for both native WAT and walz. String escapes and
 //! nested comments stay verbatim; only whitespace between tokens is rewritten.
 use crate::{Error, ir::Span};
 
@@ -102,7 +102,7 @@ fn flat(n: &Node) -> Option<String> {
                 .collect::<Option<Vec<_>>>()?
                 .join(" ")
         )),
-        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('%'),"let"|"for-each"|"struct.update"|"result.let"|"stream.fold-result"|"match")) => {
+        Node::List(items) if matches!(items.first(),Some(Node::Token(t)) if matches!(t.trim_start_matches('@'),"let"|"for-each"|"struct.update"|"result.let"|"stream.fold-result"|"match")) => {
             None
         }
         Node::List(items) if matches!(items.as_slice(), [Node::Token(head), Node::Fields(_)] if head.ends_with("::")) => {
@@ -121,7 +121,7 @@ fn flat(n: &Node) -> Option<String> {
 fn head(n: &Node) -> Option<&str> {
     match n {
         Node::List(items) => match items.first()? {
-            Node::Token(t) => Some(t.trim_start_matches('%')),
+            Node::Token(t) => Some(t.trim_start_matches('@')),
             _ => None,
         },
         _ => None,
@@ -159,7 +159,7 @@ fn header_end(items: &[Node]) -> usize {
             )
         ),
     };
-    let name = name.trim_start_matches('%');
+    let name = name.trim_start_matches('@');
     let fields = match name {
         "result.let" => Some(if meaningful.len() == 4 { 2 } else { 4 }),
         "stream.fold-result" => Some(if meaningful.len() == 5 { 1 } else { 4 }),
@@ -254,7 +254,7 @@ fn write_header(items: &[Node], indent: usize, output: &mut String) {
     output.push_str(&" ".repeat(indent));
     output.push('(');
     let mut column = indent + 1;
-    let declaration = matches!(items.first(), Some(Node::Token(t)) if matches!(t.trim_start_matches('%'), "func" | "closure"));
+    let declaration = matches!(items.first(), Some(Node::Token(t)) if matches!(t.trim_start_matches('@'), "func" | "closure"));
     for (index, item) in items.iter().enumerate() {
         if declaration && matches!(item, Node::List(_)) {
             if column > 0 {

@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 pub(crate) fn exports(node: &Sexp, namespace: &str, out: &mut BTreeSet<(String, String)>) {
     match node.head() {
-        Some("%export" | "%public") => {
+        Some("@export" | "@public") => {
             for item in &node.list().unwrap()[1..] {
                 let parts = item.list().unwrap();
                 let kind = if item.head() == Some("opaque") {
@@ -28,7 +28,7 @@ pub(crate) fn exports(node: &Sexp, namespace: &str, out: &mut BTreeSet<(String, 
                 exports(child, namespace, out);
             }
         }
-        Some("%namespace") => {
+        Some("@namespace") => {
             let parts = node.list().unwrap();
             let name = parts[1].atom().unwrap().trim_start_matches('$');
             let name = if namespace.is_empty() {

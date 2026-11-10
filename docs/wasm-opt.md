@@ -1,133 +1,145 @@
-# wasm-opt に合わせた Wasm GC の出力
+<a id="wasm-opt-に合わせた-wasm-gc-の出力"></a>
 
-Binaryen 133 の通常の `-O3` を基準に、WLT の出力を調べた。
-外部に公開した GC 参照と trap の意味を保ったまま、大きな `%match` をテーブル分岐へ変えている。
-[固定した入力・生成物・計測結果](../benchmarks/wasm-opt/20261110-v1/report.md)を参照。
+# Wasm GC output for wasm-opt
 
-## どの形が最適化されるか
+Walz output was examined against ordinary `-O3` in Binaryen 133.
+Large `@match` expressions use table branches while preserving externally exposed GC references and trap semantics.
+See the [fixed inputs, artifacts, and measurements](../benchmarks/wasm-opt/20261110-v1/report.md).
 
-| 入力の形 | Binaryen の処理 | WLT の方針 |
+<a id="どの形が最適化されるか"></a>
+
+## Which forms are optimized
+
+| Input form | Binaryen processing | Walz approach |
 | --- | --- | --- |
-| 定数演算、不要な純粋な束縛 | 定数伝播・畳み込み、不要なローカルの削除 | 数値命令とローカルとして出力する |
-| 関数内で作って読み出すだけの GC struct／Result | `heap2local` で割当てをローカルへ置き換え、後続パスで簡約できる | `struct.new`／`struct.get` と具体的な型を維持する |
-| 既知の型への cast、不変フィールドの読み出し | `optimize-casts`、`local-subtyping`、共通式の簡約 | 非 null 型・不変フィールド・具体的な subtype を保持する |
-| 直接呼出し、到達不能な関数 | インライン化、未使用要素の削除 | 静的な呼出し先と明示的な export を保持する |
-| タグを順番に比較する大きな match | 今回の入力では `-O3` 後も比較列が残った | 8ケース以上は `br_table` を出す |
+| Constant arithmetic, unnecessary pure bindings | Constant propagation/folding, unused-local removal | Emit numeric instructions and locals |
+| GC structs/Results constructed and only read within a function | `heap2local` can replace allocations with locals, followed by simplification in later passes | Retain `struct.new`/`struct.get` and concrete types |
+| Casts to known types, immutable-field reads | `optimize-casts`, `local-subtyping`, common-expression simplification | Retain non-null types, immutable fields, and concrete subtypes |
+| Direct calls, unreachable functions | Inlining, removal of unused elements | Retain static callees and explicit exports |
+| Large matches comparing tags sequentially | Comparison chains remained after `-O3` on these inputs | Emit `br_table` for eight or more cases |
 
-GC の標準パスを含む処理順は [133 のパス定義](https://github.com/WebAssembly/binaryen/blob/version_133/src/passes/pass.cpp)で確認した。
-具体的な型を残すことや、不変フィールドを使う方針は
-[GC の lowering 指針](https://github.com/WebAssembly/binaryen/wiki/GC-Implementation---Lowering-Tips)にも沿っている。
-割当て除去は参照が外へ渡らず、同一性などの観測を保てる場合に限られる。
-任意の GC オブジェクトや、ホストへ渡る ABI 値が消えるという保証ではない。
+Pass order, including standard GC passes, was checked in the [133 pass definitions](https://github.com/WebAssembly/binaryen/blob/version_133/src/passes/pass.cpp).
+Retaining concrete types and using immutable fields also follows the
+[GC lowering tips](https://github.com/WebAssembly/binaryen/wiki/GC-Implementation---Lowering-Tips).
+Allocation elimination is limited to cases where references do not escape and observations such as identity are preserved.
+There is no guarantee that arbitrary GC objects or ABI values passed to hosts disappear.
 
-固定した3つの小例では、不要な束縛、局所 struct、局所 Result がいずれも
-`(i32.const 42)` だけの関数になった。最適化後は各37バイト、code section は各6バイト。
-この部分は既存の出力で最適化できるため、WLT に重複するパスを追加していない。
+In three fixed small examples, unnecessary bindings, local structs, and local Results all became
+functions containing only `(i32.const 42)`. Each optimized output is 37 bytes, with a 6-byte code section.
+Existing output already supports this optimization, so no duplicate Walz pass was added.
 
-## 大きな match の出力
+<a id="大きな-match-の出力"></a>
 
-検査済み enum のタグは宣言順に `0..N-1` で、match は網羅的になる。
-8ケース以上では subject を一度だけ一時ローカルに保存し、不変のタグを一度だけ読み、
-`br_table` で選んだ case へ進む。テーブル順は宣言タグ順なので、ソースの arm 順に依存しない。
-7ケース以下の出力は従来の `if` 列を保つ。小さいテーブルには固定の負担があるため、8を初期のしきい値とした。
-この出力選択は lowering の一部で、WLT の `--no-optimize` でも使われる。
+## Output for large matches
 
-各 case には従来どおり具体的な subtype への `ref.cast` を残す。
-payload のない case も cast を実行する。範囲外のタグは `unreachable` へ進む。
-これにより、外部 Wasm が作った「base 型だけの値」「タグと subtype が違う値」を受け入れない。
-関数の評価順、return、外側への branch、例外、unit、所有値を返す arm の扱いも維持する。
+Checked enums assign tags `0..N-1` in declaration order, and matches are exhaustive.
+For eight or more cases, the subject is stored once in a temporary local, its immutable tag is read once,
+and `br_table` selects the case. Table order follows declaration tags, independent of source arm order.
+Seven or fewer cases retain the existing `if` chain. Small tables have fixed overhead, so eight is the initial threshold.
+This output choice is part of lowering and also applies with Walz `--no-optimize`.
 
-`-O3` 後の全体サイズは、8／16／32ケースでそれぞれ496→463、928→839、1792→1591バイトになった。
-code section は292→259、572→483、1132→931バイト。
-生の WLT 出力はラベル名を含む name section が増えるため、全体サイズが増える場合がある。
-命令部分とデバッグ名を含む全体サイズを分けて比較する。
+Each case retains the existing `ref.cast` to its concrete subtype.
+Cases without payloads also cast. Out-of-range tags go to `unreachable`.
+This rejects externally constructed Wasm values with only a base type or mismatched tags and subtypes.
+Function evaluation order, return, outer branches, exceptions, unit, and arms returning owned values remain intact.
 
-速度はサイズと同じ傾向とは限らない。V8で事前構築した参照を混ぜて読む比較では、
-32ケースは約5%改善、16ケースはほぼ同等、8ケースは約2%悪化した。
-JSからの呼出し、タグ分布、JIT、CPUに依存する小規模な測定であり、実アプリ全体の高速化を保証しない。
+After `-O3`, total sizes for 8/16/32 cases changed from 496→463, 928→839, and 1792→1591 bytes respectively.
+Code sections changed from 292→259, 572→483, and 1132→931 bytes.
+Raw Walz output may grow in total size because label names enlarge the name section.
+Compare instruction size separately from total size including debug names.
 
-## 任意の後処理として実行する
+Speed does not necessarily follow size. In V8 comparisons mixing reads of preconstructed references,
+32 cases improved by about 5%, 16 cases were nearly unchanged, and eight cases worsened by about 2%.
+These small measurements depend on JS calls, tag distributions, JIT, and CPU; they do not guarantee whole-application speedups.
+
+<a id="任意の後処理として実行する"></a>
+
+## Running as optional postprocessing
 
 ```sh
-wlt build input.wlt --target core -o target/input.wasm
+walz build input.walz --target core -o target/input.wasm
 wasm-opt target/input.wasm \
   --enable-gc --enable-reference-types --enable-exception-handling \
   -O3 -o target/input.opt.wasm
 ```
 
-使う Wasm 機能に応じてフラグを指定する。上記は Core Wasm 用で、Component 全体を直接処理する手順ではない。
-WLT の通常ビルドと Playground は `wasm-opt` を起動しない。Rust 製ブラウザコンパイラ自体の wasm-pack 設定とも別の話になる。
+Set flags according to the Wasm features used. The commands above target Core Wasm, not whole Components directly.
+Normal Walz builds and Playground do not invoke `wasm-opt`. This is also separate from wasm-pack settings for the Rust browser compiler itself.
 
-GC 向けには複数回のパイプライン実行が効くことがあり、
-[公式ガイド](https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook)は `-O3 -O3` も紹介している。
-今回の変更後の enum では、2回目でさらに5バイト小さくなった。
+Running the pipeline more than once can help GC code;
+the [official guide](https://github.com/WebAssembly/binaryen/wiki/GC-Optimization-Guidebook) also presents `-O3 -O3`.
+For the changed enums here, a second pass saved another five bytes.
 
-通常の検査・計測では `--closed-world`、GUFA、`--traps-never-happen`、
-`--ignore-implicit-traps`、fast-math を指定しない。
-closed-world は外部が GC 参照をどう扱うかに制約を加え、trap を無視する設定は不要な式の削除条件を変える。
-公開参照や除算の trap を保持する今回の比較とは異なる前提になる。
-設定の契約は [133 のオプション定義](https://github.com/WebAssembly/binaryen/blob/version_133/src/tools/optimization-options.h)を参照。
+Ordinary checks and measurements do not use `--closed-world`, GUFA, `--traps-never-happen`,
+`--ignore-implicit-traps`, or fast-math.
+closed-world constrains how external code handles GC references; ignoring traps changes when unused expressions can be removed.
+Those assumptions differ from these comparisons, which preserve public references and division traps.
+See the [133 option definitions](https://github.com/WebAssembly/binaryen/blob/version_133/src/tools/optimization-options.h) for option contracts.
 
-## 最適化しにくいソースへの任意警告
+<a id="最適化しにくいソースへの任意警告"></a>
+
+## Optional warnings for sources that are hard to optimize
 
 ```sh
-wlt check examples/optimization/loop-copy.wlt --warn-performance
-wlt check examples/optimization/loop-copy.wlt --warn-performance --json
-just check-performance examples/optimization/loop-copy.wlt
+walz check examples/optimization/loop-copy.walz --warn-performance
+walz check examples/optimization/loop-copy.walz --warn-performance --json
+just check-performance examples/optimization/loop-copy.walz
 ```
 
-通常の型・effect・所有権・race・lawの検査を通した後、型付きIRの根拠から改善候補を出す。
-コンパイルエラーがあればそちらを返す。警告だけでは終了コードを失敗にしない。
-既定では無効で、ソースの自動修正や生成Wasmの変更は行わない。
+After ordinary type/effect/ownership/race/law checks pass, improvement candidates are derived from typed IR evidence.
+Compilation errors take priority. Warnings alone do not cause a failing exit code.
+Warnings are disabled by default and neither automatically fix sources nor change generated Wasm.
 
-| コード | 検出する形 | 検討する変更 |
+| Code | Detected form | Changes to consider |
 | --- | --- | --- |
-| `W_OPT_LOOP_COPY` | ループ本体のbytes／listのslice、またはそれを行う静的な呼出し先 | 元データと添字・範囲を保持する、bytes/string viewを使う、意味を保てる場合だけループ外へ移す |
-| `W_OPT_LOOP_HOST_ESCAPE` | 同じ関数のループ本体で割り当てたGC値がホストへ逃げる可能性 | ホストの契約に合うならスカラーを渡す、Wasm内にGC値を保つ、境界でまとめて転送する |
+| `W_OPT_LOOP_COPY` | bytes/list slices in loop bodies, or static callees performing them | Retain original data with indices/ranges, use bytes/string views, or move work outside loops only when semantics are preserved |
+| `W_OPT_LOOP_HOST_ESCAPE` | GC values allocated in a loop body of the same function may escape to a host | Pass scalars if the host contract permits, retain GC values within Wasm, or batch transfers at boundaries |
 
-copyの判定は関数名ではなく検査済みの操作と呼出しグラフを使い、importの別名や具体化した関数にも対応する。
-ヘルパー越しのコピーには実際のsliceの位置も関連情報として示す。
-host escapeは既存の領域解析に基づく保守的な判定で、ホスト内の処理までは証明しない。
-ヘルパー内の割当てが呼出し元のループで繰り返されるケースなど、すべての反復経路を網羅するものではない。
+Copy detection uses checked operations and the call graph rather than function names, covering import aliases and instantiated functions.
+Copies through helpers include the actual slice position as related information.
+Host escape detection is conservative and based on existing region analysis; it does not prove host-side behavior.
+It does not cover every repeated path, such as allocations within helpers repeated by caller loops.
 
-ループの初期値だけで行うコピー、未参照の宣言、解析で到達不能と分かった箇所は除外する。
-外側のループで繰り返される内側ループの初期化は対象になる。
-可変フィールドやnullable型があるという理由だけでは警告しない。
-マクロ展開で同じソース位置に同じ警告が重なった場合はまとめる。
+Copies only in loop initializers, unreferenced declarations, and locations found unreachable by analysis are excluded.
+Inner-loop initialization repeated by an outer loop is included.
+Mutable fields and nullable types alone do not trigger warnings.
+Identical warnings at the same source position due to macro expansion are merged.
 
-[loop-copy.wlt](../examples/optimization/loop-copy.wlt)は、毎回sliceしたbytesの先頭を読む例。
-[loop-indexed.wlt](../examples/optimization/loop-indexed.wlt)は、同じ不変データを直接読む例になる。
-Binaryen 133の通常の `-O3` では、前者に `array.copy` が残り、後者では消える。
-最適化後の全体サイズは253→214バイト。空データで反復0回なら0を返し、1回ならtrapする性質も両方で照合している。
-入力・診断・生成物は [性能警告の確認記録](../benchmarks/wasm-opt/20261110-advice-v1/report.md) に保存してある。
-これはソースを明示的に書き換えた例で、一般のコピーを安全に削除できるという判定ではない。
+[loop-copy.walz](../examples/optimization/loop-copy.walz) reads the first byte of a newly sliced bytes value on each iteration.
+[loop-indexed.walz](../examples/optimization/loop-indexed.walz) reads the same immutable data directly.
+With ordinary `-O3` in Binaryen 133, the first retains `array.copy`, while the second eliminates it.
+Optimized total size changes from 253→214 bytes. Both are also checked to return 0 for empty data with zero iterations and trap with one iteration.
+Inputs, diagnostics, and artifacts are saved in the [performance-warning verification record](../benchmarks/wasm-opt/20261110-advice-v1/report.md).
+This is an explicit source rewrite example, not a determination that arbitrary copies can safely be removed.
 
-警告はBinaryen自身の「最適化失敗」通知や、計測したホットスポットではない。
-コピーが必要なsnapshotである場合や、ホストがオブジェクト同一性を必要とする場合もある。
-ループの頻度、境界trap、変更の観測、データ保持期間、ホストABIを確認して採否を決める。
-実際の最適化結果・プロファイルを調べる入口として使う。
+These warnings are neither Binaryen's own optimization-failure notifications nor measured hotspots.
+A copy may be a necessary snapshot, or the host may require object identity.
+Decide whether to apply changes after checking loop frequency, boundary traps, mutation observations, data retention, and the host ABI.
+Use warnings as a starting point for inspecting actual optimization results and profiles.
 
-`--json` では従来の `wlt-check-v1` に `performance` を追加する。
-`diagnostics` はエラー用、`performance.warnings` は既存のDiagnostic形式の警告用で、混在させない。
-`performance.schema` は `wlt-performance-v1`、`profile` は根拠とした `binaryen-133-open-world`。
-これはインストール済みのoptimizerを検出した結果ではなく、外部の実行ファイルは起動しない。
-`coverage: "opaque_wat"` は標準WATの式レベルの解析ができないことを表し、「改善候補なし」という意味ではない。
-フラグなしの `check --json` は従来の形式を保つ。
+`--json` adds `performance` to the existing `walz-check-v1` format.
+`diagnostics` remains for errors; `performance.warnings` contains warnings in the existing Diagnostic format, kept separate.
+`performance.schema` is `walz-performance-v1`; `profile` is the evidence profile `binaryen-133-open-world`.
+This does not detect an installed optimizer or invoke external executables.
+`coverage: "opaque_wat"` means expression-level analysis of standard WAT is unavailable, rather than meaning no improvement candidates exist.
+Without the flag, `check --json` retains its existing format.
 
-Rust APIは `performance::check_with_policy(source, policy)`。
-検査済みIRを再利用する場合は `performance::analyze(source, module)` を使える。
-読み込んだ複数ファイルの位置へ戻すには `Report::located(&source)` を呼ぶ。
-解析は入力IRを変更せず、出力先に依存しないため、Core＋JSPIやComponent用のtaskもCore出力を要求せずに検査できる。
+The Rust API is `performance::check_with_policy(source, policy)`.
+Use `performance::analyze(source, module)` to reuse checked IR.
+Call `Report::located(&source)` to map positions back to multiple loaded files.
+Analysis does not modify input IR or depend on output targets, so tasks targeting Core＋JSPI or Component can be checked without requiring Core output.
 
-LSPでは `initializationOptions: {"performanceWarnings": true}`、または
-`workspace/didChangeConfiguration` の `settings: {"wlt": {"performanceWarnings": true}}` で有効にする。
-severityは2（Warning）。元のファイル位置とUTF-16範囲、ヘルパーの関連位置を表示する。
-同じrevisionでは計算結果を再利用し、無効化・編集・クローズで古い警告を消す。
-LSPは従来どおり型付きsnapshotから診断するため、lawの証明にはCLIのcheck/buildを使う。
+Enable warnings in LSP with `initializationOptions: {"performanceWarnings": true}` or
+`settings: {"walz": {"performanceWarnings": true}}` in `workspace/didChangeConfiguration`.
+Severity is 2 (Warning). Diagnostics show original-file positions, UTF-16 ranges, and related helper positions.
+Results are reused within the same revision; disabling, editing, or closing clears stale warnings.
+LSP continues to diagnose from typed snapshots; use CLI check/build for law proofs.
 
-## 再実行
+<a id="再実行"></a>
 
-`wasm-opt --version` が133である実行ファイルを明示する。別の版で調べる場合は課題・記録も別版にする。
+## Rerunning
+
+Explicitly specify an executable whose `wasm-opt --version` is 133. Investigations using other versions need separately versioned tasks and records.
 
 ```sh
 just test-wasm-opt /path/to/binaryen-133/bin/wasm-opt
@@ -138,13 +150,13 @@ just wasm-opt-compare \
   benchmarks/wasm-opt/20261110-v1/after new-comparison
 ```
 
-capture は `target/wasm-opt/<run>/` に入力、WAT、Wasm、最適化後の命令と metrics、
-コンパイラ実装・入力の SHA-256、実行コマンド、生の測定値を保存する。既存 run を上書きしない。
-compare は両側の入力とプロファイルの一致、保存した入力とWasmのハッシュ、全caseの値を検査し、
-同じプロセスで before／after の順を交互に変えて測る。
+capture saves inputs, WAT, Wasm, optimized instructions and metrics,
+compiler-implementation/input SHA-256 hashes, executed commands, and raw measurements under `target/wasm-opt/<run>/`. Existing runs are not overwritten.
+compare checks matching inputs and profiles on both sides, saved input/Wasm hashes, and every case's values,
+then measures in the same process, alternating before/after order.
 
-通常の Rust テストは8〜64ケース、arm の並べ替え、ネスト、副作用の一回評価、分岐と所有値を検査する。
-`test-wasm-opt` は133を使い、最適化後の値・不正タグ・不正subtype・nullary case・未使用の除算trapを
-WasmtimeとV8で確認する。Core／ComponentのABI検査とPlaygroundのE2Eも別途持つ。
-性能警告の検査は、正例・除外例、importとマクロの位置、JSONとLSPの任意有効化に加え、
-上記のコピー有無とホストが観測するGC参照の同一性もBinaryen後に確認する。
+Ordinary Rust tests cover 8–64 cases, reordered arms, nesting, one-time evaluation of side effects, branches, and owned values.
+`test-wasm-opt` uses 133 to check optimized values, invalid tags/subtypes, nullary cases, and unused division traps
+in Wasmtime and V8. Separate Core/Component ABI checks and Playground E2E tests are also present.
+Performance-warning checks cover positive/excluded cases, import/macro positions, optional JSON/LSP enablement,
+and the copy-presence differences above and host-observable GC-reference identity after Binaryen.

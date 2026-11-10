@@ -95,13 +95,13 @@ pub(crate) fn benchmark(module: &Module, export: &str) -> String {
             // Typed Core emission has no globals. This anonymous global is
             // index zero and cannot collide with user function/type names.
             output.push_str(&format!(
-                "(global (export \"__wlt_bench_sink\") (mut {storage}) {initial})\n"
+                "(global (export \"__walz_bench_sink\") (mut {storage}) {initial})\n"
             ));
             format!("(global.set 0 {call})")
         }
     };
     output.push_str(&format!(
-        "(func (export \"__wlt_bench_batch\") (param i32) (local i32)
+        "(func (export \"__walz_bench_batch\") (param i32) (local i32)
           (block (loop
             (br_if 1 (i32.eqz (local.get 0)))
             {body}

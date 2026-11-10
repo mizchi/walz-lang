@@ -9,7 +9,7 @@ import { once } from 'node:events';
 import { build } from './build-core.mjs';
 import { instrument } from './testing/memory.mjs';
 
-const fixture = 'tests/component-fixtures/threads.wlt';
+const fixture = 'tests/component-fixtures/threads.walz';
 const workerSource = `
 const { parentPort, workerData } = require('node:worker_threads');
 (async () => {
@@ -33,7 +33,7 @@ async function workers(url, memory, count, work) {
 }
 
 test('Core: host and workers use one shared Memory, distinct from ABI storage', { timeout: 60000 }, async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'wlt-threads-'));
+  const directory = await mkdtemp(join(tmpdir(), 'walz-threads-'));
   try {
     await build(fixture, directory);
     await instrument(directory, 'core');
@@ -107,10 +107,10 @@ test('Core: host and workers use one shared Memory, distinct from ABI storage', 
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: private shared memory preserves atomic semantics beside ABI memory`, { timeout: 60000 }, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-private-threads-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-private-threads-'));
     try {
       const source = (await readFile(fixture, 'utf8')).replace('(import "env" "memory" (memory $shared 1 2 shared))', '(memory $shared 1 2 shared)');
-      const input = join(directory, 'private.wlt');
+      const input = join(directory, 'private.walz');
       await writeFile(input, source);
       const { build: compile } = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
       const output = join(directory, 'out');

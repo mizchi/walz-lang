@@ -1,0 +1,3 @@
+(module
+  (func $main (export "main") (result i64) (@effect pure)
+    (@let (($x i64 40) ($y i64 2)) (+ $x $y))))

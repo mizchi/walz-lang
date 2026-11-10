@@ -2,9 +2,9 @@ use std::process::Command;
 
 fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output {
     let directory = tempfile::tempdir().unwrap();
-    let input = directory.path().join("source.wlt");
+    let input = directory.path().join("source.walz");
     std::fs::write(&input, source).unwrap();
-    let mut command = Command::new(env!("CARGO_BIN_EXE_wlt"));
+    let mut command = Command::new(env!("CARGO_BIN_EXE_walz"));
     command.args([mode]).arg(input);
     if let Some(path) = path {
         command.env("PATH", path);
@@ -13,9 +13,9 @@ fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output
 }
 
 const GOOD: &str = r#"(module
-  (func $main (export "main") (result i64) (%effect pure)
-    (%let $x (%box.new i64 (i64.const 42))
-      (%match (%box i64) (result i64) (%move $x) (case own ($n) (local.get $n))))))"#;
+  (func $main (export "main") (result i64) (@effect pure)
+    (@let $x (@box.new i64 (i64.const 42))
+      (@match (@box i64) (result i64) (@move $x) (case own ($n) (local.get $n))))))"#;
 
 #[test]
 fn contracts_are_inspectable_and_verified_execution_uses_the_checked_ir() {
@@ -52,7 +52,7 @@ fn verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel() {
             "typed core",
         ),
         (
-            "(module (import \"host\" \"x\" (func $x)) (func $main (export \"main\") (%effect pure) (nop)))",
+            "(module (import \"host\" \"x\" (func $x)) (func $main (export \"main\") (@effect pure) (nop)))",
             "imports",
         ),
         (
@@ -60,7 +60,7 @@ fn verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel() {
             "effect contract",
         ),
         (
-            "(module (func $main (export \"main\") (param $x (%box i64)) (%effect pure) (%box.close (%move $x))))",
+            "(module (func $main (export \"main\") (param $x (@box i64)) (@effect pure) (@box.close (@move $x))))",
             "owned exports",
         ),
     ] {
@@ -105,9 +105,9 @@ fn independent_kernel_rejects_double_use_branch_mismatch_and_lost_loop_owners() 
         .unwrap();
         let output = Command::new("lean")
             .args([
-                wlt::verified::LEAN_VERSION,
+                walz::verified::LEAN_VERSION,
                 "--run",
-                wlt::verified::KERNEL_PATH,
+                walz::verified::KERNEL_PATH,
             ])
             .arg(path)
             .output()
@@ -124,7 +124,7 @@ fn independent_kernel_rejects_double_use_branch_mismatch_and_lost_loop_owners() 
 
 #[test]
 fn ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_protected() {
-    let source = std::fs::read_to_string("examples/ready-delivery.wlt").unwrap();
+    let source = std::fs::read_to_string("examples/ready-delivery.walz").unwrap();
     let output = command("run-verified", &source, None);
     assert!(
         output.status.success(),
@@ -133,8 +133,8 @@ fn ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_prote
     );
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "42");
     for source in [
-        "(module (func $f (export \"f\") (result (%future %unit)) (%effect pure) (%future.ready %unit)))",
-        "(module (func $f (export \"f\") (param $s (%stream %unit)) (%effect pure) (%stream.close %unit (%move $s))))",
+        "(module (func $f (export \"f\") (result (@future @unit)) (@effect pure) (@future.ready @unit)))",
+        "(module (func $f (export \"f\") (param $s (@stream @unit)) (@effect pure) (@stream.close @unit (@move $s))))",
     ] {
         let output = command("verify", source, None);
         assert_eq!(output.status.code(), Some(1));
@@ -175,9 +175,9 @@ fn independent_kernel_checks_graph_edges_contexts_and_terminals() {
         std::fs::write(&path,json!({"version":2,"functions":[{"name":"graph","inputs":[0],"graph":{"entry":0,"nodes":nodes}}]}).to_string()).unwrap();
         let output = Command::new("lean")
             .args([
-                wlt::verified::LEAN_VERSION,
+                walz::verified::LEAN_VERSION,
                 "--run",
-                wlt::verified::KERNEL_PATH,
+                walz::verified::KERNEL_PATH,
             ])
             .arg(path)
             .output()

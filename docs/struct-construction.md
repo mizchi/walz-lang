@@ -1,90 +1,90 @@
-# 名前付きstruct構築
+# Named Struct Construction
 
-`%struct.new`は、既存のGC structをフィールド名で構築する。すべてのフィールドに名前がある型を対象とする。
-標準WATの位置引数の`struct.new`も使える。
+`@struct.new` constructs an existing GC struct by field name. Every field in the type must be named.
+Standard WAT positional `struct.new` remains available.
 
 ```wat
 (type $User
   (struct (field $name $string) (field $age i32) (field $email $string)))
 
-(%struct.new $User
-  ($name (%string.lit "Alice"))
+(@struct.new $User
+  ($name (@string.lit "Alice"))
   ($age (i32.const 30))
-  ($email (%string.lit "alice@example.com")))
+  ($email (@string.lit "alice@example.com")))
 ```
 
-`$string`は通常どおり`(%use "wlt:core" (type $string))`で取り込む。
-フィールドの記述順は任意。重複、未知のフィールド、欠落を静的エラーにする。nullableやmutableでも省略はできない。
-ラベルは変数の束縛ではない。初期値では`$foo`または`(local.get $foo)`で既存のローカル変数を読む。
+Import `$string` as usual with `(@use "walz:core" (type $string))`.
+Fields may appear in any order. Duplicate, unknown, and missing fields are static errors; nullable or mutable fields cannot be omitted either.
+Labels do not bind variables. Initializers read existing locals with `$foo` or `(local.get $foo)`.
 
-## 独立した2つの糖衣
+## Two Independent Sugars
 
-フィールド群を`{}`で書ける。`:name`は静的な`$name`フィールドのラベル。
+Field groups can use `{}`. `:name` labels the static `$name` field.
 
 ```wat
-(%struct.new $User {
-  :name (%string.lit "Alice")
+(@struct.new $User {
+  :name (@string.lit "Alice")
   :age (i32.const 30)
-  :email (%string.lit "alice@example.com")
+  :email (@string.lit "alice@example.com")
 })
 ```
 
-名前付き初期値の直下では、フィールドの型で確定できるリテラルを省略表記できる。`{}`は不要。
+Directly inside a named initializer, literals whose types are determined by the field type can use shorthand. `{}` is optional.
 
 ```wat
-(%struct.new $User
+(@struct.new $User
   ($name "Alice")
   ($age 30)
   ($email "alice@example.com"))
 ```
 
-型名を含む短縮形もある。`%$User::`は`$User`、`%$model.User::`は`$model.User`を指定する。
-`%`は拡張構文、`$User`は既存の型識別子を表す。`$`を省いた`%User::`は受け付けない。
+There is also a shorthand including the type name. `@$User::` selects `$User`, and `@$model.User::` selects `$model.User`.
+`@` marks extension syntax; `$User` is an existing type identifier. `@User::` without `$` is rejected.
 
 ```wat
-(%$User::{:name "Alice" :age 30 :email "alice@example.com"})
+(@$User::{:name "Alice" :age 30 :email "alice@example.com"})
 ```
 
-裸の数値は、解決したフィールド型の`i32.const` / `i64.const` / `f32.const` / `f64.const`として検査する。
-これはフィールド宣言に基づく局所的な期待型付け。例えばi32フィールドの`:age 30`には`(i32.const 30)`と同じ型の定数命令を補い、i64フィールドなら`i64.const`を補う。
-リテラルの値から整数幅を決めたり、後続の使用箇所から型を探索したりはしない。型の確定には既存の宣言・命令の署名・明示的な型適用を使う。
-明示的に`(i32.const 30)`と書いた値をi64フィールドへ渡すと型エラーになり、暗黙に拡張しない。
-範囲・符号・16進数・浮動小数点・NaN/InfはWATの該当型の定数規則に従う。例えばi32フィールドの`4294967295`は全bitが1のi32となる。
-裸文字列は`$string`に対する`%string.lit`と同じUTF-8規則を使う。文字列escapeもWATの規則。
-数値の既定幅や暗黙変換、newtypeの自動wrap、boolean/nullの別名は追加しない。
-bytes、参照、v128、newtype、Option/Resultなどには従来の明示式を使う。
-文字列の省略は名前付き構築の初期値の直下に限る。数値とローカル参照は、[期待型が分かる一般の式位置](core-expressions.md#ローカル参照と数値の省略形)でも省略できる。
+Bare numbers are checked as `i32.const`/`i64.const`/`f32.const`/`f64.const` of the resolved field type.
+This is local expected typing based on field declarations. For example, `:age 30` in an i32 field receives the same constant instruction as `(i32.const 30)`; an i64 field receives `i64.const`.
+Integer width is not chosen from literal magnitude, and later uses are not searched to find types. Existing declarations, instruction signatures, and explicit type applications determine types.
+Passing an explicit `(i32.const 30)` to an i64 field is a type error, without implicit widening.
+Ranges, signs, hexadecimal notation, floating-point values, and NaN/Inf follow WAT constant rules for the relevant type. For example, `4294967295` in an i32 field is an i32 with every bit set.
+Bare strings use the same UTF-8 rules as `@string.lit` for `$string`. String escaping also follows WAT rules.
+No default numeric widths, implicit conversions, automatic newtype wrapping, or boolean/null aliases are added.
+Use existing explicit expressions for bytes, references, v128, newtypes, Option/Result, and similar values.
+String shorthand is limited to direct named-construction initializers. Numeric and local-reference shorthand also works in [general expression positions with known expected types](core-expressions.md#ローカル参照と数値の省略形).
 
-`{}`は型を指定する構築式の中で使う。型のないmap、spread、comma、動的なキーは追加しない。
-値には任意の既存式や、型を指定した別の名前付き構築式を置ける。空structは`(%$Empty::{})`で構築できる。
+`{}` is used within a construction expression that specifies a type. Untyped maps, spread, commas, and dynamic keys are not added.
+Values can be arbitrary existing expressions or other explicitly typed named-construction expressions. Construct an empty struct with `(@$Empty::{})`.
 
-## 型引数と可視性
+## Type Arguments and Visibility
 
-既存の名前解決、明示的な型適用、単相化を使う。
+This uses existing name resolution, explicit type application, and monomorphization.
 
 ```wat
-(type $Box (%type.params $T) (%where (shared $T) (nonunit $T))
+(type $Box (@type.params $T) (@where (shared $T) (nonunit $T))
   (struct (field $value $T)))
-(%struct.new (%inst $Box i64) {:value 42})
+(@struct.new (@inst $Box i64) {:value 42})
 ```
 
-型引数を指定する場合は`%struct.new`の型オペランドに`(%inst ...)`を置く。型引数の推論は追加しない。
-%useした型の別名も同じ規則で解決する。opaque型の外部からの構築は認めない。
-匿名フィールドを含む型には従来の位置引数構築を使う。
+For type arguments, put `(@inst ...)` in the type operand of `@struct.new`. No type-argument inference is added.
+Aliases of types imported through @use resolve under the same rules. Opaque types cannot be constructed externally.
+Use existing positional construction for types containing anonymous fields.
 
-## 評価順と静的解析
+## Evaluation Order and Static Analysis
 
-値を**ソースの記述順に、到達した式を一度ずつ**評価し、衛生的な一時値へ保存する。
-最後に一時値を型定義順へ配置した既存の`struct.new`へ渡す。
-途中のthrow・trap・return・分岐では、後続の初期値と最後のstruct割当てを実行しない。
-Future待機を含む場合も、先に評価した値を保持する。フィールド名順や型定義順への並べ替えで作用の順番を変えない。
+Values evaluate **in source order, once per reached expression**, and are saved in hygienic temporaries.
+Finally, the temporaries are arranged in type-definition order and passed to existing `struct.new`.
+An intervening throw, trap, return, or branch skips later initializers and the final struct allocation.
+Previously evaluated values are retained across Future awaits too. Reordering by field name or type-definition order never changes effect order.
 
-展開結果は既存のtyped IRの`Let`・`Local`・`StructNew`を使い、型・opaque・effect・所有権・メモリ領域の検査を通る。
-名前の対応付けはコンパイル時に行い、実行時のkeywordやmapを作らない。structのidentity、allocates、mutableフィールドのget/setはWasm GCの規則を保つ。
-共有GCフィールドへの所有値の格納禁止も維持する。所有操作や例外を含む初期値は既存の所有権証明書で検査する。
-到達不能な後続式も静的検査の対象に残す。
+Expansion uses existing typed-IR `Let`, `Local`, and `StructNew`, passing type, opaque, effect, ownership, and memory-region checks.
+Name association happens at compile time without runtime keywords or maps. Struct identity, allocates, and mutable-field get/set retain Wasm GC rules.
+The prohibition on storing owned values in shared GC fields remains. Initializers with ownership operations or exceptions use existing ownership certificates.
+Unreachable later expressions remain subject to static checking.
 
-実行例は[struct-literals.wlt](../examples/struct-literals.wlt)。`just run examples/struct-literals.wlt`は42を返す。
-`just test-structs`で型と実行・両JS ABIを、`just test-e2e`でChromiumを検査する。
-導入前の読解比較は[評価記録](../evals/reports/20261106-struct-literals-v2/REPORT.md)に保存している。
-同じ6パターンを4表記でコンパイル・実行した[現行構文の確認](../evals/reports/20261106-struct-literals-implementation-v2/README.md)も保存している。旧綴り`%Type::`を使った導入時の記録は当時の入力・結果のまま固定している。
+See [struct-literals.walz](../examples/struct-literals.walz) for an executable example. `just run examples/struct-literals.walz` returns 42.
+`just test-structs` checks types, execution, and both JS ABIs; `just test-e2e` checks Chromium.
+The reading comparison before introduction is saved in the [evaluation record](../evals/reports/20261106-struct-literals-v2/REPORT.md).
+A [current-syntax check](../evals/reports/20261106-struct-literals-implementation-v2/README.md) compiles and runs the same six patterns in four notations. Introduction-time records using the old `@Type::` spelling remain frozen with their original inputs/results.

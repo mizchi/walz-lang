@@ -2,9 +2,9 @@
 use crate::ir::*;
 use crate::{Error, effects::EffectSet};
 
-pub const EVENT_LOOP: &str = "wlt:host/event-loop@0.1.0";
-pub const TEXT_IO: &str = "wlt:host/text-io@0.1.0";
-pub const CLI: &str = "wlt:host/cli@0.1.0";
+pub const EVENT_LOOP: &str = "walz:host/event-loop@0.1.0";
+pub const TEXT_IO: &str = "walz:host/text-io@0.1.0";
+pub const CLI: &str = "walz:host/cli@0.1.0";
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]

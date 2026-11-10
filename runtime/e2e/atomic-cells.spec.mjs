@@ -21,11 +21,11 @@ test('Core: certified browser workers require the explicit host contract', async
     let error;
     try { await instantiate({ imports: { env: { memory } } }); }
     catch (e) { error = e.message; }
-    const { api } = await instantiate({ imports: { env: { memory } }, atomicHostContract: 'wlt-atomic-cells-v1' });
+    const { api } = await instantiate({ imports: { env: { memory } }, atomicHostContract: 'walz-atomic-cells-v1' });
     const source = `onmessage = async ({ data: { url, memory } }) => {
       try {
         const { instantiate } = await import(url);
-        const { api } = await instantiate({ imports: { env: { memory } }, atomicHostContract: 'wlt-atomic-cells-v1' });
+        const { api } = await instantiate({ imports: { env: { memory } }, atomicHostContract: 'walz-atomic-cells-v1' });
         for (let i = 0; i < 3000; i++) api.add(1);
         postMessage('done');
       } catch (e) { postMessage({ error: e.message }); }

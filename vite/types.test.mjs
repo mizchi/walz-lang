@@ -14,7 +14,7 @@ test('declarations reflect ABI direction, nested options, unit payloads and asyn
   };
   const code = declarations(bindings);
   for (const needle of ['Uint8Array', 'ReadonlyArray<bigint>', 'BigInt64Array', '"some"', '"none"',
-    '"myValue"', '"empty"', 'PromiseLike<void>', 'Promise<Awaited<WltFuture<bigint>>>', 'AsyncIterable<string>', 'WltStream<string>']) {
+    '"myValue"', '"empty"', 'PromiseLike<void>', 'Promise<Awaited<WalzFuture<bigint>>>', 'AsyncIterable<string>', 'WalzStream<string>']) {
     assert.ok(code.includes(needle), needle);
   }
   assert.ok(!code.includes(': any'));

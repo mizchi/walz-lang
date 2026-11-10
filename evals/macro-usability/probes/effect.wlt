@@ -1,4 +1,0 @@
-(module
-  (import "host" "read" (func $read (result i32)))
-  (%macro $read (rule () (call $read)))
-  (func $main (export "main") (result i32) (%effect pure) (%$read)))

@@ -1,14 +1,14 @@
-const SOURCE: &str = include_str!("component-fixtures/native-async.wlt");
+const SOURCE: &str = include_str!("component-fixtures/native-async.walz");
 #[test]
 fn native_async_world_uses_standard_internal_producers() {
     let d = tempfile::tempdir().unwrap();
     let wit = d.path().join("api.wit");
     std::fs::write(&wit, include_str!("component-fixtures/native-async.wit")).unwrap();
-    let c = wlt::component::compile_with_world(SOURCE, &Default::default(), &wit, Some("guest"))
+    let c = walz::component::compile_with_world(SOURCE, &Default::default(), &wit, Some("guest"))
         .unwrap();
     assert!(c.wat.contains("canon future.new"));
     assert!(c.wat.contains("canon stream.write"));
-    assert!(!c.wat.contains("(import \"wlt:runtime/"));
+    assert!(!c.wat.contains("(import \"walz:runtime/"));
 }
 
 #[test]
@@ -18,7 +18,7 @@ fn native_engine_runs_the_canonical_future_producer_without_javascript() {
     let wit = dir.path().join("api.wit");
     std::fs::write(&wit, include_str!("component-fixtures/native-async.wit")).unwrap();
     let built =
-        wlt::component::compile_with_world(SOURCE, &Default::default(), &wit, Some("guest"))
+        walz::component::compile_with_world(SOURCE, &Default::default(), &wit, Some("guest"))
             .unwrap();
     let body = built
         .wat
@@ -49,7 +49,7 @@ fn native_engine_runs_the_canonical_future_producer_without_javascript() {
     let wasm = wat::parse_str(&harness).unwrap();
     let file = dir.path().join("harness.wasm");
     std::fs::write(&file, wasm).unwrap();
-    let output=std::process::Command::new(std::env::var_os("WLT_WASMTIME").unwrap_or_else(||"wasmtime".into())).args(["run","-W","gc=y,function-references=y,exceptions=y,component-model-async=y,component-model-more-async-builtins=y,component-model-async-stackful=y","--invoke","run()"]).arg(file).output().unwrap();
+    let output=std::process::Command::new(std::env::var_os("WALZ_WASMTIME").unwrap_or_else(||"wasmtime".into())).args(["run","-W","gc=y,function-references=y,exceptions=y,component-model-async=y,component-model-more-async-builtins=y,component-model-async-stackful=y","--invoke","run()"]).arg(file).output().unwrap();
     assert!(
         output.status.success(),
         "{}",

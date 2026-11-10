@@ -9,7 +9,7 @@ import {instantiate as library} from './succinct/index.mjs';
 import {IndexedJS} from './succinct/indexed-js.mjs';
 
 for(const backend of ['core','component'])test(`${backend}: succinct rank/select and wavelet batches agree with independent unpacked oracles`, {timeout:120000}, async () => {
-  const dir = await mkdtemp(join(tmpdir(),'wlt-succinct-'));
+  const dir = await mkdtemp(join(tmpdir(),'walz-succinct-'));
   try {
     await build(dir,{backend});
     const {instantiate} = await import(pathToFileURL(join(dir,'serial','index.js')));

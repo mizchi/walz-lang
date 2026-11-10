@@ -10,13 +10,13 @@ import { instrument } from "./testing/memory.mjs";
 
 for (const backend of ["core", "component"])
   test(`${backend}: seeded cancellation schedules preserve outcomes and release all scopes`, { timeout: 60000 }, async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-fuzz-cancel-"));
-    const seed = Number(process.env.WLT_FUZZ_SEED ?? 42) >>> 0;
+    const directory = await mkdtemp(join(tmpdir(), "walz-fuzz-cancel-"));
+    const seed = Number(process.env.WALZ_FUZZ_SEED ?? 42) >>> 0;
     let state = seed;
     const random = () => ((state = (Math.imul(state, 1664525) + 1013904223) >>> 0) >>> 8);
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/event-loop.wlt", directory);
+      await build("tests/component-fixtures/event-loop.walz", directory);
       await instrument(directory, backend);
       const { instantiate } = await import(pathToFileURL(join(directory, "index.js")));
       let entered, control, calls, disposed;

@@ -1,0 +1,1 @@
+(module (@use "./modules/math.walz" (func $answer)) (export "main" (func $answer)))

@@ -249,7 +249,7 @@ impl Session {
             Some(json!({"location":{"uri":file_uri(l.location.path.as_deref()?).ok()?,"range":self.range(l)},
                 "message":if l.message.is_empty() { d.message.as_str() } else { &l.message }}))
         }).collect::<Vec<_>>();
-        json!({"range":range,"severity":severity,"code":d.code,"source":"wlt",
+        json!({"range":range,"severity":severity,"code":d.code,"source":"walz",
             "message":std::iter::once(d.message.clone()).chain(d.notes.iter().cloned())
                 .chain(d.help.iter().map(|h| format!("help: {h}"))).collect::<Vec<_>>().join("\n"),
             "relatedInformation":related})
@@ -373,7 +373,7 @@ impl Session {
         let Ok(snapshot) = self.snapshot(&path) else {
             return Ok(Value::Null);
         };
-        if method == "wlt/expandMacro" {
+        if method == "walz/expandMacro" {
             return Ok(snapshot.macro_expansion(&path, scalar.line + 1, column));
         }
         if method == "textDocument/completion" {
@@ -451,14 +451,14 @@ impl Session {
         let result=match method {
             "initialize"=>{
                 self.performance_warnings=params["initializationOptions"]["performanceWarnings"].as_bool().unwrap_or(false);
-                Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"experimental":{"wltMacroExpansion":true,"wltPerformanceWarnings":true},"completionProvider":{"triggerCharacters":["$",".","%"]}},"serverInfo":{"name":"wlt","version":env!("CARGO_PKG_VERSION")}}))
+                Ok(json!({"capabilities":{"positionEncoding":"utf-16","textDocumentSync":{"openClose":true,"change":2,"save":true},"hoverProvider":true,"definitionProvider":true,"experimental":{"walzMacroExpansion":true,"walzPerformanceWarnings":true},"completionProvider":{"triggerCharacters":["$",".","@"]}},"serverInfo":{"name":"walz","version":env!("CARGO_PKG_VERSION")}}))
             },
             "shutdown"=>{self.shutdown=true;Ok(Value::Null)},
-            "textDocument/hover"|"textDocument/definition"|"textDocument/completion"|"wlt/expandMacro"=>self.query(method,params),
+            "textDocument/hover"|"textDocument/definition"|"textDocument/completion"|"walz/expandMacro"=>self.query(method,params),
             "textDocument/didOpen"|"textDocument/didChange"|"textDocument/didClose"|"textDocument/didSave"=>return self.edit(method,params).unwrap_or_else(|message|vec![json!({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":1,"message":message}})]),
             "workspace/didChangeWatchedFiles"=>{self.cache.clear();return self.publish()},
             "workspace/didChangeConfiguration"=>{
-                if let Some(enabled)=params["settings"]["wlt"]["performanceWarnings"].as_bool() {
+                if let Some(enabled)=params["settings"]["walz"]["performanceWarnings"].as_bool() {
                     self.performance_warnings=enabled;
                     return self.publish();
                 }
@@ -485,7 +485,7 @@ mod memory_contracts {
     #[test]
     fn unsaved_source_snapshots_share_the_immutable_buffer() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("main.wlt");
+        let path = dir.path().join("main.walz");
         let text: std::sync::Arc<str> = "(module)".into();
         let overlays = BTreeMap::from([(path.clone(), text.clone())]);
         let loaded = source::load_with_overlays(&path, &overlays).unwrap();
@@ -502,7 +502,7 @@ mod memory_contracts {
         let dir = tempfile::tempdir().unwrap();
         let mut server = Session::new(Default::default());
         for n in 0..10 {
-            let uri = file_uri(&dir.path().join(format!("{n}.wlt"))).unwrap();
+            let uri = file_uri(&dir.path().join(format!("{n}.walz"))).unwrap();
             server.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":"(module)"}}}));
             assert!(
                 server.cache.len() <= 8,
@@ -510,7 +510,7 @@ mod memory_contracts {
             );
         }
         for n in 0..10 {
-            let uri = file_uri(&dir.path().join(format!("{n}.wlt"))).unwrap();
+            let uri = file_uri(&dir.path().join(format!("{n}.walz"))).unwrap();
             server.handle(
                 json!({"method":"textDocument/didClose","params":{"textDocument":{"uri":uri}}}),
             );

@@ -1,0 +1,11 @@
+(module
+  (@use "walz:core" (func $option.ok-or))
+  ;; Infer the two type arguments that a normal generic call requires explicitly.
+  (@macro $ok-or
+    (rule (?value:expr ?error:expr)
+      (infer (?Option ?value) (?Error ?error))
+      (@$ok-or.typed ?Option ?Error ?value ?error)))
+  (@macro $ok-or.typed
+    (rule ((option ?T:type) ?E:type ?value:expr ?error:expr)
+      (call (@inst $option.ok-or ?T ?E) ?value ?error)))
+  (@export (macro $ok-or)))

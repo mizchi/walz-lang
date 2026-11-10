@@ -19,7 +19,7 @@ async function files(directory) {
 async function copy(source,target) {await mkdir(dirname(target),{recursive:true});await copyFile(source,target);}
 async function capture(directory) {
   await mkdir(dirname(directory),{recursive:true});await mkdir(directory);
-  for(const folder of ["src","stdlib","examples/json-parser"])
+  for(const folder of ["src","walz/core","examples/json-parser"])
     for(const file of await files(join(root,folder)))await copy(file,join(directory,"source",relative(root,file)));
   for(const name of ["Cargo.toml","Cargo.lock","pnpm-lock.yaml","tools/json-bench.rs"])
     await copy(join(root,name),join(directory,"source",name));
@@ -30,15 +30,15 @@ async function capture(directory) {
   await writeFile(join(directory,"corpus.json"),JSON.stringify(cases,null,2)+"\n",{flag:"wx"});
   for(const backend of ["core","component"]) {
     const {build}=await import(backend==="core"?"./build-core.mjs":"./build.mjs");
-    await build(join(root,"examples/json-parser/benchmark.wlt"),join(directory,backend));
+    await build(join(root,"examples/json-parser/benchmark.walz"),join(directory,backend));
   }
   const command=(args)=>execFile("cargo",args,{cwd:root,maxBuffer:4*1024*1024});
-  await command(["run","--locked","--quiet","--","build","examples/json-parser/resident.wlt",join(directory,"resident.wasm")]);
+  await command(["run","--locked","--quiet","--","build","examples/json-parser/resident.walz",join(directory,"resident.wasm")]);
   await command(["build","--locked","--release","--example","json-bench"]);
   await copy(join(root,"target/release/examples/json-bench"),join(directory,"native-json-bench"));await chmod(join(directory,"native-json-bench"),0o755);
   const lock=await readFile(join(root,"Cargo.lock"),"utf8");
   const rustc=(await execFile("rustc",["--version"])).stdout.trim();
-  const manifest={schema:"wlt-json-capture-v1",created:new Date().toISOString(),node:process.version,cpu:cpus()[0]?.model,
+  const manifest={schema:"walz-json-capture-v1",created:new Date().toISOString(),node:process.version,cpu:cpus()[0]?.model,
     compiler:{head:(await execFile("git",["rev-parse","HEAD"],{cwd:root})).stdout.trim(),dirty:!!(await execFile("git",["status","--porcelain"],{cwd:root})).stdout.trim()},
     reference:{node:process.version,v8:process.versions.v8,rustc,serdeJson:lock.match(/name = "serde_json"\nversion = "([^"]+)"/)[1],profile:"release, default serde_json features"},hashes:{},sizes:{}};
   for(const file of await files(directory)) {

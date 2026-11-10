@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WLT Playground</title>
+  <title>Walz Playground</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header>
-    <div><span class="eyebrow">WAT + TYPES + WASM GC</span><h1>WLT Playground</h1></div>
-    <p>Compile WLT to WebAssembly in your browser.</p>
+    <div><span class="eyebrow">WAT + TYPES + WASM GC</span><h1>Walz Playground</h1></div>
+    <p>Compile Walz to WebAssembly in your browser.</p>
     <nav class="project-links" aria-label="Project links">
-      <a href="https://github.com/mizchi/wlt-lang#readme" target="_blank" rel="noopener noreferrer">Documentation</a>
-      <a href="https://github.com/mizchi/wlt-lang" target="_blank" rel="noopener noreferrer" aria-label="WLT on GitHub">GitHub ↗</a>
+      <a href="https://github.com/mizchi/walz-lang#readme" target="_blank" rel="noopener noreferrer">Documentation</a>
+      <a href="https://github.com/mizchi/walz-lang" target="_blank" rel="noopener noreferrer" aria-label="Walz on GitHub">GitHub ↗</a>
     </nav>
   </header>
   <main>
@@ -30,7 +30,7 @@
     </aside>
     <div class="workspace">
       <section class="editor-pane" aria-label="Source">
-        <div class="pane-title"><label for="source">WLT source</label><span>Ctrl / ⌘ + Enter to compile</span></div>
+        <div class="pane-title"><label for="source">Walz source</label><span>Ctrl / ⌘ + Enter to compile</span></div>
         <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="source-help"></textarea>
       </section>
       <section class="output-pane" aria-label="Compilation output">
@@ -53,9 +53,9 @@
       </div>
       <pre id="run-output" data-testid="run-output" role="status">Run output appears here</pre>
     </section>
-    <p id="source-help" class="hint">Your source stays in this browser and is compiled by the Rust compiler running in WebAssembly. Supports single files, wlt:core, hygienic macros, generic call inference and event-loop imports through WebAssembly JSPI. Use the CLI for relative .wlt/.wasm imports, Component output, other host imports or Lean verification.</p>
+    <p id="source-help" class="hint">Your source stays in this browser and is compiled by the Rust compiler running in WebAssembly. Supports single files, walz:core, hygienic macros, generic call inference and event-loop imports through WebAssembly JSPI. Use the CLI for relative .walz/.wasm imports, Component output, other host imports or Lean verification.</p>
   </main>
-  <footer>WLT / WebAssembly compiler playground</footer>
+  <footer>Walz / WebAssembly compiler playground</footer>
   <script type="module" src="./main.mjs"></script>
 </body>
 </html>

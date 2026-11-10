@@ -14,12 +14,12 @@ for (const backend of ["core", "component"])
     `${backend}: real text capabilities preserve values, errors, backpressure and cancellation`,
     { timeout: 60000 },
     async () => {
-      const dir = await mkdtemp(join(tmpdir(), "wlt-io-"));
+      const dir = await mkdtemp(join(tmpdir(), "walz-io-"));
       try {
         const { build } = await import(
           backend === "core" ? "./build-core.mjs" : "./build.mjs"
         );
-        await build("examples/io/text-filter.wlt", dir);
+        await build("examples/io/text-filter.walz", dir);
         await instrument(dir, backend);
         const runtime = await import(pathToFileURL(join(dir, "index.js")));
         await assert.rejects(runtime.instantiate(), /missing host capability/);
@@ -168,16 +168,16 @@ for (const backend of ["core", "component"])
 
 for (const backend of ["core", "component"])
   test(`${backend}: flattened text imports handle empty and Unicode values without retaining buffers`, async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-flat-text-"));
+    const directory = await mkdtemp(join(tmpdir(), "walz-flat-text-"));
     try {
       const { writeFile } = await import("node:fs/promises");
-      const source = join(directory, "source.wlt");
+      const source = join(directory, "source.walz");
       await writeFile(
         source,
         `(module
-      (import "wlt:host/text-io@0.1.0" "write-line" (func $write (param $string %string) (result (%future (%result %unit i32)))))
-      (func $main (export "main") (param $string %string) (result (%result %unit i32)) (%effect host suspends)
-        (%future.await (%result %unit i32) (call $write (local.get $string)))))`,
+      (import "walz:host/text-io@0.1.0" "write-line" (func $write (param $string @string) (result (@future (@result @unit i32)))))
+      (func $main (export "main") (param $string @string) (result (@result @unit i32)) (@effect host suspends)
+        (@future.await (@result @unit i32) (call $write (local.get $string)))))`,
       );
       const { build } = await import(
         backend === "core" ? "./build-core.mjs" : "./build.mjs"

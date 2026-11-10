@@ -5,11 +5,11 @@ import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {createMapper} from './mapper.mjs';
 
-const compiler = resolve('target/debug/wlt');
-const source = `;; 日本語 😀\n(module (func $add (export "add-one") (param $n i64) (result i64) (%effect pure) (+ $n 1)))`;
+const compiler = resolve('target/debug/walz');
+const source = `;; 日本語 😀\n(module (func $add (export "add-one") (param $n i64) (result i64) (@effect pure) (+ $n 1)))`;
 
 async function fixture(fn) {
-  const root = await mkdtemp(join(tmpdir(),'wlt mapper-'));
+  const root = await mkdtemp(join(tmpdir(),'walz mapper-'));
   const mapper = createMapper();
   try {
     await mapper.handle('initialize',{positionEncodings:['utf-8','utf-16']});
@@ -17,8 +17,8 @@ async function fixture(fn) {
   } finally { mapper.close(); await rm(root,{recursive:true,force:true}); }
 }
 
-test('unsaved WLT uses the checked ABI and UTF-8 mappings without writing declarations',async()=>fixture(async(root,mapper)=>{
-  const fileName = join(root,'new.wlt');
+test('unsaved Walz uses the checked ABI and UTF-8 mappings without writing declarations',async()=>fixture(async(root,mapper)=>{
+  const fileName = join(root,'new.walz');
   await mapper.handle('openProject',{projectHandle:'one',configFileName:join(root,'tsconfig.json'),options:{compiler}});
   const result = await mapper.handle('transform',{projectHandle:'one',fileName,content:source});
   assert.equal(result.extension,'.ts'); assert.deepEqual(result.diagnostics,[]);
@@ -27,10 +27,10 @@ test('unsaved WLT uses the checked ABI and UTF-8 mappings without writing declar
   for(const [start,length,original,size,kind,features] of result.mappings) {
     assert.equal(Buffer.from(source).subarray(original,original+size).toString(),'add-one');
     assert.ok(Buffer.from(result.text).subarray(start,start+length).length);
-    assert.equal(kind,1); assert.equal(features & 256,0); // CamelCase exports must not rename WLT identifiers.
+    assert.equal(kind,1); assert.equal(features & 256,0); // CamelCase exports must not rename Walz identifiers.
   }
   await assert.rejects(readFile(fileName),{code:'ENOENT'});
-  await assert.rejects(readFile(join(root,'new.d.wlt.ts')),{code:'ENOENT'});
+  await assert.rejects(readFile(join(root,'new.d.walz.ts')),{code:'ENOENT'});
   const bad = source.replace('(+ $n 1)','$missing');
   const error = await mapper.handle('transform',{projectHandle:'one',fileName,content:bad});
   assert.equal(error.text,'export {};\n'); assert.equal(error.diagnostics.length,1);
@@ -42,7 +42,7 @@ test('unsaved WLT uses the checked ABI and UTF-8 mappings without writing declar
 }));
 
 test('project configuration fingerprints dependencies and isolates handles and invalid options',async()=>fixture(async(root,mapper)=>{
-  const helper=join(root,'helper.wlt'); await writeFile(helper,source);
+  const helper=join(root,'helper.walz'); await writeFile(helper,source);
   const params={projectHandle:'one',configFileName:join(root,'tsconfig.json'),options:{compiler}};
   const first=await mapper.handle('openProject',params);
   assert.ok(first.watchedFiles.includes(await import('node:fs/promises').then(fs=>fs.realpath(helper))));
@@ -60,17 +60,17 @@ test('project configuration fingerprints dependencies and isolates handles and i
 }));
 
 test('static dependency diagnostics name the actual file without assigning its offsets to the root',async()=>fixture(async(root,mapper)=>{
-  await writeFile(join(root,'helper.wlt'),'(module (%export (func $answer)) (func $answer (result i32) (%effect pure) $missing))');
+  await writeFile(join(root,'helper.walz'),'(module (@export (func $answer)) (func $answer (result i32) (@effect pure) $missing))');
   await mapper.handle('openProject',{projectHandle:'one',configFileName:join(root,'tsconfig.json'),options:{compiler}});
-  const content='(module (%use "./helper.wlt" (func $answer)) (func $main (export "main") (result i32) (%effect pure) (call $answer)))';
-  const result=await mapper.handle('transform',{projectHandle:'one',fileName:join(root,'main.wlt'),content});
-  assert.match(result.diagnostics[0].messageText,/helper\.wlt/);
+  const content='(module (@use "./helper.walz" (func $answer)) (func $main (export "main") (result i32) (@effect pure) (call $answer)))';
+  const result=await mapper.handle('transform',{projectHandle:'one',fileName:join(root,'main.walz'),content});
+  assert.match(result.diagnostics[0].messageText,/helper\.walz/);
   assert.equal(result.diagnostics[0].start,0);
   assert.equal(result.diagnostics[0].length,0);
 }));
 
 test('missing compilers produce a diagnostic and do not leave an unhandled child-process rejection',async()=>fixture(async(root,mapper)=>{
-  await mapper.handle('openProject',{projectHandle:'one',configFileName:join(root,'tsconfig.json'),options:{compiler:join(root,'no-wlt-executable')}});
-  const result=await mapper.handle('transform',{projectHandle:'one',fileName:join(root,'main.wlt'),content:source});
+  await mapper.handle('openProject',{projectHandle:'one',configFileName:join(root,'tsconfig.json'),options:{compiler:join(root,'no-walz-executable')}});
+  const result=await mapper.handle('transform',{projectHandle:'one',fileName:join(root,'main.walz'),content:source});
   assert.match(result.diagnostics[0].messageText,/compiler not found/);
 }));

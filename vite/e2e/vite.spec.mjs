@@ -18,13 +18,13 @@ test('named ESM imports and factories run rich values from a nested base URL', a
   expect(errors).toEqual([]);
   if (info.project.name === 'preview') {
     expect(wasm).toHaveLength(2);
-    expect(wasm.every(response=>response.status===200 && response.url.includes('/wlt-vite/assets/'))).toBe(true);
+    expect(wasm.every(response=>response.status===200 && response.url.includes('/walz-vite/assets/'))).toBe(true);
   }
 });
 
 test('dependency edits reload the dev page and compiler errors recover', async ({page}, info) => {
   test.skip(info.project.name !== 'dev', 'development file watching');
-  const helper = 'target/vite-e2e/dev/helper.wlt';
+  const helper = 'target/vite-e2e/dev/helper.walz';
   const original = await readFile(helper,'utf8');
   try {
     await page.goto('./'); await expect(page.locator('#answer')).toHaveText('42');

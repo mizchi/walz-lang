@@ -2,7 +2,7 @@ use serde_json::Value;
 use std::{path::Path, process::Command};
 
 fn cli(args: &[&str]) -> (i32, Value) {
-    let out = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let out = Command::new(env!("CARGO_BIN_EXE_walz"))
         .args(args)
         .output()
         .unwrap();
@@ -27,7 +27,7 @@ fn position(source: &str, needle: &str) -> (String, String) {
 #[test]
 fn json_check_keeps_success_failure_and_native_validation_machine_readable() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("source.wlt");
+    let file = dir.path().join("source.walz");
     let path = file.to_str().unwrap();
     for source in [
         "(module (func $f (nop)))",
@@ -36,7 +36,7 @@ fn json_check_keeps_success_failure_and_native_validation_machine_readable() {
         std::fs::write(&file, source).unwrap();
         let (code, report) = cli(&["check", "--json", path]);
         assert_eq!(code, 0);
-        assert_eq!(report["schema"], "wlt-check-v1");
+        assert_eq!(report["schema"], "walz-check-v1");
         assert_eq!(report["ok"], true);
         assert_eq!(report["diagnostics"], serde_json::json!([]));
     }
@@ -56,7 +56,7 @@ fn json_check_keeps_success_failure_and_native_validation_machine_readable() {
     let (code, report) = cli(&[
         "check",
         "--json",
-        dir.path().join("missing.wlt").to_str().unwrap(),
+        dir.path().join("missing.walz").to_str().unwrap(),
     ]);
     assert_eq!(code, 1);
     assert_eq!(report["diagnostics"][0]["code"], "E_TOOL");
@@ -69,7 +69,7 @@ fn json_check_keeps_success_failure_and_native_validation_machine_readable() {
     ]);
     assert_eq!(code, 1);
     assert_eq!(report["diagnostics"][0]["code"], "E_TOOL");
-    std::fs::write(&file, "(module (%law \"false\" (i32.const 0)))").unwrap();
+    std::fs::write(&file, "(module (@law \"false\" (i32.const 0)))").unwrap();
     let (code, report) = cli(&["check", "--json", path]);
     assert_eq!(code, 1);
     assert_eq!(report["ok"], false);
@@ -78,11 +78,11 @@ fn json_check_keeps_success_failure_and_native_validation_machine_readable() {
 #[test]
 fn type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances() {
     let dir = tempfile::tempdir().unwrap();
-    let root = dir.path().join("main.wlt");
-    let child = dir.path().join("lib.wlt");
-    let source = "(module\n (%export (func $id) (func $count))\n (%type.alias $Count i64)\n (func $id (%type.params $T) (param $x $T) (result $T) (%effect pure) (local.get $x))\n (func $count (result $Count) (%effect pure) ;; 日本語🦀\n  (; 型🦀 ;) (%let $n $Count (i64.const 42) (local.get $n))))";
+    let root = dir.path().join("main.walz");
+    let child = dir.path().join("lib.walz");
+    let source = "(module\n (@export (func $id) (func $count))\n (@type.alias $Count i64)\n (func $id (@type.params $T) (param $x $T) (result $T) (@effect pure) (local.get $x))\n (func $count (result $Count) (@effect pure) ;; 日本語🦀\n  (; 型🦀 ;) (@let $n $Count (i64.const 42) (local.get $n))))";
     std::fs::write(&child, source).unwrap();
-    std::fs::write(&root, "(module (%use \"./lib.wlt\" (func $id) (func $count)) (func $a (result i32) (call (%inst $id i32) (i32.const 1))) (func $b (result i64) (call (%inst $id i64) (i64.const 2))))").unwrap();
+    std::fs::write(&root, "(module (@use \"./lib.walz\" (func $id) (func $count)) (func $a (result i32) (call (@inst $id i32) (i32.const 1))) (func $b (result i64) (call (@inst $id i64) (i64.const 2))))").unwrap();
     let (line, column) = position(source, "$n $Count");
     let (code, report) = cli(&[
         "type-at",
@@ -105,7 +105,7 @@ fn type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances(
         ),
         child.canonicalize().unwrap()
     );
-    let (line, column) = position(source, "$Count) (%effect");
+    let (line, column) = position(source, "$Count) (@effect");
     let (_, report) = cli(&[
         "type-at",
         root.to_str().unwrap(),
@@ -153,7 +153,7 @@ fn type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances(
 #[test]
 fn type_queries_validate_coordinates_errors_and_native_limits() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("file.wlt");
+    let file = dir.path().join("file.walz");
     let path = file.to_str().unwrap();
     std::fs::write(
         &file,
@@ -177,7 +177,7 @@ fn type_queries_validate_coordinates_errors_and_native_limits() {
         vec!["types", path, "--json"],
     ] {
         assert_eq!(
-            Command::new(env!("CARGO_BIN_EXE_wlt"))
+            Command::new(env!("CARGO_BIN_EXE_walz"))
                 .args(args)
                 .output()
                 .unwrap()
@@ -191,8 +191,8 @@ fn type_queries_validate_coordinates_errors_and_native_limits() {
 #[test]
 fn equal_result_types_do_not_hide_distinct_generic_instances() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("instances.wlt");
-    let source = "(module (func $id (%type.params $T $U) (param $x $T) (result $T) (local.get $x)) (func $a (result i32) (call (%inst $id i32 i64) (i32.const 1))) (func $b (result i32) (call (%inst $id i32 f64) (i32.const 2))))";
+    let path = dir.path().join("instances.walz");
+    let source = "(module (func $id (@type.params $T $U) (param $x $T) (result $T) (local.get $x)) (func $a (result i32) (call (@inst $id i32 i64) (i32.const 1))) (func $b (result i32) (call (@inst $id i32 f64) (i32.const 2))))";
     std::fs::write(&path, source).unwrap();
     let (line, column) = position(source, "(local.get $x)");
     let (_, report) = cli(&["type-at", path.to_str().unwrap(), &line, &column]);
@@ -205,14 +205,14 @@ fn equal_result_types_do_not_hide_distinct_generic_instances() {
 #[test]
 fn loaded_snapshot_queries_do_not_require_the_file_to_still_exist() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("snapshot.wlt");
+    let file = dir.path().join("snapshot.walz");
     let source = "(module (func $f (result i64) (i64.const 42)))";
     std::fs::write(&file, source).unwrap();
-    let loaded = wlt::source::load(&file).unwrap();
+    let loaded = walz::source::load(&file).unwrap();
     std::fs::remove_file(&file).unwrap();
     let (line, column) = position(source, "(i64.const");
     for path in [None, Some(file.as_path())] {
-        let query = wlt::inspect::type_at(
+        let query = walz::inspect::type_at(
             &loaded,
             path,
             line.parse().unwrap(),

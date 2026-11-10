@@ -2,7 +2,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 fn cli(directory: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_wlt"))
+    Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(directory)
         .args(args)
         .output()
@@ -27,10 +27,10 @@ fn valid_wasm(path: &Path) {
 }
 
 const SOURCE: &str = r#"(module
-  (%use "./math.wlt" (func $answer))
+  (@use "./math.walz" (func $answer))
   (func $main (export "main") (result i32) (call $answer)))"#;
 const LIBRARY: &str = r#"(module
-  (%export (func $answer))
+  (@export (func $answer))
   (func $answer (result i32) (+ 40 2)))"#;
 
 #[test]
@@ -38,8 +38,8 @@ fn build_finds_a_project_entry_and_creates_its_output_directory() {
     let directory = tempfile::tempdir().unwrap();
     let project = directory.path().join("example app");
     std::fs::create_dir_all(project.join("src")).unwrap();
-    std::fs::write(project.join("src/main.wlt"), SOURCE).unwrap();
-    std::fs::write(project.join("src/math.wlt"), LIBRARY).unwrap();
+    std::fs::write(project.join("src/main.walz"), SOURCE).unwrap();
+    std::fs::write(project.join("src/math.walz"), LIBRARY).unwrap();
     success(cli(&project, &["build"]));
     valid_wasm(&project.join("target/main.wasm"));
     success(cli(
@@ -47,8 +47,8 @@ fn build_finds_a_project_entry_and_creates_its_output_directory() {
         &["build", "example app", "-o", "dist/app.wasm"],
     ));
     valid_wasm(&directory.path().join("dist/app.wasm"));
-    // main.wlt at the root takes priority over src/main.wlt.
-    std::fs::write(project.join("main.wlt"), "(module)").unwrap();
+    // main.walz at the root takes priority over src/main.walz.
+    std::fs::write(project.join("main.walz"), "(module)").unwrap();
     success(cli(&project, &["build"]));
     assert_eq!(
         std::fs::read(project.join("target/main.wasm")).unwrap(),
@@ -59,12 +59,12 @@ fn build_finds_a_project_entry_and_creates_its_output_directory() {
 #[test]
 fn build_supports_default_named_and_legacy_positional_outputs() {
     let directory = tempfile::tempdir().unwrap();
-    std::fs::write(directory.path().join("program.wlt"), "(module)").unwrap();
+    std::fs::write(directory.path().join("program.walz"), "(module)").unwrap();
     for args in [
-        vec!["build", "program.wlt"],
-        vec!["build", "program.wlt", "-o", "out/short.wasm"],
-        vec!["build", "--output", "out/long.wasm", "program.wlt"],
-        vec!["build", "program.wlt", "out/positional.wasm"],
+        vec!["build", "program.walz"],
+        vec!["build", "program.walz", "-o", "out/short.wasm"],
+        vec!["build", "--output", "out/long.wasm", "program.walz"],
+        vec!["build", "program.walz", "out/positional.wasm"],
     ] {
         success(cli(directory.path(), &args));
     }
@@ -76,27 +76,27 @@ fn build_supports_default_named_and_legacy_positional_outputs() {
     ] {
         valid_wasm(&directory.path().join(path));
     }
-    std::fs::write(directory.path().join("-input.wlt"), "(module)").unwrap();
+    std::fs::write(directory.path().join("-input.walz"), "(module)").unwrap();
     success(cli(
         directory.path(),
-        &["build", "-o", "out/dash.wasm", "--", "-input.wlt"],
+        &["build", "-o", "out/dash.wasm", "--", "-input.walz"],
     ));
     valid_wasm(&directory.path().join("out/dash.wasm"));
-    std::fs::write(directory.path().join("my.program.wlt"), "(module)").unwrap();
-    success(cli(directory.path(), &["build", "my.program.wlt"]));
+    std::fs::write(directory.path().join("my.program.walz"), "(module)").unwrap();
+    success(cli(directory.path(), &["build", "my.program.walz"]));
     valid_wasm(&directory.path().join("target/my.program.wasm"));
 }
 
 #[test]
 fn build_rejects_invalid_options_and_preserves_sources_on_output_aliases() {
     let directory = tempfile::tempdir().unwrap();
-    let source = directory.path().join("program.wlt");
+    let source = directory.path().join("program.walz");
     std::fs::write(&source, "(module)").unwrap();
     for args in [
         vec!["build", "--unknown"],
         vec!["build", "-o"],
         vec!["build", "-o", "a", "--output", "b"],
-        vec!["build", "program.wlt", "a.wasm", "-o", "b.wasm"],
+        vec!["build", "program.walz", "a.wasm", "-o", "b.wasm"],
         vec!["build", "a", "b", "c"],
     ] {
         assert_eq!(
@@ -105,29 +105,29 @@ fn build_rejects_invalid_options_and_preserves_sources_on_output_aliases() {
             "{args:?}"
         );
     }
-    for output in ["program.wlt", "./program.wlt"] {
-        let result = cli(directory.path(), &["build", "program.wlt", "-o", output]);
+    for output in ["program.walz", "./program.walz"] {
+        let result = cli(directory.path(), &["build", "program.walz", "-o", output]);
         assert_eq!(result.status.code(), Some(1));
         assert!(String::from_utf8_lossy(&result.stderr).contains("output must differ"));
         assert_eq!(std::fs::read_to_string(&source).unwrap(), "(module)");
     }
-    std::fs::hard_link(&source, directory.path().join("alias.wlt")).unwrap();
+    std::fs::hard_link(&source, directory.path().join("alias.walz")).unwrap();
     assert_eq!(
-        cli(directory.path(), &["build", "program.wlt", "alias.wlt"])
+        cli(directory.path(), &["build", "program.walz", "alias.walz"])
             .status
             .code(),
         Some(1)
     );
     assert_eq!(std::fs::read_to_string(&source).unwrap(), "(module)");
     std::fs::write(&source, SOURCE).unwrap();
-    std::fs::write(directory.path().join("math.wlt"), LIBRARY).unwrap();
+    std::fs::write(directory.path().join("math.walz"), LIBRARY).unwrap();
     let result = cli(
         directory.path(),
-        &["build", "program.wlt", "-o", "math.wlt"],
+        &["build", "program.walz", "-o", "math.walz"],
     );
     assert_eq!(result.status.code(), Some(1));
     assert_eq!(
-        std::fs::read_to_string(directory.path().join("math.wlt")).unwrap(),
+        std::fs::read_to_string(directory.path().join("math.walz")).unwrap(),
         LIBRARY
     );
 }
@@ -139,11 +139,11 @@ fn failed_builds_leave_no_output_and_missing_entries_explain_the_convention() {
     assert_eq!(missing.status.code(), Some(1));
     let error = String::from_utf8_lossy(&missing.stderr);
     assert!(
-        error.contains("main.wlt") && error.contains("src/main.wlt"),
+        error.contains("main.walz") && error.contains("src/main.walz"),
         "{error}"
     );
     std::fs::write(
-        directory.path().join("main.wlt"),
+        directory.path().join("main.walz"),
         "(module (func $f (result i32) (f64.const 1)))",
     )
     .unwrap();
@@ -170,7 +170,7 @@ fn installed_command_help_and_version_require_no_runtime_or_source() {
         vec!["-V"],
     ] {
         let output = success(
-            Command::new(env!("CARGO_BIN_EXE_wlt"))
+            Command::new(env!("CARGO_BIN_EXE_walz"))
                 .current_dir(directory.path())
                 .env("PATH", "")
                 .args(&args)
@@ -180,14 +180,14 @@ fn installed_command_help_and_version_require_no_runtime_or_source() {
         let text = String::from_utf8(output.stdout).unwrap();
         assert!(!text.is_empty(), "{args:?}");
         if args[0] == "--version" || args[0] == "-V" {
-            assert_eq!(text.trim(), concat!("wlt ", env!("CARGO_PKG_VERSION")));
+            assert_eq!(text.trim(), concat!("walz ", env!("CARGO_PKG_VERSION")));
         } else {
             assert!(text.contains("Usage:"), "{text}");
         }
     }
-    std::fs::write(directory.path().join("main.wlt"), r#"(module (%use "wlt:core" (type $option)) (func $f (result (%inst $option i32)) (%option.some 42)))"#).unwrap();
+    std::fs::write(directory.path().join("main.walz"), r#"(module (@use "walz:core" (type $option)) (func $f (result (@inst $option i32)) (@option.some 42)))"#).unwrap();
     success(
-        Command::new(env!("CARGO_BIN_EXE_wlt"))
+        Command::new(env!("CARGO_BIN_EXE_walz"))
             .current_dir(directory.path())
             .env("PATH", "")
             .arg("build")
@@ -200,19 +200,19 @@ fn installed_command_help_and_version_require_no_runtime_or_source() {
 #[test]
 fn discovery_skips_generated_directories_and_allows_explicit_opt_in() {
     let directory = tempfile::tempdir().unwrap();
-    let test = r#"(module (%test "visible test" 1))"#;
-    let bench = r#"(module (%bench "visible bench" (nop)))"#;
-    std::fs::write(directory.path().join("visible.test.wlt"), test).unwrap();
-    std::fs::write(directory.path().join("visible_bench.wlt"), bench).unwrap();
+    let test = r#"(module (@test "visible test" 1))"#;
+    let bench = r#"(module (@bench "visible bench" (nop)))"#;
+    std::fs::write(directory.path().join("visible.test.walz"), test).unwrap();
+    std::fs::write(directory.path().join("visible_bench.walz"), bench).unwrap();
     for name in ["target", "node_modules", ".git"] {
         let path = directory.path().join(name);
         std::fs::create_dir(&path).unwrap();
-        std::fs::write(path.join("generated.test.wlt"), test).unwrap();
-        std::fs::write(path.join("generated_bench.wlt"), bench).unwrap();
+        std::fs::write(path.join("generated.test.walz"), test).unwrap();
+        std::fs::write(path.join("generated_bench.walz"), bench).unwrap();
     }
     for (command, suffix, count) in [
-        ("test", "generated.test.wlt", "1 tests;"),
-        ("bench", "generated_bench.wlt", "1 benchmarks;"),
+        ("test", "generated.test.walz", "1 tests;"),
+        ("bench", "generated_bench.walz", "1 benchmarks;"),
     ] {
         let listed = success(cli(directory.path(), &[command, ".", "--list"]));
         assert!(String::from_utf8_lossy(&listed.stdout).contains(count));
@@ -228,8 +228,8 @@ fn discovery_skips_generated_directories_and_allows_explicit_opt_in() {
 fn runner_option_terminators_preserve_filenames_that_look_like_global_flags() {
     let directory = tempfile::tempdir().unwrap();
     for (command, source) in [
-        ("test", r#"(module (%test "--legacy-syntax" 1))"#),
-        ("bench", r#"(module (%bench "--legacy-syntax" (nop)))"#),
+        ("test", r#"(module (@test "--legacy-syntax" 1))"#),
+        ("bench", r#"(module (@bench "--legacy-syntax" (nop)))"#),
     ] {
         for name in ["--json", "--bindings", "--legacy-syntax"] {
             std::fs::write(directory.path().join(name), source).unwrap();

@@ -1,0 +1,28 @@
+(module
+  (@use "walz:core"
+    (type $string)
+    (func $string-view.new)
+    (func $string-view.slice)
+    (func $string-view.bytes)
+    (func $string-view.to-string)
+    (func $bytes-view.get))
+  (func $word
+    (export "word")
+    (param $source $string)
+    (param $start i32)
+    (param $length i32)
+    (result $string)
+    (@effect allocates)
+    (@let $view (call $string-view.slice (call $string-view.new $source) $start $length)
+      ;; Materialize only the result crossing the ABI boundary.
+      (call $string-view.to-string $view)))
+
+  (func $main
+    (export "main")
+    (result i32)
+    (@effect allocates)
+    (@let
+      (($whole (call $string-view.new (@string.lit "日🦀:*")))
+       ($tail (call $string-view.slice $whole 7 2))
+       ($star (call $string-view.slice $tail 1 1)))
+      (call $bytes-view.get (call $string-view.bytes $star) 0))))

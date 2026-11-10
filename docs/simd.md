@@ -1,51 +1,59 @@
-# v128 と SIMD
+<a id="v128-と-simd"></a>
 
-`v128` は Wasm の128ビット値型をそのまま使うプリミティブ。import は不要です。`i32x4` などは別の型ではなく、同じビット列を各命令がどう解釈するかを指定します。WLT 専用の SIMD 構文は追加せず、標準 WAT の命令名を使います。
+# v128 and SIMD
+
+`v128` is a primitive using Wasm's 128-bit value type directly; no import is needed. Names such as `i32x4` are not separate types, but describe how each instruction interprets the same bits. Walz adds no dedicated SIMD syntax and uses standard WAT instruction names.
 
 ```wat
 (module
-  (func $main (export "main") (result i32) (%effect pure)
-    (%let $v v128 (v128.const i32x4 40 0 0 0)
+  (func $main (export "main") (result i32) (@effect pure)
+    (@let $v v128 (v128.const i32x4 40 0 0 0)
       (i32x4.extract_lane 0
         (i32x4.add (local.get $v) (i32x4.splat (i32.const 2)))))))
 ```
 
-`just run examples/simd.wlt` は42を返します。型付き IR で検査し、対応する Wasm SIMD 命令へ直接出力します。SIMD 演算のためのランタイムやヒープ割当ては追加しません。
+`just run examples/simd.walz` returns 42. Instructions are checked in typed IR and emitted directly as corresponding Wasm SIMD instructions. SIMD operations add no runtime or heap allocations.
 
-## 命令と型
+<a id="命令と型"></a>
 
-| 操作 | 例・型の規約 |
+## Instructions and types
+
+| Operation | Examples and type conventions |
 | --- | --- |
-| 定数 | `v128.const i8x16 …` / `i16x8 …` / `i32x4 …` / `i64x2 …` / `f32x4 …` / `f64x2 …`。形に応じて16/8/4/2/4/2個のlane値 |
-| 複製 | `(i32x4.splat i32-expr)` → `v128`。`i8x16` / `i16x8` も入力は `i32` |
-| 取り出し | `(i32x4.extract_lane 0 vector)` → `i32`。`i8x16` / `i16x8` は `_s` / `_u` を指定 |
-| 置換 | `(i64x2.replace_lane 1 vector i64-expr)` → `v128` |
-| 算術・比較・変換 | `i32x4.add`、`f32x4.mul`、`i16x8.eq`、`i32x4.trunc_sat_f32x4_s` など。形の変換後も型は `v128` |
-| ビット操作 | `v128.and` / `or` / `xor` / `not`、3引数の `v128.bitselect` |
-| シフト | `(i64x2.shl vector i32-expr)`。シフト量は各形とも `i32` |
-| 集約 | `v128.any_true`、整数laneの `all_true` / `bitmask` → `i32` |
-| 並べ替え | `i8x16.shuffle` は0〜31の固定添字16個と `v128` 2値。`i8x16.swizzle` は動的な添字ベクトル |
+| Constants | `v128.const i8x16 …` / `i16x8 …` / `i32x4 …` / `i64x2 …` / `f32x4 …` / `f64x2 …`, with 16/8/4/2/4/2 lane values respectively |
+| Splat | `(i32x4.splat i32-expr)` → `v128`; `i8x16` / `i16x8` also take `i32` |
+| Extract | `(i32x4.extract_lane 0 vector)` → `i32`; specify `_s` / `_u` for `i8x16` / `i16x8` |
+| Replace | `(i64x2.replace_lane 1 vector i64-expr)` → `v128` |
+| Arithmetic, comparison, conversion | `i32x4.add`, `f32x4.mul`, `i16x8.eq`, `i32x4.trunc_sat_f32x4_s`, etc.; the type remains `v128` after shape conversions |
+| Bit operations | `v128.and` / `or` / `xor` / `not`, and three-argument `v128.bitselect` |
+| Shifts | `(i64x2.shl vector i32-expr)`; shift counts are `i32` for every shape |
+| Reductions | `v128.any_true`, integer-lane `all_true` / `bitmask` → `i32` |
+| Rearrangement | `i8x16.shuffle` takes 16 fixed indices from 0 to 31 and two `v128` values; `i8x16.swizzle` takes a dynamic index vector |
 
-lane番号と shuffle の添字は、式ではなく命令の即値です。範囲、定数の形・lane数、引数の数と型を検査します。対応命令は固定した `wasmparser` の通常 SIMD 命令一覧から取り、署名と即値を Wasm validator と照合します。
+Lane numbers and shuffle indices are instruction immediates rather than expressions. Checks cover ranges, constant shapes/lane counts, argument counts, and types. Supported instructions come from the regular SIMD list in the pinned `wasmparser`; signatures and immediates are checked against the Wasm validator.
 
-整数演算の折り返し、飽和演算、比較結果のビットマスク、浮動小数点や NaN の扱いは、[Wasm のベクトル命令](https://webassembly.github.io/spec/core/valid/instructions.html#vector-instructions)に従います。WLT 独自の演算規則は加えません。
+Integer wrapping, saturating arithmetic, comparison bitmasks, floating point, and NaNs follow [Wasm vector instructions](https://webassembly.github.io/spec/core/valid/instructions.html#vector-instructions). Walz adds no independent arithmetic rules.
 
-## GC・ジェネリクス・解析
+<a id="gcジェネリクス解析"></a>
 
-`v128` は共有可能な値で、`shared` / `nonunit` 制約を満たします。関数の引数・戻り値、`%let`、GC の struct/array フィールド、明示したクロージャ捕捉、`list` / `option` などの型引数に使えます。ベクトル自体に参照 identity や所有権の move はありません。可変フィールドへの読み書きやコンテナの割当ては、既存の effect 規則に従います。
+## GC, generics, and analysis
 
-対応する非メモリ SIMD 命令自体は pure で trap しません。オペランドは左から右に一度ずつ評価し、呼び出し・読み書き・例外・中断などの作用をそのまま引き継ぎます。`%effect pure` でオペランドの作用を隠すことはできません。
+`v128` is shareable and satisfies `shared` / `nonunit` constraints. It can appear in function arguments/results, `@let`, GC struct/array fields, explicit closure captures, and type arguments such as `list` / `option`. Vectors themselves have neither reference identity nor ownership moves. Mutable-field reads/writes and container allocation follow existing effect rules.
 
-型・effect・所有権・アクセス先の解析を維持しますが、ベクトルの値域推論や SIMD の代数的な簡約は追加していません。現在の Lean の `%law` モデルも SIMD を扱わず、対象外の式として拒否します。
+Supported non-memory SIMD instructions themselves are pure and do not trap. Operands evaluate once each from left to right, retaining effects such as calls, reads/writes, exceptions, and suspension. `@effect pure` cannot hide operand effects.
 
-## ABI と対応範囲
+Type, effect, ownership, and access-target analysis remain intact, but no vector range inference or SIMD algebraic simplification is added. The current Lean `@law` model likewise does not support SIMD and rejects it as an out-of-scope expression.
 
-WIT / Component の値型と [WebAssembly JavaScript API](https://webassembly.github.io/spec/js-api/index.html)には、`v128` を直接渡す値表現がありません。WIT 生成、Component、Core＋JSPI の import/export 境界では、直接の `v128` と `list<v128>` / `future<v128>` などの入れ子を拒否します。スカラー、スカラーのlist、bytesに明示的に変換するラッパーを使います。
+<a id="abi-と対応範囲"></a>
 
-Wasm 内部の関数・GC格納・Future/Streamのpayloadには `v128` を使えます。内部で作った値を中断の前後で保持し、スカラーへ取り出して返すこともできます。Core Wasm 単体の生成では、Wasmの `v128` 署名を出力できます。
+## ABI and supported scope
 
-型付きコアの対象は通常 SIMD の**非メモリ命令**です。線形メモリの `v128.load` / `store` / load/store lane と Relaxed SIMD は、従来の標準 WAT 経路で扱います。その経路の解析は `opaque` となり、型付きコアの effect・所有権契約を保証しません。対応外の命令を混ぜて契約検査を迂回することはできません。
+WIT / Component value types and the [WebAssembly JavaScript API](https://webassembly.github.io/spec/js-api/index.html) have no representation for passing `v128` directly. WIT generation, Component, and Core＋JSPI import/export boundaries reject direct `v128` and nested forms such as `list<v128>` / `future<v128>`. Use wrappers explicitly converting to scalars, scalar lists, or bytes.
 
-実例は [最小例](../examples/simd.wlt)、[ABI・非同期の例](../tests/component-fixtures/simd.wlt)。検査は `just test-simd`、ブラウザは `pnpm exec playwright test runtime/e2e/simd.spec.mjs` で再実行できます。
+`v128` is supported in internal Wasm functions, GC storage, and Future/Stream payloads. Internally constructed values can be retained across suspension, extracted to scalars, and returned. Standalone Core Wasm generation can emit Wasm `v128` signatures.
 
-バルク演算の実装とJS・jsimdとの比較は [SIMDカーネルと測定](simd-kernels.md) を参照してください。
+The typed core covers regular SIMD **non-memory instructions**. Linear-memory `v128.load` / `store` / load/store lane and Relaxed SIMD use the existing standard WAT path. Analysis on that path is `opaque` and does not guarantee typed-core effect/ownership contracts. Mixing unsupported instructions cannot bypass contract checks.
+
+See the [minimal example](../examples/simd.walz) and [ABI/async example](../tests/component-fixtures/simd.walz). Rerun checks with `just test-simd` and browser checks with `pnpm exec playwright test runtime/e2e/simd.spec.mjs`.
+
+For bulk-operation implementations and comparisons against JS and jsimd, see [SIMD kernels and measurements](simd-kernels.md).

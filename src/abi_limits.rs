@@ -376,11 +376,11 @@ mod tests {
     #[test]
     fn shared_type_graph_is_visited_once_per_vertex() {
         let mut text =
-            "(module (type $T0 (struct (field $value i32))) (%abi.type $T0 (record \"value\"))"
+            "(module (type $T0 (struct (field $value i32))) (@abi.type $T0 (record \"value\"))"
                 .to_owned();
         for n in 1..9 {
             text += &format!(
-                "(type $T{n} (struct (field (ref $T{})) (field (ref $T{})))) (%abi.type $T{n} (tuple))",
+                "(type $T{n} (struct (field (ref $T{})) (field (ref $T{})))) (@abi.type $T{n} (tuple))",
                 n - 1,
                 n - 1
             );

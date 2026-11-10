@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 fn memory(source: &str, name: &str) -> Value {
-    let module = wlt::check(source).unwrap();
-    let report = serde_json::to_value(wlt::analysis::analyze(&module)).unwrap();
+    let module = walz::check(source).unwrap();
+    let report = serde_json::to_value(walz::analysis::analyze(&module)).unwrap();
     report["functions"]
         .as_array()
         .unwrap()
@@ -17,7 +17,7 @@ fn distinguishes_input_mutation_from_fresh_output_and_return_escape() {
     let source = r#"(module
       (type $A (array (mut i32)))
       (func $map (param $input (ref $A)) (result (ref $A))
-        (%let $out (array.new $A (i32.const 0) (array.len (local.get $input)))
+        (@let $out (array.new $A (i32.const 0) (array.len (local.get $input)))
           (block (result (ref $A))
             (array.set $A (local.get $out) (i32.const 0) (array.get $A (local.get $input) (i32.const 0)))
             (local.get $out))))
@@ -39,9 +39,9 @@ fn substitutes_argument_and_capture_effects_and_tracks_returned_aliases() {
       (type $C (struct (field (mut i32))))
       (func $alias (param $p (ref $C)) (result (ref $C)) (local.get $p))
       (func $set (param $p (ref $C)) (struct.set $C 0 (local.get $p) (i32.const 42)))
-      (%closure $Set (%capture $c (ref $C)) (call $set (local.get $c)))
-      (func $local (%let $c (struct.new $C (i32.const 0))
-        (%closure.call $Set (%closure.new $Set (call $alias (local.get $c)))))))"#;
+      (@closure $Set (@capture $c (ref $C)) (call $set (local.get $c)))
+      (func $local (@let $c (struct.new $C (i32.const 0))
+        (@closure.call $Set (@closure.new $Set (call $alias (local.get $c)))))))"#;
     let local = memory(source, "$local");
     assert_eq!(local["writes"][0]["object"]["root"]["kind"], "allocation");
     assert_eq!(local["writes"][0]["object"]["root"]["function"], "$local");
@@ -65,12 +65,12 @@ fn escape_follows_stores_cycles_and_containers_without_escaping_callee_private_v
       (func $store (param $box (ref $C)) (param $value (ref $C))
         (struct.set $C 0 (local.get $box) (local.get $value)))
       (func $private
-        (%let $a (struct.new $C (ref.null $C))
-          (%let $b (struct.new $C (local.get $a))
+        (@let $a (struct.new $C (ref.null $C))
+          (@let $b (struct.new $C (local.get $a))
             (call $store (local.get $a) (local.get $b)))))
       (func $escape (param $external (ref $C))
-        (%let $a (struct.new $C (ref.null $C))
-          (%let $b (struct.new $C (local.get $a))
+        (@let $a (struct.new $C (ref.null $C))
+          (@let $b (struct.new $C (local.get $a))
             (call $store (local.get $external) (local.get $b))))))"#;
     let private = memory(source, "$private");
     assert!(
@@ -95,7 +95,7 @@ fn unknown_imports_and_recursive_paths_widen_conservatively() {
     let source = r#"(module
       (type $C (struct (field (mut (ref null $C)))))
       (import "host" "save" (func $save (param $p (ref $C))))
-      (func $host (%let $p (struct.new $C (ref.null $C)) (call $save (local.get $p))))
+      (func $host (@let $p (struct.new $C (ref.null $C)) (call $save (local.get $p))))
       (func $walk (param $p (ref $C)) (param $n i32)
         (if (i32.eqz (local.get $n))
           (then (struct.set $C 0 (local.get $p) (ref.null $C)))
@@ -115,13 +115,13 @@ fn unknown_imports_and_recursive_paths_widen_conservatively() {
 #[test]
 fn containers_and_ready_future_payloads_preserve_reference_aliases() {
     let source = r#"(module (type $C (struct (field (mut i32))))
-      (func $wrap (param $p (ref $C)) (result (%option (ref $C))) (%option.some (ref $C) (local.get $p)))
+      (func $wrap (param $p (ref $C)) (result (@option (ref $C))) (@option.some (ref $C) (local.get $p)))
       (func $use (param $p (ref $C))
-        (%match (%option (ref $C)) (call $wrap (local.get $p))
+        (@match (@option (ref $C)) (call $wrap (local.get $p))
           (case none () (nop)) (case some ($v) (struct.set $C 0 (local.get $v) (i32.const 42)))))
-      (func $ready (%let $p (struct.new $C (i32.const 0))
-        (%let $f (%future.ready (ref $C) (local.get $p))
-          (struct.set $C 0 (%future.await (ref $C) (%move $f)) (i32.const 42))))))"#;
+      (func $ready (@let $p (struct.new $C (i32.const 0))
+        (@let $f (@future.ready (ref $C) (local.get $p))
+          (struct.set $C 0 (@future.await (ref $C) (@move $f)) (i32.const 42))))))"#;
     assert_eq!(
         memory(source, "$use")["writes"][0]["object"]["root"]["kind"],
         "parameter"
@@ -138,17 +138,17 @@ fn weak_updates_keep_old_aliases_and_recur_propagates_new_objects() {
       (type $C (struct (field (mut i32))))
       (type $Box (struct (field (mut (ref null $C)))))
       (func $old (param $p (ref $Box)) (param $q (ref $Box)) (param $v (ref $C)) (result (ref null $C))
-        (%let $old (struct.get $Box 0 (local.get $p))
+        (@let $old (struct.get $Box 0 (local.get $p))
           (block (result (ref null $C)) (struct.set $Box 0 (local.get $q) (local.get $v)) (local.get $old))))
       (func $caller (result (ref null $C))
-        (%let $a (struct.new $C (i32.const 0))
-          (%let $b (struct.new $C (i32.const 1))
-            (%let $box (struct.new $Box (local.get $a)) (call $old (local.get $box) (local.get $box) (local.get $b))))))
+        (@let $a (struct.new $C (i32.const 0))
+          (@let $b (struct.new $C (i32.const 1))
+            (@let $box (struct.new $Box (local.get $a)) (call $old (local.get $box) (local.get $box) (local.get $b))))))
       (func $loop (param $p (ref $C)) (param $n i32)
-        (%loop $go (bind $value (ref $C) (local.get $p)) (bind $i i32 (local.get $n))
+        (@loop $go (bind $value (ref $C) (local.get $p)) (bind $i i32 (local.get $n))
           (if (i32.eqz (local.get $i))
             (then (struct.set $C 0 (local.get $value) (i32.const 42)))
-            (else (%recur $go (struct.new $C (i32.const 0)) (i32.sub (local.get $i) (i32.const 1))))))))"#;
+            (else (@recur $go (struct.new $C (i32.const 0)) (i32.sub (local.get $i) (i32.const 1))))))))"#;
     let caller = memory(source, "$caller");
     let allocations = caller["allocations"].as_array().unwrap();
     assert!(
@@ -176,7 +176,7 @@ fn suspension_invalidates_mutable_reference_contents_across_calls() {
     let source = r#"(module
       (type $C (struct (field (mut i32))))
       (type $Box (struct (field (mut (ref null $C)))))
-      (import "wlt:host/event-loop@0.1.0" "yield" (func $yield))
+      (import "walz:host/event-loop@0.1.0" "yield" (func $yield))
       (func $after (param $box (ref $Box))
         (block
           (struct.set $Box 0 (local.get $box) (struct.new $C (i32.const 0)))
@@ -198,7 +198,7 @@ fn returns_and_block_branch_payloads_remain_visible_as_escaping_references() {
         "(block $done (result (ref $C)) (br $done (local.get $a)))",
     ] {
         let source = format!(
-            "(module (type $C (struct (field i32))) (func $f (result (ref $C)) (%let $a (struct.new $C (i32.const 42)) {body})))"
+            "(module (type $C (struct (field i32))) (func $f (result (ref $C)) (@let $a (struct.new $C (i32.const 42)) {body})))"
         );
         let m = memory(&source, "$f");
         assert_eq!(

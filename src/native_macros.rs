@@ -165,7 +165,7 @@ fn index(name: &str) -> Option<usize> {
 impl Lower<'_> {
     fn fresh(&mut self) -> String {
         loop {
-            let s = format!("$__wlt_macro_{}", self.next);
+            let s = format!("$__walz_macro_{}", self.next);
             self.next += 1;
             if self.names.insert(s.clone()) {
                 return s;
@@ -178,7 +178,7 @@ impl Lower<'_> {
         n
     }
     fn error(&self, node: &Sexp, message: &str) -> Error {
-        Error::at(self.source, node.span, message).with_code("E_WLT_NATIVE_MACRO")
+        Error::at(self.source, node.span, message).with_code("E_WALZ_NATIVE_MACRO")
     }
     fn infer(&self, node: &Sexp, scope: &Scope) -> Option<String> {
         let parts = node.list()?;
@@ -285,7 +285,7 @@ impl Lower<'_> {
             if op != "local.get" {
                 return Err(self.error(
                     node,
-                    "%let and loop state bindings are immutable; use %recur for state updates",
+                    "@let and loop state bindings are immutable; use @recur for state updates",
                 ));
             }
             return Ok(actual.clone());
@@ -303,14 +303,14 @@ impl Lower<'_> {
             return Ok(vec![render(node, self.source)]);
         };
         let head = node.head().unwrap_or("");
-        if head.starts_with('@') {
+        if crate::syntax::annotation(head) {
             return Ok(vec![render(node, self.source)]);
         }
         if head == "let" {
             if !(4..=5).contains(&parts.len()) || parts[1].atom().and_then(id).is_none() {
                 return Err(self.error(
                     node,
-                    "native %let requires (%let $name [type] initial body)",
+                    "native @let requires (@let $name [type] initial body)",
                 ));
             }
             let index = if parts.len() == 5 { 3 } else { 2 };
@@ -320,7 +320,7 @@ impl Lower<'_> {
                 self.infer(&parts[index], scope).ok_or_else(|| {
                     self.error(
                         &parts[index],
-                        "cannot infer native initializer type; add an explicit %let type",
+                        "cannot infer native initializer type; add an explicit @let type",
                     )
                 })?
             };
@@ -337,7 +337,7 @@ impl Lower<'_> {
         }
         if head == "recur" {
             if !tail {
-                return Err(self.error(node, "%recur must be in tail position"));
+                return Err(self.error(node, "@recur must be in tail position"));
             }
             let name = parts
                 .get(1)
@@ -348,11 +348,11 @@ impl Lower<'_> {
                 .loops
                 .last()
                 .filter(|l| l.name == name)
-                .ok_or_else(|| self.error(node, "%recur must target the innermost loop"))?;
+                .ok_or_else(|| self.error(node, "@recur must target the innermost loop"))?;
             let label = state.label.clone();
             let slots = state.slots.clone();
             if parts.len() != slots.len() + 2 {
-                return Err(self.error(node, "%recur argument count mismatch"));
+                return Err(self.error(node, "@recur argument count mismatch"));
             }
             let mut out = vec![];
             let mut temporaries = vec![];
@@ -428,7 +428,7 @@ impl Lower<'_> {
                 || parts[i + 1].head() != Some("step")
                 || parts[i].list().unwrap().len() != 2
             {
-                return Err(self.error(node, "expected %for bindings, while, step and unit body"));
+                return Err(self.error(node, "expected @for bindings, while, step and unit body"));
             }
             let condition = self
                 .expr(&parts[i].list().unwrap()[1], &nested, false)?
@@ -458,7 +458,7 @@ impl Lower<'_> {
                 String::new()
             };
             if parts.len() != i + 1 {
-                return Err(self.error(node, "expected one %loop body"));
+                return Err(self.error(node, "expected one @loop body"));
             }
             format!(
                 "{result} {}",
@@ -480,7 +480,7 @@ pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
     let mut found = false;
     let mut names = BTreeSet::new();
     while let Some(node) = pending.pop() {
-        if node.head().is_some_and(|h| h.starts_with('@')) {
+        if node.head().is_some_and(crate::syntax::annotation) {
             continue;
         }
         if node.head() == Some("opaque") {
@@ -491,7 +491,7 @@ pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
             if let Some(name) = id(name) {
                 names.insert(name);
             }
-            if let Some(name) = name.strip_prefix('%') {
+            if let Some(name) = name.strip_prefix('@') {
                 found = true;
                 if !matches!(
                     name,
@@ -581,7 +581,7 @@ pub(crate) fn expand(source: &str) -> Result<Option<String>, Error> {
                         n.head(),
                         Some("param" | "result" | "local" | "type" | "export" | "import")
                     )
-                    && !n.head().is_some_and(|h| h.starts_with('@'))
+                    && !n.head().is_some_and(crate::syntax::annotation)
             })
             .map(|(i, _)| i)
             .unwrap_or(parts.len());

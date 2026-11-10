@@ -1,133 +1,141 @@
-# ベンチマーク
+<a id="ベンチマーク"></a>
 
-`*_bench.wlt` に `%bench` を書き、`wlt bench` で実行する。Node.js 24 以降が必要。
-Rust側の型検査・コンパイル時間は [Criterionによるフロントエンドの計測](frontend-performance.md) を参照。
+# Benchmarking
+
+Write `@bench` in `*_bench.walz` and run it with `walz bench`. Requires Node.js 24 or later.
+For Rust-side type-checking and compilation time, see [measuring the frontend with Criterion](frontend-performance.md).
 
 ```wat
 (module
-  (%bench "integer mix"
+  (@bench "integer mix"
     (param $i i32)
     (result i32)
     (^ (* $i 16777619) (>>> $i 7))))
 ```
 
 ```sh
-just bench                          # カレント以下の *_bench.wlt
+just bench                          # カレント以下の *_bench.walz
 just bench examples 'JSON'          # 名前の部分一致
 just list-benches examples
-wlt bench examples/benchmarks/stdlib_v2_bench.wlt --samples 20
-wlt bench examples --json > target/bench.json
-wlt bench examples --iterations 1000 --warmup-ms 100
+walz bench examples/benchmarks/stdlib_v2_bench.walz --samples 20
+walz bench examples --json > target/bench.json
+walz bench examples --iterations 1000 --warmup-ms 100
 just test-bench
 ```
 
-名前と本体は必須。名前はモジュール内で重複できず、空白だけの名前も拒否する。
-`(param $i i32)` と `(result 型)` は、この順でそれぞれ1個まで省略可能。
-結果型を省略すると unit になり、`(%bench "unit" (nop))` のように書ける。
-本体は通常の型・effect・所有権検査を受ける式1個で、ヘルパーは通常の `func`、
-ライブラリは明示した `%use` で利用する。bench 宣言は実行用のエントリーファイルに置く。
-ライブラリとして import するファイルの中には置けない。
+The name and body are required. Names must be unique within a module, and names containing only whitespace are rejected.
+One optional `(param $i i32)` and one optional `(result type)` are allowed, in that order.
+Omitting the result type gives unit, as in `(@bench "unit" (nop))`.
+The body is a single expression subject to normal type, effect, and ownership checks. Use ordinary `func` helpers
+and explicit `@use` declarations for libraries. Place bench declarations in the executable entry file.
+They cannot appear in files imported as libraries.
 
-`i32` の反復番号は各バッチで 0 から始まる。バッチ内の全反復で本体を1回ずつ呼ぶ。
-省略すれば引数なしの本体になる。条件を変えずに比較する場合は `--iterations` を固定する。
+The `i32` iteration index starts at 0 in each batch. The body is called once for every iteration in the batch.
+Omitting the parameter gives a body with no arguments. Fix `--iterations` when comparing under unchanged conditions.
 
-返した値は Wasm の公開 global に保存し、計算結果が観測可能なままにする。
-GC参照や `v128` も返せる。保持するのは最後の1個で、過去の結果は到達不能になれば回収できる。
-所有値や borrow は返せない。資源は本体の中で消費・close し、共有値または unit を返す。
-unit の本体で計算結果を `drop` すると、その計算は通常どおり最適化で消えることがある。
-返り値の保持は定数畳み込みやループ不変式の移動を禁止しないため、測りたい入力は反復番号などで変化させる。
+Return values are stored in a public Wasm global so that computation results remain observable.
+GC references and `v128` are also supported. Only the last result is retained; earlier results can be collected once unreachable.
+Owned values and borrows cannot be returned. Consume or close resources inside the body and return a shared value or unit.
+If a unit body uses `drop` on a computation's result, normal optimization may eliminate that computation.
+Retaining the return value does not prevent constant folding or loop-invariant code motion, so vary the measured input using the iteration index or similar data.
 
-## 計測と表示
+<a id="計測と表示"></a>
 
-ケースごとに別の Node プロセスと Wasm インスタンスを作る。その中では校正、ウォームアップ、
-各サンプルを同じインスタンスで実行する。WLT/Wasmのコンパイル、プロセス起動、
-インスタンス生成、校正、ウォームアップはサンプルの時間に含まない。
+## Measurement and output
 
-反復は Wasm 内のループで実行し、JS はバッチの前後だけで単調時計を読む。
-結果はバッチ時間を反復数で割った ns/op。反復ループ・結果保存・バッチ単位の JS/Wasm 呼び出しの負担、
-GCとJITの影響は含む。極小の式ではこの負担が支配的になるため、実用的な処理単位で測る。
-固定したリテラルの構築も本体にあれば計測対象になる。
+Each case gets a separate Node process and Wasm instance. Calibration, warmup,
+and every sample use that same instance. Walz/Wasm compilation, process startup,
+instantiation, calibration, and warmup are excluded from sample times.
 
-| オプション | 既定値 | 意味 |
+Iterations run in a Wasm loop; JS reads a monotonic clock only before and after each batch.
+The result is batch time divided by the iteration count, in ns/op. It includes the iteration loop, result storage, the per-batch JS/Wasm call,
+and GC and JIT effects. This overhead dominates very small expressions, so measure practical units of work.
+Constructing fixed literals is also measured if it occurs in the body.
+
+| Option | Default | Meaning |
 | --- | --- | --- |
-| `--samples N` | 10 | 測定バッチ数。1〜10000 |
-| `--sample-ms N` | 10 | 自動校正する1バッチの目標ミリ秒。正の整数 |
-| `--iterations N` | 自動 | 1バッチの反復数。1〜2147483647。指定時は校正を省略 |
-| `--warmup-ms N` | 100 | 計測前のウォームアップ時間。0で省略 |
-| `--timeout-ms N` | 30000 | ケース単位の制限時間。Node起動・Wasmコンパイル・校正も含む |
-| `--filter TEXT` | なし | bench名の部分一致 |
-| `--list` | なし | 全体を型検査し、対象だけ一覧表示。Nodeは不要 |
-| `--json` | なし | `wlt-bench-v1` の構造化結果 |
+| `--samples N` | 10 | Number of measured batches, from 1 to 10000 |
+| `--sample-ms N` | 10 | Target milliseconds per automatically calibrated batch; a positive integer |
+| `--iterations N` | automatic | Iterations per batch, from 1 to 2147483647. Skips calibration when specified |
+| `--warmup-ms N` | 100 | Warmup time before measurement; 0 skips warmup |
+| `--timeout-ms N` | 30000 | Per-case timeout, including Node startup, Wasm compilation, and calibration |
+| `--filter TEXT` | none | Substring match on bench names |
+| `--list` | none | Type-check everything and list matching cases only; does not require Node |
+| `--json` | none | Structured results in `walz-bench-v1` format |
 
-自動校正では反復数を倍増し、目標時間に達するか上限に達したところで固定する。
-表示は中央値、平均、最小、最大、標本標準偏差と、サンプル数・反復数。
-JSONには測定順の生サンプルとNode/V8の版、OS・アーキテクチャ、オプション、失敗理由も残す。
-外れ値は削除・加工しない。比較する環境、入力、オプションと結果は一緒に保存する。
+Automatic calibration doubles the iteration count until it reaches the target time or the upper limit, then fixes that count.
+Output includes the median, mean, minimum, maximum, sample standard deviation, sample count, and iteration count.
+JSON also records raw samples in measurement order, Node/V8 versions, OS and architecture, options, and failure reasons.
+Outliers are neither removed nor adjusted. Save the comparison environment, inputs, options, and results together.
 
-実行対象は閉じた同期的なguestコード。ホストimportの実装、JSPI/Componentの非同期処理はランナーでは提供しない。
-選んだbench以外のexportはリンクの根から外すため、無関係なimportは持ち込まない。
-通常の `%test` と探索・実行を分け、`wlt test` はbenchを実行しない。
+The execution target is closed, synchronous guest code. The runner does not provide host import implementations or JSPI/Component asynchronous execution.
+Exports other than the selected bench are removed from the link roots, so unrelated imports are not pulled in.
+Discovery and execution are separate from ordinary `@test` cases; `walz test` does not run benches.
 
-ディレクトリは再帰探索し、シンボリックリンクをたどらない。
-`target`・`node_modules`・`.git` は再帰探索から除外する。これらも入力パスとして明示した場合は対象にできる。
-明示したファイルは名前を問わず、重複は正規化したパスでまとめる。`--` の後はすべてファイルパスとして扱う。
-trapやタイムアウト、ファイルの型エラーがあっても他のケースは続行する。
-0件はエラー。終了コードは成功0、計測・ソース・環境のエラー1、引数の誤り2。
+Directories are searched recursively without following symbolic links.
+`target`, `node_modules`, and `.git` are excluded from recursive discovery, but can be targeted by explicitly specifying them as input paths.
+Explicit files are accepted regardless of their names; duplicates are merged by normalized path. Everything after `--` is treated as a file path.
+Other cases continue after traps, timeouts, or file type errors.
+Zero cases is an error. Exit codes are 0 for success, 1 for measurement/source/environment errors, and 2 for invalid arguments.
 
-Rust APIは `wlt::benchmark::run(paths, options)`。検査済みIRからハーネスを作る場合は
-`wlt::benchmark::compile(source, &module, index)` を使う。
-[標準ライブラリの計測例](../examples/benchmarks/stdlib_v2_bench.wlt) に整数、ビュー、JSON解析をまとめている。
+The Rust API is `walz::benchmark::run(paths, options)`. To build a harness from checked IR,
+use `walz::benchmark::compile(source, &module, index)`.
+The [standard library benchmark examples](../examples/benchmarks/stdlib_v2_bench.walz) cover integers, views, and JSON parsing.
 
-[MoonBitのbench実装](https://github.com/moonbitlang/core/blob/main/bench/bench.mbt) の
-バッチ反復・単調時計・結果保持を参考にした。WLTでは専用のbenchオブジェクトを導入せず、
-宣言とCLI、観測可能な返り値で表す。
+The batch iterations, monotonic clock, and result retention were informed by
+[MoonBit's bench implementation](https://github.com/moonbitlang/core/blob/main/bench/bench.mbt). Walz represents these through
+declarations, the CLI, and observable return values, without introducing a dedicated bench object.
 
-## プロファイルを使ったstdの改善
+<a id="プロファイルを使ったstdの改善"></a>
 
-[最初の改善結果と固定した計測データ](../benchmarks/stdlib-json/20261106-v1/report.md) は、JSONエスケープの変更前後を記録している。
+## Improving std with profiles
 
-変更前の `%bench` をWasmとして固定し、プロファイルと速度比較を別の実行で取る。
-例は [std_tune_v2_bench.wlt](../examples/benchmarks/std_tune_v2_bench.wlt)。64／1024バイトの連結、
-ASCII・Unicode・エスケープを含むJSON化、builder、JSON解析と、入力構築だけの対照を含む。
-リテラルの構築も本体に含むため、処理だけの時間とみなさない。
-v2は `$json.stringify` と `$json.from-string` を使う。旧APIの入力は `stdlib-v1.wlt`／`std-tune-v1.wlt` に元の内容を保持し、自動探索から外す。
-v1の測定は保存済みWasmで再実行する。APIと入力の変わったv2をv1と同じ比較組として扱わない。
+The [initial improvements and fixed measurement data](../benchmarks/stdlib-json/20261106-v1/report.md) record the JSON escaping change before and after.
+
+Capture the pre-change `@bench` as Wasm, and collect profiles and speed comparisons in separate runs.
+See [std_tune_v2_bench.walz](../examples/benchmarks/std_tune_v2_bench.walz). It covers 64/1024-byte concatenation,
+JSON serialization with ASCII, Unicode, and escapes, builders, JSON parsing, and an input-construction-only control.
+Literal construction is included in the body, so do not interpret the results as processing-only time.
+v2 uses `$json.stringify` and `$json.from-string`. Inputs for the old API retain their original contents in `stdlib-v1.walz`/`std-tune-v1.walz` and are excluded from automatic discovery.
+Rerun v1 measurements with the saved Wasm. Do not treat v2, whose API and inputs changed, as the same comparison suite as v1.
 
 ```sh
-just bench-capture examples/benchmarks/std_tune_v2_bench.wlt target/std-tune/before
+just bench-capture examples/benchmarks/std_tune_v2_bench.walz target/std-tune/before
 just bench-profile target/std-tune/before target/std-tune/profile-before 'json.stringify string ASCII 1024' 200000
 
 # stdを修正し、機能検査を通した後
 just test-std-tune
-just bench-capture examples/benchmarks/std_tune_v2_bench.wlt target/std-tune/after
+just bench-capture examples/benchmarks/std_tune_v2_bench.walz target/std-tune/after
 just bench-compare target/std-tune/before target/std-tune/after target/std-tune/comparison.json
 just bench-profile target/std-tune/after target/std-tune/profile-after 'json.stringify string ASCII 1024' 200000
 ```
 
-captureはWasm、入力、展開済みソース、計測driver、stdlibソースを保存し、SHA-256を記録する。
-ディレクトリや結果ファイルは上書きしない。profile／compareの前に記録と実ファイルを照合する。
-比較する入力やdriverが異なれば拒否する。計測には固定したdriverとWasmを使う。
-測定後の入力を変える場合は別のsuite・snapshotとして保存し、基準値から取り直す。
+capture saves Wasm, inputs, expanded source, the measurement driver, and stdlib sources, and records SHA-256 hashes.
+It does not overwrite directories or result files. Before profile/compare, the recorded metadata is checked against the actual files.
+Different comparison inputs or drivers are rejected. Measurements use the fixed driver and Wasm.
+If inputs change after measurement, save them as a separate suite/snapshot and take a new baseline.
 
-compareは基準側で校正した同じ反復数を両方へ渡し、ウォームアップ後にbefore→after／after→beforeを
-交互に実行する。生サンプル、対応するサンプル比の中央値、Wasmサイズ、バイナリが同一かどうかを保存する。
-スカラー結果は一致を検査する。GC参照の内容はこの比較では検査できないため、別途oracleによる機能検査を行う。
-`just test-std-tune` は正確なJSONエスケープ、Unicode、連結・builder、ABI解放をCoreとComponentの両方で検査する。
+compare passes both sides the same iteration count calibrated on the baseline. After warmup, it
+alternates before→after and after→before runs. It saves raw samples, the median of paired sample ratios, Wasm sizes, and whether the binaries are identical.
+Scalar results are checked for equality. This comparison cannot check the contents of GC references, so run separate functional checks using an oracle.
+`just test-std-tune` checks exact JSON escaping, Unicode, concatenation/builders, and ABI cleanup on both Core and Component.
 
-profileは同じWasmをV8とWasmtimeで別々に実行し、Chrome DevTools等で読める `.cpuprofile`、
-Firefox Profilerで読める `.guest.json` と、関数ごとのサンプル集計を出す。
-V8はウォームアップ後に約1秒、Wasmtimeは指定した反復数を1ms間隔でサンプリングする。
-プロファイルの起動・Wasmコンパイルは採取区間から外し、プロファイル下の時間を速度比較には使わない。
-Wasmtime側のサンプルが少なければ、新しい出力先で反復数を増やす。
-両エンジンでインライン化やGCが異なるため、サンプル比をエンジン間で性能比として扱わない。
+profile runs the same Wasm separately in V8 and Wasmtime, producing `.cpuprofile` files readable by Chrome DevTools and similar tools,
+`.guest.json` files readable by Firefox Profiler, and per-function sample totals.
+V8 samples for about one second after warmup; Wasmtime samples the specified iterations at 1 ms intervals.
+Profile startup and Wasm compilation are outside the collection interval. Do not use profiled times for speed comparisons.
+If Wasmtime yields too few samples, increase the iteration count with a new output destination.
+Inlining and GC differ between the engines, so do not interpret cross-engine sample ratios as performance ratios.
 
-## Core＋JSPI のテスト・計測
+<a id="corejspi-のテスト計測"></a>
 
-`wlt test --target core-js --bindings policy.json --host host.mjs` と
-`wlt bench --target core-js --bindings policy.json --host host.mjs` で、非同期 import と子タスクを実行できる。
-ケースごとにプロセス・Wasm instance・host factory を作り、正常・失敗・取消し後にホストの解放を待つ。
-`--list` は型チェックだけを行い、host module と Node を起動しない。
-タイムアウト時は協調的な取消しを要求し、最大5秒の解放猶予後も終了しないホストは強制終了して失敗を報告する。
+## Core＋JSPI tests and benchmarks
 
-Core＋JSPI のベンチは、各呼出しを順番に await する end-to-end 計測。codec・JSPI・待機時間を含み、結果は ABI 対応の共有値または unit に限定する。
-既定の `core` の Wasm 内バッチ計測とは別の測定条件で、JSON の `options.target` と `summary.runtime` に区別を残す。
+`walz test --target core-js --bindings policy.json --host host.mjs` and
+`walz bench --target core-js --bindings policy.json --host host.mjs` can execute asynchronous imports and child tasks.
+Each case gets its own process, Wasm instance, and host factory, and waits for host cleanup after success, failure, or cancellation.
+`--list` only type-checks; it does not start the host module or Node.
+A timeout requests cooperative cancellation. A host that has not exited after a cleanup grace period of up to 5 seconds is forcibly terminated and reported as a failure.
+
+Core＋JSPI benchmarks measure end-to-end execution by awaiting each call in sequence. They include codecs, JSPI, and waiting time; results are limited to ABI-supported shared values or unit.
+These conditions differ from the default `core` in-Wasm batch measurements. JSON records the distinction in `options.target` and `summary.runtime`.

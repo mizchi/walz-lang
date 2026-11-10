@@ -1,0 +1,29 @@
+(module
+  (@use "walz:core" (type $result))
+  (@export (type $Id) (func $run))
+  (type $Id (@newtype i64))
+  (func $step
+    (param $n i64)
+    (param $fail i32)
+    (result (@inst $result $Id i32))
+    (@effect pure)
+    (if
+      (result (@inst $result $Id i32))
+      (local.get $fail)
+      (then (@result.err $Id i32 (i32.const 7)))
+      (else (@result.ok $Id i32 (@newtype.wrap $Id (local.get $n))))
+    ))
+
+  (func $run
+    (param $fail i32)
+    (result (@inst $result $Id i32))
+    (@effect pure)
+    (@result.do
+      ($a (call $step (i64.const 40) (local.get $fail)))
+      ($b (call $step (i64.const 2) (i32.const 0)))
+      (@result.ok $Id i32
+        (@newtype.wrap $Id
+          (i64.add
+            (@newtype.unwrap $Id (local.get $a))
+            (@newtype.unwrap $Id (local.get $b))))
+      ))))

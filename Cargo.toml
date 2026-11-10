@@ -1,17 +1,17 @@
 [package]
-name = "wlt"
+name = "walz"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.99"
 publish = false
-default-run = "wlt"
+default-run = "walz"
 description = "A small typed language extending WAT for Wasm GC"
-repository = "https://github.com/mizchi/wlt-lang"
+repository = "https://github.com/mizchi/walz-lang"
 readme = "README.md"
-license = "Apache-2.0 WITH LLVM-exception"
+license = "Apache-2.0"
 
 [workspace]
-members = [".", "crates/wlt-web"]
+members = [".", "crates/walz-web"]
 default-members = ["."]
 
 [[bench]]

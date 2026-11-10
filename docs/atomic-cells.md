@@ -1,94 +1,94 @@
-# 固定 atomic セルの条件付き race-free 検証
+# Conditional Race-Freedom Verification for Fixed Atomic Cells
 
-`%race-free` を付けたモジュールでは、共有線形メモリへのアクセスを静的に宣言した atomic セルに限定する。Rust の型・所有権・effect 検査に加え、コンパイル時に独立した Lean カーネルを実行する。ホストが同じ契約を守るという前提で、共有メモリのデータ競合を排除する。
+A module marked `@race-free` restricts shared linear-memory accesses to statically declared atomic cells. In addition to Rust's type, ownership, and effect checks, compilation runs an independent Lean kernel. This excludes shared-memory data races under the assumption that the host follows the same contract.
 
 ```wat
 (module
-  (%race-free)
+  (@race-free)
   (import "env" "memory" (memory $shared 1 1 shared))
-  (%atomic.cell $counter $shared i32 0)
+  (@atomic.cell $counter $shared i32 0)
   (func $add (export "add") (param $n i32) (result i32)
-    (%effect reads writes synchronizes)
-    (i32.atomic.rmw.add (%atomic.at $counter) $n)))
+    (@effect reads writes synchronizes)
+    (i32.atomic.rmw.add (@atomic.at $counter) $n)))
 ```
 
-実行できる [fixture](../tests/component-fixtures/atomic-cells.wlt) と [Worker の使用例](../runtime/atomic-cells.test.mjs) を同梱する。
+An executable [fixture](../tests/component-fixtures/atomic-cells.walz) and [Worker example](../runtime/atomic-cells.test.mjs) are included.
 
-ここではatomicセルだけを使うversion 1の契約を説明する。[readonly領域のversion 2](readonly-regions.md)は、公開後不変の共有payloadとWorkerごとの私有memoryを追加する。スケジューリングと取消しには[汎用Workerホスト](worker-host.md)を使える。
+This page describes the version 1 contract, which uses only atomic cells. [Readonly regions in version 2](readonly-regions.md) add shared payloads that remain immutable after publication and private memory for each Worker. The [general Worker host](worker-host.md) supports scheduling and cancellation.
 
-## 検査する規則
+## Checked Rules
 
-- 共有元のメモリは最大1つ。`shared`、初期ページ数と最大ページ数が同じで、raw memory export がないことを要求する。メモリなしの計算・fence も受理する。
-- `(%atomic.cell $name $memory i32/i64 byte-offset)` は固定セルを宣言する。初期メモリ内の自然アライメント、セルの重複、宣言数256以下を検査する。宣言は初期値を書き込まない。
-- `(%atomic.at $name)` は atomic のアドレス位置にだけ使える。整数や参照として取り出すこと、加減算・cast・関数引数への受け渡しはできない。メモリ指定を省くとセルのメモリを使う。明示指定する場合も一致を要求する。
-- full-width の i32 / i64 load・store・RMW・cmpxchg、同じ型の wait、notify、fence を扱う。狭幅アクセス、余分な offset、raw アドレス、size/grow は拒否する。notify はセルの待ち行列を操作し、payload の書込みとしては扱わない。
-- 未使用の定義を含めて検査する。未知のホスト関数 import、数値以外の ABI 引数・結果を拒否する。unit の結果は許す。GC データはエージェント内に留め、従来の move / 消費規則を維持する。
+- There is at most one backing shared memory. It must be `shared`, have equal initial and maximum page counts, and have no raw memory export. Memory-free computation and fences are also accepted.
+- `(@atomic.cell $name $memory i32/i64 byte-offset)` declares a fixed cell. Checks require natural alignment within initial memory, non-overlapping cells, and at most 256 declarations. Declarations do not write initial values.
+- `(@atomic.at $name)` is allowed only in atomic address positions. It cannot be extracted as an integer or reference, used in addition/subtraction or casts, or passed as a function argument. Omitting the memory selects the cell's memory; an explicit memory must match it.
+- Full-width i32/i64 load, store, RMW, and cmpxchg, waits of the same type, notify, and fence are supported. Narrow accesses, extra offsets, raw addresses, and size/grow are rejected. Notify operates on the cell's wait queue and is not treated as a payload write.
+- Checks include unused definitions. Unknown host-function imports and non-numeric ABI parameters/results are rejected; unit results are allowed. GC data stays within an agent, preserving the existing move/consumption rules.
 
-`%atomic.cell` と `%atomic.at` は `%race-free` なしでも静的な型付き糖衣として使えるが、その場合に証明済みとは扱わない。通常の WAT と、任意のアドレスを使う既存 atomics の経路も維持する。
+`@atomic.cell` and `@atomic.at` can also be used as static typed sugar without `@race-free`, but are not treated as verified in that case. Ordinary WAT and existing atomics with arbitrary addresses remain supported.
 
-ファイルからは `(%export (cell $counter))` と `(%use "./state.wlt" (cell $counter $alias))` でセルを選べる。別名は同じセルを指す。`%race-free` はエントリーモジュールに置き、取り込む全定義へ適用する。
+Files can select cells with `(@export (cell $counter))` and `(@use "./state.walz" (cell $counter $alias))`. Aliases refer to the same cell. Put `@race-free` in the entry module; it applies to all included definitions.
 
-## ホスト契約
+## Host Contract
 
-Core＋JSPI の生成 api は、共有メモリ import に対して明示的な契約指定を要求する。
+The generated Core+JSPI API requires an explicit contract selection for shared-memory imports.
 
 ```js
 const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
 const { api } = await instantiate({
   imports: { env: { memory } },
-  atomicHostContract: 'wlt-atomic-cells-v1',
+  atomicHostContract: 'walz-atomic-cells-v1',
 });
 Atomics.add(new Int32Array(memory.buffer), 0, 1);
 api.add(2);
 ```
 
-`manifest.json` の `raceFree.cells` が `{offset, width}` のレイアウトを示す。ホストと、同じメモリを使うすべての Worker / Wasm インスタンスは、次を守る。
+`raceFree.cells` in `manifest.json` describes the `{offset, width}` layout. The host and every Worker/Wasm instance using the same memory must follow these rules:
 
-1. 共有開始後の payload アクセスには、宣言されたセルの範囲と幅に一致する Atomics / Wasm atomics だけを使う。
-2. 通常の TypedArray 書込み、異なる幅による重ね合わせ、別モジュールの data segment による再初期化を行わない。
-3. wait / notify は宣言したセルのアドレスを使う。終了は有限 timeout や明示的な notify で制御する。
+1. After sharing begins, access payloads only through Atomics/Wasm atomics matching the declared cell ranges and widths.
+2. Do not use ordinary TypedArray writes, overlapping accesses of different widths, or reinitialization through another module's data segments.
+3. Use declared cell addresses for wait/notify. Control termination with finite timeouts or explicit notify operations.
 
-検証済み Core 成果物は `wlt-core-js-v3` を使う。値の codec は v2 と同じで、v3 は契約 descriptor とホストの明示指定を必須にする。古いランタイムは未対応 ABI として拒否するため、契約確認を読み飛ばして実行しない。通常の成果物は引き続き v2 を使う。
+Verified Core artifacts use `walz-core-js-v3`. Value codecs are the same as v2; v3 requires a contract descriptor and explicit host selection. Older runtimes reject this as an unsupported ABI, preventing execution that skips contract acknowledgement. Ordinary artifacts continue to use v2.
 
-共有前の初期化は任意の初期状態としてモデルの外に置く。メモリの共有属性・limits は Wasm エンジンが照合する。契約指定がなければ api はインスタンス化前に拒否する。
+Initialization before sharing is outside the model and treated as an arbitrary initial state. The Wasm engine checks memory sharing attributes and limits. Without a contract selection, the API rejects the request before instantiation.
 
-**契約の指定はホストコードの検証ではない。** ホストが指定だけ行って規約を破れば証明は適用できない。生の Core Wasm を直接 instantiate する場合も同じ前提が必要。私有メモリでは外部ホストの契約指定は不要で、Core / Component の両方で使える。
+**Selecting a contract does not verify host code.** If the host selects it but violates the rules, the proof does not apply. Direct instantiation of raw Core Wasm requires the same assumption. Private memory needs no external host contract selection and works with both Core and Component.
 
-## Lean が証明する範囲
+## What Lean Proves
 
-[AtomicCells.lean](../proof/AtomicCells.lean) は、コンパイラが抽出するセルの配置とアクセス命令の一覧を独立に検査する。opcode の whitelist も Lean 側に持ち、非 atomic 命令・異なる幅・配置外のアクセスを拒否する。
+[AtomicCells.lean](../proof/AtomicCells.lean) independently checks the cell layout and access-instruction list extracted by the compiler. Lean also has its own opcode whitelist, rejecting non-atomic instructions, mismatched widths, and accesses outside the layout.
 
-検査に通った契約について、任意のエージェント数と任意の長さの実行列を対象に、以下を証明する。
+For a contract that passes checking, it proves the following for any number of agents and execution traces of arbitrary length.
 
-| 定理 | 保証 |
+| Theorem | Guarantee |
 | --- | --- |
-| `race_free` | 競合するエージェント間アクセスに非 atomic なものが混じらない |
-| `uniform_cells` | 重なる payload アクセスは開始位置・幅が一致する |
-| `in_bounds` | 各アクセスは4 / 8バイト、自然アライメント、宣言したメモリの範囲内 |
+| `race_free` | Conflicting accesses between agents never include a non-atomic access |
+| `uniform_cells` | Overlapping payload accesses have the same start and width |
+| `in_bounds` | Every access is 4/8 bytes, naturally aligned, and within the declared memory |
 
-モデルは、検査済みの任意の命令位置を任意のエージェントが何度でも実行できるようにする。制御フローを過大近似し、実行回数の有限展開は使わない。ホストのイベントも同じセル契約に従う。notify / fence / スレッド内 GC 操作は payload trace の stuttering step とする。
+The model lets any agent execute any checked instruction site any number of times. It overapproximates control flow without bounded unrolling of execution counts. Host events follow the same cell contract. Notify, fence, and intra-thread GC operations are stuttering steps in the payload trace.
 
-ソースのパース・名前解決・IR 抽出・最適化・DCE・Wasm 出力・エンジン・ABI 実装と、ホストの契約順守は TCB / 仮定として残る。生成 Wasm 全体の意味保存や、任意の JavaScript を形式検証したものではない。
+Source parsing, name resolution, IR extraction, optimization, DCE, Wasm emission, the engine, ABI implementations, and host compliance remain in the TCB or assumptions. This is not a proof of semantics preservation for all generated Wasm or formal verification of arbitrary JavaScript.
 
-データ競合がなくても、`atomic.load → 加算 → atomic.store` の手順は更新を失い得る。Node の検査では2 Worker を両方 load の直後で止め、両方が1を書いて最終値が1になることを再現する。`rmw.add` なら同じ実行で加算は失われない。線形化可能性・deadlock-free・公平性・排他領域 `Owned<R>` の分割／移動はこの版の保証に含めない。
+Even without data races, `atomic.load → addition → atomic.store` can lose updates. The Node test pauses two Workers immediately after both loads and reproduces a final value of 1 when both write 1. With `rmw.add`, the additions are preserved in the same execution. This version does not guarantee linearizability, deadlock freedom, fairness, or splitting/moving exclusive regions `Owned<R>`.
 
-## コマンドと証拠
+## Commands and Evidence
 
 ```sh
-cargo run --locked -- race-contracts tests/component-fixtures/atomic-cells.wlt
-cargo run --locked -- verify tests/component-fixtures/atomic-cells.wlt
+cargo run --locked -- race-contracts tests/component-fixtures/atomic-cells.walz
+cargo run --locked -- verify tests/component-fixtures/atomic-cells.walz
 just test-atomic-cells
 ```
 
-`check` と `race-contracts` は Rust の構造検査・契約抽出だけを行う。`build` / `wat` / `core-js` / `component` / `verify` は、対象コードの Lean 検査にも成功する必要がある。ブラウザ内コンパイラは Lean を実行できないため、このモードを `E_HOST_UNAVAILABLE` で拒否する。ネイティブで検証して生成した成果物はブラウザで実行できる。
+`check` and `race-contracts` perform only Rust structural checks and contract extraction. `build`, `wat`, `core-js`, `component`, and `verify` also require Lean checking of the target code to succeed. The in-browser compiler cannot run Lean and rejects this mode with `E_HOST_UNAVAILABLE`. Artifacts verified and generated natively can run in a browser.
 
-設計判断と証拠:
+Design decisions and evidence:
 
-| 項目 | 内容 |
+| Item | Details |
 | --- | --- |
-| 契約の出所 | 固定幅の atomic セル限定と、ホスト契約を前提とするユーザーの選択 |
-| 実装 | セル参照を定数アドレスへ下げ、全関数の memory 命令を検査。検証モードでは opaque fallback を禁止 |
-| 機械検査 | Lean の trace 不変条件と3定理。Rust / Node / ブラウザで受理・拒否と実行を照合 |
-| 拒否する witness | 部分的に重なる i64 / i32 セル、i32.store、異なる幅、契約外 offset。改ざんした JSON もカーネルが拒否 |
-| 保持する witness | 全操作が atomic な load/store プロトコルの更新喪失。データ競合の証明と論理的な競合を区別 |
-| ホスト境界 | ホストが非 atomic 書込みを行う反例をモデルに保持。ホスト契約を外すと保証は成立しない |
+| Contract origin | The user's choice to restrict accesses to fixed-width atomic cells and assume a host contract |
+| Implementation | Lowers cell references to constant addresses and checks memory instructions in all functions. Verified mode prohibits opaque fallback |
+| Machine checking | Lean trace invariants and three theorems. Rust/Node/browser tests compare acceptance, rejection, and execution |
+| Rejected witnesses | Partially overlapping i64/i32 cells, i32.store, different widths, and offsets outside the contract. The kernel also rejects tampered JSON |
+| Retained witness | Lost updates in a load/store protocol whose operations are all atomic. Distinguishes a data-race proof from logical races |
+| Host boundary | Retains a counterexample with a non-atomic host write in the model. The guarantee fails without the host contract |

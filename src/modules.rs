@@ -165,7 +165,7 @@ fn collect(
             }
             Some("race-free") if !scope.is_empty() => {
                 return Err(
-                    Error::at(source, node.span, "%race-free belongs to the entry module")
+                    Error::at(source, node.span, "@race-free belongs to the entry module")
                         .with_code("E_RACE_MODE"),
                 );
             }
@@ -185,7 +185,7 @@ fn collect(
                 return Err(
                     Error::at(source, node.span, "file uses require source::load")
                         .with_code("E_SOURCE_REQUIRED")
-                        .help("load the entry file to resolve its relative %use paths"),
+                        .help("load the entry file to resolve its relative @use paths"),
                 );
             }
             Some("use") => current.uses.push(node.clone()),
@@ -464,7 +464,7 @@ fn resolve(
 }
 fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Result<(), Error> {
     let head = node.head().unwrap_or("").to_owned();
-    if head.starts_with('@') {
+    if crate::syntax::annotation(&head) {
         return Ok(());
     }
     if head == "export" && !scope.is_empty() {
@@ -477,15 +477,15 @@ fn rewrite(source: &str, scopes: &Scopes, scope: &str, node: &mut Sexp) -> Resul
     let Kind::List(items) = &mut node.kind else {
         return Ok(());
     };
-    if let Some(name) = head.strip_prefix('%').filter(|n| n.starts_with('$')) {
+    if let Some(name) = head.strip_prefix('@').filter(|n| n.starts_with('$')) {
         let mut operand = items[0].clone();
         operand.kind = Kind::Atom(name.into());
         items[0].kind = Kind::Atom(format!(
-            "%{}",
+            "@{}",
             resolve(source, scopes, scope, SymbolKind::Macro, &operand)
                 .map_err(|e| e.with_code("E_MACRO_UNKNOWN"))?
         ));
-        let concrete = items[0].atom().unwrap().trim_start_matches('%');
+        let concrete = items[0].atom().unwrap().trim_start_matches('@');
         let definition = scopes
             .values()
             .find_map(|s| s.macro_definitions.get(concrete));

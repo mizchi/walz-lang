@@ -2,7 +2,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::{Command, ExitCode, Stdio};
 
-pub const USAGE: &str = "Usage: wlt run [file.wlt|directory] [--invoke export] [--target core|core-js]\n               [--bindings policy.json] [--host host.mjs] [--timeout-ms N] [--exit-code]\n               [--stdio [--input file] [--output file]]\n               [--read-file NAME=PATH] [--write-file NAME=PATH] [-- arguments...]\n\nDefault entry: main.wlt, then src/main.wlt. Default target: core (Wasmtime).\ncore-js uses Node.js 24+ and supports async imports. --stdio explicitly grants text I/O.\nArguments are also available to core-js guests through wlt:host/cli@0.1.0.arguments.";
+pub const USAGE: &str = "Usage: walz run [file.walz|directory] [--invoke export] [--target core|core-js]\n               [--bindings policy.json] [--host host.mjs] [--timeout-ms N] [--exit-code]\n               [--stdio [--input file] [--output file]]\n               [--read-file NAME=PATH] [--write-file NAME=PATH] [-- arguments...]\n\nDefault entry: main.walz, then src/main.walz. Default target: core (Wasmtime).\ncore-js uses Node.js 24+ and supports async imports. --stdio explicitly grants text I/O.\nArguments are also available to core-js guests through walz:host/cli@0.1.0.arguments.";
 
 #[derive(Default)]
 struct Options {
@@ -141,16 +141,16 @@ fn execute(options: Options) -> Result<u8, Box<dyn std::error::Error>> {
         path
     };
     let loaded = if options.legacy {
-        wlt::source::load_legacy(&path)?
+        walz::source::load_legacy(&path)?
     } else {
-        wlt::source::load(&path)?
+        walz::source::load(&path)?
     };
     let policy = options
         .bindings
         .as_ref()
         .map(std::fs::read_to_string)
         .transpose()?
-        .map(|s| wlt::bindings::BindingPolicy::parse(&s))
+        .map(|s| walz::bindings::BindingPolicy::parse(&s))
         .transpose()?
         .unwrap_or_default();
     let dir = tempfile::tempdir()?;
@@ -183,7 +183,7 @@ fn execute(options: Options) -> Result<u8, Box<dyn std::error::Error>> {
                 }
             }
         }
-        let built = wlt::component::core_js::compile_with_policy(loaded.text(), &policy)
+        let built = walz::component::core_js::compile_with_policy(loaded.text(), &policy)
             .map_err(|e| loaded.diagnostic(e))?;
         let export = built
             .exports
@@ -249,7 +249,7 @@ fn execute(options: Options) -> Result<u8, Box<dyn std::error::Error>> {
             .unwrap_or(1));
     }
     let compiled =
-        wlt::compile_with_policy(loaded.text(), &policy).map_err(|e| loaded.diagnostic(e))?;
+        walz::compile_with_policy(loaded.text(), &policy).map_err(|e| loaded.diagnostic(e))?;
     let file = dir.path().join("program.wasm");
     std::fs::write(&file, compiled.wasm)?;
     let mut command = Command::new("wasmtime");

@@ -8,15 +8,15 @@ const execFile=promisify(execCallback);
 const root=fileURLToPath(new URL('../../', import.meta.url));
 export async function build(directory, {backend='core'}={}) {
   const compiler = backend === 'core' ? core : (await import('../build.mjs')).build;
-  await compiler(resolve(root,'examples/succinct/api.wlt'), resolve(directory,'serial'));
+  await compiler(resolve(root,'examples/succinct/api.walz'), resolve(directory,'serial'));
   const source=resolve(directory,'source');
   await mkdir(source,{recursive:true});
   for(const name of await readdir(resolve(root,'examples/succinct'))) {
-    if(name.endsWith('.wlt')) await copyFile(resolve(root,'examples/succinct',name),resolve(source,name));
+    if(name.endsWith('.walz')) await copyFile(resolve(root,'examples/succinct',name),resolve(source,name));
   }
-  await writeFile(resolve(source,'memory.wlt'), '(module (import "env" "memory" (memory $memory 256 256 shared)) (%export (memory $memory)))');
-  await execFile('cargo',['run','--locked','--quiet','--','build',resolve(source,'reader.wlt'),'-o',resolve(directory,'reader.wasm')],{cwd:root,maxBuffer:4*1024*1024});
-  const {stdout}=await execFile('cargo',['run','--locked','--quiet','--','race-contracts',resolve(source,'reader.wlt')],{cwd:root,maxBuffer:4*1024*1024});
+  await writeFile(resolve(source,'memory.walz'), '(module (import "env" "memory" (memory $memory 256 256 shared)) (@export (memory $memory)))');
+  await execFile('cargo',['run','--locked','--quiet','--','build',resolve(source,'reader.walz'),'-o',resolve(directory,'reader.wasm')],{cwd:root,maxBuffer:4*1024*1024});
+  const {stdout}=await execFile('cargo',['run','--locked','--quiet','--','race-contracts',resolve(source,'reader.walz')],{cwd:root,maxBuffer:4*1024*1024});
   await writeFile(resolve(directory,'reader-contract.json'),stdout);
   await mkdir(resolve(directory,'workers'),{recursive:true});
   for(const name of ['host.mjs','agent.mjs'])await copyFile(new URL('../workers/'+name,import.meta.url),resolve(directory,'workers',name));

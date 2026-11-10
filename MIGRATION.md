@@ -1,8 +1,40 @@
+# Walz `@` extensions (2026-11-10)
+
+Walz extension entry points now use `@`: `@use`, `@let`, `@match`, `@effect`, `@macro`, and `@$name`. The same prefix applies to extension value types, annotations, named construction, and generic instantiation. Percent-prefixed extensions are not source aliases.
+
+Known Walz `@` names are reserved. They always enter checking and cannot be discarded by a WAT parser as unknown annotations. Other WAT annotations and their complete payloads remain opaque. WIT identifier escapes, URI percent encoding, and arithmetic remainder operators still use `%`.
+
+Frontend inputs/references use v6, stock-ledger evaluations v19, diagnostic evaluations v8, struct-readability packets v8, and macro/usability harness input revision 4. Previous inputs and recorded results remain unchanged; use fresh run IDs.
+
+---
+
+# Walz naming (2026-11-10)
+
+The current language name is **Walz**. The records below retain the names and paths used when those measurements were taken.
+
+| Surface | Current name |
+|---|---|
+| CLI / Cargo package | `walz` |
+| Application source | `.walz` |
+| Tests / benchmarks | `*.test.walz` / `*_bench.walz` |
+| Built-in package / implementation | `walz:core` / `walz/core/` |
+| Host interfaces | `walz:host/...` |
+| Browser compiler | `walz-web` |
+| JavaScript package | `@mizchi/walz-runtime` |
+| CLI override / tool environment variables | `WALZ` / `WALZ_*` |
+| Local agent skill | `.agents/skills/walz/` |
+
+CLI JSON schemas, LSP extension methods, generated names, and runtime ABI markers also use `walz`. Source syntax and Wasm semantics are unchanged. WLT compatibility aliases and a migration command are not provided.
+
+Recorded artifacts and frozen inputs retain their original bytes. Frontend benchmarks use new v5 fixtures; evaluation suites and harness input revisions identify the renamed inputs separately. Historical WAT reference tests normalize generated identifiers and host namespaces explicitly. New runs must use fresh output directories.
+
+---
+
 # WLT への移行
 
 このリポジトリは Wasmtime の作業ディレクトリにあった `examples/gcwat` の試作を取り出したものです。
 Wasmtime 自体の Git 履歴やソースは取り込んでいません。最初のコミットに改名前の試作を保存し、その後で改名しています。
-ライセンスは元の Cargo 宣言に従い Apache-2.0 WITH LLVM-exception を維持します。
+現在のWLTのライセンスは[Apache License 2.0](LICENSE)です。
 
 | 対象 | 旧名 | 現行名 |
 | --- | --- | --- |

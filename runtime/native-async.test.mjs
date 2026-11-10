@@ -6,9 +6,9 @@ import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 import {buildNative} from './build-native.mjs';
 test('native async world creates future and stream using canonical producers',{timeout:60000},async()=>{
- const dir=await mkdtemp(join(tmpdir(),'wlt-native-async-'));
+ const dir=await mkdtemp(join(tmpdir(),'walz-native-async-'));
  try{
-  await buildNative('tests/component-fixtures/native-async.wlt','tests/component-fixtures/native-async.wit',dir,{});
+  await buildNative('tests/component-fixtures/native-async.walz','tests/component-fixtures/native-async.wit',dir,{});
   const {instantiate}=await import(pathToFileURL(join(dir,'native.js')));
   const memories=[];
   const component=await instantiate(async name=>WebAssembly.compile(await readFile(join(dir,name))),{},async(m,i)=>{const x=await WebAssembly.instantiate(m,i);if(x.exports.live)memories.push(x.exports);return x;});

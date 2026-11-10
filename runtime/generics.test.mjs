@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 for(const backend of ['core','component'])test(`${backend}: monomorphized list map and fold retain concrete export ABIs`,async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-generics-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-generics-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('examples/generic-lists.wlt',dir);
+    await build('examples/generic-lists.walz',dir);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));let memory;
     const {api}=await instantiate({instantiateCore:async(module,imports)=>{
       const instance=await WebAssembly.instantiate(module,imports);

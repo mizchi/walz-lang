@@ -14,7 +14,7 @@ pub(super) fn render(
         .find(|d| d.namespace == namespace)?;
     // Reserve its component index, then insert the exact validated binary.
     let mut text = format!(
-        "(component $binary{group} (@custom \"wlt:embedded-component\" {:?}))\n(instance $binary_instance{group} (instantiate $binary{group}))\n",
+        "(component $binary{group} (@custom \"walz:embedded-component\" {:?}))\n(instance $binary_instance{group} (instantiate $binary{group}))\n",
         dependency.namespace
     );
     for (i, function) in functions {
@@ -66,7 +66,7 @@ pub(super) fn assemble(module: &Module, text: String) -> Result<(String, Vec<u8>
                 for child in wasmparser::Parser::new(0).parse_all(original) {
                     if let wasmparser::Payload::CustomSection(section) =
                         child.map_err(|e| fail(e.to_string()))?
-                        && section.name() == "wlt:embedded-component"
+                        && section.name() == "walz:embedded-component"
                     {
                         let namespace =
                             std::str::from_utf8(section.data()).map_err(|e| fail(e.to_string()))?;

@@ -223,7 +223,7 @@ pub(crate) fn check_observed<T>(
     }
 }
 
-/// Resolve and check wlt, infer effects, and emit a validated Wasm GC module.
+/// Resolve and check walz, infer effects, and emit a validated Wasm GC module.
 pub fn compile(source: &str) -> Result<Compilation, Error> {
     compile_with_options(source, CompileOptions::default())
 }
@@ -239,10 +239,12 @@ pub fn compile_with_policy(
 }
 
 pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Compilation, Error> {
-    // Native WAT takes precedence: do not reinterpret or rewrite valid WAT.
+    // Reserved Walz entries must not be discarded as opaque WAT annotations.
+    // Otherwise native WAT takes precedence without rewriting its source.
     // The dedicated reader does not decide acceptance here (data strings,
     // stack syntax, numeric indices, and all standard instructions remain valid).
-    if let Ok(wasm) = wat::parse_str(source)
+    if !syntax::requested(source)
+        && let Ok(wasm) = wat::parse_str(source)
         && wasmparser::Parser::is_core_wasm(&wasm)
         && wasmparser::Validator::new().validate_all(&wasm).is_ok()
     {

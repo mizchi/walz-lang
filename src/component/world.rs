@@ -123,7 +123,7 @@ impl World {
                 .is_some_and(|b| b.resource.is_some())
             {
                 return Err(fail(
-                    "native WIT worlds require typed own/borrow imports; regenerate numeric resource bindings with wlt bind",
+                    "native WIT worlds require typed own/borrow imports; regenerate numeric resource bindings with walz bind",
                 ));
             }
             let expected = world

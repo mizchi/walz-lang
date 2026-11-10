@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-const port = Number(process.env.WLT_PLAYGROUND_TEST_PORT ?? 41740);
+const port = Number(process.env.WALZ_PLAYGROUND_TEST_PORT ?? 41740);
 
 export default defineConfig({
   testDir: 'playground/tests',

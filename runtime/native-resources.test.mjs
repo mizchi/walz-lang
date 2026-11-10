@@ -7,9 +7,9 @@ import {pathToFileURL} from 'node:url';
 import {buildNative} from './build-native.mjs';
 import {collect} from './testing/memory.mjs';
 test('native resource own/borrow preserves identity and calls the host destructor once',{timeout:60000},async()=>{
- const dir=await mkdtemp(join(tmpdir(),'wlt-native-resource-'));
+ const dir=await mkdtemp(join(tmpdir(),'walz-native-resource-'));
  try{
-  await buildNative('tests/component-fixtures/native-resources.wlt','tests/component-fixtures/native-resources.wit',dir,{bindings:'tests/component-fixtures/native-resources.json'});
+  await buildNative('tests/component-fixtures/native-resources.walz','tests/component-fixtures/native-resources.wit',dir,{bindings:'tests/component-fixtures/native-resources.json'});
   const {instantiate}=await import(pathToFileURL(join(dir,'native.js')));
   let closed=0,memory;
   class File {constructor(){this.value=42;this.closed=false;}[Symbol.dispose](){assert.equal(this.closed,false);this.closed=true;closed++;}}

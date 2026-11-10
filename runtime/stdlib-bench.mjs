@@ -57,10 +57,10 @@ async function capture(directory) {
   await save(join(directory, "corpus.json"), corpus());
   await copyFile(join(root, "runtime/text-io.mjs"), join(directory, "text-io.mjs"));
   for (const name of Object.keys(corpus())) {
-    await build(join(root, `examples/apps/${name}/main.wlt`), join(directory, name));
-    for (const folder of [`examples/apps/${name}`, "stdlib"]) {
+    await build(join(root, `examples/apps/${name}/main.walz`), join(directory, name));
+    for (const folder of [`examples/apps/${name}`, "walz/core"]) {
       for (const path of await files(join(root, folder))) {
-        if (!path.endsWith(".wlt")) continue;
+        if (!path.endsWith(".walz")) continue;
         const target = join(directory, "source", relative(root, path));
         await mkdir(resolve(target, ".."), { recursive: true });
         await copyFile(path, target);

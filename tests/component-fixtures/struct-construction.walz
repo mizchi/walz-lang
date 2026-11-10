@@ -1,0 +1,144 @@
+(module
+  (@use "walz:core" (type $string) (type $tuple) (type $future))
+  (type $User (struct (field $name $string) (field $age i32) (field $email $string)))
+  (type $Pair (struct (field $left i32) (field $right i32)))
+  (type $Triple (struct (field $left i32) (field $middle i32) (field $right i32)))
+  (type $Trace (struct (field $log (mut i32))))
+  (type $Box
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (struct (field $value $T)))
+  (tag $Stop)
+  (func $fields
+    (param $u (ref $User))
+    (result (@inst $tuple $string (@inst $tuple i32 $string)))
+    (@effect pure)
+    (@tuple.new
+      (struct.get $User $name $u)
+      (@tuple.new
+        (struct.get $User $age $u)
+        (struct.get $User $email $u)))
+  )
+
+  (func $profile
+    (export "profile")
+    (param $name $string)
+    (param $age i32)
+    (param $email $string)
+    (result (@inst $tuple $string (@inst $tuple i32 $string)))
+    (@effect allocates)
+    (call $fields
+      (@$User::{:email $email :name $name :age $age})))
+
+  (func $literal
+    (export "literal-profile")
+    (result (@inst $tuple $string (@inst $tuple i32 $string)))
+    (@effect allocates)
+    (call $fields
+      (@struct.new $User ($email "alice@example.com") ($age 30) ($name "日本語🦀"))))
+
+  (func $boxed
+    (export "boxed")
+    (result i64)
+    (@effect allocates)
+    (struct.get (@inst $Box i64) $value (@struct.new (@inst $Box i64) {:value 42})))
+
+  (func $mark
+    (param $t (ref $Trace))
+    (param $n i32)
+    (result i32)
+    (@effect reads writes)
+    (block
+      (result i32)
+      (struct.set $Trace $log
+        $t
+        (i32.add
+          (i32.mul (struct.get $Trace $log $t) 10)
+          $n))
+      $n))
+
+  (func $order
+    (export "order")
+    (result i32)
+    (@effect allocates reads writes)
+    (@let
+      (($t (struct.new $Trace 0))
+       ($p
+         (@$Pair::{
+           :right (call $mark $t 2)
+           :left (call $mark $t 1)
+         })))
+      (i32.add
+        (i32.mul (struct.get $Trace $log $t) 100)
+        (i32.add
+          (i32.mul (struct.get $Pair $left $p) 10)
+          (struct.get $Pair $right $p)))
+    ))
+
+  (func $throw
+    (export "throw-before-later")
+    (param $fail i32)
+    (result i32)
+    (@effect allocates reads writes)
+    (@let $t (struct.new $Trace 0)
+      (@try
+        (result i32)
+        (do
+          (block
+            (result i32)
+            (drop
+              (@$Triple::{
+                :right (call $mark $t 2)
+                :middle
+                  (if
+                    (result i32)
+                    $fail
+                    (then (throw $Stop))
+                    (else (call $mark $t 3)))
+                :left (call $mark $t 1)
+              }))
+            (struct.get $Trace $log $t)))
+        (catch $Stop () (struct.get $Trace $log $t)))
+    ))
+
+  (func $early
+    (export "early-return")
+    (param $flag i32)
+    (result i32)
+    (@effect allocates)
+    (@let $p
+      (@$Pair::{:right (if (result i32) $flag (then (return 42)) (else 2)) :left 40})
+      (i32.add
+        (struct.get $Pair $left $p)
+        (struct.get $Pair $right $p)))
+  )
+
+  (func $branch
+    (export "branch")
+    (result i32)
+    (@effect allocates)
+    (block $done
+      (result i32)
+      (struct.get $Pair $left
+        (@$Pair::{:right (br $done 42) :left (unreachable)}))))
+
+  (func $await
+    (export "await-sum")
+    (param $f (@inst $future i32))
+    (result i32)
+    (@effect allocates suspends)
+    (@let $p (@struct.new $Pair ($left 40) ($right (@future.await i32 (@move $f))))
+      (i32.add
+        (struct.get $Pair $left $p)
+        (struct.get $Pair $right $p)))
+  )
+
+  (func $shorthand
+    (export "shorthand")
+    (param $x i64)
+    (result i64)
+    (@effect pure)
+    (@let (($base (type i64) $x)
+           ($one (type i64) 1))
+      (i64.add $base $one)))
+)

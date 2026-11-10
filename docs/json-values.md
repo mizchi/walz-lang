@@ -1,74 +1,74 @@
-# JSON の値と parser
+# JSON Values and Parser
 
-`stdlib/json-value.wlt` は言語のプリミティブを増やさず、opaque な不変の JSON 値を実装する。
-`wlt:core` から必要な型と関数だけを named import できる。実行する例とCLIは [examples/json-parser](../examples/json-parser/README.md)、境界のfixtureは `tests/component-fixtures/json-value.wlt`。
+`walz/core/json-value.walz` implements opaque immutable JSON values without adding language primitives.
+Named imports from `walz:core` select only the required types and functions. Executable examples and a CLI are in [examples/json-parser](../examples/json-parser/README.md); the boundary fixture is `tests/component-fixtures/json-value.walz`.
 
-JSONの公開操作は `$json.*` にまとめる。`$json-value` は不変のJSON値、`$json-kind` は種類を表すenum、
-`$json-object` は可変のobject writerの型。ドットはWAT識別子の一部で、`$json` という値や型を暗黙に導入しない。
-`$json.from-string` は渡された文字列をそのままJSONのstring値に包み、`$json.parse` はJSON文書の構文を解析する。
+Public JSON operations are grouped under `$json.*`. `$json-value` is an immutable JSON value, `$json-kind` is a kind enum,
+and `$json-object` is the mutable object-writer type. Dots are part of WAT identifiers and do not implicitly introduce a `$json` value or type.
+`$json.from-string` wraps the supplied string directly as a JSON string value; `$json.parse` parses JSON document syntax.
 
 ```wat
 (module
-  (%use "wlt:core" (type $string)
+  (@use "walz:core" (type $string)
     (func $json.from-string) (func $json.stringify))
   (func $quote (export "quote") (param $text $string) (result $string)
-    (%effect reads writes allocates)
+    (@effect reads writes allocates)
     (call $json.stringify (call $json.from-string $text))))
 ```
 
-`quote("null")` の出力は引用符を含む `"null"`。`$json.parse` に渡す `null` はJSONのnull値になる。
-JSON文字列の引用符付け・エスケープは内部実装に置き、独立した公開quote関数は設けない。
+The output of `quote("null")` is `"null"`, including quotation marks. Passing `null` to `$json.parse` produces a JSON null value.
+JSON string quoting and escaping are internal; there is no separate public quote function.
 
 ```wat
 (module
-  (%use "wlt:core" (type $string) (type $result)
+  (@use "walz:core" (type $string) (type $result)
     (func $json.parse) (func $json.stringify))
   (func $normalize (export "normalize") (param $source $string)
-    (result (%inst $result $string i32)) (%effect reads writes allocates)
-    (%result.do
+    (result (@inst $result $string i32)) (@effect reads writes allocates)
+    (@result.do
       ($value (call $json.parse (local.get $source)))
-      (%result.ok (call $json.stringify (local.get $value))))))
+      (@result.ok (call $json.stringify (local.get $value))))))
 ```
 
-| API | 契約 |
+| API | Contract |
 | --- | --- |
-| `parse(text)` | `result<(ref Value), i32>`。err は UTF-8 のバイト位置 |
-| `stringify(Value)` | JSON text。数値の字句を保持する |
-| `$json.from-string(text)` | 解析せずJSONのstring値を構築する |
-| `$json.null/boolean/array/object` | 不変値を作る。array/object は空 |
-| `number(text)` | JSON 数値として検査して作る。結果は Result |
-| `prepend(array, item)` | 先頭へ追加した新しい配列を Result で返す |
-| `set(object, key, item)` | 末尾へ追加した新しい object を Result で返す |
-| `get/at` | key／添字の値を Option で返す |
-| `as-string/as-number/as-boolean` | 対応する payload を Option で返す |
-| `kind` | null/boolean/number/string/array/object の enum |
+| `parse(text)` | `result<(ref Value), i32>`; err is a UTF-8 byte position |
+| `stringify(Value)` | JSON text, retaining numeric lexemes |
+| `$json.from-string(text)` | Constructs a JSON string value without parsing |
+| `$json.null/boolean/array/object` | Creates immutable values; array/object starts empty |
+| `number(text)` | Validates and constructs a JSON number, returning Result |
+| `prepend(array, item)` | Returns a new array with the item prepended, as Result |
+| `set(object, key, item)` | Returns a new object with the item appended, as Result |
+| `get/at` | Returns the value at a key/index as Option |
+| `as-string/as-number/as-boolean` | Returns the corresponding payload as Option |
+| `kind` | The null/boolean/number/string/array/object enum |
 
-小数と指数を含む数値は text のまま保持する。`9007199254740993` のような整数も丸めない。
-整数として計算する場合は `string.parse-s64/parse-u64` と組み合わせる。
-binary float の最短文字列表現や、十進から浮動小数点への正確な丸めはこの API の対象外。
+Numbers, including fractions and exponents, remain text. Integers such as `9007199254740993` are not rounded.
+Combine with `string.parse-s64/parse-u64` for integer arithmetic.
+Shortest binary-float formatting and correctly rounded decimal-to-floating-point conversion are outside this API's scope.
 
-object は重複 key を保持し、`get` は最後の値を返す。set は既存の値を書き換えない。
-配列の兄弟要素と object の field はループで処理する。再帰は値のネストに限る。
-parser は入力 65,536 bytes、array/object のネスト128まで。空のcontainerも深さに数える。JSON の4種類の空白を認め、後続のごみ、
-制御文字、壊れた数値、末尾カンマ、壊れた escape を拒否する。
-Wasm UTF-8 の意味に合わせ、対応しない UTF-16 surrogate escape も拒否する。
+Objects retain duplicate keys; `get` returns the last value. Set does not overwrite existing values.
+Sibling array elements and object fields are processed by loops; recursion is limited to value nesting.
+The parser accepts at most 65,536 input bytes and 128 levels of array/object nesting. Empty containers also count toward depth. It accepts the four JSON whitespace characters and rejects trailing garbage,
+control characters, malformed numbers, trailing commas, and malformed escapes.
+To match Wasm UTF-8 semantics, it also rejects unpaired UTF-16 surrogate escapes.
 
-可変object writerは `$json.object-builder.*` にまとめる。`new`、`string`、`u64`、`s64`、`boolean`、`object`、`null`、`number`、`value`、`finish` を提供する。
-number は検査に失敗した場合 builder を変更しない。value は配列も含む任意の JSON 値を書ける。
-数値を扱うホスト依存ランタイムは加えていない。
+Mutable object-writer operations are grouped under `$json.object-builder.*`: `new`, `string`, `u64`, `s64`, `boolean`, `object`, `null`, `number`, `value`, and `finish`.
+Number leaves the builder unchanged if validation fails. Value can write any JSON value, including arrays.
+No host-dependent numeric runtime is added.
 
-実装で共通化候補になったのは要素 list と field list の反転だが、payload の形が異なる
-2つの短いループに留まる。単相化ジェネリクスは今回追加せず、重複が増えた段階で再評価する。
-
-
-数値の解析は整数部・小数部・指数部の検査を `%result.do` で連鎖する。
-文字列escape・array/object・値の振り分けでは、早期returnで成功・失敗の出口を明示する。
-内部のResult/pairには透明な型aliasを使い、状態や追加ランタイムは導入しない。
-parseの返り値型と、不変値の構築・検索の意味は維持する。
-
-汎用の `$string-builder` へJSONを追加するときは、`$json.stringify` の結果を `$string-builder.text` に渡す。
-string／汎用builderはJSONモジュールへ依存しない。内部の `json-string.wlt` はJSON値とobject writerが共有し、`wlt:core` の公開カタログには含めない。
+Reversing the element list and field list was a possible implementation abstraction, but remains
+two short loops with different payload shapes. Monomorphized generics were not added for this change; the choice will be reconsidered if duplication grows.
 
 
-解析速度とABI込みの比較は [JSONパーサーのベンチマーク](json-parser-bench.md) を参照。
-改善後の測定とSIMD・割当て方式の実験は [チューニング結果](json-parser-tuning.md) を参照。
+Numeric parsing chains integer, fraction, and exponent checks with `@result.do`.
+String escapes, arrays/objects, and value dispatch use early returns to make success/failure exits explicit.
+Internal Result/pair types use transparent aliases without introducing state or an additional runtime.
+The parse return type and the semantics of immutable-value construction and lookup are preserved.
+
+To append JSON to a general `$string-builder`, pass the result of `$json.stringify` to `$string-builder.text`.
+The string/general builder does not depend on the JSON module. Internal `json-string.walz` is shared by JSON values and the object writer and is absent from the public `walz:core` catalogue.
+
+
+See [JSON parser benchmarks](json-parser-bench.md) for parsing speed and comparisons including the ABI.
+See [tuning results](json-parser-tuning.md) for measurements after improvements and experiments with SIMD and allocation strategies.

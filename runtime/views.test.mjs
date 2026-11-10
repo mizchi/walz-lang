@@ -10,10 +10,10 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });
 for (const backend of ["core", "component"])
   test(`${backend}: zero-copy views preserve ranges, UTF-8 and suspended roots`, { timeout: 60000 }, async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-views-"));
+    const directory = await mkdtemp(join(tmpdir(), "walz-views-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/views.wlt", directory);
+      await build("tests/component-fixtures/views.walz", directory);
       await instrument(directory, backend);
       const { instantiate } = await import(pathToFileURL(join(directory, "index.js")));
       const make = async () => {

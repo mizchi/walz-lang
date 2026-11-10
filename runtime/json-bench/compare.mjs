@@ -8,7 +8,7 @@ import {verify,measure,equivalentOutput} from "./runner.mjs";
 import {hash,checksum} from "./workloads.mjs";
 
 export function checkCompatibility(before,after) {
-  for(const name of ["corpus.json","source/examples/json-parser/resident.wlt","source/examples/json-parser/benchmark.wlt"]) {
+  for(const name of ["corpus.json","source/examples/json-parser/resident.walz","source/examples/json-parser/benchmark.walz"]) {
     assert.ok(before.hashes[name]&&after.hashes[name],`missing comparison input: ${name}`);
     assert.equal(before.hashes[name],after.hashes[name],`comparison mismatch: ${name}`);
   }
@@ -46,7 +46,7 @@ export async function compare(beforeDirectory,afterDirectory,output,{rounds=9,ta
   await mkdir(output);
   const engines={before:await load(beforeDirectory),after:await load(afterDirectory)};
   const cases=JSON.parse(await readFile(join(beforeDirectory,"corpus.json"),"utf8"));
-  const report={schema:"wlt-json-comparison-v1",created:new Date().toISOString(),node:process.version,
+  const report={schema:"walz-json-comparison-v1",created:new Date().toISOString(),node:process.version,
     v8:process.versions.v8,cpu:cpus()[0]?.model,arch:process.arch,rounds,targetMs,
     snapshots:{},method:{rotatingOrder:true,setupExcluded:true,explicitGc:"before each measured batch only",astCheckedOutsideTimer:true},cases:[]};
   for(const [index,name] of ["before","after"].entries()) {

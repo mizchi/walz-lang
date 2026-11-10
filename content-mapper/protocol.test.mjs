@@ -30,6 +30,6 @@ test('packaged stdio server implements the upstream project lifecycle without st
   child.stdin.end(Buffer.concat(requests.map(([method,params],i)=>frame({jsonrpc:'2.0',id:i,method,params}))));
   assert.equal(await done,0,stderr); await read;
   assert.equal(output.length,4);
-  assert.deepEqual(output[0].result,{positionEncoding:'utf-8',diagnosticSource:'wlt'});
+  assert.deepEqual(output[0].result,{positionEncoding:'utf-8',diagnosticSource:'walz'});
   assert.equal(output[2].result,null); assert.equal(output[3].error.code,-32601);
 });

@@ -4,7 +4,7 @@ export class QueryPool{
   static async create(module,memory,length,count,{createWorker}={}){
     const pool=new QueryPool();
     pool.#host=await WorkerHost.create({workers:count,driver:new URL('./driver.mjs',import.meta.url),
-      init:{module,memory,length,contract:'wlt-readonly-regions-v1'},
+      init:{module,memory,length,contract:'walz-readonly-regions-v1'},
       cancellation:{memory,byteOffset:0},...(createWorker?{workerFactory:createWorker}:{})});
     return pool;
   }

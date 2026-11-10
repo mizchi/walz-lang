@@ -1,55 +1,55 @@
-# Stream のバッチ転送
+# Stream Batch Transfer
 
 ```wat
-(%match (%stream.read-batch i32 256 (%move $stream))
+(@match (@stream.read-batch i32 256 (@move $stream))
   (case pair ($next $items)
     (block
       ;; $items は不変 list<i32>。$next は引き続き一つの所有値。
-      (%stream.close i32 (%move $next)))))
+      (@stream.close i32 (@move $next)))))
 ```
 
-`%stream.read-batch T max stream` は所有する `stream<T>` を消費し、
-`tuple<stream<T>, list<T>>` を返す。`max` は i32 で1–65536。結果が空の list なら EOF。
-ホストは1要素以上、最大 max 要素までの部分進捗を返せる。指定数がそろうまで待たない。
-既存の `%stream.next` は一要素を読む操作のまま。どちらも返された tail を消費または close する。
+`@stream.read-batch T max stream` consumes an owned `stream<T>` and
+returns `tuple<stream<T>, list<T>>`. `max` is an i32 from 1–65536. An empty result list means EOF.
+The host can return partial progress of one through max elements without waiting for the requested count.
+Existing `@stream.next` still reads one element. In either case, consume or close the returned tail.
 
-共有 payload に限定し、要素の順序・GC 値の型・UTF-8 検査を保つ。
-Core 単体の ready stream では GC の cons 列からコピーする。
-Core＋JSPI と Component では一度の read で Canonical buffer に受け、GC list へ移す。
-容量の上限に加えて、Canonical buffer は既存の16 MiB上限以内に制限する。
-取消しでは遅延した producer が解放済みの buffer に書かないようにし、reader の終了処理を待つ。
+Only shareable payloads are allowed, preserving element order, GC value types, and UTF-8 checks.
+Standalone Core ready streams copy from GC cons chains.
+Core+JSPI and Component receive a Canonical buffer in one read and transfer it into a GC list.
+In addition to capacity limits, the Canonical buffer is restricted to the existing 16 MiB limit.
+Cancellation prevents delayed producers from writing released buffers and waits for reader shutdown.
 
-## ホストの protocol
+## Host Protocol
 
-最適化に対応する AsyncIterator は `readMany(max)` を実装し、
-`Promise<{items: Array | TypedArray, done: boolean}>` を返せる。
-`items` は0–max要素で、空なら done が true でなければならない。
-最後の要素と done=true を同時に返すこともできる。
-通常の AsyncIterator は next() で一要素ずつ受ける。
+An optimized AsyncIterator can implement `readMany(max)`, returning
+`Promise<{items: Array | TypedArray, done: boolean}>`.
+`items` contains 0–max elements; an empty result requires done=true.
+The final elements may be returned together with done=true.
+Ordinary AsyncIterators read one element at a time through next().
 
-`createChannels()` の reader とファイル adapter はこの protocol に対応する。
-Component の固定版 jco glue では、tuple/list 自体を payload とする場合も区別できるように
-内部の batch marker を使う。生成形式が変われば build を拒否する。
+Readers from `createChannels()` and file adapters support this protocol.
+Pinned Component jco glue uses an internal batch marker to distinguish batches even when a tuple/list is itself the payload.
+A change in the generated format causes build rejection.
 
-`createChannels().sendMany(writer, values)` は最大65536要素の配列を受け取り、
-`Promise<[accepted, status]>` を返す。status は0=全要素を受理、1=終了／取消し。
-accepted は buffer または reader へ渡した prefix の要素数で、取消しでも巻き戻さない。
-未受理の要素は解放する。空配列は進捗0の成功で、待機 reader を起こさない。
-一つの pending read / write、capacity=0 の rendezvous という既存規則を保つ。
-WLT import の policy では `(list T) -> (pair i32 i32)` を使い、resource の use と suspends を明示する。
+`createChannels().sendMany(writer, values)` accepts an array of at most 65,536 elements and
+returns `Promise<[accepted, status]>`. Status is 0=all accepted, 1=closed/cancelled.
+Accepted is the length of the prefix passed to a buffer or reader; cancellation does not roll it back.
+Unaccepted elements are released. An empty array succeeds with zero progress and does not wake pending readers.
+Existing rules of one pending read/write and capacity-0 rendezvous remain.
+Walz import policy uses `(list T) -> (pair i32 i32)`, explicitly specifying resource use and suspends.
 
-## 検査と計測
+## Tests and Measurements
 
-`just test-runtime-cli` は ready stream、文字列、unit、両 JS backend の順序・部分受理・
-取消し・未解放数0を検査する。511要素を上限13で読む検査では、producer の呼出しは40回。
-これはホスト往復数の検査であり、時間の短縮率そのものではない。
+`just test-runtime-cli` checks ready streams, strings, unit, ordering/partial acceptance/cancellation in both JS backends,
+and zero outstanding allocations. Reading 511 elements with a maximum of 13 calls the producer 40 times.
+This checks host round-trip count, not the speedup itself.
 
-[ファイルの例](../examples/wasi-files/README.md) の `sum-batch(size)` は、
-byte stream を GC list にまとめて `list.fold` で合計する。
-WIT binding を生成した後、`just bench-stream-file /absolute/path/input.bin` で
-1 byte と256 bytesを、同じ入力・同じ guest 処理で比較できる。
-この計測はファイルの open/close、I/O、ABI 変換、JSPI、GC 処理を含む。
+`sum-batch(size)` in the [file example](../examples/wasi-files/README.md)
+groups a byte stream into GC lists and sums them with `list.fold`.
+After generating WIT bindings, `just bench-stream-file /absolute/path/input.bin` compares
+1-byte and 256-byte batches using the same input and guest processing.
+Measurement includes file open/close, I/O, ABI conversion, JSPI, and GC work.
 
-ready-only の順序は既存の `WltDelivery.readMany_preserves_order` と対応させる。
-ホストの非同期実装・glue・scheduler の意味保存や liveness の機械証明は含まない。
-EOF とファイルの completion future の成功は別であり、読み終わった後も completion を確認する。
+Ready-only ordering corresponds to existing `WalzDelivery.readMany_preserves_order`.
+There is no machine proof of host asynchronous implementation/glue/scheduler semantics preservation or liveness.
+EOF and successful file completion futures are distinct; check completion even after reading ends.

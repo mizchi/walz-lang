@@ -15,7 +15,7 @@ assert.equal(directories.length, 2, 'usage: wasm-opt-compare.mjs BEFORE AFTER NE
 const captures = await Promise.all(directories.map(async directory => {
   const manifest = await json(join(directory, 'manifest.json'));
   const result = await json(join(directory, 'result.json'));
-  assert.equal(manifest.schema, 'wlt-wasm-opt-v1');
+  assert.equal(manifest.schema, 'walz-wasm-opt-v1');
   assert.equal(result.passed, true);
   for (const [name, hash] of Object.entries(manifest.inputs)) {
     if (name.startsWith('inputs/')) assert.equal(sha(await readFile(join(directory, name))), hash, name);
@@ -79,7 +79,7 @@ for (let index = 0; index < captures[0].result.results.length; index++) {
     results.push(row);
   }
 }
-const result = {schema:'wlt-wasm-opt-comparison-v1', passed:true, createdAt:new Date().toISOString(),
+const result = {schema:'walz-wasm-opt-comparison-v1', passed:true, createdAt:new Date().toISOString(),
   directories, manifests:captures.map(c => sha(JSON.stringify(c.manifest))), settings,
   node:process.version, v8:process.versions.v8, platform:process.platform, architecture:process.arch,
   toolSha256:sha(await readFile(fileURLToPath(import.meta.url))), results};

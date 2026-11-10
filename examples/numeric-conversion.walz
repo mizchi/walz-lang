@@ -1,0 +1,4 @@
+(module
+  ;; Standard WAT, currently absent from walz's numeric operation table.
+  (func $main (export "main") (result f64)
+    (f64.convert_i64_s (i64.const 42))))

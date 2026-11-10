@@ -1,3 +1,0 @@
-(module
-  (%use "./library.wasm" (func $math.next $forward))
-  (%export (func $forward)))

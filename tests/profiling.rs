@@ -3,17 +3,17 @@ use std::process::Command;
 #[test]
 fn native_guest_profile_driver_runs_the_actual_text_guest_and_checks_cleanup() {
     let dir = tempfile::tempdir().unwrap();
-    let input = dir.path().join("profile.wlt");
-    let source = include_str!("../examples/io/text-filter.wlt").replacen(
+    let input = dir.path().join("profile.walz");
+    let source = include_str!("../examples/io/text-filter.walz").replacen(
         "(module",
         r#"(module
       (type $Unused (struct (field i64)))
-      (func $unused (result (%option i64)) (%option.none i64))
-      (import "wlt:host/event-loop@0.1.0" "yield" (func $unused-clock))"#,
+      (func $unused (result (@option i64)) (@option.none i64))
+      (import "walz:host/event-loop@0.1.0" "yield" (func $unused-clock))"#,
         1,
     );
     std::fs::write(&input, source).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("profile-text")
         .arg(&input)
         .arg(dir.path())

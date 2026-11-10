@@ -7,7 +7,7 @@
     "noEmit": true,
     "allowArbitraryExtensions": true,
     "types": ["../../vite/client.d.ts"],
-    "paths": {"@mizchi/wlt-runtime/vite/types": ["../../vite/runtime.d.ts"]}
+    "paths": {"@mizchi/walz-runtime/vite/types": ["../../vite/runtime.d.ts"]}
   },
   "include": ["main.ts"]
 }

@@ -1,10 +1,10 @@
 #[test]
 fn run_deadline_reports_timeout_after_host_cleanup() {
     let dir = tempfile::tempdir().unwrap();
-    std::fs::write(dir.path().join("main.wlt"),r#"(module (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $n i32))) (func $main (export "main") (%effect host suspends) (call $sleep 60000)))"#).unwrap();
+    std::fs::write(dir.path().join("main.walz"),r#"(module (import "walz:host/event-loop@0.1.0" "sleep" (func $sleep (param $n i32))) (func $main (export "main") (@effect host suspends) (call $sleep 60000)))"#).unwrap();
     std::fs::write(dir.path().join("host.mjs"),r#"import {writeFileSync} from 'node:fs';export default {eventLoop:{sleep:()=>{const done=Promise.withResolvers();done.promise[Symbol.asyncDispose]=async()=>{await new Promise(r=>setTimeout(r,10));writeFileSync(new URL('./closed',import.meta.url),'yes');done.resolve();};return done.promise;}}};"#).unwrap();
     let run = |args: &[&str]| {
-        std::process::Command::new(env!("CARGO_BIN_EXE_wlt"))
+        std::process::Command::new(env!("CARGO_BIN_EXE_walz"))
             .current_dir(dir.path())
             .args(args)
             .output()

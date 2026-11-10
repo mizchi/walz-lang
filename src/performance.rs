@@ -23,7 +23,7 @@ pub struct Report {
 impl Report {
     fn empty(coverage: &'static str) -> Self {
         Self {
-            schema: "wlt-performance-v1",
+            schema: "walz-performance-v1",
             profile: "binaryen-133-open-world",
             coverage,
             warnings: vec![],

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Walz"
+  short_description: "Read, write, and check Walz programs"
+  default_prompt: "Use $walz to read or change this Walz application and validate it with the installed CLI."

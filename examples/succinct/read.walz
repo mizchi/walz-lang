@@ -1,0 +1,446 @@
+(module
+  (@use "./memory.walz" (memory $memory))
+  (@readonly.region $payload $memory 4096 16773120)
+  (@export
+    (func $get)
+    (func $stride)
+    (func $rank)
+    (func $select)
+    (func $query)
+    (func $validate))
+  (func $get
+    (param $p i32)
+    (result i32)
+    (@effect reads)
+    (@readonly.load $payload i32 $p))
+
+  (func $stride
+    (param $n i32)
+    (result i32)
+    (@effect pure)
+    (@let $words (i32.shr_u (+ $n 31) 5)
+      (i32.and (+ (* (+ $words (+ (i32.shr_u (+ $words 15) 4) 1)) 4) 15) -16)))
+
+  (func $rank
+    (param $base i32)
+    (param $n i32)
+    (param $end i32)
+    (result i32)
+    (@effect reads)
+    (block
+      (result i32)
+      (if (i32.gt_u $end $n) (then (unreachable)) (else (nop)))
+      (@let
+        (($words (i32.shr_u (+ $n 31) 5))
+         ($block (i32.shr_u $end 9))
+         ($last (i32.shr_u $end 5))
+         ($prefix (call $get (+ $base (* (+ $words $block) 4))))
+        )
+        (@loop $scan
+          (bind $w i32 (i32.shl $block 4))
+          (bind $sum i32 $prefix)
+          (result i32)
+          (if
+            (result i32)
+            (< $w $last)
+            (then
+              (@recur $scan
+                (+ $w 1)
+                (+ $sum
+                  (i32.popcnt (call $get (+ $base (* $w 4))))
+                )))
+            (else
+              (@let $bits (i32.and $end 31)
+                (if
+                  (result i32)
+                  (= $bits 0)
+                  (then $sum)
+                  (else
+                    (+ $sum
+                      (i32.popcnt
+                        (i32.and
+                          (call $get (+ $base (* $last 4)))
+                          (- (i32.shl 1 $bits) 1))))
+                  ))))
+          ))))
+  )
+
+  (func $rank-simd
+    (param $base i32)
+    (param $n i32)
+    (param $end i32)
+    (result i32)
+    (@effect reads)
+    (block
+      (result i32)
+      (if (i32.gt_u $end $n) (then (unreachable)) (else (nop)))
+      (@let
+        (($words (i32.shr_u (+ $n 31) 5))
+         ($block (i32.shr_u $end 9))
+         ($last (i32.shr_u $end 5))
+         ($prefix (call $get (+ $base (* (+ $words $block) 4))))
+        )
+        (@loop $scan
+          (bind $w i32 (i32.shl $block 4))
+          (bind $sum i32 $prefix)
+          (bind $lanes v128 (v128.const i32x4 0 0 0 0))
+          (result i32)
+          (if
+            (result i32)
+            (i32.le_u (+ $w 4) $last)
+            (then
+              (@recur $scan
+                (+ $w 4)
+                $sum
+                (i32x4.add $lanes
+                  (i32x4.extadd_pairwise_i16x8_u
+                    (i16x8.extadd_pairwise_i8x16_u
+                      (i8x16.popcnt (@readonly.load $payload v128 (+ $base (* $w 4))))
+                    ))))
+            )
+            (else
+              (if
+                (result i32)
+                (< $w $last)
+                (then
+                  (@recur $scan
+                    (+ $w 1)
+                    (+ $sum
+                      (i32.popcnt (call $get (+ $base (* $w 4))))
+                    )
+                    $lanes))
+                (else
+                  (@let
+                    (($bits (i32.and $end 31))
+                     ($total
+                       (+ $sum
+                         (+
+                           (+
+                             (i32x4.extract_lane 0 $lanes)
+                             (i32x4.extract_lane 1 $lanes))
+                           (+
+                             (i32x4.extract_lane 2 $lanes)
+                             (i32x4.extract_lane 3 $lanes))))
+                     ))
+                    (if
+                      (result i32)
+                      (= $bits 0)
+                      (then $total)
+                      (else
+                        (+ $total
+                          (i32.popcnt
+                            (i32.and
+                              (call $get (+ $base (* $last 4)))
+                              (- (i32.shl 1 $bits) 1))))
+                      ))))
+              ))))
+      )))
+
+  (func $prefix
+    (param $base i32)
+    (param $n i32)
+    (param $block i32)
+    (param $zero i32)
+    (result i32)
+    (@effect reads)
+    (@let $ones (call $get (+ $base (* (+ (i32.shr_u (+ $n 31) 5) $block) 4)))
+      (if
+        (result i32)
+        $zero
+        (then
+          (-
+            (if
+              (result i32)
+              (i32.gt_u (i32.shl $block 9) $n)
+              (then $n)
+              (else (i32.shl $block 9)))
+            $ones))
+        (else $ones))))
+
+  (func $select
+    (param $base i32)
+    (param $n i32)
+    (param $target i32)
+    (param $zero i32)
+    (result i32)
+    (@effect reads)
+    (@let $blocks (i32.shr_u (+ $n 511) 9)
+      (if
+        (result i32)
+        (i32.ge_u $target (call $prefix $base $n $blocks $zero))
+        (then -1)
+        (else
+          ;; upper_bound skips duplicate prefixes from empty superblocks.
+          (@loop $search
+            (bind $lo i32 0)
+            (bind $hi i32 $blocks)
+            (result i32)
+            (if
+              (result i32)
+              (< (+ $lo 1) $hi)
+              (then
+                (@let $mid (i32.shr_u (+ $lo $hi) 1)
+                  (if
+                    (result i32)
+                    (i32.le_u (call $prefix $base $n $mid $zero) $target)
+                    (then (@recur $search $mid $hi))
+                    (else (@recur $search $lo $mid))))
+              )
+              (else
+                (@loop $scan
+                  (bind $word i32 (i32.shl $lo 4))
+                  (bind $left i32 (- $target (call $prefix $base $n $lo $zero)))
+                  (result i32)
+                  (@let
+                    (($start (i32.shl $word 5))
+                     ($count
+                       (if
+                         (result i32)
+                         (< (- $n $start) 32)
+                         (then (- $n $start))
+                         (else 32)))
+                     ($mask
+                       (if
+                         (result i32)
+                         (= $count 32)
+                         (then -1)
+                         (else (- (i32.shl 1 $count) 1))))
+                     ($bits
+                       (i32.and $mask
+                         (i32.xor
+                           (call $get (+ $base (* $word 4)))
+                           (if (result i32) $zero (then -1) (else 0))))
+                     )
+                     ($ones (i32.popcnt $bits)))
+                    (if
+                      (result i32)
+                      (i32.ge_u $left $ones)
+                      (then (@recur $scan (+ $word 1) (- $left $ones)))
+                      (else
+                        (@loop $within
+                          (bind $bits i32 $bits)
+                          (bind $k i32 $left)
+                          (result i32)
+                          (if
+                            (result i32)
+                            (= $k 0)
+                            (then (+ $start (i32.ctz $bits)))
+                            (else (@recur $within (i32.and $bits (- $bits 1)) (- $k 1))))
+                        ))))
+                ))))
+        ))))
+
+  (func $less
+    (param $n i32)
+    (param $l i32)
+    (param $r i32)
+    (param $x i32)
+    (result i32)
+    (@effect reads)
+    (if
+      (result i32)
+      (i32.ge_u $x 256)
+      (then (- $r $l))
+      (else
+        (@let $stride (call $stride $n)
+          (@loop $levels
+            (bind $level i32 0)
+            (bind $l i32 $l)
+            (bind $r i32 $r)
+            (bind $sum i32 0)
+            (result i32)
+            (if
+              (result i32)
+              (= $level 8)
+              (then $sum)
+              (else
+                (@let
+                  (($base (+ 64 (* $level $stride)))
+                   ($left (call $rank-simd $base $n $l))
+                   ($right (call $rank-simd $base $n $r))
+                   ($bit (i32.and (i32.shr_u $x (- 7 $level)) 1))
+                   ($zeros (call $get (+ 16 (* $level 4))))
+                  )
+                  (@recur $levels
+                    (+ $level 1)
+                    (if (result i32) $bit (then (+ $zeros $left)) (else (- $l $left)))
+                    (if (result i32) $bit (then (+ $zeros $right)) (else (- $r $right)))
+                    (+ $sum
+                      (if
+                        (result i32)
+                        $bit
+                        (then (- (- $r $l) (- $right $left)))
+                        (else 0))))
+                ))))
+        ))))
+
+  (func $quantile
+    (param $n i32)
+    (param $l i32)
+    (param $r i32)
+    (param $k i32)
+    (result i32)
+    (@effect reads)
+    (if
+      (result i32)
+      (i32.ge_u $k (- $r $l))
+      (then -1)
+      (else
+        (@let $stride (call $stride $n)
+          (@loop $levels
+            (bind $level i32 0)
+            (bind $l i32 $l)
+            (bind $r i32 $r)
+            (bind $k i32 $k)
+            (bind $value i32 0)
+            (result i32)
+            (if
+              (result i32)
+              (= $level 8)
+              (then $value)
+              (else
+                (@let
+                  (($base (+ 64 (* $level $stride)))
+                   ($left (call $rank-simd $base $n $l))
+                   ($right (call $rank-simd $base $n $r))
+                   ($zero-count (- (- $r $l) (- $right $left)))
+                   ($bit (i32.ge_u $k $zero-count))
+                   ($zeros (call $get (+ 16 (* $level 4))))
+                  )
+                  (@recur $levels
+                    (+ $level 1)
+                    (if (result i32) $bit (then (+ $zeros $left)) (else (- $l $left)))
+                    (if (result i32) $bit (then (+ $zeros $right)) (else (- $r $right)))
+                    (if (result i32) $bit (then (- $k $zero-count)) (else $k))
+                    (i32.or (i32.shl $value 1) $bit))))
+            ))))
+    ))
+
+  (func $validate
+    (param $bytes i32)
+    (@effect reads)
+    (block
+      (if
+        (|| (< $bytes 64) (i32.gt_u $bytes 16773120))
+        (then (unreachable))
+        (else (nop)))
+      (if
+        (|| (!= (call $get 0) 1464611889) (!= (call $get 12) $bytes))
+        (then (unreachable))
+        (else (nop)))
+      (@let
+        (($kind (call $get 4))
+         ($n (call $get 8))
+         ($stride (call $stride $n)))
+        (block
+          (if
+            (|| (i32.gt_u $kind 1) (i32.gt_u $n 134000000))
+            (then (unreachable))
+            (else (nop)))
+          (if
+            (!= $bytes (+ 64 (* (if (result i32) $kind (then 8) (else 1)) $stride)))
+            (then (unreachable))
+            (else (nop)))
+          (@for $level
+            (bind $level i32 0)
+            (while (< $level (if (result i32) $kind (then 8) (else 1))))
+            (step (+ $level 1))
+            (@let
+              (($base (+ 64 (* $level $stride)))
+               ($words (i32.shr_u (+ $n 31) 5)))
+              (@loop $words
+                (bind $word i32 0)
+                (bind $ones i32 0)
+                (if
+                  (< $word $words)
+                  (then
+                    (block
+                      (if
+                        (= (i32.and $word 15) 0)
+                        (then
+                          (if
+                            (!=
+                              (call $get (+ $base (* (+ $words (i32.shr_u $word 4)) 4)))
+                              $ones)
+                            (then (unreachable))
+                            (else (nop))))
+                        (else (nop)))
+                      (@let $bits (call $get (+ $base (* $word 4)))
+                        (block
+                          (if
+                            (&& (= (+ $word 1) $words) (!= (i32.and $n 31) 0))
+                            (then
+                              (if
+                                (!= (i32.shr_u $bits (i32.and $n 31)) 0)
+                                (then (unreachable))
+                                (else (nop))))
+                            (else (nop)))
+                          (@recur $words (+ $word 1) (+ $ones (i32.popcnt $bits))))
+                      )))
+                  (else
+                    (block
+                      (if
+                        (!=
+                          (call $get
+                            (+ $base (* (+ $words (i32.shr_u (+ $words 15) 4)) 4)))
+                          $ones)
+                        (then (unreachable))
+                        (else (nop)))
+                      (if
+                        (&& $kind (!= (call $get (+ 16 (* $level 4))) (- $n $ones)))
+                        (then (unreachable))
+                        (else (nop))))
+                  ))))
+          ))))
+  )
+
+  (func $query
+    (param $op i32)
+    (param $a i32)
+    (param $b i32)
+    (param $c i32)
+    (result i32)
+    (@effect reads)
+    (@let $n (call $get 8)
+      (if
+        (result i32)
+        (= (call $get 4) 0)
+        (then
+          (if
+            (result i32)
+            (= $op 0)
+            (then (call $rank 64 $n $a))
+            (else
+              (if
+                (result i32)
+                (|| (= $op 1) (= $op 2))
+                (then (call $select 64 $n $a (= $op 2)))
+                (else (unreachable))))
+          ))
+        (else
+          (block
+            (result i32)
+            (if
+              (|| (i32.gt_u $a $b) (i32.gt_u $b $n))
+              (then (unreachable))
+              (else (nop)))
+            (if
+              (result i32)
+              (= $op 3)
+              (then
+                (@let
+                  (($lo (i32.and $c 65535))
+                   ($hi (i32.shr_u $c 16)))
+                  (block
+                    (result i32)
+                    (if (|| (> $lo $hi) (> $hi 256)) (then (unreachable)) (else (nop)))
+                    (- (call $less $n $a $b $hi) (call $less $n $a $b $lo))))
+              )
+              (else
+                (if
+                  (result i32)
+                  (= $op 4)
+                  (then (call $quantile $n $a $b $c))
+                  (else (unreachable))))
+            ))))
+    )))

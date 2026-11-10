@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
 async function compile(page, source) {
-  await page.getByLabel('WLT source').fill(source);
+  await page.getByLabel('Walz source').fill(source);
   await page.getByRole('button', { name: 'Compile', exact: true }).click();
 }
 
@@ -16,16 +16,16 @@ test('documentation and repository links remain accessible on a narrow screen', 
   await page.setViewportSize({ width: 390, height: 844 });
   const docs = page.getByRole('link', { name: 'Documentation', exact: true });
   await expect(docs).toBeVisible();
-  await expect(docs).toHaveAttribute('href', 'https://github.com/mizchi/wlt-lang#readme');
-  await expect(page.getByRole('link', { name: 'WLT on GitHub' })).toBeVisible();
-  const title = await page.getByRole('heading', { name: 'WLT Playground' }).boundingBox();
+  await expect(docs).toHaveAttribute('href', 'https://github.com/mizchi/walz-lang#readme');
+  await expect(page.getByRole('link', { name: 'Walz on GitHub' })).toBeVisible();
+  const title = await page.getByRole('heading', { name: 'Walz Playground' }).boundingBox();
   const link = await docs.boundingBox();
   expect(link.y).toBeGreaterThanOrEqual(title.y + title.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
 test('dense enum matches use a table and evaluate the subject once', async ({ page }) => {
-  const source = await readFile(new URL('../../tests/component-fixtures/match-dispatch.wlt', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../tests/component-fixtures/match-dispatch.walz', import.meta.url), 'utf8');
   for (const optimize of [false, true]) {
     await page.getByLabel('Optimize').setChecked(optimize);
     await compile(page, source);
@@ -56,7 +56,7 @@ test('loads the Wasm compiler, compiles GC/std syntax, executes i64 and download
   const bytes = await readFile(await artifact.path());
   expect([...bytes.subarray(0, 4)]).toEqual([0, 97, 115, 109]);
   expect(WebAssembly.validate(bytes)).toBe(true);
-  expect(requests.some(url => url.endsWith('/pkg/wlt_web_bg.wasm'))).toBe(true);
+  expect(requests.some(url => url.endsWith('/pkg/walz_web_bg.wasm'))).toBe(true);
   expect(requests.every(url => new URL(url).origin === new URL(page.url()).origin)).toBe(true);
 });
 
@@ -70,7 +70,7 @@ test('preserves structured diagnostics, invalidates stale output and recovers', 
   await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
   await page.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(page.getByTestId('run-output')).toHaveText('7');
-  await page.getByLabel('WLT source').fill('(module)');
+  await page.getByLabel('Walz source').fill('(module)');
   await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeDisabled();
 });
 
@@ -87,7 +87,7 @@ test('timeouts terminate infinite guest execution and a new run still works', as
 });
 
 test('browser compilation refuses unchecked Lean laws and supports optimization toggle', async ({ page }) => {
-  await compile(page, '(module (%law "true" (i32.const 1)))');
+  await compile(page, '(module (@law "true" (i32.const 1)))');
   await expect(page.getByTestId('diagnostics')).toContainText('E_HOST_UNAVAILABLE');
   await expect(page.getByTestId('diagnostics')).toContainText('Lean');
   await page.getByLabel('Example').selectOption('arithmetic');
@@ -122,10 +122,16 @@ test('stop cancels a running guest and the page stays usable on a narrow screen'
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
+test('reserved @ effects are checked instead of discarded as WAT annotations', async ({ page }) => {
+  await compile(page, '(module (import "host" "write" (func $write)) (func $main (@effect pure) (call $write)))');
+  await expect(page.getByTestId('compile-status')).toContainText('Compilation error');
+  await expect(page.getByTestId('diagnostics')).toContainText('E_EFFECT_CONTRACT');
+});
+
 test('Wasm compiler matches the frozen native WAT outputs for all seven frontend fixtures', async ({ page }) => {
-  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v4.json', import.meta.url)));
+  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v6.json', import.meta.url)));
   const fixtures = await Promise.all(Object.keys(reference.cases).map(async name => ({
-    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v4/${name}`, import.meta.url), 'utf8'),
+    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v6/${name}`, import.meta.url), 'utf8'),
   })));
   const actual = await page.evaluate(async fixtures => {
     const { WorkerClient } = await import('./worker-client.mjs');
@@ -151,18 +157,18 @@ test('Wasm compiler matches the frozen native WAT outputs for all seven frontend
 
 test('expected strings and core value helpers run while bench entries stay private',async({page})=>{
  await compile(page,`(module
-  (%use "wlt:core" (type $string) (type $option) (type $result) (func $option.ok-or))
-  (func $main (export "main") (result i32) (%effect pure)
-    (%match (call (%inst $option.ok-or $string i32) (%option.some $string "日本") 7)
-      (case ok ($value) (%string.byte-len $value)) (case err ($code) $code)))
-  (%bench "private" (result i32) 1))`);
+  (@use "walz:core" (type $string) (type $option) (type $result) (func $option.ok-or))
+  (func $main (export "main") (result i32) (@effect pure)
+    (@match (call (@inst $option.ok-or $string i32) (@option.some $string "日本") 7)
+      (case ok ($value) (@string.byte-len $value)) (case err ($code) $code)))
+  (@bench "private" (result i32) 1))`);
  await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
  await page.getByRole('button',{name:'Run',exact:true}).click();
  await expect(page.getByTestId('run-output')).toHaveText('6');
 });
 
 test('list traversal, field patterns and field updates compile in Wasm and run', async ({page}) => {
-  const source = await readFile(new URL('../../examples/high-level.wlt', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../examples/high-level.walz', import.meta.url), 'utf8');
   await compile(page, source);
   await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
   await page.getByRole('button', {name:'Run', exact:true}).click();

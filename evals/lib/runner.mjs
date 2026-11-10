@@ -28,10 +28,10 @@ async function sourceHashes(directory) {
     };
   return {
     candidateSha256: sha256(
-      await readFile(join(directory, "writer/candidate.wlt")),
+      await readFile(join(directory, "writer/candidate.walz")),
     ),
     sampleSha256: sha256(
-      await readFile(join(directory, "reader/counted.wlt")),
+      await readFile(join(directory, "reader/counted.walz")),
     ),
   };
 }
@@ -80,11 +80,11 @@ async function worker(directory) {
     const implementation = await implementationFingerprint();
     const subjects = {};
     for (const [name, path] of [
-      ["sample", "reader/counted.wlt"],
-      ["candidate", "writer/candidate.wlt"],
+      ["sample", "reader/counted.walz"],
+      ["candidate", "writer/candidate.walz"],
     ]) {
       const source = join(directory, path);
-      assertSnapshotIncludes(await readFile(source, "utf8"), manifest.suite.version >= 13 ? 'wlt:core' : 'wlt:std');
+      assertSnapshotIncludes(await readFile(source, "utf8"), manifest.suite.version >= 13 ? 'walz:core' : 'walz:std');
       subjects[name] = await verifyStock({
         source,
         output: join(directory, "work", name),
@@ -100,7 +100,7 @@ async function worker(directory) {
       throw new Error("evaluation source changed during execution");
     await checkInputs(directory);
     await save(destination, {
-      schema: "wlt-eval-verification-v1",
+      schema: "walz-eval-verification-v1",
       passed: Object.values(subjects).every((s) => s.passed),
       inputsFingerprint,
       ...hashes,

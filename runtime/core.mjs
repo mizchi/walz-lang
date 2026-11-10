@@ -107,7 +107,7 @@ class Boundary {
     name,
     suspends,
     convert,
-    namespace = "wlt:host/event-loop@0.1.0",
+    namespace = "walz:host/event-loop@0.1.0",
     decode = (args) => args,
   ) {
     const host = this.hosts[namespace];
@@ -200,9 +200,9 @@ export async function instantiate(
   installReadables = null,
   validateContract = null,
 ) {
-  if (!["wlt-core-js-v1", "wlt-core-js-v2", "wlt-core-js-v3", "wlt-core-js-v4"].includes(abi))
+  if (!["walz-core-js-v1", "walz-core-js-v2", "walz-core-js-v3", "walz-core-js-v4"].includes(abi))
     throw new Error("unsupported Core JS ABI");
-  if (abi === "wlt-core-js-v3" || abi === "wlt-core-js-v4") {
+  if (abi === "walz-core-js-v3" || abi === "walz-core-js-v4") {
     if (!validateContract) throw new Error("shared-memory contract validator is required");
     validateContract(abi, raceFree, memories, options);
   } else if (raceFree !== null) {

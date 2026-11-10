@@ -20,5 +20,5 @@ try {
     }
     if (!process.stdout.write(frame(response))) await once(process.stdout,'drain');
   }
-} catch(error) { console.error(`WLT Content Mapper: ${error.message}`); process.exitCode=1; }
+} catch(error) { console.error(`Walz Content Mapper: ${error.message}`); process.exitCode=1; }
 finally { mapper.close(); }

@@ -22,7 +22,7 @@ impl Checker<'_, '_> {
         self.expression_depth += 1;
         // Only macros and expressions with speculative type queries need a
         // retry frame. Ordinary ancestors keep the original small call frame.
-        let boundary = node.head().is_some_and(|h| h.starts_with("%$"))
+        let boundary = node.head().is_some_and(|h| h.starts_with("@$"))
             || node.head() == Some("stream.fold-result")
             || (node.head() == Some("call")
                 && node
@@ -56,7 +56,7 @@ impl Checker<'_, '_> {
             .replacement(node)
             .map(Cow::Owned)
             .unwrap_or(Cow::Borrowed(node));
-        if syntax.head().is_some_and(|h| h.starts_with("%$")) {
+        if syntax.head().is_some_and(|h| h.starts_with("@$")) {
             // A previous speculative operator check may have expanded an input.
             // Replay its syntax, never its temporary LocalIds or LoopIds.
             environment.apply_expansions(syntax.to_mut());

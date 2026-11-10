@@ -91,8 +91,8 @@ export class Tasks {
     finally { this.cleaning = false; }
   }
   bind(component) {
-    if(component.wltChildRun)this.childRun=component.wltChildRun;
-    const {wltChildRun:privateRunner,...visible}=component;
+    if(component.walzChildRun)this.childRun=component.walzChildRun;
+    const {walzChildRun:privateRunner,...visible}=component;
     if (!this.flag || !this.tag)
       throw new Error("component lacks the cancellation ABI");
     this.raw = component.api;
@@ -113,7 +113,7 @@ export class Tasks {
     return {
       ...visible,
       api,
-      "wlt:generated/api@0.1.0": api,
+      "walz:generated/api@0.1.0": api,
       start: this.start.bind(this),
     };
   }

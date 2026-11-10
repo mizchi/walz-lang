@@ -4,19 +4,19 @@ use std::process::Command;
 fn composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack() {
     let mut body = "(i32.const 42)".to_string();
     for _ in 0..60 {
-        body = format!("(%$wrap {body})");
+        body = format!("(@$wrap {body})");
     }
     let mut template = "?x".to_string();
     for _ in 0..5 {
         template = format!("(block (result i32) {template})");
     }
     let source = format!(
-        "(module (%macro $wrap (rule (?x:expr) {template})) (func $f (result i32) {body}))"
+        "(module (@macro $wrap (rule (?x:expr) {template})) (func $f (result i32) {body}))"
     );
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("deep.wlt");
+    let path = dir.path().join("deep.walz");
     std::fs::write(&path, source).unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let result = Command::new(env!("CARGO_BIN_EXE_walz"))
         .args(["check", "--json"])
         .arg(path)
         .output()
@@ -36,13 +36,13 @@ fn composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack
 fn one_function_can_expand_512_siblings_without_revisiting_its_prefix() {
     for count in [32, 128, 256, 512] {
         let mut source = String::from(
-            "(module (%macro $double (rule (?x:expr) (infer (?T ?x)) (when (Add ?x)) (%let $value (type ?T) ?x (+ $value $value)))) (func $main (export \"main\") (result i64) (%effect pure) (block (result i64)",
+            "(module (@macro $double (rule (?x:expr) (infer (?T ?x)) (when (Add ?x)) (@let $value (type ?T) ?x (+ $value $value)))) (func $main (export \"main\") (result i64) (@effect pure) (block (result i64)",
         );
         for _ in 1..count {
-            source.push_str("(drop (%$double (i64.const 21)))");
+            source.push_str("(drop (@$double (i64.const 21)))");
         }
-        source.push_str("(%$double (i64.const 21)))))");
-        let report = wlt::macros::report(&source, &Default::default()).unwrap();
+        source.push_str("(@$double (i64.const 21)))))");
+        let report = walz::macros::report(&source, &Default::default()).unwrap();
         assert_eq!(report.expansions.len(), count);
         assert_eq!(report.checking.module_passes, 1);
         assert_eq!(report.checking.function_checks, 1);
@@ -60,7 +60,7 @@ fn one_function_can_expand_512_siblings_without_revisiting_its_prefix() {
 fn run(source: &str, expected: &str) {
     for optimize in [false, true] {
         let compilation =
-            wlt::compile_with_options(source, wlt::CompileOptions { optimize }).unwrap();
+            walz::compile_with_options(source, walz::CompileOptions { optimize }).unwrap();
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("test.wasm");
         std::fs::write(&path, &compilation.wasm).unwrap();
@@ -98,13 +98,13 @@ fn run(source: &str, expected: &str) {
 #[test]
 fn resuming_preserves_outer_locals_labels_and_speculative_type_queries() {
     let source = r#"(module
-      (%macro $id (rule (?x:expr) (infer (?T ?x)) (%let $saved (type ?T) ?x $saved)))
-      (func $main (export "main") (result i32) (%effect pure)
-        (%let $prefix (block $done (result i32) (br $done (i32.const 20)))
-          (+ (%$id (block $done (result i32) (br $done (+ $prefix 1))))
-             (%$id (%$id (i32.const 21)))))))"#;
+      (@macro $id (rule (?x:expr) (infer (?T ?x)) (@let $saved (type ?T) ?x $saved)))
+      (func $main (export "main") (result i32) (@effect pure)
+        (@let $prefix (block $done (result i32) (br $done (i32.const 20)))
+          (+ (@$id (block $done (result i32) (br $done (+ $prefix 1))))
+             (@$id (@$id (i32.const 21)))))))"#;
     run(source, "42");
-    let report = wlt::macros::report(source, &Default::default()).unwrap();
+    let report = walz::macros::report(source, &Default::default()).unwrap();
     assert_eq!(report.expansions.len(), 3);
     assert_eq!(report.checking.function_checks, 1);
 }
@@ -112,12 +112,12 @@ fn resuming_preserves_outer_locals_labels_and_speculative_type_queries() {
 #[test]
 fn speculative_operator_retry_replays_syntax_without_temporary_local_ids() {
     let source = r#"(module
-      (%macro $number (rule () (%let $temporary (i32.const 7) 1)))
-      (func $main (export "main") (result i32) (%effect pure)
-        (if (result i32) (i32.eq (+ (%$number) (i32.const 41)) (i32.const 42))
+      (@macro $number (rule () (@let $temporary (i32.const 7) 1)))
+      (func $main (export "main") (result i32) (@effect pure)
+        (if (result i32) (i32.eq (+ (@$number) (i32.const 41)) (i32.const 42))
           (then (i32.const 42)) (else (i32.const 0)))))"#;
     run(source, "42");
-    let report = wlt::macros::report(source, &Default::default()).unwrap();
+    let report = walz::macros::report(source, &Default::default()).unwrap();
     assert_eq!(report.expansions.len(), 1);
     assert_eq!(report.checking.function_checks, 1);
 }
@@ -125,10 +125,10 @@ fn speculative_operator_retry_replays_syntax_without_temporary_local_ids() {
 #[test]
 fn macro_diagnostics_explain_trailing_repetition_and_whole_body_forwarding() {
     let source = r#"(module
-      (%macro $bad (rule ((?value:expr ...) ?body:expr)
+      (@macro $bad (rule ((?value:expr ...) ?body:expr)
         (block ?value ... ?body)))
-      (func $f (result i32) (%$bad ((i32.const 1)) (i32.const 42))))"#;
-    let error = wlt::check(source).unwrap_err();
+      (func $f (result i32) (@$bad ((i32.const 1)) (i32.const 42))))"#;
+    let error = walz::check(source).unwrap_err();
     assert_eq!(error.diagnostic().code, "E_MACRO");
     assert!(
         error
@@ -142,12 +142,12 @@ fn macro_diagnostics_explain_trailing_repetition_and_whole_body_forwarding() {
     assert_eq!(&source[span.start..span.end], "...");
 
     let source = r#"(module
-      (%macro $inner (rule (?n:ident ?v:expr ?body:expr)
-        (bind ?n ?body) (%let ?n ?v ?body)))
-      (%macro $outer (rule (?n:ident ?v:expr ?body:expr)
-        (bind ?n ?body) (%$inner ?n ?v (block (result i32) ?body))))
-      (func $f (result i32) (%$outer $x (i32.const 42) $x)))"#;
-    let error = wlt::check(source).unwrap_err();
+      (@macro $inner (rule (?n:ident ?v:expr ?body:expr)
+        (bind ?n ?body) (@let ?n ?v ?body)))
+      (@macro $outer (rule (?n:ident ?v:expr ?body:expr)
+        (bind ?n ?body) (@$inner ?n ?v (block (result i32) ?body))))
+      (func $f (result i32) (@$outer $x (i32.const 42) $x)))"#;
+    let error = walz::check(source).unwrap_err();
     assert_eq!(error.diagnostic().code, "E_MACRO_BINDING");
     assert!(
         error
@@ -161,12 +161,12 @@ fn macro_diagnostics_explain_trailing_repetition_and_whole_body_forwarding() {
 
 #[test]
 fn caller_scope_hint_identifies_the_captured_initializer_without_guessing() {
-    let header = "(module (%macro $bindings (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (%let ((?n ?v) ...) ?body)))";
+    let header = "(module (@macro $bindings (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (@let ((?n ?v) ...) ?body)))";
     for (name, expected_hint) in [("$a", true), ("$unrelated", false)] {
         let source = format!(
-            "{header} (func $f (result i32) (%$bindings (($a (i32.const 20)) ($b (+ {name} 22))) $b)))"
+            "{header} (func $f (result i32) (@$bindings (($a (i32.const 20)) ($b (+ {name} 22))) $b)))"
         );
-        let error = wlt::check(&source).unwrap_err();
+        let error = walz::check(&source).unwrap_err();
         assert_eq!(error.diagnostic().code, "E_UNKNOWN_LOCAL");
         assert_eq!(
             error

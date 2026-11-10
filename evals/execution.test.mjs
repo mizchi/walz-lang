@@ -8,14 +8,14 @@ import { verifyRun } from "./lib/runner.mjs";
 import { assertSnapshotIncludes, metrics, sourceIncludes, functionForms } from "./lib/source.mjs";
 
 test("source inspection ignores strings/nested comments but rejects live includes", () => {
-  assert.deepEqual(sourceIncludes('(module (%use "./lib.wlt" (func $f)) (%use "wlt:core" (type $result)) (import "./host.wlt" "f" (func $host)))'), ["./lib.wlt"]);
+  assert.deepEqual(sourceIncludes('(module (@use "./lib.walz" (func $f)) (@use "walz:core" (type $result)) (import "./host.walz" "f" (func $host)))'), ["./lib.walz"]);
   assertSnapshotIncludes(String.raw`(module ;; (include "bad")
-    (include "program.wlt") (func $f (text.lit "(include \"bad\")")))`);
+    (include "program.walz") (func $f (text.lit "(include \"bad\")")))`);
   assertSnapshotIncludes(
-    '(module (; outer (; (include "bad") ;) ;) (include "program.wlt"))',
+    '(module (; outer (; (include "bad") ;) ;) (include "program.walz"))',
   );
   assert.throws(
-    () => assertSnapshotIncludes('(module (include "../live.wlt"))'),
+    () => assertSnapshotIncludes('(module (include "../live.walz"))'),
     /frozen/,
   );
   assert.throws(() => assertSnapshotIncludes("(module)"), /exactly one/);
@@ -29,7 +29,7 @@ test(
   "frozen sources execute outside checkout; seed is a negative control and completed candidate passes",
   { timeout: 60000 },
   async () => {
-    const parent = await mkdtemp(join(tmpdir(), "wlt-eval-exec-"));
+    const parent = await mkdtemp(join(tmpdir(), "walz-eval-exec-"));
     try {
       const directory = join(parent, "path with spaces's", "run");
       await prepareRun("integration-99", { directory });
@@ -46,30 +46,30 @@ test(
         ),
       );
       // Parent-only oracle control; writer is never given these sources.
-      const sample = await readFile(join(directory, "reader/counted.wlt"), "utf8");
-      const extra = await readFile(new URL("stock-ledger/extra-control.wlt", import.meta.url), "utf8");
+      const sample = await readFile(join(directory, "reader/counted.walz"), "utf8");
+      const extra = await readFile(new URL("stock-ledger/extra-control.walz", import.meta.url), "utf8");
       const candidate = sample.slice(0, sample.lastIndexOf(")")) + extra.slice(extra.indexOf("(module") + 7);
-      await writeFile(join(directory, "writer/candidate.wlt"), candidate);
+      await writeFile(join(directory, "writer/candidate.walz"), candidate);
       const positive = await verifyRun(directory);
       assert.equal(positive.passed, true, JSON.stringify(positive));
       assert.equal(positive.subjects.sample.checks.length, 14);
       assert.equal(positive.subjects.candidate.checks.length, 16);
       const wideStart = candidate.indexOf("  (func $count64");
       const formatStart = candidate.indexOf("  (func $format-count");
-      const fakeWide = `(func $count64 (export "count64") (result (%inst $result i64 i32))
-        (%effect reads writes allocates host suspends)
-        (%result.let ($n) (call $main) (%result.ok (i64.extend_i32_u (local.get $n)))))\n`;
+      const fakeWide = `(func $count64 (export "count64") (result (@inst $result i64 i32))
+        (@effect reads writes allocates host suspends)
+        (@result.let ($n) (call $main) (@result.ok (i64.extend_i32_u (local.get $n)))))\n`;
       const falsePositive = (candidate.slice(0, wideStart) + fakeWide + candidate.slice(formatStart))
-        .replace('(%result.ok (call $string-builder.finish (local.get $builder)))', '(%result.ok (%string.lit "count=42"))');
-      await writeFile(join(directory, "writer/candidate.wlt"), falsePositive);
+        .replace('(@result.ok (call $string-builder.finish (local.get $builder)))', '(@result.ok (@string.lit "count=42"))');
+      await writeFile(join(directory, "writer/candidate.walz"), falsePositive);
       const rejected = await verifyRun(directory);
       assert.equal(rejected.passed, false);
       const extraFailures = rejected.subjects.candidate.checks.filter((c) => !c.passed);
       assert.deepEqual(extraFailures.map((c) => c.name.slice(0, 2)), ["W5", "W6"]);
-      await writeFile(join(directory, "support/stdlib/text.wlt"), "changed");
+      await writeFile(join(directory, "support/walz/core/text.walz"), "changed");
       const tampered = await verifyRun(directory);
       assert.equal(tampered.passed, false);
-      assert.match(tampered.fatal, /text.wlt/);
+      assert.match(tampered.fatal, /text.walz/);
     } finally {
       await rm(parent, { recursive: true, force: true });
     }
@@ -80,14 +80,14 @@ test(
   "a synchronous Wasm loop is killed and cannot retain a successful verification",
   { timeout: 20000 },
   async () => {
-    const parent = await mkdtemp(join(tmpdir(), "wlt-eval-timeout-"));
+    const parent = await mkdtemp(join(tmpdir(), "walz-eval-timeout-"));
     try {
       const directory = join(parent, "run");
       await prepareRun("timeout", { directory });
       await writeFile(join(directory, "verification.json"), '{"passed":true}');
       await writeFile(
-        join(directory, "writer/candidate.wlt"),
-        '(module (%use "wlt:core" (type $result)) (%include "program.wlt") (func $main (export "main") (result (%inst $result i32 i32)) (%effect pure) (%loop $spin (result (%inst $result i32 i32)) (%recur $spin))))',
+        join(directory, "writer/candidate.walz"),
+        '(module (@use "walz:core" (type $result)) (@include "program.walz") (func $main (export "main") (result (@inst $result i32 i32)) (@effect pure) (@loop $spin (result (@inst $result i32 i32)) (@recur $spin))))',
       );
       const result = await verifyRun(directory, { timeoutMs: 5000 });
       assert.equal(result.passed, false);
@@ -99,25 +99,25 @@ test(
 );
 
 test("prefixed syntax retains evaluation measurements and frozen include checks", () => {
-  const old = '(module (include "program.wlt") (func $f (let ($x) (pair (ref $stock.State) i32) (match $V))))';
-  const modern = old.replaceAll('(include ', '(%include ').replaceAll('(let ', '(%let ').replaceAll('(pair ', '(%tuple ').replaceAll('(match ', '(%match ');
+  const old = '(module (include "program.walz") (func $f (let ($x) (pair (ref $stock.State) i32) (match $V))))';
+  const modern = old.replaceAll('(include ', '(@include ').replaceAll('(let ', '(@let ').replaceAll('(pair ', '(@tuple ').replaceAll('(match ', '(@match ');
   assertSnapshotIncludes(modern);
-  assert.deepEqual(sourceIncludes(modern), ["program.wlt"]);
+  assert.deepEqual(sourceIncludes(modern), ["program.walz"]);
   assert.deepEqual(metrics(modern), metrics(old));
   assert.deepEqual(functionForms(modern, "$f"), functionForms(old, "$f"));
-  assert.throws(() => assertSnapshotIncludes('(module (%include "../live.wlt"))'), /frozen/);
+  assert.throws(() => assertSnapshotIncludes('(module (@include "../live.walz"))'), /frozen/);
 });
 
 test("standard type applications and grouped lets keep distinct lexical measurements", () => {
-  const source = '(module (%include "program.wlt") (%use "wlt:core" (type $tuple)) (func $main (param $p (%inst $tuple (ref $stock.State) i32)) (%let (($a (i32.const 0))) (%let ($x $y) (local.get $p) (nop)))))';
+  const source = '(module (@include "program.walz") (@use "walz:core" (type $tuple)) (func $main (param $p (@inst $tuple (ref $stock.State) i32)) (@let (($a (i32.const 0))) (@let ($x $y) (local.get $p) (nop)))))';
   assertSnapshotIncludes(source);
-  const historical = source.replace('wlt:core', 'wlt:std');
-  assert.throws(() => assertSnapshotIncludes(historical), /wlt:core/);
-  assertSnapshotIncludes(historical, 'wlt:std');
+  const historical = source.replace('walz:core', 'walz:std');
+  assert.throws(() => assertSnapshotIncludes(historical), /walz:core/);
+  assertSnapshotIncludes(historical, 'walz:std');
   const result=metrics(source);
   assert.equal(result.groupedLets, 1);
   assert.equal(result.patternLets, 1);
   assert.equal(result.stateTypeOccurrences, 1);
   assert.equal(functionForms(source, "$main")["let.group"], 1);
-  assert.throws(() => assertSnapshotIncludes('(module (%include "program.wlt") (%use "../live.wlt" (func $f)))'), /wlt:core/);
+  assert.throws(() => assertSnapshotIncludes('(module (@include "program.walz") (@use "../live.walz" (func $f)))'), /walz:core/);
 });

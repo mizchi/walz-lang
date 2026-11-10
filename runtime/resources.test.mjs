@@ -20,10 +20,10 @@ test('resource registry rejects wrong kinds, stale IDs, and foreign task scopes'
 });
 
 for(const backend of ['core','component'])test(`${backend}: resources close exactly once on every exit`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-resource-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-resource-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('examples/resources/main.wlt',dir,{bindings:'examples/resources/policy.json'});
+    await build('examples/resources/main.walz',dir,{bindings:'examples/resources/policy.json'});
     const {instantiate,TaskCancelledError}=await import(pathToFileURL(join(dir,'index.js')));
     let next=0,closed=[],pending,stopped=false;
     const {api,start}=await instantiate({imports:{files:{

@@ -10,7 +10,7 @@ import {createRunDirectory} from '../evals/macro-usability/support.mjs';
 import {cases} from './wasm-opt-cases.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const compiler=resolve(process.env.WLT??join(root,'target/debug/wlt'));
+const compiler=resolve(process.env.WALZ??join(root,'target/debug/walz'));
 const optimizer=process.argv[3]??'wasm-opt';
 const exec=promisify(callback),sha=b=>createHash('sha256').update(b).digest('hex');
 const run=async(executable,args)=>{
@@ -25,7 +25,7 @@ const output=await createRunDirectory(join(root,'target/wasm-opt'),process.argv[
 const save=(name,value)=>writeFile(join(output,name),value,{flag:'wx'});
 await mkdir(join(output,'inputs'));await mkdir(join(output,'artifacts'));
 const inputs={};
-for(const item of cases){const source=item.source+'\n';await save(`inputs/${item.name}.wlt`,source);inputs[`inputs/${item.name}.wlt`]=sha(source);}
+for(const item of cases){const source=item.source+'\n';await save(`inputs/${item.name}.walz`,source);inputs[`inputs/${item.name}.walz`]=sha(source);}
 for(const file of ['tools/wasm-opt-cases.mjs','tools/wasm-opt-capture.mjs'])inputs[file]=sha(await readFile(join(root,file)));
 const implementation={};
 async function hashes(dir,prefix){for(const e of await readdir(dir,{withFileTypes:true})){const p=join(dir,e.name),key=prefix+e.name;if(e.isDirectory())await hashes(p,key+'/');else implementation[key]=sha(await readFile(p));}}
@@ -33,13 +33,13 @@ for(const dir of ['src','stdlib'])await hashes(join(root,dir),dir+'/');
 for(const file of ['Cargo.toml','Cargo.lock','build.rs'])implementation[file]=sha(await readFile(join(root,file)));
 const profiles=[{name:'o3',flags:['-O3']},{name:'o3-twice',flags:['-O3','-O3']}];
 const features=['--enable-gc','--enable-reference-types'];
-const manifest={schema:'wlt-wasm-opt-v1',createdAt:new Date().toISOString(),git:(await run('git',['rev-parse','HEAD'])).trim(),compiler,binarySha256:sha(await readFile(compiler)),optimizer,version,features,profiles,inputs,implementation,node:process.version,platform:process.platform,architecture:process.arch,benchmark:{rounds:9,calls:500000,warmupCalls:50000,description:'preallocated GC values; deterministic mixed tags; JS-to-Wasm calls included'}};
+const manifest={schema:'walz-wasm-opt-v1',createdAt:new Date().toISOString(),git:(await run('git',['rev-parse','HEAD'])).trim(),compiler,binarySha256:sha(await readFile(compiler)),optimizer,version,features,profiles,inputs,implementation,node:process.version,platform:process.platform,architecture:process.arch,benchmark:{rounds:9,calls:500000,warmupCalls:50000,description:'preallocated GC values; deterministic mixed tags; JS-to-Wasm calls included'}};
 await save('manifest.json',JSON.stringify(manifest,null,2)+'\n');
 function codeBytes(bytes){let p=8;const leb=()=>{let n=0,s=0,b;do{b=bytes[p++];n+=(b&127)*2**s;s+=7;}while(b&128);return n;};while(p<bytes.length){const id=bytes[p++],size=leb();if(id===10)return size;p+=size;}return 0;}
 const median=xs=>[...xs].sort((a,b)=>a-b)[Math.floor(xs.length/2)];
 const results=[];
 for(const item of cases){
-  const source=join(output,'inputs',item.name+'.wlt'),prefix=join(output,'artifacts',item.name);
+  const source=join(output,'inputs',item.name+'.walz'),prefix=join(output,'artifacts',item.name);
   await run(compiler,['build',source,'--target','core','-o',prefix+'.wasm']);
   await save(`artifacts/${item.name}.wat`,await run(compiler,['wat',source]));
   const variants=[{name:'raw',path:prefix+'.wasm'}];
@@ -69,8 +69,8 @@ for(const item of cases){
   results.push(row);console.log(JSON.stringify(row));
 }
 for(const [file,h]of Object.entries(implementation))assert.equal(sha(await readFile(join(root,file))),h,file);
-for(const item of cases)assert.equal(sha(await readFile(join(output,'inputs',item.name+'.wlt'))),inputs[`inputs/${item.name}.wlt`]);
+for(const item of cases)assert.equal(sha(await readFile(join(output,'inputs',item.name+'.walz'))),inputs[`inputs/${item.name}.walz`]);
 assert.equal(sha(await readFile(compiler)),manifest.binarySha256);
 await save('commands.json',JSON.stringify(commands,null,2)+'\n');
-await save('result.json',JSON.stringify({schema:'wlt-wasm-opt-result-v1',passed:true,results},null,2)+'\n');
+await save('result.json',JSON.stringify({schema:'walz-wasm-opt-result-v1',passed:true,results},null,2)+'\n');
 console.log(output);

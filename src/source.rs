@@ -228,7 +228,7 @@ impl Source {
     }
 }
 fn file_import(node: &Sexp) -> bool {
-    matches!(node.head(), Some("import" | "%import" | "use" | "%use"))
+    matches!(node.head(), Some("import" | "@import" | "use" | "@use"))
         && node
             .list()
             .and_then(|p| p.get(1))
@@ -251,30 +251,30 @@ fn includes<'a>(
             node.head(),
             Some(
                 "namespace"
-                    | "%namespace"
-                    | "%import"
-                    | "%file.namespace"
-                    | "%file.use"
-                    | "%legacy.namespace"
+                    | "@namespace"
+                    | "@import"
+                    | "@file.namespace"
+                    | "@file.use"
+                    | "@legacy.namespace"
             )
         )
     {
         return Err(Error::at(
             source,
             node.span,
-            "use files as modules and select their exports with %use",
+            "use files as modules and select their exports with @use",
         )
-        .with_code("E_WLT_EXTENSION"));
+        .with_code("E_WALZ_EXTENSION"));
     }
-    if !legacy && node.head() == Some("%use") {
+    if !legacy && node.head() == Some("@use") {
         let path = node.list().and_then(|p| p.get(1)).and_then(Sexp::text);
         if !path.is_some_and(|path| {
-            path.starts_with("wlt:") || path.starts_with("./") || path.starts_with("../")
+            path.starts_with("walz:") || path.starts_with("./") || path.starts_with("../")
         }) {
             return Err(Error::at(
                 source,
                 node.span,
-                "%use requires a package name or an explicit relative path such as ./module.wlt",
+                "@use requires a package name or an explicit relative path such as ./module.walz",
             )
             .with_code("E_USE_PATH"));
         }
@@ -284,22 +284,22 @@ fn includes<'a>(
             || matches!(node.head(), Some("import" | "use")) && file_import(node))
     {
         return Err(
-            Error::at(source, node.span, "file linking requires %include or %use")
-                .with_code("E_WLT_PREFIX"),
+            Error::at(source, node.span, "file linking requires @include or @use")
+                .with_code("E_WALZ_PREFIX"),
         );
     }
-    if (node.head() == Some("%use") || legacy && file_import(node))
+    if (node.head() == Some("@use") || legacy && file_import(node))
         && node
             .list()
             .and_then(|p| p.get(1))
             .and_then(Sexp::text)
-            .is_some_and(|s| s.starts_with("wlt:"))
+            .is_some_and(|s| s.starts_with("walz:"))
     {
         return Ok(());
     }
-    if matches!(node.head(), Some("include" | "%include")) || file_import(node) {
+    if matches!(node.head(), Some("include" | "@include")) || file_import(node) {
         output.push(node);
-    } else if matches!(node.head(), Some("module" | "namespace" | "%namespace")) {
+    } else if matches!(node.head(), Some("module" | "namespace" | "@namespace")) {
         for child in node.list().unwrap() {
             includes(source, child, output, legacy)?;
         }
@@ -388,18 +388,18 @@ fn expand(
                 &original,
                 node.span,
                 if import {
-                    "expected (import \"relative.wlt\" (func/type/tag $member [$alias])...)"
+                    "expected (import \"relative.walz\" (func/type/tag $member [$alias])...)"
                 } else {
-                    "expected (include \"relative.wlt\")"
+                    "expected (include \"relative.walz\")"
                 },
             )
             .with_path(&canonical));
         };
-        if relative.starts_with("wlt:") {
+        if relative.starts_with("walz:") {
             return Err(Error::at(
                 &original,
                 node.span,
-                "standard modules require %use, not %include",
+                "standard modules require @use, not @include",
             )
             .with_code("E_CORE_MODULE")
             .with_path(&canonical));
@@ -489,7 +489,7 @@ fn expand(
                 }
             }
             output.append(
-                &format!("(%file.use {name} "),
+                &format!("(@file.use {name} "),
                 node.span.start,
                 &canonical,
                 &original,
@@ -508,7 +508,7 @@ fn expand(
                 return Err(Error::at(
                     &original,
                     node.span,
-                    "binary modules require %use, not %include",
+                    "binary modules require @use, not @include",
                 )
                 .with_code("E_WASM_USE")
                 .with_path(&canonical));
@@ -653,7 +653,7 @@ fn load_mode(
     let mut next = 0;
     for (name, _) in &mut modules.units {
         let fresh = loop {
-            let name = format!("$wlt-file-{next}");
+            let name = format!("$walz-file-{next}");
             next += 1;
             if !atoms
                 .iter()
@@ -687,7 +687,7 @@ fn load_mode(
             .original
             .clone();
         linked.append(
-            &format!("\n(%file.namespace {name}\n"),
+            &format!("\n(@file.namespace {name}\n"),
             0,
             &unit.path,
             &original,

@@ -52,7 +52,7 @@ jobs:
         run: |
           pnpm playground:build
           node --test playground/samples.test.mjs
-          cargo test --locked -p wlt-web
+          cargo test --locked -p walz-web
       - name: Browser tests
         run: |
           pnpm exec playwright install --with-deps chromium

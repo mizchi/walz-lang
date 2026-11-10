@@ -1,6 +1,6 @@
 // Value-only adapter over WASI 0.3 descriptor.openAt/readViaStream/writeViaStream.
 // Upstream: WebAssembly/WASI v0.3.0, 3ee2a590c766594ae44a54730fc74fc27da5c609.
-export const FILESYSTEM = 'wlt:filesystem/files@0.3.0';
+export const FILESYSTEM = 'walz:filesystem/files@0.3.0';
 const ok = () => ({tag:'ok',val:undefined});
 const err = val => ({tag:'err',val});
 const codes = new Set(['bad-descriptor','interrupted','invalid','io','no-entry','not-permitted','read-only']);

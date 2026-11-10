@@ -9,14 +9,14 @@ just eval-usability trial-01
 Node.js 24以降、Wasm GC対応Wasmtime、インストール済みのpnpm依存が必要。CLIをビルドしてから現在のソースを評価する。生成物は `evals/runs/trial-01/`。IDの再利用・パスの逸脱は拒否する。
 
 - `manifest.json`: 実行CLIのSHA-256、Node版、評価者の立場。
-- `inputs.json` / `snapshot/`: 課題・コード・参照資料を固定。WLTのcoreはCLIに同梱されている。
+- `inputs.json` / `snapshot/`: 課題・コード・参照資料を固定。WALZのcoreはCLIに同梱されている。
 - `commands.json`: CLIの引数・終了コード・stdout/stderr・経過時間。
 - `result.json`: 各操作の合否、独立したBigInt/Map oracleとの照合、LSPの実応答、コードの補助指標。
 - `work/`: コンパイル結果、生成binding、間違いを入れたコード。
 
-`result.json` の失敗があれば終了コード1。使い勝手の問題を見つける評価なので、正しく動かない操作も記録する。既知の問題を「成功」に変えるため期待値を緩めない。同居した `%bench` を含むアプリのJSビルドも成功することを検査する。以前の問題の最小再現は [bench-repro/main.wlt](bench-repro/main.wlt)。
+`result.json` の失敗があれば終了コード1。使い勝手の問題を見つける評価なので、正しく動かない操作も記録する。既知の問題を「成功」に変えるため期待値を緩めない。同居した `@bench` を含むアプリのJSビルドも成功することを検査する。以前の問題の最小再現は [bench-repro/main.walz](bench-repro/main.walz)。
 
-Core＋JSPIとComponentで同じ7組のデータを比較し、各呼出し後にABIバッファと端点tableの空状態を確認する。方針変更版も7組で検査する。これは任意のGCヒープのリーク不存在の証明ではない。ネイティブWITの検査はraw jco/JSPIを使い、WLT SDKを通さない。今回はブラウザUIや実エディターの操作は測っていない。
+Core＋JSPIとComponentで同じ7組のデータを比較し、各呼出し後にABIバッファと端点tableの空状態を確認する。方針変更版も7組で検査する。これは任意のGCヒープのリーク不存在の証明ではない。ネイティブWITの検査はraw jco/JSPIを使い、Walz SDKを通さない。今回はブラウザUIや実エディターの操作は測っていない。
 
 JSONのamountは符号付き64bitの整数字句として処理し、小数・指数表記からの丸めは行わない。oracleはJSON.parseのsource contextとBigIntで数値を正確に読み、入力の不正・範囲外・加算overflowを別に検査する。ベンチの実行は機能確認で、速度比較や人間の作業時間の測定ではない。
 

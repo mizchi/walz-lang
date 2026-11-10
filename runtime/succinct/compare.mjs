@@ -10,7 +10,7 @@ const output=resolve(root,'benchmarks/succinct',id);await mkdir(output);
 const runs=[];
 for(const name of [before,after]){
   const report=JSON.parse(await readFile(resolve(root,'benchmarks/succinct',name,'report.json'),'utf8'));
-  const dir=resolve(root,'target/succinct/runs',name,'wlt'),bytes=await readFile(join(dir,'reader.wasm'));
+  const dir=resolve(root,'target/succinct/runs',name,'walz'),bytes=await readFile(join(dir,'reader.wasm'));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),report.reader);
   const {instantiate}=await import(pathToFileURL(join(dir,'serial/index.js')));
   runs.push({name,report,dir,module:await WebAssembly.compile(bytes),api:(await instantiate()).api});
@@ -39,7 +39,7 @@ for(let row=0;row<runs[0].report.rows.length;row++){
   const medians=variants.map(v=>[...v.samples].sort((x,y)=>x-y)[4]);
   result.push({kind:a.kind,n:a.n,count:a.count,dataHash:a.dataHash,queryHash:a.queryHash,beforeMs:medians[0],afterMs:medians[1],ratio:medians[0]/medians[1],samples:variants.map(({name,samples,iterations})=>({name,samples,iterations}))});
 }
-await writeFile(join(output,'report.json'),JSON.stringify({before,after,schema:'wlt-succinct-comparison-v1',node:process.version,v8:process.versions.v8,sink,result},null,2)+'\n');
+await writeFile(join(output,'report.json'),JSON.stringify({before,after,schema:'walz-succinct-comparison-v1',node:process.version,v8:process.versions.v8,sink,result},null,2)+'\n');
 const lines=['# Alternating comparison','','Same inputs and serialized indexes, captured Wasm, local execution with identical input/output copies. Nine rotated samples; milliseconds per batch.','','| Workload | Q | Before | After | Before / after |','|---|---:|---:|---:|---:|'];
 for(const r of result)lines.push(`| ${r.kind} | ${r.count} | ${r.beforeMs.toFixed(3)} | ${r.afterMs.toFixed(3)} | ${r.ratio.toFixed(3)} |`);
 await writeFile(join(output,'report.md'),lines.join('\n')+'\n');console.log(lines.join('\n'));

@@ -4,7 +4,7 @@ import Lean
 The ready-only readable-end model. States describe ownership of an endpoint,
 not mutation of a shared GC object. Pending I/O and task cancellation are absent.
 -/
-namespace WltDelivery
+namespace WalzDelivery
 
 inductive Future (α : Type) where
   | ready (value : α)
@@ -78,4 +78,4 @@ theorem eof_does_not_resolve_completion (completion : Future (Except ε Unit)) :
 example : readMany 3 [40, 2] = ([40, 2], []) := rfl
 example : closeStream (Stream.closed : Stream Nat) = none := rfl
 
-end WltDelivery
+end WalzDelivery

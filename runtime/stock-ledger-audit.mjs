@@ -32,7 +32,7 @@ const metrics = (source) => {
 };
 const variants = [];
 for (const name of ["main-explicit", "main"]) {
-  const file = join(source, name + ".wlt"),
+  const file = join(source, name + ".walz"),
     directory = join(root, name);
   await build(file, directory);
   const { stdout } = await exec("cargo", [
@@ -81,7 +81,7 @@ for (const name of ["main-explicit", "main"]) {
 }
 await mkdir(join(root, "source/examples/apps"), { recursive: true });
 await cp(source, join(root, "source", source), { recursive: true });
-await cp("stdlib", join(root, "source/stdlib"), { recursive: true });
+await cp("walz/core", join(root, "source/walz/core"), { recursive: true });
 const corpus = (unicode) => {
   const stocks = new Map(),
     lines = [],

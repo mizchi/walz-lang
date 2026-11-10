@@ -1,6 +1,6 @@
-// Shape contract for wlt's planned WASI 0.3-aligned types.
+// Shape contract for walz's planned WASI 0.3-aligned types.
 // This is a test interface, not an implementation of any wasi:* package.
-package wlt:async-contract@0.1.0;
+package walz:async-contract@0.1.0;
 
 interface shapes {
   variant io-error {

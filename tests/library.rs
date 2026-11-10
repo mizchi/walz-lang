@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn standard_library_has_executable_language_tests() {
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "tests/library.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "tests/library.test.walz"])
         .output()
         .unwrap();
     assert!(
@@ -17,8 +17,8 @@ fn standard_library_has_executable_language_tests() {
 
 #[test]
 fn standard_library_search_parse_and_builder_contracts_execute_natively() {
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "tests/stdlib.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "tests/stdlib.test.walz"])
         .output()
         .unwrap();
     assert!(
@@ -32,11 +32,11 @@ fn standard_library_search_parse_and_builder_contracts_execute_natively() {
 
 #[test]
 fn builder_representation_and_mutation_effects_are_checked() {
-    let loaded = wlt::source::load("tests/stdlib.test.wlt").unwrap();
+    let loaded = walz::source::load("tests/stdlib.test.walz").unwrap();
     let prefix = loaded.text().trim_end().strip_suffix(')').unwrap();
     for (body, message) in [
         (
-            "(func $bad (param $b (ref $string-builder)) (%effect pure) (call $string-builder.text (local.get $b) (%string.lit \"x\")))",
+            "(func $bad (param $b (ref $string-builder)) (@effect pure) (call $string-builder.text (local.get $b) (@string.lit \"x\")))",
             "effect contract",
         ),
         (
@@ -44,19 +44,19 @@ fn builder_representation_and_mutation_effects_are_checked() {
             "opaque",
         ),
         (
-            "(func $bad (param $o (ref $json-object)) (%effect pure) (call $json.object-builder.u64 (local.get $o) (%string.lit \"n\") (i64.const 1)))",
+            "(func $bad (param $o (ref $json-object)) (@effect pure) (call $json.object-builder.u64 (local.get $o) (@string.lit \"n\") (i64.const 1)))",
             "effect contract",
         ),
     ] {
         assert!(
-            wlt::check(&format!("{prefix} {body})"))
+            walz::check(&format!("{prefix} {body})"))
                 .unwrap_err()
                 .to_string()
                 .contains(message)
         );
     }
-    let module = wlt::check(loaded.text()).unwrap();
-    let analysis = wlt::analysis::analyze(&module);
+    let module = walz::check(loaded.text()).unwrap();
+    let analysis = walz::analysis::analyze(&module);
     for name in [
         "$bytes.find-byte",
         "$bytes.find",
@@ -78,14 +78,14 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
     let source = r#"(module
       (type $A (array (mut i32)))
       (func $main (export "main") (result i32)
-        (%let $a (array.new_fixed $A 2 (i32.const 65) (i32.const 255))
-          (%let $b (%bytes.from-array $A (local.get $a))
+        (@let $a (array.new_fixed $A 2 (i32.const 65) (i32.const 255))
+          (@let $b (@bytes.from-array $A (local.get $a))
             (block (result i32)
               (array.set $A (local.get $a) (i32.const 0) (i32.const 0))
-              (i32.add (%bytes.get (local.get $b) (i32.const 0)) (%bytes.get (local.get $b) (i32.const 1)))))))
-      (func $bad (export "bad") (result %bytes)
-        (%bytes.from-array $A (array.new_fixed $A 1 (i32.const 256)))))"#;
-    let compiled = wlt::compile(source).unwrap();
+              (i32.add (@bytes.get (local.get $b) (i32.const 0)) (@bytes.get (local.get $b) (i32.const 1)))))))
+      (func $bad (export "bad") (result @bytes)
+        (@bytes.from-array $A (array.new_fixed $A 1 (i32.const 256)))))"#;
+    let compiled = walz::compile(source).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("program.wasm");
     std::fs::write(&path, compiled.wasm).unwrap();
@@ -117,25 +117,25 @@ fn array_to_bytes_copies_and_checks_unsigned_octets() {
         ("i64", "reads", false),
     ] {
         let source = format!(
-            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result %bytes) (%effect {effect}) (%bytes.from-array $A (local.get $a))))"
+            "(module (type $A (array {element})) (func $f (param $a (ref $A)) (result @bytes) (@effect {effect}) (@bytes.from-array $A (local.get $a))))"
         );
-        assert_eq!(wlt::check(&source).is_ok(), ok, "{source}");
+        assert_eq!(walz::check(&source).is_ok(), ok, "{source}");
     }
-    let source = "(module (type $A (array (mut i32))) (func $copy (param $a (ref $A)) (result %bytes) (%bytes.from-array $A (local.get $a))))";
-    let module = wlt::check(source).unwrap();
-    let analysis = wlt::analysis::analyze(&module);
+    let source = "(module (type $A (array (mut i32))) (func $copy (param $a (ref $A)) (result @bytes) (@bytes.from-array $A (local.get $a))))";
+    let module = walz::check(source).unwrap();
+    let analysis = walz::analysis::analyze(&module);
     let memory = &analysis.functions[0].memory;
     assert!(
         memory
             .reads
             .iter()
-            .any(|l| matches!(l.object.root, wlt::regions::Root::Parameter { index: 0 }))
+            .any(|l| matches!(l.object.root, walz::regions::Root::Parameter { index: 0 }))
     );
     assert!(
         memory
             .returns
             .iter()
-            .all(|p| matches!(p.root, wlt::regions::Root::Allocation { .. }))
+            .all(|p| matches!(p.root, walz::regions::Root::Allocation { .. }))
     );
-    wlt::compile("(module (type $A (array i32)) (func $f (result %bytes) (%bytes.from-array $A (unreachable))))").unwrap();
+    walz::compile("(module (type $A (array i32)) (func $f (result @bytes) (@bytes.from-array $A (unreachable))))").unwrap();
 }

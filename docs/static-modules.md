@@ -1,96 +1,96 @@
-# ファイルモジュール・%use / %export と DCE
+# File Modules, @use/@export, and DCE
 
-`.wlt`の定義に加え、WIT付きの閉じたComponent `.wasm`からも同期・共有値のexportを取り込める。`(%use "./math.wasm" (func $math.add $add))`の型・effect・出力先の契約は[Wasmの%use](wasm-use.md)にまとめる。
+In addition to `.walz` definitions, synchronous exports using shareable values can be imported from closed Component `.wasm` files with WIT. See [Wasm @use](wasm-use.md) for the type, effect, and output-target contract of `(@use "./math.wasm" (func $math.add $add))`.
 
-`%include` は宣言を挿入するテキスト展開です。スコープや読み込み済みキャッシュを作りません。
-関数・型・tag・メモリを選んで使うときは、明示的な相対パスの `%use` を使います。
+`@include` inserts declarations through textual expansion. It creates neither a scope nor a loaded-file cache.
+To select functions, types, tags, or memories, use `@use` with an explicit relative path.
 
-`math.wlt`:
+`math.walz`:
 
 ```wat
 (module
-  (%export (func $answer) (func $unused))
-  (func $helper (result i32) (%effect pure) (i32.const 42))
-  (func $answer (result i32) (%effect pure) (call $helper))
-  (func $unused (result i32) (%effect pure) (i32.const 99)))
+  (@export (func $answer) (func $unused))
+  (func $helper (result i32) (@effect pure) (i32.const 42))
+  (func $answer (result i32) (@effect pure) (call $helper))
+  (func $unused (result i32) (@effect pure) (i32.const 99)))
 ```
 
-`main.wlt`:
+`main.walz`:
 
 ```wat
 (module
-  (%use "./math.wlt" (func $answer $chosen))
+  (@use "./math.walz" (func $answer $chosen))
   (export "main" (func $chosen)))
 ```
 
-静的 export の `$answer` を `$chosen` に束縛し、それを Wasm の `main` として公開します。
-生成物には answer とその依存の helper が入り、unused は入りません。呼出し元で `$helper`・`$unused` は使えません。
-[実行できるサンプル](../examples/modules.wlt) は `just run examples/modules.wlt` で42を返します。
+This binds static export `$answer` to `$chosen`, then exposes it as the Wasm `main`.
+The artifact includes answer and its helper dependency, but excludes unused. The caller cannot use `$helper` or `$unused`.
+The [executable example](../examples/modules.walz) returns 42 with `just run examples/modules.walz`.
 
-## 境界の規約
+## Boundary Rules
 
-| 宣言 | 意味 |
+| Declaration | Meaning |
 | --- | --- |
-| `(%export (func $f) (type $T) (tag $Error))` | 静的に公開する名前。`%public` も互換で受理 |
-| `(%export (opaque $State))` | 型を公開し、その表現を宣言スコープに閉じる |
-| `(%use "./file.wlt" (func $f $local) (type $T) (tag $Error))` | ファイル API の選択と別名。別名省略時は同じ識別子 |
-| `(%use "wlt:core" (func $string.u64 $unsigned))` | 組み込みコアから公開された識別子を選択 |
-| `(export "name" (func $local))` | ルートから Wasm / Component API に公開。静的 import の関数も指定可能 |
-| 関数内の `(export "name")` | 従来どおりの Wasm ABI export |
-| `(import "host" "member" (func ...))` | 従来どおりの Wasm / WIT ホスト import |
+| `(@export (func $f) (type $T) (tag $Error))` | Statically public names; `@public` is accepted for compatibility |
+| `(@export (opaque $State))` | Exposes the type while keeping its representation within its declaration scope |
+| `(@use "./file.walz" (func $f $local) (type $T) (tag $Error))` | Selects and aliases a file API; omitting an alias keeps the identifier |
+| `(@use "walz:core" (func $string.u64 $unsigned))` | Selects a public identifier from the built-in core |
+| `(export "name" (func $local))` | Exposes a Wasm/Component API from the root; statically imported functions are allowed |
+| `(export "name")` inside a function | Existing Wasm ABI export |
+| `(import "host" "member" (func ...))` | Existing Wasm/WIT host import |
 
-ファイルは独立した静的スコープです。読み込んだファイルの宣言 は呼出し元に流入しません。
-依存側が import した名前も、export しなければ外へ出ません。
-同じ canonical path は1つの定義集合を共有します。別名・`./`・複数の経路でも型を作り直しません。
-opaque 型の所有スコープも維持します。絶対パスと循環 import は拒否し、include と合わせて深さ64・展開後16MiBの上限を適用します。
-ファイル名の解決・診断の元ファイルへの対応は `source::load` が担当し、文字列 API の check/compile はファイル I/O を行いません。
+Each file has an independent static scope. Declarations from a loaded file do not flow into the caller.
+Names imported by dependencies also remain private unless exported.
+The same canonical path shares one definition set; aliases, `./`, and multiple routes do not recreate types.
+Opaque types retain their owning scopes. Absolute paths and import cycles are rejected; imports and includes share limits of depth 64 and 16 MiB after expansion.
+`source::load` handles filename resolution and mapping diagnostics to original files; string-based check/compile APIs perform no file I/O.
 
-再公開は `(%use "./source.wlt" (func $original $renamed))` と `(%export (func $renamed))` を組み合わせます。
-`%namespace` は廃止しました。1ファイルが1モジュールです。`%use` の対象は `wlt:core` などの登録済みパッケージか、`./`・`../` で始まるファイルパスです。
-ドットは識別子の一部なので、`$stock.get` も明示的に束縛しなければ使えません。ファイル内に宣言した namespace を探索する規則はありません。
-変数の再代入、トップレベル実行、start、メモリ初期化などをこの静的ファイルモジュールに追加していません。
-wildcard・default import/export・dynamic import・循環モジュールは未対応です。
-取り込むライブラリ内の `%test` も拒否します。テストは別の入口ファイルから API を import して書き、生成物の根に意図せず追加されることを防ぎます。
+Re-export by combining `(@use "./source.walz" (func $original $renamed))` and `(@export (func $renamed))`.
+`@namespace` has been removed. One file is one module. `@use` targets registered packages such as `walz:core` or file paths beginning with `./` or `../`.
+Dots are part of identifiers, so `$stock.get` also needs an explicit binding. There is no lookup rule for namespaces declared inside files.
+Static file modules add no variable reassignment, top-level execution, start, or memory initialization.
+Wildcards, default imports/exports, dynamic imports, and cyclic modules are unsupported.
+`@test` inside imported libraries is also rejected. Tests import APIs from a separate entry file, preventing accidental additions to artifact roots.
 
-## 生成時の除去
+## Elimination During Emission
 
-先に読み込んだ全ソースを名前解決し、型・effect・所有権・opaque・必要な law を検査します。
-使わない関数にある不正な型、effect、未消費の所有値も拒否します。
-その後、ABI export・テスト・law を根として、直接呼出し、クロージャ、型のフィールド、値型の payload、例外 tag と生成 helper の依存をたどります。
-宣言を落として ID を振り直し、同じ投影を Core Wasm、Core＋JSPI、Component、プロファイラの ABI に使います。
-到達しないホスト関数も manifest・codec・生成 import から除き、不要な capability を要求しません。
-Component の trusted binding 検査は削除前にも適用するため、未対応のホスト binding を含むライブラリの受理範囲は広げません。
-`check` / `ir` / `analyze` は削除前の全ソースを保持します。import したという理由だけで生成物の根にはしません。
-この到達性解析と ID の再割当てはコンパイラの TCB です。Lean の契約カーネルによる意味保存の証明は追加していません。
+First, every loaded source undergoes name resolution and type, effect, ownership, opaque, and required law checks.
+Invalid types/effects and unconsumed owned values inside unused functions are still rejected.
+Then, starting from ABI exports, tests, and laws, reachability follows direct calls, closures, type fields, value-type payloads, exception tags, and generated-helper dependencies.
+Unreachable declarations are removed and IDs reassigned; the same projection serves Core Wasm, Core+JSPI, Component, and profiler ABIs.
+Unreachable host functions also disappear from manifests, codecs, and generated imports, avoiding unnecessary capabilities.
+Component trusted-binding checks also run before elimination, so this does not expand acceptance of libraries containing unsupported host bindings.
+`check`, `ir`, and `analyze` retain all source before elimination. Importing alone does not make a declaration an artifact root.
+This reachability analysis and ID reassignment belong to the compiler TCB. No semantics-preservation proof by the Lean contract kernel is added.
 
-標準 WAT 単体は従来どおり書き換えません。start・メモリ・table・global や外部の import 解決を含む任意の WAT に、この除去を適用することはありません。
-`%include` の結果が標準 WAT だけになる場合も、その経路を維持します。named file import は型付きの静的リンク経路です。
+Standalone standard WAT remains unchanged. This elimination does not apply to arbitrary WAT with start, memories, tables, globals, or external import resolution.
+The existing path is also retained when `@include` produces only standard WAT. Named file imports use typed static linking.
 
-Wasm の import はインスタンス化時に必要な外部定義であり、start 等も実行されます。[Wasm Core 仕様](https://www.w3.org/TR/wasm-core/#modules)
-ESM の import は別モジュールの binding への参照で、値をコピーする宣言ではありません。[ECMAScript FAQ](https://github.com/tc39/ecma262/blob/main/FAQ.md#why-are-imported-module-bindings-aliased-instead-of-copied)
-WLT はこの名前の明示的な束縛を採用し、初期化を持たない関数・型・tag の部分集合を単一 Wasm へ静的リンクします。ESM 全体の実行モデルを実装するものではありません。
+Wasm imports are external definitions required at instantiation, which also runs start and similar initialization. [Wasm Core specification](https://www.w3.org/TR/wasm-core/#modules)
+ESM imports refer to bindings in another module rather than declaring value copies. [ECMAScript FAQ](https://github.com/tc39/ecma262/blob/main/FAQ.md#why-are-imported-module-bindings-aliased-instead-of-copied)
+Walz adopts explicit name binding and statically links an initialization-free subset of functions/types/tags into a single Wasm module. It does not implement ESM's full execution model.
 
-`just test-modules` でファイル共有・可視性・再公開・未使用 import の除去と両 JS backend の実行を確認できます。
-ブラウザでホスト capability を与えず動作する検査も `just test-e2e` に含まれます。
+`just test-modules` checks file sharing, visibility, re-exports, unused-import elimination, and execution on both JS backends.
+`just test-e2e` also includes browser execution without host capabilities.
 
-## 標準ライブラリの生成サイズ
+## Standard-Library Artifact Sizes
 
-以下は旧入力に対する named import 導入時の記録です。現在のソース・構文に対する測定値ではありません。
-JSON builder 共通化後の保存済み成果物と、今回の成果物を同じ入力・期待値で比較しています。
-[入力・ソース・生成物のハッシュと比較結果](stdlib/20261105-imports-dce.json) を保存しました。
-すべての呼出しで JSON 出力・入力終了1回・ABI の未解放数0を照合しています。
+The following records the introduction of named imports for old input. These are not measurements of current sources/syntax.
+Saved artifacts after JSON-builder consolidation were compared with the artifacts from this change using identical inputs and expectations.
+[Input/source/artifact hashes and comparison results](stdlib/20261105-imports-dce.json) are saved.
+Every call checked JSON output, exactly one input close, and zero outstanding ABI allocations.
 
-| Core Wasm（名前セクション込み） | 変更前 bytes | named import ＋ DCE 後 bytes |
+| Core Wasm (including name section) | Before, bytes | After named imports + DCE, bytes |
 | --- | ---: | ---: |
-| ログ集計 | 13,942 | 11,711 |
-| 在庫台帳 | 15,192 | 13,065 |
+| Log aggregation | 13,942 | 11,711 |
+| Inventory ledger | 15,192 | 13,065 |
 | workflow | 22,966 | 20,939 |
 
-速度の優劣は今回の変更の判定基準にしていません。関数・型・ホスト import の到達性を対象とし、式の簡約や共有する生成 helper の完全な最小化は別の最適化として残します。
+Speed was not an acceptance criterion for this change. It addresses reachability of functions, types, and host imports; expression simplification and fully minimizing shared generated helpers remain separate optimizations.
 
-回帰検査は `just check`、Rust 212件、言語内テスト41件、Node 45件、Chromium 26件、評価ハーネス11件が成功しました。
-未使用 import を除いた Component で生成されなくなる Future / Stream の管理表も、検査用メトリクスでは不在を0として扱います。
+Regression checks passed `just check`, 212 Rust tests, 41 language tests, 45 Node tests, 26 Chromium tests, and 11 evaluation-harness tests.
+For Future/Stream registries no longer generated in Components after unused-import elimination, test metrics treat an absent registry as zero.
 
-`%export (memory $mem)` と `%use "./file.wlt" (memory $mem $local)` でメモリも選択できる。ライブラリ内の memory 命令は参照先の名前を明示する。[共有メモリ](threads.md) を参照。
+Memories can also be selected with `(@export (memory $mem))` and `(@use "./file.walz" (memory $mem $local))`. Memory instructions inside libraries explicitly name their target. See [shared memory](threads.md).
 
-固定atomicセルは`(cell $name $alias)`、readonly領域は`(region $name $alias)`で選択できる。領域を取り込むと対応するmemoryもリンクする。これらは整数ポインタを公開する操作ではない。[atomicセル](atomic-cells.md)・[readonly領域](readonly-regions.md)を参照。
+Select fixed atomic cells with `(cell $name $alias)` and readonly regions with `(region $name $alias)`. Importing a region also links its memory. These operations do not expose integer pointers. See [atomic cells](atomic-cells.md) and [readonly regions](readonly-regions.md).

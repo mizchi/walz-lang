@@ -1,72 +1,72 @@
-# リスト走査・構造体分解・フィールド更新
+# List Traversal, Struct Destructuring, and Field Updates
 
-3つとも型付きコアの糖衣。`%for-each` は `let`・リスト操作・`loop/if/block/recur`、構造体の pattern let は `let/struct.get`、`%struct.update` は `let/struct.get/struct.set` に展開する。追加のランタイムや汎用 iterator は持たない。型・effect・所有権・opaque の検査を通した後で最適化する。
+All three are typed-core sugar. `@for-each` expands into `let`, list operations, and `loop/if/block/recur`; struct pattern let expands into `let/struct.get`; `@struct.update` expands into `let/struct.get/struct.set`. There is no additional runtime or generic iterator. Optimization follows type, effect, ownership, and opaque checking.
 
-実行例は [examples/high-level.wlt](../examples/high-level.wlt)。`wlt run examples/high-level.wlt` は `42` を返す。検証は `just test-high-level`。
+See [examples/high-level.walz](../examples/high-level.walz) for an executable example. `walz run examples/high-level.walz` returns `42`. Run `just test-high-level` to verify it.
 
-## `%for-each`
+## `@for-each`
 
 ```wat
-(%for-each $item $items
+(@for-each $item $items
   (call $visit $item))
 
-(%for-each ($key $amount) $entries
+(@for-each ($key $amount) $entries
   (call $add $key $amount))
 
-(%for-each {:category $key :amount $amount} $rows
+(@for-each {:category $key :amount $amount} $rows
   (call $add $key $amount))
 ```
 
-形式は `(%for-each pattern list-expression unit-body)`。リスト式と長さを一度だけ評価し、添字0から順番に各要素を一度ずつ読む。空なら本体を評価しない。本体・全体の型は unit。要素型はリストの型から決める。要素は共有可能な非unit値とし、所有値・borrow を含む要素は受け付けない。
+The form is `(@for-each pattern list-expression unit-body)`. The list expression and its length are evaluated only once, then each element is read once in index order starting at 0. An empty list does not evaluate the body. Both the body and the entire expression have type unit. The element type comes from the list type. Elements must be shareable, non-unit values; elements containing owned values or borrows are rejected.
 
-pattern は `$name`、既存の tuple の `($first $second)`、後述の構造体フィールド pattern。tuple の unit payload は既存の分解規約どおり束縛を持たない。各反復で新しいローカル ID に束縛し、外側の同名ローカルを隠せる。リスト式の評価中にはその新しい束縛は見えない。
+A pattern is `$name`, an existing tuple pattern `($first $second)`, or the struct-field pattern described below. Tuple unit payloads create no bindings under the existing destructuring rules. Each iteration binds fresh local IDs and can shadow same-named outer locals. The new bindings are not visible while evaluating the list expression.
 
-本体は通常の effect・所有権検査を受ける。空のリストに対しても本体の型や effect を検査する。反復ごとに作って消費する所有値は使えるが、外側の所有値を反復ごとに消費することはできない。
+The body undergoes ordinary effect and ownership checking, even for an empty list. Owned values created and consumed within each iteration are allowed; consuming an outer owned value on each iteration is not.
 
-内部の添字・長さ・ループラベルはソースから参照できない。専用の `break/continue` やラベル引数は設けない。全体からの早期脱出は外側の `block` と標準の `br`、または `return` を使う。例外や脱出が起きれば以後の要素を評価しない。内部ループをまたぐ外側への `%recur` は拒否する。
+Internal index, length, and loop labels cannot be referenced from source. There are no dedicated `break/continue` forms or label arguments. To exit the whole expression early, use an outer `block` and standard `br`, or `return`. Exceptions or exits skip remaining elements. An outward `@recur` crossing the internal loop is rejected.
 
 ```wat
 (block $done (result i32)
-  (%for-each $n $numbers
+  (@for-each $n $numbers
     (if (< $n 0)
       (then (br $done $n))
       (else (nop))))
   0)
 ```
 
-配列・view・stream は直接の対象にしない。配列の可変性や stream の所有権を走査構文へ暗黙に混ぜず、既存の操作で明示する。
+Arrays, views, and streams are not direct targets. Their mutability or ownership is made explicit through existing operations rather than implicitly mixed into traversal syntax.
 
-## 構造体の pattern let
+## Struct Pattern Let
 
 ```wat
-(%let {:category $key :amount $amount} $row
+(@let {:category $key :amount $amount} $row
   (call $add $key $amount))
 ```
 
-形式は `(%let {:field $binding ...} struct-expression body)`。対象は型が確定した non-null の共有構造体参照。対象式を一度だけ評価し、指定したフィールドを記述順に一度ずつ読んでから本体を評価する。必要なフィールドだけ選べる。フィールドの重複、束縛名の重複、未知のフィールド、非識別子の束縛はエラー。空の pattern は受け付けない。
+The form is `(@let {:field $binding ...} struct-expression body)`. The target must be a shareable, non-null struct reference of a known type. The target expression is evaluated once; selected fields are read once each in written order before evaluating the body. Only needed fields must be selected. Duplicate fields, duplicate binding names, unknown fields, and non-identifier bindings are errors. Empty patterns are rejected.
 
-束縛の型はフィールドの型そのもの。型注釈・入れ子の pattern・デフォルト値は追加しない。この形式は単一の `%let` で使い、複数初期化のグループには混在させない。グループの内側にこの `%let` を置ける。
+Each binding has exactly its field's type. There are no type annotations, nested patterns, or defaults. This form is a single `@let` and cannot be mixed into a multiple-initializer group; it can appear inside such a group.
 
-可変フィールドも読み取った時点の値を束縛する。その後に元のフィールドへ代入してもローカルの値は変わらない。GC参照の場合は参照先を共有し、オブジェクトを複製しない。可変フィールドの読み取りは `reads`、不変フィールドは既存の `struct.get` と同じ effect を持つ。opaque 型の内部フィールドは宣言元以外で分解できない。
+Mutable fields also bind the value observed at the time of the read. Later assignment to the original field does not change the local value. GC references share their referents without cloning objects. Mutable-field reads have `reads`; immutable fields have the same effect as existing `struct.get`. Opaque type internals cannot be destructured outside their declaring file.
 
-## `%struct.update`
+## `@struct.update`
 
 ```wat
-(%struct.update $State $state
+(@struct.update $State $state
   ($accepted $old (+ $old 1)))
 ```
 
-形式は `(%struct.update $Type object-expression ($field $old new-value))`。一つの式で一つのフィールドを更新し、unit を返す。フィールドは `struct.set` と同様に名前または添字で指定できる。型オペランドは `(%inst $Type T...)` も使える。
+The form is `(@struct.update $Type object-expression ($field $old new-value))`. It updates one field in one expression and returns unit. As with `struct.set`, a field can be named or indexed. The type operand also accepts `(@inst $Type T...)`.
 
-評価順序は次のとおり。
+Evaluation proceeds as follows:
 
-1. 対象式を一度だけ評価する。
-2. そのフィールドを一度読み、`$old` に束縛する。null ならここで trap し、更新式には進まない。
-3. 更新式を一度評価する。`$old` はこの式の中だけで見える。
-4. 得られた値を同じ対象・同じフィールドへ一度書く。
+1. Evaluate the target expression once.
+2. Read that field once and bind it to `$old`. A null target traps here, before the update expression.
+3. Evaluate the update expression once. `$old` is visible only inside this expression.
+4. Write the resulting value once to the same field of the same target.
 
-対象は共有構造体、フィールドは可変で共有可能な非unit型とする。更新式にはそのフィールド型を期待する。暗黙の型変換・move・部分moveは行わない。不変フィールドや外部の opaque 型への更新は拒否する。通常の `reads writes` を持ち、更新式・対象式の追加 effect も検査する。
+The target is a shareable struct; the field must be mutable, shareable, and non-unit. The update expression expects the field type. There are no implicit conversions, moves, or partial moves. Immutable fields and external opaque types are rejected. The operation has ordinary `reads writes` effects, and additional effects of the target/update expressions are checked too.
 
-更新式には通常の関数呼び出し・例外・中断を使える。旧値は更新式に入る前に確定する。同じフィールドを更新式内で別途変更しても、正常終了すれば最後の書き込みで上書きする。例外・`return`・外側への `br` で更新式が終わった場合、最後の書き込みは行わず、それまでの副作用は残る。原子的な更新・排他・ロールバックは提供しない。共有線形メモリの競合には [atomic cells](atomic-cells.md) を使う。
+The update expression can use ordinary calls, exceptions, and suspension. The old value is fixed before entering it. If it separately changes the same field, normal completion overwrites that change with the final write. If the update expression ends through an exception, `return`, or outward `br`, there is no final write, and earlier side effects remain. Atomic update, exclusion, and rollback are not provided. Use [atomic cells](atomic-cells.md) for shared linear-memory races.
 
-Core、Core＋JSPI、Component は同じ検査済みIRを使う。中断中のローカル保持、例外時の中止、ABI一時メモリの解放は Node / Chromium の両バックエンド検査で確認する。糖衣の意味保存を新たにLeanで証明したものではなく、既存の所有契約の検査をそのまま使う。
+Core, Core+JSPI, and Component use the same checked IR. Both backends are tested on Node/Chromium for retention of locals during suspension, abort on exceptions, and release of ABI temporary memory. No new Lean proof of sugar semantics preservation is provided; the existing ownership-contract checks apply unchanged.

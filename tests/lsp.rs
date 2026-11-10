@@ -10,15 +10,15 @@ fn position(s: &str, needle: &str) -> Value {
 #[test]
 fn unsaved_modules_share_checked_snapshots_and_utf16_definitions() {
     let dir = tempfile::tempdir().unwrap();
-    let root = dir.path().join("main.wlt");
-    let dependency = dir.path().join("part.wlt");
+    let root = dir.path().join("main.walz");
+    let dependency = dir.path().join("part.walz");
     std::fs::write(&root, "(module)").unwrap();
     std::fs::write(&dependency, "(module)").unwrap();
-    let root_uri = wlt::lsp::file_uri(&root).unwrap();
-    let dep_uri = wlt::lsp::file_uri(&dependency).unwrap();
-    let mut s = wlt::lsp::Session::new(Default::default());
-    s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":dep_uri,"version":1,"text":"(module (func $answer (result i32) 42) (%export (func $answer)))"}}}));
-    let text = "(module (%use \"./part.wlt\" (func $answer)) (func $main (result i32) (; 🦀 ;)\n (%let $x (type i32) 1 (; 🦀 ;) (+ $x (call $answer)))))";
+    let root_uri = walz::lsp::file_uri(&root).unwrap();
+    let dep_uri = walz::lsp::file_uri(&dependency).unwrap();
+    let mut s = walz::lsp::Session::new(Default::default());
+    s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":dep_uri,"version":1,"text":"(module (func $answer (result i32) 42) (@export (func $answer)))"}}}));
+    let text = "(module (@use \"./part.walz\" (func $answer)) (func $main (result i32) (; 🦀 ;)\n (@let $x (type i32) 1 (; 🦀 ;) (+ $x (call $answer)))))";
     let out=s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":root_uri,"version":1,"text":text}}}));
     assert!(
         out.iter()
@@ -60,7 +60,7 @@ fn unsaved_modules_share_checked_snapshots_and_utf16_definitions() {
 }
 #[test]
 fn stdio_framing_shutdown_and_cancellation_are_protocol_only() {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("lsp")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -123,7 +123,7 @@ fn stdio_framing_shutdown_and_cancellation_are_protocol_only() {
 
 #[test]
 fn utf16_positions_round_trip_and_reject_half_surrogates() {
-    use wlt::lsp::{Position, byte_offset};
+    use walz::lsp::{Position, byte_offset};
     let s = "a🦀日本\r\nx";
     assert_eq!(
         byte_offset(
@@ -189,10 +189,10 @@ fn utf16_positions_round_trip_and_reject_half_surrogates() {
 #[test]
 fn incremental_changes_use_utf16_and_invalidate_importers() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("new 日本.wlt");
-    let uri = wlt::lsp::file_uri(&file).unwrap();
+    let file = dir.path().join("new 日本.walz");
+    let uri = walz::lsp::file_uri(&file).unwrap();
     assert!(uri.contains("%20"));
-    let mut session = wlt::lsp::Session::new(Default::default());
+    let mut session = walz::lsp::Session::new(Default::default());
     let text = "(module (func $f (result i32) (; 🦀 ;) (i64.const 1)))";
     session.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":text}}}));
     let start = position(text, "i64");
@@ -206,13 +206,13 @@ fn incremental_changes_use_utf16_and_invalidate_importers() {
 #[test]
 fn erroneous_current_revisions_keep_declarations_navigation_and_completion() {
     let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("main.wlt");
-    let part = dir.path().join("part.wlt");
-    let uri = wlt::lsp::file_uri(&path).unwrap();
-    let dep = wlt::lsp::file_uri(&part).unwrap();
-    let mut s = wlt::lsp::Session::new(Default::default());
-    s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":dep,"version":1,"text":"(module (%export (func $sum)) (func $sum (param $n i32) (result i32) $n))"}}}));
-    let text = "(module (%use \"./part.wlt\" (func $sum))\n(func $main (result i32) (; 😀 ;) (%let $stable (type i32) 41 (%let $answer (call $sum (i64.const 1)) (+ $stable $answer)))))";
+    let path = dir.path().join("main.walz");
+    let part = dir.path().join("part.walz");
+    let uri = walz::lsp::file_uri(&path).unwrap();
+    let dep = walz::lsp::file_uri(&part).unwrap();
+    let mut s = walz::lsp::Session::new(Default::default());
+    s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":dep,"version":1,"text":"(module (@export (func $sum)) (func $sum (param $n i32) (result i32) $n))"}}}));
+    let text = "(module (@use \"./part.walz\" (func $sum))\n(func $main (result i32) (; 😀 ;) (@let $stable (type i32) 41 (@let $answer (call $sum (i64.const 1)) (+ $stable $answer)))))";
     let out=s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":text}}}));
     assert!(
         out.iter().any(|v| v["params"]["uri"] == uri
@@ -251,11 +251,11 @@ fn erroneous_current_revisions_keep_declarations_navigation_and_completion() {
 #[test]
 fn recovery_uses_current_positions_and_lexical_shadowing_without_old_types() {
     let dir = tempfile::tempdir().unwrap();
-    let uri = wlt::lsp::file_uri(&dir.path().join("main.wlt")).unwrap();
-    let mut s = wlt::lsp::Session::new(Default::default());
+    let uri = walz::lsp::file_uri(&dir.path().join("main.walz")).unwrap();
+    let mut s = walz::lsp::Session::new(Default::default());
     for (version, prefix) in [(1, ""), (2, "\n\n(; 😀 ;)\n")] {
         let text = format!(
-            "{prefix}(module (func $bad (result i32) $missing) (func $f (result i32) (%let $x (type i32) 1 (block (result i32) (drop (%let $x (type i64) 2 $x)) $x))))"
+            "{prefix}(module (func $bad (result i32) $missing) (func $f (result i32) (@let $x (type i32) 1 (block (result i32) (drop (@let $x (type i64) 2 $x)) $x))))"
         );
         if version == 1 {
             s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":version,"text":text}}}));
@@ -287,10 +287,10 @@ fn recovery_uses_current_positions_and_lexical_shadowing_without_old_types() {
 #[test]
 fn incomplete_edits_keep_current_declarations_and_offer_core_imports() {
     let dir = tempfile::tempdir().unwrap();
-    let uri = wlt::lsp::file_uri(&dir.path().join("main.wlt")).unwrap();
-    let mut s = wlt::lsp::Session::new(Default::default());
-    let text = "(module (%use \"wlt:core\" (func $json.)) (func $f (param $x i32) (result i32) $x";
-    assert!(wlt::check(text).is_err());
+    let uri = walz::lsp::file_uri(&dir.path().join("main.walz")).unwrap();
+    let mut s = walz::lsp::Session::new(Default::default());
+    let text = "(module (@use \"walz:core\" (func $json.)) (func $f (param $x i32) (result i32) $x";
+    assert!(walz::check(text).is_err());
     let notifications=s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":text}}}));
     assert!(
         notifications
@@ -320,9 +320,9 @@ fn incomplete_edits_keep_current_declarations_and_offer_core_imports() {
 #[test]
 fn declaration_recovery_keeps_wat_type_function_and_local_names_separate() {
     let dir = tempfile::tempdir().unwrap();
-    let uri = wlt::lsp::file_uri(&dir.path().join("main.wlt")).unwrap();
+    let uri = walz::lsp::file_uri(&dir.path().join("main.walz")).unwrap();
     let text = "(module (type $Same (struct (field i32))) (func $Same (result i32) 1) (func $bad (result i32) $missing) (func $run (param $Same i32) (result i32) (block (result i32) (drop (struct.new $Same 1)) (call $Same))))";
-    let mut s = wlt::lsp::Session::new(Default::default());
+    let mut s = walz::lsp::Session::new(Default::default());
     s.handle(json!({"method":"textDocument/didOpen","params":{"textDocument":{"uri":uri,"version":1,"text":text}}}));
     for (needle, target) in [
         ("$Same 1)", "$Same (struct"),

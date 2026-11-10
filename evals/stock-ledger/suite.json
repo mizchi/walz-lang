@@ -1,6 +1,6 @@
 {
   "id": "stock-ledger",
-  "version": 16,
+  "version": 19,
   "apiReference": "docs/stdlib-api.md",
   "apiMembers": [
     "$string.parse-u64",
@@ -16,14 +16,14 @@
     "$json.parse"
   ],
   "cheatsheet": "CHEATSHEET.md",
-  "main": "examples/apps/stock-ledger/main.wlt",
-  "counted": "examples/apps/stock-ledger/main-counted.wlt",
+  "main": "examples/apps/stock-ledger/main.walz",
+  "counted": "examples/apps/stock-ledger/main-counted.walz",
   "support": [
-    "examples/apps/stock-ledger/program.wlt",
-    "examples/apps/stock-ledger/parse.wlt",
-    "examples/apps/stock-ledger/stock.wlt",
-    "examples/apps/stock-ledger/report.wlt",
-    "stdlib"
+    "examples/apps/stock-ledger/program.walz",
+    "examples/apps/stock-ledger/parse.walz",
+    "examples/apps/stock-ledger/stock.walz",
+    "examples/apps/stock-ledger/report.walz",
+    "walz/core"
   ],
   "axes": [
     "flow",
@@ -48,5 +48,8 @@
     "standard",
     "api",
     "counter"
-  ]
+  ],
+  "referenceLanguage": "en",
+  "language": "walz",
+  "extensionPrefix": "@"
 }

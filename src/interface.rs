@@ -24,7 +24,7 @@ pub enum AbiType {
 pub(crate) fn apply(source: &str, module: &mut Module, nodes: &[&Sexp]) -> Result<(), Error> {
     for node in nodes {
         let error = || {
-            Error::at(source, node.span, "invalid %abi.type declaration").with_code("E_ABI_TYPE")
+            Error::at(source, node.span, "invalid @abi.type declaration").with_code("E_ABI_TYPE")
         };
         let p = node.list().ok_or_else(error)?;
         if p.len() != 3 {

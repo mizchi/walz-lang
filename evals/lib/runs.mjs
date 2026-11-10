@@ -49,7 +49,11 @@ export async function implementationFingerprint(root = projectRoot) {
   for (const name of [
     "src",
     "runtime",
-    "stdlib",
+    "walz/core",
+    "templates/app",
+    ".agents/skills/walz",
+    "CHEATSHEET.md",
+    "CHEATSHEET.ja.md",
     "Cargo.toml",
     "Cargo.lock",
     "package.json",
@@ -70,7 +74,7 @@ export async function implementationFingerprint(root = projectRoot) {
       else throw e;
     }
     for (const file of paths)
-      if (/\.(rs|mjs|md|json|yaml|wlt)$|Cargo\.(toml|lock)$/.test(file))
+      if (/\.(rs|mjs|md|json|yaml|walz)$|Cargo\.(toml|lock)$/.test(file))
         hashes[relative(root, file)] = sha256(await readFile(file));
   }
   return { sha256: sha256(JSON.stringify(hashes)), files: hashes };
@@ -131,7 +135,7 @@ export async function prepareRun(
           if (!section) throw new Error("missing API documentation for " + name);
           return section.split(/\n## /)[0].trimEnd();
         }).join("\n\n");
-        await writeFile(join(directory, role, "api.md"), document.slice(0, document.indexOf("## 基本型")) + excerpt + "\n");
+        await writeFile(join(directory, role, "api.md"), document.slice(0, document.search(/^## (?:Built-in types|基本型)\s*$/m)) + excerpt + "\n");
       }
       await copyFile(
         join(root, suite.cheatsheet),
@@ -139,24 +143,24 @@ export async function prepareRun(
       );
       await copyFile(
         join(root, suite.main),
-        join(directory, role, "main.wlt"),
+        join(directory, role, "main.walz"),
       );
       await copyFile(
         join(evalRoot, "stock-ledger/contract.md"),
         join(directory, role, "contract.md"),
       );
       await writeFile(
-        join(directory, role, "program.wlt"),
-        '(module (%include "../support/examples/apps/stock-ledger/program.wlt"))\n',
+        join(directory, role, "program.walz"),
+        '(module (@include "../support/examples/apps/stock-ledger/program.walz"))\n',
       );
     }
     await copyFile(
       join(root, suite.counted),
-      join(directory, "reader/counted.wlt"),
+      join(directory, "reader/counted.walz"),
     );
     await copyFile(
       join(root, suite.main),
-      join(directory, "writer/candidate.wlt"),
+      join(directory, "writer/candidate.walz"),
     );
     await copyFile(
       join(evalRoot, "stock-ledger/rubric.md"),
@@ -168,15 +172,15 @@ export async function prepareRun(
     );
     await save(join(directory, "metrics.json"), {
       main: metrics(
-        await readFile(join(directory, "reader/main.wlt"), "utf8"),
+        await readFile(join(directory, "reader/main.walz"), "utf8"),
       ),
       counted: metrics(
-        await readFile(join(directory, "reader/counted.wlt"), "utf8"),
+        await readFile(join(directory, "reader/counted.walz"), "utf8"),
       ),
     });
     const values = {
       READER_OUTPUT: join(directory, "reader.json"),
-      CANDIDATE: join(directory, "writer/candidate.wlt"),
+      CANDIDATE: join(directory, "writer/candidate.walz"),
       WRITER_OUTPUT: join(directory, "writer/report.json"),
       PROJECT_ROOT: root,
       CHECK_COMMAND: command([
@@ -186,7 +190,7 @@ export async function prepareRun(
         "--quiet",
         "--",
         "check",
-        join(directory, "writer/candidate.wlt"),
+        join(directory, "writer/candidate.walz"),
       ]),
       REVIEW_COMMAND: command([
         "node",
@@ -233,21 +237,21 @@ export async function prepareRun(
         "reader/cheatsheet.md",
         "reader/contract.md",
         "reader/rubric.md",
-        "reader/main.wlt",
-        "reader/counted.wlt",
+        "reader/main.walz",
+        "reader/counted.walz",
         ...(suite.apiReference ? ["reader/api.md"] : []),
       ],
       writer: [
         "writer/task.md",
         "writer/cheatsheet.md",
         "writer/contract.md",
-        "writer/main.wlt",
-        "writer/candidate.wlt",
+        "writer/main.walz",
+        "writer/candidate.walz",
         ...(suite.apiReference ? ["writer/api.md"] : []),
       ],
     };
     await save(join(directory, "manifest.json"), {
-      schema: "wlt-eval-v1",
+      schema: "walz-eval-v1",
       id,
       suite,
       preparedAt: new Date().toISOString(),
@@ -263,7 +267,7 @@ export async function prepareRun(
     const hashes = {};
     for (const file of await files(directory)) {
       const name = relative(directory, file);
-      if (name !== "writer/candidate.wlt")
+      if (name !== "writer/candidate.walz")
         hashes[name] = sha256(await readFile(file));
     }
     await save(join(directory, "inputs.json"), hashes);
@@ -397,9 +401,9 @@ export async function scoreRun(directory) {
       execution.node === process.version &&
       execution.inputsFingerprint === inputsFingerprint &&
       execution.candidateSha256 ===
-        sha256(await readFile(join(directory, "writer/candidate.wlt"))) &&
+        sha256(await readFile(join(directory, "writer/candidate.walz"))) &&
       execution.sampleSha256 ===
-        sha256(await readFile(join(directory, "reader/counted.wlt")))
+        sha256(await readFile(join(directory, "reader/counted.walz")))
     );
     const executionPassed = !!(
       currentExecution &&
@@ -427,7 +431,7 @@ export async function scoreRun(directory) {
       executionPassed &&
       writerPassed;
     result = {
-      schema: "wlt-eval-summary-v1",
+      schema: "walz-eval-summary-v1",
       id: manifest.id,
       status: incomplete ? "incomplete" : passed ? "pass" : "fail",
       passed,
@@ -456,7 +460,7 @@ export async function scoreRun(directory) {
     };
   } catch (e) {
     result = {
-      schema: "wlt-eval-summary-v1",
+      schema: "walz-eval-summary-v1",
       status: "invalid",
       passed: false,
       error: e.message,

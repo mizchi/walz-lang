@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const exec = promisify(rawExec),
   cli = fileURLToPath(new URL("run.mjs", import.meta.url));
 test("CLI works outside project, reports incomplete as exit 2, and rejects missing/unknown options", async () => {
-  const parent = await mkdtemp(join(tmpdir(), "wlt-eval-cli-"));
+  const parent = await mkdtemp(join(tmpdir(), "walz-eval-cli-"));
   try {
     const directory = join(parent, "run");
     const out = await exec(

@@ -1,0 +1,4 @@
+(module
+  (@use "./model.walz" (func $main $sample) (func $summarize $aggregate))
+  (export "main" (func $sample))
+  (export "summarize" (func $aggregate)))

@@ -1,5 +1,5 @@
 // Native compute samples and unprofiled end-to-end JSPI measurements are
-// separate: benchmark.wlt shares the parser/stats, but has no I/O adapters.
+// separate: benchmark.walz shares the parser/stats, but has no I/O adapters.
 import { execFile as rawExec } from "node:child_process";
 import { promisify } from "node:util";
 import {
@@ -34,11 +34,11 @@ if (
 )
   throw new Error("rows must be 1..1000000 and rounds 1..1000");
 const source = "examples/apps/log-stats";
-await build(join(source, "main.wlt"), output);
-for (const directory of [source, "stdlib"]) {
+await build(join(source, "main.walz"), output);
+for (const directory of [source, "walz/core"]) {
   await mkdir(join(output, "source", directory), { recursive: true });
   for (const name of await readdir(directory))
-    if (name.endsWith(".wlt"))
+    if (name.endsWith(".walz"))
       await copyFile(
         join(directory, name),
         join(output, "source", directory, name),
@@ -50,7 +50,7 @@ await exec("cargo", [
   "--quiet",
   "--",
   "build",
-  join(source, "benchmark.wlt"),
+  join(source, "benchmark.walz"),
   join(output, "compute.wasm"),
 ]);
 const corpus = [

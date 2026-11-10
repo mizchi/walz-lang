@@ -6,13 +6,13 @@ import {join} from 'node:path';
 import {prepare,verify} from './struct-literals/run.mjs';
 
 test('struct literal evaluation freezes counterbalanced packets and rejects tampering',async()=>{
-  const root=await mkdtemp(join(tmpdir(),'wlt-struct-eval-'));
+  const root=await mkdtemp(join(tmpdir(),'walz-struct-eval-'));
   try {
     const run=join(root,'new-parent','run');await prepare(run);
     await assert.rejects(prepare(run),/EEXIST/);
     const manifest=JSON.parse(await readFile(join(run,'manifest.json'),'utf8'));
-    assert.equal(manifest.schema,'wlt-struct-readability-v7');
-    assert.match(await readFile(join(run,'readerA','packet.md'),'utf8'),/\(%\$User::\{/);
+    assert.equal(manifest.schema,'walz-struct-readability-v8');
+    assert.match(await readFile(join(run,'readerA','packet.md'),'utf8'),/\(@\$User::\{/);
     assert.deepEqual(Object.values(manifest.labels.readerA),Object.values(manifest.labels.readerB).reverse());
     const oracle=JSON.parse(await readFile(join(run,'oracle.json'),'utf8'));
     for(const role of ['readerA','readerB']) {

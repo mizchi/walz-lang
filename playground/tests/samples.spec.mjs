@@ -6,7 +6,7 @@ for (const [id, sample] of Object.entries(samples)) {
     await page.goto('./');
     await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
     await page.getByLabel('Example', { exact: true }).selectOption(id);
-    await expect(page.getByLabel('WLT source')).toHaveValue(sample.source);
+    await expect(page.getByLabel('Walz source')).toHaveValue(sample.source);
     await expect(page.getByTestId('sample-description')).toHaveText(sample.description);
     await page.getByRole('button', { name: 'Compile', exact: true }).click();
     const status = page.getByTestId('compile-status');
@@ -35,7 +35,7 @@ for (const [id, sample] of Object.entries(samples)) {
 test('editing an example clears the advertised output until another example is selected', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
-  await page.getByLabel('WLT source').fill('(module)');
+  await page.getByLabel('Walz source').fill('(module)');
   await expect(page.getByTestId('sample-outcome')).toBeEmpty();
   await expect(page.getByText('Custom source', { exact: true })).toBeVisible();
   await page.getByLabel('Example', { exact: true }).selectOption('loop');

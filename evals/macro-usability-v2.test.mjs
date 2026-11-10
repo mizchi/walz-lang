@@ -14,7 +14,7 @@ test('v2 distinguishes wrong execution from an unmet exploratory authoring task'
 test('v2 scaling holds real call counts constant while changing function distribution',()=>{
   for(const count of [1,32,128,256,512])for(const shape of ['single','separate']){
     const source=scalingSource(count,shape);
-    assert.equal((source.match(/\(%\$double /g)??[]).length,count);
+    assert.equal((source.match(/\(@\$double /g)??[]).length,count);
     assert.equal((source.match(/\(func \$/g)??[]).length,shape==='single'?1:count+1);
     assert.equal((source.match(/\(export "main"\)/g)??[]).length,1);
   }

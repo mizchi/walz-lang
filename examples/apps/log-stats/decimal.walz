@@ -1,0 +1,9 @@
+(module
+  (@use "walz:core" (type $string))
+  (@use "../../../walz/core/text.walz" (func $string.u64))
+  (@export (func $text))
+  (func $text
+    (param $n i64)
+    (result $string)
+    (@effect reads writes allocates)
+    (call $string.u64 (local.get $n))))

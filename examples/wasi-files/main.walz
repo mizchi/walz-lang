@@ -1,0 +1,32 @@
+(module
+  (@use "walz:core" (type $stream) (type $future) (type $tuple) (type $option) (type $result) (type $unit) (type $string))
+  (@use "./generated/bindings.walz"
+    (func $files.read-file) (func $files.write-file)
+    (type $wit-u8) (type $files.error-code))
+
+  (func $main (export "main") (result i32) (@effect host suspends)
+    (@match (call $files.read-file (@string.lit "input"))
+      (case pair ($bytes $completion)
+        (@let $total (type i32)
+          (@loop $read (bind $stream (@inst $stream $wit-u8) (@move $bytes))
+                      (bind $sum i32 0) (result i32)
+            (@match (@stream.next $wit-u8 (@move $stream))
+              (case pair ($next $item)
+                (@match $item
+                  (case none () (block (result i32) (@stream.close $wit-u8 (@move $next)) $sum))
+                  (case some ($byte) (@recur $read (@move $next) (+ $sum (@newtype.unwrap $wit-u8 $byte))))))))
+          (@match (@future.await (@inst $result $unit (ref $files.error-code)) (@move $completion))
+            (case ok () $total)
+            (case err ($error) -1))))))
+
+  (func $write (export "write") (result i32) (@effect host suspends)
+    (@match (@future.await (@inst $result $unit (ref $files.error-code))
+      (call $files.write-file (@string.lit "output")
+        (@stream.cons $wit-u8 (@newtype.wrap $wit-u8 65)
+          (@stream.cons $wit-u8 (@newtype.wrap $wit-u8 66) (@stream.empty $wit-u8)))))
+      (case ok () 0)
+      (case err ($error) 1)))
+  (@use "./batch.walz" (func $sum-batch))
+  (func $batch (export "sum-batch") (param $size i32) (result i32) (@effect allocates host suspends)
+    (call $sum-batch $size))
+)

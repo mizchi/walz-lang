@@ -3,16 +3,16 @@ use std::process::Command;
 #[test]
 fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     let dir = tempfile::tempdir().unwrap();
-    let source = dir.path().join("input.wlt");
+    let source = dir.path().join("input.walz");
     let output = dir.path().join("output");
     std::fs::write(
         &source,
-        r#"(module (func $internal (result %string) (%effect pure) (%string.lit "internal"))
+        r#"(module (func $internal (result @string) (@effect pure) (@string.lit "internal"))
           (func $f (export "main") (param $x i64) (result i64)
-          (%effect pure) (local.get $x)))"#,
+          (@effect pure) (local.get $x)))"#,
     )
     .unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let result = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("core-js")
         .arg(&source)
         .arg(&output)
@@ -32,7 +32,7 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
     }
     let manifest: serde_json::Value =
         serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
-    assert_eq!(manifest["abi"], "wlt-core-js-v2");
+    assert_eq!(manifest["abi"], "walz-core-js-v2");
     let bindings = std::fs::read_to_string(output.join("bindings.mjs")).unwrap();
     assert!(bindings.contains("BigInt64"));
     assert!(!bindings.contains("Float64") && !bindings.contains("TextEncoder"));
@@ -42,9 +42,9 @@ fn core_js_builds_valid_modules_and_only_required_boundary_codecs() {
 fn core_js_does_not_overwrite_its_source_with_an_artifact() {
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("core.wasm");
-    let text = "(module (func $f (export \"main\") (%effect pure) (nop)))";
+    let text = "(module (func $f (export \"main\") (@effect pure) (nop)))";
     std::fs::write(&source, text).unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let result = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("core-js")
         .arg(&source)
         .arg(dir.path())
@@ -70,9 +70,9 @@ fn core_js_preserves_trusted_import_and_portable_export_checks() {
         ),
     ] {
         let dir = tempfile::tempdir().unwrap();
-        let input = dir.path().join("input.wlt");
+        let input = dir.path().join("input.walz");
         std::fs::write(&input, source).unwrap();
-        let result = Command::new(env!("CARGO_BIN_EXE_wlt"))
+        let result = Command::new(env!("CARGO_BIN_EXE_walz"))
             .arg("core-js")
             .arg(input)
             .arg(dir.path().join("output"))

@@ -63,10 +63,10 @@ test('invalid capacities and foreign handles fail closed',()=>{
 });
 
 for(const backend of ['core','component'])test(`${backend}: affine writers, backpressure and cancellation free resources`,{timeout:60000},async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'wlt-channels-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-channels-'));
   try {
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('examples/channels/main.wlt',directory,{bindings:'examples/channels/policy.json'});
+    await build('examples/channels/main.walz',directory,{bindings:'examples/channels/policy.json'});
     const {instantiate,TaskCancelledError}=await import(pathToFileURL(join(directory,'index.js')));
     const channels=createChannels(), values=[];
     let completed, allocator, pending;

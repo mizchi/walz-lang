@@ -1,6 +1,8 @@
-# 汎用の非同期Workerホスト
+<a id="汎用の非同期workerホスト"></a>
 
-[WorkerHost](../runtime/workers/host.mjs) はNodeのworker_threadsとブラウザのmodule Workerを同じAPIで扱う。succinct索引、Wasm、特定のデータ形式には依存しない。起動・キュー・配送・取消し・join・終了を担当し、アプリケーション固有の処理はdriverへ分ける。
+# Generic asynchronous Worker host
+
+[WorkerHost](../runtime/workers/host.mjs) provides one API for Node worker_threads and browser module Workers. It does not depend on succinct indexes, Wasm, or particular data formats. It handles startup, queues, delivery, cancellation, join, and shutdown, separating application-specific work into drivers.
 
 ```js
 import { WorkerHost } from './runtime/workers/host.mjs';
@@ -21,7 +23,7 @@ await task.result;
 await task.cancel(); // 完了後なら何もしない
 ```
 
-driverは通常のES moduleとして書く。関数・クロージャを文字列化してWorkerへ送る仕組みは持たない。
+Write drivers as ordinary ES modules. Functions and closures are not stringified and sent to Workers.
 
 ```js
 // my-driver.mjs
@@ -38,47 +40,53 @@ export async function create({ bias }) {
 }
 ```
 
-`create`と`run`は同期関数でもよい。`create`の結果は`run`を必須とし、`dispose`は任意。`run`は`{value, transfer?}`を返す。TypedArrayをコピーせず返す場合は、例えば`{value: output, transfer: [output.buffer]}`を使う。
+`create` and `run` may be synchronous. `create` must return `run`; `dispose` is optional. `run` returns `{value, transfer?}`. To return a TypedArray without copying, use, for example, `{value: output, transfer: [output.buffer]}`.
 
-## APIと配送の規約
+<a id="apiと配送の規約"></a>
 
-| API | 規約 |
+## API and delivery conventions
+
+| API | Contract |
 |---|---|
-| `WorkerHost.create({workers, driver, init, cancellation?})` | 1〜32 Worker。全driverの初期化を待つ。initは一度snapshotし、同じclone可能な値を各Workerへ渡す |
-| `run(payload, {signal?, transfer?})` | 空いているWorkerに1ジョブを割り当て、結果のPromiseを返す。同時に複数回呼べる |
-| `map(payloads, options)` | Worker数を超えるジョブもキューに置く。結果は投入順。待機キューは最大4096ジョブ |
-| `start(payload, options)` | `{result, cancel}`のハンドル。`cancel(reason)`は実行中のジョブの終了確認まで待つ |
-| `join()` | 呼出し時点で投入済みのジョブをすべて待つ。エラー・取消しも終了として待ち合わせる |
-| `close()` / `Symbol.asyncDispose` | 新規投入を止め、待機ジョブを取り消し、実行中ジョブをjoinし、各driverのdisposeとWorker終了を待つ |
+| `WorkerHost.create({workers, driver, init, cancellation?})` | 1–32 Workers; waits for every driver to initialize. Snapshots init once and passes the same cloneable value to each Worker |
+| `run(payload, {signal?, transfer?})` | Assigns one job to an idle Worker and returns a result Promise; supports concurrent calls |
+| `map(payloads, options)` | Queues jobs beyond the Worker count. Results follow submission order; the waiting queue holds at most 4096 jobs |
+| `start(payload, options)` | Returns a `{result, cancel}` handle; `cancel(reason)` waits for running-job completion confirmation |
+| `join()` | Waits for all jobs submitted as of the call, including errors and cancellation as completion |
+| `close()` / `Symbol.asyncDispose` | Stops new submissions, cancels queued jobs, joins running jobs, and waits for each driver's dispose and Worker shutdown |
 
-デフォルトのジョブpayloadは配送時にstructured cloneする。キュー内で待っているpayloadを変更しない。`transfer: payload => [payload.bytes.buffer]`を指定した場合、そのbufferは配送時に移動し、送信元から使えなくなる。共有メモリは内容をコピーせず共有する。Wasm GC参照、Promise、関数は配送する値として扱わない。
+By default, job payloads undergo structured clone at delivery. Do not mutate payloads waiting in the queue. With `transfer: payload => [payload.bytes.buffer]`, the buffer transfers at delivery and becomes unavailable to the sender. Shared memory is shared without copying its contents. Wasm GC references, Promises, and functions are not delivery values.
 
-`start().result`には`Symbol.asyncDispose`も付ける。既存のWLT Future host adapterへこのPromiseを渡す場合、Futureのcloseをジョブの取消しとjoinへ接続できる。FutureそのものをWorker間で送る機能ではない。
+`start().result` also has `Symbol.asyncDispose`. Passing this Promise to the existing Walz Future host adapter connects Future close to job cancellation and join. It does not send Futures themselves between Workers.
 
-driverはtrustedなアプリケーションコード。ホストが任意のJSを検証・隔離するわけではなく、任意の共有データを自動でrace-freeと認定することもない。
+Drivers are trusted application code. The host neither verifies/isolates arbitrary JS nor automatically certifies arbitrary shared data as race-free.
 
-## 取消しと共有メモリの寿命
+<a id="取消しと共有メモリの寿命"></a>
 
-非同期driverにはWorker内の`AbortSignal`を渡す。取消しメッセージで中断を要求し、`run`が終了を返すまで呼出し元のPromiseを確定しない。一つのジョブ・mapグループの取消しは、別のグループを取り消さない。最初の取消し・エラーを理由として保持し、`0`・`false`・空文字・nullの理由も失わない。
+## Cancellation and shared-memory lifetime
 
-CPU処理はWorkerのイベントループを止めるため、メッセージだけでは実行中に取消しを観測できない。任意で次を指定する。
+Async drivers receive a Worker-local `AbortSignal`. Cancellation messages request interruption, and caller Promises remain unsettled until `run` finishes. Cancelling one job/map group does not cancel other groups. The first cancellation/error reason is retained, including `0`, `false`, empty strings, and null.
+
+CPU processing blocks the Worker's event loop, so messages alone cannot expose cancellation while it runs. Optionally specify the following.
 
 ```js
 cancellation: { memory: sharedMemory, byteOffset: 0 }
 ```
 
-この自然アライメントのi32セルをホスト専用の取消しbitmaskにする。Worker IDのbitだけをAtomicsで設定・解除する。JSのCPUループは`context.isCancelled()`、Wasm側は同じbitを定期的に読む。セルは他のホスト／プロトコルと共用しない。汎用ホストは関数の任意位置を強制的に巻き戻さない。
+This naturally aligned i32 cell becomes a host-exclusive cancellation bitmask. Atomics sets/clears only the Worker ID's bit. JS CPU loops use `context.isCancelled()`; Wasm periodically reads the same bit. Do not share the cell with other hosts/protocols. The generic host does not forcibly unwind functions at arbitrary positions.
 
-ホストはinitのsnapshotと制御セルを、すべての実行が終了しdriverのdisposeとWorker終了が確認できるまで保持する。取消し要求、世代番号の変更、Promiseの早期rejectだけで共有領域を再利用しない。終了処理に失敗した場合はcloseをrejectし、leaseを保持して再試行を許す。
+The host retains the init snapshot and control cell until all execution finishes and driver disposal and Worker shutdown are confirmed. Cancellation requests, generation-number changes, and early Promise rejection alone do not permit shared-region reuse. Failed shutdown rejects close, retaining leases and permitting retry.
 
-ブラウザでSharedArrayBuffer／共有Wasm Memoryを使うdriverにはcross-origin isolationが必要。共有メモリを使わない通常のWorkerジョブにも、その条件を一律には要求しない。
+Browser drivers using SharedArrayBuffer/shared Wasm Memory require cross-origin isolation. This requirement is not imposed on ordinary Worker jobs that do not use shared memory.
 
-## WLTとの接続
+<a id="walzとの接続"></a>
 
-[別の非同期WLTプログラム](../tests/component-fixtures/worker-job.wlt)と[driver例](../runtime/testing/worker-wlt-driver.mjs)を用意した。WorkerごとにCore＋JSPIまたはComponentをinstantiateし、Worker内でFutureをawaitする。結果のi64だけをBigIntとして戻す。取消しを既存runtimeの`start(..., {signal})`へ渡し、後片付けの完了まで待つ。
+## Connecting to Walz
 
-`%task.spawn`は同じエージェント内の協調的並行処理のまま。GC環境を別Workerへ暗黙に送る操作には変えない。Workerへ渡すデータは明示したclone／transfer／共有メモリの契約に従う。
+A [separate async Walz program](../tests/component-fixtures/worker-job.walz) and [example driver](../runtime/testing/worker-walz-driver.mjs) are provided. Each Worker instantiates Core＋JSPI or Component and awaits Futures within the Worker. Only the i64 result returns as BigInt. Cancellation is passed to the existing runtime's `start(..., {signal})`, waiting for cleanup to complete.
 
-[succinct driver](../runtime/succinct/driver.mjs)は、この汎用ホストの一つの利用例。索引layout、Wasmのreserve/batch関数、出力の型を知るのはdriverとQueryPool adapterだけで、汎用ホストにはそれらを持ち込まない。
+`@task.spawn` remains cooperative concurrency within the same agent. It does not implicitly send GC environments to another Worker. Worker data follows explicit clone/transfer/shared-memory contracts.
 
-`just test-workers`で、非同期ジョブ、CPU処理の個別取消し、transfer、取消し後の全reader待合せ、終了失敗時の再試行、両WLTバックエンド、Chromiumを検査する。ホストのJS全体を形式証明したものではない。共有索引のデータ競合に関する検証範囲は[読み取り専用領域](readonly-regions.md)を参照。
+The [succinct driver](../runtime/succinct/driver.mjs) is one user of this generic host. Only the driver and QueryPool adapter know the index layout, Wasm reserve/batch functions, and output types; these details stay outside the generic host.
+
+`just test-workers` checks async jobs, per-job cancellation of CPU work, transfer, waiting for all readers after cancellation, retries after shutdown failures, both Walz backends, and Chromium. This is not a formal proof of the entire JS host. See [readonly regions](readonly-regions.md) for the verification scope of shared-index data races.

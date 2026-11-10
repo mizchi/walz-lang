@@ -1,5 +1,5 @@
 // Value-only text capabilities. Providers own their I/O and implement close.
-export const TEXT_IO = "wlt:host/text-io@0.1.0";
+export const TEXT_IO = "walz:host/text-io@0.1.0";
 export const IOError = Object.freeze({
   utf8: 1,
   read: 2,

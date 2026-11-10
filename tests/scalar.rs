@@ -40,9 +40,9 @@ fn standard_numeric_instructions_remain_in_the_typed_core() {
         ),
     ] {
         let source = format!(
-            "(module (func $main (export \"main\") (result {result}) (%effect pure) {expression}))"
+            "(module (func $main (export \"main\") (result {result}) (@effect pure) {expression}))"
         );
-        let compiled = wlt::compile(&source).unwrap();
+        let compiled = walz::compile(&source).unwrap();
         assert!(!compiled.analysis.opaque, "{expression}");
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("scalar.wasm");
@@ -68,18 +68,18 @@ fn standard_numeric_instructions_remain_in_the_typed_core() {
 #[test]
 fn numeric_conversion_types_and_trapping_effects_are_checked() {
     assert!(
-        wlt::check(
-            "(module (func $bad (result f64) (%effect pure) (f64.convert_i64_s (i32.const 1))))"
+        walz::check(
+            "(module (func $bad (result f64) (@effect pure) (f64.convert_i64_s (i32.const 1))))"
         )
         .is_err()
     );
     for (op, trapping) in [("i32.trunc_f64_s", true), ("i32.trunc_sat_f64_s", false)] {
-        let module = wlt::check(&format!(
-            "(module (func $f (param $x f64) (result i32) (%effect pure) ({op} (local.get $x))))"
+        let module = walz::check(&format!(
+            "(module (func $f (param $x f64) (result i32) (@effect pure) ({op} (local.get $x))))"
         ))
         .unwrap();
         assert_eq!(
-            wlt::analysis::analyze(&module).functions[0]
+            walz::analysis::analyze(&module).functions[0]
                 .effects
                 .may_trap,
             trapping

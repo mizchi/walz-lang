@@ -61,7 +61,7 @@ export function adaptJspiGlue(source) {
   ]) {
     const declaration = `function ${kind}Read(`;
     if (!source.includes(declaration)) continue;
-    source = source.replace(declaration, `function wltRaw${kind}Read(`);
+    source = source.replace(declaration, `function walzRaw${kind}Read(`);
     source += `
 `; // Insert inside instantiate, where tables and options live.
     const endClass = kind === "future" ? "FutureEnd" : "StreamEnd";
@@ -70,20 +70,20 @@ export function adaptJspiGlue(source) {
     const wrapper = `function ${kind}Read(ctx,handle,...args){
       // Payload copies can complete on the producer's continuation. Stamp every
       // nested allocation with the waiting reader's scope before lowering it.
-      const owner=options?.wlt?.scope?.(), getReallocFn=ctx.getReallocFn;
+      const owner=options?.walz?.scope?.(), getReallocFn=ctx.getReallocFn;
       if(owner!==undefined && getReallocFn)ctx={...ctx,getReallocFn:()=>{
-        const realloc=getReallocFn();return realloc && ((...args)=>{options.wlt.enter(owner);return realloc(...args);});
+        const realloc=getReallocFn();return realloc && ((...args)=>{options.walz.enter(owner);return realloc(...args);});
       }};
       const end=get${kind[0].toUpperCase() + kind.slice(1)}End({tableIdx:ctx.${table},${handle}:handle});
       const failed=error=>{end.resetPendingBufferMeta();end.setCopyState(${endClass}.CopyState.DONE);throw error;};
-      const run=()=>{try{const value=wltRaw${kind}Read(ctx,handle,...args);return value?.then?Promise.resolve(value).catch(failed):value;}catch(error){return failed(error);}};
-      if(!options?.wlt?.read)return run();
-      return options.wlt.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__wltCancellingRead=true;end.cancel();}},run);
+      const run=()=>{try{const value=walzRaw${kind}Read(ctx,handle,...args);return value?.then?Promise.resolve(value).catch(failed):value;}catch(error){return failed(error);}};
+      if(!options?.walz?.read)return run();
+      return options.walz.read(()=>{if(end.isCopying()&&!end.hasPendingEvent()){end.__walzCancellingRead=true;end.cancel();}},run);
     }
 `;
     source = source.replace(
-      `function wltRaw${kind}Read(`,
-      `${wrapper}function wltRaw${kind}Read(`,
+      `function walzRaw${kind}Read(`,
+      `${wrapper}function walzRaw${kind}Read(`,
     );
   }
   // Attach rejection handling before a synchronous read parks its task.
@@ -101,14 +101,14 @@ ${indent}${tail}`);
     const guard="if (!task) { throw new Error('invalid/missing async task'); }";
     const at=source.indexOf(guard,start);
     if(at<start || at>start+600)throw new Error("jco cleanup patch no longer matches; review pinned transpiler");
-    source=source.slice(0,at)+guard.replace("if (!task)","if (!task && !options?.wlt?.cleaning?.())")+source.slice(at+guard.length);
+    source=source.slice(0,at)+guard.replace("if (!task)","if (!task && !options?.walz?.cleaning?.())")+source.slice(at+guard.length);
   }
   const marker =
     "const reportErr = (err) => console.error('[jco] error while disposing discarded host value', err);";
   if (source.includes(marker))
     source = source.replace(
       marker,
-      `if(options?.wlt?.disposal){options.wlt.disposal(()=>disposeFn.call(value));return;}
+      `if(options?.walz?.disposal){options.walz.disposal(()=>disposeFn.call(value));return;}
 ${marker}`,
     );
   // A cancelled copy has detached its guest buffer. Waiting for iterator.next()
@@ -116,7 +116,7 @@ ${marker}`,
   source = source.replaceAll(
     "if (deferSyncFinish) { await Promise.resolve(); }",
     `if (deferSyncFinish) { await Promise.resolve(); }
-          if(this.__wltCancellingRead && injectedWritePromise){
+          if(this.__walzCancellingRead && injectedWritePromise){
             injectedWritePromise.then(cleanup=>cleanup(),()=>{});
             return finishCopy();
           }`,

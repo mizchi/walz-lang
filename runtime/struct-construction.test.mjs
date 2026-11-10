@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 for(const backend of ['core','component'])test(`${backend}: named structs preserve field order, text, exceptions and suspensions`,async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-struct-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-struct-'));
   try {
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/struct-construction.wlt',dir);
+    await build('tests/component-fixtures/struct-construction.walz',dir);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));
     let arena;
     const {api}=await instantiate({instantiateCore:async(module,imports)=>{

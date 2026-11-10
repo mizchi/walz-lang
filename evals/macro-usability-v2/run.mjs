@@ -10,7 +10,7 @@ import {createRunDirectory} from '../macro-usability/support.mjs';
 import {metrics} from '../lib/source.mjs';
 
 const execFile=promisify(callback),root=fileURLToPath(new URL('../../',import.meta.url));
-const binary=resolve(process.env.WLT??join(root,'target/debug/wlt'));
+const binary=resolve(process.env.WALZ??join(root,'target/debug/walz'));
 const output=await createRunDirectory(join(root,'evals/runs'),process.argv[2]);
 const snapshot=join(output,'snapshot'),work=join(output,'work');
 await mkdir(work,{recursive:true});
@@ -20,8 +20,8 @@ for(const file of ['CHEATSHEET.md','docs/user-macros.md','docs/lsp.md']){
 }
 const {cases,classify,describeSyntax}=await import(pathToFileURL(join(snapshot,'suite/cases.mjs')));
 await mkdir(join(snapshot,'programs'));
-for(const item of cases)await writeFile(join(snapshot,'programs',`${item.name}.wlt`),item.source+'\n',{flag:'wx'});
-await writeFile(join(snapshot,'plan.json'),JSON.stringify(cases.map(({source,...item})=>({...item,file:`programs/${item.name}.wlt`})),null,2)+'\n',{flag:'wx'});
+for(const item of cases)await writeFile(join(snapshot,'programs',`${item.name}.walz`),item.source+'\n',{flag:'wx'});
+await writeFile(join(snapshot,'plan.json'),JSON.stringify(cases.map(({source,...item})=>({...item,file:`programs/${item.name}.walz`})),null,2)+'\n',{flag:'wx'});
 const sha=buffer=>createHash('sha256').update(buffer).digest('hex');
 async function hashes(directory,prefix=''){
   const values={};for(const e of await readdir(directory,{withFileTypes:true})){
@@ -31,9 +31,9 @@ async function hashes(directory,prefix=''){
 }
 const inputs=await hashes(snapshot);await writeFile(join(output,'inputs.json'),JSON.stringify(inputs,null,2)+'\n',{flag:'wx'});
 const implementation={};
-for(const directory of ['src','stdlib','crates/wlt-web/src','runtime'])Object.assign(implementation,await hashes(join(root,directory),directory+'/'));
+for(const directory of ['src','walz/core','crates/walz-web/src','runtime'])Object.assign(implementation,await hashes(join(root,directory),directory+'/'));
 for(const file of ['Cargo.toml','Cargo.lock','build.rs','package.json','pnpm-lock.yaml'])implementation[file]=sha(await readFile(join(root,file)));
-const manifest={schema:'wlt-macro-authoring-v2',createdAt:new Date().toISOString(),perspective:'nonblind implementer authoring evaluation',binary,binarySha256:sha(await readFile(binary)),git:(await execFile('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim(),node:process.version,platform:process.platform,architecture:process.arch,implementation};
+const manifest={schema:'walz-macro-authoring-v2',inputRevision:4,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer authoring evaluation',binary,binarySha256:sha(await readFile(binary)),git:(await execFile('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim(),node:process.version,platform:process.platform,architecture:process.arch,implementation};
 await writeFile(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});
 const commands=[];
 async function command(executable,args,largeOutput){
@@ -49,10 +49,10 @@ async function command(executable,args,largeOutput){
 }
 const results=[];
 for(const item of cases){
-  const source=join(snapshot,'programs',`${item.name}.wlt`),checks=[];
+  const source=join(snapshot,'programs',`${item.name}.walz`),checks=[];
   for(let round=0;round<3;round++){
     const record=await command(binary,['check','--json',source]);
-    try{const parsed=JSON.parse(record.stdout);record.protocolValid=parsed.schema==='wlt-check-v1'&&parsed.ok===(record.code===0);record.diagnostic=parsed.diagnostics?.[0];}
+    try{const parsed=JSON.parse(record.stdout);record.protocolValid=parsed.schema==='walz-check-v1'&&parsed.ok===(record.code===0);record.diagnostic=parsed.diagnostics?.[0];}
     catch{record.protocolValid=false;}
     checks.push(record);
   }
@@ -81,7 +81,7 @@ try{
   assert.deepEqual(await hashes(snapshot),inputs);assert.equal(sha(await readFile(binary)),manifest.binarySha256);
   for(const [p,h]of Object.entries(implementation))assert.equal(sha(await readFile(join(root,p))),h,p);
 }catch(e){unchanged=false;verificationError=e.message;}
-const result={schema:'wlt-macro-authoring-result-v2',passed:unchanged&&results.every(r=>r.passed),unchanged,verificationError,
+const result={schema:'walz-macro-authoring-result-v2',passed:unchanged&&results.every(r=>r.passed),unchanged,verificationError,
   requiredPassed:results.filter(r=>r.required&&r.achieved).length,requiredTotal:results.filter(r=>r.required).length,
   unmet:results.filter(r=>!r.achieved).map(r=>r.name),failures:results.filter(r=>!r.passed).map(r=>r.name),cases:results};
 await writeFile(join(output,'commands.json'),JSON.stringify(commands,null,2)+'\n',{flag:'wx'});

@@ -9,10 +9,10 @@ import {createEventLoop} from './host.mjs';
 import {withTaskScope} from './scopes.mjs';
 
 for(const backend of ['core','component'])test(`${backend}: deadline scopes wait for child disposal and isolate other calls`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-deadlines-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-deadlines-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/deadlines.wlt',dir);await instrument(dir,backend);
+    await build('tests/component-fixtures/deadlines.walz',dir);await instrument(dir,backend);
     const runtime=await import(pathToFileURL(join(dir,'index.js')));
     assert.equal(typeof runtime.withTaskScope,'function');
     let disposed=0,started=0,guest,allocator;

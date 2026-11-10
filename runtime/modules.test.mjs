@@ -8,10 +8,10 @@ import { instrument } from "./testing/memory.mjs";
 
 for (const backend of ["core", "component"])
   test(`${backend}: a selected file export runs without the library's unused clock capability`, async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-module-imports-"));
+    const directory = await mkdtemp(join(tmpdir(), "walz-module-imports-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/module-imports.wlt", directory);
+      await build("tests/component-fixtures/module-imports.walz", directory);
       const manifest = JSON.parse(await readFile(join(directory,
         backend === "core" ? "manifest.json" : "component.wasm.json")));
       assert.deepEqual(manifest.imports, []);

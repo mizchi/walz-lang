@@ -2,7 +2,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 fn cli(directory: &Path, args: &[&str]) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_wlt"))
+    Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(directory)
         .args(args)
         .output()
@@ -20,53 +20,53 @@ fn text(output: &Output) -> String {
 #[test]
 fn declarations_check_types_names_and_keep_generated_functions_private() {
     let source = r#"(module
-      (%use "wlt:core" (type $string))
-      (%bench "unit" (nop))
-      (%bench "number" (param $iteration i32) (result i64)
+      (@use "walz:core" (type $string))
+      (@bench "unit" (nop))
+      (@bench "number" (param $iteration i32) (result i64)
         (i64.extend_i32_u $iteration))
-      (%bench "string" (result $string) (%string.lit "hello"))
-      (%bench "vector" (result v128) (v128.const i32x4 1 2 3 4)))"#;
-    let module = wlt::check(source).unwrap();
+      (@bench "string" (result $string) (@string.lit "hello"))
+      (@bench "vector" (result v128) (v128.const i32x4 1 2 3 4)))"#;
+    let module = walz::check(source).unwrap();
     assert_eq!(module.benches.len(), 4);
     assert!(module.tests.is_empty());
-    let built = wlt::compile(source).unwrap();
+    let built = walz::compile(source).unwrap();
     assert!(built.wat.contains("v128.const"));
     for (source, expected) in [
-        ("(module (%bench \"\" (nop)))", "non-empty benchmark name"),
-        ("(module (%bench $name (nop)))", "benchmark name string"),
+        ("(module (@bench \"\" (nop)))", "non-empty benchmark name"),
+        ("(module (@bench $name (nop)))", "benchmark name string"),
         (
-            "(module (%bench \"same\" (nop)) (%bench \"same\" (nop)))",
+            "(module (@bench \"same\" (nop)) (@bench \"same\" (nop)))",
             "duplicate benchmark name",
         ),
         (
-            "(module (%bench \"bad\" (result i64) (i32.const 1)))",
+            "(module (@bench \"bad\" (result i64) (i32.const 1)))",
             "expected i64",
         ),
-        ("(module (%bench \"bad\" (i32.const 1)))", "expected unit"),
+        ("(module (@bench \"bad\" (i32.const 1)))", "expected unit"),
         (
-            "(module (%bench \"bad\" (param $i i64) (nop)))",
+            "(module (@bench \"bad\" (param $i i64) (nop)))",
             "i32 iteration parameter",
         ),
         (
-            "(module (%bench \"bad\" (param $i i32) (param $j i32) (nop)))",
+            "(module (@bench \"bad\" (param $i i32) (param $j i32) (nop)))",
             "one iteration parameter",
         ),
         (
-            "(module (%bench \"bad\" (nop) (nop)))",
+            "(module (@bench \"bad\" (nop) (nop)))",
             "one benchmark body",
         ),
         (
-            "(module (%bench \"a\" (nop)) (func $f (call $__bench0)))",
+            "(module (@bench \"a\" (nop)) (func $f (call $__bench0)))",
             "unknown function",
         ),
-        ("(module (bench \"a\" (nop)))", "%bench"),
+        ("(module (bench \"a\" (nop)))", "@bench"),
     ] {
-        let error = wlt::check(source).unwrap_err().to_string();
+        let error = walz::check(source).unwrap_err().to_string();
         assert!(error.contains(expected), "{source}: {error}");
     }
-    let error = wlt::check(
-        r#"(module (%use "wlt:core" (type $box))
-          (%bench "owned" (result (%inst $box i64)) (%box.new (i64.const 1))))"#,
+    let error = walz::check(
+        r#"(module (@use "walz:core" (type $box))
+          (@bench "owned" (result (@inst $box i64)) (@box.new (i64.const 1))))"#,
     )
     .unwrap_err()
     .to_string();
@@ -79,22 +79,22 @@ fn discovery_listing_filtering_and_tests_are_separate() {
     let nested = directory.path().join("nested");
     std::fs::create_dir(&nested).unwrap();
     std::fs::write(
-        nested.join("sample_bench.wlt"),
+        nested.join("sample_bench.walz"),
         r#"(module
       (import "host" "read" (func $read (result i32)))
-      (%bench "read one" (result i32) (call $read))
-      (%bench "other" (nop))
-      (%test "separate test" (i32.const 1)))"#,
+      (@bench "read one" (result i32) (call $read))
+      (@bench "other" (nop))
+      (@test "separate test" (i32.const 1)))"#,
     )
     .unwrap();
-    std::fs::write(nested.join("ordinary.wlt"), "invalid").unwrap();
-    std::fs::write(nested.join("ignored.test.wlt"), "(module)").unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    std::fs::write(nested.join("ordinary.walz"), "invalid").unwrap();
+    std::fs::write(nested.join("ignored.test.walz"), "(module)").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(directory.path())
         .args([
             "bench",
             ".",
-            "nested/sample_bench.wlt",
+            "nested/sample_bench.walz",
             "--filter",
             "read",
             "--list",
@@ -124,12 +124,12 @@ fn discovery_listing_filtering_and_tests_are_separate() {
 fn runs_resident_wasm_batches_and_emits_raw_samples_as_json() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("sample_bench.wlt"),
+        directory.path().join("sample_bench.walz"),
         r#"(module
-      (%bench "index" (param $i i32) (result i64) (i64.extend_i32_u $i))
-      (%bench "unit" (nop))
-      (%bench "simd" (result v128) (v128.const i32x4 1 2 3 4))
-      (%bench "gc" (result (ref $Item)) (struct.new $Item (i32.const 42)))
+      (@bench "index" (param $i i32) (result i64) (i64.extend_i32_u $i))
+      (@bench "unit" (nop))
+      (@bench "simd" (result v128) (v128.const i32x4 1 2 3 4))
+      (@bench "gc" (result (ref $Item)) (struct.new $Item (i32.const 42)))
       (type $Item (struct (field i32))))"#,
     )
     .unwrap();
@@ -148,7 +148,7 @@ fn runs_resident_wasm_batches_and_emits_raw_samples_as_json() {
     );
     assert!(output.status.success(), "{}", text(&output));
     let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(report["schema"], "wlt-bench-v1");
+    assert_eq!(report["schema"], "walz-bench-v1");
     let cases = report["benchmarks"].as_array().unwrap();
     assert_eq!(cases.len(), 4);
     for case in cases {
@@ -166,21 +166,21 @@ fn runs_resident_wasm_batches_and_emits_raw_samples_as_json() {
 fn failures_timeouts_and_compile_errors_do_not_hide_peers() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("a_bench.wlt"),
+        directory.path().join("a_bench.walz"),
         r#"(module
-      (%bench "trap" (unreachable))
-      (%bench "infinite" (%loop $forever (%recur $forever)))
-      (%bench "after failure" (nop)))"#,
+      (@bench "trap" (unreachable))
+      (@bench "infinite" (@loop $forever (@recur $forever)))
+      (@bench "after failure" (nop)))"#,
     )
     .unwrap();
     std::fs::write(
-        directory.path().join("b_bench.wlt"),
-        "(module (%bench \"bad type\" (i64.const 1)))",
+        directory.path().join("b_bench.walz"),
+        "(module (@bench \"bad type\" (i64.const 1)))",
     )
     .unwrap();
     std::fs::write(
-        directory.path().join("c_bench.wlt"),
-        "(module (%bench \"after compile error\" (nop)))",
+        directory.path().join("c_bench.walz"),
+        "(module (@bench \"after compile error\" (nop)))",
     )
     .unwrap();
     let output = cli(
@@ -241,9 +241,9 @@ fn empty_selection_and_invalid_options_fail() {
 fn batch_wrapper_counts_iterations_and_retains_only_the_latest_gc_result() {
     let source = r#"(module
       (type $Item (struct (field i32)))
-      (%bench "gc" (param $i i32) (result (ref $Item)) (struct.new $Item $i)))"#;
-    let module = wlt::check(source).unwrap();
-    let wasm = wlt::benchmark::compile(source, &module, 0).unwrap();
+      (@bench "gc" (param $i i32) (result (ref $Item)) (struct.new $Item $i)))"#;
+    let module = walz::check(source).unwrap();
+    let wasm = walz::benchmark::compile(source, &module, 0).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("bench.wasm");
     // A test-only observer checks the index passed to the body on every batch.
@@ -260,21 +260,21 @@ fn batch_wrapper_counts_iterations_and_retains_only_the_latest_gc_result() {
       import { readFile } from 'node:fs/promises';
       const { instance } = await WebAssembly.instantiate(await readFile(process.argv[1]));
       const api = instance.exports;
-      assert.equal(api.__wlt_bench_sink.value, null);
-      api.__wlt_bench_batch(8);
+      assert.equal(api.__walz_bench_sink.value, null);
+      api.__walz_bench_batch(8);
       assert.equal(api.index(), 7);
-      const old = new WeakRef(api.__wlt_bench_sink.value);
-      api.__wlt_bench_batch(3);
+      const old = new WeakRef(api.__walz_bench_sink.value);
+      api.__walz_bench_batch(3);
       assert.equal(api.index(), 2);
-      api.__wlt_bench_batch(0);
+      api.__walz_bench_batch(0);
       assert.equal(api.index(), 2);
       for (let i = 0; i < 30; i++) {
         await new Promise(resolve => setImmediate(resolve));
         globalThis.gc();
       }
       assert.equal(old.deref(), undefined, 'previous result must be collectable');
-      const last = new WeakRef(api.__wlt_bench_sink.value);
-      api.__wlt_bench_sink.value = null;
+      const last = new WeakRef(api.__walz_bench_sink.value);
+      api.__walz_bench_sink.value = null;
       for (let i = 0; i < 30; i++) {
         await new Promise(resolve => setImmediate(resolve));
         globalThis.gc();
@@ -305,27 +305,27 @@ fn wasmprinter_for_test(wasm: &[u8]) -> String {
 fn selection_projects_unrelated_imports_and_supports_static_generic_libraries() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("lib.wlt"),
+        directory.path().join("lib.walz"),
         r#"(module
-      (%export (func $id))
-      (func $id (%type.params $T) (param $value $T) (result $T) $value))"#,
+      (@export (func $id))
+      (func $id (@type.params $T) (param $value $T) (result $T) $value))"#,
     )
     .unwrap();
     std::fs::write(
-        directory.path().join("suite.wlt"),
+        directory.path().join("suite.walz"),
         r#"(module
-      (%use "./lib.wlt" (func $id))
+      (@use "./lib.walz" (func $id))
       (import "host" "read" (func $read (result i32)))
-      (%bench "needs host" (result i32) (call $read))
-      (%bench "closed" (param $i i32) (result i64)
-        (call (%inst $id i64) (i64.extend_i32_u $i))))"#,
+      (@bench "needs host" (result i32) (call $read))
+      (@bench "closed" (param $i i32) (result i64)
+        (call (@inst $id i64) (i64.extend_i32_u $i))))"#,
     )
     .unwrap();
     let output = cli(
         directory.path(),
         &[
             "bench",
-            "suite.wlt",
+            "suite.walz",
             "--filter",
             "closed",
             "--iterations",
@@ -340,7 +340,7 @@ fn selection_projects_unrelated_imports_and_supports_static_generic_libraries() 
     assert!(text(&output).contains("1 measured; 0 failed; 0 errors; 1 filtered out"));
     let output = cli(
         directory.path(),
-        &["bench", "suite.wlt", "--filter", "needs host"],
+        &["bench", "suite.walz", "--filter", "needs host"],
     );
     assert_eq!(output.status.code(), Some(1));
     assert!(
@@ -354,12 +354,12 @@ fn selection_projects_unrelated_imports_and_supports_static_generic_libraries() 
 fn unsupported_suspension_and_missing_runtime_are_reported_without_skipping_checks() {
     let directory = tempfile::tempdir().unwrap();
     std::fs::write(
-        directory.path().join("suite.wlt"),
+        directory.path().join("suite.walz"),
         r#"(module
-      (%bench "await" (drop (%future.await i64 (%future.ready i64 (i64.const 1))))))"#,
+      (@bench "await" (drop (@future.await i64 (@future.ready i64 (i64.const 1))))))"#,
     )
     .unwrap();
-    let output = cli(directory.path(), &["bench", "suite.wlt"]);
+    let output = cli(directory.path(), &["bench", "suite.walz"]);
     assert_eq!(output.status.code(), Some(1));
     assert!(
         text(&output).contains("must be synchronous"),
@@ -367,26 +367,26 @@ fn unsupported_suspension_and_missing_runtime_are_reported_without_skipping_chec
         text(&output)
     );
     std::fs::write(
-        directory.path().join("suite.wlt"),
-        "(module (%bench \"valid\" (nop)))",
+        directory.path().join("suite.walz"),
+        "(module (@bench \"valid\" (nop)))",
     )
     .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
         .current_dir(directory.path())
-        .args(["bench", "suite.wlt"])
+        .args(["bench", "suite.walz"])
         .env("PATH", "")
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(1));
     assert!(text(&output).contains("Node.js 24+"), "{}", text(&output));
     std::fs::write(
-        directory.path().join("suite.wlt"),
-        "(module (%bench \"valid\" (nop)) (%bench \"filtered out\" (i32.const 1)))",
+        directory.path().join("suite.walz"),
+        "(module (@bench \"valid\" (nop)) (@bench \"filtered out\" (i32.const 1)))",
     )
     .unwrap();
     let output = cli(
         directory.path(),
-        &["bench", "suite.wlt", "--filter", "valid", "--list"],
+        &["bench", "suite.walz", "--filter", "valid", "--list"],
     );
     assert_eq!(output.status.code(), Some(1));
     assert!(text(&output).contains("expected unit"), "{}", text(&output));
@@ -395,23 +395,23 @@ fn unsupported_suspension_and_missing_runtime_are_reported_without_skipping_chec
 #[test]
 fn benchmark_generation_avoids_user_names_and_keeps_law_verification() {
     let source = r#"(module
-      (func $user (export "__wlt_bench_0") (nop))
-      (%law "identity" (param $x i32) (= $x $x))
-      (%bench "generated" (nop)))"#;
-    let module = wlt::check(source).unwrap();
-    assert_ne!(module.benches[0].export, "__wlt_bench_0");
-    assert!(wlt::benchmark::compile(source, &module, 0).is_ok());
+      (func $user (export "__walz_bench_0") (nop))
+      (@law "identity" (param $x i32) (= $x $x))
+      (@bench "generated" (nop)))"#;
+    let module = walz::check(source).unwrap();
+    assert_ne!(module.benches[0].export, "__walz_bench_0");
+    assert!(walz::benchmark::compile(source, &module, 0).is_ok());
     let false_law = source.replace("(= $x $x)", "(!= $x $x)");
-    let module = wlt::check(&false_law).unwrap();
-    assert!(wlt::benchmark::compile(&false_law, &module, 0).is_err());
-    let sample = wlt::source::load(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/benchmarks/stdlib_v2_bench.wlt"),
+    let module = walz::check(&false_law).unwrap();
+    assert!(walz::benchmark::compile(&false_law, &module, 0).is_err());
+    let sample = walz::source::load(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/benchmarks/stdlib_v2_bench.walz"),
     )
     .unwrap();
-    let module = wlt::check(sample.text()).unwrap();
+    let module = walz::check(sample.text()).unwrap();
     assert_eq!(module.benches.len(), 4);
     for index in 0..module.benches.len() {
-        wlt::benchmark::compile(sample.text(), &module, index).unwrap();
+        walz::benchmark::compile(sample.text(), &module, index).unwrap();
     }
 }
 
@@ -423,28 +423,31 @@ fn discovery_skips_symlinks_and_explicit_paths_and_separator_still_work() {
     let nested = directory.path().join("nested");
     std::fs::create_dir(&nested).unwrap();
     std::fs::write(
-        nested.join("sample_bench.wlt"),
-        "(module (%bench \"one\" (nop)))",
+        nested.join("sample_bench.walz"),
+        "(module (@bench \"one\" (nop)))",
     )
     .unwrap();
     symlink(directory.path(), nested.join("cycle")).unwrap();
     symlink(
-        nested.join("sample_bench.wlt"),
-        directory.path().join("linked_bench.wlt"),
+        nested.join("sample_bench.walz"),
+        directory.path().join("linked_bench.walz"),
     )
     .unwrap();
     let output = cli(
         directory.path(),
-        &["bench", ".", "linked_bench.wlt", "--list"],
+        &["bench", ".", "linked_bench.walz", "--list"],
     );
     assert!(output.status.success(), "{}", text(&output));
     assert!(text(&output).contains("1 benchmarks; 0 filtered out"));
     std::fs::write(
-        directory.path().join("--sample.wlt"),
-        "(module (%bench \"two\" (nop)))",
+        directory.path().join("--sample.walz"),
+        "(module (@bench \"two\" (nop)))",
     )
     .unwrap();
-    let output = cli(directory.path(), &["bench", "--list", "--", "--sample.wlt"]);
+    let output = cli(
+        directory.path(),
+        &["bench", "--list", "--", "--sample.walz"],
+    );
     assert!(output.status.success(), "{}", text(&output));
     assert!(text(&output).contains("two"));
 }

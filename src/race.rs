@@ -4,7 +4,7 @@
 use crate::{Error, ir::*, sexpr::Sexp};
 use serde::{Deserialize, Serialize};
 
-pub const HOST_CONTRACT: &str = "wlt-atomic-cells-v1";
+pub const HOST_CONTRACT: &str = "walz-atomic-cells-v1";
 pub const KERNEL_SOURCE: &str = include_str!("../proof/AtomicCells.lean");
 
 #[derive(Clone, Debug, Serialize)]
@@ -59,10 +59,10 @@ pub struct Certificate {
 
 pub(crate) fn requested(source: &str) -> bool {
     fn walk(node: &Sexp) -> bool {
-        if node.head().is_some_and(|h| h.starts_with('@')) {
+        if node.head().is_some_and(crate::syntax::annotation) {
             return false;
         }
-        matches!(node.head(), Some("%race-free" | "race-free"))
+        matches!(node.head(), Some("@race-free" | "race-free"))
             || node.list().is_some_and(|v| v.iter().any(walk))
     }
     crate::sexpr::parse(source).is_ok_and(|node| walk(&node))
@@ -79,7 +79,7 @@ pub(crate) fn cell_declaration(
         .ok_or_else(|| err("expected atomic cell declaration"))?;
     if p.len() != 5 {
         return Err(err(
-            "expected (%atomic.cell $name $memory i32/i64 byte-offset)",
+            "expected (@atomic.cell $name $memory i32/i64 byte-offset)",
         ));
     }
     let name = p[1]
@@ -318,7 +318,7 @@ fn certificate_inner(source: &str, module: &Module) -> Result<Option<Certificate
                     continue;
                 }
                 let error = || {
-                    Error::at(source, e.span, "race-free memory access requires a full-width (%atomic.at $cell), without pointer arithmetic or extra offsets").with_code("E_RACE_ACCESS")
+                    Error::at(source, e.span, "race-free memory access requires a full-width (@atomic.at $cell), without pointer arithmetic or extra offsets").with_code("E_RACE_ACCESS")
                 };
                 let id = cell.ok_or_else(error)?;
                 let cell = module.atomic_cells.get(id.0).ok_or_else(error)?;
@@ -366,7 +366,7 @@ pub fn verify_certificate(certificate: &Certificate) -> Result<(), Error> {
         .suffix(".lean")
         .tempfile()
         .map_err(|e| Error::message(e.to_string()))?;
-    write!(kernel, "{KERNEL_SOURCE}\ndef main := WltAtomicCells.run\n")
+    write!(kernel, "{KERNEL_SOURCE}\ndef main := WalzAtomicCells.run\n")
         .map_err(|e| Error::message(e.to_string()))?;
     kernel.flush().map_err(|e| Error::message(e.to_string()))?;
     let output = std::process::Command::new("lean")

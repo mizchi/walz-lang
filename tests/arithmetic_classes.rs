@@ -2,7 +2,8 @@ use std::process::Command;
 
 fn run(source: &str, expected: &str, trap: bool) {
     for optimize in [false, true] {
-        let compiled = wlt::compile_with_options(source, wlt::CompileOptions { optimize }).unwrap();
+        let compiled =
+            walz::compile_with_options(source, walz::CompileOptions { optimize }).unwrap();
         assert!(!compiled.analysis.opaque);
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("main.wasm");
@@ -41,17 +42,17 @@ fn sub_mul_and_div_resolve_to_the_same_wasm_as_native_scalar_operations() {
             ),
         ] {
             let source = format!(
-                "(module (func $main (export \"main\") (result {ty}) (%effect pure) ({symbol} {a} {b})))"
+                "(module (func $main (export \"main\") (result {ty}) (@effect pure) ({symbol} {a} {b})))"
             );
             let explicit = source.replace(
                 &format!("({symbol} {a} {b})"),
                 &format!("({ty}.{suffix} ({ty}.const {a}) ({ty}.const {b}))"),
             );
             for optimize in [false, true] {
-                let options = wlt::CompileOptions { optimize };
+                let options = walz::CompileOptions { optimize };
                 assert_eq!(
-                    wlt::compile_with_options(&source, options).unwrap().wasm,
-                    wlt::compile_with_options(&explicit, options).unwrap().wasm
+                    walz::compile_with_options(&source, options).unwrap().wasm,
+                    walz::compile_with_options(&explicit, options).unwrap().wasm
                 );
             }
             run(&source, expected, false);
@@ -107,14 +108,14 @@ fn arithmetic_keeps_wasm_wrapping_division_rounding_and_traps() {
         );
         let source = format!("(module (func $f (param $x {ty}) (result {ty}) (/ $x 0)))");
         assert!(
-            !wlt::analysis::analyze(&wlt::check(&source).unwrap()).functions[0]
+            !walz::analysis::analyze(&walz::check(&source).unwrap()).functions[0]
                 .effects
                 .may_trap
         );
     }
-    let module = wlt::check("(module (func $f (param $x i32) (result i32) (/ $x 0)))").unwrap();
+    let module = walz::check("(module (func $f (param $x i32) (result i32) (/ $x 0)))").unwrap();
     assert!(
-        wlt::analysis::analyze(&module).functions[0]
+        walz::analysis::analyze(&module).functions[0]
             .effects
             .may_trap
     );
@@ -123,8 +124,8 @@ fn arithmetic_keeps_wasm_wrapping_division_rounding_and_traps() {
 #[test]
 fn arithmetic_constraints_work_in_generic_functions_and_reject_missing_instances() {
     for (class, op) in [("Sub", "-"), ("Mul", "*"), ("Div", "/")] {
-        let source = format!("(module (func $calc (%type.params $T) (%where ({class} $T)) (param $a $T) (param $b $T) (result $T) ({op} $a $b))
-          (func $main (export \"main\") (result i64) (call (%inst $calc i64) 84 2)))");
+        let source = format!("(module (func $calc (@type.params $T) (@where ({class} $T)) (param $a $T) (param $b $T) (result $T) ({op} $a $b))
+          (func $main (export \"main\") (result i64) (call (@inst $calc i64) 84 2)))");
         run(
             &source,
             match op {
@@ -134,22 +135,22 @@ fn arithmetic_constraints_work_in_generic_functions_and_reject_missing_instances
             },
             false,
         );
-        for ty in ["v128", "%string", "(%box i32)", "%unit"] {
+        for ty in ["v128", "@string", "(@box i32)", "@unit"] {
             let source = format!(
-                "(module (func $require (%type.params $T) (%where ({class} $T)) (nop)) (func $unused (call (%inst $require {ty}))))"
+                "(module (func $require (@type.params $T) (@where ({class} $T)) (nop)) (func $unused (call (@inst $require {ty}))))"
             );
             assert_eq!(
-                wlt::check(&source).unwrap_err().diagnostic().code,
+                walz::check(&source).unwrap_err().diagnostic().code,
                 "E_GENERIC_BOUND"
             );
         }
     }
     for source in [
-        "(module (func $f (result i32) (%let $x (* 6 7) $x)))",
+        "(module (func $f (result i32) (@let $x (* 6 7) $x)))",
         "(module (func $f (result i64) (/ (i32.const 84) (i64.const 2))))",
-        "(module (type $N (%newtype i32)) (func $f (param $x $N) (result $N) (* $x $x)))",
+        "(module (type $N (@newtype i32)) (func $f (param $x $N) (result $N) (* $x $x)))",
         "(module (func $f (result i32) (/ 1)))",
     ] {
-        assert!(wlt::compile(source).is_err(), "{source}");
+        assert!(walz::compile(source).is_err(), "{source}");
     }
 }

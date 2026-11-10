@@ -1,0 +1,55 @@
+(module
+  (@use "walz:core" (type $bytes) (type $list))
+  (@use "./build.walz"
+    (func $build-bits $bits)
+    (func $build-wavelet $wavelet)
+    (func $copy-in)
+    (func $copy-out))
+  (@use "./read.walz" (func $query) (func $validate))
+  (type $Results (array (mut i32)))
+  (func $build-bits
+    (export "build-bits")
+    (param $input $bytes)
+    (param $length i32)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (call $copy-out (call $bits $input $length)))
+
+  (func $build-wavelet
+    (export "build-wavelet")
+    (param $input $bytes)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (call $copy-out (call $wavelet $input)))
+
+  (func $query-many
+    (export "query-many")
+    (param $index $bytes)
+    (param $queries (@inst $list i32))
+    (result (@inst $list i32))
+    (@effect reads writes allocates)
+    (block
+      (result (@inst $list i32))
+      (call $copy-in $index)
+      (call $validate (@bytes.len $index))
+      (@let
+        (($length (@list.len i32 $queries))
+         ($count (i32.shr_u $length 2))
+         ($out (array.new $Results 0 $count)))
+        (block
+          (result (@inst $list i32))
+          (if (!= (i32.and $length 3) 0) (then (unreachable)) (else (nop)))
+          (@for $queries
+            (bind $i i32 0)
+            (while (< $i $count))
+            (step (+ $i 1))
+            (@let $p (* $i 4)
+              (array.set $Results $out $i
+                (call $query
+                  (@list.get i32 $queries $p)
+                  (@list.get i32 $queries (+ $p 1))
+                  (@list.get i32 $queries (+ $p 2))
+                  (@list.get i32 $queries (+ $p 3))))
+            ))
+          (@list.from-array i32 $Results $out))))
+  ))

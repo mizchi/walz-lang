@@ -1,20 +1,26 @@
-# JSONパーサーのチューニング
+<a id="jsonパーサーのチューニング"></a>
 
-2026-11-06、Apple M5 / Node v24.21.0 / V8 13.6で、[初回の比較](json-parser-bench.md)を基準に変更前後のバイナリを同じプロセスで測定した。
-言語仕様や公開APIは追加していない。数値の原文、重複キーの順序、UTF-8 byte単位のエラー位置、65,536 bytes・128段の制限を維持する。
+# JSON parser tuning
 
-## 採用した変更
+On 2026-11-06, using Apple M5 / Node v24.21.0 / V8 13.6, pre-change and post-change binaries were measured in the same process against the [initial comparison](json-parser-bench.md).
+No language features or public APIs were added. Original numeric text, duplicate-key order, UTF-8 byte error positions, and the 65,536-byte/128-level limits are preserved.
 
-- 空白・数字の走査では長さをループの外で取り、同じbyteを繰り返し読まない。
-- 文字列の通常部分は8byteずつ走査する。ブロック全体の範囲を確認してから読み、最初の引用符・バックスラッシュ・制御文字で止まる。末尾は1byteずつ処理する。
-- エスケープがない文字列はbuilderを作らず、一度のsliceで返す。builderは最初のエスケープが現れた場合だけ作る。
-- bytesのsliceは、新しいGC配列への`array.copy`に展開する。範囲検査とUTF-8検査は維持する。
+<a id="採用した変更"></a>
 
-## 変更前後の結果
+## Adopted changes
 
-入力がGC上にある解析本体の中央値。単位はµs/文書。
+- Whitespace and digit scans obtain the length outside the loop and avoid rereading the same byte.
+- Ordinary string segments are scanned eight bytes at a time. The whole block's bounds are checked before reading, and scanning stops at the first quote, backslash, or control character. The tail is handled one byte at a time.
+- Strings without escapes return a single slice without creating a builder. A builder is created only when the first escape appears.
+- bytes slices expand to `array.copy` into a new GC array. Bounds and UTF-8 checks are retained.
 
-| 入力 | 変更前 | 変更後 | 速度比 |
+<a id="変更前後の結果"></a>
+
+## Before and after
+
+Medians for the parser body with inputs resident in GC, in µs/document.
+
+| Input | Before | After | Speed ratio |
 |---|---:|---:|---:|
 | small-object | 0.37 | 0.25 | 1.49x |
 | records-128 | 53.44 | 33.48 | 1.60x |
@@ -26,37 +32,41 @@
 | nested-64 | 1.26 | 1.03 | 1.21x |
 | whitespace | 54.74 | 26.92 | 2.03x |
 
-40KBレコードの入出力ABI込みの解析＋再シリアライズは、Core＋JSPIが520.10→420.74µs、Componentが545.44→448.25µsだった。
-解析本体の1.58倍に対して、API全体は約1.22–1.24倍の改善となる。数値配列とUnicode escapeには大きな変化がない。
-resident Wasmは12,220→13,174 bytes。初回比較の時間とは別の実行であり、この表は同じプロセスで再測定した変更前を使う。
+Parsing and reserializing 40 KB records including input/output ABI costs changed from 520.10→420.74 µs for Core＋JSPI and 545.44→448.25 µs for Component.
+The full API improves by about 1.22–1.24x, compared with 1.58x for the parser body. Numeric arrays and Unicode escapes show little change.
+Resident Wasm grew from 12,220→13,174 bytes. This run is separate from the initial comparison; the table uses a pre-change version remeasured in the same process.
 
-[9回比較の全標本・入力hash・サイズ](../benchmarks/json-parser/20261106-r7-tuning/report.json)、[全APIの表](../benchmarks/json-parser/20261106-r7-tuning/report.md)、[試行ごとのソースと結果](../benchmarks/json-parser/20261106-r7-tuning/)を保存した。
+Saved artifacts include [all samples, input hashes, and sizes from nine comparisons](../benchmarks/json-parser/20261106-r7-tuning/report.json), [tables for every API](../benchmarks/json-parser/20261106-r7-tuning/report.md), and [sources and results for each trial](../benchmarks/json-parser/20261106-r7-tuning/).
 
-## 試して採用しなかった変更
+<a id="試して採用しなかった変更"></a>
 
-構築専用の32要素chunkへ値を溜め、最後にimmutableなJSONノードを一度だけ作る方式も試した。
-スカラー版との5回比較では、数値配列は約135→112µs、幅の広いobjectは約87→77µsに短縮した。
-一方、40KBのレコード配列は約141→166µsになった。小さな配列やobjectの追加バッファが負担になるため、この方式は採用していない。
-公開済みノードを破壊的に反転する方式も、問い合わせ関数へ`reads` effectを持ち込むので採用していない。`get` / `at`をpureな関数から呼べることを回帰検査する。
+## Changes tried but not adopted
 
-SIMDについては、GC bytesから16byteをレジスタへ詰め、`i8x16.eq`・`i8x16.lt_u`・`i8x16.bitmask`で分類する方式を試した。
-スカラー版の48KB ASCII文字列は約30→24µsになったが、短いキーの多い40KBレコードは約140→167µsに遅くなった。
-先頭8byteをスカラーで調べてからSIMDへ進む版でも、レコードは約141→154µsだった。最終版はSIMDを使わない。
+A version accumulated values in construction-only 32-element chunks and created immutable JSON nodes only once at the end.
+In five comparisons against the scalar version, numeric arrays dropped from about 135→112 µs and wide objects from about 87→77 µs.
+However, 40 KB record arrays rose from about 141→166 µs. The additional buffers for small arrays and objects made this approach too costly, so it was not adopted.
+Destructively reversing already published nodes was also rejected because it would introduce a `reads` effect into query functions. Regression checks ensure `get` / `at` remain callable from pure functions.
 
-[simdjsonの設計](https://github.com/simdjson/simdjson/blob/master/HACKING.md)では、最初の走査で構造位置を索引化し、その後に値を構築する。
-今回の実験は文字列のブロック分類だけであり、この二段階パーサー全体の実装ではない。
-現状のGC byte配列には線形メモリの`v128.load`を直接使えず、16回の読み出しとlane挿入の費用が残る。
-今後SIMD化する場合は、入力の格納・転送方法と合わせて検討する。
+For SIMD, a version packed 16 bytes from GC bytes into a register and classified them with `i8x16.eq`, `i8x16.lt_u`, and `i8x16.bitmask`.
+A 48 KB ASCII string improved from about 30→24 µs over the scalar version, but 40 KB records with many short keys slowed from about 140→167 µs.
+A version checking the first eight bytes with scalar operations before SIMD still took about 141→154 µs on records. The final version does not use SIMD.
 
-## 測定方法
+The [simdjson design](https://github.com/simdjson/simdjson/blob/master/HACKING.md) indexes structural positions in an initial scan and constructs values afterward.
+This experiment only classifies string blocks; it does not implement that entire two-stage parser.
+Current GC byte arrays cannot directly use linear-memory `v128.load`, leaving the cost of 16 reads and lane insertions.
+Future SIMD work should consider input storage and transfer together.
 
-変更前の`20261106-r2`と変更後の`20261106-r7-unroll`を固定し、入力とベンチマーク用WLTのSHA-256が同じことを検査した。
-入力の準備・コンパイル・instantiate・出力照合を測定から除外し、3バッチのwarmup後、順番を回転して9回測る。
-明示的GCは各バッチの前だけに行い、バッチ内の自動GCは時間に含める。
-実際のGC ASTを返すresident解析と、Core＋JSPI / Componentの解析状態・再シリアライズ・入力長の対照を分けて測る。
-全バッチ後にASTの再シリアライズhash、正規化した文字列の完全一致、ABIバッファの未解放数0を検査する。
+<a id="測定方法"></a>
 
-過去のcaptureと結果は書き換えない。試行ごとのバイナリと全ソースは`target/json-parser-bench/`の`20261106-r3-scalar`、`20261106-r4-chunks`、`20261106-r5-simd`、`20261106-r6-simd-prefix`、`20261106-r7-unroll`に保存した。
+## Measurement method
+
+The pre-change `20261106-r2` and post-change `20261106-r7-unroll` were fixed, and the inputs and benchmark Walz were checked for identical SHA-256 hashes.
+Input preparation, compilation, instantiation, and output verification are excluded. After three warmup batches, nine measurements rotate execution order.
+Explicit GC occurs only before each batch; automatic GC within the batch is timed.
+Resident parsing returning the actual GC AST is measured separately from Core＋JSPI / Component parsing status, reserialization, and input-length controls.
+After all batches, checks verify AST reserialization hashes, exact equality of normalized strings, and zero outstanding ABI buffers.
+
+Past captures and results are not rewritten. Per-trial binaries and all sources are saved under `target/json-parser-bench/` in `20261106-r3-scalar`, `20261106-r4-chunks`, `20261106-r5-simd`, `20261106-r6-simd-prefix`, and `20261106-r7-unroll`.
 
 ```sh
 just test-json
@@ -66,10 +76,12 @@ just json-bench-compare target/json-parser-bench/20261106-r2 \
   target/json-parser-bench/new-tuning target/json-parser-bench/new-comparison 9
 ```
 
-比較用の実装も結果と一緒に保存する。保存した`compare.mjs`を`node --expose-gc`で実行すれば、同じ比較を別の新しい出力ディレクトリへ再実行できる。
+The comparison implementation is saved alongside the results. Run the saved `compare.mjs` with `node --expose-gc` to repeat the same comparison in another new output directory.
 
-## 検査
+<a id="検査"></a>
 
-`just check`、Rust 327テスト、GC有効のNode 83テスト、Chromium 48テストが通過した。
-短い文字列から48KBまでの通常文字列、8/16byte境界の全位置、Unicodeとescape、切れた入力・制御文字のエラー位置、bytes sliceの全小区間と範囲外を検査する。
-元のJSON値を保持したまま`prepend` / `set`した結果と両方を観測し、不変性と重複キーの順序も確認する。
+## Checks
+
+`just check`, 327 Rust tests, 83 Node tests with GC enabled, and 48 Chromium tests passed.
+Checks cover ordinary strings from short inputs to 48 KB, every position at 8/16-byte boundaries, Unicode and escapes, error positions for truncated input/control characters, and all small bytes-slice subranges and out-of-bounds cases.
+They observe both original JSON values and the results of `prepend` / `set`, verifying immutability and duplicate-key order too.

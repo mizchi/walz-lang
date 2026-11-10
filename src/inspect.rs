@@ -15,7 +15,7 @@ pub fn esm(loaded: &Source, policy: &BindingPolicy) -> Result<serde_json::Value,
     fn locate(node: &Sexp, loaded: &Source, exports: &mut serde_json::Value) {
         // A template's export-shaped data is not a declaration in this source.
         // Only the checked expansion may introduce a real public binding.
-        if node.head() == Some("%macro") {
+        if node.head() == Some("@macro") {
             return;
         }
         if let Some(items) = node.list() {
@@ -85,12 +85,12 @@ impl Surface<'_> {
         fn walk<'a>(n: &'a Sexp, source: &str, out: &mut Surface<'a>) {
             let Some(p) = n.list() else { return };
             match n.head() {
-                Some("func" | "%closure") => out.functions.push(n),
-                Some("param" | "%capture" | "bind") if p.len() >= 3 => {
+                Some("func" | "@closure") => out.functions.push(n),
+                Some("param" | "@capture" | "bind") if p.len() >= 3 => {
                     out.annotation(source, &p[1], &p[2])
                 }
-                Some("%let") if p.len() == 5 => out.annotation(source, &p[1], &p[2]),
-                Some("%let") if p.len() == 3 => {
+                Some("@let") if p.len() == 5 => out.annotation(source, &p[1], &p[2]),
+                Some("@let") if p.len() == 3 => {
                     for binding in p[1].list().unwrap_or_default() {
                         if let Some([name, ty, _]) = binding.list() {
                             out.annotation(source, name, ty);
@@ -287,14 +287,14 @@ pub fn type_at(
         )
     }) {
         Ok((_, matches)) => Ok(TypeQuery {
-            schema: "wlt-type-at-v1",
+            schema: "walz-type-at-v1",
             mode: "typed",
             matches,
         }),
         Err(_) => {
             crate::compile_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
             Ok(TypeQuery {
-                schema: "wlt-type-at-v1",
+                schema: "walz-type-at-v1",
                 mode: "wat",
                 matches: vec![],
             })
@@ -416,7 +416,7 @@ impl Snapshot {
     pub fn query(&self, path: &Path, line: usize, column: usize) -> Result<TypeQuery, Error> {
         let offsets = self.source.offsets(Some(path), line, column)?;
         Ok(TypeQuery {
-            schema: "wlt-type-at-v1",
+            schema: "walz-type-at-v1",
             mode: if self.error.is_some() {
                 "syntax"
             } else if self.checked.is_some() {

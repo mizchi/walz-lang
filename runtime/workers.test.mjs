@@ -71,15 +71,15 @@ test('retaining completed task handles does not retain a closed Worker host',
     await completed.task.cancel();
   });
 
-for(const backend of ['core','component'])test(`${backend}: general Workers run WLT JSPI futures and join their cancellation`,async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-worker-'));
+for(const backend of ['core','component'])test(`${backend}: general Workers run Walz JSPI futures and join their cancellation`,async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'walz-worker-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/worker-job.wlt',dir);
-    const pool=await WorkerHost.create({workers:2,driver:new URL('./testing/worker-wlt-driver.mjs',import.meta.url),init:{url:pathToFileURL(join(dir,'index.js')).href}});
+    await build('tests/component-fixtures/worker-job.walz',dir);
+    const pool=await WorkerHost.create({workers:2,driver:new URL('./testing/worker-walz-driver.mjs',import.meta.url),init:{url:pathToFileURL(join(dir,'index.js')).href}});
     try{
       assert.deepEqual(await pool.map([{value:20n},{value:21n}]),[40n,42n]);
-      const abort=new AbortController(),reason=new Error('cancel only this WLT job');
+      const abort=new AbortController(),reason=new Error('cancel only this Walz job');
       const pending=pool.run({value:1n,ms:10000},{signal:abort.signal});
       const sibling=pool.run({value:21n,ms:1});abort.abort(reason);
       await assert.rejects(pending,e=>e===reason);assert.equal(await sibling,42n);

@@ -1,5 +1,0 @@
-(module
-  (%use "./math.wlt" (func $answer))
-
-  (func $main (export "main") (result i32) (%effect pure)
-    (call $answer)))

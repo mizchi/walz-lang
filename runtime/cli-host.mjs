@@ -20,7 +20,7 @@ export async function openHost(config,{signal,args=[]}={}) {
       host=typeof module.default==='function'?await module.default({args,signal}):module.default;
       if(!host||typeof host!=='object')throw new Error('host module must export options or a host factory as default');
     }
-    const options={...host,imports:{...host?.imports,'wlt:host/cli@0.1.0':{arguments:()=>args}}};
+    const options={...host,imports:{...host?.imports,'walz:host/cli@0.1.0':{arguments:()=>args}}};
     if(Object.keys(config.readFiles??{}).length||Object.keys(config.writeFiles??{}).length){
       files=createNodeFileSystem({readFiles:config.readFiles,writeFiles:config.writeFiles});
       options.imports[FILESYSTEM]=files;

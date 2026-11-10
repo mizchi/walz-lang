@@ -8,10 +8,10 @@ import {instrument} from './testing/memory.mjs';
 
 for (const backend of ['core', 'component']) {
   test(`${backend}: high-level forms preserve order, snapshots, exceptions and ABI cleanup`, {timeout:60000}, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-high-level-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-high-level-'));
     try {
       const {build} = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/high-level.wlt', directory);
+      await build('tests/component-fixtures/high-level.walz', directory);
       await instrument(directory, backend);
       const {instantiate} = await import(pathToFileURL(join(directory, 'index.js')));
       let memory;
@@ -44,10 +44,10 @@ for (const backend of ['core', 'component']) {
     } finally { await rm(directory, {recursive:true, force:true}); }
   });
   test(`${backend}: loop and old field locals survive suspension; null and rejection stop evaluation`, {timeout:60000}, async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'wlt-high-level-async-'));
+    const directory = await mkdtemp(join(tmpdir(), 'walz-high-level-async-'));
     try {
       const {build} = await import(backend === 'core' ? './build-core.mjs' : './build.mjs');
-      await build('tests/component-fixtures/high-level-async.wlt', directory);
+      await build('tests/component-fixtures/high-level-async.walz', directory);
       await instrument(directory, backend);
       const {instantiate} = await import(pathToFileURL(join(directory, 'index.js')));
       const calls = [];

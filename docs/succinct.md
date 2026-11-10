@@ -1,8 +1,10 @@
-# 簡潔索引とWorkerバッチ
+<a id="簡潔索引とworkerバッチ"></a>
 
-rank/select付き不変BitVectorと、u8値域のWavelet MatrixをWLTで実装した。基礎となる索引は512bitごとのu32 prefix。単独rankはスカラー、Wavelet内部のrankはv128のpopcount・pairwise加算を使う。selectはprefixのupper_boundで対象blockを選び、最大16wordを走査する。空blockの重複prefixと、末尾paddingを数えないselect0を扱う。
+# Succinct indexes and Worker batches
 
-実装は[examples/succinct](../examples/succinct)。構築・検証・問い合わせはWLT、Workerの管理は[汎用WorkerHost](worker-host.md)、索引固有の接続は小さな[driver](../runtime/succinct/driver.mjs)に分けた。標準の配列やJSON ASTを全面置換するAPIではなく、繰り返す範囲統計の実験用ライブラリとして提供する。
+Walz implementations of immutable BitVectors with rank/select and a Wavelet Matrix over u8 values. The base index is a u32 prefix every 512 bits. Standalone rank uses scalar operations; rank within Wavelet uses v128 popcount and pairwise addition. select chooses a block with upper_bound over prefixes, then scans at most 16 words. It handles duplicate prefixes for empty blocks and select0 excluding tail padding.
+
+The implementation is in [examples/succinct](../examples/succinct). Construction, validation, and queries are in Walz; Worker management uses the [generic WorkerHost](worker-host.md); index-specific integration lives in a small [driver](../runtime/succinct/driver.mjs). This is an experimental library for repeated range statistics, rather than an API replacing standard arrays or JSON ASTs wholesale.
 
 ```sh
 just succinct-build target/succinct/library
@@ -10,7 +12,7 @@ just succinct-build target/succinct/library
 just succinct-build target/succinct/component component
 ```
 
-生成物のsdk・workers・serial・reader.wasmを一緒に配布する。開発時にはnative Leanが必要だが、生成物の実行にコンパイラやLeanは不要。
+Distribute generated sdk, workers, serial, and reader.wasm together. Development requires native Lean; running generated artifacts requires neither the compiler nor Lean.
 
 ```js
 import { instantiate, queries } from './target/succinct/library/sdk/index.mjs';
@@ -28,29 +30,31 @@ const quantile = await index.queryMany(
 ); // Int32Array [3]
 ```
 
-BitVectorは`buildBits(bytes, logicalBitLength)`で作る。各byteの下位bitから位置を数え、末尾の未使用bitは0にする。`queries.rank1(ends)`は半開区間[0,end)の1の個数、`queries.select1(ranks)` / `select0(ranks)`は0-originの位置を返す。selectの欠落、空区間や範囲外kのquantileは-1。rankの範囲外、逆順の区間、不正な値域はエラー。Waveletの値域は0〜255、rangeFreqの上限には256を使える。
+Construct a BitVector with `buildBits(bytes, logicalBitLength)`. Positions count from each byte's low bit, and unused trailing bits must be 0. `queries.rank1(ends)` counts ones in half-open [0,end); `queries.select1(ranks)` / `select0(ranks)` return zero-based positions. Missing select results and quantiles for empty ranges or out-of-range k return -1. Out-of-range rank, reversed intervals, and invalid value ranges are errors. Wavelet values range from 0 to 255; rangeFreq's upper bound can be 256.
 
-元データは構築時にコピーする。`snapshot()`も独立したコピーで、変更しても索引に反映されない。共有するのは索引本体・prefix・zero count等の補助表。GC参照は共有しない。問い合わせはWorkerの私有メモリに渡し、結果も私有bufferからtransferで返す。複数のqueryManyも汎用ホストのキューで扱う。各queryMany内の結果順を保ち、AbortSignalで一つのバッチだけを取り消せる。
+Original data is copied during construction. `snapshot()` is also an independent copy; modifying it does not affect the index. Shared data consists of the index itself and auxiliary tables such as prefixes and zero counts. GC references are not shared. Queries go to Worker-private memory, and results return by transfer from private buffers. Multiple queryMany calls also use the generic host's queue. Result order within each queryMany is preserved, and AbortSignal can cancel just one batch.
 
-初回のprepareでWorker数を決める。同じindexではその数を使い続ける。バッチ上限は524,288問い合わせ。初版の共有memoryは16MiB固定で、`byteLength`はそのcapacityではなく索引が使う論理サイズ。private出力メモリは問い合わせ数に応じてgrowする。小さい索引のcapacity削減は今後の調整点。
+The first prepare fixes the Worker count for that index. The batch limit is 524,288 queries. Initial shared memory is fixed at 16 MiB; `byteLength` reports the index's logical size rather than capacity. Private output memory grows with query count. Reducing capacity for small indexes remains future tuning.
 
-公開前に一度初期化し、以後は[readonly領域の契約](readonly-regions.md)に従う。close・取消しでは読取り完了の確認を待ち、共有領域を早期に再利用しない。静的なBuilderの部分moveや汎用borrow checkerは追加していない。
+Initialization occurs once before publication, after which the [readonly-region contract](readonly-regions.md) applies. close and cancellation wait for reads to complete, avoiding premature reuse of shared regions. No static Builder partial moves or generic borrow checker are added.
 
-## 検査と再計測
+<a id="検査と再計測"></a>
 
-`just test-succinct`で、展開した配列から求める独立oracle、同じ索引方式のJS、両単体バックエンド、1/2/4 Worker、Chromium、取消しと終了失敗、領域guard・Lean証明書を検査する。空、全0/全1、疎な列、32/512bit境界、選択の欠落、頻度・分位点を含む。
+## Checks and remeasurement
+
+`just test-succinct` checks an independent oracle over expanded arrays, JS with the same indexing scheme, both standalone backends, 1/2/4 Workers, Chromium, cancellation and shutdown failures, region guards, and Lean certificates. Cases include empty inputs, all-zero/all-one data, sparse sequences, 32/512-bit boundaries, missing selects, frequencies, and quantiles.
 
 ```sh
 just bench-succinct new-run-id ../jsimd
 node --expose-gc runtime/succinct/compare.mjs before-id after-id new-comparison-id
 ```
 
-計測は新しいIDだけを受け付ける。WLTソース、実際のjsimd公開APIとWasm、生成物、入力、compiler hash、Node/V8/CPUと9標本を保存する。同じ索引を持つJSを対照とし、jsimdの線形selectと索引selectのアルゴリズム差を、WLT固有の倍率として扱わない。
+Measurements accept only new IDs. They save Walz sources, actual jsimd public APIs and Wasm, artifacts, inputs, compiler hashes, Node/V8/CPU, and nine samples. JS using the same index serves as a control; algorithmic differences between jsimd's linear select and indexed select are not presented as Walz-specific speedups.
 
-[初回スカラー](../benchmarks/succinct/20261108-r1-scalar/report.md)、[SIMD試行](../benchmarks/succinct/20261108-r2-simd/report.md)、[同一プロセスの交互比較](../benchmarks/succinct/20261108-r3-comparison/report.md)、[汎用ホスト版](../benchmarks/succinct/20261108-r4-general-host/report.md)を別々に保存した。
+The [initial scalar version](../benchmarks/succinct/20261108-r1-scalar/report.md), [SIMD trial](../benchmarks/succinct/20261108-r2-simd/report.md), [same-process alternating comparison](../benchmarks/succinct/20261108-r3-comparison/report.md), and [generic-host version](../benchmarks/succinct/20261108-r4-general-host/report.md) are saved separately.
 
-交互比較では、SIMDはrangeFreqを約1.30倍、quantileを約1.06倍にした一方、単独rankは約9%遅くなった。このため単独rankにはスカラーを残した。汎用ホスト版の262,144要素・32,768件では、quantileは同方式JS 11.10ms、jsimd 6.16ms、WLT local 6.14ms、WLT 4 Worker 1.69ms。rangeFreqはJS 18.90ms、jsimd 13.49ms、WLT local 11.11ms、4 Worker 2.92msだった。
+In the alternating comparison, SIMD improved rangeFreq by about 1.30x and quantile by about 1.06x, but made standalone rank about 9% slower, so standalone rank retains scalar operations. For 262,144 elements and 32,768 queries in the generic-host version, quantile took 11.10 ms for same-scheme JS, 6.16 ms for jsimd, 6.14 ms for Walz local, and 1.69 ms for Walz with four Workers. rangeFreq took 18.90 ms for JS, 13.49 ms for jsimd, 11.11 ms for Walz local, and 2.92 ms for four Workers.
 
-これらは構築・起動を除き、問い合わせコピー・結果取得とWorker通信を含むバッチ中央値。小さい単発rankではJSが速い。Worker準備はこの実行で十数〜数十msあり、常駐させて複数バッチに償却する必要がある。build/prepare/初回queryは別に記録し、損益分岐バッチ数はその一回のsetup値と定常中央値からの概算である。完全なcold-start分布やp95を測った値ではない。
+These are batch medians excluding construction/startup but including query copies, result retrieval, and Worker communication. JS is faster for small standalone rank queries. Worker preparation took roughly ten to several tens of milliseconds in this run and must be amortized over multiple batches with resident Workers. build/prepare/first query are recorded separately; break-even batch counts are estimates from that one setup measurement and steady-state medians. They are not full cold-start distributions or measured p95 values.
 
-測定条件はApple M5・Node 24.21.0/V8 13.6、jsimd `2cf51e8`。u8全値域のWaveletは約1.063 bytes/valueであり、Uint8Arrayより小さいという主張はしない。固定比率の補助表を持つ実装で、数学的なn+o(n)やentropy boundの達成を証明したものでもない。
+Conditions were Apple M5, Node 24.21.0/V8 13.6, and jsimd `2cf51e8`. Wavelet across the full u8 range uses about 1.063 bytes/value; no claim is made that it is smaller than Uint8Array. This implementation uses fixed-ratio auxiliary tables and does not prove mathematical n+o(n) or entropy bounds.

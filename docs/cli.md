@@ -1,174 +1,205 @@
-# CLI のインストールと使い方
+<a id="cli-のインストールと使い方"></a>
 
-最初のプロジェクトを作る手順は[導入](getting-started.md)、構文は[言語ガイド](language-guide.md)、
-対応機能と制限は[機能一覧](features.md)を参照。このページは各コマンドの詳細を扱う。
+# Installing and Using the CLI
 
-Rust 1.99以降の Cargo からインストールする。
+See [Getting started](getting-started.md) to create your first project, the [Language guide](language-guide.md) for syntax,
+and [Feature reference](features.md) for supported features and restrictions. This page describes individual commands.
 
-```sh
-cargo install --git https://github.com/mizchi/wlt-lang --locked --bin wlt
-wlt --version
-```
-
-ローカルのチェックアウトを使う場合は、リポジトリ直下で次を実行する。
+Install with Cargo from Rust 1.99 or later.
 
 ```sh
-cargo install --path . --locked --bin wlt
+cargo install --git https://github.com/mizchi/walz-lang --locked --bin walz
+walz --version
 ```
 
-`wlt` は Cargo のインストール先（通常は `~/.cargo/bin`）に置かれる。このディレクトリを `PATH` に含める。利用時にソースのチェックアウト・Cargo・just・pnpm は必要ない。コアライブラリ、証明カーネルのソース、ベンチ用ドライバはバイナリに埋め込まれる。
+For a local checkout, run the following at the repository root.
 
-| コマンド | 追加で必要なもの |
+```sh
+cargo install --path . --locked --bin walz
+```
+
+`walz` is installed in Cargo's install directory (usually `~/.cargo/bin`). Include it in `PATH`. Using Walz does not require a source checkout, Cargo, just, or pnpm. The core library, proof-kernel source, and benchmark driver are embedded in the binary.
+
+| Command | Additional requirements |
 | --- | --- |
-| `wlt build`、`check`、静的解析 | 通常のコンパイルには不要 |
-| `wlt lsp` | LSP クライアントを持つエディター。[診断・hover・定義移動](lsp.md) |
-| `wlt test`、`run --target core`（既定） | Wasm GC 対応の `wasmtime` が PATH 上に必要 |
-| `wlt run --target core-js` | JSPI 対応の Node.js 24以降 |
-| `wlt bench` | Node.js 24以降が PATH 上に必要 |
-| `verify`、law や `%race-free` を含むビルド | elan 経由の `lean +v4.34.1` が必要 |
+| `walz build`, `check`, static analysis | None for ordinary compilation |
+| `walz lsp` | Editor with an LSP client; [diagnostics, hover, and go-to-definition](lsp.md) |
+| `walz test`, `run --target core` (default) | Wasm-GC-capable `wasmtime` on PATH |
+| `walz run --target core-js` | JSPI-capable Node.js 24 or later |
+| `walz bench` | Node.js 24 or later on PATH |
+| `verify`, builds containing laws or `@race-free` | `lean +v4.34.1` through elan |
 
-`test --list` と `bench --list` は型検査・一覧表示のみで、実行ランタイムは不要。
+`test --list` and `bench --list` only type-check and list declarations; no execution runtime is needed.
 
-リポジトリの [最小プロジェクト](../examples/cli/README.md) なら、`cd examples/cli` の後に `wlt build`・`wlt test`・`wlt bench` をそのまま実行できる。
+For the repository's [Minimal project](../examples/cli/README.md), run `cd examples/cli`, then use `walz build`, `walz test`, and `walz bench` directly.
+
+## new
+
+`walz new <directory>` creates an application in a destination that does not exist. Use `walz new -- <directory>` when the path might otherwise be interpreted as an option. Existing files, directories, and other existing destinations are rejected rather than overwritten.
+
+The command works from the installed binary without downloads and does not initialize Git. It creates:
+
+- `src/main.walz`, the application entry point, and `src/math.walz`, a source library.
+- `tests/math.test.walz` and `app_bench.walz` for tests and benchmarks.
+- English and Japanese `README.md` / `README.ja.md` and `CHEATSHEET.md` / `CHEATSHEET.ja.md`.
+- A local `.agents/skills/walz/` skill with self-contained reference files for coding agents.
+
+For example, create a project with `walz new app`, then run `cd app`, `walz run`, `walz build`, `walz test`, and `walz bench`. Runtime requirements are the same as those listed above.
+
+The library publishes its source API through `@export`; the application entry module selects it through `@use`. Source-library exports are not automatically added to the application's root Wasm ABI. See [Agent skills](agent-skills.md) for the generated local skill and its reference files.
 
 ## build
 
 ```sh
-wlt build
-wlt build examples/closure.wlt
-wlt build examples/closure.wlt -o dist/closure.wasm
-wlt build ./my-project
-wlt build main.wlt output.wasm
-wlt build main.wlt --target core-js -o dist/app
-wlt build main.wlt --target component
-wlt build main.wlt --target component --wit api.wit --world guest
+walz build
+walz build examples/closure.walz
+walz build examples/closure.walz -o dist/closure.wasm
+walz build ./my-project
+walz build main.walz output.wasm
+walz build main.walz --target core-js -o dist/app
+walz build main.walz --target component
+walz build main.walz --target component --wit api.wit --world guest
 ```
 
-引数なしではカレントディレクトリの `main.wlt`、次に `src/main.wlt` を探す。設定ファイルや親ディレクトリの探索は行わない。両方ある場合は `main.wlt` を使う。入力を明示すれば通常の WAT も受け付ける。
+With no arguments, searches the current directory for `main.walz`, then `src/main.walz`. It does not search configuration files or parent directories. If both exist, `main.walz` wins. Explicit inputs also accept ordinary WAT.
 
-既定の出力は `target/<入力の拡張子を除いた名前>.wasm`。たとえば `src/main.wlt` は `target/main.wasm`、`foo.test.wlt` は `target/foo.test.wasm` になる。ディレクトリを入力にすると、その中のエントリーと `target/` を使う。
+Default output is `target/<input name without extension>.wasm`. For example, `src/main.walz` becomes `target/main.wasm`, and `foo.test.walz` becomes `target/foo.test.wasm`. A directory input uses its own entry point and `target/` directory.
 
-`-o` / `--output` で出力先を指定する。相対出力パスはカレントディレクトリが基準で、親ディレクトリも作成する。従来の `wlt build INPUT OUTPUT` も使用できる。型・effect・所有権・必要な証明と Wasm の検査を通してから出力する。ソースと取り込んだファイルへの上書きは、symlink / hard link の別名も含めて拒否する。
+Specify output with `-o` / `--output`. Relative output paths are based on the current directory; parent directories are created too. The existing `walz build INPUT OUTPUT` form remains supported. Output is written only after type, effect, ownership, required proof, and Wasm checks pass. Overwriting source or included files is rejected, including symlink/hard-link aliases.
 
-独自のホスト import policy は `--bindings policy.json` で渡す。`--` 以降はファイルパスとして扱う。
+Pass custom host-import policies with `--bindings policy.json`. Anything after `--` is treated as a file path.
 
-既定の出力は Core Wasm。実行する場合は `wlt run main.wlt`、または次のように Wasmtime へ渡す。
+Default output is Core Wasm. Execute it with `walz run main.walz` or pass it to Wasmtime as follows.
 
 ```sh
 wasmtime run -W gc=y,function-references=y,exceptions=y --invoke main target/main.wasm
 ```
 
-`--target core-js` は `target/<name>-js/` に `index.js`・Wasm・codec・ランタイムを同梱する。ビルド後の実行にチェックアウトや Cargo は不要。`const {instantiate}=await import('./dist/app/index.js')` から呼べる。Node とブラウザの JSPI に対応する。
-`--target component` は `target/<name>.component.wasm` と manifest を生成する。JS への変換は固定版 jco を使う開発タスク `just build-js` を参照。旧 `component` / `core-js` サブコマンドも低水準の生成用に残る。[ランタイム](runtime.md)。
+`--target core-js` bundles `index.js`, Wasm, codecs, and runtime in `target/<name>-js/`. Execution after building needs no checkout or Cargo. Call it through `const {instantiate}=await import('./dist/app/index.js')`. Node/browser JSPI are supported.
+`--target component` generates `target/<name>.component.wasm` and a manifest. For JS conversion, see development task `just build-js` using pinned jco. Old `component` / `core-js` subcommands remain for low-level generation. [Runtime](runtime.md).
 
 ## run
 
 ```sh
-wlt run
-wlt run main.wlt --invoke add -- 40 2
-wlt run main.wlt --target core-js --invoke main -- 40 '"2n"'
-wlt run main.wlt --target core-js --stdio --input input.txt --output output.txt
-wlt run main.wlt --target core-js --bindings generated/bindings.json --host host.mjs
-wlt run main.wlt --exit-code
+walz run
+walz run main.walz --invoke add -- 40 2
+walz run main.walz --target core-js --invoke main -- 40 '"2n"'
+walz run main.walz --target core-js --stdio --input input.txt --output output.txt
+walz run main.walz --target core-js --bindings generated/bindings.json --host host.mjs
+walz run main.walz --exit-code
 ```
 
-エントリーの探索は build と同じ。既定 export は `main`、`--invoke` で選択する。`--` 以降はプログラム引数。core は Wasmtime の数値引数、core-js は export が引数を取る場合に JSON 値として解釈する。BigInt は `"42n"`。引数を取らない export はコマンドライン引数を関数引数として受け取らない。
+Entry discovery matches build. Default export is `main`; select another with `--invoke`. Anything after `--` is a program argument. Core uses Wasmtime numeric arguments; core-js interprets JSON values if the export takes parameters. BigInt uses `"42n"`. Exports without parameters do not receive command-line arguments as function arguments.
 
-core-js では常に `wlt:host/cli@0.1.0.arguments` の `list<string>` として元の文字列引数も参照できる。標準入出力は `--stdio` で明示的に許可する。`--input` / `--output` はそれぞれ標準入力・出力の代わりのファイル。stdio モードは戻り値を stdout に追加しない。
+Core-js always also exposes original string arguments as `list<string>` through `walz:host/cli@0.1.0.arguments`. Explicitly enable standard input/output with `--stdio`. `--input` / `--output` select files instead of stdin/stdout. Stdio mode does not append return values to stdout.
 
-`--host` のモジュールは options オブジェクト、または `({args,signal}) => options` を default export する。`imports` と `eventLoop` に必要なホスト実装を供給する。資源は host の `Symbol.asyncDispose` でも解放できる。通常は値を stdout へ表示し、`result.err` は stderr と終了コード1。`--exit-code` は 0–255 の整数結果を終了コードにする。
+The `--host` module default-exports an options object or `({args,signal}) => options`. Supply required host implementations through `imports` and `eventLoop`. Resources can also be released through host `Symbol.asyncDispose`. Normally, values print to stdout; `result.err` goes to stderr with exit code 1. `--exit-code` uses an integer result in 0–255 as the exit code.
 
-ファイルは `--read-file 名前=ホストパス` / `--write-file 名前=ホストパス` を必要な数だけ指定する。guest が使えるのは指定した名前だけ。ソース・入力への出力上書きはファイルの別名も含めて拒否する。[WASI ファイル adapter](wasi-files.md)。
+Specify files with as many `--read-file name=host-path` / `--write-file name=host-path` options as needed. The guest can use only named files. Overwriting source/input with output is rejected, including file aliases. [WASI file adapters](wasi-files.md).
 
-割り込みでは Node の AbortSignal を介して guest を取り消し、ホストと I/O の解放を待つ。Unix の親プロセスだけに SIGINT / SIGTERM を送った場合も子へ転送し、終了を待って一時成果物を削除する。取消しの終了コードは130。
+Interrupts cancel the guest through Node AbortSignal and wait for host/I/O cleanup. SIGINT / SIGTERM sent only to the Unix parent process are forwarded to the child; termination is awaited before temporary artifacts are deleted. Cancellation exits with code 130.
 
-### 戻り値と実行先の選択
+<a id="戻り値と実行先の選択"></a>
 
-| 用途 | コマンド | stdout |
+### Choosing Return Values and Execution Targets
+
+| Purpose | Command | Stdout |
 | --- | --- | --- |
-| 数値やunitを返すCore Wasm | `wlt run main.wlt` | Wasmtimeの値表示 |
-| string・list・Resultなどの共有値をJSで受け取る | `wlt run main.wlt --target core-js` | JSONでエンコードした値。stringなら引用符も出力 |
-| パイプやファイルへraw textを出す | `wlt run main.wlt --target core-js --stdio` | 明示的なI/O importが書いた内容。戻り値を追加しない |
-| WIT interfaceとしてホストへ組み込む | `wlt build main.wlt --target component --wit api.wit` | Componentを生成。ホストで実行する |
+| Core Wasm returning numeric values or unit | `walz run main.walz` | Wasmtime value display |
+| Receive shared values such as string/list/Result in JS | `walz run main.walz --target core-js` | JSON-encoded values; strings include quotes |
+| Write raw text to pipes/files | `walz run main.walz --target core-js --stdio` | Content written by explicit I/O imports, without appended return values |
+| Embed in a host as a WIT interface | `walz build main.walz --target component --wit api.wit` | Generates a Component to execute in a host |
 
-CoreのGC参照の表示は `<anyref>` 等になり、stringの本文へ自動変換しない。`--stdio` は戻り値をraw textへ変えるオプションではなく、プログラムが要求する標準入出力capabilityを許可する。
-同じファイルの `%test` / `%bench` は通常のJS/Componentビルドの公開ABIから外す。宣言の型・effect・所有権はその場合も検査し、実行と計測は `wlt test` / `wlt bench` で選択する。
+Core displays GC references as `<anyref>` or similar and does not automatically convert them to string contents. `--stdio` grants the standard-I/O capabilities requested by the program; it does not convert return values to raw text.
+`@test` / `@bench` in the same file are excluded from the public ABI of ordinary JS/Component builds. Their types/effects/ownership are still checked; execution and measurement are selected with `walz test` / `walz bench`.
 
-## test と bench
+<a id="test-と-bench"></a>
 
-```sh
-wlt test
-wlt test tests/programs --filter closure
-wlt test --list
-wlt test tests/example.test.wlt --timeout-ms 1000
-
-wlt bench
-wlt bench examples --filter JSON --samples 20
-wlt bench --list
-wlt bench --json --samples 3 --iterations 100 --warmup-ms 0
-```
-
-`test` は既定で `tests/` の `*.test.wlt`、`bench` はカレントディレクトリ以下の `*_bench.wlt` を再帰探索する。ファイルを直接指定した場合は名前を問わない。複数のパスを渡せ、同じファイルは1回だけ対象になる。
-
-再帰探索では `target`・`node_modules`・`.git` と symlink をたどらない。これらのディレクトリやファイルを入力として明示すれば対象にできる。`--` 以降のパスはオプションとして解釈しない。
-
-各テスト・ベンチは独立したプロセスで実行し、失敗・trap・タイムアウト後も他のケースを続行する。0件の場合は失敗する。宣言方法は [テスト](testing.md) と [ベンチマーク](benchmarking.md) を参照。
-
-## help と終了コード
+## test and bench
 
 ```sh
-wlt --help
-wlt build --help
-wlt test --help
-wlt bench --help
-wlt help build
-wlt --version
+walz test
+walz test tests/programs --filter closure
+walz test --list
+walz test tests/example.test.walz --timeout-ms 1000
+
+walz bench
+walz bench examples --filter JSON --samples 20
+walz bench --list
+walz bench --json --samples 3 --iterations 100 --warmup-ms 0
 ```
 
-終了コードは成功が0、ソース・実行環境のエラーやテスト／ベンチの失敗が1、引数の誤りが2。
+By default, `test` recursively discovers `*.test.walz` under `tests/`; `bench` recursively discovers `*_bench.walz` below the current directory. Direct file inputs accept any name. Multiple paths are allowed; each file is included once.
 
-CLI 開発時には `just test-cli`、パッケージからのインストール検査には `just test-install` を使う。後者は一時領域へインストールし、ビルド元を削除して別ディレクトリで3コマンドと失敗時の終了コードを検査する。通常のインストールは `just install` でも実行できる。
+Recursive discovery does not descend into `target`, `node_modules`, `.git`, or symlinks. Explicitly naming these directories/files can include them. Paths after `--` are not interpreted as options.
 
-## マクロ展開と型の確認
+Each test/benchmark runs in its own process; other cases continue after failures, traps, or timeouts. Zero cases is a failure. See [Testing](testing.md) and [Benchmarking](benchmarking.md) for declarations.
+
+<a id="help-と終了コード"></a>
+
+## Help and Exit Codes
 
 ```sh
-wlt check --json examples/user-macros/main.wlt
-wlt macro-expand examples/user-macros/main.wlt
-wlt macro-expand --text examples/user-macros/main.wlt
-wlt expand examples/user-macros/main.wlt
+walz --help
+walz build --help
+walz test --help
+walz bench --help
+walz help build
+walz --version
 ```
 
-`macro-expand` は型検査を通した展開履歴を出し、ゲストを実行しない。既定は `wlt-macro-expansion-v1` のJSONで、宣言・展開元・推論型・入力の利用状況・`checking` の仕事量を含む。`--text` は展開元・推論型・入力の構文出現数を人が読む形式で表示する。`expand` は全拡張を下げた最終WATを出す。
+Exit codes are 0 for success, 1 for source/runtime-environment errors or failed tests/benchmarks, and 2 for invalid arguments.
 
-`single` / `duplicated` / `discarded` は入力構文の出現数の分類で、ループや分岐を含む実行回数ではない。`checking` のカウンタも検査予算の指標であり、CPU時間ではない。構文の使い分けと上限は [ユーザー定義マクロ](user-macros.md)、編集時の型・定義・展開照会は [LSP](lsp.md) を参照。
+Use `just test-cli` for CLI development and `just test-install` for package-install checks. The latter installs into temporary storage, removes the build source, and checks the three commands and failure exit codes from another directory. Ordinary installation is also available through `just install`.
 
-### JS公開ABIの検査
+<a id="マクロ展開と型の確認"></a>
+
+## Inspecting Macro Expansions and Types
 
 ```sh
-wlt esm-metadata main.wlt
-wlt esm-metadata main.wlt --stdin < edited.wlt
+walz check --json examples/user-macros/main.walz
+walz macro-expand examples/user-macros/main.walz
+walz macro-expand --text examples/user-macros/main.walz
+walz expand examples/user-macros/main.walz
 ```
 
-`esm-metadata`はCore＋JSPIの型・契約・公開ABIを検査し、`wlt-esm-metadata-v1`のJSONを返す。
-引数・結果の型、JS名、非同期かどうか、export位置、読み込んだファイルを含む。
-`--stdin`は指定したパスの未保存内容として検査し、相対依存はそのパスから解決する。ソースや生成物を変更しない。
-ホストimportがあれば`--bindings policy.json`を指定する。[Content Mapper](content-mapper.md)もこの入口を使う。
+`macro-expand` outputs type-checked expansion history without executing the guest. Default output is `walz-macro-expansion-v1` JSON containing declarations, expansion origins, inferred types, input usage, and `checking` work counts. `--text` displays origins, inferred types, and syntactic input occurrence counts in human-readable form. `expand` outputs final WAT with all extensions lowered.
 
-## Core＋JSPI のテスト・計測
+`single` / `duplicated` / `discarded` classify syntactic input occurrences, not execution counts including loops/branches. `checking` counters also measure checking-budget work, not CPU time. See [User-defined macros](user-macros.md) for syntax choices and limits and [LSP](lsp.md) for type/definition/expansion queries while editing.
 
-`wlt test --target core-js --bindings policy.json --host host.mjs` と
-`wlt bench --target core-js --bindings policy.json --host host.mjs` で、非同期 import と子タスクを実行できる。
-ケースごとにプロセス・Wasm instance・host factory を作り、正常・失敗・取消し後にホストの解放を待つ。
-`--list` は型チェックだけを行い、host module と Node を起動しない。
-タイムアウト時は協調的な取消しを要求し、最大5秒の解放猶予後も終了しないホストは強制終了して失敗を報告する。
+<a id="js公開abiの検査"></a>
 
-Core＋JSPI のベンチは、各呼出しを順番に await する end-to-end 計測。codec・JSPI・待機時間を含み、結果は ABI 対応の共有値または unit に限定する。
-既定の `core` の Wasm 内バッチ計測とは別の測定条件で、JSON の `options.target` と `summary.runtime` に区別を残す。
+### Checking the Public JS ABI
 
-## 実行期限
+```sh
+walz esm-metadata main.walz
+walz esm-metadata main.walz --stdin < edited.walz
+```
 
-`wlt run --target core-js --timeout-ms 1000` は guest の start からの期限を設定する。
-コンパイル・host factory の初期化はこの期限に含めない。時間切れは終了コード124、
-外部からの取消しは130で、どちらも guest と host の解放を待って終了する。
-同じ instance の別の呼出しや、WLT の子タスクの扱いは [スコープ](scoped-tasks.md) を参照。
-`test` / `bench` の期限はケースの Node 初期化も含み、応答しない provider には5秒の解放猶予後にプロセスを終了する。
+`esm-metadata` checks Core+JSPI types, contracts, and public ABI, returning `walz-esm-metadata-v1` JSON.
+It includes parameter/result types, JS names, async status, export positions, and loaded files.
+`--stdin` checks input as unsaved contents at the given path; relative dependencies resolve from that path. It changes neither source nor generated artifacts.
+For host imports, specify `--bindings policy.json`. [Content Mapper](content-mapper.md) also uses this entry point.
+
+<a id="corejspi-のテスト計測"></a>
+
+## Core+JSPI Tests and Benchmarks
+
+`walz test --target core-js --bindings policy.json --host host.mjs` and
+`walz bench --target core-js --bindings policy.json --host host.mjs` execute asynchronous imports and child tasks.
+Each case gets its own process, Wasm instance, and host factory; host cleanup is awaited after success, failure, or cancellation.
+`--list` only type-checks and starts neither the host module nor Node.
+Timeout requests cooperative cancellation; hosts still running after up to 5 seconds of cleanup grace are forcibly terminated and reported as failures.
+
+Core+JSPI benchmarks measure end-to-end execution, awaiting calls in order. Measurements include codecs, JSPI, and waits; results are restricted to ABI-supported shared values or unit.
+These differ from default `core` Wasm batch measurements; JSON `options.target` and `summary.runtime` retain the distinction.
+
+<a id="実行期限"></a>
+
+## Execution Deadlines
+
+`walz run --target core-js --timeout-ms 1000` sets a deadline starting at guest start.
+Compilation and host-factory initialization are excluded. Timeout exits with 124;
+external cancellation exits with 130. Both await guest/host cleanup before exiting.
+See [Scopes](scoped-tasks.md) for other calls on the same instance and Walz child tasks.
+`test` / `bench` deadlines include case Node initialization; unresponsive providers are terminated after a 5-second cleanup grace period.

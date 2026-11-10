@@ -1,13 +1,13 @@
 export const checks = {
   testing: {
     category: 'Checks and interop', label: 'Tests and benchmarks',
-    description: '%test checks a predicate; %bench declares a measured expression. Compile their bodies here, or use wlt test / wlt bench in the CLI for their dedicated harnesses.',
+    description: '@test checks a predicate; @bench declares a measured expression. Compile their bodies here, or use walz test / walz bench in the CLI for their dedicated harnesses.',
     features: ['tests', 'benchmarks'], expectation: { kind: 'run', output: '42' },
     source: `(module
-  (func $answer (result i32) (%effect pure) (+ 40 2))
-  (%test "answer is 42" (= (call $answer) 42))
-  (%bench "compute the answer" (result i32) (call $answer))
-  (func $main (export "main") (result i32) (%effect pure)
+  (func $answer (result i32) (@effect pure) (+ 40 2))
+  (@test "answer is 42" (= (call $answer) 42))
+  (@bench "compute the answer" (result i32) (call $answer))
+  (func $main (export "main") (result i32) (@effect pure)
     (call $answer)))`,
   },
   'type-error': {
@@ -23,12 +23,12 @@ export const checks = {
     description: 'Intentional error: an owned value cannot be moved twice. Inspect the related location pointing to the first move.',
     features: ['diagnostics', 'ownership'], expectation: { kind: 'diagnostic', code: 'E_OWNERSHIP_MOVED' },
     source: `(module
-  (%use "wlt:core" (type $box))
+  (@use "walz:core" (type $box))
   (func $main (export "main")
-    (%let $ticket (%box.new i64 42)
+    (@let $ticket (@box.new i64 42)
       (block
-        (%box.close (%move $ticket))
-        (%box.close (%move $ticket))))))`,
+        (@box.close (@move $ticket))
+        (@box.close (@move $ticket))))))`,
   },
   'effect-error': {
     category: 'Checks and interop', label: 'Diagnostic: an effect contract',
@@ -36,8 +36,8 @@ export const checks = {
     features: ['diagnostics', 'effects'], expectation: { kind: 'diagnostic', code: 'E_EFFECT_CONTRACT' },
     source: `(module
   (type $Cell (struct (field $value (mut i32))))
-  (func $main (export "main") (%effect pure)
-    (%let $cell (struct.new $Cell 0)
+  (func $main (export "main") (@effect pure)
+    (@let $cell (struct.new $Cell 0)
       (struct.set $Cell $value $cell 42))))`,
   },
   laws: {
@@ -45,9 +45,9 @@ export const checks = {
     description: 'A law quantifies over all inputs, including integer overflow. Browser compilation refuses to skip the external Lean proof step; use the native CLI to verify this program.',
     features: ['laws'], expectation: { kind: 'diagnostic', code: 'E_HOST_UNAVAILABLE' },
     source: `(module
-  (%law "addition is commutative" (param $x i32) (param $y i32)
+  (@law "addition is commutative" (param $x i32) (param $y i32)
     (= (+ $x $y) (+ $y $x)))
-  (func $main (export "main") (result i32) (%effect pure)
+  (func $main (export "main") (result i32) (@effect pure)
     (+ 40 2)))`,
   },
   native: {

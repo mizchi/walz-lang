@@ -42,10 +42,10 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
         let dir = tempfile::tempdir().unwrap();
         std::fs::create_dir(dir.path().join("sub")).unwrap();
         std::fs::write(
-            dir.path().join("leaf.wlt"),
+            dir.path().join("leaf.walz"),
             format!(
                 r#"(module
-          (%export (opaque $State) (func $new) (func $get))
+          (@export (opaque $State) (func $new) (func $get))
           (type $State (struct (field $n i32)))
           (func $new (result (ref $State)) (struct.new $State (i32.const {seed})))
           (func $get (param $s (ref $State)) (result i32) (struct.get $State $n (local.get $s))))"#
@@ -54,25 +54,25 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
         .unwrap();
         let private = format!("$hidden{seed}.read");
         std::fs::write(
-            dir.path().join("facade.wlt"),
+            dir.path().join("facade.walz"),
             format!(
                 r#"(module
-          (%use "./sub/../leaf.wlt" (type $State $S) (func $new $make) (func $get {private}))
-          (%export (type $S) (func $make)))"#
+          (@use "./sub/../leaf.walz" (type $State $S) (func $new $make) (func $get {private}))
+          (@export (type $S) (func $make)))"#
             ),
         )
         .unwrap();
-        let main = dir.path().join("main.wlt");
+        let main = dir.path().join("main.walz");
         std::fs::write(
             &main,
             r#"(module
-          (%use "./facade.wlt" (type $S) (func $make))
-          (%use "./leaf.wlt" (func $get $read))
+          (@use "./facade.walz" (type $S) (func $make))
+          (@use "./leaf.walz" (func $get $read))
           (func $main (export "main") (result i32) (call $read (call $make))))"#,
         )
         .unwrap();
-        let loaded = wlt::source::load(&main).unwrap();
-        let compiled = wlt::compile(loaded.text()).unwrap();
+        let loaded = walz::source::load(&main).unwrap();
+        let compiled = walz::compile(loaded.text()).unwrap();
         assert_eq!(
             compiled
                 .ir
@@ -85,10 +85,13 @@ fn seeded_module_graphs_share_types_without_leaking_private_aliases() {
         );
         std::fs::write(
             &main,
-            format!("(module (%use \"./facade.wlt\" (func {private} $leaked)))"),
+            format!("(module (@use \"./facade.walz\" (func {private} $leaked)))"),
         )
         .unwrap();
-        let loaded = wlt::source::load(&main).unwrap();
-        assert!(wlt::check(loaded.text()).is_err(), "seed {seed}: {private}");
+        let loaded = walz::source::load(&main).unwrap();
+        assert!(
+            walz::check(loaded.text()).is_err(),
+            "seed {seed}: {private}"
+        );
     }
 }

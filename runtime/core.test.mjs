@@ -15,9 +15,9 @@ import { build } from "./build-core.mjs";
 import { collect, tick } from "./testing/memory.mjs";
 
 async function fixture(source, run) {
-  const directory = await mkdtemp(join(tmpdir(), "wlt-core-"));
+  const directory = await mkdtemp(join(tmpdir(), "walz-core-"));
   try {
-    const input = join(directory, "input.wlt");
+    const input = join(directory, "input.walz");
     await writeFile(input, source);
     await build(input, directory);
     await run(
@@ -30,11 +30,11 @@ async function fixture(source, run) {
 }
 
 const source = `(module
-  (func $main (export "main") (param $x i64) (result i64) (%effect pure) (local.get $x))
-  (func $transfer (export "transfer") (param $x (%tuple (%future i64) (%tuple %string %unit)))
-    (result (%tuple (%future i64) (%tuple %string %unit))) (%effect pure) (%move $x))
-  (func $option (export "option") (param $x (%option (%option i64)))
-    (result (%option (%option i64))) (%effect pure) (local.get $x)))`;
+  (func $main (export "main") (param $x i64) (result i64) (@effect pure) (local.get $x))
+  (func $transfer (export "transfer") (param $x (@tuple (@future i64) (@tuple @string @unit)))
+    (result (@tuple (@future i64) (@tuple @string @unit))) (@effect pure) (@move $x))
+  (func $option (export "option") (param $x (@option (@option i64)))
+    (result (@option (@option i64))) (@effect pure) (local.get $x)))`;
 
 test("Core bindings roll back partially encoded owned inputs and preserve nested option distinctions", async () => {
   await fixture(source, async (runtime) => {
@@ -75,7 +75,7 @@ test("Core bindings roll back partially encoded owned inputs and preserve nested
 
 test("scalar Core output has no Component dependency or text codecs", async () => {
   await fixture(
-    "(module (func $f (export \"main\") (result i64) (%effect pure) (i64.const 42)))",
+    "(module (func $f (export \"main\") (result i64) (@effect pure) (i64.const 42)))",
     async (runtime, directory) => {
       assert.equal((await runtime.instantiate()).api.main(), 42n);
       const names = await readdir(directory);
@@ -103,9 +103,9 @@ test(
   "exported ends and cancelled late producers do not retain Core instances",
   { skip: typeof global.gc !== "function" },
   async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-core-gc-"));
+    const directory = await mkdtemp(join(tmpdir(), "walz-core-gc-"));
     try {
-      await build("tests/component-fixtures/values.wlt", directory);
+      await build("tests/component-fixtures/values.walz", directory);
       const runtime = await import(pathToFileURL(join(directory, "index.js")));
       const create = async (cancel) => {
         let memory, notify, complete;
@@ -158,8 +158,8 @@ test("Core keeps the existing shared-payload restriction for delivery", async ()
   await assert.rejects(
     fixture(
       `(module
-    (func $nested (export "nested") (result (%future (%future i64))) (%effect pure)
-      (%future.ready (%future i64) (%future.ready i64 (i64.const 42)))))`,
+    (func $nested (export "nested") (result (@future (@future i64))) (@effect pure)
+      (@future.ready (@future i64) (@future.ready i64 (i64.const 42)))))`,
       () => {},
     ),
     /delivery payload must be shared/,
@@ -172,10 +172,10 @@ test(
   async () => {
     await fixture(
       `(module
-    (func $value (export "value") (param $n i64) (result i64) (%effect pure) (local.get $n))
-    (func $crash (export "crash") (%effect pure) (unreachable))
-    (func $await (export "await") (param $f (%future i64)) (result i64) (%effect suspends)
-      (%future.await i64 (%move $f))))`,
+    (func $value (export "value") (param $n i64) (result i64) (@effect pure) (local.get $n))
+    (func $crash (export "crash") (@effect pure) (unreachable))
+    (func $await (export "await") (param $f (@future i64)) (result i64) (@effect suspends)
+      (@future.await i64 (@move $f))))`,
       async (runtime) => {
         const create = async (name, args) => {
           let memory, notify;
@@ -234,10 +234,10 @@ test(
 test("host failures stay fatal through catch_all and falsy rejection reasons", async () => {
   await fixture(
     `(module
-    (import "wlt:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
-    (func $direct (export "direct") (%effect host suspends) (call $sleep (i32.const 0)))
-    (func $caught (export "caught") (result i64) (%effect host suspends)
-      (%try (result i64) (do (block (result i64) (call $sleep (i32.const 0)) (i64.const 42)))
+    (import "walz:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
+    (func $direct (export "direct") (@effect host suspends) (call $sleep (i32.const 0)))
+    (func $caught (export "caught") (result i64) (@effect host suspends)
+      (@try (result i64) (do (block (result i64) (call $sleep (i32.const 0)) (i64.const 42)))
         (catch_all (i64.const 99)))))`,
     async (runtime) => {
       for (const reason of [new Error("host failed"), 0, undefined]) {

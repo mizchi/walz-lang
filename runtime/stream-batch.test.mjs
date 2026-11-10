@@ -29,10 +29,10 @@ test('rendezvous batches make progress without waiting for a full read',async()=
   assert.equal(channels.active(),0);
 });
 for(const backend of ['core','component'])test(`${backend}: explicit batch reads preserve tails and reduce host crossings`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-stream-batch-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-stream-batch-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/stream-batch.wlt',dir);
+    await build('tests/component-fixtures/stream-batch.walz',dir);
     const {instantiate,TaskCancelledError}=await import(pathToFileURL(join(dir,'index.js')));
     let allocator,waiting;
     const {api,start}=await instantiate({onTaskEvent:e=>{if(e.type==='read-pending')waiting?.resolve();},instantiateCore:async(module,imports)=>{const instance=await WebAssembly.instantiate(module,imports);if(instance.exports.live)allocator=instance.exports;return instance;}});

@@ -44,7 +44,7 @@ async function capture(directory) {
       ["compute", "benchmark"],
     ])
       await build(
-        join(root, `examples/apps/workflow/${source}.wlt`),
+        join(root, `examples/apps/workflow/${source}.walz`),
         join(directory, `${backend}-${kind}`),
       );
   }
@@ -56,16 +56,16 @@ async function capture(directory) {
       "--quiet",
       "--",
       "build",
-      "examples/apps/workflow/benchmark.wlt",
+      "examples/apps/workflow/benchmark.walz",
       join(directory, "compute.wasm"),
     ],
     { cwd: root },
   );
   for (const name of ["text-io.mjs", "workflow-oracle.mjs"])
     await copyFile(join(root, "runtime", name), join(directory, name));
-  for (const folder of ["examples/apps/workflow", "stdlib"]) {
+  for (const folder of ["examples/apps/workflow", "walz/core"]) {
     for (const name of await readdir(join(root, folder))) {
-      if (!name.endsWith(".wlt")) continue;
+      if (!name.endsWith(".walz")) continue;
       const target = join(directory, "source", folder, name);
       await mkdir(resolve(target, ".."), { recursive: true });
       await copyFile(join(root, folder, name), target);

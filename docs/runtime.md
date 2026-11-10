@@ -1,23 +1,27 @@
-# Future / Stream と JavaScript 実行
+<a id="future--stream-と-javascript-実行"></a>
+
+# Future / Stream and JavaScript execution
 
 ```wat
-(%let $future (%future.ready i64 (i64.const 42))
-  (%future.await i64 (%move $future)))
+(@let $future (@future.ready i64 (i64.const 42))
+  (@future.await i64 (@move $future)))
 ```
 
-`(%inst $future T)` と `(%inst $stream T)` は opaque な所有値です。ready/empty/cons で構築し、await/next/close だけで扱います。
-next は `(%inst $tuple (%inst $stream T) (%inst $option T))` を返すので、次回は返された Stream を使います。終端の none でも端点が返り、最後に明示 close が必要です。
-payload は共有できるデータに限定し、unit、Result、GC 参照も扱えます。Future/Stream 自体や own 値を payload にすることは初版では拒否します。
-await/next は suspends を持ち、呼び出し元へ伝播します。WIT の future/stream 型と読み取り関数の async にも対応します。
+`(@inst $future T)` and `(@inst $stream T)` are opaque owned values. Construct them with ready/empty/cons and access them only through await/next/close.
+next returns `(@inst $tuple (@inst $stream T) (@inst $option T))`, so use the returned Stream on the next read. Even terminal none returns an endpoint that must eventually be explicitly closed.
+Payloads are restricted to shareable data, including unit, Result, and GC references. The initial version rejects Future/Stream themselves and own values as payloads.
+await/next have suspends, which propagates to callers. WIT future/stream types and async reading functions are supported too.
 
-[ready-delivery.wlt](../examples/ready-delivery.wlt) は stream の40と2を合計し、別の completion Future の Result も確認して42を返します。
-通常の core Wasm 出力では配送済みデータを GC に保持し、読み取りは即時に返ります。
-Component 出力では外部の readable handle も保持でき、await/next は JSPI を通じて Promise/AsyncIterable の配送を待ちます。
-close は端点を消費し、外部端点なら Canonical ABI の drop-readable を実行します。固定したホスト実装では不要になったタイマーを解放します。
-JS ランタイムからの task cancellation と、それに伴う進行中の read の cancel に対応します。共有 payload の [writer とスコープ付き spawn / join](scoped-tasks.md) で言語内の producer / consumer も記述できます。
-CLI の単体配布は `wlt build --target core-js`、直接実行は `wlt run --target core-js`。明示したファイルは [WASI 0.3 の値 adapter](wasi-files.md) で接続します。[CLI の規約](cli.md) を参照してください。
+[ready-delivery.walz](../examples/ready-delivery.walz) sums 40 and 2 from a stream, checks a separate completion Future's Result, and returns 42.
+Ordinary core Wasm output stores already-delivered data in GC; reads return immediately.
+Component output can also hold external readable handles, with await/next waiting through JSPI for Promise/AsyncIterable delivery.
+close consumes the endpoint and invokes Canonical ABI drop-readable for external endpoints. The fixed host implementation releases timers that are no longer needed.
+Task cancellation from the JS runtime and cancellation of the associated in-flight read are supported. Shared-payload [writers and scoped spawn / join](scoped-tasks.md) also express producers/consumers within the language.
+For standalone CLI distribution, use `walz build --target core-js`; for direct execution, use `walz run --target core-js`. Explicitly supplied files connect through [WASI 0.3 value adapters](wasi-files.md). See the [CLI conventions](cli.md).
 
-## Component ABI と JavaScript のイベントループ
+<a id="component-abi-と-javascript-のイベントループ"></a>
+
+## Component ABI and the JavaScript event loop
 
 ```sh
 pnpm install --frozen-lockfile
@@ -30,14 +34,14 @@ pnpm exec playwright install chromium
 just test-e2e
 ```
 
-Rust/Lean に加え Node.js 24 以降と pnpm を使います。Node 24.21.0、pnpm 12.11.2、jco-transpile 0.23.0、Playwright 1.64.1 の Chromium 156 で確認しています。
-実行環境には Wasm GC、例外機構（try_table）、[JSPI](https://v8.dev/blog/jspi) の `WebAssembly.Suspending` / `WebAssembly.promising` が必要です。
-[jco](https://bytecodealliance.github.io/jco/transpiling.html) が Canonical ABI と JSPI の橋渡しを行い、待機中も JavaScript のタイマーが進みます。同じインスタンスへの公開呼出しは順番に実行し、一つの呼出し内の子タスクは協調的に並行実行します。
+Use Node.js 24 or later and pnpm in addition to Rust/Lean. Verified with Node 24.21.0, pnpm 12.11.2, jco-transpile 0.23.0, and Chromium 156 in Playwright 1.64.1.
+The runtime requires Wasm GC, exceptions (try_table), and [JSPI](https://v8.dev/blog/jspi) `WebAssembly.Suspending` / `WebAssembly.promising`.
+[jco](https://bytecodealliance.github.io/jco/transpiling.html) bridges the Canonical ABI and JSPI, allowing JavaScript timers to progress while waiting. Public calls on the same instance run sequentially; child tasks within one call run cooperatively in parallel.
 
-[event-loop.wlt](../tests/component-fixtures/event-loop.wlt) は、GC 参照を待機中も保持する main、非同期 Stream の総和、completion Result の分岐、pending Future の close を実装しています。
-ホストの固定契約は `wlt:host/event-loop@0.1.0` です。
+[event-loop.walz](../tests/component-fixtures/event-loop.walz) implements a main retaining GC references across waits, an asynchronous Stream sum, branching on a completion Result, and closing a pending Future.
+The fixed host contract is `walz:host/event-loop@0.1.0`.
 
-| import | 型 | 作用 |
+| import | Type | Effects |
 |---|---|---|
 | sleep | `(i32) -> unit` | host, suspends |
 | yield | `() -> unit` | host, suspends |
@@ -45,19 +49,21 @@ Rust/Lean に加え Node.js 24 以降と pnpm を使います。Node 24.21.0、p
 | ticks | `(i32, i32) -> stream<i64>` | host |
 | fallible-i64 | `(i32, i32) -> future<result<i64,i32>>` | host |
 
-時間はミリ秒です。ticks は要素数・間隔を受け取り、0 から順に配送します。fallible-i64 は code=0 なら ok(42)、それ以外なら err(code) を配送します。
-公開関数には effects 契約が必要です。Component の生成でも、同じ IR の所有権契約と law を Lean で検査します。未知の import、境界の GC 参照や own、外へ漏れる例外は拒否します。
+Times are in milliseconds. ticks takes an element count and interval and delivers values starting at 0. fallible-i64 delivers ok(42) for code=0 and err(code) otherwise.
+Public functions require effects contracts. Component generation also checks the same IR's ownership contracts and laws with Lean. Unknown imports, GC references or own at boundaries, and escaping exceptions are rejected.
 
-内部値と ABI バッファを分離し、数値、Option、Result、pair、Future、Stream を変換します。Future/Stream は Component Model 自体の型と readable handle です。
-バッファは呼び出しごとに確保し、戻り値は post-return、引数や read は変換終了後に解放します。アリーナ上限は16 MiBです。
-`wlt:runtime/delivery@0.1.0` は ready 値や Stream の前置要素を JS の配送端点へ移すための内部 import です。型と factory 名はモジュールごとに生成するため、`.wasm.json` と対応する JS ホストを同時に配布します。
-`wlt wit` は公開 API の論理的な形状を出力し、`wasm-tools component wit target/component.wasm` は内部 import を含む実際の Component 契約を出力します。
+Internal values and ABI buffers are separate, with conversion for numbers, Option, Result, pair, Future, and Stream. Future/Stream use the Component Model's own types and readable handles.
+Buffers are allocated per call. Return values are released at post-return; arguments and reads are released after conversion. The arena limit is 16 MiB.
+`walz:runtime/delivery@0.1.0` is an internal import for moving ready values and prefixed Stream elements to JS delivery endpoints. Types and factory names are generated per module, so distribute `.wasm.json` and the matching JS host together.
+`walz wit` emits the logical public API shape; `wasm-tools component wit target/component.wasm` emits the actual Component contract, including internal imports.
 
-生成する JS には、固定した jco バージョンの unit/option.none の配送と、失敗した import の Promise が確定しない問題への局所的な補正を適用します。内容は [jco-compat.mjs](../runtime/jco-compat.mjs) に集約し、実行テストで両方向の配送と失敗を確認します。
-アプリケーションの失敗は Result で返します。不正なタイマー引数は trap となり、そのインスタンスは再利用できません。
-現段階では独自の timer binding を実装しており、wasi:* のファイル・ネットワーク API や WASI 0.3.0 一式の実装ではありません。
+Generated JS receives localized fixes for the pinned jco version's unit/option.none delivery and unresolved Promises from failed imports. These fixes are collected in [jco-compat.mjs](../runtime/jco-compat.mjs); runtime tests check delivery in both directions and failures.
+Return application failures through Result. Invalid timer arguments trap, leaving the instance unusable.
+This currently implements custom timer bindings, rather than wasi:* file/network APIs or the full WASI 0.3.0 suite.
 
-### 軽量な Core＋JSPI 出力
+<a id="軽量な-corejspi-出力"></a>
+
+### Lightweight Core＋JSPI output
 
 ```sh
 just build-core-js                  # target/core-event-loop に生成
@@ -66,30 +72,32 @@ just test-core-js
 just memory-core-js
 ```
 
-JS 向けには、[taraba](https://github.com/mizchi/taraba) の構成を参考にした専用の出力も使えます。
-`runtime/build-core.mjs` は Component transpiler をロードせず、2つの core Wasm と、小さな共通ホスト・生成済みの型変換を出力します。
-`instantiate()` の `api` / `start` と event-loop binding は上の経路と共通です。同期関数の同期性、Future/Stream の所有権、取消しの終了確認も維持します。
-GC 値と停止中のスタックは Wasm エンジンが管理し、ホストが手動管理する対象は一時バッファと外部端点に限定します。
+A dedicated JS output is also available, informed by [taraba](https://github.com/mizchi/taraba).
+`runtime/build-core.mjs` emits two core Wasm modules, a small shared host, and generated type conversions without loading the Component transpiler.
+`instantiate()`'s `api` / `start` and event-loop bindings are shared with the path above. Synchronous functions remain synchronous; Future/Stream ownership and cancellation completion checks are preserved.
+The Wasm engine manages GC values and suspended stacks; the host manually manages only temporary buffers and external endpoints.
 
-この経路の ABI は `wlt-core-js-v2` です。標準 Component との相互運用には `just component` / `just build-js` を使います。
-公開 API と配送 payload の具体的な型から codec を生成し、実行時に型スキーマを解釈する処理は持ちません。
-API の制約・内部 ABI は [SPEC.md](../SPEC.md#corejspi-の-js-専用-abi)、サイズ・メモリの比較は [MEMORY.md](../MEMORY.md) を参照してください。
+This path uses ABI `walz-core-js-v2`. For standard Component interoperability, use `just component` / `just build-js`.
+Codecs are generated from concrete public API and delivery-payload types, without interpreting type schemas at runtime.
+See [SPEC.md](../SPEC.md#corejspi-の-js-専用-abi) for API restrictions and the internal ABI, and [MEMORY.md](../MEMORY.md) for size and memory comparisons.
 
-`just profile before` / `just profile after` で行フィルタの guest profile と実行メトリクスを保存し、
-`just profile-compare before after` で保存した成果物を交互に再測定できます。
-ABI 割当てを約19%減らした変更、UTF-8 検証のチューニングと測定条件は [PROFILE.md](../PROFILE.md) に記録しています。
+`just profile before` / `just profile after` save line-filter guest profiles and execution metrics;
+`just profile-compare before after` remeasures saved artifacts in alternating order.
+[PROFILE.md](../PROFILE.md) records the change reducing ABI allocations by about 19%, UTF-8 validation tuning, and measurement conditions.
 
-少し大きい実用例として、[ログ集計 CLI](../examples/apps/log-stats/README.md) を追加しました。
-静的モジュールと文字列ライブラリで TSV の解析、GC 上の集計、整数の文字列化、JSON の1行出力を実装しています。
-Result / Stream のマクロで所有権を保つ反復を記述し、集計状態は opaque な型として公開します。
-`just build-log-stats` の後、`just log-stats input.tsv` で実行、`just test-log-stats` で検査できます。
-`just profile-log-stats` は、共有する計算部分の guest profile と、実際の Core＋JSPI 経路の実行時間を保存します。
+The [log aggregation CLI](../examples/apps/log-stats/README.md) is a somewhat larger practical example.
+It uses static modules and the string library for TSV parsing, GC aggregation, integer-to-string conversion, and one-line JSON output.
+Result / Stream macros express ownership-preserving iteration, with aggregation state exposed as an opaque type.
+After `just build-log-stats`, run `just log-stats input.tsv` and check with `just test-log-stats`.
+`just profile-log-stats` saves a guest profile of the shared computation and actual Core＋JSPI execution time.
 
-改善後の機能を別の処理で確認する [在庫台帳 CLI](../examples/apps/stock-ledger/README.md) もあります。
-`just build-stock-ledger` → `just stock-ledger` で、Unicode の品目名と数量から JSON Lines を出力します。
-手書き版とマクロ版を同じ操作列で照合し、`just audit-stock-ledger` で記述量・生成 IR・実行時間を比較できます。
+The [inventory ledger CLI](../examples/apps/stock-ledger/README.md) exercises the improved features on another workload.
+`just build-stock-ledger` → `just stock-ledger` emits JSON Lines from Unicode item names and quantities.
+The handwritten and macro versions are compared using the same operation sequence; `just audit-stock-ledger` compares source volume, generated IR, and execution time.
 
-### UTF-8 行フィルタと I/O capability
+<a id="utf-8-行フィルタと-io-capability"></a>
+
+### UTF-8 line filter and I/O capabilities
 
 ```sh
 just build-text
@@ -98,30 +106,32 @@ just text-file input.txt output.txt
 just test-io
 ```
 
-[行フィルタ](../examples/io/text-filter.wlt) は、空行を除いて入力を出力し、出力した行数を `result<i32,i32>` で返します。
-入力は LF / CRLF 区切りで、末尾の改行なし、チャンク途中で分割された UTF-8 に対応します。出力は各行に LF を付けます。
-CLI の stdout は処理したデータだけで、終了コードは成功0、I/O の失敗1、SIGINT による取消し130です。同じファイルを入力と出力へ指定することは拒否します。
+The [line filter](../examples/io/text-filter.walz) outputs input with empty lines removed and returns the number of output lines as `result<i32,i32>`.
+Input supports LF / CRLF separators, missing final newlines, and UTF-8 split across chunks. Each output line ends in LF.
+CLI stdout contains only processed data. Exit codes are 0 for success, 1 for I/O failure, and 130 for SIGINT cancellation. Specifying the same file for input and output is rejected.
 
-固定の契約は [text-io.wit](../interfaces/text-io.wit) の `wlt:host/text-io@0.1.0` です。
+The fixed contract is `walz:host/text-io@0.1.0` in [text-io.wit](../interfaces/text-io.wit).
 
-| import | 型 | 必須 capability |
+| import | Type | Required capability |
 |---|---|---|
 | read-lines | `() -> stream<result<text,i32>>` | text-input |
 | write-line | `(text) -> future<result<unit,i32>>` | text-output |
 
-両方とも host 作用を持ちます。呼び出しは端点を返すだけで、読み取り・完了待ちが suspends を持ちます。
-コンパイラは import の名前・シグネチャ・effect を検査し、manifest の `imports` に必須 capability と型を記録します。
-埋め込みでは `instantiate({imports: {'wlt:host/text-io@0.1.0': io}})` で明示的に host を渡します。必要な関数がない場合はインスタンスの生成を拒否します。
-`runtime/text-io.mjs` の `createTextIO({input,write})` は、byte iterable と `write(bytes,AbortSignal)` を既存の値型に接続します。
-`runtime/node-io.mjs` は Node のストリームとファイルの開閉、`runtime/text-cli.mjs` は CLI を担当します。
-これらの I/O 実装は通常の Core 出力へ自動では組み込みません。ファイルパスや標準入出力を選ぶ権限は host 側にあります。
+Both have the host effect. Calls only return endpoints; reads and waits for completion have suspends.
+The compiler checks import names, signatures, and effects, recording required capabilities and types in manifest `imports`.
+Embedders explicitly supply the host with `instantiate({imports: {'walz:host/text-io@0.1.0': io}})`. Instantiation is rejected if required functions are missing.
+`createTextIO({input,write})` in `runtime/text-io.mjs` connects a byte iterable and `write(bytes,AbortSignal)` to the existing value types.
+`runtime/node-io.mjs` handles Node streams and file opening/closing; `runtime/text-cli.mjs` handles the CLI.
+These I/O implementations are not automatically included in ordinary Core output. The host controls file paths and standard input/output selection.
 
-I/O エラーコードは UTF-8 不正1、読み取り失敗2、書き込み失敗3、行長上限4、閉じた入力または書き込み中止5です。
-入力は一度だけ消費でき、行の上限は既定1 MiBです。JS の helper では `maxLineBytes` を最大8 MiBまで設定できます。
-入力を close すると provider の return を待ち、出力の取消しは AbortSignal を通知して sink の終了を待ちます。Node の CLI はファイルと未完了のストリームも閉じます。
-この例は Node/JS の capability binding であり、WASI のファイル・ネットワークパッケージの実装は今後の範囲です。
+I/O error codes are 1 for invalid UTF-8, 2 for read failure, 3 for write failure, 4 for line-length limit, and 5 for closed input or aborted writes.
+Input can be consumed only once; the default line limit is 1 MiB. The JS helper allows `maxLineBytes` up to 8 MiB.
+Closing input waits for the provider's return; cancelling output signals AbortSignal and waits for the sink to finish. The Node CLI also closes files and unfinished streams.
+This example is a Node/JS capability binding; implementing WASI file/network packages remains future work.
 
-### タスクの取消し
+<a id="タスクの取消し"></a>
+
+### Task cancellation
 
 ```js
 import {instantiate, TaskCancelledError} from './target/event-loop/index.js';
@@ -139,25 +149,27 @@ console.log(outcome);                // {status: 'cancelled', started: true/fals
 console.log(await api.main(0));      // 取消し後も同じインスタンスで 42n
 ```
 
-`start` の名前は JS の export 名です（例: `sumTicks`、`catchAll`）。引数は配列で渡します。
-`task.result` は通常の値を返す Promise で、取消し後は TaskCancelledError を返し、cause に最初の取消し理由を残します。Result の err や Wasm のアプリケーション例外へは変換しません。
-`cancel(reason)` は要求と終了確認を分けます。返す Promise は、ゲストのスタック、所有する readable end、ABI バッファ、ホストの非同期 dispose/iterator.return の処理が終わるまで確定しません。
-開始前の取消しではゲストを実行せず、引数の所有権も移しません。開始後は待機点で取消しを確認し、内部の制御用例外で巻き戻します。ソースの catch_all はこの取消しを捕捉できません。
-終了結果は status=returned/cancelled/failed と、開始済みかを示す started です。既に値を返したタスクと、呼び出し元に渡した Future/Stream は、後から cancel しても取り消しません。
+Names passed to `start` are JS export names (for example, `sumTicks` and `catchAll`). Pass arguments as an array.
+`task.result` is a Promise returning the ordinary value; after cancellation, it yields TaskCancelledError with the first cancellation reason in cause. Cancellation is not converted into a Result err or a Wasm application exception.
+`cancel(reason)` separates the request from completion confirmation. Its returned Promise remains unsettled until cleanup of the guest stack, owned readable ends, ABI buffers, and asynchronous host dispose/iterator.return completes.
+Cancelling before start does not run the guest or transfer argument ownership. After start, cancellation is checked at suspension points and unwinds through an internal control exception. Source-level catch_all cannot catch it.
+Completion reports status=returned/cancelled/failed and started indicating whether execution began. Later cancellation does not cancel tasks that already returned values or Future/Stream values already passed to callers.
 
-取消しは協調的です。CPU だけを使う処理の強制停止、既に行った変更の巻き戻し、言語側の producer task の停止は行いません。
-カスタムホストが進行中の操作を終了できない場合は、終了確認も待ち続けます。解放処理が失敗した場合は failed と AggregateError を返し、そのインスタンスの再利用を拒否します。
-直接の `api` 呼び出しでは、async export は順番に実行します。同期 export は同期のままで、他のタスクの実行・解放中なら busy エラーを返します。同期 export を待ち行列に入れる場合も `start` を使います。
-Component 経由の ABI と manifest は version=2 です。旧出力は `just build-js` で再生成してください。
-Lean のモデルでは一度限りの受け取り、配送順序、終端・close を検証し、実コードの Wasm 実行と照合します。
+Cancellation is cooperative. It does not forcibly stop CPU-only work, roll back changes already made, or stop language-side producer tasks.
+If a custom host cannot finish an in-flight operation, completion confirmation keeps waiting. Failed cleanup returns failed and AggregateError and prevents reuse of the instance.
+For direct `api` calls, async exports execute sequentially. Synchronous exports remain synchronous and return busy errors while another task executes or cleans up. Use `start` to queue synchronous exports too.
+The Component ABI and manifest use version=2. Regenerate old output with `just build-js`.
+The Lean model verifies one-time receipt, delivery order, termination, and close, and is compared against actual Wasm execution.
 
-Wasm 例外と trap の違いや、標準 WAT と拡張を混在できる範囲は [構文と解析の境界](syntax.md#標準-wat-との混在と解析) を参照してください。
-`%try` は `try_table` へ展開し、trap は捕捉しません。[exceptions.wlt](../examples/exceptions.wlt) に実行例があります。
+See the [syntax and analysis boundary](syntax.md#標準-wat-との混在と解析) for Wasm exceptions versus traps and supported mixing of standard WAT and extensions.
+`@try` expands to `try_table` and does not catch traps. See [exceptions.walz](../examples/exceptions.walz) for an executable example.
 
-## bytes/text とモジュールを JS から使う
+<a id="bytestext-とモジュールを-js-から使う"></a>
+
+## Using bytes/text and modules from JS
 
 ```sh
-just build-js tests/component-fixtures/buffers.wlt target/buffers
+just build-js tests/component-fixtures/buffers.walz target/buffers
 ```
 
 ```js
@@ -168,20 +180,19 @@ api.text('hello');                  // 'hello'
 api.slice(new Uint8Array([1, 2, 3]), 1, 2); // Uint8Array([2, 3])
 ```
 
-標準関数は `(%use "wlt:core" (func $string.u64 $unsigned))` のように、公開する名前を選んで取り込みます。
-標準ライブラリの依存と3つのアプリも named import を使います。未使用の定義とホスト import は生成時に除去し、必要な capability だけを manifest に残します。
-`%include` は互換のテキスト展開として残します。ファイルの読み込みで実行時の I/O capability は増えません。
+Import selected standard names explicitly, as in `(@use "walz:core" (func $string.u64 $unsigned))`.
+Standard library dependencies and all three applications use named imports too. Unused definitions and host imports are removed during generation, leaving only required capabilities in the manifest.
+`@include` remains as compatible text expansion. Loading files does not add runtime I/O capabilities.
 
+See [MEMORY.md](../MEMORY.md) for memory-management boundaries, corrected retention paths, and measurements. `just memory-check` rechecks management tables, GC reachability, fragmentation, and retained memory under repeated execution.
 
-メモリの管理境界・修正した保持経路・実測は [MEMORY.md](../MEMORY.md) を参照してください。`just memory-check` で管理表、GC 到達性、断片化と反復時の保持量を再検査できます。
+`walz/core/text.walz` provides concatenation, u64/s64 decimal conversion, and JSON string generation.
+The [standard library](../walz/core/README.md) also provides search, splitting, checked integer parsing, and text/JSON builders.
+Log aggregation, inventory ledger, and workflow use common parsing functions and the JSON object builder. `just test-stdlib` checks boundary values and both JS backends.
+See [SPEC.md](../SPEC.md#文字列ライブラリと配列のコピー) for the new syntax and contracts.
+`just fmt-walz file.walz` formats while preserving comments; `just check-walz-format file.walz` checks formatting.
+`just compare-log-stats before-directory after-directory` alternates measurements under varied conditions for log aggregation before and after changes.
 
-`stdlib/text.wlt` に連結、u64/s64 の十進数変換と JSON string の生成があります。
-検索・分割・検査付き整数解析と text/JSON builder も [標準ライブラリ](../stdlib/README.md) にあります。
-ログ集計・在庫台帳・workflow は共通の解析関数と JSON object builder を使っています。`just test-stdlib` で境界値と両 JS backend を検査できます。
-新しい構文と契約は [SPEC.md](../SPEC.md#文字列ライブラリと配列のコピー) を参照してください。
-`just fmt-wlt file.wlt` でコメントを保持して整形し、`just check-wlt-format file.wlt` で検査できます。
-ログ集計の変更前後は `just compare-log-stats before-directory after-directory` で条件を変えて交互に測定できます。
+Shared memory can be passed to Core＋JSPI through `imports: { env: { memory } }`. It is retained separately from ABI temporary memory and shares the host's `WebAssembly.Memory` itself. See [type, ownership, Worker, and Component boundaries](threads.md).
 
-共有メモリは `imports: { env: { memory } }` から Core＋JSPI へ渡せる。ABI の一時メモリとは別に保持し、ホストの `WebAssembly.Memory` 自体を共有する。[型・所有権・Worker・Component の境界](threads.md)。
-
-別Workerで実行する場合は[汎用WorkerHost](worker-host.md)を明示的に作る。driver内で別のCore＋JSPI／Componentプログラムをinstantiateし、Futureをawaitしてclone可能な結果を戻せる。個別取消しとjoinを提供するが、CPU処理には協調的な取消し検査が必要。`%task.spawn`とGC参照は同じエージェント内に留める。[簡潔索引](succinct.md)も共通ホストを利用する。
+To execute in another Worker, explicitly create a [generic WorkerHost](worker-host.md). A driver can instantiate another Core＋JSPI/Component program, await Futures, and return cloneable results. It provides per-task cancellation and join; CPU work needs cooperative cancellation checks. `@task.spawn` and GC references remain within the same agent. [Succinct indexes](succinct.md) also use the shared host.

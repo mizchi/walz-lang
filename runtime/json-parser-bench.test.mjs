@@ -18,7 +18,7 @@ test("JSON benchmark freezes diverse inputs in the shared value domain",()=>{
   }
 });
 test("JSON benchmark refuses changed artifacts and rejects incorrect runners",async()=>{
-  const directory=await mkdtemp(join(tmpdir(),"wlt-json-bench-"));
+  const directory=await mkdtemp(join(tmpdir(),"walz-json-bench-"));
   try {
     await writeFile(join(directory,"input.json"),"null");
     await writeFile(join(directory,"capture.json"),JSON.stringify({hashes:{"input.json":hash("null")}}));
@@ -37,8 +37,8 @@ test("JSON benchmark accepts equivalent escape spellings and rejects different v
 
 test("JSON comparison requires identical inputs and benchmark programs",()=>{
   const manifest={reference:{node:process.version,v8:process.versions.v8},hashes:{
-    "corpus.json":"inputs", "source/examples/json-parser/resident.wlt":"resident",
-    "source/examples/json-parser/benchmark.wlt":"api",
+    "corpus.json":"inputs", "source/examples/json-parser/resident.walz":"resident",
+    "source/examples/json-parser/benchmark.walz":"api",
   }};
   checkCompatibility(manifest,structuredClone(manifest));
   for(const key of Object.keys(manifest.hashes)) {

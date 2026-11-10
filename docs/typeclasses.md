@@ -1,31 +1,31 @@
-# 基本型の型クラスと記号演算子
+# Primitive Typeclasses and Symbolic Operators
 
-組み込みの`Add`・`Sub`・`Mul`・`Div`・`Eq`・`Ord`・`Logical`・`Bitwise`・`Shift`を、具体型ごとの固定インスタンスとして提供する。
-演算子を型検査時に既存のWasm命令やifへ解決し、辞書・間接呼び出し・実行時の実装探索を追加しない。
-クラスはコンパイラ組み込みで、importは不要。利用者がclass/implを宣言する構文は、この段階では提供しない。
+Built-in `Add`, `Sub`, `Mul`, `Div`, `Eq`, `Ord`, `Logical`, `Bitwise`, and `Shift` provide fixed instances for concrete types.
+Type checking resolves operators into existing Wasm instructions or if expressions without dictionaries, indirect calls, or runtime instance search.
+Classes are compiler built-ins and need no imports. User-declared class/impl syntax is not provided at this stage.
 
-| クラス | インスタンス | 演算子 | 展開 |
+| Class | Instances | Operator | Expansion |
 | --- | --- | --- | --- |
-| `Add` | i32 / i64 / f32 / f64 | `(+ a b)` | 対応する`.add`。結果はオペランドと同じ型 |
-| `Sub` | i32 / i64 / f32 / f64 | `(- a b)` | 対応する`.sub`。結果はオペランドと同じ型 |
-| `Mul` | i32 / i64 / f32 / f64 | `(* a b)` | 対応する`.mul`。結果はオペランドと同じ型 |
-| `Div` | i32 / i64 / f32 / f64 | `(/ a b)` | 整数は符号付き`.div_s`、floatは`.div`。結果は入力と同じ型 |
-| `Eq` | i32 / i64 | `(= a b)` / `(!= a b)` | `.eq` / `.ne`。結果はi32の0/1 |
-| `Ord` | i32 / i64 | `(< a b)` / `(<= a b)` / `(> a b)` / `(>= a b)` | 符号付き`.lt_s` / `.le_s` / `.gt_s` / `.ge_s`。結果はi32の0/1 |
-| `Logical` | i32 | `(&& a b)` / `(\|\| a b)` | 短絡するif。結果はi32の0/1 |
-| `Bitwise` | i32 / i64 | `(& a b)` / `(\| a b)` / `(^ a b)` | `.and` / `.or` / `.xor`。結果は入力と同じ型 |
-| `Shift` | i32 / i64 | `(<< a n)` / `(>> a n)` / `(>>> a n)` | `.shl` / `.shr_s` / `.shr_u`。結果は入力と同じ型 |
+| `Add` | i32 / i64 / f32 / f64 | `(+ a b)` | Corresponding `.add`; result matches operand type |
+| `Sub` | i32 / i64 / f32 / f64 | `(- a b)` | Corresponding `.sub`; result matches operand type |
+| `Mul` | i32 / i64 / f32 / f64 | `(* a b)` | Corresponding `.mul`; result matches operand type |
+| `Div` | i32 / i64 / f32 / f64 | `(/ a b)` | Signed `.div_s` for integers, `.div` for floats; result matches input type |
+| `Eq` | i32 / i64 | `(= a b)` / `(!= a b)` | `.eq` / `.ne`; result is i32 0/1 |
+| `Ord` | i32 / i64 | `(< a b)` / `(<= a b)` / `(> a b)` / `(>= a b)` | Signed `.lt_s` / `.le_s` / `.gt_s` / `.ge_s`; result is i32 0/1 |
+| `Logical` | i32 | `(&& a b)` / `(\|\| a b)` | Short-circuiting if; result is i32 0/1 |
+| `Bitwise` | i32 / i64 | `(& a b)` / `(\| a b)` / `(^ a b)` | `.and` / `.or` / `.xor`; result matches input type |
+| `Shift` | i32 / i64 | `(<< a n)` / `(>> a n)` / `(>>> a n)` | `.shl` / `.shr_s` / `.shr_u`; result matches input type |
 
-演算子はすべて2引数で、両辺を同じ型にする。固定の記号演算子には`%`を付けない。
-整数の加減乗算はWasmのビット幅で折り返す。整数除算は0方向へ丸め、ゼロ除算と最小値/-1でtrapする。符号なしの除算は明示的な`i32.div_u` / `i64.div_u`を使う。
-浮動小数点演算はWasmの丸めとNaN/Infinity等の規則を保つ。floatのゼロ除算はtrapせず、結合則を前提に演算を並べ替えない。
-浮動小数点はNaNのため通常の等価関係・全順序を満たさないので、Eq/Ordを実装しない。
-浮動小数点の比較・符号なし整数の比較・v128には、従来どおり明示的なWasm命令を使う。
+Every operator takes two arguments of the same type. Fixed symbolic operators have no `@` prefix.
+Integer addition/subtraction/multiplication wraps at the Wasm bit width. Integer division truncates toward zero and traps on division by zero or minimum-value/-1. Use explicit `i32.div_u`/`i64.div_u` for unsigned division.
+Floating-point arithmetic retains Wasm rounding, NaN/Infinity, and related rules. Float division by zero does not trap, and operations are not reordered assuming associativity.
+Floating-point types do not implement Eq/Ord because NaN prevents ordinary equivalence relations and total ordering.
+Use existing explicit Wasm instructions for floating-point comparisons, unsigned-integer comparisons, and v128.
 
-## 短絡する論理演算とビット演算
+## Short-Circuit Logic and Bitwise Operations
 
-論理値には既存の条件式と同じi32を使い、0を偽、非0を真とする。`&&`・`||`は常に0/1を返し、オペランドの値をそのまま返さない。
-`(&& a b)`はaが真のときだけbを評価し、`(|| a b)`はaが偽のときだけbを評価する。左辺を評価する回数は一度。
+Booleans use i32 as existing conditions do: 0 is false, nonzero is true. `&&`/`||` always return 0/1 rather than an unchanged operand.
+`(&& a b)` evaluates b only when a is true; `(|| a b)` evaluates b only when a is false. The left operand evaluates once.
 
 ```wat
 (module
@@ -35,70 +35,70 @@
     (call $guard 7)))
 ```
 
-このmainは1を返し、右辺の除算を実行しない。`(&& 2 4)`は1、ビット単位の`(& 2 4)`は0になる。
-`&`・`|`・`^`は左右のオペランドを両方とも、左から右に一度ずつ評価する。
+This main returns 1 without executing the right-hand division. `(&& 2 4)` returns 1, while bitwise `(& 2 4)` returns 0.
+`&`, `|`, and `^` evaluate both operands once each from left to right.
 
-シフトでは値とシフト量を同じ整数型にする。`>>`は符号拡張、`>>>`はゼロ埋め。
-Wasmと同じく、i32はシフト量の下位5bit、i64は下位6bitだけを使う。従ってi32の`(<< 1 32)`とi64の`(<< 1 64)`はどちらも1となる。負のシフト量も同じマスク規則に従う。
-`>>>`も結果の型は変えない。例えば`(>>> -1 0)`は、全bitが1のi32/i64のままとなる。
+Shifts require the value and count to have the same integer type. `>>` sign-extends; `>>>` zero-fills.
+As in Wasm, i32 uses only the low 5 count bits, and i64 uses the low 6. Thus i32 `(<< 1 32)` and i64 `(<< 1 64)` both return 1. Negative shift counts follow the same masking rule.
+`>>>` does not change the result type. For example, `(>>> -1 0)` remains an i32/i64 with every bit set.
 
 ```wat
 (module
-  (func $masked (%type.params $T) (%where (Bitwise $T) (Shift $T))
+  (func $masked (@type.params $T) (@where (Bitwise $T) (Shift $T))
     (param $x $T) (param $mask $T) (param $n $T) (result $T)
     (>>> (& $x $mask) $n))
   (func $main (export "main") (result i64)
-    (call (%inst $masked i64) 84 127 1)))
+    (call (@inst $masked i64) 84 127 1)))
 ```
 
-短絡で実行しない可能性がある右辺も、型・effect・所有権の検査対象に残す。
-右辺だけで外側の所有値を消費すると、分岐後の所有状態が揃わずエラーになる。右辺の中で作って消費する所有値は使える。
-展開後は既存のIf/Numericを使うので、throw・return・trap・Future待機も通常のifと同じ経路を通る。
+A right operand that may be skipped by short-circuiting still undergoes type, effect, and ownership checking.
+Consuming an outer owned value only on the right creates inconsistent post-branch ownership states and is an error. Values created and consumed inside the right operand are allowed.
+Expansion uses existing If/Numeric forms, so throw, return, trap, and Future awaits follow the same paths as ordinary if.
 
-## 型の決め方
+## Determining Types
 
 ```wat
 (module
   (func $four (result i32) (+ 1 3))
   (func $main (export "main") (result i64)
-    (%let (($x (type i64) 40)
+    (@let (($x (type i64) 40)
            ($y (+ 1 $x)))
       (+ $y 1))))
 ```
 
-入力と同じ型を返す`+ - * /`・ビット演算・シフトは、戻り値・引数・let注釈・フィールド等の期待型、または型が決まるオペランドから入力型を選ぶ。
-型が決まった後、両方のオペランドをその型で検査する。暗黙の幅変換や整数/float変換はしない。
-左右のどちらから型が分かっても、実行時には到達したオペランドをソース順に一度ずつ評価する。throw・return・待機・所有権の規則は元の式と同じ。
+For `+ - * /`, bitwise operations, and shifts, whose results match their inputs, the input type comes from an expected result/parameter/let-annotation/field type or from an operand with a known type.
+Once determined, both operands are checked at that type. No implicit width or integer/float conversions occur.
+Regardless of which operand determines the type, reached operands evaluate once each in source order. Throw, return, waiting, and ownership rules are those of the original expressions.
 
-比較はi32を返すが、その戻り値型からオペランドの幅を決めない。
-`(< $x 3)`で`$x`がi64ならi64比較になる。両辺が裸の数値なら`(< (i64.const 1) 3)`のように一方を明示する。
-`(%let $x (+ 1 3) body)`も、オペランドや期待型に型の手掛かりがなくエラーになる。既定の数値型は設けない。
-`Logical`の入力はi32に固定されるため、`(&& 1 3)`や`(%let $x (|| 0 7) body)`は型が決まる。i64・float・参照などを暗黙に真偽値へ変換しない。
+Comparisons return i32, but that result type does not determine operand width.
+If `$x` is i64, `(< $x 3)` is an i64 comparison. When both sides are bare numbers, make one explicit, such as `(< (i64.const 1) 3)`.
+`(@let $x (+ 1 3) body)` is also an error without a type clue from operands or the expected type. There is no default numeric type.
+`Logical` inputs are fixed to i32, so `(&& 1 3)` and `(@let $x (|| 0 7) body)` have determined types. i64, floats, references, and other types do not implicitly convert to booleans.
 
-透明な型aliasは展開した型を使う。newtypeに基底型のインスタンスを自動で引き継がせない。
-newtypeは明示的にunwrapして演算し、必要ならwrapする。text・bytes・GC参照・所有値への構造的なEq等も追加しない。
+Transparent type aliases use their expanded types. Newtypes do not automatically inherit base-type instances.
+Unwrap newtypes explicitly before operations, then wrap if needed. No structural Eq or similar operations for text, bytes, GC references, or owned values are added.
 
-## ジェネリクスの制約
+## Generic Bounds
 
 ```wat
 (module
-  (func $add (%type.params $T) (%where (Add $T))
-    (param $a $T) (param $b $T) (result $T) (%effect pure)
+  (func $add (@type.params $T) (@where (Add $T))
+    (param $a $T) (param $b $T) (result $T) (@effect pure)
     (+ $a $b))
-  (func $main (export "main") (result i64) (%effect pure)
-    (call (%inst $add i64) 40 2)))
+  (func $main (export "main") (result i64) (@effect pure)
+    (call (@inst $add i64) 40 2)))
 ```
 
-`%where`内に上表のクラス名で`(Add $T)`・`(Mul $T)`・`(Div $T)`等を記述でき、複数の対象を並べた`(Add $T $U)`は両方の型に同じ制約を課す。
-func/type/type.alias/closureに共通。対象は、その宣言の型パラメータに限る。
-すべての制約を満たす必要があり、演算子を呼ばない本体やDCEされる関数からの適用も検査する。
-未対応の型は、置換した引数が不正なヘッダーを作る前に`E_GENERIC_BOUND`として報告する。
+Within `@where`, class names from the table specify constraints such as `(Add $T)`, `(Mul $T)`, or `(Div $T)`; `(Add $T $U)` imposes the same constraint on both types.
+This is shared by func/type/type.alias/closure. Targets must be type parameters of that declaration.
+Every constraint must hold; checks also cover bodies that never invoke operators and applications from functions removed by DCE.
+Unsupported types produce `E_GENERIC_BOUND` before substituted arguments can create invalid headers.
 
-型引数は引き続き`(%inst $add i64)`のように明示する。
-既存のジェネリクスと同じく、本体の型・effect・所有権を各具体化で検査する。抽象的な本体を宣言時に証明する仕組みや、必要な制約の自動推論は追加しない。
-型クラスはインスタンスの利用可否を表し、任意の型に対する代数法則の証明を自動で与えるものではない。整数の`%law`は、解決後の既存命令で従来どおり検査する。
+Type arguments continue to be explicit, such as `(@inst $add i64)`.
+As with existing generics, each instantiation checks body types, effects, and ownership. There is no declaration-time proof of abstract bodies or automatic inference of required constraints.
+Typeclasses indicate instance availability; they do not automatically prove algebraic laws for arbitrary types. Integer `@law` checks the existing resolved instructions as before.
 
-主な診断は、型が決まらない`E_OPERATOR_TYPE`、混在型の`E_TYPE_MISMATCH`、直接の未対応演算の`E_CLASS_INSTANCE`、具体化時の`E_GENERIC_BOUND`。
-`type-at`は記号演算子の結果型と各オペランドの型を区別して返す。
+Main diagnostics are `E_OPERATOR_TYPE` for undetermined types, `E_TYPE_MISMATCH` for mixed types, `E_CLASS_INSTANCE` for directly unsupported operations, and `E_GENERIC_BOUND` during instantiation.
+`type-at` distinguishes symbolic-operator result types from operand types.
 
-実行例は[typeclasses.wlt](../examples/typeclasses.wlt)。`just test-typeclasses`でWasmとの一致・単相化・診断・両JS ABIを、`just test-e2e`でChromiumを検査する。
+See [typeclasses.walz](../examples/typeclasses.walz) for an executable example. `just test-typeclasses` checks agreement with Wasm, monomorphization, diagnostics, and both JS ABIs; `just test-e2e` checks Chromium.

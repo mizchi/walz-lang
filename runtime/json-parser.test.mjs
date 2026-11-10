@@ -17,11 +17,11 @@ function invoke(directory,input,file) {
     child.stdin.end(input);
   });
 }
-for(const backend of ["core","component"])test(`${backend}: WLT JSON parser runs from stdin/files with byte-accurate diagnostics`,{timeout:60000},async()=>{
-  const directory=await mkdtemp(join(tmpdir(),"wlt-json-cli-"));
+for(const backend of ["core","component"])test(`${backend}: Walz JSON parser runs from stdin/files with byte-accurate diagnostics`,{timeout:60000},async()=>{
+  const directory=await mkdtemp(join(tmpdir(),"walz-json-cli-"));
   try {
     const {build}=await import(backend==="core"?"./build-core.mjs":"./build.mjs");
-    await build("examples/json-parser/main.wlt",directory);
+    await build("examples/json-parser/main.walz",directory);
     const {instantiate}=await import(pathToFileURL(join(directory,"index.js")));
     const {api}=await instantiate();
     assert.equal(api.main(),42);

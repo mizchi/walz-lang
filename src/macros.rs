@@ -42,8 +42,8 @@ pub struct Checking {
 impl Default for Report {
     fn default() -> Self {
         Self {
-            schema: "wlt-macro-expansion-v1",
-            type_schema: "wlt-type-info-v1",
+            schema: "walz-macro-expansion-v1",
+            type_schema: "walz-type-info-v1",
             definitions: vec![],
             expansions: vec![],
             checking: Checking::default(),
@@ -198,8 +198,11 @@ pub(crate) fn requested(source: &str) -> bool {
     crate::sexpr::parse(source).is_ok_and(|root| {
         let mut pending = vec![&root];
         while let Some(n) = pending.pop() {
-            if matches!(n.head(), Some("macro" | "%macro"))
-                || n.head().is_some_and(|h| h.starts_with("%$"))
+            if n.head().is_some_and(crate::syntax::annotation) {
+                continue;
+            }
+            if matches!(n.head(), Some("macro" | "@macro"))
+                || n.head().is_some_and(|h| h.starts_with("@$"))
             {
                 return true;
             }
@@ -419,7 +422,7 @@ pub(crate) fn declaration(source: &str, node: &Sexp) -> Result<Macro, Error> {
             error(
                 source,
                 node,
-                "expected (%macro $name (rule (pattern...) clauses... template)...)",
+                "expected (@macro $name (rule (pattern...) clauses... template)...)",
             )
         })?;
     if parts.len() < 3 {
@@ -805,7 +808,7 @@ impl Environment {
         expected: Option<&Inferred>,
         mut infer: impl FnMut(&Sexp, bool, Projection) -> Result<Inferred, Error>,
     ) -> Result<(), Error> {
-        let name = node.head().unwrap_or("").trim_start_matches('%');
+        let name = node.head().unwrap_or("").trim_start_matches('@');
         let definition = self.definitions.get(name).ok_or_else(|| {
             error(source, node, format!("unknown macro `{name}`")).with_code("E_MACRO_UNKNOWN")
         })?;

@@ -178,7 +178,7 @@ pub fn emit(module: &Module) -> Result<String, Error> {
         return Ok(output);
     }
     output.push_str(
-        "\nnamespace WltLaws\nset_option maxRecDepth 4096\nset_option maxHeartbeats 4000000\n",
+        "\nnamespace WalzLaws\nset_option maxRecDepth 4096\nset_option maxHeartbeats 4000000\n",
     );
     let mut ordered = Vec::new();
     let mut done = BTreeSet::new();
@@ -236,6 +236,6 @@ pub fn emit(module: &Module) -> Result<String, Error> {
             .collect::<String>();
         output.push_str(&format!("theorem law{index}{params} : f{}{arguments} ≠ 0 := by\n  simp only [{definitions}] <;> bv_decide\n", law.function.0));
     }
-    output.push_str("end WltLaws\n");
+    output.push_str("end WalzLaws\n");
     Ok(output)
 }

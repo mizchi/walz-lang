@@ -557,7 +557,7 @@ impl Instantiator<'_> {
                 self.walk(&b[2], &nested, input, index, depth + 1)?,
             ]);
             fields.push(binding);
-        } else if !input && head.starts_with("%$") {
+        } else if !input && head.starts_with("@$") {
             let prior = self.delegated.clone();
             self.delegated.extend(super::bindings::delegation(
                 self.source,

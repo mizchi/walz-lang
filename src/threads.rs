@@ -186,7 +186,7 @@ pub(crate) fn immediate(node: &Sexp) -> bool {
         .is_some_and(|a| a.starts_with("offset=") || a.starts_with("align="))
 }
 
-/// WAT selectors precede operands. Arity disambiguates WLT's bare scalar/local
+/// WAT selectors precede operands. Arity disambiguates Walz's bare scalar/local
 /// sugar: (i32.atomic.load 0) has one address, (... $mem 0) has a selector.
 pub(crate) fn selector(items: &[Sexp]) -> Option<usize> {
     let op = lookup(items.first()?.atom()?)?;

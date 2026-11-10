@@ -1,14 +1,14 @@
-# 組み込みの `wlt:core` と複数束縛
+# Built-In `walz:core` and Multiple Bindings
 
-WLT の基本型と標準関数は、通常の静的 import と同じ名前解決・別名・可視性の規則で参照する。
-公開名・完全な関数型・型制約・effect は [生成した標準 API 一覧](stdlib-api.md) にまとめている。
-型・関連関数・WIT組み込みとの区別は [命名とWIT対応](naming.md) を参照。
-汎用のtextキー辞書と不変listを作るbuilderは [コレクション](collections.md) を参照。
-bytes/stringと任意のGC配列の部分範囲を共有する型は [ゼロコピービュー](views.md) を参照。
+Walz's basic types and standard functions use the same name-resolution, aliasing, and visibility rules as ordinary static imports.
+The [generated standard API listing](stdlib-api.md) documents public names, complete function types, type bounds, and effects.
+See [naming and WIT mapping](naming.md) for types, associated functions, and the distinction from WIT built-ins.
+See [collections](collections.md) for generic text-key dictionaries and builders for immutable lists.
+See [zero-copy views](views.md) for types sharing subranges of bytes/string and arbitrary GC arrays.
 
 ```wat
 (module
-  (%use "wlt:core"
+  (@use "walz:core"
     (type $string)
     (type $option)
     (type $result $Outcome)
@@ -16,48 +16,48 @@ bytes/stringと任意のGC配列の部分範囲を共有する型は [ゼロコ�
     (func $string.u64 $format))
   (func $main
     (export "main")
-    (result (%inst $Outcome $string i32))
-    (%effect reads writes allocates suspends)
-    (%let
-      (($pending (type (%inst $future i64)) (%future.ready i64 42))
-       ($number (%future.await i64 (%move $pending)))
+    (result (@inst $Outcome $string i32))
+    (@effect reads writes allocates suspends)
+    (@let
+      (($pending (type (@inst $future i64)) (@future.ready i64 42))
+       ($number (@future.await i64 (@move $pending)))
        ($label (call $format (local.get $number))))
-      (%result.ok (local.get $label))))
+      (@result.ok (local.get $label))))
 )
 ```
 
-`wlt:core` はコンパイラに同梱したモジュールで、ファイルパスや Wasm のホスト import ではない。文字列の check/compile API でも、ファイル経由でも同じものを解決する。解決時のネットワーク・ファイル探索・実行時のモジュール初期化は追加しない。
+`walz:core` is bundled with the compiler; it is neither a file path nor a Wasm host import. String-based check/compile APIs and file-based compilation resolve the same module. Resolution adds no network/file search or runtime module initialization.
 
-| import する型 | 使い方 |
+| Imported type | Usage |
 | --- | --- |
-| `$string` / `$bytes` / `$unit` | 型引数なし。その名前を型の位置に書く |
-| `$option` / `$list` | `(%inst $option T)` / `(%inst $list T)` |
-| `$result` / `$tuple` | `(%inst $result T E)` / `(%inst $tuple T U)` |
-| `$box` / `$future` / `$stream` | `(%inst $box T)` / `(%inst $future T)` / `(%inst $stream T)` |
-| `$task` | `(%inst $task T)`。共有結果 T を返す子タスクの所有ハンドル |
-| `$resource-handle` / `$borrow` | リソースの nominal 型 R に対して `(%inst $resource-handle $R)` / `(%inst $borrow $R)` |
+| `$string` / `$bytes` / `$unit` | No type arguments; write the name in type positions |
+| `$option` / `$list` | `(@inst $option T)` / `(@inst $list T)` |
+| `$result` / `$tuple` | `(@inst $result T E)` / `(@inst $tuple T U)` |
+| `$box` / `$future` / `$stream` | `(@inst $box T)` / `(@inst $future T)` / `(@inst $stream T)` |
+| `$task` | `(@inst $task T)`: an owned handle to a child task returning shareable result T |
+| `$resource-handle` / `$borrow` | `(@inst $resource-handle $R)` / `(@inst $borrow $R)` for nominal resource type R |
 
-これらは既存の検査済み基底型への透明な alias。型引数を取るものも利用者定義の汎用 alias と同じ単相化を使い、新しい nominal identity や追加ランタイムを作らない。`i32`・`i64`・`f32`・`f64`・`ref` は Wasm の構文としてそのまま使う。
+These are transparent aliases for existing checked base types. Parameterized types use the same monomorphization as user-defined generic aliases, adding no nominal identity or runtime. `i32`, `i64`, `f32`, `f64`, and `ref` remain ordinary Wasm syntax.
 
-標準関数は `(func $string.u64)`、`(func $list.map)`、`(func $string-builder.new)` などを選んで import する。任意のローカル名へ変更できる。名前を取り込まない関数は呼出し元のスコープに現れない。依存する標準モジュールは一度だけ展開し、通常の型・effect・所有権・opaque 検査と DCE を適用する。builder や JSON 値の内部表現は公開しない。
+Select standard functions to import with forms such as `(func $string.u64)`, `(func $list.map)`, and `(func $string-builder.new)`. Any local alias is allowed. Functions not imported do not appear in the caller's scope. Dependent standard modules expand once and undergo ordinary type, effect, ownership, and opaque checks and DCE. Internal representations of builders and JSON values are private.
 
-同じスコープで同じ標準名と別名の組を繰り返して import した場合は、1つの束縛を共有する。これは `%include` で自己完結した宣言群を挿入する場合にも適用する。別の標準名を同じローカル名に割り当てたり、同名のローカル宣言を追加したりすれば衝突として拒否する。
+Repeated imports of the same standard-name/alias pair in one scope share a binding. This also applies when `@include` inserts self-contained declarations. Assigning different standard names to the same local name or adding a same-named local declaration is rejected as a collision.
 
-`%string.lit`、`%result.ok`、`%option.some`、`%future.ready` / `%future.await` / `%future.close` などの固定構文はコンパイラの値操作。型の参照には import した型名を使う。`(result (%inst $result T E))` の外側は WAT の結果宣言で、内側が1つの Result 値型を表す。
+Fixed syntax such as `@string.lit`, `@result.ok`, `@option.some`, and `@future.ready`/`@future.await`/`@future.close` is compiler value operations. Type references use imported type names. In `(result (@inst $result T E))`, the outer result is a WAT result declaration; the inner form is one Result value type.
 
-## 複数束縛の `%let`
+## Multiple-Binding `@let`
 
 ```text
-(%let (($a [(type T)] initial-a)
+(@let (($a [(type T)] initial-a)
        ($b [(type U)] initial-b)
        ...)
   body)
 ```
 
-各初期値を左から右に一度だけ評価する。`initial-b` は `$a` を参照でき、`initial-a` は後続の `$b` を参照できない。同名で再束縛する場合、その初期値では以前の束縛が見え、新しい束縛は評価後から見える。すべての名前は body 内に有効で、式の外には出ない。
+Initializers evaluate once each from left to right. `initial-b` can refer to `$a`; `initial-a` cannot refer to the later `$b`. When rebinding the same name, its initializer sees the previous binding, and the new binding becomes visible afterward. All names are in scope in the body and do not escape the expression.
 
-型注釈`(type T)`は束縛ごとに省略可能。`($n (type i64) 42)`はi64の定数を初期値にし、`($copy $n)`は既存のローカルの型を使う。期待型のない`($n 42)`は整数幅が決まらずエラーになる。不変性、初期値の型適合、effect、所有値の move と消費義務は単独の `%let` と同じ。初期値が trap・throw・中断を起こす場合も、ネストした `%let` と同じ順序と既存の終了処理に従う。Wasm の複数戻り値を束縛する構文ではない。pair の分解は `(%let ($first $second) subject body)` を使う。
+Each binding may omit its `(type T)` annotation. `($n (type i64) 42)` initializes an i64 constant; `($copy $n)` uses the existing local's type. `($n 42)` without an expected type is an error because the integer width is unknown. Immutability, initializer type compatibility, effects, explicit moves, and consumption obligations are the same as for single `@let`. Trapping, throwing, or suspending initializers follow nested `@let` order and existing exit cleanup. This does not bind Wasm multi-value results. Use `(@let ($first $second) subject body)` to destructure pairs.
 
-`just test-standard` で、標準型・関数・別名・可視性と、Core＋JSPI / Component の Future・Result・Option ABI を確認する。
+`just test-standard` checks standard types/functions/aliases/visibility and Future/Result/Option ABIs for Core+JSPI and Component.
 
-`$task<T>` は同じインスタンス内の子タスクです。`%task.spawn` で作り、明示 move と join / drop で消費します。実行先は Core＋JSPI または Component です。[writer と子タスク](scoped-tasks.md)。
+`$task<T>` is a child task within the same instance. Create it with `@task.spawn` and consume it through explicit moves and join/drop. Execution targets Core+JSPI or Component. See [writers and child tasks](scoped-tasks.md).

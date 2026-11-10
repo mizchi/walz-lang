@@ -1,5 +1,5 @@
-//! Explicit WLT surface syntax. The checked implementation IR keeps its own
-//! vocabulary; only recognized `%` entries may introduce those extensions.
+//! Explicit Walz surface syntax. The checked implementation IR keeps its own
+//! vocabulary; only recognized `@` entries may introduce those extensions.
 use crate::{
     Error,
     ir::Span,
@@ -73,14 +73,85 @@ fn entry(name: &str) -> bool {
     .any(|prefix| name.starts_with(prefix))
 }
 
+fn extension(name: &str) -> bool {
+    let Some(name) = name.strip_prefix('@') else {
+        return false;
+    };
+    name.starts_with('$')
+        || entry(&crate::naming::core(name))
+        || matches!(
+            name,
+            "inst"
+                | "export"
+                | "loop"
+                | "try"
+                | "result"
+                | "struct.new"
+                | "import"
+                | "effects"
+                | "file.namespace"
+                | "string"
+                | "text"
+                | "bytes"
+                | "unit"
+        )
+}
+
+/// Unreserved WAT annotations are opaque, including any extension-looking data.
+pub(crate) fn annotation(head: &str) -> bool {
+    head.starts_with('@') && !extension(head)
+}
+
+/// WAT parsers discard unknown annotations. Detect owned entries before that
+/// fast path, even when their arguments are malformed. Strings, comments, and
+/// the complete payloads of ordinary annotations cannot request an extension.
+pub(crate) fn requested(source: &str) -> bool {
+    use wast::lexer::TokenKind;
+    if !source.contains('@') {
+        return false;
+    }
+    let lexer = wast::lexer::Lexer::new(source);
+    let (mut offset, mut depth, mut skipped) = (0, 0usize, None);
+    let mut head = false;
+    while let Ok(Some(token)) = lexer.parse(&mut offset) {
+        match token.kind {
+            TokenKind::Whitespace | TokenKind::LineComment | TokenKind::BlockComment => continue,
+            TokenKind::LParen => {
+                depth += 1;
+                head = true;
+            }
+            TokenKind::RParen => {
+                if skipped == Some(depth) {
+                    skipped = None;
+                }
+                depth = depth.saturating_sub(1);
+                head = false;
+            }
+            _ => {
+                if skipped.is_none() && token.kind == TokenKind::Annotation {
+                    let name = &source[token.offset..token.offset + token.len as usize];
+                    if extension(name) {
+                        return true;
+                    }
+                    if head {
+                        skipped = Some(depth);
+                    }
+                }
+                head = false;
+            }
+        }
+    }
+    false
+}
+
 fn prefix_error(source: &str, node: &Sexp, name: &str) -> Error {
     Error::at(
         source,
         node.span,
-        format!("WLT extension `{name}` requires `%{name}`"),
+        format!("Walz extension `{name}` requires `@{name}`"),
     )
-    .with_code("E_WLT_PREFIX")
-    .help(format!("write `%{name}` for this WLT extension"))
+    .with_code("E_WALZ_PREFIX")
+    .help(format!("write `@{name}` for this Walz extension"))
 }
 
 /// Historical spelling edits retain a mapping to the original source offsets.
@@ -115,10 +186,11 @@ impl Migration {
 }
 
 fn native(source: &str) -> bool {
-    wat::parse_str(source).is_ok_and(|bytes| {
-        wasmparser::Parser::is_core_wasm(&bytes)
-            && wasmparser::Validator::new().validate_all(&bytes).is_ok()
-    })
+    !requested(source)
+        && wat::parse_str(source).is_ok_and(|bytes| {
+            wasmparser::Parser::is_core_wasm(&bytes)
+                && wasmparser::Validator::new().validate_all(&bytes).is_ok()
+        })
 }
 
 fn legacy_control(node: &Sexp, head: &str, legacy_try: bool) -> bool {
@@ -128,7 +200,7 @@ fn legacy_control(node: &Sexp, head: &str, legacy_try: bool) -> bool {
     }
     let mut pending = parts.iter().skip(1).collect::<Vec<_>>();
     while let Some(n) = pending.pop() {
-        if head == "loop" && matches!(n.head(), Some("recur" | "%recur")) {
+        if head == "loop" && matches!(n.head(), Some("recur" | "@recur")) {
             return true;
         }
         if head == "try" && legacy_try && n.head() == Some("catch_all") {
@@ -165,7 +237,7 @@ pub(crate) fn convert_legacy(source: &str) -> Result<Migration, Error> {
     let mut pending = vec![&root];
     while let Some(node) = pending.pop() {
         if matches!(node.atom(), Some("$json.Object" | "$json.new"))
-            || matches!(node.head(), Some("namespace" | "%namespace"))
+            || matches!(node.head(), Some("namespace" | "@namespace"))
                 && node.list().and_then(|p| p.get(1)).and_then(Sexp::atom) == Some("$json")
         {
             plan.old_json_object = true;
@@ -213,7 +285,7 @@ pub(crate) fn normalize(source: &str, root: &Sexp) -> Result<Sexp, Error> {
 /// Lower it before name, type, effect and ownership analysis so those contracts
 /// use the same implementation for both spellings.
 fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
-    if !matches!(node.head(), Some("let" | "%let")) {
+    if !matches!(node.head(), Some("let" | "@let")) {
         return Ok(());
     }
     let parts = node.list().unwrap();
@@ -240,7 +312,7 @@ fn lower_let_group(source: &str, node: &mut Sexp) -> Result<(), Error> {
         }) {
             return Err(error(
                 binding.span,
-                "expected ($name [type] initial) in %let binding group",
+                "expected ($name [type] initial) in @let binding group",
             ));
         }
     }
@@ -307,7 +379,7 @@ impl<'a> Plan<'a> {
         }
         self.edits
             .entry(node.span.start)
-            .or_insert_with(|| "%".into());
+            .or_insert_with(|| "@".into());
         self.marked.insert(node.span);
         Ok(())
     }
@@ -340,8 +412,8 @@ impl<'a> Plan<'a> {
             );
         }
         // Patterns and binding/type-query clauses form a separate grammar.
-        // Only each rule's output is ordinary WLT surface syntax.
-        if matches!(node.head(), Some("macro" | "%macro")) {
+        // Only each rule's output is ordinary Walz surface syntax.
+        if matches!(node.head(), Some("macro" | "@macro")) {
             if node.head() == Some("macro") {
                 self.require(node, "macro")?;
             }
@@ -367,7 +439,7 @@ impl<'a> Plan<'a> {
         }
         // `(type T)` marks a let annotation at the surface; the checked core
         // and the native macro expander share the existing type operand.
-        if matches!(node.head(), Some("let" | "%let"))
+        if matches!(node.head(), Some("let" | "@let"))
             && let Kind::List(items) = &mut node.kind
             && items.len() == 5
             && items[2].head() == Some("type")
@@ -377,14 +449,14 @@ impl<'a> Plan<'a> {
                 return Err(Error::at(
                     self.source,
                     items[2].span,
-                    "expected one type in %let annotation: (type T)",
+                    "expected one type in @let annotation: (type T)",
                 )
                 .with_code("E_LET_TYPE"));
             }
             items[2] = annotation[1].clone();
         }
         if let Kind::Atom(name) = &mut node.kind {
-            if let Some(bare) = name.strip_prefix('%') {
+            if let Some(bare) = name.strip_prefix('@') {
                 let core = crate::naming::core(bare);
                 let public = crate::naming::public(&core);
                 if !matches!(core.as_ref(), "text" | "bytes" | "unit")
@@ -393,12 +465,12 @@ impl<'a> Plan<'a> {
                     return Err(Error::at(
                         self.source,
                         node.span,
-                        format!("unknown WLT type `%{bare}`"),
+                        format!("unknown Walz type `@{bare}`"),
                     )
-                    .with_code("E_WLT_EXTENSION"));
+                    .with_code("E_WALZ_EXTENSION"));
                 }
                 if self.legacy && bare != public {
-                    self.replacements.insert(node.span, format!("%{public}"));
+                    self.replacements.insert(node.span, format!("@{public}"));
                 }
                 self.marked.insert(node.span);
                 *name = core.into_owned();
@@ -406,7 +478,7 @@ impl<'a> Plan<'a> {
             return Ok(());
         }
         let mut head = node.head().unwrap_or("").to_owned();
-        if head.starts_with('@') {
+        if crate::syntax::annotation(&head) {
             return Ok(());
         }
         if matches!(head.as_str(), "native.loop" | "native.try" | "struct.named") {
@@ -415,7 +487,7 @@ impl<'a> Plan<'a> {
                 node.span,
                 "internal syntax is not a source instruction",
             )
-            .with_code("E_WLT_EXTENSION"));
+            .with_code("E_WALZ_EXTENSION"));
         }
         if !self.legacy && head == "try" && legacy_control(node, &head, false) {
             return Err(prefix_error(self.source, node, "try"));
@@ -426,53 +498,53 @@ impl<'a> Plan<'a> {
         let Kind::List(items) = &mut node.kind else {
             return Ok(());
         };
-        if !self.legacy && matches!(head.as_str(), "namespace" | "%namespace" | "%import") {
+        if !self.legacy && matches!(head.as_str(), "namespace" | "@namespace" | "@import") {
             return Err(Error::at(
                 self.source,
                 items[0].span,
-                if head == "%import" {
-                    "static source imports use %use"
+                if head == "@import" {
+                    "static source imports use @use"
                 } else {
                     "namespace declarations are removed; put the module in a file"
                 },
             )
-            .with_code("E_WLT_EXTENSION")
-            .help("use (%use \"./module.wlt\" (func $member)) to select file exports"));
+            .with_code("E_WALZ_EXTENSION")
+            .help("use (@use \"./module.walz\" (func $member)) to select file exports"));
         }
-        if !self.legacy && head == "%use" {
+        if !self.legacy && head == "@use" {
             let path = items.get(1).and_then(Sexp::text);
             if !path.is_some_and(|path| {
-                path.starts_with("wlt:") || path.starts_with("./") || path.starts_with("../")
+                path.starts_with("walz:") || path.starts_with("./") || path.starts_with("../")
             }) {
                 return Err(Error::at(self.source, node.span,
-                    "%use requires a package name or an explicit relative path such as ./module.wlt")
+                    "@use requires a package name or an explicit relative path such as ./module.walz")
                     .with_code("E_USE_PATH"));
             }
         }
         if self.legacy {
-            if matches!(head.as_str(), "namespace" | "%namespace") {
-                head = "%legacy.namespace".into();
+            if matches!(head.as_str(), "namespace" | "@namespace") {
+                head = "@legacy.namespace".into();
                 self.replacements.insert(items[0].span, head.clone());
                 items[0].kind = Kind::Atom(head.clone());
-            } else if matches!(head.as_str(), "import" | "%import" | "use" | "%use")
+            } else if matches!(head.as_str(), "import" | "@import" | "use" | "@use")
                 && items.get(2).and_then(Sexp::text).is_none()
             {
                 head = if items.get(1).and_then(Sexp::atom).is_some() {
-                    "%file.use"
+                    "@file.use"
                 } else {
-                    "%use"
+                    "@use"
                 }
                 .into();
                 self.replacements.insert(items[0].span, head.clone());
                 items[0].kind = Kind::Atom(head.clone());
             }
-            let bare = head.trim_start_matches('%');
+            let bare = head.trim_start_matches('@');
             let public = if bare == "effects" {
                 "effect".into()
             } else {
                 crate::naming::public(bare).into_owned()
             };
-            let renamed = format!("{}{public}", if head.starts_with('%') { "%" } else { "" });
+            let renamed = format!("{}{public}", if head.starts_with('@') { "@" } else { "" });
             if renamed != head {
                 head = renamed;
                 self.replacements.insert(items[0].span, head.clone());
@@ -480,17 +552,17 @@ impl<'a> Plan<'a> {
             }
         }
         if self.legacy
-            && matches!(head.as_str(), "import" | "%import" | "%use")
+            && matches!(head.as_str(), "import" | "@import" | "@use")
             && matches!(
                 items.get(1).and_then(Sexp::text),
-                Some("wlt:std" | "wlt:core")
+                Some("walz:std" | "walz:core")
             )
             && items.get(2).and_then(Sexp::text).is_none()
         {
-            if items[1].text() == Some("wlt:std") {
+            if items[1].text() == Some("walz:std") {
                 self.replacements
-                    .insert(items[1].span, "\"wlt:core\"".into());
-                items[1].kind = Kind::Text("wlt:core".into());
+                    .insert(items[1].span, "\"walz:core\"".into());
+                items[1].kind = Kind::Text("walz:core".into());
             }
             for binding in &items[2..] {
                 if let Some(kind @ ("type" | "func")) = binding.head()
@@ -507,17 +579,17 @@ impl<'a> Plan<'a> {
                 }
             }
         }
-        if head == "%inst" {
+        if head == "@inst" {
             if items.len() < 2 || !items[1].atom().is_some_and(|n| n.starts_with('$')) {
                 return Err(
-                    Error::at(self.source, node.span, "expected (%inst $name types...)")
-                        .with_code("E_WLT_EXTENSION"),
+                    Error::at(self.source, node.span, "expected (@inst $name types...)")
+                        .with_code("E_WALZ_EXTENSION"),
                 );
             }
             items.remove(0);
-        } else if head.starts_with("%$") {
+        } else if head.starts_with("@$") {
             // Macro identity is resolved in its own module namespace.
-        } else if let Some(bare) = head.strip_prefix('%') {
+        } else if let Some(bare) = head.strip_prefix('@') {
             let core = crate::naming::core(bare);
             if crate::naming::public(&core) != bare
                 || !entry(&core)
@@ -526,9 +598,9 @@ impl<'a> Plan<'a> {
                 return Err(Error::at(
                     self.source,
                     node.span,
-                    format!("unknown WLT extension `%{bare}`"),
+                    format!("unknown Walz extension `@{bare}`"),
                 )
-                .with_code("E_WLT_EXTENSION"));
+                .with_code("E_WALZ_EXTENSION"));
             }
             self.marked.insert(items[0].span);
             items[0].kind = Kind::Atom(
@@ -549,7 +621,7 @@ impl<'a> Plan<'a> {
             }
             self.edits
                 .entry(items[0].span.start)
-                .or_insert_with(|| "%inst ".into());
+                .or_insert_with(|| "@inst ".into());
         } else if entry(&crate::naming::core(&head)) {
             let core = crate::naming::core(&head);
             self.require(&items[0], &crate::naming::public(&core))?;
@@ -573,7 +645,7 @@ impl<'a> Plan<'a> {
             return Ok(());
         }
         let previous_arguments = self.macro_arguments;
-        self.macro_arguments |= head.starts_with("%$");
+        self.macro_arguments |= head.starts_with("@$");
         let count = items.len();
         for (i, child) in items
             .iter_mut()

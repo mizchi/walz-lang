@@ -23,7 +23,7 @@ pub(super) struct Index {
     macro_bindings: Vec<(Sexp, Sexp)>,
 }
 fn head(n: &Sexp) -> Option<&str> {
-    n.head().map(|s| s.trim_start_matches('%'))
+    n.head().map(|s| s.trim_start_matches('@'))
 }
 fn snippet(text: &str, n: &Sexp) -> String {
     text.get(n.span.start..n.span.end)
@@ -74,7 +74,7 @@ impl Index {
         while let Some(n) = pending.pop() {
             if let Some(m) = n
                 .head()
-                .and_then(|h| h.strip_prefix('%'))
+                .and_then(|h| h.strip_prefix('@'))
                 .and_then(|n| macros.get(n))
             {
                 index.macro_bindings.extend(m.editor_bindings(n));
@@ -224,14 +224,14 @@ impl Index {
                 }
             }
             Some("use" | "file.use") => {
-                if p.get(1).and_then(Sexp::text) == Some("wlt:core") {
+                if p.get(1).and_then(Sexp::text) == Some("walz:core") {
                     for (name, kind) in crate::standard::completion_exports() {
                         if self.symbols.len() >= MAX_ENTRIES {
                             break;
                         }
                         self.symbols.push(Symbol {
                             name: name.into(),
-                            detail: "wlt:core export (explicit import required)".into(),
+                            detail: "walz:core export (explicit import required)".into(),
                             declaration: source.label(n.span, "core import"),
                             visibility: n.span,
                             kind,
@@ -397,7 +397,7 @@ impl Index {
         }
         match head(n) {
             Some(name)
-                if name.starts_with('$') && n.head().is_some_and(|h| h.starts_with("%$")) =>
+                if name.starts_with('$') && n.head().is_some_and(|h| h.starts_with("@$")) =>
             {
                 self.reference(
                     &p[0],
@@ -609,7 +609,7 @@ impl Index {
                     == Some(path)
                     && offsets.iter().any(|o| contains(s.visibility, *o))
                     && seen.insert(if s.kind == 14 {
-                        format!("%{}", s.name)
+                        format!("@{}", s.name)
                     } else {
                         s.name.clone()
                     })
@@ -618,7 +618,7 @@ impl Index {
             .map(|s| {
                 (
                     if s.kind == 14 {
-                        format!("%{}", s.name)
+                        format!("@{}", s.name)
                     } else {
                         s.name.clone()
                     },

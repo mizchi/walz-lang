@@ -64,10 +64,10 @@ jobs:
       - name: Differential seeds
         if: matrix.suite == 'compiler'
         env:
-          WLT_FUZZ_CASES: ${{ github.event_name == 'schedule' && '256' || '32' }}
+          WALZ_FUZZ_CASES: ${{ github.event_name == 'schedule' && '256' || '32' }}
         run: |
           for seed in 137 2026; do
-            WLT_FUZZ_SEED="$seed" cargo test --locked --test differential
+            WALZ_FUZZ_SEED="$seed" cargo test --locked --test differential
           done
       - name: Dependencies
         if: matrix.suite == 'runtime'

@@ -189,7 +189,7 @@ impl Checker<'_, '_> {
         if items.len() != 4 {
             return Err(fail(
                 node,
-                "expected (%struct.update $Type object ($field $old new-value))",
+                "expected (@struct.update $Type object ($field $old new-value))",
             ));
         }
         let Some([field, name, update]) = items[3].list() else {

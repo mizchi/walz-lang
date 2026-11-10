@@ -1,4 +1,4 @@
-//! Embedded `wlt:core`: ordinary static aliases and library modules. Resolving
+//! Embedded `walz:core`: ordinary static aliases and library modules. Resolving
 //! this package never performs filesystem or host I/O and adds no runtime.
 use crate::{
     Error,
@@ -9,11 +9,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::standard_sources::{INTERNAL_LIBRARIES, LIBRARIES, TYPES};
 
 fn imports<'a>(node: &'a Sexp, out: &mut Vec<&'a Sexp>) {
-    if node.head() == Some("%use") && node.list().unwrap().get(2).and_then(Sexp::text).is_none() {
+    if node.head() == Some("@use") && node.list().unwrap().get(2).and_then(Sexp::text).is_none() {
         out.push(node);
     } else if matches!(
         node.head(),
-        Some("module" | "%namespace" | "%file.namespace" | "%legacy.namespace")
+        Some("module" | "@namespace" | "@file.namespace" | "@legacy.namespace")
     ) {
         for child in node.list().unwrap().iter().skip(1) {
             imports(child, out);
@@ -87,14 +87,14 @@ impl Libraries<'_> {
             return Ok(name.clone());
         }
         let parsed = parsed_library(file)?;
-        let name = format!("{}-{}", self.prefix, file.trim_end_matches(".wlt"));
+        let name = format!("{}-{}", self.prefix, file.trim_end_matches(".walz"));
         self.active.insert(file.into());
         let mut nodes = vec![];
         imports(&parsed.syntax, &mut nodes);
         let mut edits = vec![];
         for node in nodes {
             let path = &node.list().unwrap()[1];
-            let target = if path.text() == Some("wlt:core") {
+            let target = if path.text() == Some("walz:core") {
                 for binding in &node.list().unwrap()[2..] {
                     let fields = binding.list().unwrap();
                     if binding.head() != Some("type") {
@@ -113,7 +113,7 @@ impl Libraries<'_> {
                 )?
             };
             edits.push((path.span, target));
-            edits.push((node.list().unwrap()[0].span, "%file.use".into()));
+            edits.push((node.list().unwrap()[0].span, "@file.use".into()));
         }
         let mut text = parsed.source[parsed.body.clone()].to_owned();
         edits.sort_by_key(|(span, _)| std::cmp::Reverse(span.start));
@@ -124,7 +124,7 @@ impl Libraries<'_> {
             );
         }
         self.units
-            .push(format!("\n(%file.namespace {name} {})\n", text));
+            .push(format!("\n(@file.namespace {name} {})\n", text));
         self.active.remove(file);
         self.names.insert(file.into(), name.clone());
         Ok(name)
@@ -161,7 +161,7 @@ impl Prepared {
         let mut seen = BTreeSet::new();
         parts.retain_mut(|child| {
             if child.head() == Some("use")
-                && child.list().unwrap().get(1).and_then(Sexp::text) == Some("wlt:core")
+                && child.list().unwrap().get(1).and_then(Sexp::text) == Some("walz:core")
                 && child.list().unwrap().get(2).and_then(Sexp::text).is_none()
             {
                 let Kind::List(fields) = &mut child.kind else {
@@ -193,7 +193,7 @@ impl Prepared {
                 .chain(&mut error.diagnostic.related)
             {
                 if label.location.path.is_none() && label.span.start >= self.insert {
-                    label.location.path = Some("wlt:core".into());
+                    label.location.path = Some("walz:core".into());
                     label.location.line = label.location.line.saturating_sub(self.line_offset);
                 }
             }
@@ -212,7 +212,7 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
                 .unwrap()
                 .get(1)
                 .and_then(Sexp::text)
-                .is_some_and(|s| s.starts_with("wlt:"))
+                .is_some_and(|s| s.starts_with("walz:"))
         })
         .collect::<Vec<_>>();
     let mut result = Prepared {
@@ -236,7 +236,7 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
     }
     let mut next = 0;
     let prefix = loop {
-        let prefix = format!("$wlt-core-{next}");
+        let prefix = format!("$walz-core-{next}");
         next += 1;
         if !names.iter().any(|n| n.starts_with(prefix.as_str())) {
             break prefix;
@@ -252,17 +252,17 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
     let mut selected = BTreeMap::new();
     for node in nodes {
         let parts = node.list().unwrap();
-        if parts[1].text() != Some("wlt:core") {
+        if parts[1].text() != Some("walz:core") {
             return Err(Error::at(
                 source,
                 parts[1].span,
-                "unknown built-in module; expected wlt:core",
+                "unknown built-in module; expected walz:core",
             )
             .with_code("E_CORE_MODULE"));
         }
         if parts.len() < 3 {
             return Err(
-                Error::at(source, node.span, "wlt:core requires explicit imports")
+                Error::at(source, node.span, "walz:core requires explicit imports")
                     .with_code("E_CORE_MEMBER"),
             );
         }
@@ -299,7 +299,7 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
                     Error::at(
                         source,
                         item.span,
-                        format!("wlt:core does not export {} {}", member.0, member.1),
+                        format!("walz:core does not export {} {}", member.0, member.1),
                     )
                     .with_code("E_CORE_MEMBER")
                 })?;
@@ -307,7 +307,7 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
             selected.insert(member, unit);
         }
     }
-    let mut facade = String::from("(%export");
+    let mut facade = String::from("(@export");
     for name in &libraries.core_types {
         facade.push_str(&format!(" (type {name})"));
     }
@@ -319,11 +319,11 @@ pub(crate) fn prepare(source: &str, root: &Sexp) -> Result<Prepared, Error> {
     }
     for ((kind, name), unit) in selected {
         facade.push_str(&format!(
-            "\n(%file.use {unit} ({kind} {name}))\n(%export ({kind} {name}))\n"
+            "\n(@file.use {unit} ({kind} {name}))\n(@export ({kind} {name}))\n"
         ));
     }
     let extra = format!(
-        "\n(%file.namespace {prefix} {facade})\n{}",
+        "\n(@file.namespace {prefix} {facade})\n{}",
         libraries.units.join("")
     );
     let mut text = source.to_owned();
@@ -371,7 +371,7 @@ mod performance_contracts {
             .list()
             .unwrap()
             .iter()
-            .filter(|n| n.head() == Some("%type.alias"))
+            .filter(|n| n.head() == Some("@type.alias"))
             .filter(|n| {
                 exported_types.contains(&(
                     "type".to_owned(),
@@ -393,8 +393,8 @@ mod performance_contracts {
     fn type_only_imports_do_not_parse_library_implementations() {
         crate::sexpr::take_parse_log();
         crate::check(
-            r#"(module (%use "wlt:core" (type $result))
-          (func $main (result (%inst $result i64 i32)) (%result.ok 42)))"#,
+            r#"(module (@use "walz:core" (type $result))
+          (func $main (result (@inst $result i64 i32)) (@result.ok 42)))"#,
         )
         .unwrap();
         let calls = crate::sexpr::take_parse_log();
@@ -413,8 +413,8 @@ mod performance_contracts {
                 std::thread::spawn(move || {
                     let source = format!(
                         r#"(module
-              (%use "wlt:core" (type $string) (func $string.concat $join{index}))
-              (func $wlt-core-{index} (result i32) (i32.const 0))
+              (@use "walz:core" (type $string) (func $string.concat $join{index}))
+              (func $walz-core-{index} (result i32) (i32.const 0))
               (func $main (export "main") (param $value $string) (result $string)
                 (call $join{index} $value $value)))"#
                     );
@@ -424,7 +424,7 @@ mod performance_contracts {
                             module
                                 .functions
                                 .iter()
-                                .any(|f| f.name == format!("$wlt-core-{index}"))
+                                .any(|f| f.name == format!("$walz-core-{index}"))
                         );
                         let error = crate::check(
                             &source.replace(&format!("(call $join{index}"), "(call $missing"),

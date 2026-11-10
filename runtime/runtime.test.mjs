@@ -5,14 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 const { build } = await import(
-  process.env.WLT_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
+  process.env.WALZ_BACKEND === "core" ? "./build-core.mjs" : "./build.mjs"
 );
 import { createEventLoop } from "./host.mjs";
 
 async function fixture(name, fn) {
-  const dir = await mkdtemp(join(tmpdir(), "wlt-component-"));
+  const dir = await mkdtemp(join(tmpdir(), "walz-component-"));
   try {
-    await build(`tests/component-fixtures/${name}.wlt`, dir);
+    await build(`tests/component-fixtures/${name}.walz`, dir);
     const runtime = await import(pathToFileURL(join(dir, "index.js")));
     await fn(runtime, dir);
   } finally {
@@ -318,9 +318,9 @@ test(
         fs.readFile(
           join(
             dir,
-            process.env.WLT_BACKEND === "core"
+            process.env.WALZ_BACKEND === "core"
               ? "bindings.mjs"
-              : "interfaces/wlt-runtime-delivery.d.ts",
+              : "interfaces/walz-runtime-delivery.d.ts",
           ),
           "utf8",
         ),

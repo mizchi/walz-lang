@@ -68,7 +68,7 @@ test('WASI 0.3 descriptors stay host-owned and close after read completion or ca
 });
 
 test('Node file grants use the same stream/completion protocol and release handles', async () => {
-  const directory=await mkdtemp(join(tmpdir(),'wlt-wasi-files-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-wasi-files-'));
   try {
     const input=join(directory,'in.bin'),output=join(directory,'out.bin');
     const bytes=new Uint8Array([0,1,127,128,255]);await writeFile(input,bytes);
@@ -85,7 +85,7 @@ test('Node file grants use the same stream/completion protocol and release handl
 });
 
 test('file batches transfer whole chunks and dispose a failed batch provider',async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-file-batches-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-file-batches-'));
   try{
     const input=join(dir,'input'),output=join(dir,'output'),bytes=Uint8Array.from({length:8193},(_,i)=>i&255);
     await writeFile(input,bytes);const files=createNodeFileSystem({readFiles:{input},writeFiles:{output}});
@@ -113,16 +113,16 @@ test('read completion waits for descriptor disposal and unused cancellation does
 });
 
 for(const backend of ['core','component']) test(`${backend}: file adapter transports byte streams and completion results without retaining descriptors`,{timeout:60000},async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'wlt-file-abi-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-file-abi-'));
   try {
-    for(const name of ['main.wlt','batch.wlt','filesystem.wit','policy.json'])await copyFile(`examples/wasi-files/${name}`,join(directory,name));
+    for(const name of ['main.walz','batch.walz','filesystem.wit','policy.json'])await copyFile(`examples/wasi-files/${name}`,join(directory,name));
     await execFile('cargo',['run','--locked','--quiet','--','bind',join(directory,'filesystem.wit'),join(directory,'policy.json'),join(directory,'generated')]);
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    const out=join(directory,'out');await build(join(directory,'main.wlt'),out,{bindings:join(directory,'generated/bindings.json')});
+    const out=join(directory,'out');await build(join(directory,'main.walz'),out,{bindings:join(directory,'generated/bindings.json')});
     const input=join(directory,'input'),output=join(directory,'output');await writeFile(input,new Uint8Array([65,66]));
     const files=createNodeFileSystem({readFiles:{input},writeFiles:{output}});
     const {instantiate}=await import(pathToFileURL(join(out,'index.js')));let allocator;
-    const {api}=await instantiate({imports:{'wlt:filesystem/files@0.3.0':files},instantiateCore:async(m,i)=>{const instance=await WebAssembly.instantiate(m,i);if(instance.exports.live)allocator=instance.exports;return instance;}});
+    const {api}=await instantiate({imports:{'walz:filesystem/files@0.3.0':files},instantiateCore:async(m,i)=>{const instance=await WebAssembly.instantiate(m,i);if(instance.exports.live)allocator=instance.exports;return instance;}});
     assert.equal(await api.main(),131);assert.equal(await api.write(),0);
     assert.equal(await api.sumBatch(1),131);assert.equal(await api.sumBatch(256),131);
     assert.deepEqual(new Uint8Array(await readFile(output)),new Uint8Array([65,66]));

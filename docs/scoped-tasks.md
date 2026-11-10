@@ -1,53 +1,53 @@
-# Future / Stream writer と子タスク
+# Future/Stream Writers and Child Tasks
 
-writer は既存の所有付き `%resource`、reader は `wlt:core` の `$future<T>` / `$stream<T>` を使う。ホストの `createChannels()` は容量 0–65536 の Stream と、一度だけ確定する Future を提供する。新しい一般的な lifetime 構文は追加しない。
+Writers use existing owned `@resource` values; readers use `walz:core` `$future<T>`/`$stream<T>`. The host's `createChannels()` provides Streams of capacity 0–65536 and Futures that settle once. No new general lifetime syntax is introduced.
 
-`examples/channels/main.wlt` の `pipeline` は、容量 0 の Stream を言語内で producer と consumer に接続する実行例。`policy.json` も含めて両 JS backend と Chromium で検査する。
+The `pipeline` in `examples/channels/main.walz` connects a capacity-0 Stream to language-side producer and consumer tasks. It is tested, including `policy.json`, on both JS backends and Chromium.
 
 ```wat
-(%use "wlt:core" (type $task))
-(%closure $Work (%capture $n i32) (result i32) (%effect pure) (+ $n 1))
+(@use "walz:core" (type $task))
+(@closure $Work (@capture $n i32) (result i32) (@effect pure) (+ $n 1))
 (func $main (export "main") (result i32)
-  (%effect host reads writes allocates suspends)
-  (%task.scope (result i32)
-    (%let $a (%task.spawn i32 $Work (%closure.new $Work 20))
-      (%let $b (%task.spawn i32 $Work (%closure.new $Work 20))
-        (+ (%task.join i32 (%move $a)) (%task.join i32 (%move $b)))))))
+  (@effect host reads writes allocates suspends)
+  (@task.scope (result i32)
+    (@let $a (@task.spawn i32 $Work (@closure.new $Work 20))
+      (@let $b (@task.spawn i32 $Work (@closure.new $Work 20))
+        (+ (@task.join i32 (@move $a)) (@task.join i32 (@move $b)))))))
 ```
 
-`%task.spawn T $Closure environment` は引数を持たず `T` を返す宣言済みクロージャを開始し、所有付き `$task<T>` を返す。捕捉は既存の明示宣言を使う。所有捕捉を持つ環境は明示的に move する。結果 `T` は共有可能な型に限定する。結果の GC オブジェクトを JS にコピーせず、同一性を維持する。
+`@task.spawn T $Closure environment` starts a declared zero-argument closure returning `T` and returns an owned `$task<T>`. Captures use existing explicit declarations. Environments with owned captures require an explicit move. Result `T` must be shareable. Result GC objects preserve identity rather than being copied to JS.
 
-`%task.join T handle` は完了を待って結果を取り出す。`%task.drop T handle` は完了を待って結果を捨てる。どちらもハンドルを消費する。`drop` は detach しない。ハンドルのコピー・未消費・ABI への export、任意の数値からの構築は拒否する。
+`@task.join T handle` waits for completion and retrieves the result. `@task.drop T handle` waits for completion and discards the result. Both consume the handle; `drop` does not detach. Copying handles, leaving them unconsumed, exporting them through the ABI, or constructing them from arbitrary numbers is rejected.
 
-`%task.scope (result T) body` は正常終了と return・br・例外の退出時に子の完了を待つ。公開関数の呼出し全体にも暗黙の親スコープがある。子の失敗は兄弟と親を協調的に取り消す。スコープから例外で退出する場合も親の取消しを要求する。扱いたい失敗は `result` を値として返す。取消しは host 操作・reader・資源の解放と guest stack の unwind を待ってから完了する。
+`@task.scope (result T) body` waits for children on normal completion and exits through return, br, or exceptions. Each public function call also has an implicit parent scope. A child's failure cooperatively cancels its siblings and parent. Exceptional scope exit also requests parent cancellation. Return a `result` value for failures that should be handled. Cancellation completes after host operations, readers, and resources are released and the guest stack unwinds.
 
-これは一つの JS agent 内の協調的並行処理。Worker の並列実行、CPU ループの強制停止と select は扱わない。子だけの取消しと期限は `%task.cancel` / `%task.join-timeout` を使う。イベントループを止める `atomic.wait` 等を推論 effect が含むクロージャは spawn できない。実行先は Core＋JSPI または Component。Core Wasm 単体を実行する `wlt run` の既定 backend には scheduler がない。
+This is cooperative concurrency within one JS agent. It does not provide Worker parallelism, forced interruption of CPU loops, or select. Use `@task.cancel`/`@task.join-timeout` for child-only cancellation and deadlines. Closures whose inferred effects include event-loop-blocking operations such as `atomic.wait` cannot be spawned. Execution targets Core+JSPI or Component. The default backend of `walz run`, which executes standalone Core Wasm, has no scheduler.
 
-## writer の契約
+## Writer Contract
 
-`runtime/channels.mjs` の `createChannels()` はホスト SDK であり、使用する具体的な payload 型を policy と WLT の import 署名で一致させる。payload は ABI を通せる共有データを値で転送する。GC の参照同一性を保持する子タスクの結果とは境界が異なる。
+`createChannels()` in `runtime/channels.mjs` is a host SDK; the concrete payload types in policy and Walz import signatures must match. Payloads transfer shareable ABI-compatible data by value. This differs from child-task results, which preserve GC reference identity.
 
-| 操作 | 契約 |
+| Operation | Contract |
 | --- | --- |
-| `stream(capacity)` / `future()` | 所有付き writer の同期 factory。resource `new` として登録 |
-| `reader(writer)` | reader を一度だけ取得。resource `reader` 契約が独立した所有 endpoint を生成 |
-| `send(writer, value)` | Stream に一要素書く Promise。空きまたは待機 reader がなければ待つ。0=受理、1=終了／取消し |
-| `resolve(writer, value)` | Future を一度だけ確定。0=確定、1=既に終了。reader は `future<result<T,i32>>`、未確定 close は err(1) |
-| `close(writer)` | 同期・冪等。Stream は受理済みバッファを流して EOF。待機 write は値を保持せず終了 |
+| `stream(capacity)` / `future()` | Synchronous factories for owned writers, registered as resource `new` |
+| `reader(writer)` | Acquires the reader once; the resource `reader` contract creates an independent owned endpoint |
+| `send(writer, value)` | A Promise writing one Stream element; waits for capacity or a pending reader. 0=accepted, 1=closed/cancelled |
+| `resolve(writer, value)` | Settles a Future once. 0=settled, 1=already closed. The reader is `future<result<T,i32>>`; closing before settlement produces err(1) |
+| `close(writer)` | Synchronous and idempotent. A Stream drains accepted buffered values then reaches EOF; pending writes finish without retaining their values |
 
-一つの reader と一つの pending write に限定する。同時 write / 同時 read は拒否する。reader close はバッファを捨てて待機 writer を起こす。書き込み Promise の disposer は、その書き込みを取り消す。writer の明示 close と `%using` の destructor は既存の資源管理を使う。
+There is one reader and at most one pending write. Concurrent writes/reads are rejected. Closing a reader discards buffered values and wakes the pending writer. A write Promise's disposer cancels that write. Explicit writer close and `@using` destructors use existing resource management.
 
-`%using` から返せる所有値は、借用を含められない Future / Stream / Task に限って拡張した。例えば `%using` 内で consumer を spawn し、その Task を返せば、writer を閉じてから外側で join できる。borrow・その他の所有値の返却禁止は維持する。
+Owned values returnable from `@using` are extended only to Future/Stream/Task, which cannot contain borrows. For example, spawning a consumer inside `@using` and returning its Task allows joining outside after the writer closes. Returning borrows or other owned values remains prohibited.
 
-## 実装と検査の範囲
+## Implementation and Checking Scope
 
-GC slot と scheduler の private ABI は数値 ID だけを渡す。Component の固定版 jco は、親タスク内の別 thread として子を実行する補正を `runtime/jco-children.mjs` に限定する。元の生成パターンが変われば build を拒否する。スレッドごとの import 対応、終了時の登録解除、親 Wasm stack の unwind 完了を検査する。
+The private ABI between GC slots and the scheduler passes numeric IDs only. For pinned jco's Component output, `runtime/jco-children.mjs` contains the adjustment that runs children as separate threads within the parent task. A change in the original generation pattern causes build rejection. Tests check per-thread import association, deregistration on termination, and completion of parent Wasm stack unwinding.
 
-所有権は既存の Rust / Lean 契約を再利用する。scheduler・JSPI・glue・finally の意味保存や liveness の機械証明はまだない。`just test-runtime-cli` と `just test-e2e` は、並行開始の barrier、参照同一性、EOF、取消し、兄弟失敗、ABI の未解放数と GC slot 数 0 を確認する。
+Ownership reuses the existing Rust/Lean contracts. There is no machine proof yet of scheduler/JSPI/glue/finally semantics preservation or liveness. `just test-runtime-cli` and `just test-e2e` check concurrent-start barriers, reference identity, EOF, cancellation, sibling failure, and zero outstanding ABI allocations and GC slots.
 
-## 期限とホスト側スコープ
+## Deadlines and Host-Side Scopes
 
-非同期 export を含む JS 成果物は `withTaskScope` も export する。
+JS artifacts containing asynchronous exports also export `withTaskScope`.
 
 ```js
 import {instantiate, withTaskScope} from './app/index.js';
@@ -63,41 +63,41 @@ const result = await withTaskScope(start, async scope => {
 }, {timeoutMs: 1000});
 ```
 
-`timeoutMs` は0–2147483647の整数。start に渡した時点から queued の時間も数える。
-0 は guest に入らず取り消す。期限切れは `TaskTimeoutError` で、`TaskCancelledError` の派生型。
-guest の完了が先なら、遅れた期限は結果を変えない。timer と AbortSignal listener は終端で外す。
+`timeoutMs` is an integer from 0–2147483647. Time counts from the start call, including time queued.
+Zero cancels without entering the guest. Expiry produces `TaskTimeoutError`, a subclass of `TaskCancelledError`.
+If the guest finishes first, a late deadline does not change its result. Timers and AbortSignal listeners are removed at termination.
 
-公開呼出し一回が、既存の暗黙の親スコープ。期限切れはその呼出しと WLT の子を取り消し、
-子の unwind・資源の解放が終わってから result を reject する。別の公開呼出しは取り消さない。
-同期 api の戻り値と、非同期の disposer を含む終了通知は別で、解放完了を待つ場合は start の result を使う。
+One public call is the existing implicit parent scope. Expiry cancels that call and its Walz children,
+rejecting result after child unwinding and resource release finish. It does not cancel other public calls.
+Synchronous API return values and completion notifications including asynchronous disposers are distinct; use start's result to await complete release.
 
-withTaskScope は callback と、その scope.start で開始した公開呼出しを束ねる。
-正常終了でも全呼出しを待ち、callback／呼出しの失敗・外部 AbortSignal・期限で所属する呼出しを取り消す。
-scope.cancel(reason) も解放を待つ。終了後の start は拒否し、終了済み scope は instance や過去の結果を保持しない。
-同一 instance の公開呼出しは従来どおり直列化される。並行に進める処理は WLT の子タスクを使う。
+WithTaskScope groups its callback and public calls initiated through its scope.start.
+Even normal completion waits for every call; callback/call failure, an external AbortSignal, or a deadline cancels member calls.
+Scope.cancel(reason) also waits for release. Start after termination is rejected; a terminated scope retains no instance or past results.
+Public calls on the same instance remain serialized. Use Walz child tasks for work that should progress concurrently.
 
-これは公開呼出しとホスト側のグループを単位とする取消し。
-`%task.cancel T handle` はハンドルを消費し、その子と孫の取消し・unwind・host disposal を待つ。親と兄弟は継続する。`drop` は完了待ち、`cancel` は取消し要求という違いがある。
+This cancellation operates on public calls and host-side groups.
+`@task.cancel T handle` consumes the handle and waits for cancellation, unwinding, and host disposal of that child and its descendants. The parent and siblings continue. `drop` waits for completion; `cancel` requests cancellation.
 
-`%task.join-timeout T milliseconds handle` はハンドルを消費して `option<T>` を返す。完了すれば `some`、時間切れなら子の取消しと解放が完了してから `none`。待ち時間は非負の i32、0 も指定できる。既に完了した子の結果を優先する。通常の trap や cleanup failure は成功扱いにせず、親の失敗になる。
+`@task.join-timeout T milliseconds handle` consumes the handle and returns `option<T>`: `some` on completion, or `none` after timeout-triggered child cancellation and release finish. The wait is a nonnegative i32, including 0. An already completed child's result takes priority. Ordinary traps and cleanup failures fail the parent rather than counting as success.
 
-取消しは協調的で、CPU 処理を強制停止しない。ホスト操作は disposer と完了通知の契約を守る必要がある。スコープごとに reader、所有 endpoint、resource、ABI allocation、保留 disposal を追跡する。子へ move した捕捉の所有先も移す。ABI 戻り値は post-return まで生存させ、取消しで破棄する子のバッファだけを回収する。
+Cancellation is cooperative and cannot forcibly interrupt CPU work. Host operations must follow disposer and completion-notification contracts. Each scope tracks readers, owned endpoints, resources, ABI allocations, and pending disposals. Ownership of captures moved to a child also transfers. ABI return values live until post-return; cancellation reclaims only buffers of discarded children.
 
-`proof/Tasks.lean` は取消し対象外の状態を保存する契約と、解放前に acknowledgment できない契約を検査する。JS 実装全体の機械検証ではない。任意スコープの取消しトークンと select は後続。
-ABI を越えてホストへ返した Future/Stream はホストへ所有が移り、その寿命まで deadline が延びるわけではない。
-callback と host 操作は協調的に終了する必要があり、CPU ループや応答しない provider を timer で強制停止できない。
+`proof/Tasks.lean` checks contracts preserving states outside the cancellation target and prohibiting acknowledgement before release. It does not mechanically verify the whole JS implementation. Arbitrary-scope cancellation tokens and select remain subsequent work.
+Futures/Streams returned across the ABI transfer ownership to the host; deadlines do not extend through their lifetimes.
+Callbacks and host operations must terminate cooperatively; a timer cannot forcibly stop CPU loops or unresponsive providers.
 
-## 所有する timer future
+## Owned Timer Future
 
-`wlt:host/event-loop@0.1.0.after(i32)` は `future<unit>` を返す固定の clock capability。
-既存の Future と同じ所有権・await・close を使う。
+`walz:host/event-loop@0.1.0.after(i32)` is a fixed clock capability returning `future<unit>`.
+It uses the same ownership, await, and close as existing Futures.
 
 ```wat
-(%use "wlt:core" (type $future) (type $unit))
-(import "wlt:host/event-loop@0.1.0" "after"
-  (func $after (param $ms i32) (result (%inst $future $unit))))
-(func $pause (export "pause") (param $ms i32) (%effect host suspends)
-  (%future.await $unit (call $after $ms)))
+(@use "walz:core" (type $future) (type $unit))
+(import "walz:host/event-loop@0.1.0" "after"
+  (func $after (param $ms i32) (result (@inst $future $unit))))
+(func $pause (export "pause") (param $ms i32) (@effect host suspends)
+  (@future.await $unit (call $after $ms)))
 ```
 
-close／取消しでは timer を解放する。型・effect・capability は既存の trusted binding と照合する。
+Close/cancellation releases the timer. Types, effects, and capabilities are checked against the existing trusted binding.

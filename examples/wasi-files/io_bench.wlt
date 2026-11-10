@@ -1,4 +1,0 @@
-(module
-  (%use "./batch.wlt" (func $sum-batch))
-  (%bench "file read: one byte" (result i32) (call $sum-batch 1))
-  (%bench "file read: 256 bytes" (result i32) (call $sum-batch 256)))

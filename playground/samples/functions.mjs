@@ -4,24 +4,24 @@ export const functions = {
     description: 'Declare a nominal closure type and every captured variable. Construction supplies those values explicitly; there are no implicit captures.',
     features: ['closures'], expectation: { kind: 'run', output: '42n' },
     source: `(module
-  (%closure $Adder (%capture $base i64) (param $x i64) (result i64)
-    (%effect pure)
+  (@closure $Adder (@capture $base i64) (param $x i64) (result i64)
+    (@effect pure)
     (+ $base $x))
-  (func $main (export "main") (result i64) (%effect allocates)
-    (%let $add40 (%closure.new $Adder 40)
-      (%closure.call $Adder $add40 2))))`,
+  (func $main (export "main") (result i64) (@effect allocates)
+    (@let $add40 (@closure.new $Adder 40)
+      (@closure.call $Adder $add40 2))))`,
   },
   generics: {
     category: 'Functions and modules', label: 'Generic functions and type-class bounds',
-    description: 'Ordinary calls infer unique type arguments from arguments and the expected result. %where checks primitive type-class constraints; inferred and explicit calls share monomorphized instances.',
+    description: 'Ordinary calls infer unique type arguments from arguments and the expected result. @where checks primitive type-class constraints; inferred and explicit calls share monomorphized instances.',
     features: ['generics', 'generic-inference', 'type-bounds'], expectation: { kind: 'run', output: '42n' },
     source: `(module
-  (func $add (%type.params $T) (%where (Add $T) (shared $T))
-    (param $a $T) (param $b $T) (result $T) (%effect pure)
+  (func $add (@type.params $T) (@where (Add $T) (shared $T))
+    (param $a $T) (param $b $T) (result $T) (@effect pure)
     (+ $a $b))
-  (func $main (export "main") (result i64) (%effect pure)
+  (func $main (export "main") (result i64) (@effect pure)
     ;; The expected i64 result fixes T; 40 and 2 are also i64.
-    ;; Explicit form: (call (%inst $add i64) 40 2)
+    ;; Explicit form: (call (@inst $add i64) 40 2)
     (call $add 40 2)))`,
   },
   modules: {
@@ -29,21 +29,21 @@ export const functions = {
     description: 'One file is one module. Select exports using an explicit relative path. This single-file playground reports E_SOURCE_REQUIRED; run the two files below with the CLI.',
     features: ['modules', 'opaque'], expectation: { kind: 'diagnostic', code: 'E_SOURCE_REQUIRED' },
     source: `(module
-  ;; Save this as main.wlt. In user.wlt, write:
+  ;; Save this as main.walz. In user.walz, write:
   ;; (module
-  ;;   (%export (opaque $Id) (func $new) (func $number))
-  ;;   (type $Id (%newtype i32))
-  ;;   (func $new (param $n i32) (result $Id) (%effect pure)
-  ;;     (%newtype.wrap $Id $n))
-  ;;   (func $number (param $id $Id) (result i32) (%effect pure)
-  ;;     (%newtype.unwrap $Id $id)))
-  (%use "./user.wlt" (func $new $make-id) (func $number))
-  (func $main (export "main") (result i32) (%effect pure)
+  ;;   (@export (opaque $Id) (func $new) (func $number))
+  ;;   (type $Id (@newtype i32))
+  ;;   (func $new (param $n i32) (result $Id) (@effect pure)
+  ;;     (@newtype.wrap $Id $n))
+  ;;   (func $number (param $id $Id) (result i32) (@effect pure)
+  ;;     (@newtype.unwrap $Id $id)))
+  (@use "./user.walz" (func $new $make-id) (func $number))
+  (func $main (export "main") (result i32) (@effect pure)
     (call $number (call $make-id 42))))`,
   },
   'component-imports': {
     category: 'Functions and modules', label: 'WIT-typed Component Wasm imports (CLI)',
-    description: 'Select typed exports from a closed Component .wasm with %use. The CLI reads WIT types from the binary and embeds the dependency in Component output. This single-file playground cannot resolve relative files.',
+    description: 'Select typed exports from a closed Component .wasm with @use. The CLI reads WIT types from the binary and embeds the dependency in Component output. This single-file playground cannot resolve relative files.',
     features: ['modules', 'component-imports', 'effects'],
     expectation: { kind: 'diagnostic', code: 'E_SOURCE_REQUIRED' },
     source: `(module
@@ -52,18 +52,18 @@ export const functions = {
   ;; interface math { add: func(a: s32, b: s32) -> s32; }
   ;; world library { export math; }
   ;;
-  ;; math.wlt implements the exported function:
+  ;; math.walz implements the exported function:
   ;; (module
   ;;   (func $add (export "math-add") (param $a i32) (param $b i32)
-  ;;     (result i32) (%effect pure) (+ $a $b)))
+  ;;     (result i32) (@effect pure) (+ $a $b)))
   ;;
   ;; Build a Canonical ABI library with the CLI:
-  ;; wlt build math.wlt --target component --wit math.wit --world library -o math.wasm
+  ;; walz build math.walz --target component --wit math.wit --world library -o math.wasm
   ;; Then build this file with --target component.
   ;; Imports currently accept synchronous shared values.
   ;; WIT does not prove purity, so the call has a host effect.
-  (%use "./math.wasm" (func $math.add $add))
-  (func $main (export "main") (result i32) (%effect host)
+  (@use "./math.wasm" (func $math.add $add))
+  (func $main (export "main") (result i32) (@effect host)
     (call $add 20 22)))`,
   },
   ownership: {
@@ -71,14 +71,14 @@ export const functions = {
     description: 'An owned box must be moved and consumed. Capturing an owned value makes this closure callable once; a shared GC reference alone does not imply ownership.',
     features: ['ownership', 'closures'], expectation: { kind: 'run', output: '42n' },
     source: `(module
-  (%use "wlt:core" (type $box))
-  (%closure $Take (%capture $ticket (%inst $box i64)) (result i64)
-    (%effect pure)
-    (%match (%move $ticket)
+  (@use "walz:core" (type $box))
+  (@closure $Take (@capture $ticket (@inst $box i64)) (result i64)
+    (@effect pure)
+    (@match (@move $ticket)
       (case own ($value) $value)))
-  (func $main (export "main") (result i64) (%effect allocates)
-    (%let $ticket (%box.new i64 42)
-      (%let $take (%closure.new $Take (%move $ticket))
-        (%closure.call $Take (%move $take))))))`,
+  (func $main (export "main") (result i64) (@effect allocates)
+    (@let $ticket (@box.new i64 42)
+      (@let $take (@closure.new $Take (@move $ticket))
+        (@closure.call $Take (@move $take))))))`,
   },
 };

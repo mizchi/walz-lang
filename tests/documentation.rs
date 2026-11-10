@@ -49,7 +49,7 @@ fn introductory_guides_compile_run_and_support_the_documented_project_workflow()
                 .next()
                 .and_then(|line| line.strip_prefix(";; file: "))
                 .map(str::to_owned)
-                .unwrap_or_else(|| format!("example-{i}.wlt"));
+                .unwrap_or_else(|| format!("example-{i}.walz"));
             let path = directory.join(name);
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             std::fs::write(&path, source).unwrap();
@@ -57,9 +57,9 @@ fn introductory_guides_compile_run_and_support_the_documented_project_workflow()
         }
         assert!(!paths.is_empty(), "{guide} needs executable examples");
         for (i, path) in paths.iter().enumerate() {
-            let loaded = wlt::source::load(path).unwrap();
+            let loaded = walz::source::load(path).unwrap();
             let compiled =
-                wlt::compile(loaded.text()).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+                walz::compile(loaded.text()).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
             let wasm = directory.join(format!("example-{i}.wasm"));
             std::fs::write(&wasm, &compiled.wasm).unwrap();
             if let Some(module) = &compiled.ir {
@@ -77,7 +77,7 @@ fn introductory_guides_compile_run_and_support_the_documented_project_workflow()
             }
         }
         if guide == "getting-started" {
-            let cli = env!("CARGO_BIN_EXE_wlt");
+            let cli = env!("CARGO_BIN_EXE_walz");
             successful(Command::new(cli).current_dir(&directory).arg("build"));
             assert!(directory.join("target/main.wasm").is_file());
             assert_eq!(
@@ -106,6 +106,7 @@ fn entry_guides_link_to_existing_local_documents_and_examples() {
         "docs/getting-started.md",
         "docs/language-guide.md",
         "docs/development.md",
+        "docs/agent-skills.md",
     ] {
         let path = root.join(name);
         let text = std::fs::read_to_string(&path).unwrap();
@@ -120,5 +121,28 @@ fn entry_guides_link_to_existing_local_documents_and_examples() {
                 "{name}: broken link to {target}"
             );
         }
+    }
+}
+
+#[test]
+fn english_and_japanese_references_keep_the_same_walz_examples() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    for (english, japanese) in [
+        ("CHEATSHEET.md", "CHEATSHEET.ja.md"),
+        ("SPEC.md", "SPEC.ja.md"),
+        ("README.md", "README.ja.md"),
+    ] {
+        let extract = |file: &str| {
+            let text = std::fs::read_to_string(root.join(file)).unwrap();
+            text.split("```wat\n")
+                .skip(1)
+                .map(|block| block.split("```").next().unwrap().to_owned())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            extract(english),
+            extract(japanese),
+            "{english} / {japanese}"
+        );
     }
 }

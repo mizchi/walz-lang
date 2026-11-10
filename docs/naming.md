@@ -1,79 +1,87 @@
-# 標準名とWITの対応
+<a id="標準名とwitの対応"></a>
 
-標準ライブラリの公開型は小文字のkebab-case、関連関数は通常 `$型名.操作名` とする。
-JSONの構築・解析・出力・検索は `$json.*` に集約し、可変object writerは `$json.object-builder.*` に分ける。
-`$json.from-string` はJSONのstring値の構築、`$json.parse` は文書の解析、`$json.stringify` は値の出力。
-WATではドットも識別子の一部で、名前空間を意味しない。WLTも同じで、ファイル単位の公開名を `%use` で明示的に束縛する。
-利用者のWAT識別子にはこの命名規則を強制しない。
+# Standard names and their WIT mappings
 
-| 型の公開名 | 関連関数の例 |
+Public standard library types use lowercase kebab-case; related functions generally use `$type-name.operation-name`.
+JSON construction, parsing, serialization, and lookup are grouped under `$json.*`; mutable object writers use `$json.object-builder.*`.
+`$json.from-string` constructs a JSON string value, `$json.parse` parses a document, and `$json.stringify` serializes a value.
+In WAT, dots are part of identifiers rather than namespaces. Walz follows the same rule, explicitly binding file-level public names with `@use`.
+This naming convention is not imposed on users' WAT identifiers.
+
+| Public type name | Related function examples |
 | --- | --- |
-| `$bytes` | `$bytes.equal`、`$bytes.find` |
-| `$string` | `$string.u64`、`$string.find` |
-| `$bytes-view` | `$bytes-view.new`、`$bytes-view.slice` |
-| `$string-view` | `$string-view.new`、`$string-view.to-string` |
-| `$array-view` | `$array-view.new`、`$array-view.slice`、`$array-view.to-list`（要素型と元配列型を具体化） |
-| `$dict` | `$dict.new`、`$dict.get` |
-| `$list-builder` | `$list-builder.push`、`$list-builder.finish` |
-| `$string-builder` | `$string-builder.text`、`$string-builder.finish` |
-| `$json-object` | `$json.object-builder.string`、`$json.object-builder.finish` |
-| `$json-value` | `$json.parse`、`$json.stringify` |
+| `$bytes` | `$bytes.equal`, `$bytes.find` |
+| `$string` | `$string.u64`, `$string.find` |
+| `$bytes-view` | `$bytes-view.new`, `$bytes-view.slice` |
+| `$string-view` | `$string-view.new`, `$string-view.to-string` |
+| `$array-view` | `$array-view.new`, `$array-view.slice`, `$array-view.to-list` (instantiate the element type and source array type) |
+| `$dict` | `$dict.new`, `$dict.get` |
+| `$list-builder` | `$list-builder.push`, `$list-builder.finish` |
+| `$string-builder` | `$string-builder.text`, `$string-builder.finish` |
+| `$json-object` | `$json.object-builder.string`, `$json.object-builder.finish` |
+| `$json-value` | `$json.parse`, `$json.stringify` |
 
-ビュー、辞書、builder、JSON値の型は不透明なGC型なので、値の型には `(ref $string-view)` や
-`(ref (%inst $dict i64))` と書く。`.View` / `.Dict` / `.Builder` の接尾辞は付けない。
-公開名の詳細は [生成API一覧](stdlib-api.md) を参照。
+Views, dictionaries, builders, and JSON values are opaque GC types, so write value types as `(ref $string-view)` or
+`(ref (@inst $dict i64))`. Do not add `.View` / `.Dict` / `.Builder` suffixes.
+See the [generated API list](stdlib-api.md) for public names.
 
-## WITの組み込み型とWLT固有の型
+<a id="witの組み込み型とwalz固有の型"></a>
 
-| WLTの標準名 | WITでの表現・対応範囲 |
+## WIT built-in types and Walz-specific types
+
+| Walz standard name | WIT representation and support |
 | --- | --- |
-| `$string` | `string`。内部は検査済みUTF-8 |
-| `$tuple<T,U>` | `tuple<T,U>`。現行実装は2要素のみ |
+| `$string` | `string`; internally validated UTF-8 |
+| `$tuple<T,U>` | `tuple<T,U>`; currently limited to two elements |
 | `$option<T>` / `$result<T,E>` | `option<T>` / `result<T,E>` |
-| `$list<T>` | `list<T>`。要素は共有可能な値に制限 |
-| `$future<T>` / `$stream<T>` | `future<T>` / `stream<T>`。既存の非同期adapterで変換 |
-| `i32` / `i64` / `f32` / `f64` | 現在のWIT生成は `s32` / `s64` / `f32` / `f64` |
-| `$bytes` | WLTの専用表現。WITでは `list<u8>` |
-| `$unit` | WLTのunit。結果・payloadの省略や既存unit adapterで表す |
-| `$box<T>` | WLTのowned GC box。WITの `own<R>` とは異なる |
-| `$resource-handle<R>` / `$borrow<R>` | WLTの外部資源と借用。明示的なhost bindingが必要 |
+| `$list<T>` | `list<T>`; elements restricted to shareable values |
+| `$future<T>` / `$stream<T>` | `future<T>` / `stream<T>`; converted by existing async adapters |
+| `i32` / `i64` / `f32` / `f64` | Current WIT generation uses `s32` / `s64` / `f32` / `f64` |
+| `$bytes` | Dedicated Walz representation; `list<u8>` in WIT |
+| `$unit` | Walz unit; represented by omitted results/payloads or existing unit adapters |
+| `$box<T>` | Walz owned GC box; distinct from WIT `own<R>` |
+| `$resource-handle<R>` / `$borrow<R>` | Walz external resources and borrows; require explicit host bindings |
 
-WITの `own<R>` はresourceの所有権を表すため、GC boxの名前には使わない。
-GC boxは `%box.new`、型は `(%inst $box T)`。外部資源は既存の `%resource.*` 操作を使う。
-命名変更と ABI 対応は別の機能で、現在の bool/char・整数・tuple/variant の対応範囲は [WIT binding](wit-bindings.md) を参照する。resource の WIT 入出力は後続。
-たとえば `$u32` をi32の透明なaliasとして追加しても、符号なし比較・除算の意味を持つ型にはならない。
-WATのi32/i64の演算と、WIT境界の型は分けて定義する。
+WIT `own<R>` denotes resource ownership, so it is not used to name GC boxes.
+GC boxes use `@box.new` and type `(@inst $box T)`. External resources use existing `@resource.*` operations.
+Naming changes and ABI support are separate features. See [WIT bindings](wit-bindings.md) for current bool/char, integer, tuple, and variant support. WIT resource input/output comes later.
+For example, adding `$u32` as a transparent i32 alias would not create a type with unsigned comparison/division semantics.
+WAT i32/i64 operations and WIT boundary types are defined separately.
 
-組み込み拡張の語彙も `%string.*`、`%tuple.*`、`%box.*` に揃える。
-既存の型付きIR・所有権検査・ABI policyの `text` / `pair` / `own` という内部表現は維持する。
-tupleは `%let ($first $second) value body` で分解でき、既存の `case pair` / `case own` の分解ラベルも維持する。
+Built-in extension vocabulary likewise uses `@string.*`, `@tuple.*`, and `@box.*`.
+Existing internal `text` / `pair` / `own` representations in typed IR, ownership checking, and ABI policies are retained.
+Tuples can be destructured with `@let ($first $second) value body`; existing `case pair` / `case own` destructuring labels are retained too.
 
-## WITへ出す名前
+<a id="witへ出す名前"></a>
 
-WLTの `$string-view.slice` は関数の識別子。WITへ出す外部名には `"string-slice"` のような小文字のkebab-caseを指定する。
-GC参照はWIT値型ではないため、ビューなどの不透明なGC型は明示的にstring/bytesなどへ変換する。
-関連関数をWITのresourceメソッドやconstructorへ自動変換する規則は追加しない。
+## Names exported to WIT
+
+Walz's `$string-view.slice` is a function identifier. Specify lowercase kebab-case external names such as `"string-slice"` when exporting to WIT.
+GC references are not WIT value types, so explicitly convert opaque GC types such as views to string/bytes or other supported types.
+No rule automatically converts related functions into WIT resource methods or constructors.
 
 ```wat
 (module
-  (%use "wlt:core" (type $string)
+  (@use "walz:core" (type $string)
     (func $string-view.new) (func $string-view.slice) (func $string-view.to-string))
   (func $string-slice (export "string-slice")
     (param $source $string) (param $start i32) (param $length i32)
-    (result $string) (%effect allocates)
+    (result $string) (@effect allocates)
     (call $string-view.to-string
       (call $string-view.slice (call $string-view.new $source) $start $length))))
 ```
 
-これはWITで `string-slice: func(p0: string, p1: s32, p2: s32) -> string` になる。
-`just wit examples/views.wlt` などで実際の出力を確認できる。
+This becomes `string-slice: func(p0: string, p1: s32, p2: s32) -> string` in WIT.
+Inspect actual output with commands such as `just wit examples/views.walz`.
 
-命名は [WITの識別子規則](https://component-model.bytecodealliance.org/design/wit.html#identifiers)
-と [WITの型の仕様](https://github.com/WebAssembly/component-model/blob/main/design/mvp/WIT.md) に基づく。
-WITでは大文字の単語も許されるが、WLT標準ライブラリは小文字に統一する。
+Names follow the [WIT identifier rules](https://component-model.bytecodealliance.org/design/wit.html#identifiers)
+and [WIT type specification](https://github.com/WebAssembly/component-model/blob/main/design/mvp/WIT.md).
+WIT permits uppercase words too, but the Walz standard library consistently uses lowercase.
 
-## 凍結済みの記録
+<a id="凍結済みの記録"></a>
 
-旧表記は通常のコンパイルでは受理しない。過去の評価・計測ソースは変更せず、既存の内部legacy loaderで読む。
-import元の公開名だけを変換し、旧ローカル名・コメント・文字列・元の診断位置を保持する。
-現在の評価課題は版を上げ、新しいrunへ入力を固定する。
+## Frozen records
+
+Old spellings are not accepted by normal compilation. Past evaluation and measurement sources remain unchanged and are read through the existing internal legacy loader.
+Only public names at import sources are converted; old local names, comments, strings, and original diagnostic positions are preserved.
+Current evaluation tasks receive a new version, with inputs fixed in a new run.

@@ -1,0 +1,12 @@
+(module
+  (@use "walz:core"
+    (type $option)
+    (type $tuple)
+    (type $result)
+    (type $string))
+  (@use "./generated/bindings.walz" (func $service.echo) (func $service.wait))
+  (func $echo (export "echo") (param $value (@inst $result (@inst $tuple i64 (@inst $option $string)) i32))
+    (result (@inst $result (@inst $tuple i64 (@inst $option $string)) i32)) (@effect host)
+    (call $service.echo (local.get $value)))
+  (func $wait (export "wait") (result $string) (@effect host suspends)
+    (call $service.wait)))

@@ -2,8 +2,8 @@ use std::process::Command;
 
 #[test]
 fn stock_ledger_models_and_effect_boundaries_are_checked() {
-    let loaded = wlt::source::load("examples/apps/stock-ledger/main.wlt").unwrap();
-    let compiled = wlt::compile(loaded.text()).unwrap();
+    let loaded = walz::source::load("examples/apps/stock-ledger/main.walz").unwrap();
+    let compiled = walz::compile(loaded.text()).unwrap();
     for (name, host, suspends) in [
         (".add", false, false),
         (".take", false, false),
@@ -28,8 +28,8 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
             (host, suspends)
         );
     }
-    let output = Command::new(env!("CARGO_BIN_EXE_wlt"))
-        .args(["test", "examples/apps/stock-ledger/model.test.wlt"])
+    let output = Command::new(env!("CARGO_BIN_EXE_walz"))
+        .args(["test", "examples/apps/stock-ledger/model.test.walz"])
         .output()
         .unwrap();
     assert!(
@@ -44,7 +44,7 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
     let probe = probe.trim_end().strip_suffix(')').unwrap().to_owned()
         + " (func $forge (param $s (ref $stock.State)) (struct.set $stock.State $size (local.get $s) (i32.const 0))))";
     assert!(
-        wlt::check(&probe)
+        walz::check(&probe)
             .unwrap_err()
             .to_string()
             .contains("opaque")
@@ -56,10 +56,10 @@ fn stock_ledger_models_and_effect_boundaries_are_checked() {
         .unwrap()
         .to_owned()
         + r#"
-      (func $bad-pure (param $s (ref $stock.State)) (result (%result i64 (ref $stock.Error))) (%effect pure)
-        (call $stock.add (local.get $s) (%string.lit "a") (i64.const 1))))"#;
+      (func $bad-pure (param $s (ref $stock.State)) (result (@result i64 (ref $stock.Error))) (@effect pure)
+        (call $stock.add (local.get $s) (@string.lit "a") (i64.const 1))))"#;
     assert!(
-        wlt::check(&pure)
+        walz::check(&pure)
             .unwrap_err()
             .to_string()
             .contains("effect contract")

@@ -1,6 +1,0 @@
-(module
-  (%use "wlt:core" (type $future))
-  (import "wlt:host/event-loop@0.1.0" "defer-i64"
-    (func $defer (param $ms i32) (param $value i64) (result (%inst $future i64))))
-  (func $double (export "double") (param $value i64) (param $ms i32) (result i64) (%effect host suspends)
-    (%future.await i64 (call $defer $ms (i64.mul $value 2)))))

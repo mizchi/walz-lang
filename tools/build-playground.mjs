@@ -6,8 +6,8 @@ import { join } from 'node:path';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const build = spawnSync('wasm-pack', [
-  'build', 'crates/wlt-web', '--target', 'web', '--release',
-  '--out-dir', '../../target/playground/pkg', '--out-name', 'wlt_web', '--locked',
+  'build', 'crates/walz-web', '--target', 'web', '--release',
+  '--out-dir', '../../target/playground/pkg', '--out-name', 'walz_web', '--locked',
 ], { cwd: root, stdio: 'inherit' });
 if (build.error) throw new Error('wasm-pack is required. Install it with: cargo install wasm-pack --locked', { cause: build.error });
 if (build.status !== 0) process.exit(build.status ?? 1);

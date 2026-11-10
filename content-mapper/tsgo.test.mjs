@@ -9,34 +9,34 @@ import {tmpdir} from 'node:os';
 import {frames,frame} from './protocol.mjs';
 
 const execFile=promisify(callback), tsgo=process.env.TSGO;
-const source=';; 日本語 😀\n(module (func $add (export "add-one") (param $n i64) (result i64) (%effect pure) (+ $n 1)))';
-const consumer='import {addOne} from "./math.wlt";\nconst answer:bigint=addOne(41n);\n';
+const source=';; 日本語 😀\n(module (func $add (export "add-one") (param $n i64) (result i64) (@effect pure) (+ $n 1)))';
+const consumer='import {addOne} from "./math.walz";\nconst answer:bigint=addOne(41n);\n';
 async function fixture(fn) {
-  const root=await mkdtemp(join(tmpdir(),'wlt-tsgo-'));
+  const root=await mkdtemp(join(tmpdir(),'walz-tsgo-'));
   try {
     await mkdir(join(root,'node_modules/@mizchi'),{recursive:true});
-    await symlink(resolve('.'),join(root,'node_modules/@mizchi/wlt-runtime'),'dir');
+    await symlink(resolve('.'),join(root,'node_modules/@mizchi/walz-runtime'),'dir');
     await writeFile(join(root,'tsconfig.json'),JSON.stringify({compilerOptions:{strict:true,noEmit:true,target:'esnext',module:'preserve',types:[]},
-      contentMappers:[{package:'@mizchi/wlt-runtime',extensions:['.wlt'],options:{compiler:resolve('target/debug/wlt')}}],include:['*.ts','*.wlt']}));
-    await writeFile(join(root,'math.wlt'),source); await writeFile(join(root,'main.ts'),consumer);
+      contentMappers:[{package:'@mizchi/walz-runtime',extensions:['.walz'],options:{compiler:resolve('target/debug/walz')}}],include:['*.ts','*.walz']}));
+    await writeFile(join(root,'math.walz'),source); await writeFile(join(root,'main.ts'),consumer);
     await fn(root);
   } finally { await rm(root,{recursive:true,force:true}); }
 }
 
-test('actual TS7 compiler resolves .wlt directly and reports TS and WLT errors without declaration files',{skip:!tsgo},async()=>fixture(async root=>{
+test('actual TS7 compiler resolves .walz directly and reports TS and Walz errors without declaration files',{skip:!tsgo},async()=>fixture(async root=>{
   const run=()=>execFile(tsgo,['--runExternalCode','--noEmit','--pretty','false','-p',root],{timeout:30000});
   await run();
   await writeFile(join(root,'main.ts'),consumer.replace('41n','41'));
   const bad=await run().catch(e=>e);
   assert.notEqual(bad.code ?? 0,0); assert.match(bad.stdout,/2345/);
   await writeFile(join(root,'main.ts'),consumer);
-  await writeFile(join(root,'math.wlt'),source.replace('(+ $n 1)','$missing'));
+  await writeFile(join(root,'math.walz'),source.replace('(+ $n 1)','$missing'));
   const invalid=await run().catch(e=>e);
-  assert.match(invalid.stdout,/wlt9001/); assert.match(invalid.stdout,/math\.wlt/); assert.match(invalid.stdout,/missing/);
-  await writeFile(join(root,'math.wlt'),source); await run();
+  assert.match(invalid.stdout,/walz9001/); assert.match(invalid.stdout,/math\.walz/); assert.match(invalid.stdout,/missing/);
+  await writeFile(join(root,'math.walz'),source); await run();
 }));
 
-test('actual TS7 LSP maps definitions to WLT exports and sees an unsaved buffer',{skip:!tsgo},async()=>fixture(async root=>{
+test('actual TS7 LSP maps definitions to Walz exports and sees an unsaved buffer',{skip:!tsgo},async()=>fixture(async root=>{
   const child=spawn(tsgo,['--lsp','--stdio'],{stdio:['pipe','pipe','pipe']});
   let id=0,stderr=''; const pending=new Map(), messages=[];
   child.stderr.on('data',s=>stderr+=s);
@@ -65,10 +65,10 @@ test('actual TS7 LSP maps definitions to WLT exports and sees an unsaved buffer'
     const hover=await call('textDocument/hover',{textDocument:{uri},position});
     assert.match(JSON.stringify(hover),/bigint/);
     const definition=await call('textDocument/definition',{textDocument:{uri},position});
-    assert.match(JSON.stringify(definition),/math\.wlt/);
+    assert.match(JSON.stringify(definition),/math\.walz/);
     assert.ok(JSON.stringify(definition).includes('"line":1'),JSON.stringify(definition));
-    const wltUri=pathToFileURL(join(root,'math.wlt')).href;
-    send('textDocument/didOpen',{textDocument:{uri:wltUri,languageId:'wlt',version:1,text:source.replaceAll('i64','i32')}});
+    const walzUri=pathToFileURL(join(root,'math.walz')).href;
+    send('textDocument/didOpen',{textDocument:{uri:walzUri,languageId:'walz',version:1,text:source.replaceAll('i64','i32')}});
     const diagnostics=await call('textDocument/diagnostic',{textDocument:{uri}});
     assert.match(JSON.stringify(diagnostics),/bigint|number/);
     await call('shutdown'); send('exit');
@@ -78,9 +78,9 @@ test('actual TS7 LSP maps definitions to WLT exports and sees an unsaved buffer'
   }
 }));
 
-test('actual TS7 watch invalidates a parent projection after a saved WLT dependency changes',{skip:!tsgo},async()=>fixture(async root=>{
-  await writeFile(join(root,'helper.wlt'),source);
-  await writeFile(join(root,'math.wlt'),'(module (%include "./helper.wlt"))');
+test('actual TS7 watch invalidates a parent projection after a saved Walz dependency changes',{skip:!tsgo},async()=>fixture(async root=>{
+  await writeFile(join(root,'helper.walz'),source);
+  await writeFile(join(root,'math.walz'),'(module (@include "./helper.walz"))');
   const child=spawn(tsgo,['--runExternalCode','--noEmit','--watch','--pretty','false','-p',root],{stdio:['ignore','pipe','pipe']});
   let output=''; child.stdout.on('data',s=>output+=s);child.stderr.on('data',s=>output+=s);
   const done=new Promise(resolve=>child.once('exit',resolve));
@@ -94,10 +94,10 @@ test('actual TS7 watch invalidates a parent projection after a saved WLT depende
   try {
     await until(text=>/Found 0 errors/.test(text));
     output='';
-    await writeFile(join(root,'helper.wlt'),source.replaceAll('i64','i32'));
+    await writeFile(join(root,'helper.walz'),source.replaceAll('i64','i32'));
     await until(text=>/2345/.test(text) && /Found [1-9]\d* errors/.test(text));
     assert.match(output,/number|bigint/);
-    output='';await writeFile(join(root,'helper.wlt'),source);
+    output='';await writeFile(join(root,'helper.walz'),source);
     await until(text=>/Found 0 errors/.test(text));
   } finally { child.kill(); await done; }
 }));

@@ -36,7 +36,7 @@ for (const [label, directory] of [["before", before], ["after", after]])
     loaded[`${label}${backend}`] = { api, arena: () => arena };
   }
 const report = {
-  schema: "wlt-list-abi-comparison-v1", created: new Date().toISOString(),
+  schema: "walz-list-abi-comparison-v1", created: new Date().toISOString(),
   node: process.version, v8: process.versions.v8, cpu: cpus()[0]?.model,
   platform: process.platform, arch: process.arch, execArgv: process.execArgv,
   rounds, sizes, unchanged,

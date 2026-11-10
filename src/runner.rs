@@ -119,7 +119,7 @@ fn invoke(path: &Path, export: &str, timeout: Duration) -> Result<TestOutcome, S
     }
 }
 
-/// Recursively discover `*.test.wlt` in directories; explicit files may have
+/// Recursively discover `*.test.walz` in directories; explicit files may have
 /// any name. Files are deduplicated and sorted by canonical path. Empty paths
 /// select `tests/` relative to the current directory. Each test runs in a fresh
 /// Wasmtime process/instance. Compile errors and test failures do not stop peers.
@@ -136,7 +136,7 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
             return report;
         }
     };
-    let discovery = crate::harness::discover(paths, "tests", ".test.wlt");
+    let discovery = crate::harness::discover(paths, "tests", ".test.walz");
     report.errors.extend(discovery.errors);
     for path in discovery.files {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
@@ -190,12 +190,12 @@ pub fn run(paths: &[PathBuf], options: &RunOptions) -> RunReport {
                         source,
                         &module,
                         test.function,
-                        "wlt-case",
+                        "walz-case",
                     )
                     .map_err(|e| loaded.diagnostic(e))?;
                     let report = crate::execution::invoke(
                         &built,
-                        "wlt-case",
+                        "walz-case",
                         &options.execution,
                         "test",
                         options.timeout,

@@ -1,0 +1,31 @@
+(module
+  (@use "walz:core"
+    (type $string)
+    (type $result)
+    (func $json.parse)
+    (func $json.stringify))
+  (func $input-length
+    (export "input-length")
+    (param $source $string)
+    (result i32)
+    (@effect pure)
+    (@string.byte-len (local.get $source)))
+
+  (func $parse-status
+    (export "parse-status")
+    (param $source $string)
+    (result i32)
+    (@effect allocates reads writes)
+    (@match (call $json.parse (local.get $source))
+      (case ok ($value) (i32.const 1))
+      (case err ($offset) (i32.const 0))))
+
+  (func $normalize
+    (export "normalize")
+    (param $source $string)
+    (result (@inst $result $string i32))
+    (@effect allocates reads writes)
+    (@result.do
+      ($value (call $json.parse (local.get $source)))
+      (@result.ok (call $json.stringify (local.get $value))))
+  ))

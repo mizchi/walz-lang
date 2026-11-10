@@ -115,7 +115,7 @@ impl Expr {
             .collect::<Vec<_>>();
         if macros && matches!(self, Self::Bindings(..)) {
             return format!(
-                "(%$delegated (($tmp {}) ($second {})) (i64.add $tmp $second))",
+                "(@$delegated (($tmp {}) ($second {})) (i64.add $tmp $second))",
                 children[0], children[1]
             );
         }
@@ -134,7 +134,7 @@ impl Expr {
                 _ => "",
             };
             if !name.is_empty() {
-                return format!("(%${name} {})", children.join(" "));
+                return format!("(@${name} {})", children.join(" "));
             }
         }
         let a = children.first().map(String::as_str).unwrap_or("");
@@ -145,7 +145,7 @@ impl Expr {
             Self::Local => "$tmp".into(),
             Self::Add(..) => format!("(i64.add {a} {b})"),
             Self::Twice(..) => {
-                format!("(%let $manual{id} (type i64) {a} (i64.add $manual{id} $manual{id}))")
+                format!("(@let $manual{id} (type i64) {a} (i64.add $manual{id} $manual{id}))")
             }
             Self::Dup(..) => format!("(i64.add {a} {a})"),
             Self::Discard(..) => "(i64.const 0)".into(),
@@ -155,14 +155,14 @@ impl Expr {
             ),
             Self::Raise(..) => format!("(throw $Stop {a})"),
             Self::Caught(..) => {
-                format!("(%try (result i64) (do {a}) (catch $Stop ($manual{id}) $manual{id}))")
+                format!("(@try (result i64) (do {a}) (catch $Stop ($manual{id}) $manual{id}))")
             }
             Self::Own(..) => format!(
-                "(%match (%box i64) (result i64) (%box.new i64 {a}) (case own ($manual{id}) $manual{id}))"
+                "(@match (@box i64) (result i64) (@box.new i64 {a}) (case own ($manual{id}) $manual{id}))"
             ),
-            Self::Generic(..) => format!("(call (%inst $id i64) {a})"),
+            Self::Generic(..) => format!("(call (@inst $id i64) {a})"),
             Self::Bindings(..) => format!(
-                "(%let $first{id} (type i64) {a} (%let $second{id} (type i64) {b} (i64.add $first{id} $second{id})))"
+                "(@let $first{id} (type i64) {a} (@let $second{id} (type i64) {b} (i64.add $first{id} $second{id})))"
             ),
             Self::Sequence(..) => {
                 format!("(block (result i64) (drop {a}) (drop {b}) (i64.const 0))")
@@ -172,18 +172,18 @@ impl Expr {
     fn source(&self, macros: bool) -> String {
         let definitions = if macros {
             r#"
-          (%macro $bindings (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (%let ((?n (type i64) ?v) ...) ?body)))
-          (%macro $delegated (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (%$bindings ((?n ?v) ...) ?body)))
-          (%macro $add (rule (?a:expr ?b:expr) (i64.add ?a ?b)))
-          (%macro $twice (rule (?x:expr) (%let $tmp (type i64) ?x (i64.add $tmp $tmp))))
-          (%macro $dup (rule (?x:expr) (i64.add ?x ?x)))
-          (%macro $discard (rule (?x:expr) (i64.const 0)))
-          (%macro $choose (rule (?c:expr ?a:expr ?b:expr) (if (result i64) (i64.eqz (i64.and ?c (i64.const 1))) (then ?a) (else ?b))))
-          (%macro $raise (rule (?x:expr) (throw $Stop ?x)))
-          (%macro $caught (rule (?x:expr) (%try (result i64) (do ?x) (catch $Stop ($tmp) $tmp))))
-          (%macro $own (rule (?x:expr) (%match (%box i64) (result i64) (%box.new i64 ?x) (case own ($tmp) $tmp))))
-          (%macro $generic (rule (?x:expr) (call (%inst $id i64) ?x)))
-          (%macro $sequence (rule (?x:expr ...) (block (result i64) (block (drop ?x) ...) (i64.const 0))))
+          (@macro $bindings (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (@let ((?n (type i64) ?v) ...) ?body)))
+          (@macro $delegated (rule (((?n:ident ?v:expr) ...) ?body:expr) (bind ?n ?body) (@$bindings ((?n ?v) ...) ?body)))
+          (@macro $add (rule (?a:expr ?b:expr) (i64.add ?a ?b)))
+          (@macro $twice (rule (?x:expr) (@let $tmp (type i64) ?x (i64.add $tmp $tmp))))
+          (@macro $dup (rule (?x:expr) (i64.add ?x ?x)))
+          (@macro $discard (rule (?x:expr) (i64.const 0)))
+          (@macro $choose (rule (?c:expr ?a:expr ?b:expr) (if (result i64) (i64.eqz (i64.and ?c (i64.const 1))) (then ?a) (else ?b))))
+          (@macro $raise (rule (?x:expr) (throw $Stop ?x)))
+          (@macro $caught (rule (?x:expr) (@try (result i64) (do ?x) (catch $Stop ($tmp) $tmp))))
+          (@macro $own (rule (?x:expr) (@match (@box i64) (result i64) (@box.new i64 ?x) (case own ($tmp) $tmp))))
+          (@macro $generic (rule (?x:expr) (call (@inst $id i64) ?x)))
+          (@macro $sequence (rule (?x:expr ...) (block (result i64) (block (drop ?x) ...) (i64.const 0))))
         "#
         } else {
             ""
@@ -194,16 +194,16 @@ impl Expr {
           (type $Counter (struct (field $n (mut i64)))) (tag $Stop (param i64))
           (func $event (param $c (ref $Counter)) (param $n i64) (result i64)
             (block (result i64) (struct.set $Counter $n $c (i64.add (i64.mul (struct.get $Counter $n $c) (i64.const 31)) $n)) $n))
-          (func $id (%type.params $T) (param $x $T) (result $T) (%effect pure) $x)
+          (func $id (@type.params $T) (param $x $T) (result $T) (@effect pure) $x)
           {definitions}
-          (func $run (result (%tuple i64 i64)) (%effect reads writes allocates)
-            (%let (($counter (struct.new $Counter 0)) ($tmp (type i64) 21))
-              (%let $value (%try (result i64) (do {body}) (catch $Stop ($caught) $caught))
-                (%tuple.new i64 i64 $value (struct.get $Counter $n $counter)))))
-          (func $main (export "main") (result i64) (%effect reads writes allocates)
-            (%match (%tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $value)))
-          (func $trace (export "trace") (result i64) (%effect reads writes allocates)
-            (%match (%tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $trace))))"#
+          (func $run (result (@tuple i64 i64)) (@effect reads writes allocates)
+            (@let (($counter (struct.new $Counter 0)) ($tmp (type i64) 21))
+              (@let $value (@try (result i64) (do {body}) (catch $Stop ($caught) $caught))
+                (@tuple.new i64 i64 $value (struct.get $Counter $n $counter)))))
+          (func $main (export "main") (result i64) (@effect reads writes allocates)
+            (@match (@tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $value)))
+          (func $trace (export "trace") (result i64) (@effect reads writes allocates)
+            (@match (@tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $trace))))"#
         )
     }
 }
@@ -261,7 +261,7 @@ fn execute(expr: &Expr, directory: &Path) -> Result<(), String> {
         .enumerate()
     {
         let compiled = std::panic::catch_unwind(|| {
-            wlt::compile_with_options(&expr.source(macros), wlt::CompileOptions { optimize })
+            walz::compile_with_options(&expr.source(macros), walz::CompileOptions { optimize })
         })
         .map_err(|_| "panic:compiler".to_string())?
         .map_err(|e| format!("compile-{}:{e}", e.diagnostic().code))?;
@@ -322,15 +322,15 @@ fn execute(expr: &Expr, directory: &Path) -> Result<(), String> {
     Ok(())
 }
 pub fn run() {
-    let seed = std::env::var("WLT_MACRO_FUZZ_SEED")
+    let seed = std::env::var("WALZ_MACRO_FUZZ_SEED")
         .map(|s| s.parse().unwrap())
         .unwrap_or(42);
-    let count = std::env::var("WLT_MACRO_FUZZ_CASES")
+    let count = std::env::var("WALZ_MACRO_FUZZ_CASES")
         .map(|s| s.parse::<usize>().unwrap())
         .unwrap_or(16);
     assert!((1..=10000).contains(&count));
     let mut state = seed;
-    let cases = if let Ok(path) = std::env::var("WLT_MACRO_FUZZ_REPLAY") {
+    let cases = if let Ok(path) = std::env::var("WALZ_MACRO_FUZZ_REPLAY") {
         vec![serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap()]
     } else {
         // Always exercise each semantic family, regardless of the random seed.
@@ -371,8 +371,9 @@ pub fn run() {
                     serde_json::to_vec_pretty(e).unwrap(),
                 )
                 .unwrap();
-                std::fs::write(folder.join(format!("{name}.macro.wlt")), e.source(true)).unwrap();
-                std::fs::write(folder.join(format!("{name}.manual.wlt")), e.source(false)).unwrap();
+                std::fs::write(folder.join(format!("{name}.macro.walz")), e.source(true)).unwrap();
+                std::fs::write(folder.join(format!("{name}.manual.walz")), e.source(false))
+                    .unwrap();
             }
             std::fs::write(folder.join("failure.json"),serde_json::to_vec_pretty(&serde_json::json!({"seed":seed,"case":index,"failure":error,"signature":signature})).unwrap()).unwrap();
             panic!(
@@ -386,45 +387,45 @@ pub fn static_obligations() {
     for n in [0, 1, 42, i64::MAX, i64::MIN] {
         for (definition, call, manual, body) in [
             (
-                "(%macro $m (rule (?x:expr) (block ?x ?x)))",
-                "(%$m (%box.close (%move $owner)))",
-                "(block (%box.close (%move $owner)) (%box.close (%move $owner)))",
-                format!("(%let $owner (%box.new i64 (i64.const {n})) BODY)"),
+                "(@macro $m (rule (?x:expr) (block ?x ?x)))",
+                "(@$m (@box.close (@move $owner)))",
+                "(block (@box.close (@move $owner)) (@box.close (@move $owner)))",
+                format!("(@let $owner (@box.new i64 (i64.const {n})) BODY)"),
             ),
             (
-                "(%macro $m (rule (?x:expr) (nop)))",
-                "(%$m (%box.close (%move $owner)))",
+                "(@macro $m (rule (?x:expr) (nop)))",
+                "(@$m (@box.close (@move $owner)))",
                 "(nop)",
-                format!("(%let $owner (%box.new i64 (i64.const {n})) BODY)"),
+                format!("(@let $owner (@box.new i64 (i64.const {n})) BODY)"),
             ),
             (
-                "(%macro $m (rule (?x:expr) (drop (call $host ?x))))",
-                "(%$m (i64.const 1))",
+                "(@macro $m (rule (?x:expr) (drop (call $host ?x))))",
+                "(@$m (i64.const 1))",
                 "(drop (call $host (i64.const 1)))",
                 "BODY".into(),
             ),
             (
-                "(%macro $m (rule (?x:expr) (drop (i32.add ?x (i32.const 0)))))",
-                "(%$m (i64.const 1))",
+                "(@macro $m (rule (?x:expr) (drop (i32.add ?x (i32.const 0)))))",
+                "(@$m (i64.const 1))",
                 "(drop (i32.add (i64.const 1) (i32.const 0)))",
                 "BODY".into(),
             ),
             (
-                "(%macro $m (rule (?x:expr) (throw $Stop ?x)))",
-                "(%$m (i64.const 1))",
+                "(@macro $m (rule (?x:expr) (throw $Stop ?x)))",
+                "(@$m (i64.const 1))",
                 "(throw $Stop (i64.const 1))",
                 "BODY".into(),
             ),
         ] {
             let source = |macros| {
                 format!(
-                    "(module (tag $Stop (param i64)) (import \"host\" \"f\" (func $host (param $n i64) (result i64))) {} (func $f (%effect pure) {}))",
+                    "(module (tag $Stop (param i64)) (import \"host\" \"f\" (func $host (param $n i64) (result i64))) {} (func $f (@effect pure) {}))",
                     if macros { definition } else { "" },
                     body.replace("BODY", if macros { call } else { manual })
                 )
             };
-            let a = wlt::check(&source(true)).unwrap_err();
-            let b = wlt::check(&source(false)).unwrap_err();
+            let a = walz::check(&source(true)).unwrap_err();
+            let b = walz::check(&source(false)).unwrap_err();
             assert_eq!(
                 a.diagnostic().code,
                 b.diagnostic().code,

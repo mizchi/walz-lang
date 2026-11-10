@@ -23,7 +23,7 @@ struct Types<'a> {
 pub(crate) fn validate_type(module: &Module, ty: &Type) -> Result<(), Error> {
     Types {
         module,
-        unit_name: "wlt-unit".into(),
+        unit_name: "walz-unit".into(),
         needs_unit: false,
         definitions: Default::default(),
     }
@@ -240,11 +240,11 @@ pub(crate) fn emit_functions(module: &Module) -> Result<String, Error> {
         .iter()
         .flat_map(|(_, f)| f.exports.iter())
         .collect::<BTreeSet<_>>();
-    let mut unit_name = String::from("wlt-unit");
+    let mut unit_name = String::from("walz-unit");
     let mut suffix = 0;
     while names.contains(&unit_name) {
         suffix += 1;
-        unit_name = format!("wlt-unit-a{suffix}");
+        unit_name = format!("walz-unit-a{suffix}");
     }
     let mut types = Types {
         module,
@@ -314,6 +314,6 @@ pub(crate) fn emit_functions(module: &Module) -> Result<String, Error> {
         types.definitions.values().cloned().collect::<String>()
     );
     Ok(format!(
-        "package wlt:generated@0.1.0;\n\ninterface api {{\n{unit}{declarations}}}\n\nworld program {{\n  export api;\n}}\n"
+        "package walz:generated@0.1.0;\n\ninterface api {{\n{unit}{declarations}}}\n\nworld program {{\n  export api;\n}}\n"
     ))
 }

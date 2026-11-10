@@ -1,0 +1,46 @@
+(module
+  (@use "walz:core" (type $list) (type $future) (type $unit)
+    (func $array-view.new) (func $array-view.get)
+    (func $array-view.slice) (func $array-view.to-list))
+  (type $Numbers (array (mut i64)))
+
+  ;; Build guest storage explicitly at the ABI boundary. Views share it after
+  ;; this conversion; no source list or JavaScript root table is retained.
+  (func $storage (param $input (@inst $list i64)) (result (ref $Numbers))
+    (@effect writes allocates)
+    (@let $n (@list.len i64 $input)
+      (if (result (ref $Numbers)) (i32.eqz $n)
+        (then (array.new_fixed $Numbers 0))
+        (else
+          (@let $out (array.new $Numbers (@list.get i64 $input 0) $n)
+            (block (result (ref $Numbers))
+              (@for $copy (bind $i i32 1)
+                (while (i32.lt_u $i $n)) (step (+ $i 1))
+                (array.set $Numbers $out $i (@list.get i64 $input $i)))
+              $out))))))
+
+  (func $slice (export "slice") (param $input (@inst $list i64))
+    (param $a i32) (param $n i32) (param $b i32) (param $m i32)
+    (result (@inst $list i64)) (@effect reads writes allocates)
+    (@let (($whole (call (@inst $array-view.new i64 $Numbers) (call $storage $input)))
+           ($part (call (@inst $array-view.slice i64 $Numbers) $whole $a $n))
+           ($tail (call (@inst $array-view.slice i64 $Numbers) $part $b $m)))
+      (call (@inst $array-view.to-list i64 $Numbers) $tail)))
+
+  (func $get (export "get") (param $input (@inst $list i64))
+    (param $start i32) (param $length i32) (param $index i32)
+    (result i64) (@effect reads writes allocates)
+    (@let $part
+      (call (@inst $array-view.slice i64 $Numbers)
+        (call (@inst $array-view.new i64 $Numbers) (call $storage $input)) $start $length)
+      (call (@inst $array-view.get i64 $Numbers) $part $index)))
+
+  (func $after (export "after") (param $input (@inst $list i64))
+    (param $start i32) (param $length i32) (param $pause (@inst $future $unit))
+    (result (@inst $list i64)) (@effect reads writes allocates suspends)
+    (@let $part
+      (call (@inst $array-view.slice i64 $Numbers)
+        (call (@inst $array-view.new i64 $Numbers) (call $storage $input)) $start $length)
+      (block (result (@inst $list i64))
+        (@future.await $unit (@move $pause))
+        (call (@inst $array-view.to-list i64 $Numbers) $part)))))

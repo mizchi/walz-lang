@@ -2,7 +2,7 @@ import Lean
 
 /- Checks the bit-vector guard used by the diagnostic analysis, not a
 refinement proof of the Rust interpreter or of arbitrary array operations. -/
-namespace WltFlow
+namespace WalzFlow
 
 theorem signed_nonnegative_bound (index length : BitVec 32)
     (nonnegative : index.slt 0 = false) (bound : index.slt length = true) :
@@ -15,4 +15,4 @@ example : ((-1 : BitVec 32).slt 3 = true) ∧
 -- An i32 addition cannot be interpreted as unbounded integer addition.
 example : (0xffffffff : BitVec 32) + 1 = 0 := by decide
 
-end WltFlow
+end WalzFlow

@@ -1,29 +1,35 @@
-# 実用化に向けた実装順
+<a id="実用化に向けた実装順"></a>
 
-1. 差分・fuzz と CI。seed、最適化有無、マクロ版／明示版、Wasmtime／Node、副作用順、取消しと解放を検査し、失敗の縮小・保存・再実行を用意する。
-2. 既存の値型を扱う WIT binding 生成。型は WIT、effect/capability は別の信頼する policy から取得する。
-3. 型付きの外部 resource と明示 close。using の範囲、正常・Result.err・例外・取消しの終了経路を検査する。
-4. 型付き IR の小さな簡約。直後に match する値の不要な箱を除き、評価順と所有権を保つ。
-5. 標準ライブラリの JSON 値と解析を補完し、明示的な単相化ジェネリクスで list の map/fold を共有する。型引数の推論や trait は導入しない。
+# Implementation order toward practical use
 
-## 差分検査
+1. Differential testing, fuzzing, and CI. Check seeds, optimization on/off, macro/explicit versions, Wasmtime/Node, side-effect order, cancellation, and cleanup; provide reduction, storage, and replay of failures.
+2. Generate WIT bindings for existing value types. Obtain types from WIT and effects/capabilities from a separate trusted policy.
+3. Typed external resources and explicit close. Check using scopes and exit paths for success, Result.err, exceptions, and cancellation.
+4. Small simplifications of typed IR. Remove unnecessary boxes for values immediately matched, preserving evaluation order and ownership.
+5. Complete standard library JSON values and parsing, and share list map/fold through explicitly monomorphized generics. Do not introduce type-argument inference or traits.
 
-`just fuzz SEED CASES` は有限な型付き式を生成する。演算結果と host 呼出し順のハッシュを独立に計算し、マクロ／明示版と最適化有無を Wasmtime と Node で照合する。
-不正ソースの変異も検査し、コンパイラの panic を失敗として扱う。失敗は `target/fuzz/failures/` に保存する。
-保存された式 JSON と不正入力 .wlt は `just fuzz-replay FILE` で再実行できる。式の payload を含む部分木と、不正入力の文字列を縮小する。言語全体や全入力についての健全性の証明ではない。
-`runtime/fuzz.test.mjs` は取消しの queued / pending / completion と微小ステップの順序を seed から選び、返却値・取消し理由・二重 close・管理表の残数を検査する。
+<a id="差分検査"></a>
 
-CI は Rust/Lean/Wasm CLI と JS/Chromium の2ジョブを実行し、失敗入力・ブラウザログを artifact として保存する。ツールの版と配布物のハッシュは `ci/tools.json` に固定する。
+## Differential testing
 
-## 直後の match の簡約
+`just fuzz SEED CASES` generates finite typed expressions. It independently computes operation results and hashes of host call order, comparing macro/explicit versions and optimization on/off in Wasmtime and Node.
+It also checks mutations of invalid sources, treating compiler panics as failures. Failures are saved under `target/fuzz/failures/`.
+Saved expression JSON and invalid .walz inputs can be replayed with `just fuzz-replay FILE`. It reduces subtrees including expression payloads and strings of invalid input. This is not a soundness proof for the entire language or all inputs.
+`runtime/fuzz.test.mjs` selects queued/pending/completion cancellation timings and microstep order from a seed, checking return values, cancellation reasons, double close, and remaining management-table entries.
 
-共有の Result/Pair を構築して直後に match する場合、選択された arm と payload の let 列へ変換する。
-使わない payload も左から一度ずつ評価し、trap と副作用を保つ。所有 payload は対象外。
-元ソースの型・effect・所有権検査、必要な Lean 検査が先に走る。IR/analysis は元ソースを保持する。
-`compile_with_options(..., CompileOptions { optimize: false })` が比較基準となる。
-このパスと到達性除去は compiler TCB であり、Lean による意味保存の証明ではない。
+CI runs two jobs, Rust/Lean/Wasm CLI and JS/Chromium, and saves failing inputs and browser logs as artifacts. Tool versions and distribution hashes are pinned in `ci/tools.json`.
 
-到達しない suspend を除去しても、公開関数の async ABI は元の解析結果を維持する。
-不要になった host import は除去し、JS の Promise 契約を変更しない。
+<a id="直後の-match-の簡約"></a>
 
-除去した一時 GC 箱の割当失敗など、資源限界による挙動の一致は対象外。payload 自体の trap は維持する。
+## Simplifying an immediate match
+
+When a shared Result/Pair is constructed and immediately matched, transform it into the selected arm and a sequence of payload lets.
+Evaluate even unused payloads once each, left to right, preserving traps and side effects. Owned payloads are excluded.
+The original source's type, effect, and ownership checks and any required Lean checks run first. IR/analysis retain the original source.
+`compile_with_options(..., CompileOptions { optimize: false })` provides the comparison baseline.
+This pass and reachability elimination are part of the compiler TCB; they do not constitute a Lean proof of semantic preservation.
+
+Even when unreachable suspends are removed, public functions retain the async ABI from the original analysis.
+Unused host imports are removed without changing the JS Promise contract.
+
+Equivalence under resource limits, such as allocation failure for eliminated temporary GC boxes, is outside the scope. Traps in payloads themselves are preserved.

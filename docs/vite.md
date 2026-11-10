@@ -1,10 +1,12 @@
-# ViteからWLTをESMとして使う
+<a id="viteからwalzをesmとして使う"></a>
 
-`.wlt`を既存のCore＋JSPI境界へコンパイルし、JavaScriptのnamed exportとして読み込む。
-Vite 8.3以降、Node.js 24以降と、同じ版の`wlt` CLIを使う。
-ブラウザにはWasm GCが必要で、非同期関数にはJSPIも必要になる。
+# Using Walz as ESM from Vite
 
-リポジトリ内では次のサンプルを動かせる。
+Compiles `.walz` to the existing Core＋JSPI boundary and loads it as JavaScript named exports.
+Use Vite 8.3 or later, Node.js 24 or later, and the matching `walz` CLI version.
+Browsers need Wasm GC, plus JSPI for asynchronous functions.
+
+Run the repository sample as follows.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -12,85 +14,89 @@ just vite          # 開発サーバー
 just build-vite    # 本番ビルドとTypeScript検査
 ```
 
-[サンプル](../examples/vite/)はstring、bytes、i64、Future、明示的なインスタンス生成を扱う。
-別プロジェクトからローカルのチェックアウトを使う場合は、同じ版のCLIとプラグインを用意する。
+The [sample](../examples/vite/) covers string, bytes, i64, Future, and explicit instantiation.
+To use a local checkout from another project, install matching CLI and plugin versions.
 
 ```sh
-cargo install --path ../wlt-lang --locked --bin wlt
-pnpm add -D vite @mizchi/wlt-runtime@file:../wlt-lang
+cargo install --path ../walz-lang --locked --bin walz
+pnpm add -D vite @mizchi/walz-runtime@file:../walz-lang
 ```
 
 ```ts
 // vite.config.ts
 import {defineConfig} from 'vite';
-import wlt from '@mizchi/wlt-runtime/vite';
+import walz from '@mizchi/walz-runtime/vite';
 
-export default defineConfig({plugins:[wlt({dts:true})]});
+export default defineConfig({plugins:[walz({dts:true})]});
 ```
 
 ```wat
-;; math.wlt
+;; math.walz
 (module
   (func $add (export "add") (param $a i32) (param $b i32)
-    (result i32) (%effect pure) (+ $a $b)))
+    (result i32) (@effect pure) (+ $a $b)))
 ```
 
 ```ts
-import {add} from './math.wlt';
+import {add} from './math.walz';
 console.log(add(20, 22)); // 42
 ```
 
-通常のimportはtop-level awaitで初期化する非同期ESMになる。同じESM IDではインスタンスを共有し、
-同期関数は呼出し時に同期の値を返す。動的`import()`でも読み込める。
-同じインスタンスの非同期処理が実行中なら、同期関数は`start()`でキューへ入れるか別インスタンスから呼ぶ。
-export名は既存のJS境界と同じ変換を使うため、WLTの`"add-one"`はJSの`addOne`になる。
-WLT自身が`"default"`をexportした場合はその関数がdefault exportになる。
+Ordinary imports produce asynchronous ESM initialized with top-level await. The same ESM ID shares one instance,
+while synchronous functions return synchronous values when called. Dynamic `import()` also works.
+If asynchronous work is running on the same instance, queue synchronous functions with `start()` or call them on another instance.
+Export names use the existing JS-boundary conversion: Walz `"add-one"` becomes JS `addOne`.
+If Walz itself exports `"default"`, that function becomes the default export.
 
-この方式は[ViteのWasm ESM Integration](https://vite.dev/guide/features#esm-integration)と同じ、
-非同期のモジュール初期化とnamed exportを入口にする。WLTの値には既存のcodec・所有権・取消しの境界を使う。
-Wasm GC参照をJSへ直接公開する用途や、`import source`は扱わない。
+Like [Vite's Wasm ESM integration](https://vite.dev/guide/features#esm-integration),
+this uses asynchronous module initialization and named exports as its entry point. Walz values use the existing codec, ownership, and cancellation boundaries.
+Direct exposure of Wasm GC references to JS and `import source` are unsupported.
 
-## 明示的な初期化とホスト
+<a id="明示的な初期化とホスト"></a>
 
-`?init`のdefault exportは、既存の`instantiate(options)`を呼ぶファクトリになる。
-呼ぶたびに新しいインスタンスを作り、`{api, start}`を返す。コンパイル済みWasm Moduleは再利用する。
+## Explicit initialization and hosts
+
+The default export of `?init` is a factory calling the existing `instantiate(options)`.
+Each call creates a new instance and returns `{api, start}`. Compiled Wasm Modules are reused.
 
 ```ts
-import init, {TaskCancelledError} from './math.wlt?init';
-import type {WltExports} from './math.wlt';
+import init, {TaskCancelledError} from './math.walz?init';
+import type {WalzExports} from './math.walz';
 
-const {api, start} = await init<WltExports>();
+const {api, start} = await init<WalzExports>();
 console.log(api.add(20, 22));
 const task = start('add', [20, 22]);
 console.log(await task.result);
 ```
 
-カスタムhost、共有Memory、eventLoop、task通知などのoptionsは[既存ランタイム](runtime.md)と共通。
-`?init`ではホストを自動リンクせず、`init({imports:{host:provider}})`のように明示的に渡す。
-共有Memoryの証明を持つプログラムは`?init`と`atomicHostContract`／`readonlyHostContract`を使う。
+Options for custom hosts, shared Memory, eventLoop, and task notifications match the [existing runtime](runtime.md).
+`?init` does not automatically link hosts; supply them explicitly, as in `init({imports:{host:provider}})`.
+Programs with shared-Memory proofs use `?init` and `atomicHostContract` / `readonlyHostContract`.
 
-通常のESM importでは、WLTのhost importのmodule名をJSのspecifierとして解決する。
-`"./host.mjs"`ならWLTファイルの隣を読む。カスタムimportには従来どおり型・effectを定めるbinding policyが必要になる。
-namespaceからproviderへの対応は設定でも指定できる。
+Ordinary ESM imports resolve Walz host-import module names as JS specifiers.
+`"./host.mjs"` loads beside the Walz file. Custom imports still require binding policies defining types and effects.
+Namespace-to-provider mappings can also be configured.
 
 ```ts
-wlt({
+walz({
   bindings:'./bindings.json',
   imports:{host:'./src/host.ts'},
 });
 ```
 
-設定内の相対パスはViteのrootが基準。JS providerはnamed exportのオブジェクトとして接続する。
-値はインスタンス生成時に取り込み、既存インスタンスのimportを後から差し替えない。
-組み込みevent-loopは既存の既定実装を使い、その他の`wlt:` capabilityは明示的なmappingか`?init`を必要とする。
+Relative configuration paths resolve from Vite's root. JS providers connect as objects of named exports.
+Values are captured at instantiation; existing instance imports are not replaced afterward.
+The built-in event loop uses the existing default implementation. Other `walz:` capabilities require explicit mappings or `?init`.
 
-## 型定義
+<a id="型定義"></a>
 
-TS7のContent Mapperを使う場合は、宣言ファイルの生成なしで検査できる。
-設定と対応するホストの版は[Content Mapperのガイド](content-mapper.md)を参照。
+## Type definitions
 
-`dts:true`は検査済みの公開ABIから`math.d.wlt.ts`を生成する。
-`allowArbitraryExtensions:true`と`@mizchi/wlt-runtime/vite/client`の型を有効にする。
+TS7's Content Mapper supports checking without declaration-file generation.
+See the [Content Mapper guide](content-mapper.md) for setup and supported host versions.
+
+`dts:true` generates `math.d.walz.ts` from the checked public ABI.
+Enable `allowArbitraryExtensions:true` and the types from `@mizchi/walz-runtime/vite/client`.
 
 ```json
 {
@@ -101,40 +107,42 @@ TS7のContent Mapperを使う場合は、宣言ファイルの生成なしで検
     "moduleResolution": "Bundler",
     "target": "ESNext",
     "allowArbitraryExtensions": true,
-    "types": ["@mizchi/wlt-runtime/vite/client"]
+    "types": ["@mizchi/walz-runtime/vite/client"]
   }
 }
 ```
 
-TypeScriptは[Vite公式の任意拡張子の宣言方式](https://vite.dev/guide/features#esm-integration)でnamed exportを解決する。
-生成はモジュールの初回コンパイル時なので、`vite build`の後に`tsc --noEmit`を実行するか、生成物を管理する。
-サンプルには対応する生成済み宣言を含めている。手書きの宣言は上書きせず、検査失敗時には自身が生成した古い宣言を消す。
-リポジトリ内のサンプルは自己参照パッケージの型探索を補うため相対`types`／`paths`を使っている。
+TypeScript resolves named exports using [Vite's official arbitrary-extension declaration approach](https://vite.dev/guide/features#esm-integration).
+Generation occurs on first module compilation, so run `tsc --noEmit` after `vite build` or manage the generated files.
+The sample includes matching generated declarations. Handwritten declarations are not overwritten; failed checks delete stale declarations generated by the plugin itself.
+Repository samples use relative `types` / `paths` to supplement type resolution for the self-referencing package.
 
-i64はbigint、bytesはUint8Array、数値listの戻り値は対応するTypedArrayになる。
-Option、Result、record、variant、enum、flags、tupleも既存のJS表現へ型付けする。
-非同期関数はPromiseを返す。同期関数のFuture戻り値は`WltFuture<T>`で、PromiseLikeと明示解放を提供する。
-Streamは`WltStream<T>`で、`next()`・`readMany()`・`return()`を提供する。
-同期Futureを`start()`経由で受け取るresultは、ランタイム固有のthenable同化抑制をTypeScriptで表し切れないためunknownとする。
-通常の関数呼出しではFutureハンドルの型を保持する。
+i64 maps to bigint, bytes to Uint8Array, and numeric-list results to matching TypedArrays.
+Option, Result, record, variant, enum, flags, and tuple are also typed using existing JS representations.
+Async functions return Promises. A synchronous function's Future result is `WalzFuture<T>`, providing PromiseLike and explicit disposal.
+Streams use `WalzStream<T>`, providing `next()`, `readMany()`, and `return()`.
+The result of obtaining a synchronous Future through `start()` is unknown because TypeScript cannot fully express the runtime-specific suppression of thenable assimilation.
+Ordinary function calls retain the Future-handle type.
 
-## ビルドと開発時の更新
+<a id="ビルドと開発時の更新"></a>
 
-本番のブラウザビルドでは2つのWasmをViteのassetとして出力し、設定したbaseに合わせて読み込む。
-開発時とSSRではバイナリを生成JSへ埋め込み、ファイル配信やブラウザのNode互換機能に依存せずロードする。
-SSRでも同じCore／JSPIのランタイム条件が適用される。
+## Builds and development updates
 
-コンパイラが実際に読んだ`%use`／`%include`／typed Wasmとbinding policyを監視する。
-WLTの変更ではページ全体を再読み込みし、型やGCレイアウトが変わった古いインスタンスを差し替えない。
-コンパイル失敗はViteのerror overlayに元ファイルの位置を表示する。
+Production browser builds emit two Wasm modules as Vite assets, loading them according to the configured base.
+Development and SSR embed binaries in generated JS, avoiding dependencies on file serving or browser Node compatibility.
+SSR has the same Core/JSPI runtime requirements.
 
-コンパイラはシェルを介さず実行する。必要なら`compiler:'./bin/wlt'`や
-`compiler:['cargo','run','--locked','--manifest-path','/path/to/Cargo.toml','--']`で指定できる。
-既定は環境変数`WLT`、なければPATH上の`wlt`。タイムアウトは`timeoutMs`（既定60000）。
-ビルド用の一時ファイルは成功・失敗・終了のいずれでも回収する。
+The plugin watches `@use`, `@include`, typed Wasm, and binding policies actually read by the compiler.
+Walz changes trigger full-page reloads rather than swapping old instances whose types or GC layouts changed.
+Compilation failures show original-file positions in Vite's error overlay.
 
-静的な`%use`のDCEはコンパイラの既存規則に従う。JSで未使用のbindingが消えても、公開したWasm exportはビルドの根として残る。
-Core＋JSPIの公開ABIの制約も引き継ぐ。`?raw`と`?url`はViteが元のWLTソースに対して処理する。
+The compiler runs without a shell. Specify it when needed with `compiler:'./bin/walz'` or
+`compiler:['cargo','run','--locked','--manifest-path','/path/to/Cargo.toml','--']`.
+The default is environment variable `WALZ`, falling back to `walz` on PATH. `timeoutMs` controls the timeout (default 60000).
+Temporary build files are cleaned up on success, failure, and termination.
 
-検査は`just test-vite`。SSR、元ファイルの診断、宣言の型検査、別インスタンス、ABI値に加え、
-Chromiumで開発／本番のサブパス配信と依存ファイル変更・エラー復帰を確認する。
+Static `@use` DCE follows existing compiler rules. Public Wasm exports remain build roots even if unused JS bindings disappear.
+Core＋JSPI public ABI constraints also apply. Vite handles `?raw` and `?url` against the original Walz source.
+
+Run checks with `just test-vite`. Alongside SSR, original-file diagnostics, declaration type checks, separate instances, and ABI values,
+Chromium checks development/production subpath serving, dependency changes, and recovery from errors.

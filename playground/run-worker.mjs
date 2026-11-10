@@ -7,7 +7,7 @@ async function executeHost(program, name) {
   const entry = program.exports[name];
   if (!entry) throw new Error('Select an exported function to run');
   if (entry.arity !== 0) throw new Error(`Select a function with no arguments (${entry.arity} argument${entry.arity === 1 ? '' : 's'} required)`);
-  if (!program.manifest.imports.every(item => item.module === 'wlt:host/event-loop@0.1.0')) {
+  if (!program.manifest.imports.every(item => item.module === 'walz:host/event-loop@0.1.0')) {
     throw new Error('Only event-loop host imports are available in this playground');
   }
   const url = URL.createObjectURL(new Blob([program.bindings], { type: 'text/javascript' }));

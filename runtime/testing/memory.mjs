@@ -5,7 +5,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 export async function instrument(
   directory,
-  backend = process.env.WLT_BACKEND,
+  backend = process.env.WALZ_BACKEND,
 ) {
   if (backend === "core") {
     const path = join(directory, "core.mjs");
@@ -33,7 +33,7 @@ export async function instrument(
       throw new Error("jco buffer inspection anchor changed");
     source = source.replace(
       "class BufferManager {",
-      "class BufferManager {\n  __wltSize(){return Array.from(this.#buffers.values()).reduce((n,b)=>n+b.size,0);}",
+      "class BufferManager {\n  __walzSize(){return Array.from(this.#buffers.values()).reduce((n,b)=>n+b.size,0);}",
     );
   }
   source = source.replace(marker, (match) =>
@@ -41,7 +41,7 @@ export async function instrument(
       "return { api:",
       `return { __memory:()=>({
     scopes:typeof RESOURCE_SCOPE_TASKS==='undefined'?0:RESOURCE_SCOPE_TASKS.size,
-    bufferRegistry:typeof BUFFER_MGR==='undefined'?0:BUFFER_MGR.__wltSize(),
+    bufferRegistry:typeof BUFFER_MGR==='undefined'?0:BUFFER_MGR.__walzSize(),
     tasks:typeof ASYNC_TASKS_BY_COMPONENT_IDX==='undefined'?0:Array.from(ASYNC_TASKS_BY_COMPONENT_IDX.values()).reduce((n,t)=>n+t.length,0),
     futures:typeof FUTURES==='undefined'?0:FUTURES.size(),
     streams:typeof STREAMS==='undefined'?0:STREAMS.size(),

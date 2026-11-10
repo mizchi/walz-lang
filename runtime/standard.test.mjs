@@ -6,11 +6,11 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 for (const backend of ["core", "component"])
-  test(`${backend}: wlt:core types and grouped bindings preserve async portable ABIs`, async () => {
-    const directory = await mkdtemp(join(tmpdir(), "wlt-standard-"));
+  test(`${backend}: walz:core types and grouped bindings preserve async portable ABIs`, async () => {
+    const directory = await mkdtemp(join(tmpdir(), "walz-standard-"));
     try {
       const { build } = await import(backend === "core" ? "./build-core.mjs" : "./build.mjs");
-      await build("tests/component-fixtures/standard.wlt", directory);
+      await build("tests/component-fixtures/standard.walz", directory);
       const { instantiate } = await import(pathToFileURL(join(directory, "index.js")));
       const calls = [];
       let memory;

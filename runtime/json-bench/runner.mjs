@@ -71,12 +71,12 @@ async function native(directory,mode,c) {
   },outputBytes:Buffer.byteLength(check.normalized)};
 }
 const groups={
-  parse:["nodeParse","serdeParse","wltResident"],
+  parse:["nodeParse","serdeParse","walzResident"],
   api:["coreInputLength","coreParseStatus","componentInputLength","componentParseStatus"],
   normalize:["nodeNormalize","serdeNormalize","coreNormalize","componentNormalize"],
 };
 function tables(report) {
-  const titles={parse:"既存の入力からASTを生成（ABIコピーなし）",api:"JS API：入力変換を含む解析と入力長だけの対照",normalize:"解析＋再シリアライズ（WLTは入出力ABI込み）"};
+  const titles={parse:"既存の入力からASTを生成（ABIコピーなし）",api:"JS API：入力変換を含む解析と入力長だけの対照",normalize:"解析＋再シリアライズ（WALZは入出力ABI込み）"};
   return Object.entries(groups).map(([group,names])=>[
     `## ${titles[group]}`,"",
     `| input | bytes | ${names.join(" | ")} |`,
@@ -99,32 +99,32 @@ export async function run(directory,output,{rounds=9,targetMs=30}={}) {
     }});
     adapters[backend]={api:program.api,clean:()=>assert.equal(arena.live(),0,`${backend}: ABI buffer leak`)};
   }
-  const report={schema:"wlt-json-bench-v1",created:new Date().toISOString(),node:process.version,v8:process.versions.v8,
+  const report={schema:"walz-json-bench-v1",created:new Date().toISOString(),node:process.version,v8:process.versions.v8,
     cpu:cpus()[0]?.model,platform:process.platform,arch:process.arch,rounds,targetMs,
     captureHash:hash(await readFile(join(directory,"capture.json"))),reference:manifest.reference,sizes:manifest.sizes,
     method:{setupExcluded:true,ioExcluded:true,rotatingOrder:true,explicitGc:"before each measured batch only",nativeDropIncluded:true},cases:[]};
   for(const c of corpus) {
     const input=residentSource(raw,c.source);
-    const wltOutput=equivalentOutput(adapters.core.api.normalize(c.source),c.normalized);
-    assert.equal(equivalentOutput(adapters.component.api.normalize(c.source),c.normalized),wltOutput);
-    const wltHash=checksum(wltOutput);
-    const parseCheck=value=>assert.equal(raw.checksum(value),wltHash,`${c.name}: raw AST mismatch`);
+    const walzOutput=equivalentOutput(adapters.core.api.normalize(c.source),c.normalized);
+    assert.equal(equivalentOutput(adapters.component.api.normalize(c.source),c.normalized),walzOutput);
+    const walzHash=checksum(walzOutput);
+    const parseCheck=value=>assert.equal(raw.checksum(value),walzHash,`${c.name}: raw AST mismatch`);
     const variants={
       nodeParse:{fn:()=>JSON.parse(c.source),check:value=>assert.deepEqual(value,JSON.parse(c.normalized))},
       serdeParse:await native(directory,"parse",c),
-      wltResident:{fn:()=>raw.parse(input),check:parseCheck},
+      walzResident:{fn:()=>raw.parse(input),check:parseCheck},
       nodeNormalize:{fn:()=>JSON.stringify(JSON.parse(c.source)),check:value=>assert.equal(value,c.normalized)},
       serdeNormalize:await native(directory,"normalize",c),
     };
     for(const [backend,{api,clean}] of Object.entries(adapters)) {
       variants[backend+"InputLength"]={fn:()=>api.inputLength(c.source),check:value=>assert.equal(value,c.bytes),clean};
       variants[backend+"ParseStatus"]={fn:()=>api.parseStatus(c.source),check:value=>assert.equal(value,1),clean};
-      variants[backend+"Normalize"]={fn:()=>api.normalize(c.source),check:value=>assert.deepEqual(value,{tag:"ok",val:wltOutput}),clean};
+      variants[backend+"Normalize"]={fn:()=>api.normalize(c.source),check:value=>assert.deepEqual(value,{tag:"ok",val:walzOutput}),clean};
     }
     const results=await measure(variants,{rounds,targetMs});
     for(const result of Object.values(results))result.mibPerSecond=c.bytes/(result.medianNs/1e9)/(1024*1024);
-    report.cases.push({name:c.name,bytes:c.bytes,inputHash:c.inputHash,normalizedHash:c.normalizedHash,wltNormalizedHash:wltHash,outputBytes:{wlt:Buffer.byteLength(wltOutput),node:Buffer.byteLength(c.normalized),serde:variants.serdeNormalize.outputBytes},results});
-    console.log(`${c.name}: parse Node ${(results.nodeParse.medianNs/1000).toFixed(2)}us, serde ${(results.serdeParse.medianNs/1000).toFixed(2)}us, WLT ${(results.wltResident.medianNs/1000).toFixed(2)}us`);
+    report.cases.push({name:c.name,bytes:c.bytes,inputHash:c.inputHash,normalizedHash:c.normalizedHash,walzNormalizedHash:walzHash,outputBytes:{walz:Buffer.byteLength(walzOutput),node:Buffer.byteLength(c.normalized),serde:variants.serdeNormalize.outputBytes},results});
+    console.log(`${c.name}: parse Node ${(results.nodeParse.medianNs/1000).toFixed(2)}us, serde ${(results.serdeParse.medianNs/1000).toFixed(2)}us, Walz ${(results.walzResident.medianNs/1000).toFixed(2)}us`);
   }
   // Same API, intentionally different number representations. Not ranked inputs.
   report.semanticProbes=[];
@@ -133,7 +133,7 @@ export async function run(directory,output,{rounds=9,targetMs=30}={}) {
   await writeFile(join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
   const text=`# JSON parser speed comparison\n\n${report.node} / ${report.cpu} / ${report.arch}; ${rounds} rounds; median µs/call.\n\n`+
     `All logical JSON outputs and raw AST serialization hashes passed. AST/output validation, file I/O, compilation, instantiation and input setup are excluded. Calls rotate order each round. Explicit GC runs before each timed batch; automatic GC during a batch is included. Rust release Value destruction is inside its timer; each native process warms its allocator before timing.\n\n`+
-    `WLT resident returns an opaque GC AST and is checked by a serialization hash outside the timer. Core/Component parse-status fully parses but returns only success, so it is a different API from returning an AST. Input-length measures the same input ABI without parsing; timings are not subtracted. Normalize includes both WLT ABI copies. Native Rust has no JS FFI or UTF-16 conversion. WLT preserves numeric lexemes and duplicates, JS uses Numbers, serde_json uses its default Value/Map. Ranked inputs use finite safe numbers and unique, sorted keys. Unicode escaping can differ (WLT uses \\u000a for newline, Node uses \\n); output sizes are recorded. Results apply to these inputs and representations.\n\n`+tables(report);
+    `Walz resident returns an opaque GC AST and is checked by a serialization hash outside the timer. Core/Component parse-status fully parses but returns only success, so it is a different API from returning an AST. Input-length measures the same input ABI without parsing; timings are not subtracted. Normalize includes both Walz ABI copies. Native Rust has no JS FFI or UTF-16 conversion. Walz preserves numeric lexemes and duplicates, JS uses Numbers, serde_json uses its default Value/Map. Ranked inputs use finite safe numbers and unique, sorted keys. Unicode escaping can differ (Walz uses \\u000a for newline, Node uses \\n); output sizes are recorded. Results apply to these inputs and representations.\n\n`+tables(report);
   await writeFile(join(output,"report.md"),text,{flag:"wx"});
   console.log(output);return report;
 }

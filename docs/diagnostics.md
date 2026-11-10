@@ -1,62 +1,64 @@
-# 診断のデータ契約
+<a id="診断のデータ契約"></a>
 
-`wlt::Error::diagnostic()` は `&wlt::diagnostic::Diagnostic` を返す。
-診断データとテキスト描画を分離し、呼び出し側で表示文を解析せずに位置や分類を取得できる。
-`serde_json::to_value(error.diagnostic())` で JSON にもできる。
+# Diagnostic data contract
 
-| フィールド | 意味 |
+`walz::Error::diagnostic()` returns `&walz::diagnostic::Diagnostic`.
+Diagnostic data is separate from text rendering, so callers can obtain positions and categories without parsing display text.
+It can also be converted to JSON with `serde_json::to_value(error.diagnostic())`.
+
+| Field | Meaning |
 |---|---|
-| `code` | 機械処理用の分類 |
-| `message` | 主エラーの説明 |
-| `primary` | 問題のソース範囲。外部ツール等の失敗では `None` |
-| `related` | 宣言、先行する move、effect の原因などの位置と説明 |
-| `notes` | 位置を持たない補足 |
-| `help` | 名前候補や修正方針。自動修正ではない |
+| `code` | Machine-readable category |
+| `message` | Description of the primary error |
+| `primary` | Source range of the problem; `None` for failures such as external tools |
+| `related` | Positions and descriptions of declarations, earlier moves, effect causes, and similar context |
+| `notes` | Additional information without positions |
+| `help` | Name candidates or suggested repair approaches, rather than automatic fixes |
 
-各ラベルは `span`、`location`、`message` を持つ。
-`span` は UTF-8 byte offset の半開区間、`location.line/column` は1始まり。
-列は Unicode scalar の個数で数え、バイト数や画面上の文字幅では数えない。
+Each label has `span`, `location`, and `message`.
+`span` is a half-open range of UTF-8 byte offsets; `location.line/column` are one-based.
+Columns count Unicode scalars, rather than bytes or display widths.
 
-文字列 API の `check` / `compile` が返した位置は、その文字列に対するもので、`location.path` は `None`。
-include を使う場合は `source::load(path)` の展開後テキストを検査し、エラーを `loaded.diagnostic(error)` に渡す。
-主エラーとすべての関連位置を、それぞれ元ファイルの範囲・行・列へ変換する。
-変換済みのラベルの `span` は `location.path` のファイルに対するものになる。
-include 境界をまたぐ範囲は、開始ファイル内の連続する部分までに制限する。
-CLI とテストランナーもこの変換を使う。
+Positions returned by the string API's `check` / `compile` refer to that string, with `location.path` set to `None`.
+When using include, check the expanded text from `source::load(path)` and pass errors to `loaded.diagnostic(error)`.
+This maps the primary error and every related position to ranges, lines, and columns in their respective original files.
+A mapped label's `span` then refers to the file in `location.path`.
+Ranges crossing include boundaries are limited to the contiguous portion in the starting file.
+The CLI and test runner use this mapping too.
 
-| code | 診断 |
+| code | Diagnostic |
 |---|---|
-| `E_CALL_ARITY` | 呼び出し先と引数数。通常の call では関数名を数えない |
-| `E_UNKNOWN_LOCAL` | 現在のスコープにない名前 |
-| `E_TYPE_MISMATCH` | 期待する型と実際の型 |
-| `E_OWNERSHIP_MOVED` | 消費済み、または利用不能な所有値の再使用 |
-| `E_OWNERSHIP` | 所有権契約の状態不一致や未消費値 |
-| `E_EFFECT_CONTRACT` | 宣言した effect の上限を超える処理 |
-| `E_OPAQUE_REPRESENTATION` | 所有する ファイル の外からの表現アクセス |
-| `E_ALIAS_CYCLE` | 透明な型 alias の参照循環。順序付き経路と各参照位置を表示 |
-| `E_GENERIC_INFERENCE` | 汎用呼び出しの型引数が曖昧、未確定、または衝突 |
-| `E_MACRO` / `E_MACRO_UNKNOWN` | マクロの宣言・テンプレートの構文、または未定義のマクロ |
-| `E_MACRO_MATCH` | 構文・型制約に一致するルールがない |
-| `E_MACRO_TYPE` / `E_MACRO_INFERENCE` | 型問い合わせの対象不一致、または必要な具体型・期待型がない |
-| `E_MACRO_BINDING` / `E_MACRO_HYGIENE` | 宣言した束縛関係・重複・委譲、またはテンプレート内の自由なローカル参照の違反 |
-| `E_MACRO_LIMIT` | 展開数・サイズ・深さ・検査量の上限 |
-| `E_CHECK` | その他の構文・名前解決・検査エラー |
-| `E_TOOL` | ソース範囲を持たないツール・入出力等の失敗 |
+| `E_CALL_ARITY` | Callee and argument count; ordinary calls do not count the function name |
+| `E_UNKNOWN_LOCAL` | Name absent from the current scope |
+| `E_TYPE_MISMATCH` | Expected and actual types |
+| `E_OWNERSHIP_MOVED` | Reuse of a consumed or unavailable owned value |
+| `E_OWNERSHIP` | Ownership-contract state mismatch or an unconsumed value |
+| `E_EFFECT_CONTRACT` | Operation exceeding the declared effect limit |
+| `E_OPAQUE_REPRESENTATION` | Representation access from outside the owning file |
+| `E_ALIAS_CYCLE` | Reference cycle among transparent type aliases; shows the ordered path and each reference position |
+| `E_GENERIC_INFERENCE` | Ambiguous, unresolved, or conflicting type arguments for a generic call |
+| `E_MACRO` / `E_MACRO_UNKNOWN` | Macro declaration/template syntax, or an undefined macro |
+| `E_MACRO_MATCH` | No rule matches the syntax and type constraints |
+| `E_MACRO_TYPE` / `E_MACRO_INFERENCE` | Type-query target mismatch, or a missing required concrete/expected type |
+| `E_MACRO_BINDING` / `E_MACRO_HYGIENE` | Violation of declared binding relationships, duplication, delegation, or free local references in templates |
+| `E_MACRO_LIMIT` | Expansion count, size, depth, or checking-work limit |
+| `E_CHECK` | Other syntax, name-resolution, or checking errors |
+| `E_TOOL` | Tool, I/O, or similar failure without a source range |
 
-`%closure.call` の個数には、明示的に渡す environment を含む。
-その場合は environment 1個と通常の引数を分けて補足する。capture の個数は加算しない。
-名前候補は現在のスコープだけから最大3件を選ぶ。capture の説明は closure 内で候補がない場合に限る。
-近い名前がない場合は、利用可能な束縛とその型・宣言位置を最大4件示す。置換先と断定せず、既存の束縛を意図した場合の案内として表示する。
+`@closure.call` counts the explicitly passed environment.
+Diagnostics distinguish the one environment argument from ordinary arguments. Captures are not added to the count.
+Up to three name candidates are selected only from the current scope. Capture guidance is shown only inside closures with no candidates.
+When no close name exists, diagnostics show up to four available bindings, their types, and declaration positions. These are presented as guidance if an existing binding was intended, without asserting a replacement.
 
-型の期待値には数値演算の operand、呼び出し先の parameter、宣言した result の根拠を付ける。
-失敗した operand と周辺の期待型が同じ数値型なら、その型に対応する同種の演算と定数型の確認を条件付きで案内する。実在する命令で型・引数数が合う場合に限り、暗黙の変換は行わない。
-内側の式が既に原因を説明している場合、外側の result や call を原因として追加しない。
-所有権診断は束縛の宣言と先行する move を示し、分岐では到達可能な複数の位置を最大3件表示する。
-effect 診断は宣言と必要な作用を並べ、原因の操作まで呼び出しを最大8段追う。catch で処理済みの throw は原因にしない。
-これらの補足は診断用データであり、所有権の proof contract や effect の許可判定には使わない。
+Expected types include their basis in numeric operands, callee parameters, or declared results.
+When a failing operand and the surrounding expected type are the same numeric type, conditional guidance suggests checking the corresponding operation family and constant types. This applies only to actual instructions with matching types and arity; no implicit conversion occurs.
+When an inner expression already explains the cause, the outer result or call is not added as a cause.
+Ownership diagnostics show the binding declaration and earlier move; branches display up to three reachable positions.
+Effect diagnostics show the declaration and required effects together, following up to eight call levels to the causing operation. Throws already handled by catch are not treated as causes.
+This context is diagnostic data; it is not used for ownership proof contracts or effect permission decisions.
 
-マクロでは入力の位置と展開ルールの位置を区別する。末尾以外の `...` はそのトークンを指し、末尾反復や再帰ルールを案内する。委譲する本体を組み直した場合は、本体全体を転送し、ラッパーを委譲先のスコープ内へ移すよう案内する。
-`E_UNKNOWN_LOCAL` が捕捉した初期化式内にあり、同名の呼び出し側の束縛を確認できた場合は、初期化式が caller のスコープを使うことを補足する。無関係な未定義名にこの説明を付けたり、暗黙の捕捉でコードを受理したりはしない。[対応範囲](user-macros.md#hygiene-evaluation-and-intentional-bindings)も参照。
+Macros distinguish input positions from expansion-rule positions. A nonterminal `...` points to that token and suggests trailing repetition or recursive rules. When a delegated body has been reconstructed, guidance suggests forwarding the whole body and moving the wrapper inside the delegate's scope.
+If `E_UNKNOWN_LOCAL` occurs in a captured initializer and a caller binding with the same name can be confirmed, a note explains that initializers use the caller's scope. This note is not attached to unrelated undefined names, and code is not accepted through implicit capture. See also the [supported scope](user-macros.md#hygiene-evaluation-and-intentional-bindings).
 
-回帰テストは `cargo test --locked --test diagnostics`。
-実際のメッセージの読解・修正品質は [評価ループ](../evals/diagnostics/README.md) で別に評価する。
+Run regression tests with `cargo test --locked --test diagnostics`.
+Actual message comprehension and repair quality are assessed separately in the [evaluation loop](../evals/diagnostics/README.md).

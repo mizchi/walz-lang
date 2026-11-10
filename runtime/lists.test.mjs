@@ -7,10 +7,10 @@ import {pathToFileURL} from 'node:url';
 import {instrument,tick} from './testing/memory.mjs';
 
 for(const backend of ['core','component'])test(`${backend}: generic lists preserve values, snapshots, and ABI ownership`,{timeout:60000},async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-lists-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-lists-'));
   try{
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/lists.wlt',dir);await instrument(dir,backend);
+    await build('tests/component-fixtures/lists.walz',dir);await instrument(dir,backend);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));
     let memory;
     const make=(options={})=>instantiate({...options,instantiateCore:async(module,imports)=>{const instance=await WebAssembly.instantiate(module,imports);if(instance.exports.live)memory=instance.exports;return instance;}});

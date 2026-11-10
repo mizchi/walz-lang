@@ -9,44 +9,44 @@ import {instrument,collect} from './testing/memory.mjs';
 const source=`(module
   (type $Box (struct (field i32)))
   (type $Mutable (struct (field (mut i32))))
-  (import "wlt:host/event-loop@0.1.0" "sleep" (func $gate (param $n i32)))
-  (%closure $Work (%capture $n i32) (result i64) (%effect host suspends)
+  (import "walz:host/event-loop@0.1.0" "sleep" (func $gate (param $n i32)))
+  (@closure $Work (@capture $n i32) (result i64) (@effect host suspends)
     (block (result i64) (call $gate $n) (i64.const 21)))
-  (%closure $Identity (%capture $value (ref $Box)) (result (ref $Box)) (%effect pure) $value)
-  (%closure $Bad (result i64) (%effect host suspends) (block (result i64) (call $gate 2) (unreachable)))
-  (func $concurrent (export "concurrent") (result i64) (%effect host reads writes allocates suspends)
-    (%task.scope (result i64)
-      (%let $a (%task.spawn i64 $Work (%closure.new $Work 0))
-        (%let $b (%task.spawn i64 $Work (%closure.new $Work 1))
-          (+ (%task.join i64 (%move $a)) (%task.join i64 (%move $b)))))))
-  (func $identity (export "identity") (result i32) (%effect host reads writes allocates suspends)
-    (%let $object (struct.new $Box 42)
-      (%let $task (%task.spawn (ref $Box) $Identity (%closure.new $Identity $object))
-        (ref.eq $object (%task.join (ref $Box) (%move $task))))))
-  (func $failure (export "failure") (result i64) (%effect host reads writes allocates suspends)
-    (%task.scope (result i64)
-      (%let $waiting (%task.spawn i64 $Work (%closure.new $Work 0))
-        (%let $bad (%task.spawn i64 $Bad (%closure.new $Bad))
-          (block (result i64) (%task.drop i64 (%move $waiting)) (%task.join i64 (%move $bad)))))))
-  (%closure $Write (%capture $cell (ref $Mutable)) (%effect host writes suspends)
+  (@closure $Identity (@capture $value (ref $Box)) (result (ref $Box)) (@effect pure) $value)
+  (@closure $Bad (result i64) (@effect host suspends) (block (result i64) (call $gate 2) (unreachable)))
+  (func $concurrent (export "concurrent") (result i64) (@effect host reads writes allocates suspends)
+    (@task.scope (result i64)
+      (@let $a (@task.spawn i64 $Work (@closure.new $Work 0))
+        (@let $b (@task.spawn i64 $Work (@closure.new $Work 1))
+          (+ (@task.join i64 (@move $a)) (@task.join i64 (@move $b)))))))
+  (func $identity (export "identity") (result i32) (@effect host reads writes allocates suspends)
+    (@let $object (struct.new $Box 42)
+      (@let $task (@task.spawn (ref $Box) $Identity (@closure.new $Identity $object))
+        (ref.eq $object (@task.join (ref $Box) (@move $task))))))
+  (func $failure (export "failure") (result i64) (@effect host reads writes allocates suspends)
+    (@task.scope (result i64)
+      (@let $waiting (@task.spawn i64 $Work (@closure.new $Work 0))
+        (@let $bad (@task.spawn i64 $Bad (@closure.new $Bad))
+          (block (result i64) (@task.drop i64 (@move $waiting)) (@task.join i64 (@move $bad)))))))
+  (@closure $Write (@capture $cell (ref $Mutable)) (@effect host writes suspends)
     (block (call $gate 3) (struct.set $Mutable 0 $cell (i32.const 42))))
-  (func $make (param $cell (ref $Mutable)) (result (%task %unit)) (%effect host reads writes allocates suspends)
-    (%task.scope (result (%task %unit))
-      (return (%task.spawn %unit $Write (%closure.new $Write $cell)))))
-  (func $early (export "early") (result i32) (%effect host reads writes allocates suspends)
-    (%let $cell (struct.new $Mutable 0)
-      (%let $task (call $make $cell)
-        (%let $value (struct.get $Mutable 0 $cell)
-          (block (result i32) (%task.drop %unit (%move $task)) $value)))))
-  (func $trapped (export "trapped") (param $divisor i32) (%effect host reads writes allocates suspends)
-    (%task.scope (result %unit)
-      (%let $task (%task.spawn i64 $Work (%closure.new $Work 0))
-        (block (drop (i32.div_s (i32.const 1) $divisor)) (%task.drop i64 (%move $task)))))))`;
+  (func $make (param $cell (ref $Mutable)) (result (@task @unit)) (@effect host reads writes allocates suspends)
+    (@task.scope (result (@task @unit))
+      (return (@task.spawn @unit $Write (@closure.new $Write $cell)))))
+  (func $early (export "early") (result i32) (@effect host reads writes allocates suspends)
+    (@let $cell (struct.new $Mutable 0)
+      (@let $task (call $make $cell)
+        (@let $value (struct.get $Mutable 0 $cell)
+          (block (result i32) (@task.drop @unit (@move $task)) $value)))))
+  (func $trapped (export "trapped") (param $divisor i32) (@effect host reads writes allocates suspends)
+    (@task.scope (result @unit)
+      (@let $task (@task.spawn i64 $Work (@closure.new $Work 0))
+        (block (drop (i32.div_s (i32.const 1) $divisor)) (@task.drop i64 (@move $task)))))))`;
 
 for(const backend of ['core','component'])test(`${backend}: concurrent children, GC identity, cancellation, and scope cleanup`,{timeout:60000},async()=>{
-  const directory=await mkdtemp(join(tmpdir(),'wlt-scoped-'));
+  const directory=await mkdtemp(join(tmpdir(),'walz-scoped-'));
   try {
-    const input=join(directory,'main.wlt');await writeFile(input,source);
+    const input=join(directory,'main.walz');await writeFile(input,source);
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
     await build(input,join(directory,'js'));
     await instrument(join(directory,'js'),backend);
@@ -66,7 +66,7 @@ for(const backend of ['core','component'])test(`${backend}: concurrent children,
       if(instance.exports.__children_live)guest=instance.exports;
       return instance;
     }});
-    assert.equal(component.wltChildRun,undefined,'private runner must not escape');
+    assert.equal(component.walzChildRun,undefined,'private runner must not escape');
     const {api,start}=component;
     assert.equal(await api.concurrent(),42n,'both children must start before either finishes');
     assert.equal(arrived.length,2);assert.equal(await api.identity(),1,'GC result identity is preserved');

@@ -4,15 +4,15 @@ use std::process::Command;
 #[test]
 fn core_js_exposes_checked_esm_names_shapes_and_suspension() {
     let source = r#"(module
-      (%use "wlt:core" (type $string) (type $bytes) (type $future))
-      (func $add (export "add-one") (param $x i64) (result i64) (%effect pure) (+ $x 1))
-      (func $echo (export "echo") (param $x $string) (result $string) (%effect pure) $x)
-      (func $bytes (export "bytes") (param $x $bytes) (result $bytes) (%effect pure) $x)
-      (func $wait (export "wait") (param $x (%inst $future i32)) (result i32) (%effect suspends)
-        (%future.await i32 (%move $x))))"#;
-    let built = wlt::component::core_js::compile(source).unwrap();
+      (@use "walz:core" (type $string) (type $bytes) (type $future))
+      (func $add (export "add-one") (param $x i64) (result i64) (@effect pure) (+ $x 1))
+      (func $echo (export "echo") (param $x $string) (result $string) (@effect pure) $x)
+      (func $bytes (export "bytes") (param $x $bytes) (result $bytes) (@effect pure) $x)
+      (func $wait (export "wait") (param $x (@inst $future i32)) (result i32) (@effect suspends)
+        (@future.await i32 (@move $x))))"#;
+    let built = walz::component::core_js::compile(source).unwrap();
     let esm = &built.manifest["esm"];
-    assert_eq!(esm["schema"], "wlt-esm-v1");
+    assert_eq!(esm["schema"], "walz-esm-v1");
     assert_eq!(
         esm["exports"]["add-one"],
         json!({"jsName":"addOne","params":["i64"],"result":"i64","suspends":false})
@@ -26,24 +26,24 @@ fn core_js_exposes_checked_esm_names_shapes_and_suspension() {
 #[test]
 fn core_js_build_records_files_for_incremental_consumers() {
     let dir = tempfile::tempdir().unwrap();
-    let main = dir.path().join("main.wlt");
-    let helper = dir.path().join("helper.wlt");
+    let main = dir.path().join("main.walz");
+    let helper = dir.path().join("helper.walz");
     let policy = dir.path().join("bindings.json");
     let output = dir.path().join("output");
     std::fs::write(
         &main,
-        r#"(module (%use "./helper.wlt" (func $answer))
-      (func $main (export "main") (result i32) (%effect pure) (call $answer)))"#,
+        r#"(module (@use "./helper.walz" (func $answer))
+      (func $main (export "main") (result i32) (@effect pure) (call $answer)))"#,
     )
     .unwrap();
     std::fs::write(
         &helper,
-        r#"(module (%export (func $answer))
-      (func $answer (result i32) (%effect pure) 42))"#,
+        r#"(module (@export (func $answer))
+      (func $answer (result i32) (@effect pure) 42))"#,
     )
     .unwrap();
     std::fs::write(&policy, r#"{"imports":[]}"#).unwrap();
-    let built = Command::new(env!("CARGO_BIN_EXE_wlt"))
+    let built = Command::new(env!("CARGO_BIN_EXE_walz"))
         .arg("build")
         .arg(&main)
         .args(["--target", "core-js", "--bindings"])

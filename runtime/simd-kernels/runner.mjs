@@ -99,7 +99,7 @@ export async function run(directory, { rounds = 9, sizes = [16, 1024, 4096, 1638
     adapters[backend] = { api: instance.api, arena: () => arena };
   }
   const report = {
-    schema: "wlt-simd-kernels-v1", created: new Date().toISOString(),
+    schema: "walz-simd-kernels-v1", created: new Date().toISOString(),
     node: process.version, v8: process.versions.v8, cpu: cpus()[0]?.model,
     platform: process.platform, arch: process.arch, execArgv: process.execArgv,
     rounds, targetMs, sizes, capture: hash(await readFile(join(directory, "capture.json"))),
@@ -116,10 +116,10 @@ export async function run(directory, { rounds = 9, sizes = [16, 1024, 4096, 1638
     const linear = await linearReference(directory, c);
     const resident = measure({
       js: c.js,
-      wltScalar: scalarRun,
-      wltSimd: simdRun,
+      walzScalar: scalarRun,
+      walzSimd: simdRun,
       jsimdKernel: linear.resident,
-      wltPackAndSimd: packRun,
+      walzPackAndSimd: packRun,
     }, c.expected, rounds, targetMs);
     const boundary = { jsimdScratchCopy: linear.copyInclusive };
     for (const [backend, { api }] of Object.entries(adapters)) for (const kind of ["Scalar", "Simd"]) {
@@ -130,14 +130,14 @@ export async function run(directory, { rounds = 9, sizes = [16, 1024, 4096, 1638
     for (const adapter of Object.values(adapters)) assert.equal(adapter.arena().live(), 0, "ABI buffer leak");
     const inputHash = hash(Buffer.concat([c.a, c.b].filter(Boolean).map(a => Buffer.from(a.buffer, a.byteOffset, a.byteLength))));
     report.cases.push({ name: c.name, length, inputHash, expected: c.expected, resident, copyInclusive });
-    console.log(`${c.name} n=${length}: SIMD/JS ${(resident.js.medianNs / resident.wltSimd.medianNs).toFixed(2)}x; SIMD/scalar ${(resident.wltScalar.medianNs / resident.wltSimd.medianNs).toFixed(2)}x`);
+    console.log(`${c.name} n=${length}: SIMD/JS ${(resident.js.medianNs / resident.walzSimd.medianNs).toFixed(2)}x; SIMD/scalar ${(resident.walzScalar.medianNs / resident.walzSimd.medianNs).toFixed(2)}x`);
     global.gc?.();
   }
   assert.ok(Number.isFinite(sink));
   const results = join(directory, "results", report.created.replaceAll(/[:.]/g, "-"));
   await mkdir(results, { recursive: true });
   await writeFile(join(results, "report.json"), JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
-  const text = `# SIMD kernel measurements\n\n${report.node} / ${report.cpu}; ${rounds} rounds. Median microseconds/call.\n\nResident excludes construction and packing; wltPackAndSimd includes packing from existing scalar GC arrays. jsimdKernel is the captured raw linear-memory kernel, without its public JS wrapper.\n\n${table(report, "resident", ["js", "wltScalar", "wltSimd", "jsimdKernel", "wltPackAndSimd"])}\n\nCopy-inclusive includes input copies and the kernel. WLT uses its production value adapters, GC conversion and packing; jsimdScratchCopy reuses preallocated linear scratch and excludes its public allocator/wrapper. These are representation/boundary costs, not equal API implementations.\n\n${table(report, "copyInclusive", ["jsimdScratchCopy", "coreScalar", "coreSimd", "componentScalar", "componentSimd"])}\n`;
+  const text = `# SIMD kernel measurements\n\n${report.node} / ${report.cpu}; ${rounds} rounds. Median microseconds/call.\n\nResident excludes construction and packing; walzPackAndSimd includes packing from existing scalar GC arrays. jsimdKernel is the captured raw linear-memory kernel, without its public JS wrapper.\n\n${table(report, "resident", ["js", "walzScalar", "walzSimd", "jsimdKernel", "walzPackAndSimd"])}\n\nCopy-inclusive includes input copies and the kernel. Walz uses its production value adapters, GC conversion and packing; jsimdScratchCopy reuses preallocated linear scratch and excludes its public allocator/wrapper. These are representation/boundary costs, not equal API implementations.\n\n${table(report, "copyInclusive", ["jsimdScratchCopy", "coreScalar", "coreSimd", "componentScalar", "componentSimd"])}\n`;
   await writeFile(join(results, "report.md"), text, { flag: "wx" });
   console.log(results);
   return { report, results };

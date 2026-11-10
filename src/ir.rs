@@ -531,18 +531,18 @@ impl Module {
     /// Format a type belonging to this checked module using source type names.
     pub fn type_name(&self, ty: &Type) -> String {
         match ty {
-            Type::Unit => "%unit".into(),
-            Type::Resource(id) => format!("(%resource {})", self.types[id.0].name),
-            Type::Borrow(id) => format!("(%borrow {})", self.types[id.0].name),
+            Type::Unit => "@unit".into(),
+            Type::Resource(id) => format!("(@resource {})", self.types[id.0].name),
+            Type::Borrow(id) => format!("(@borrow {})", self.types[id.0].name),
             Type::Value(id) => match &self.types[id.0].kind {
                 TypeKind::Value(value) => {
                     let name = value.type_name(|ty| self.type_name(ty));
                     if let Some((head, rest)) =
                         name.strip_prefix('(').and_then(|s| s.split_once(' '))
                     {
-                        format!("(%{} {rest}", crate::naming::public(head))
+                        format!("(@{} {rest}", crate::naming::public(head))
                     } else {
-                        format!("%{}", crate::naming::public(&name))
+                        format!("@{}", crate::naming::public(&name))
                     }
                 }
                 _ => unreachable!("value type"),

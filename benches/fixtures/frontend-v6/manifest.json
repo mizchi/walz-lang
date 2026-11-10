@@ -1,0 +1,13 @@
+{
+  "version": 6,
+  "files": {
+    "json.walz": "d6adff04491cf0d69f191d85c3f6082394ad1cc60abcc19bc0f2d34a0366fa0c",
+    "let.walz": "d34835da241004aaa0c62938bc5caaf0decece03bba660ac063d220e247a346a",
+    "native.walz": "d0ffa083b37034668d173dbb42d68433195255cd719e2d85180b55a462e98fd3",
+    "std-string.walz": "067f4bcd04afa5b9bea2396fb2a23c3d3fe7d8106984909481c63bfbc8bc2fc9",
+    "std-types.walz": "9c591c7c9dc94e51903a6cafc6c5ab3d63d871b02359eb5a53e2645e28ea7545",
+    "stock-ledger.walz": "3c9ae1a84dad9294533eaa86999123ba5f09f4f1fd557165877d9bd5f8e42d2a",
+    "type-error.walz": "6eb364e5f1914ea20f5bc1058396f68e33eedb3606661f39fd1774fa2452c504",
+    "workflow.walz": "c88277ed9abc4d7b013cd0b54fbf2867cc26c574875a22e538e06c8aa8224458"
+  }
+}

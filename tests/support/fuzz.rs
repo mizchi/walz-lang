@@ -95,29 +95,29 @@ impl Expr {
                 *next += 1;
                 let a = a.render(short, next);
                 let b = b.render(short, next);
-                let value = format!("(%tuple.new i32 i32 {a} {b})");
+                let value = format!("(@tuple.new i32 i32 {a} {b})");
                 let body = format!("(i32.sub (local.get $a{id}) (local.get $b{id}))");
                 if short {
-                    format!("(%let ($a{id} $b{id}) {value} {body})")
+                    format!("(@let ($a{id} $b{id}) {value} {body})")
                 } else {
                     format!(
-                        "(%match (%tuple i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
+                        "(@match (@tuple i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
                     )
                 }
             }
             Self::List(a, b) => format!(
-                "(%list.get i32 (%list.new i32 {} {}) (i32.const 1))",
+                "(@list.get i32 (@list.new i32 {} {}) (i32.const 1))",
                 a.render(short, next),
                 b.render(short, next)
             ),
             Self::Generic(a) => {
-                format!("(call (%inst $identity $Count) {})", a.render(short, next))
+                format!("(call (@inst $identity $Count) {})", a.render(short, next))
             }
             Self::Result(a, ok) => {
                 let id = *next;
                 *next += 1;
                 format!(
-                    "(%match (%result i32 i32) (result i32) (%result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
+                    "(@match (@result i32 i32) (result i32) (@result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
                     if *ok { "ok" } else { "err" },
                     a.render(short, next)
                 )
@@ -133,13 +133,13 @@ impl Expr {
     fn source(&self, short: bool) -> String {
         let body = self.render(short, &mut 0);
         format!(
-            r#"(module (%type.alias $Count i32)
+            r#"(module (@type.alias $Count i32)
           (import "trace" "event" (func $event (param $n i32) (result i32)))
           (import "trace" "get" (func $get (result i32)))
-          (func $identity (%type.params $T) (%where (shared $T) (nonunit $T)) (param $x $T) (result $T) (%effect pure) (local.get $x))
-          (func $dead (result (%option i64)) (%option.none i64))
+          (func $identity (@type.params $T) (@where (shared $T) (nonunit $T)) (param $x $T) (result $T) (@effect pure) (local.get $x))
+          (func $dead (result (@option i64)) (@option.none i64))
           (func $main (export "main") (result i64)
-            (%let $value {body}
+            (@let $value {body}
               (i64.or (i64.shl (i64.extend_i32_u (call $get)) (i64.const 32))
                 (i64.extend_i32_u (local.get $value))))))"#
         )
@@ -191,7 +191,7 @@ fn execute(expr: &Expr, directory: &Path) -> Result<(), String> {
         .enumerate()
     {
         let compiled = std::panic::catch_unwind(|| {
-            wlt::compile_with_options(&expr.source(short), wlt::CompileOptions { optimize })
+            walz::compile_with_options(&expr.source(short), walz::CompileOptions { optimize })
         })
         .map_err(|_| "compiler-panic:generated typed input".to_owned())?
         .map_err(|e| format!("compile:{e}"))?;
@@ -234,21 +234,21 @@ fn execute(expr: &Expr, directory: &Path) -> Result<(), String> {
     Ok(())
 }
 pub fn run() {
-    let seed = std::env::var("WLT_FUZZ_SEED")
+    let seed = std::env::var("WALZ_FUZZ_SEED")
         .ok()
         .map(|s| s.parse::<u64>().unwrap())
         .unwrap_or(42);
-    let count = std::env::var("WLT_FUZZ_CASES")
+    let count = std::env::var("WALZ_FUZZ_CASES")
         .ok()
         .map(|s| s.parse::<usize>().unwrap())
         .unwrap_or(24);
     assert!((1..=10000).contains(&count));
-    if let Ok(path) = std::env::var("WLT_FUZZ_REPLAY")
-        && path.ends_with(".wlt")
+    if let Ok(path) = std::env::var("WALZ_FUZZ_REPLAY")
+        && path.ends_with(".walz")
     {
         let source = std::fs::read_to_string(path).unwrap();
         assert!(
-            std::panic::catch_unwind(|| wlt::compile(&source)).is_ok(),
+            std::panic::catch_unwind(|| walz::compile(&source)).is_ok(),
             "replayed source panicked"
         );
         return;
@@ -263,7 +263,7 @@ pub fn run() {
       let hash=0; const {instance}=await WebAssembly.instantiate(await readFile(process.argv[2]),{trace:{event:n=>{hash=(Math.imul(hash,31)+n)|0;return n},get:()=>hash}});
       console.log(instance.exports.main().toString());"#).unwrap();
     let mut state = seed;
-    let replay = std::env::var("WLT_FUZZ_REPLAY").ok();
+    let replay = std::env::var("WALZ_FUZZ_REPLAY").ok();
     let cases = if let Some(path) = replay {
         vec![serde_json::from_slice::<Expr>(&std::fs::read(path).unwrap()).unwrap()]
     } else {
@@ -295,7 +295,7 @@ pub fn run() {
             let byte_index = random(&mut state) as usize % bytes.len();
             bytes[byte_index] = b"()$;\"012 xyz"[random(&mut state) as usize % 12];
             let source = String::from_utf8(bytes).unwrap();
-            if std::panic::catch_unwind(|| wlt::compile(&source)).is_err() {
+            if std::panic::catch_unwind(|| walz::compile(&source)).is_err() {
                 let mut reduced = source;
                 let mut chunk = reduced.len() / 2;
                 while chunk > 0 {
@@ -303,7 +303,7 @@ pub fn run() {
                     while start + chunk <= reduced.len() {
                         let candidate =
                             format!("{}{}", &reduced[..start], &reduced[start + chunk..]);
-                        if std::panic::catch_unwind(|| wlt::compile(&candidate)).is_err() {
+                        if std::panic::catch_unwind(|| walz::compile(&candidate)).is_err() {
                             reduced = candidate;
                         } else {
                             start += chunk;
@@ -314,7 +314,7 @@ pub fn run() {
                 let folder = Path::new("target/fuzz/failures");
                 std::fs::create_dir_all(folder).unwrap();
                 let path = folder.join(format!(
-                    "mutation-{seed}-{index}-{mutation}-{}.wlt",
+                    "mutation-{seed}-{index}-{mutation}-{}.walz",
                     std::process::id()
                 ));
                 std::fs::write(&path, reduced).unwrap();

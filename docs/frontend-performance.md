@@ -1,9 +1,11 @@
-# Rustフロントエンドの計測
+<a id="rustフロントエンドの計測"></a>
 
-Criterion 0.8.2を開発依存として使い、WLTの型検査とCore Wasmへのコンパイルを測る。
-Cargo／rustc自身のビルド時間とは分ける。Rustのbench profileを使い、Wasmの実行は含めない。
+# Measuring the Rust frontend
 
-初回の改善結果は[20261107-r1の計測記録](../benchmarks/frontend/20261107-r1/report.md)を参照。
+Uses Criterion 0.8.2 as a development dependency to measure Walz type checking and compilation to Core Wasm.
+These measurements are separate from Cargo/rustc build time. They use Rust's bench profile and exclude Wasm execution.
+
+See the [20261107-r1 measurement record](../benchmarks/frontend/20261107-r1/report.md) for the initial improvements.
 
 ```sh
 just test-frontend
@@ -13,72 +15,82 @@ just frontend-compare before-r1
 just frontend-bench '^check/std-types$'
 ```
 
-`frontend-save` は既存のラベルを上書きしない。比較は基準値を維持し、結果は既定で
-`target/criterion/frontend-v4/` に保存する。`CRITERION_HOME` で基点を変えても、その下の`frontend-v4/`に分ける。
-直接使うときのオプションは[Criterionのbaseline資料](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_options.html)を参照。
+`frontend-save` does not overwrite existing labels. Comparisons preserve the baseline and, by default,
+save results under `target/criterion/frontend-v6/`. Setting `CRITERION_HOME` changes the base directory, but results remain separated under its `frontend-v6/` subdirectory.
+For direct invocation options, see [Criterion's baseline documentation](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_options.html).
 
-## 対象と条件
+<a id="対象と条件"></a>
 
-`benches/fixtures/frontend-v4/` の入力を固定する。`wlt:core`・`%use`・ファイルモジュールへの変更に合わせた新版で、v1〜v3の入力と過去の計測記録は保持する。
-大きな入力はファイル解決後のコンパイラ内部形式を固定したもの。非公開のスコープ表現を含むため、CLIの参照比較では明示的にlegacy fixture経路を使い、公開ソースの文法例には使わない。
-アプリのファイルimport／includeは事前に展開してあり、
-APIの計測にはファイル読み込みを含めない。入力を変更する場合は新しい版を作る。
+## Targets and conditions
 
-| group | 対象 |
+Inputs in `benches/fixtures/frontend-v6/` are fixed. V6 changes Walz's extension prefix from `%` to `@`; v1–v5 inputs and references retain their original bytes. Reference checks compare v6 WAT exactly with v5 and normalize only generated names/host namespaces when comparing earlier language names. IR, analysis, and diagnostic references are captured separately for v6.
+Large inputs fix the compiler's internal form after file resolution. Because they contain private scope representations, CLI reference comparisons explicitly use the legacy fixture path; they are not public-source syntax examples.
+Application file imports/includes are expanded in advance,
+so API measurements exclude file reads. Create a new version when changing inputs.
+
+| group | Target |
 | --- | --- |
-| `check` | 名前・型・effect・所有権の検査。Native WAT、let、標準型、文字列、JSON、在庫台帳、workflow |
-| `compile` | 上記の検査、解析、最適化・DCE、WAT／Wasm生成、Wasm validator |
-| `check-error` | 標準ライブラリを参照する型エラーの診断 |
-| `cold-check` | 毎回新しいCLIプロセスでcheck。起動・ファイルI/Oを含む。OSのファイルキャッシュは温まる |
+| `check` | Name, type, effect, and ownership checks. Native WAT, let, standard types, strings, JSON, inventory ledger, workflow |
+| `compile` | The checks above, analysis, optimization/DCE, WAT/Wasm generation, and the Wasm validator |
+| `check-error` | Diagnostics for type errors referencing the standard library |
+| `cold-check` | check in a new CLI process each time, including startup and file I/O. The OS file cache warms up |
 
-既定は30サンプル、ウォームアップ500ms、目標計測時間2秒。入力と結果を `std::hint::black_box` に渡し、
-生成したIR等の解放も1回の時間に含める。測定設定はCLIで変更できる。
-標準ライブラリの語彙はビルド時の索引に、構文木はプロセス内の固定数の読み取り専用cacheに保持する。
-標準ライブラリの cache はユーザーのソース、import別名、型検査結果、policy、所有権状態を保持しない。LSP は別に、リビジョンを区別する上限付き IR cache を持つ。
-繰り返しのAPI呼び出しと、新しいプロセスの時間を別々に確認する。
+Defaults are 30 samples, 500 ms warmup, and a 2-second target measurement duration. Inputs and results are passed to `std::hint::black_box`,
+and releasing generated IR and similar data is included in each iteration's time. Measurement settings can be changed through the CLI.
+Standard library vocabulary is stored in a build-time index; syntax trees are held in a fixed-size, process-local read-only cache.
+The standard library cache retains no user source, import aliases, type-check results, policies, or ownership state. The LSP has a separate bounded IR cache that distinguishes revisions.
+Check repeated API calls and fresh-process time separately.
 
-## ネイティブプロファイル
+<a id="ネイティブプロファイル"></a>
 
-macOSでは対象を1つ指定してRustのスタックを採取できる。出力先は毎回変える。
+## Native profiles
+
+On macOS, select one target to collect Rust stacks. Use a new output destination each time.
 
 ```sh
 just frontend-profile check/std-types target/frontend-profile/check-r1.txt
 just frontend-profile compile/workflow target/frontend-profile/compile-r1.txt
 ```
 
-このタスクはCriterionの `--profile-time` で同じ処理を反復し、macOSの `sample` を1ms間隔で実行する。
-Cargoのビルドは採取前に完了させる。プロファイル下の時間は速度比較に使わない。
-Linux等ではベンチ実行ファイルに `--bench --profile-time` を渡し、perf等で採取する。
-フラグの意味は[Criterionのprofiling資料](https://bheisler.github.io/criterion.rs/book/user_guide/profiling.html)を参照。
+This task repeats the same operation using Criterion's `--profile-time` and runs macOS `sample` at 1 ms intervals.
+Cargo builds complete before collection. Do not use profiled times for speed comparisons.
+On Linux and similar platforms, pass `--bench --profile-time` to the benchmark executable and collect with perf or a similar tool.
+For flag meanings, see [Criterion's profiling documentation](https://bheisler.github.io/criterion.rs/book/user_guide/profiling.html).
 
-## 正しさの検査
+<a id="正しさの検査"></a>
 
-`runtime/frontend-reference.test.mjs` は変更前の固定入力、型付きIR、解析結果、WAT、診断をSHA-256等で照合する。
-`tests/fixtures/frontend-reference-v4.json` を速度改善のために更新しない。
-改名前のv1 referenceも保持し、生成WATが内部namespace名以外は一致することを照合する。
-APIが意図的に変わる場合は新しい入力・referenceとして版を分ける。
-標準型だけの利用で無関係なライブラリを構文解析しないこと、生成索引とソースの一致、
-並行呼び出し時の別名・hygieneの分離もRustのテストで確認する。
+## Correctness checks
 
-## ABI 型グラフの検査
+`runtime/frontend-reference.test.mjs` checks fixed pre-change inputs, typed IR, analysis results, WAT, and diagnostics using SHA-256 and other comparisons.
+Do not update `tests/fixtures/frontend-reference-v6.json` for speed improvements.
+The pre-rename v1 reference is retained too, and generated WAT is checked for equality apart from internal namespace names.
+Intentional API changes require new versions of inputs and references.
+Rust tests also verify that using only standard types does not parse unrelated libraries, that generated indexes match their sources,
+and that concurrent calls isolate aliases and hygiene.
 
-値 ABI のレイアウト、flatten 数、型表現を型 ID ごとにメモ化する。同じ型を二度含む DAG を木として繰り返し展開しない。adapter 内の flatten と WIT の名前付き型生成も結果を再利用する。checked arithmetic と [ABI 上限](wit-bindings.md#abi-型の実装上限) により、許容サイズを超える展開は診断で終了する。
+<a id="abi-型グラフの検査"></a>
 
-`tests/abi_limits.rs` は重複 DAG と拒否境界を検査し、lib の決定的な訪問数テストは各頂点の再検査を防ぐ。ここでは処理時間の改善率を主張しない。比較する場合は既存の入力と baseline を保ったまま新しい計測ラベルを使う。
+## ABI type graph checks
 
-## マクロ展開後の型検査
+Value ABI layouts, flatten counts, and type representations are memoized by type ID. DAGs containing the same type twice are not repeatedly expanded as trees. Adapter flattening and WIT named-type generation reuse results too. Checked arithmetic and [ABI limits](wit-bindings.md#abi-型の実装上限) terminate oversized expansions with diagnostics.
 
-マクロは展開した式から検査を再開し、完了した外側や先行する式を再検査しない。型問い合わせの試行で作ったローカルIDは破棄し、構文だけを再利用する。新しい具体化で型環境が変わる場合は全体を検査し直す。式の再開、最終的な本体のサイズ・深さ、全体の契約検査を分けている。[実装の構成](architecture.md)と[検査の規約](user-macros.md#checking-scope-and-work-counters)を参照。
+`tests/abi_limits.rs` checks duplicate DAGs and rejection boundaries, while deterministic visit-count tests in lib prevent rechecking each vertex. No processing-time improvement ratio is claimed here. For comparisons, keep existing inputs and baselines and use a new measurement label.
 
-`macro-expand` の `checking` は、モジュール検査のパス数・関数本体へ入った回数・予算で数える構文走査を公開する。全checker操作数やCPU時間ではなく、Criterionの計測とも別の指標。
+<a id="マクロ展開後の型検査"></a>
 
-同じ固定入力による [20261109の比較](../evals/reports/20261109-macro-authoring-v2-r3/REPORT.md)では、単一関数の256展開が776.51msから35.22ms、ノード訪問が1,317,396から9,751になった。以前は200万ノードの予算を超えた512展開も、予算を変えず77.55msで成功した。前後とも受理した12プログラムの生成Wasmは同一。
+## Type checking after macro expansion
 
-これは各3回のCLI中央値で、起動・読み込みを含む。分散した展開には同様の高速化を主張せず、ゲスト実行速度の比較にも使わない。再計測は新しいIDで行い、既存の入力・ルーブリック・結果を上書きしない。
+Checking resumes from the expanded expression without rechecking completed outer or preceding expressions. Local IDs created by trial type queries are discarded, and only syntax is reused. A new instantiation that changes the type environment triggers a full recheck. Expression resumption, final body size/depth, and whole-program contract checks are separate. See the [implementation structure](architecture.md) and [checking conventions](user-macros.md#checking-scope-and-work-counters).
+
+The `checking` output from `macro-expand` exposes module-checking pass counts, function-body entry counts, and budget-counted syntax visits. These are neither total checker operations nor CPU time, and are distinct from Criterion measurements.
+
+In the [20261109 comparison](../evals/reports/20261109-macro-authoring-v2-r3/REPORT.md) using the same fixed inputs, 256 expansions in one function dropped from 776.51 ms to 35.22 ms, and node visits from 1,317,396 to 9,751. The 512-expansion case, which previously exceeded the two-million-node budget, succeeded in 77.55 ms without changing the budget. Generated Wasm was identical for all 12 programs accepted both before and after.
+
+These are CLI medians over three runs each, including startup and loading. No equivalent speedup is claimed for distributed expansions, and these results are not guest execution speed comparisons. Remeasure with a new ID; do not overwrite existing inputs, rubrics, or results.
 
 ```sh
 just eval-user-macros my-macros-v1-01
 just eval-macro-authoring my-macros-v2-01
 ```
 
-v1はABI・取消し・LSPを含むアプリ、v2は現行APIでのマクロ作成と単一／複数関数への展開を試す。[評価ガイド](../evals/README.md#マクロの実用性と規模の評価)に保存物と判定の違いをまとめた。
+v1 tests applications including ABI, cancellation, and LSP; v2 tests macro authoring with the current API and expansion into one or multiple functions. The [evaluation guide](../evals/README.md#マクロの実用性と規模の評価) explains the differences in saved artifacts and judgments.

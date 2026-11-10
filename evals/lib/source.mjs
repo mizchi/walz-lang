@@ -1,4 +1,4 @@
-// Lexical measurements and include inspection, not a wlt type checker.
+// Lexical measurements and include inspection, not a walz type checker.
 function tokens(source) {
   const out = [];
   let i = 0;
@@ -78,25 +78,25 @@ function tree(items) {
   if (stack.length || !root) throw new Error("unclosed module");
   return root;
 }
-export function assertSnapshotIncludes(source, corePackage = 'wlt:core') {
+export function assertSnapshotIncludes(source, corePackage = 'walz:core') {
   const root = tree(tokens(source));
   let count = 0;
   if (root[0] !== "module") throw new Error("expected module");
   const walk = (node) => {
     if (!Array.isArray(node)) return;
-    if (["include", "%include"].includes(node[0])) {
-      if (node.length !== 2 || node[1]?.text !== '"program.wlt"')
+    if (["include", "@include"].includes(node[0])) {
+      if (node.length !== 2 || node[1]?.text !== '"program.walz"')
         throw new Error(
-          'candidate may only include "program.wlt" from the frozen support',
+          'candidate may only include "program.walz" from the frozen support',
         );
       count++;
-    } else if (["import", "%import", "%use"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
+    } else if (["import", "@import", "@use"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
       if (node[1].text !== JSON.stringify(corePackage)) throw new Error(`candidate may only import ${corePackage} in addition to frozen support`);
-    } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
+    } else if (node[0] === "module" || ["namespace", "@namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
   walk(root);
-  if (count !== 1) throw new Error('keep exactly one (include "program.wlt")');
+  if (count !== 1) throw new Error('keep exactly one (include "program.walz")');
 }
 export function metrics(source) {
   const items = tokens(source),
@@ -113,7 +113,7 @@ export function metrics(source) {
       maxDepth = Math.max(maxDepth, depth);
     } else if (item === ")") depth--;
   }
-  const canonical = (name) => typeof name === "string" ? name.replace(/^%/, "") : name;
+  const canonical = (name) => typeof name === "string" ? name.replace(/^@/, "") : name;
   const text = (node) =>
     Array.isArray(node)
       ? "(" + node.map(text).join(" ") + ")"
@@ -159,7 +159,7 @@ export function functionForms(source, name) {
     if (!Array.isArray(node)) return;
     if (typeof node[0] === "string") {
       // Count the same checked operation across historical/public spellings.
-      const head = node[0].replace(/^%/, "").replace(
+      const head = node[0].replace(/^@/, "").replace(
         /^(string|tuple|box)(?=\.|$)/,
         family => ({ string: "text", tuple: "pair", box: "own" })[family],
       );
@@ -177,15 +177,15 @@ export function sourceIncludes(source) {
     paths = [];
   const walk = (node) => {
     if (!Array.isArray(node)) return;
-    if (["include", "%include"].includes(node[0])) {
+    if (["include", "@include"].includes(node[0])) {
       if (node.length !== 2 || typeof node[1]?.text !== "string")
         throw new Error("invalid include");
       // Evaluation fixtures use literal relative filenames, not WAT byte escapes.
       paths.push(JSON.parse(node[1].text));
-    } else if (["%use", "%import", "import"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
+    } else if (["@use", "@import", "import"].includes(node[0]) && node[1]?.text && !node[2]?.text) {
       const path = JSON.parse(node[1].text);
-      if (!path.startsWith("wlt:")) paths.push(path);
-    } else if (node[0] === "module" || ["namespace", "%namespace"].includes(node[0]))
+      if (!path.startsWith("walz:")) paths.push(path);
+    } else if (node[0] === "module" || ["namespace", "@namespace"].includes(node[0]))
       node.slice(1).forEach(walk);
   };
   walk(root);

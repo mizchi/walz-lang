@@ -1,0 +1,3 @@
+(module
+  (@use "./math.walz" (func $add))
+  (func $main (export "main") (result i64) (@effect pure) (call $add 40 2)))

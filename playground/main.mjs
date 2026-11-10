@@ -40,7 +40,7 @@ function invalidate() {
 function diagnosticText(diagnostic) {
   const label = item => {
     const { path, line, column } = item.location;
-    return `${path ?? 'playground.wlt'}:${line}:${column}${item.message ? ` ${item.message}` : ''}`;
+    return `${path ?? 'playground.walz'}:${line}:${column}${item.message ? ` ${item.message}` : ''}`;
   };
   return [
     `${diagnostic.code}: ${diagnostic.message}`,

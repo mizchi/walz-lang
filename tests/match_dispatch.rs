@@ -8,9 +8,9 @@ fn source(count: usize) -> String {
         .rev()
         .map(|i| format!("(case v{i} ($x) (+ $x {i}))"))
         .collect::<String>();
-    let makers = (0..count).map(|i| format!("(func $make{i} (export \"make{i}\") (param $x i32) (result (ref $E)) (%variant.new $E v{i} $x))")).collect::<String>();
+    let makers = (0..count).map(|i| format!("(func $make{i} (export \"make{i}\") (param $x i32) (result (ref $E)) (@variant.new $E v{i} $x))")).collect::<String>();
     format!(
-        "(module (type $E (%variant {variants})) (func $read (export \"read\") (param $x (ref $E)) (result i32) (%match $E (result i32) $x {arms})) {makers} (func $main (export \"main\") (result i32) (call $read (call $make{} (i32.const {})))))",
+        "(module (type $E (@variant {variants})) (func $read (export \"read\") (param $x (ref $E)) (result i32) (@match $E (result i32) $x {arms})) {makers} (func $main (export \"main\") (result i32) (call $read (call $make{} (i32.const {})))))",
         count - 1,
         43 - count as i32
     )
@@ -64,7 +64,7 @@ fn execute(bytes: &[u8], export: &str, expected: Option<&str>) {
 }
 
 fn interop_wasm() -> Vec<u8> {
-    let mut wat = wlt::compile(&source(8)).unwrap().wat;
+    let mut wat = walz::compile(&source(8)).unwrap().wat;
     wat.truncate(wat.rfind(')').unwrap());
     for i in 0..8 {
         wat.push_str(&format!(
@@ -102,8 +102,9 @@ fn check_interop(bytes: &[u8]) {
 fn large_dense_matches_use_one_tag_load_and_keep_every_case_cast() {
     for count in [8, 16, 32, 64] {
         for optimize in [false, true] {
-            let built = wlt::compile_with_options(&source(count), wlt::CompileOptions { optimize })
-                .unwrap();
+            let built =
+                walz::compile_with_options(&source(count), walz::CompileOptions { optimize })
+                    .unwrap();
             assert!(
                 built.wat.contains("br_table"),
                 "{count} cases: {}",
@@ -114,7 +115,7 @@ fn large_dense_matches_use_one_tag_load_and_keep_every_case_cast() {
             execute(&built.wasm, "main", Some("42"));
         }
     }
-    assert!(!wlt::compile(&source(2)).unwrap().wat.contains("br_table"));
+    assert!(!walz::compile(&source(2)).unwrap().wat.contains("br_table"));
 }
 
 #[test]
@@ -124,10 +125,10 @@ fn raw_wasm_callers_keep_tag_and_subtype_validation() {
 
 fn semantic_sources() -> Vec<String> {
     let variants = (0..8).map(|i| format!("(v{i} i32)")).collect::<String>();
-    let subject = "(%variant.new $E v7 (i32.const 42))";
+    let subject = "(@variant.new $E v7 (i32.const 42))";
     let matcher = |selected: &str, other: &str| {
         format!(
-            "(%match {subject} {})",
+            "(@match {subject} {})",
             (0..8)
                 .rev()
                 .map(|i| format!("(case v{i} ($x) {})", if i == 7 { selected } else { other }))
@@ -144,7 +145,7 @@ fn semantic_sources() -> Vec<String> {
             matcher("(br $done $x)", "(i32.const 0)")
         ),
         format!(
-            "(%try (result i32) (do {}) (catch $Err ($code) $code))",
+            "(@try (result i32) (do {}) (catch $Err ($code) $code))",
             matcher("(throw $Err $x)", "(i32.const 0)")
         ),
         format!(
@@ -152,12 +153,12 @@ fn semantic_sources() -> Vec<String> {
             matcher("(nop)", "(nop)")
         ),
     ];
-    let mut sources=bodies.into_iter().map(|body|format!("(module (tag $Err (param i32)) (type $E (%variant {variants})) (func $main (export \"main\") (result i32) {body}))")).collect::<Vec<_>>();
+    let mut sources=bodies.into_iter().map(|body|format!("(module (tag $Err (param i32)) (type $E (@variant {variants})) (func $main (export \"main\") (result i32) {body}))")).collect::<Vec<_>>();
     let arms = (0..8)
-        .map(|i| format!("(case v{i} ($x) (%box.new i32 $x))"))
+        .map(|i| format!("(case v{i} ($x) (@box.new i32 $x))"))
         .collect::<String>();
-    sources.push(format!("(module (%use \"wlt:core\" (type $box)) (type $E (%variant {variants})) (func $main (export \"main\") (result i32) (%let $owner (type (%inst $box i32)) (%match {subject} {arms}) (%match (%move $owner) (case own ($n) $n)))))"));
-    sources.push(include_str!("component-fixtures/match-dispatch.wlt").into());
+    sources.push(format!("(module (@use \"walz:core\" (type $box)) (type $E (@variant {variants})) (func $main (export \"main\") (result i32) (@let $owner (type (@inst $box i32)) (@match {subject} {arms}) (@match (@move $owner) (case own ($n) $n)))))"));
+    sources.push(include_str!("component-fixtures/match-dispatch.walz").into());
     sources
 }
 
@@ -165,7 +166,7 @@ fn semantic_sources() -> Vec<String> {
 fn dense_branches_preserve_return_labels_exceptions_unit_and_owned_results() {
     for source in semantic_sources() {
         for optimize in [false, true] {
-            let built = wlt::compile_with_options(&source, wlt::CompileOptions { optimize })
+            let built = walz::compile_with_options(&source, walz::CompileOptions { optimize })
                 .unwrap_or_else(|error| panic!("{error}\n{source}"));
             execute(&built.wasm, "main", Some("42"));
         }
@@ -178,9 +179,9 @@ fn nullary_wasm() -> Vec<u8> {
         .map(|i| format!("(case v{i} () (i32.const 42))"))
         .collect::<String>();
     let source = format!(
-        "(module (type $E (%variant {variants})) (func $read (export \"read\") (param $x (ref $E)) (result i32) (%match $x {arms})))"
+        "(module (type $E (@variant {variants})) (func $read (export \"read\") (param $x (ref $E)) (result i32) (@match $x {arms})))"
     );
-    let mut wat = wlt::compile(&source).unwrap().wat;
+    let mut wat = walz::compile(&source).unwrap().wat;
     assert_eq!(wat.matches("(drop (ref.cast ").count(), 8);
     wat.truncate(wat.rfind(')').unwrap());
     wat.push_str("(func (export \"good\") (result i32) (call $read (struct.new $__variant_0_7 (i32.const 7)))) (func (export \"bad\") (result i32) (call $read (struct.new $E (i32.const 7)))))");
@@ -197,16 +198,16 @@ fn nullary_cases_still_validate_the_runtime_subtype() {
 #[test]
 #[ignore = "requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt"]
 fn wasm_opt_open_world_preserves_values_and_traps() {
-    let optimizer = std::env::var_os("WLT_WASM_OPT").expect("set WLT_WASM_OPT to wasm-opt 133");
+    let optimizer = std::env::var_os("WALZ_WASM_OPT").expect("set WALZ_WASM_OPT to wasm-opt 133");
     let version = Command::new(&optimizer).arg("--version").output().unwrap();
     assert!(String::from_utf8_lossy(&version.stdout).contains("version 133"));
     let mut programs = vec![interop_wasm(), nullary_wasm()];
     programs.extend(
         semantic_sources()
             .iter()
-            .map(|s| wlt::compile(s).unwrap().wasm),
+            .map(|s| walz::compile(s).unwrap().wasm),
     );
-    programs.push(wlt::compile("(module (func $main (export \"main\") (result i32) (%let $unused (i32.div_s (i32.const 1) (i32.const 0)) (i32.const 42))))").unwrap().wasm);
+    programs.push(walz::compile("(module (func $main (export \"main\") (result i32) (@let $unused (i32.div_s (i32.const 1) (i32.const 0)) (i32.const 42))))").unwrap().wasm);
     let last = programs.len() - 1;
     for (i, bytes) in programs.iter().enumerate() {
         let dir = tempfile::tempdir().unwrap();

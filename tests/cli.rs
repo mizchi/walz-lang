@@ -1,7 +1,7 @@
 use std::process::Command;
 
 fn command() -> Command {
-    let mut command = Command::new(env!("CARGO_BIN_EXE_wlt"));
+    let mut command = Command::new(env!("CARGO_BIN_EXE_walz"));
     command.current_dir(env!("CARGO_MANIFEST_DIR"));
     command
 }
@@ -51,7 +51,7 @@ fn emits_valid_wasm_and_inspectable_wat_and_ir() {
     let directory = tempfile::tempdir().unwrap();
     let destination = directory.path().join("program.wasm");
     let output = command()
-        .args(["build", "examples/closure.wlt"])
+        .args(["build", "examples/closure.walz"])
         .arg(&destination)
         .output()
         .unwrap();
@@ -63,7 +63,7 @@ fn emits_valid_wasm_and_inspectable_wat_and_ir() {
     let bytes = std::fs::read(destination).unwrap();
     wasmparser::Validator::new().validate_all(&bytes).unwrap();
     let output = command()
-        .args(["wat", "examples/closure.wlt"])
+        .args(["wat", "examples/closure.walz"])
         .output()
         .unwrap();
     assert!(output.status.success());
@@ -71,7 +71,7 @@ fn emits_valid_wasm_and_inspectable_wat_and_ir() {
     assert!(wat.contains("struct.new $Adder"));
     assert!(!wat.contains("closure.new"));
     let output = command()
-        .args(["ir", "examples/closure.wlt"])
+        .args(["ir", "examples/closure.walz"])
         .output()
         .unwrap();
     assert!(output.status.success());
@@ -82,7 +82,7 @@ fn emits_valid_wasm_and_inspectable_wat_and_ir() {
 #[test]
 fn reports_effects_as_json_and_checks_without_executing() {
     let output = command()
-        .args(["analyze", "examples/counter.wlt"])
+        .args(["analyze", "examples/counter.walz"])
         .output()
         .unwrap();
     assert!(
@@ -99,7 +99,7 @@ fn reports_effects_as_json_and_checks_without_executing() {
     assert_eq!(increment["effects"]["writes"], true);
     assert_eq!(increment["captures"][0], "$cell");
     let output = command()
-        .args(["check", "examples/closure.wlt"])
+        .args(["check", "examples/closure.walz"])
         .output()
         .unwrap();
     assert!(output.status.success());
@@ -109,7 +109,7 @@ fn reports_effects_as_json_and_checks_without_executing() {
 #[test]
 fn reports_expression_and_binding_types_without_running_the_program() {
     let output = command()
-        .args(["types", "examples/ast-interpreter.wlt"])
+        .args(["types", "examples/ast-interpreter.walz"])
         .env("PATH", "")
         .output()
         .unwrap();
@@ -140,8 +140,8 @@ fn reports_expression_and_binding_types_without_running_the_program() {
 #[test]
 fn static_type_errors_use_source_type_names() {
     let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("wrong-type.wlt");
-    std::fs::write(&path, "(module\n  (type $Left (struct))\n  (type $Right (struct))\n  (func $f (result (ref $Left)) (%let $wrong (struct.new $Right) (local.get $wrong))))").unwrap();
+    let path = directory.path().join("wrong-type.walz");
+    std::fs::write(&path, "(module\n  (type $Left (struct))\n  (type $Right (struct))\n  (func $f (result (ref $Left)) (@let $wrong (struct.new $Right) (local.get $wrong))))").unwrap();
     for command_name in ["check", "types", "build"] {
         let mut cli = command();
         cli.arg(command_name).arg(&path);
@@ -152,7 +152,7 @@ fn static_type_errors_use_source_type_names() {
         assert_eq!(output.status.code(), Some(1));
         assert!(output.stdout.is_empty());
         let error = String::from_utf8_lossy(&output.stderr);
-        assert!(error.contains("wrong-type.wlt:4:"), "{error}");
+        assert!(error.contains("wrong-type.walz:4:"), "{error}");
         assert!(
             error.contains("type mismatch: expected (ref $Left), got (ref $Right)"),
             "{error}"
@@ -173,7 +173,7 @@ fn rejects_invalid_usage_and_reports_source_diagnostics() {
         );
     }
     let directory = tempfile::tempdir().unwrap();
-    let source = directory.path().join("bad.wlt");
+    let source = directory.path().join("bad.walz");
     std::fs::write(
         &source,
         "(module\n  (func $f (result i64) (local.get $hidden)))",
@@ -182,6 +182,6 @@ fn rejects_invalid_usage_and_reports_source_diagnostics() {
     let output = command().arg("check").arg(source).output().unwrap();
     assert_eq!(output.status.code(), Some(1));
     let error = String::from_utf8_lossy(&output.stderr);
-    assert!(error.contains("bad.wlt:2:"), "{error}");
+    assert!(error.contains("bad.walz:2:"), "{error}");
     assert!(error.contains("unbound local"), "{error}");
 }

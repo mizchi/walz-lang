@@ -79,7 +79,7 @@ pub fn write(output: &Path, built: &CoreJs) -> Result<(), Box<dyn std::error::Er
                 built.manifest["imports"].as_array().is_some_and(|imports| {
                     imports
                         .iter()
-                        .any(|b| b["module"] == "wlt:filesystem/files@0.3.0")
+                        .any(|b| b["module"] == "walz:filesystem/files@0.3.0")
                 })
             }
             _ => true,

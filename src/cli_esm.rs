@@ -3,8 +3,8 @@ use std::{
     collections::BTreeMap, ffi::OsString, io::Read, path::PathBuf, process::ExitCode, sync::Arc,
 };
 
-pub const USAGE: &str = "Usage: wlt esm-metadata <file.wlt> [--stdin] [--bindings policy.json]\n\nReturn checked Core/JSPI signatures and source locations as JSON.\n--stdin uses an unsaved UTF-8 source buffer without modifying the file.";
-const SCHEMA: &str = "wlt-esm-metadata-v1";
+pub const USAGE: &str = "Usage: walz esm-metadata <file.walz> [--stdin] [--bindings policy.json]\n\nReturn checked Core/JSPI signatures and source locations as JSON.\n--stdin uses an unsaved UTF-8 source buffer without modifying the file.";
+const SCHEMA: &str = "walz-esm-metadata-v1";
 
 pub fn command(args: &[OsString]) -> ExitCode {
     let mut path = None;
@@ -36,7 +36,7 @@ pub fn command(args: &[OsString]) -> ExitCode {
         let policy = bindings
             .as_ref()
             .map(|p| {
-                wlt::bindings::BindingPolicy::parse(&std::fs::read_to_string(p)?)
+                walz::bindings::BindingPolicy::parse(&std::fs::read_to_string(p)?)
                     .map_err(Into::<Box<dyn std::error::Error>>::into)
             })
             .transpose()?
@@ -52,8 +52,8 @@ pub fn command(args: &[OsString]) -> ExitCode {
             }
             overlays.insert(path.clone(), Arc::<str>::from(content));
         }
-        let loaded = wlt::source::load_with_overlays(&path, &overlays)?;
-        let esm = wlt::inspect::esm(&loaded, &policy)?;
+        let loaded = walz::source::load_with_overlays(&path, &overlays)?;
+        let esm = walz::inspect::esm(&loaded, &policy)?;
         let files = loaded
             .paths()
             .map(|p| p.to_owned())

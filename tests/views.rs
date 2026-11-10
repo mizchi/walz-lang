@@ -1,18 +1,18 @@
 use std::{collections::BTreeSet, process::Command};
-use wlt::ir::{BufferOp, Expr, ExprKind, Module};
+use walz::ir::{BufferOp, Expr, ExprKind, Module};
 
 const SCAN: &str = r#"(module
-  (%use "wlt:core" (type $string)
+  (@use "walz:core" (type $string)
     (func $string-view.new) (func $string-view.slice) (func $string-view.bytes)
     (func $string-view.byte-len) (func $bytes-view.slice) (func $bytes-view.get))
-  (func $scan (param $input $string) (result i32) (%effect allocates)
-    (%let (($whole (call $string-view.new $input))
+  (func $scan (param $input $string) (result i32) (@effect allocates)
+    (@let (($whole (call $string-view.new $input))
            ($part (call $string-view.slice $whole 1 7))
            ($tail (call $string-view.slice $part 3 4))
            ($bytes (call $bytes-view.slice (call $string-view.bytes $tail) 0 1)))
       (+ (call $string-view.byte-len $tail) (call $bytes-view.get $bytes 0))))
-  (func $main (export "main") (result i32) (%effect allocates)
-    (call $scan (%string.lit "x日🦀z"))))"#;
+  (func $main (export "main") (result i32) (@effect allocates)
+    (call $scan (@string.lit "x日🦀z"))))"#;
 
 fn no_payload_copies(module: &Module, expression: &Expr, visited: &mut BTreeSet<usize>) {
     match &expression.kind {
@@ -37,11 +37,11 @@ fn no_payload_copies(module: &Module, expression: &Expr, visited: &mut BTreeSet<
 
 #[test]
 fn views_read_nested_relative_ranges_without_copying_payloads() {
-    let module = wlt::check(SCAN).unwrap();
+    let module = walz::check(SCAN).unwrap();
     let scan = module.functions.iter().find(|f| f.name == "$scan").unwrap();
     no_payload_copies(&module, scan.body.as_ref().unwrap(), &mut BTreeSet::new());
     for optimize in [false, true] {
-        let compiled = wlt::compile_with_options(SCAN, wlt::CompileOptions { optimize }).unwrap();
+        let compiled = walz::compile_with_options(SCAN, walz::CompileOptions { optimize }).unwrap();
         let directory = tempfile::tempdir().unwrap();
         let path = directory.path().join("views.wasm");
         std::fs::write(&path, compiled.wasm).unwrap();
@@ -69,34 +69,34 @@ fn views_read_nested_relative_ranges_without_copying_payloads() {
 #[test]
 fn view_layouts_effects_and_explicit_abi_materialization_are_checked() {
     for source in [
-        r#"(module (%use "wlt:core" (type $bytes-view))
+        r#"(module (@use "walz:core" (type $bytes-view))
           (func $bad (param $v (ref $bytes-view)) (result i32)
             (struct.get $bytes-view $length $v)))"#,
-        r#"(module (%use "wlt:core" (type $string-view) (type $bytes-view))
+        r#"(module (@use "walz:core" (type $string-view) (type $bytes-view))
           (func $bad (param $v (ref $bytes-view)) (result (ref $string-view))
             (struct.new $string-view $v)))"#,
     ] {
         assert_eq!(
-            wlt::check(source).unwrap_err().diagnostic().code,
+            walz::check(source).unwrap_err().diagnostic().code,
             "E_OPAQUE_REPRESENTATION"
         );
     }
     assert_eq!(
-        wlt::check(&SCAN.replace("(%effect allocates)", "(%effect pure)"))
+        walz::check(&SCAN.replace("(@effect allocates)", "(@effect pure)"))
             .unwrap_err()
             .diagnostic()
             .code,
         "E_EFFECT_CONTRACT"
     );
-    let module = wlt::check(
+    let module = walz::check(
         r#"(module
-      (%use "wlt:core" (type $bytes) (type $bytes-view) (func $bytes-view.new))
+      (@use "walz:core" (type $bytes) (type $bytes-view) (func $bytes-view.new))
       (func $view (export "view") (param $bytes $bytes) (result (ref $bytes-view))
         (call $bytes-view.new $bytes)))"#,
     )
     .unwrap();
     assert!(
-        wlt::wit::emit(&module)
+        walz::wit::emit(&module)
             .unwrap_err()
             .to_string()
             .contains("GC references")
@@ -105,21 +105,21 @@ fn view_layouts_effects_and_explicit_abi_materialization_are_checked() {
 
 #[test]
 fn subviews_share_storage_without_retaining_parents_and_copies_detach() {
-    let compiled = wlt::compile(
+    let compiled = walz::compile(
         r#"(module
-      (%use "wlt:core" (type $bytes) (type $bytes-view)
+      (@use "walz:core" (type $bytes) (type $bytes-view)
         (func $bytes-view.new) (func $bytes-view.slice)
         (func $bytes-view.get) (func $bytes-view.to-bytes))
       (type $Storage (array (mut i32)))
       (func $make (export "make") (result (ref $bytes-view))
-        (call $bytes-view.new (%bytes.from-array $Storage (array.new $Storage 7 131072))))
+        (call $bytes-view.new (@bytes.from-array $Storage (array.new $Storage 7 131072))))
       (func $slice (export "slice") (param $v (ref $bytes-view)) (result (ref $bytes-view))
         (call $bytes-view.slice $v 3 5))
       (func $get (export "get") (param $v (ref $bytes-view)) (result i32)
         (call $bytes-view.get $v 0))
       (func $copy (export "copy") (param $v (ref $bytes-view)) (result $bytes)
         (call $bytes-view.to-bytes $v))
-      (func $read (export "read") (param $v $bytes) (result i32) (%bytes.get $v 0)))"#,
+      (func $read (export "read") (param $v $bytes) (result i32) (@bytes.get $v 0)))"#,
     )
     .unwrap();
     let module = compiled.ir.as_ref().unwrap();
@@ -131,7 +131,12 @@ fn subviews_share_storage_without_retaining_parents_and_copies_detach() {
     let bytes = module
         .types
         .iter()
-        .find(|t| matches!(t.kind, wlt::ir::TypeKind::Value(wlt::ir::ValueType::Bytes)))
+        .find(|t| {
+            matches!(
+                t.kind,
+                walz::ir::TypeKind::Value(walz::ir::ValueType::Bytes)
+            )
+        })
         .unwrap();
     // Test-only observers of private packed storage; these are never shipped.
     let observers = format!(

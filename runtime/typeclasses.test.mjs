@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 for(const backend of ['core','component'])test(`${backend}: scalar type classes specialize across portable and async ABIs`,async()=>{
-  const dir=await mkdtemp(join(tmpdir(),'wlt-classes-'));
+  const dir=await mkdtemp(join(tmpdir(),'walz-classes-'));
   try {
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
-    await build('tests/component-fixtures/typeclasses.wlt',dir);
+    await build('tests/component-fixtures/typeclasses.walz',dir);
     const {instantiate}=await import(pathToFileURL(join(dir,'index.js')));
     let arena;
     const {api}=await instantiate({instantiateCore:async(module,imports)=>{

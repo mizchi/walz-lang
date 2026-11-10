@@ -1,80 +1,96 @@
-# 契約検証の範囲
+<a id="契約検証の範囲"></a>
 
-所有権の正本は [SPEC.md](../SPEC.md#所有値の最小規約) の規約です。実装と契約の変更を別に確認できるよう、型付き IR、抽出する所有契約、Lean の規則を分離します。
-参考にしたのは [Bend 2 の law/proof と使用回数の規約](https://github.com/bendlang/bend/blob/3ca3df3209ebb0fac4b80e41dac18b41442e6c58/guide/GUIDE.md) です。BendTT を移植したものではありません。
+# Scope of contract verification
+
+English | [日本語](README.ja.md)
+
+The ownership source of truth is the contract in [SPEC.md](../SPEC.md#所有値の最小規約). Typed IR, extracted ownership contracts, and Lean rules are separate so implementation and contract changes can be reviewed independently.
+The design was informed by [Bend 2's law/proof and usage-count conventions](https://github.com/bendlang/bend/blob/3ca3df3209ebb0fac4b80e41dac18b41442e6c58/guide/GUIDE.md). It is not a port of BendTT.
 
 ```sh
 just proof-check
-just verify examples/verified-laws.wlt
-just run-verified examples/ownership.wlt
-just run-verified examples/ready-delivery.wlt
-just contracts examples/ownership.wlt
-just proof examples/verified-laws.wlt
+just verify examples/verified-laws.walz
+just run-verified examples/ownership.walz
+just run-verified examples/ready-delivery.walz
+just contracts examples/ownership.walz
+just proof examples/verified-laws.walz
 ```
 
-Lean は `leanprover/lean4:v4.34.1` に固定します。Rust の verified 経路は、コンパイル時に埋め込んだ Ownership.lean と型付き IR から証明用ソースを生成します。
-Lean がない場合も、証明が失敗した場合も、Wasm を出力・実行しません。通常の WAT の経路はこの検証モードとは別に残します。
+Lean is pinned to `leanprover/lean4:v4.34.1`. Rust's verified path generates proof source from compile-time-embedded Ownership.lean and typed IR.
+If Lean is unavailable or a proof fails, Wasm is neither emitted nor executed. The ordinary WAT path remains separate from this verification mode.
 
-## 所有権
+<a id="所有権"></a>
 
-version 1 の契約の操作は nop、take、scope、seq、branch、loop、again、stop です。共有値の型は既存の型検査で処理し、契約には所有するローカル ID の利用だけを残します。
-宣言的な `Valid` は、利用可能な所有集合、ループへ戻すべき集合、操作、正常終了時に残る集合の関係です。
-`check_sound` は、検査が成功した契約がこの関係を満たすことを証明します。`double_take_rejected` は、一度消費した同じスロットを再消費できないことを任意の入力集合について証明します。
-loop は再帰的に実行しません。入口の状態と、again の戻す状態の一致を検査します。停止性や、いつか close に到達することは保証しません。
+## Ownership
 
-正常系の証人として、同じ所有値をそれぞれの分岐で1回ずつ消費する契約を受理します。破れた証人として、二重消費、片方だけ消費する分岐、外側の所有値を失うループ、消費せず抜けるスコープを拒否します。
-Lean ファイル内の example と `tests/verified.rs` が独立した検査器でこれらを確認し、`tests/ownership.rs` は対応する wlt の実コードが拒否されることも検査します。
-`sorry` や独自の公理は使いません。Lean の標準論理とカーネルを信頼します。
+Version 1 contract operations are nop, take, scope, seq, branch, loop, again, and stop. Existing type checking handles shared-value types; contracts retain only uses of owned local IDs.
+Declarative `Valid` relates available ownership sets, sets required on loop backedges, operations, and sets remaining on normal completion.
+`check_sound` proves that successfully checked contracts satisfy this relation. `double_take_rejected` proves for arbitrary input sets that the same consumed slot cannot be consumed again.
+Loops are not executed recursively. Checks compare entry state with the state returned by again. They guarantee neither termination nor eventual close.
 
-## 分岐・return・例外の証明書
+Positive witnesses accept contracts consuming the same owned value once in each branch. Negative witnesses reject double consumption, branches consuming on only one side, loops losing outer owned values, and scopes exiting without consumption.
+Examples within Lean files and `tests/verified.rs` check these with an independent checker; `tests/ownership.rs` additionally checks rejection of corresponding real walz code.
+No `sorry` or custom axioms are used. Lean's standard logic and kernel are trusted.
 
-version 2 は、新しい制御を使う関数に `body` の代わりに `graph` を持つ。ノードは利用可能な slot の集合、nop/bind/take/absent/finish、後続ノードを記録する。slot には引数評価途中の所有値も含む。正常・例外の辺は推論した effect と囲む handler/label から Rust が抽出する。すべての辺で、遷移後の所有集合と後続の入口集合が一致し、finish は空集合であることを Lean が検査する。入力を持つのに後続のない nop、到達可能な未注釈ノード、不正な添字も拒否する。
+<a id="分岐return例外の証明書"></a>
 
-`stepCheck_sound` は宣言的な `StepValid` との対応、`graph_node_sound` は各後続への状態の一致、`graph_path_sound` は任意回の反復を含む経路上に注釈が存在することを証明する。生成した JSON の偽造例も `tests/verified.rs` から独立して拒否する。version 1 の関数は同じファイル内に混在できる。
+## Certificates for branches, return, and exceptions
 
-例外経路の抽出と effect 推論の完全性、IR との対応、borrow の非流出と using の finally、newtype の消去はコンパイラ TCB に残る。[言語上の規約](../docs/core-expressions.md) を参照。
+Version 2 uses `graph` instead of `body` for functions with the new control flow. Nodes record available slot sets, nop/bind/take/absent/finish operations, and successor nodes. Slots include owned values during argument evaluation. Rust extracts normal/exceptional edges from inferred effects and enclosing handlers/labels. Lean checks that each edge's post-transition ownership set matches its successor's entry set and that finish has an empty set. It also rejects nop nodes with inputs but no successor, reachable unannotated nodes, and invalid indices.
 
-## アプリケーションの law
+`stepCheck_sound` proves correspondence with declarative `StepValid`; `graph_node_sound` proves matching states for every successor; `graph_path_sound` proves that annotations exist along paths including arbitrarily many iterations. Forged generated JSON examples are also rejected independently through `tests/verified.rs`. Version 1 functions can coexist in the same file.
 
-law と、その依存関数の実際の型付き IR を BitVec の定義へ変換します。引数を全称量化し、law の i32 の結果が非0である証明を bv_decide で生成・検査します。
-有限個の入力を選ぶテストではありません。i32/i64 の全ビットパターンについて、固定幅での折り返しを含む性質を検査します。
-`tests/laws.rs` は、加算の実装を減算に変更した場合、また x=65537 だけで壊れる法則でも実行を拒否することを確認します。
-符号、拡張、シフト量のマスク、分岐、16進数の折り返しを、検査器と Wasm の実行で確認します。
-現在は純粋で非再帰の整数断片だけを扱います。再帰・ループ・除算・GC・所有値・浮動小数点などは未対応として拒否し、仮定で埋めません。
+Completeness of exception-path extraction and effect inference, correspondence with IR, borrow non-escape, using finally, and newtype erasure remain in the compiler TCB. See the [language conventions](../docs/core-expressions.md).
 
-## 配送済み Future/Stream のモデル
+<a id="アプリケーションの-law"></a>
 
-Delivery.lean は、ready または closed の Future と、有限列を持つ open または closed の Stream を定義します。
-await の後に同じ Future を読めないこと、closed Stream を読めないこと、終端でも open の端点が返ること、next の反復が元の列の take/drop に一致することを証明します。
-Stream の EOF は別の completion Future の Result に影響しません。
-このモデルも契約付き実行時の Lean ソースへ含めます。読み取りと close の利用回数は既存の所有権の契約で検査します。
-`tests/delivery.rs` と `tests/programs/delivery.test.wlt` は、対応する実コードを Wasm GC で実行し、順序・再読・unit・GC 参照・評価回数・終了を照合します。
-WIT の future/stream への変換は `tests/wit.rs` で実際に encode/validate します。
-モデルは ready-only です。pending、writer、backpressure、外部 I/O、producer task の取消しを証明したものではありません。
+## Application laws
 
-## 解析で用いるビット条件
+Laws and the actual typed IR of their dependencies are converted to BitVec definitions. Arguments are universally quantified, and bv_decide generates/checks proofs that the law's i32 result is nonzero.
+This does not select a finite set of test inputs. It checks properties over every i32/i64 bit pattern, including fixed-width wrapping.
+`tests/laws.rs` verifies that execution is rejected when addition is changed to subtraction and for a law failing only at x=65537.
+Signs, extensions, shift-count masking, branches, and hexadecimal wrapping are checked in both the checker and Wasm execution.
+Currently only pure, nonrecursive integer fragments are supported. Recursion, loops, division, GC, owned values, floating point, and similar features are rejected as unsupported rather than filled in with assumptions.
 
-Flow.lean は、signed の添字比較に non-negative の条件を加えると unsigned の境界条件を導けることを、全32ビットの BitVec で検査します。
-non-negative を省くと -1 が signed 比較を通る反例と、加算の折り返しも確認します。`just proof-check` で独立して検査します。
-`tests/flow.rs` は同じ負の添字で解析が bounds_proven を付けないことと、実際の Wasm が範囲外で trap することを照合します。区間の結果と具体的な折り返し演算も比較します。
-この補題は Rust の抽象解釈器の健全性を証明したものではありません。memory/facts は現在診断にだけ使い、生成する Wasm の命令を除去する根拠にはまだしていません。
+<a id="配送済み-futurestream-のモデル"></a>
 
-## 信頼する実装
+## Model of already-delivered Future/Stream
 
-Tasks.lean は JSPI タスクの要求と終了確認を分ける状態モデルです。実行前の取消し、要求の冪等性、返却後の取消し無効、read 終了前のバッファ解放拒否、資源とホスト解放が残る間の終了確認拒否を証明します。
-disposals=1 の状態では終了確認を拒否し、0 にした後で受理する証人を持ちます。対応する Node テストも dispose を barrier で止め、その間は cancel の Promise が確定しないことを検査します。
-このモデルは生成する Lean ソースにも含めます。Rust/JS/Wasm との refinement、取消し完了までの時間、外部 producer の停止を証明したものではありません。
+Delivery.lean defines ready/closed Futures and open/closed Streams with finite sequences.
+It proves that a Future cannot be read again after await, closed Streams cannot be read, terminal reads still return an open endpoint, and repeated next matches take/drop of the original sequence.
+Stream EOF does not affect a separate completion Future's Result.
+This model is also included in Lean source for contract-checked execution. Existing ownership contracts check read/close usage counts.
+`tests/delivery.rs` and `tests/programs/delivery.test.walz` execute corresponding real code with Wasm GC, comparing order, rereads, unit, GC references, evaluation counts, and termination.
+`tests/wit.rs` actually encodes/validates conversion to WIT future/stream.
+The model is ready-only. It does not prove pending behavior, writers, backpressure, external I/O, or producer-task cancellation.
 
-証明したのは上の契約モデルと、生成した BitVec 定義についてです。次は証明の対象外です。
+<a id="解析で用いるビット条件"></a>
 
-- 構文解析、名前解決、Rust の型検査・effect 解析・所有契約の抽出、参照／escape／制御フローの解析。
-- 型付き IR と Lean の BitVec 定義の対応、Wasm への lowering の意味保存。
-- Lean・Wasm engine、外部資源の操作 protocol、Component ABI adapter とバッファの確保・解放、jco の JSPI glue と局所的な互換性補正。
+## Bit conditions used in analysis
 
-同じ検査済み IR から証明と実行形式を作り、異常な契約と実コードの両方を回帰テストに残すことで、この境界の食い違いを検出します。
-GC の寿命・OOM、実行時 trap、サーバーの停止性、Future/Stream の完了やキャンセルを証明したものではありません。
-Component 生成でも同じ所有契約と law を検査しますが、Delivery.lean 自体は ready-only です。外部の pending handle、Canonical ABI の変換、JSPI の中断・再開は Node と Chromium の実行テストで照合する範囲です。
+Flow.lean checks over all 32-bit BitVec values that adding a non-negative condition to a signed index comparison implies an unsigned bounds condition.
+It also checks the counterexample where -1 passes a signed comparison without non-negative, and addition wrapping. `just proof-check` verifies this independently.
+`tests/flow.rs` checks that analysis does not attach bounds_proven to the same negative index and actual Wasm traps out of bounds. It also compares interval results and concrete wrapping operations.
+This lemma does not prove soundness of Rust's abstract interpreter. memory/facts currently serve only diagnostics and are not yet grounds for eliminating generated Wasm instructions.
 
-bytes/text の UTF-8 検証・private storage・再帰的な Canonical ABI のコピーと解放、静的 namespace/use の展開、include のファイルローダも TCB です。これらの意味保存は Lean kernel では証明していません。
+<a id="信頼する実装"></a>
 
-実際の JS 参照の保持は Lean のカウンタモデルだけでは検査できません。`just memory-check` が所有表の残数、GC 到達性、反復時の保持量とアロケータの再利用を実行検査します。観測と範囲は [MEMORY.md](../MEMORY.md) に記録します。
+## Trusted implementation
+
+Tasks.lean is a state model separating JSPI task requests from completion confirmation. It proves pre-execution cancellation, request idempotence, ineffectiveness of cancellation after return, rejection of buffer release before reads finish, and rejection of completion confirmation while resource/host cleanup remains.
+A witness rejects completion confirmation with disposals=1 and accepts it after setting disposals to 0. Corresponding Node tests also hold dispose at a barrier and check that the cancel Promise remains unsettled meanwhile.
+This model is also included in generated Lean source. It does not prove refinement to Rust/JS/Wasm, time until cancellation completes, or stopping external producers.
+
+The proofs cover the contract models above and generated BitVec definitions. The following are outside their scope.
+
+- Parsing, name resolution, Rust type checking/effect analysis/ownership-contract extraction, and reference/escape/control-flow analysis.
+- Correspondence between typed IR and Lean BitVec definitions, and semantic preservation of lowering to Wasm.
+- Lean/Wasm engines, external-resource operation protocols, Component ABI adapters and buffer allocation/release, jco JSPI glue, and localized compatibility fixes.
+
+Proofs and executables come from the same checked IR; regression tests retain both invalid contracts and actual code to detect discrepancies across this boundary.
+These proofs do not establish GC lifetime/OOM behavior, runtime traps, server termination, or Future/Stream completion/cancellation.
+Component generation checks the same ownership contracts and laws, but Delivery.lean itself is ready-only. External pending handles, Canonical ABI conversion, and JSPI suspension/resumption are compared through Node and Chromium execution tests.
+
+bytes/text UTF-8 validation, private storage, recursive Canonical ABI copying/release, static namespace/use expansion, and the include file loader are also in the TCB. Their semantic preservation is not proved by the Lean kernel.
+
+Lean counter models alone cannot check actual JS-reference retention. `just memory-check` dynamically checks remaining ownership-table entries, GC reachability, repeated-execution retention, and allocator reuse. Observations and scope are recorded in [MEMORY.md](../MEMORY.md).

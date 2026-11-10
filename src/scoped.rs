@@ -50,7 +50,7 @@ impl Expander {
                 return Err(Error::at(
                     source,
                     n.span,
-                    "expected (%result.do ($name result-expr)... final-result); use (() result-expr) for unit",
+                    "expected (@result.do ($name result-expr)... final-result); use (() result-expr) for unit",
                 ));
             }
             let mut body = items.last().unwrap().clone();

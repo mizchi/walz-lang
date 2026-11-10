@@ -1,0 +1,3 @@
+(module
+  (@export (func $add))
+  (func $add (param $a i64) (param $b i64) (result i64) (@effect pure) (+ $a $b)))
