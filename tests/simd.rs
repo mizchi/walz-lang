@@ -149,8 +149,8 @@ fn vectors_are_shared_values_in_gc_storage_captures_generics_and_lists() {
                   (call (@inst $id v128) (@closure.call $Add (local.get $f) (array.get $Array (local.get $array) (i32.const 0)))))
                 (@let $values (call (@inst $list-builder.finish v128) (local.get $builder))
                   (@match (@inst $option v128) (result i32) (@option.some v128 (@list.get v128 (local.get $values) (i32.const 0)))
-                    (case none () (i32.const 0))
-                    (case some ($v) (i32x4.extract_lane 0 (local.get $v)))))))))))"#;
+                    (@case none () (i32.const 0))
+                    (@case some ($v) (i32x4.extract_lane 0 (local.get $v)))))))))))"#;
     run(source, "42");
     walz::component::compile(source).unwrap();
     walz::component::core_js::compile(source).unwrap();

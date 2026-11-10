@@ -11,7 +11,7 @@ fn standard_types_and_related_functions_use_wit_style_public_names() {
         (@tuple.new (@string.lit "value") 42))
       (func $main (export "main") (result i64)
         (@let $b (@box.new i64 42)
-          (@match (@move $b) (case own ($value) $value)))))"#,
+          (@match (@move $b) (@case own ($value) $value)))))"#,
     )
     .unwrap();
     for name in [
@@ -58,7 +58,7 @@ fn historical_imports_and_extension_names_preserve_bindings_and_locations() {
         (@pair.new (@text.lit "old names") 42))
       (func $bad (result i64) (@effects pure)
         (@let $box (@own.new i64 42)
-          (@match (@move $box) (case own ($value) $missing)))))"#;
+          (@match (@move $box) (@case own ($value) $missing)))))"#;
     std::fs::write(&path, old).unwrap();
     let loaded = walz::source::load_legacy(&path).unwrap();
     let error = loaded.diagnostic(walz::check(loaded.text()).unwrap_err());

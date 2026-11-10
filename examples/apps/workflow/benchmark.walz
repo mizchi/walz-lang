@@ -13,8 +13,8 @@
   (func $must
     (param $result (@inst $result $unit (ref $domain.Error)))
     (@match (local.get $result)
-      (case ok () (nop))
-      (case err ($e) (unreachable))))
+      (@case ok () (nop))
+      (@case err ($e) (unreachable))))
 
   (func $jobs
     (param $n i32)
@@ -72,8 +72,8 @@
                             (i32.sub (local.get $i) (i32.const 1))))
                       )))
                   (@match (call $planner.run (local.get $g) (i32.const 7))
-                    (case err ($e) (unreachable))
-                    (case ok ($r)
+                    (@case err ($e) (unreachable))
+                    (@case ok ($r)
                       (@recur $repeat
                         (i32.add (local.get $round) (i32.const 1))
                         (i64.add
@@ -108,13 +108,13 @@
         (call $must
           (call $graph.after (local.get $g) (@string.lit "0") (@string.lit "0")))
         (@match (call $graph.after (local.get $g) (@string.lit "256") (@string.lit "0"))
-          (case ok () (i32.const 0))
-          (case err ($e)
+          (@case ok () (i32.const 0))
+          (@case err ($e)
             (@match (local.get $e)
-              (case invalid ($d) (i32.const 0))
-              (case duplicate ($d) (i32.const 0))
-              (case unknown ($d) (i32.const 0))
-              (case cycle ($d) (i32.const 0))
-              (case capacity ($d) (i32.const 1))))
+              (@case invalid ($d) (i32.const 0))
+              (@case duplicate ($d) (i32.const 0))
+              (@case unknown ($d) (i32.const 0))
+              (@case cycle ($d) (i32.const 0))
+              (@case capacity ($d) (i32.const 1))))
         ))))
 )

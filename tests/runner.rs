@@ -25,7 +25,7 @@ fn discovers_nested_test_files_deduplicates_and_accepts_nonzero_results() {
       (func $double (param $n i64) (result i64) (i64.mul (local.get $n) (i64.const 2)))
       (@test "numeric" (i64.eq (call $double (i64.const 21)) (i64.const 42)))
       (@test "enum" (@match $Option (result i32) (@variant.new $Option some (i64.const 42))
-        (case none () (i32.const 0)) (case some ($n) (i64.eq (local.get $n) (i64.const 42)))))
+        (@case none () (i32.const 0)) (@case some ($n) (i64.eq (local.get $n) (i64.const 42)))))
       (@test "nonzero" (i32.const -1)))"#,
     )
     .unwrap();

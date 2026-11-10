@@ -50,7 +50,14 @@ pub(crate) fn discover(paths: &[PathBuf], default: &str, suffix: &str) -> Discov
                         Some("target" | "node_modules" | ".git")
                     );
                     if (kind.is_dir() && !generated)
-                        || (kind.is_file() && entry.file_name().to_string_lossy().ends_with(suffix))
+                        || (kind.is_file()
+                            && (entry.file_name().to_string_lossy().ends_with(suffix)
+                                || suffix.strip_suffix(".walz").is_some_and(|base| {
+                                    entry
+                                        .file_name()
+                                        .to_string_lossy()
+                                        .ends_with(&format!("{base}.watz"))
+                                })))
                     {
                         visit(&entry.path(), suffix, out);
                     }

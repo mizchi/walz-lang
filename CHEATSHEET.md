@@ -39,7 +39,7 @@ Each `wat` code block is a complete compilable module; `text` blocks are syntax 
 | `@closure`, `@capture`, `@effect`, `@type.params`, `@where` | Walz declarations/annotations |
 | `@macro` / `@$name` | Declaration/invocation of hygienic expression macros; standard WAT instructions are not redefined |
 
-`@` marks extension entry points. Internal `case`, `bind`, `while`, `step`, `do`, `catch`, and constraints `shared` / `nonunit` / `callable` belong to their respective entry points and have no prefix. Identifiers remain `$name`.
+`@` marks extension entry points. Internal `bind`, `while`, `step`, `do`, `catch`, and constraints `shared` / `nonunit` / `callable` belong to their respective entry points and have no prefix. Identifiers remain `$name`.
 
 Known Walz `@` names are reserved and always checked. Other WAT annotations, including `@custom` and their nested payloads, stay opaque.
 
@@ -307,13 +307,15 @@ Named construction requires every field. Duplicate, missing, and unknown names a
     (result i64)
     (@match $Item (result i64)
       (local.get $item)
-      (case none () (i64.const 0))
-      (case count ($n) (local.get $n))))
+      (@case none () (i64.const 0))
+      (@case count ($n) (local.get $n))))
   (@test "variant"
     (i64.eq (call $get (@variant.new $Item count (i64.const 42))) (i64.const 42))))
 ```
 
-Write each case exactly once. Cases without payloads still require `()`. Types, arity, and exhaustiveness are checked.
+Cover each variant exactly once with explicit cases or a default. Cases without payloads still require `()`. Types, arity, and exhaustiveness are checked.
+A final `(@default body)` may cover remaining variants without payload bindings. It must be unique, final, and nonredundant; omitted owned or borrowed payloads are rejected. Defaults retain type/effect/ownership checks and runtime tag/subtype traps. Write `@case`/`@default` explicitly; standard Component WAT `case` declarations retain their native spelling.
+
 Ordinary enums use `(ref $Item)`; Option/Result/pair are value types without direct reference manipulation.
 
 ## Option / Result / Pair
@@ -326,14 +328,14 @@ Ordinary enums use `(ref $Item)`; Option/Result/pair are value types without dir
 (@tuple.new T U first second)
 
 (@match (@inst $option T) (result R) subject
-  (case none () no-value) (case some ($value) with-value))
+  (@case none () no-value) (@case some ($value) with-value))
 (@match (@inst $result T E) (result R) subject
-  (case ok ($value) success) (case err ($error) failure))
+  (@case ok ($value) success) (@case err ($error) failure))
 (@match (@inst $tuple T U) (result R) subject
-  (case pair ($first $second) body))
+  (@case pair ($first $second) body))
 ```
 
-Omit value arguments and payload bindings for unit components, e.g. `(@result.ok $unit i32)` and `(case ok () body)`.
+Omit value arguments and payload bindings for unit components, e.g. `(@result.ok $unit i32)` and `(@case ok () body)`.
 A function returning Result uses `(result (@inst $result T E))`: the outer form is a declaration, the inner a value type.
 
 The following returns pair state in a Result. In match `(result (@inst $result ...))`, too, the outer form is a declaration and the inner a value type.
@@ -348,19 +350,19 @@ This explicit form writes types at each construction/decomposition site. Type al
     (@effect pure)
     (@match (@inst $tuple i64 i32) (result (@inst $result (@inst $tuple i64 i32) i32))
       (local.get $state)
-      (case pair ($id $count)
+      (@case pair ($id $count)
         (@result.ok (@inst $tuple i64 i32) i32
           (@tuple.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1))))
       )))
   (@test "pair state"
     (@match (@inst $result (@inst $tuple i64 i32) i32) (result i32)
       (call $increment (@tuple.new i64 i32 (i64.const 7) (i32.const 41)))
-      (case ok ($state)
+      (@case ok ($state)
         (@match (@inst $tuple i64 i32) (result i32)
           (local.get $state)
-          (case pair ($id $count) (i32.eq (local.get $count) (i32.const 42))))
+          (@case pair ($id $count) (i32.eq (local.get $count) (i32.const 42))))
       )
-      (case err ($error) (i32.const 0))))
+      (@case err ($error) (i32.const 0))))
 )
 ```
 
@@ -401,12 +403,12 @@ On err, body is skipped and the same E err becomes this expression's result. **T
       (@result.ok (i64.const 42))))
   (@test "unit success continues"
     (@match (call $after-unit (@result.ok $unit i32))
-      (case ok ($n) (i64.eq (local.get $n) (i64.const 42)))
-      (case err ($e) (i32.const 0))))
+      (@case ok ($n) (i64.eq (local.get $n) (i64.const 42)))
+      (@case err ($e) (i32.const 0))))
   (@test "unit error propagates"
     (@match (call $after-unit (@result.err $unit i32 (i32.const 7)))
-      (case ok ($n) (i32.const 0))
-      (case err ($e) (i32.eq (local.get $e) (i32.const 7))))
+      (@case ok ($n) (i32.const 0))
+      (@case err ($e) (i32.eq (local.get $e) (i32.const 7))))
   ))
 ```
 
@@ -424,8 +426,8 @@ On err, body is skipped and the same E err becomes this expression's result. **T
   (@test "result mapping"
     (@match (@inst $result i32 i32) (result i32)
       (call $convert (@result.ok i64 i32 (i64.const 42)))
-      (case ok ($n) (i32.eq (local.get $n) (i32.const 42)))
-      (case err ($e) (i32.const 0))))
+      (@case ok ($n) (i32.eq (local.get $n) (i32.const 42)))
+      (@case err ($e) (i32.const 0))))
 )
 ```
 
@@ -498,10 +500,10 @@ Add annotations when it cannot be determined. Omitted result declarations of fun
     ))
   (@test "short state"
     (@match (call $increment (@tuple.new (i64.const 7) (i32.const 41)))
-      (case ok ($state)
+      (@case ok ($state)
         (@let ($id $count) (local.get $state)
           (i32.eq (local.get $count) (i32.const 42))))
-      (case err ($error) (i32.const 0))))
+      (@case err ($error) (i32.const 0))))
 )
 ```
 
@@ -511,7 +513,7 @@ Add annotations when it cannot be determined. Omitted result declarations of fun
 | `(@tuple.new first second)` | Expected pair type; omit unit-component value arguments |
 | `(@option.some value)` / `(@option.none)` / `(@box.new value)` | Expected Option / Own type |
 | `(@let ($first $second) subject body)` | Evaluates/decomposes the subject pair once; omit unit-component names |
-| `(@match subject (case ...)... )` | Subject type and expected output type; long typed form is also allowed |
+| `(@match subject (@case ...)... )` | Subject type and expected output type; long typed form is also allowed |
 | `(@result.let ($value) subject body)` | Subject T/E and U locally determined by expected type or body |
 | `(@stream.fold-result source initial ($state $item) body)` | Source T/E and S from initial or expected type; body is result<S,E> |
 
@@ -767,8 +769,8 @@ Scalar conversions, saturating conversions, rounding, sqrt, min/max, and reinter
         (@newtype.wrap $Id (i32.add (local.get $a) (local.get $b))))))
   (func $main (export "main") (result i32) (@effect pure)
     (@match (call $compute)
-      (case ok ($id) (return (@newtype.unwrap $Id (local.get $id))))
-      (case err ($code) (i32.const 0))))
+      (@case ok ($id) (return (@newtype.unwrap $Id (local.get $id))))
+      (@case err ($code) (i32.const 0))))
   (@test "newtype and flat results" (i32.eq (call $main) (i32.const 42))))
 ```
 
@@ -835,3 +837,9 @@ Import explicitly with `(@use "walz:core" (func $option.ok-or) (func $result.map
 `(call (@inst $option.ok-or T E) optional error)` maps some→ok and none→err. Error is always evaluated eagerly beforehand.
 `(call (@inst $result.map-err T E U $Closure) result-value mapper)` invokes the closure once only on err and preserves ok.
 T/E/U must be shared/nonunit; the closure is E→U. Use `@match` for unit or owned payloads. [Contracts and examples](docs/option-result.md).
+
+## Optional Watz printing
+
+Watz match clauses use `case`/`default`; canonical Walz keeps `@case`/`@default`.
+
+`walz print file.walz` prints canonical Walz S-expressions. Pass `--format watz` for a reversible review view using `func`, `@export("name")`, typed immutable `let`, direct `match`/`if` expressions, and structural `wat.*`/`walz.*` calls. `walz print file.watz` prints the view back as Walz. The module wrapper is optional. This view adds no types or runtime semantics. See [mapping and examples](docs/review-syntax.md).

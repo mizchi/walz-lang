@@ -10,18 +10,18 @@
 
   (@test "option is a pure value"
     (@match (@inst $option i64) (result i32) (call $pure-option (i64.const 42))
-      (case none () (i32.const 0))
-      (case some ($value) (i64.eq (local.get $value) (i64.const 42)))))
+      (@case none () (i32.const 0))
+      (@case some ($value) (i64.eq (local.get $value) (i64.const 42)))))
 
   (@test "result error is ordinary data"
     (@match (@inst $result $unit i32) (result i32) (@result.err $unit i32 (i32.const 7))
-      (case ok () (i32.const 0))
-      (case err ($code) (i32.eq (local.get $code) (i32.const 7)))))
+      (@case ok () (i32.const 0))
+      (@case err ($code) (i32.eq (local.get $code) (i32.const 7)))))
 
   (@test "none and some unit remain distinct"
     (@match (@inst $option $unit) (result i32) (@option.some $unit)
-      (case none () (i32.const 0))
-      (case some () (i32.const 1))))
+      (@case none () (i32.const 0))
+      (@case some () (i32.const 1))))
 
   (@test "caught throw does not escape"
     (i64.eq

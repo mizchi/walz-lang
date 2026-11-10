@@ -10,11 +10,13 @@ mod cli_esm;
 mod cli_inspection;
 mod cli_js;
 mod cli_new;
+mod cli_print;
 mod cli_run;
 
-const USAGE: &str = "Usage: walz <command> [options]\n\n  new <directory>                              Create a Walz application\n  build [file.walz|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.walz (default: tests/)\n  bench [paths...]                             Run *_bench.walz (default: .)\n\n  walz <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.walz>\n  walz check --json <file.walz>\n  walz esm-metadata <file.walz> [--stdin]       Checked JavaScript ABI as JSON\n  walz lsp [--bindings policy.json]            Language Server Protocol over stdio\n  walz macro-expand [--text] <file.walz>                 Checked expansion history as JSON\n  walz type-at <file.walz> <line> <column> [--source <file.walz>]\n  walz component <file.walz> <output.wasm>\n  walz <core-js|profile-text> <file.walz> <output-directory>\n  walz bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse walz <command> --help for options; walz --version for the version.";
+const USAGE: &str = "Usage: walz <command> [options]\n\n  print [--format walz|watz] <file>             Print Walz or an optional Watz view\n  new <directory>                              Create a Walz application\n  build [file.walz|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.walz (default: tests/)\n  bench [paths...]                             Run *_bench.walz (default: .)\n\n  walz <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.walz>\n  walz check --json <file.walz>\n  walz esm-metadata <file.walz> [--stdin]       Checked JavaScript ABI as JSON\n  walz lsp [--bindings policy.json]            Language Server Protocol over stdio\n  walz macro-expand [--text] <file.walz>                 Checked expansion history as JSON\n  walz type-at <file.walz> <line> <column> [--source <file.walz>]\n  walz component <file.walz> <output.wasm>\n  walz <core-js|profile-text> <file.walz> <output-directory>\n  walz bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse walz <command> --help for options; walz --version for the version.";
 const TEST_USAGE: &str = "Usage: walz test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.walz under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
 const COMMANDS: &[&str] = &[
+    "print",
     "new",
     "build",
     "test",
@@ -52,6 +54,7 @@ fn help(command: Option<&str>) -> ExitCode {
         "{}",
         match command {
             Some("new") => cli_new::USAGE,
+            Some("print") => cli_print::USAGE,
             Some("build") => cli_build::USAGE,
             Some("test") => TEST_USAGE,
             Some("bench") => cli_bench::USAGE,
@@ -188,8 +191,14 @@ fn execute(
 ) -> Result<bool, Box<dyn std::error::Error>> {
     if matches!(command, "fmt" | "fmt-check") {
         let original = std::fs::read_to_string(path)?;
-        let formatted =
-            walz::format::source(&original).map_err(|e| format!("{}:{e}", path.display()))?;
+        let formatted = if walz::review::is_source_path(path) {
+            let translated = walz::review::from_watz(&original)
+                .map_err(|e| format!("{}:{e}", path.display()))?;
+            walz::review::to_watz(&translated.text)
+        } else {
+            walz::format::source(&original)
+        }
+        .map_err(|e| format!("{}:{e}", path.display()))?;
         if command == "fmt" {
             if original != formatted {
                 std::fs::write(path, formatted)?;
@@ -469,6 +478,9 @@ fn main() -> ExitCode {
     }
     if args.first().is_some_and(|s| s == "new") {
         return cli_new::command(&args[1..]);
+    }
+    if args.first().is_some_and(|s| s == "print") {
+        return cli_print::command(&args[1..]);
     }
     if args.first().is_some_and(|s| s == "esm-metadata") {
         return cli_esm::command(&args[1..]);

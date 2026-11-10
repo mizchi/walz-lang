@@ -321,7 +321,7 @@ fn templates_reuse_checked_memory_and_sequential_binding_forms() {
         (@result.do ($saved ?value) (@result.ok i32 i32 (+ $saved 1)))))
       (func $main (export "main") (result i32)
         (@match (@result i32 i32) (result i32) (@$chain (@result.ok i32 i32 41))
-          (case ok ($value) $value) (case err ($error) $error))))"#,
+          (@case ok ($value) $value) (@case err ($error) $error))))"#,
         "42",
     );
 }

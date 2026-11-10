@@ -65,7 +65,7 @@ fn pair_patterns_lower_to_one_match_and_consume_owned_payloads() {
           (@let ($a $b) (local.get $p) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b))))))"#,
         r#"(module (func $f (param $p (@tuple i64 i32)) (result i64)
           (@match (@tuple i64 i32) (result i64) (local.get $p)
-            (case pair ($a $b) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b)))))))"#,
+            (@case pair ($a $b) (i64.add (local.get $a) (i64.extend_i32_s (local.get $b)))))))"#,
     );
     walz::compile(
         r#"(module (func $f (param $p (@tuple @unit (@box i64)))
@@ -170,22 +170,22 @@ fn short_fold_infers_state_and_result_without_leaking_probe_locals() {
 fn short_match_uses_subject_and_expected_output_types() {
     same_wasm(
         r#"(module (func $f (param $v (@option i64)) (result i64)
-          (@match (local.get $v) (case none () (i64.const 0)) (case some ($n) (local.get $n)))))"#,
+          (@match (local.get $v) (@case none () (i64.const 0)) (@case some ($n) (local.get $n)))))"#,
         r#"(module (func $f (param $v (@option i64)) (result i64)
           (@match (@option i64) (result i64) (local.get $v)
-            (case none () (i64.const 0)) (case some ($n) (local.get $n)))))"#,
+            (@case none () (i64.const 0)) (@case some ($n) (local.get $n)))))"#,
     );
     walz::compile(
         r#"(module (type $V (@variant (no) (yes i64)))
       (func $f (param $v (ref $V)) (result (@option i64))
-        (@match (local.get $v) (case no () (@option.none))
-          (case yes ($n) (@option.some (local.get $n))))))"#,
+        (@match (local.get $v) (@case no () (@option.none))
+          (@case yes ($n) (@option.some (local.get $n))))))"#,
     )
     .unwrap();
     let error = walz::check(
         r#"(module (func $f (param $v (@option i64))
-      (@let $n (@match (local.get $v) (case none () (i64.const 0))
-        (case some ($n) (local.get $n))) (nop))))"#,
+      (@let $n (@match (local.get $v) (@case none () (i64.const 0))
+        (@case some ($n) (local.get $n))) (nop))))"#,
     )
     .unwrap_err()
     .to_string();
@@ -300,8 +300,8 @@ fn inferred_composite_types_survive_checking_and_emission() {
           (@result.ok (local.get $s))) (drop (local.get $r))))
       (func $map (param $input (@result i64 i32)) (result i32)
         (@let $r (@result.let ($v) (local.get $input) (@result.ok (i32.wrap_i64 (local.get $v))))
-          (@match (local.get $r) (case ok ($value) (local.get $value))
-            (case err ($error) (local.get $error))))))"#,
+          (@match (local.get $r) (@case ok ($value) (local.get $value))
+            (@case err ($error) (local.get $error))))))"#,
     )
     .unwrap();
     let error = walz::check(
@@ -331,8 +331,8 @@ fn fold_evaluates_source_then_initial_once() {
                   (i32.add (i32.mul (struct.get $Counter 0 (local.get $counter)) (i32.const 10)) (i32.const 2)))
                 (i64.const 0))
               ($state $item) (@result.ok (local.get $state)))
-            (case ok ($value) (struct.get $Counter 0 (local.get $counter)))
-            (case err ($error) (i32.const -1))))))"#;
+            (@case ok ($value) (struct.get $Counter 0 (local.get $counter)))
+            (@case err ($error) (i32.const -1))))))"#;
     let explicit = short
         .replace("stream.fold-result\n", "stream.fold-result i64 i64 i32\n")
         .replace(

@@ -13,7 +13,7 @@ fn config() -> Criterion {
                 })
                 .join("criterion")
         })
-        .join("frontend-v6");
+        .join("frontend-v7");
     Criterion::default()
         .output_directory(&directory)
         .sample_size(30)
@@ -22,24 +22,24 @@ fn config() -> Criterion {
 }
 
 const CASES: &[(&str, &str)] = &[
-    ("native", include_str!("fixtures/frontend-v6/native.walz")),
-    ("let", include_str!("fixtures/frontend-v6/let.walz")),
+    ("native", include_str!("fixtures/frontend-v7/native.walz")),
+    ("let", include_str!("fixtures/frontend-v7/let.walz")),
     (
         "std-types",
-        include_str!("fixtures/frontend-v6/std-types.walz"),
+        include_str!("fixtures/frontend-v7/std-types.walz"),
     ),
     (
         "std-string",
-        include_str!("fixtures/frontend-v6/std-string.walz"),
+        include_str!("fixtures/frontend-v7/std-string.walz"),
     ),
-    ("json", include_str!("fixtures/frontend-v6/json.walz")),
+    ("json", include_str!("fixtures/frontend-v7/json.walz")),
     (
         "stock-ledger",
-        include_str!("fixtures/frontend-v6/stock-ledger.walz"),
+        include_str!("fixtures/frontend-v7/stock-ledger.walz"),
     ),
     (
         "workflow",
-        include_str!("fixtures/frontend-v6/workflow.walz"),
+        include_str!("fixtures/frontend-v7/workflow.walz"),
     ),
 ];
 
@@ -59,13 +59,13 @@ fn frontend(c: &mut Criterion) {
         group.finish();
     }
     c.bench_function("check-error/std-type-mismatch", |b| {
-        let source = include_str!("fixtures/frontend-v6/type-error.walz");
+        let source = include_str!("fixtures/frontend-v7/type-error.walz");
         b.iter(|| black_box(walz::check(black_box(source)).unwrap_err()));
     });
     let mut cold = c.benchmark_group("cold-check");
     for name in ["std-types", "json"] {
         let path = format!(
-            "{}/benches/fixtures/frontend-v6/{name}.walz",
+            "{}/benches/fixtures/frontend-v7/{name}.walz",
             env!("CARGO_MANIFEST_DIR")
         );
         cold.bench_function(name, |b| {

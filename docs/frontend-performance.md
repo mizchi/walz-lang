@@ -16,14 +16,14 @@ just frontend-bench '^check/std-types$'
 ```
 
 `frontend-save` does not overwrite existing labels. Comparisons preserve the baseline and, by default,
-save results under `target/criterion/frontend-v6/`. Setting `CRITERION_HOME` changes the base directory, but results remain separated under its `frontend-v6/` subdirectory.
+save results under `target/criterion/frontend-v7/`. Setting `CRITERION_HOME` changes the base directory, but results remain separated under its `frontend-v7/` subdirectory.
 For direct invocation options, see [Criterion's baseline documentation](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_options.html).
 
 <a id="対象と条件"></a>
 
 ## Targets and conditions
 
-Inputs in `benches/fixtures/frontend-v6/` are fixed. V6 changes Walz's extension prefix from `%` to `@`; v1–v5 inputs and references retain their original bytes. Reference checks compare v6 WAT exactly with v5 and normalize only generated names/host namespaces when comparing earlier language names. IR, analysis, and diagnostic references are captured separately for v6.
+Inputs in `benches/fixtures/frontend-v7/` are fixed. V7 prefixes match arms with `@case`; v1–v6 inputs and references retain their original bytes. Reference checks compare v7 WAT exactly with v6/v5 and normalize only generated names/host namespaces when comparing earlier language names. IR, analysis, and diagnostic references are captured separately for v7.
 Large inputs fix the compiler's internal form after file resolution. Because they contain private scope representations, CLI reference comparisons explicitly use the legacy fixture path; they are not public-source syntax examples.
 Application file imports/includes are expanded in advance,
 so API measurements exclude file reads. Create a new version when changing inputs.
@@ -62,7 +62,7 @@ For flag meanings, see [Criterion's profiling documentation](https://bheisler.gi
 ## Correctness checks
 
 `runtime/frontend-reference.test.mjs` checks fixed pre-change inputs, typed IR, analysis results, WAT, and diagnostics using SHA-256 and other comparisons.
-Do not update `tests/fixtures/frontend-reference-v6.json` for speed improvements.
+Do not update `tests/fixtures/frontend-reference-v7.json` for speed improvements.
 The pre-rename v1 reference is retained too, and generated WAT is checked for equality apart from internal namespace names.
 Intentional API changes require new versions of inputs and references.
 Rust tests also verify that using only standard types does not parse unrelated libraries, that generated indexes match their sources,

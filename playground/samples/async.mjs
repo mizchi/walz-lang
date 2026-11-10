@@ -13,8 +13,8 @@ export const asyncSamples = {
       (@match
         (@stream.fold-result (@move $source) $base ($sum $item)
           (@result.ok (+ $sum $item)))
-        (case ok ($total) $total)
-        (case err ($code) (i64.const -1))))))`,
+        (@case ok ($total) $total)
+        (@case err ($code) (i64.const -1))))))`,
   },
   cancellation: {
     category: 'Ownership and async', label: 'Closing unused endpoints',

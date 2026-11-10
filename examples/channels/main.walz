@@ -35,10 +35,10 @@
     (@loop $read (bind $current (@inst $stream i32) (@move $items)) (bind $total i32 0) (result i32)
       (@match (@inst $tuple (@inst $stream i32) (@inst $option i32)) (result i32)
         (@stream.next i32 (@move $current))
-        (case pair ($next $item)
+        (@case pair ($next $item)
           (@match (@inst $option i32) (result i32) $item
-            (case none () (block (result i32) (@stream.close i32 (@move $next)) $total))
-            (case some ($n) (@recur $read (@move $next) (+ $total $n))))))))
+            (@case none () (block (result i32) (@stream.close i32 (@move $next)) $total))
+            (@case some ($n) (@recur $read (@move $next) (+ $total $n))))))))
   (func $pipeline (export "pipeline") (result i32) (@effect host reads writes allocates suspends)
     (@let $consumer
       (@using $w (@resource.new $StreamWriter (call $stream 0))

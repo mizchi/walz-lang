@@ -4,8 +4,8 @@
   (type $Array (array (mut i32)))
   (func $json-string.valid (param $bytes $bytes) (result $string) (@effect pure)
     (@match (@string.from-bytes $bytes)
-      (case none () (unreachable))
-      (case some ($text) $text)))
+      (@case none () (unreachable))
+      (@case some ($text) $text)))
   (func $json-string.width
     (param $b i32)
     (result i32)

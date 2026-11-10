@@ -11,7 +11,7 @@ test('struct literal evaluation freezes counterbalanced packets and rejects tamp
     const run=join(root,'new-parent','run');await prepare(run);
     await assert.rejects(prepare(run),/EEXIST/);
     const manifest=JSON.parse(await readFile(join(run,'manifest.json'),'utf8'));
-    assert.equal(manifest.schema,'walz-struct-readability-v8');
+    assert.equal(manifest.schema,'walz-struct-readability-v13');
     assert.match(await readFile(join(run,'readerA','packet.md'),'utf8'),/\(@\$User::\{/);
     assert.deepEqual(Object.values(manifest.labels.readerA),Object.values(manifest.labels.readerB).reverse());
     const oracle=JSON.parse(await readFile(join(run,'oracle.json'),'utf8'));

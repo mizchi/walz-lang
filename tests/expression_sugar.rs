@@ -127,7 +127,7 @@ fn generic_functions_closures_match_and_loop_bindings_use_the_same_rules() {
         (@let (($c (@closure.new $Add 40))
                ($e (@variant.new $E value (call (@inst $id i64) 2))))
           (@match $E (result i64) $e
-            (case value ($n)
+            (@case value ($n)
               (@loop $again (bind $left i64 $n) (result i64)
                 (if (result i64) (i64.eqz $left)
                   (then (@closure.call $Add $c $n))
@@ -196,7 +196,7 @@ fn shorthand_does_not_move_owned_values_or_skip_static_contracts() {
     run(
         r#"(module (func $main (export "main") (result i64)
       (@let $x (@box.new i64 42)
-        (@match (@box i64) (result i64) (@move $x) (case own ($n) $n)))))"#,
+        (@match (@box i64) (result i64) (@move $x) (@case own ($n) $n)))))"#,
         "42",
     );
     let error = walz::compile(
@@ -263,13 +263,13 @@ fn inferred_value_forms_do_not_confuse_local_atoms_with_types() {
                ($o (type (@inst $option i64)) (@option.some $N))
                ($r (type (@inst $result i64 i32)) (@result.ok 2)))
           (@match $p
-            (case pair ($a $b)
+            (@case pair ($a $b)
               (@result.let ($n) $r
                 (@match $o
-                  (case none () (@result.err i64 i32 1))
-                  (case some ($x) (@result.ok i64 i32 (i64.add $x $n)))))))))
+                  (@case none () (@result.err i64 i32 1))
+                  (@case some ($x) (@result.ok i64 i32 (i64.add $x $n)))))))))
       (func $main (export "main") (result i64)
-        (@match (call $f) (case ok ($n) $n) (case err ($e) -1))))"#,
+        (@match (call $f) (@case ok ($n) $n) (@case err ($e) -1))))"#,
         "42",
     );
 }
@@ -285,10 +285,10 @@ fn result_do_bound_locals_are_values_even_when_they_share_a_type_name() {
           (@result.ok (@option.some $N))))
       (func $main (export "main") (result i64)
         (@match (call $f)
-          (case err ($e) -1)
-          (case ok ($o) (@match $o
-            (case none () -1)
-            (case some ($n) (i64.add $n 2)))))))"#,
+          (@case err ($e) -1)
+          (@case ok ($o) (@match $o
+            (@case none () -1)
+            (@case some ($n) (i64.add $n 2)))))))"#,
         "42",
     );
 }
@@ -337,10 +337,10 @@ fn namespace_type_resolution_preserves_short_local_reads_and_explicit_type_opera
         (@type.alias $N i64)
         (func $f (param $N i64) (result (@inst $option i64))
           (@let $v (type (@inst $option i64)) (@option.some $N $N)
-            (@match $v (case none () (@option.none i64))
-              (case some ($N) (@option.some $N))))))
+            (@match $v (@case none () (@option.none i64))
+              (@case some ($N) (@option.some $N))))))
       (func $main (export "main") (result i64)
-        (@match (call $n.f 40) (case none () -1) (case some ($n) (i64.add $n 2)))))"#,
+        (@match (call $n.f 40) (@case none () -1) (@case some ($n) (i64.add $n 2)))))"#,
         "42",
     );
 }
@@ -379,9 +379,9 @@ fn generic_constructor_type_operands_survive_parameter_renaming() {
         (param $x $T) (result (@inst $option $T)) (@option.some $T $x))
       (func $main (export "main") (result i64)
         (@match (call (@inst $empty i64))
-          (case none () (@match (call (@inst $wrap i64) 42)
-            (case none () 0) (case some ($n) $n)))
-          (case some ($n) -1))))"#,
+          (@case none () (@match (call (@inst $wrap i64) 42)
+            (@case none () 0) (@case some ($n) $n)))
+          (@case some ($n) -1))))"#,
         "42",
     );
 }

@@ -72,24 +72,24 @@
       (call $write
         (@match $domain.Error (result $string)
           (local.get $e)
-          (case invalid ($detail)
+          (@case invalid ($detail)
             (call $error
               (local.get $n)
               (@string.lit "invalid-command")
               (local.get $detail)))
-          (case duplicate ($detail)
+          (@case duplicate ($detail)
             (call $error
               (local.get $n)
               (@string.lit "duplicate-task")
               (local.get $detail)))
-          (case unknown ($detail)
+          (@case unknown ($detail)
             (call $error
               (local.get $n)
               (@string.lit "unknown-task")
               (local.get $detail)))
-          (case capacity ($detail)
+          (@case capacity ($detail)
             (call $error (local.get $n) (@string.lit "capacity") (local.get $detail)))
-          (case cycle ($detail)
+          (@case cycle ($detail)
             (call $error (local.get $n) (@string.lit "cycle") (local.get $detail))))
       )))
 

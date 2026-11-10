@@ -132,8 +132,8 @@ There is no pointer/integer conversion or raw linear-memory access.
   (@option.some (@inst $result i64 i32) (@result.ok i64 i32 (i64.const 42))))
 
 (@match (@inst $option i64) (result i64) (@option.none i64)
-  (case none () (i64.const 0))
-  (case some ($value) (local.get $value)))
+  (@case none () (i64.const 0))
+  (@case some ($value) (local.get $value)))
 ```
 
 The types are `(@inst $option T)` and `(@inst $result T E)`. They can be nested and used for parameters, results, fields, array elements, explicit captures, and loop state.
@@ -144,7 +144,7 @@ Construction uses `(@option.none T)`, `(@option.some T value)`, `(@result.ok T E
 Unit is also allowed as a type argument. That side has no payload, so omit the construction value and case binding.
 Examples are `(@result.ok $unit i32)` and `(@option.some $unit)`. Unit itself cannot be used as a storage type for fields, arguments, or similar positions.
 
-The match type operand takes a type constructor such as those above. Write every none/some case for Option and every ok/err case for Result.
+The match type operand takes a type constructor such as those above. Cover both none/some for Option and ok/err for Result, using explicit cases or a final default.
 Payload arity, types, and exhaustiveness are checked. Even a case without a value requires the empty binding list `()`.
 None and some(null), none and some(unit), and ok(unit) and err(unit) are distinct values.
 
@@ -165,8 +165,8 @@ Declare enums as `@variant` types. Case names are ASCII identifiers without `$`:
 (@variant.new $Result ok (i64.const 42))
 
 (@match $Result (result i64) (local.get $result)
-  (case ok ($value) (local.get $value))
-  (case error ($code) (i64.const -1)))
+  (@case ok ($value) (local.get $value))
+  (@case error ($code) (i64.const -1)))
 ```
 
 Each type has a closed set of at least one case. Duplicate case names are not allowed.
@@ -175,13 +175,15 @@ Recursive types and forward references are allowed; construction returns a non-n
 Construction checks arity and types, so `ref.null` cannot be passed where `(ref $List)` is required.
 If a referenced object is explicitly mutable, that object can still be changed.
 
-`@match` has the form `(@match $Type [(result R)] subject (case name ($bindings...) body) ...)`.
+`@match` has the form `(@match $Type [(result R)] subject (@case name ($bindings...) body) ...)`.
 The subject must be a non-null reference to the specified enum type and is evaluated once.
-Cases can be ordered freely, but every case must occur exactly once. Unknown, duplicate, and missing cases are errors.
+Explicit cases can be ordered freely; each variant must be covered exactly once by a case or the final default. Unknown, duplicate, and missing cases are errors.
+A final `(@default body)` may cover remaining variants without payload bindings. It must be unique, final, and nonredundant; omitted owned or borrowed payloads are rejected. Defaults retain type/effect/ownership checks and runtime tag/subtype traps. Write `@case`/`@default` explicitly; standard Component WAT `case` declarations retain their native spelling.
+
 The binding count must match the payload; types come from the case declaration. Duplicate binding names within one case are errors.
 Bindings are visible only in that case's body and may shadow outer bindings. Only the selected body is evaluated.
 Each body's type must conform to result. Omitted result means unit. A match in tail position passes tail position to every case.
-There are no wildcards, guards, or nested patterns. Use a separate match for nested decomposition.
+The final `@default` is the only catch-all. There are no guards or nested patterns; use a separate match for nested decomposition.
 
 Source code cannot use `struct.new/get/set` on enum internals or treat one enum as another enum type.
 `@variant.new` allocates every time, including for cases with no arguments. `ref.eq` compares reference identity; structural equality is not provided.
@@ -409,7 +411,7 @@ WIT does not retain arbitrary effect contracts, so a generated interface alone c
 ```wat
 (@let $ticket (@box.new i64 (i64.const 42))
   (@match (@inst $box i64) (result i64) (@move $ticket)
-    (case own ($value) (local.get $value))))
+    (@case own ($value) (local.get $value))))
 
 (@let $unused (@box.new $unit)
   (@box.close (@move $unused)))
@@ -930,7 +932,7 @@ The following shorthands supplement existing explicit forms.
 (@tuple.new [first] [second])         ;; expected pair<T,U>、unit成分は省略
 (@option.none) / (@option.some value)  ;; expected option<T>
 (@box.new [value])                   ;; expected own<T>
-(@match subject (case variant ($names...) body)...)
+(@match subject (@case variant ($names...) body)...)
 (@let ($first $second) subject body)
 (@result.let ($value) subject body)
 (@stream.fold-result source initial ($state $item) body)
@@ -1040,3 +1042,9 @@ Component output specifying a WIT world connects shared-payload async endpoints 
 
 In expression positions whose expected type is determined to be the semantic string type, a UTF-8 string token expands to the same typed Data expression as `@string.lit`. A missing expected type or requirement for another type yields `E_LITERAL_TYPE`. Implicit-conversion, ownership, and effect rules do not change.
 `walz:core` `$option.ok-or` / `$result.map-err` are ordinary monomorphized functions with shared/nonunit constraints. They follow [Argument evaluation order and callback contracts](docs/option-result.md).
+
+## Optional printed view
+
+Watz match clauses use `case`/`default`; canonical Walz keeps `@case`/`@default`.
+
+Walz S-expressions are the default source and output of `walz print`. The optional `--format watz` view preserves the same source forms using `func`, `@export("name")`, and direct `match`/`if` expressions; saved `.watz` views can also be read back. The module wrapper is optional and immutable bindings use `let`. It lowers before ordinary module resolution and checking; it adds no types or runtime semantics. The canonical language remains WAT S-expressions. See [the complete mapping](docs/review-syntax.md) for syntax, escapes, limits, comments, and tooling boundaries.

@@ -20,6 +20,7 @@ pub struct Source {
     path: PathBuf,
     chunks: Vec<Chunk>,
     migration: Option<crate::syntax::Migration>,
+    reviews: BTreeMap<PathBuf, Arc<crate::review::Translation>>,
 }
 impl Source {
     /// A failed editor load still has a current root buffer to index. This
@@ -38,11 +39,15 @@ impl Source {
                 generated: false,
             }],
             migration: None,
+            reviews: BTreeMap::new(),
         }
     }
     /// Expanded immutable text; IR spans refer to this compilation unit.
     #[cfg(not(target_family = "wasm"))]
     pub(crate) fn original(&self, path: &Path) -> Option<&str> {
+        if let Some(review) = self.reviews.get(path) {
+            return Some(&review.original);
+        }
         self.chunks
             .iter()
             .find(|c| c.path == path)
@@ -106,12 +111,16 @@ impl Source {
         } else {
             self.chunks.first().ok_or_else(error)?.path.clone()
         };
-        let original = &self
+        let chunk = self
             .chunks
             .iter()
             .find(|c| c.path == path)
-            .ok_or_else(error)?
-            .original;
+            .ok_or_else(error)?;
+        let original = self
+            .reviews
+            .get(&path)
+            .map(|r| r.original.as_str())
+            .unwrap_or(&chunk.original);
         let row = original
             .split('\n')
             .nth(line.checked_sub(1).ok_or_else(error)?)
@@ -129,16 +138,25 @@ impl Source {
             .map(str::len)
             .sum::<usize>()
             + byte;
-        let mut offsets = self
-            .chunks
-            .iter()
-            .filter(|c| {
-                c.path == path
-                    && !c.generated
-                    && c.offset <= start
-                    && start < c.offset + c.end - c.start
+        let path_ref = &path;
+        let input_offsets = self
+            .reviews
+            .get(&path)
+            .map(|r| r.offsets(start))
+            .unwrap_or_else(|| vec![start]);
+        let mut offsets = input_offsets
+            .into_iter()
+            .flat_map(|start| {
+                self.chunks
+                    .iter()
+                    .filter(move |c| {
+                        c.path == *path_ref
+                            && !c.generated
+                            && c.offset <= start
+                            && start < c.offset + c.end - c.start
+                    })
+                    .map(move |c| c.start + start - c.offset)
             })
-            .map(|c| c.start + start - c.offset)
             .collect::<Vec<_>>();
         if start == original.len()
             && let Some(c) = self
@@ -200,6 +218,11 @@ impl Source {
                     &label.message,
                 );
                 label.location.path = Some(chunk.path.clone());
+                if let Some(review) = self.reviews.get(&chunk.path) {
+                    let span = review.original_span(label.span);
+                    *label = crate::diagnostic::Label::new(&review.original, span, &label.message);
+                    label.location.path = Some(chunk.path.clone());
+                }
             }
         }
         diagnostic
@@ -312,6 +335,7 @@ struct Modules {
     units: Vec<(String, Source)>,
     unavailable: BTreeMap<PathBuf, Vec<crate::binary::Unavailable>>,
     size: usize,
+    reviews: BTreeMap<PathBuf, Arc<crate::review::Translation>>,
 }
 fn expand(
     path: &Path,
@@ -338,7 +362,7 @@ fn expand(
     if stack.len() >= 64 {
         return Err(Error::message("include nesting limit exceeded".into()));
     }
-    let original: Arc<str> = if let Some(text) = overlays.get(&canonical) {
+    let mut original: Arc<str> = if let Some(text) = overlays.get(&canonical) {
         text.clone()
     } else {
         std::fs::read_to_string(&canonical)
@@ -347,6 +371,11 @@ fn expand(
     };
     if original.len() > MAX_SOURCE {
         return Err(Error::message("source exceeds 16 MiB".into()));
+    }
+    if crate::review::is_source_path(&canonical) {
+        let review = crate::review::from_watz(&original).map_err(|e| e.with_path(&canonical))?;
+        original = Arc::from(review.text.as_str());
+        modules.reviews.insert(canonical.clone(), Arc::new(review));
     }
     let syntax = match crate::sexpr::parse(&original) {
         Ok(syntax) => syntax,
@@ -439,6 +468,7 @@ fn expand(
                     path: target.clone(),
                     chunks: vec![],
                     migration: None,
+                    reviews: BTreeMap::new(),
                 };
                 if target.extension().is_some_and(|ext| ext == "wasm") {
                     let load = || -> Result<(String, Vec<crate::binary::Unavailable>), Error> {
@@ -614,6 +644,7 @@ fn load_mode(
         path: path.into(),
         chunks: Vec::new(),
         migration: None,
+        reviews: BTreeMap::new(),
     };
     let mut modules = Modules::default();
     expand(
@@ -624,8 +655,33 @@ fn load_mode(
         &mut modules,
         legacy,
         overlays,
-    )?;
+    )
+    .map_err(|mut error| {
+        for label in error
+            .diagnostic
+            .primary
+            .iter_mut()
+            .chain(&mut error.diagnostic.related)
+        {
+            if let Some(review) = label
+                .location
+                .path
+                .as_ref()
+                .and_then(|path| modules.reviews.get(path))
+            {
+                let path = label.location.path.clone();
+                *label = crate::diagnostic::Label::new(
+                    &review.original,
+                    review.original_span(label.span),
+                    &label.message,
+                );
+                label.location.path = path;
+            }
+        }
+        error
+    })?;
     if modules.units.is_empty() {
+        source.reviews = modules.reviews;
         return Ok(source);
     }
     // Reserve fresh, ordinary identifiers across every original file. Rewrite
@@ -677,6 +733,7 @@ fn load_mode(
         path: source.path.clone(),
         chunks: vec![],
         migration: None,
+        reviews: BTreeMap::new(),
     };
     append_range(&mut linked, &source, 0..end)?;
     for (name, unit) in modules.units {
@@ -696,6 +753,7 @@ fn load_mode(
         linked.append("\n)\n", 0, &unit.path, &original)?;
     }
     append_range(&mut linked, &source, end..source.text.len())?;
+    linked.reviews = modules.reviews;
     Ok(linked)
 }
 
@@ -726,6 +784,7 @@ fn rename_generated(source: &mut Source, renames: &[(String, String)]) -> Result
         path: source.path.clone(),
         chunks: vec![],
         migration: None,
+        reviews: BTreeMap::new(),
     };
     for chunk in &source.chunks {
         let mut text = source.text[chunk.start..chunk.end].to_owned();

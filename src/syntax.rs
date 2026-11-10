@@ -24,6 +24,8 @@ fn entry(name: &str) -> bool {
             | "for-each"
             | "struct.update"
             | "match"
+            | "case"
+            | "default"
             | "recur"
             | "closure"
             | "capture"

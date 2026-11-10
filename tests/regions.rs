@@ -118,7 +118,7 @@ fn containers_and_ready_future_payloads_preserve_reference_aliases() {
       (func $wrap (param $p (ref $C)) (result (@option (ref $C))) (@option.some (ref $C) (local.get $p)))
       (func $use (param $p (ref $C))
         (@match (@option (ref $C)) (call $wrap (local.get $p))
-          (case none () (nop)) (case some ($v) (struct.set $C 0 (local.get $v) (i32.const 42)))))
+          (@case none () (nop)) (@case some ($v) (struct.set $C 0 (local.get $v) (i32.const 42)))))
       (func $ready (@let $p (struct.new $C (i32.const 0))
         (@let $f (@future.ready (ref $C) (local.get $p))
           (struct.set $C 0 (@future.await (ref $C) (@move $f)) (i32.const 42))))))"#;

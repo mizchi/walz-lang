@@ -12,8 +12,8 @@
     (@closure.new $Add (local.get $base)))
   (func $eval (param $expr (ref $Expr)) (result i64)
     (@match $Expr (result i64) (local.get $expr)
-      (case literal ($value) (local.get $value))
-      (case add ($left $right)
+      (@case literal ($value) (local.get $value))
+      (@case add ($left $right)
         (i64.add (call $eval (local.get $left)) (call $eval (local.get $right))))))
 
   (@test "escaping immutable closure"

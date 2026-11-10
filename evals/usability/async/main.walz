@@ -19,8 +19,8 @@
         (+
           (@match (@inst $option i32) (result i32)
             $result
-            (case none () 21)
-            (case some ($value) $value))
+            (@case none () 21)
+            (@case some ($value) $value))
           (@task.join i32 (@move $sibling))))
     ))
 

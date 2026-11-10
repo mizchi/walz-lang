@@ -129,9 +129,9 @@ test('reserved @ effects are checked instead of discarded as WAT annotations', a
 });
 
 test('Wasm compiler matches the frozen native WAT outputs for all seven frontend fixtures', async ({ page }) => {
-  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v6.json', import.meta.url)));
+  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v7.json', import.meta.url)));
   const fixtures = await Promise.all(Object.keys(reference.cases).map(async name => ({
-    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v6/${name}`, import.meta.url), 'utf8'),
+    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v7/${name}`, import.meta.url), 'utf8'),
   })));
   const actual = await page.evaluate(async fixtures => {
     const { WorkerClient } = await import('./worker-client.mjs');
@@ -160,7 +160,7 @@ test('expected strings and core value helpers run while bench entries stay priva
   (@use "walz:core" (type $string) (type $option) (type $result) (func $option.ok-or))
   (func $main (export "main") (result i32) (@effect pure)
     (@match (call (@inst $option.ok-or $string i32) (@option.some $string "日本") 7)
-      (case ok ($value) (@string.byte-len $value)) (case err ($code) $code)))
+      (@case ok ($value) (@string.byte-len $value)) (@case err ($code) $code)))
   (@bench "private" (result i32) 1))`);
  await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
  await page.getByRole('button',{name:'Run',exact:true}).click();

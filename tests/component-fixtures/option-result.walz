@@ -24,4 +24,4 @@
            ($value (@result.ok (ref $Counter) i32 $c))
            ($mapped (call (@inst $result.map-err (ref $Counter) i32 i32 $Map) $value (@closure.new $Map $c 1))))
       (@match $mapped
-        (case ok ($same) (ref.eq $c $same)) (case err ($error) 0)))))
+        (@case ok ($same) (ref.eq $c $same)) (@case err ($error) 0)))))

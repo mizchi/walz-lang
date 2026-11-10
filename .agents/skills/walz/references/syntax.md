@@ -56,8 +56,8 @@ Prefer expected-type constructors such as `(@result.ok 42)` when a declared Resu
     (@result.ok 42))
   (func $main (export "main") (result i64) (@effect pure)
     (@match (call $answer)
-      (case ok ($n) $n)
-      (case err ($code) 0))))
+      (@case ok ($n) $n)
+      (@case err ($code) 0))))
 ```
 
 ## GC data and closure captures
@@ -72,7 +72,7 @@ Prefer expected-type constructors such as `(@result.ok 42)` when a declared Resu
 (array.new_fixed $Values 2 first second)
 (type $Choice (@variant (none) (value i64)))
 (@variant.new $Choice value 42)
-(@match choice (case none () 0) (case value ($n) $n))
+(@match choice (@case none () 0) (@case value ($n) $n))
 (@closure $Add (@capture $base i64) (param $n i64) (result i64)
   (@effect pure) (+ $base $n))
 (@closure.new $Add 40)
@@ -127,3 +127,11 @@ for a generic seed if the call does not provide enough expected-type information
 ```
 
 Keep source libraries free of Wasm ABI exports and `@test`/`@bench` entry declarations. Put those in root/test/benchmark files. A host import also needs a trusted effect/capability policy for portable JS/Component output. Avoid `@include` when selecting library names is sufficient.
+
+## Review notation
+
+`walz print source.walz` defaults to canonical Walz; `--format watz` selects reversible `.watz` syntax; `walz print source.watz` restores S-expressions. `func`, `@export("name")`, typed `let`, selectors and parenthesized operators are surface sugar; `wat.*` and `walz.*` preserve other forms. The file is an implicit module; `module { ... }` is optional and the printer omits it. `let` is immutable and assignment/`const` are rejected. This is Walz input, not JS/TypeScript execution. Use ordinary check/build/run and preserve explicit types, effects, captures, and ownership. A final `(@default body)` covers remaining shared-payload variants without bindings; owners/borrows require explicit `@case`.
+
+Direct Watz branches use `match ($value) { case ok($n) => $n, default => 0, }` and `if<i64> ($n > 0) { $n } else { 0 }`. `if<T>` preserves `(result T)`; no result annotation means unit. Explicit match headers are `match<$Variant, R>` or `match<$Variant>` with no result declaration. Branch braces contain an expression, without a return statement or trailing semicolon; use `wat.block` for sequencing. The ordinary type/effect/ownership checks and exhaustive-case rules still apply. Native labeled/stack-style forms retain structural spelling.
+
+Watz match clauses use `case`/`default`; canonical Walz keeps `(@case ...)`/`(@default ...)`.

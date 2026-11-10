@@ -27,8 +27,8 @@
     (result $string)
     (@effect reads)
     (@match (@string.from-bytes (@bytes.from-array $Input (local.get $data)))
-      (case some ($text) (local.get $text))
-      (case none () (unreachable))))
+      (@case some ($text) (local.get $text))
+      (@case none () (unreachable))))
   ;; Return the actual GC AST to the host, preventing unused-result elimination.
   (func $parse
     (export "parse")
@@ -36,8 +36,8 @@
     (result (ref $Value))
     (@effect allocates reads writes)
     (@match (call $json.parse (local.get $source))
-      (case ok ($value) (local.get $value))
-      (case err ($offset) (unreachable))))
+      (@case ok ($value) (local.get $value))
+      (@case err ($offset) (unreachable))))
   ;; Full serialization/hash is a preflight, never part of parse-only timing.
   (func $checksum
     (export "checksum")

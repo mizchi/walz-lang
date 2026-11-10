@@ -19,8 +19,8 @@ fn result_do_evaluates_once_left_to_right_and_stops_at_the_first_error() {
                   ($b (call $step (local.get $c) (i32.const 2) (i32.const {second})))
                   (@result.ok (i32.add (local.get $a) (local.get $b))))
                 (@match (local.get $r)
-                  (case ok ($n) (local.get $n))
-                  (case err ($e) (i32.add (i32.mul (local.get $e) (i32.const 100)) (struct.get $Cell $n (local.get $c)))))))))"#
+                  (@case ok ($n) (local.get $n))
+                  (@case err ($e) (i32.add (i32.mul (local.get $e) (i32.const 100)) (struct.get $Cell $n (local.get $c)))))))))"#
         );
         let compiled = walz::compile(&source).unwrap();
         assert!(!compiled.analysis.opaque);

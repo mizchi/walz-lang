@@ -58,18 +58,18 @@
     (result i32)
     (@effect pure)
     (@match (local.get $p)
-      (case pending () (i32.const 1))
-      (case running ($s $f $w) (i32.const 0))
-      (case done ($s $f $w) (i32.const 0))))
+      (@case pending () (i32.const 1))
+      (@case running ($s $f $w) (i32.const 0))
+      (@case done ($s $f $w) (i32.const 0))))
 
   (func $due
     (param $p (ref $Phase))
     (result i64)
     (@effect pure)
     (@match (local.get $p)
-      (case pending () (i64.const -1))
-      (case running ($s $f $w) (local.get $f))
-      (case done ($s $f $w) (i64.const -1))))
+      (@case pending () (i64.const -1))
+      (@case running ($s $f $w) (local.get $f))
+      (@case done ($s $f $w) (i64.const -1))))
 
   (func $start
     (param $r (ref $Run))
@@ -77,9 +77,9 @@
     (result i64)
     (@effect reads)
     (@match (call $entry (local.get $r) (local.get $i))
-      (case pending () (unreachable))
-      (case running ($s $f $w) (unreachable))
-      (case done ($s $f $w) (local.get $s))))
+      (@case pending () (unreachable))
+      (@case running ($s $f $w) (unreachable))
+      (@case done ($s $f $w) (local.get $s))))
 
   (func $finish
     (param $r (ref $Run))
@@ -87,9 +87,9 @@
     (result i64)
     (@effect reads)
     (@match (call $entry (local.get $r) (local.get $i))
-      (case pending () (unreachable))
-      (case running ($s $f $w) (unreachable))
-      (case done ($s $f $w) (local.get $f))))
+      (@case pending () (unreachable))
+      (@case running ($s $f $w) (unreachable))
+      (@case done ($s $f $w) (local.get $f))))
 
   (func $worker
     (param $r (ref $Run))
@@ -97,9 +97,9 @@
     (result i32)
     (@effect reads)
     (@match (call $entry (local.get $r) (local.get $i))
-      (case pending () (unreachable))
-      (case running ($s $f $w) (unreachable))
-      (case done ($s $f $w) (local.get $w))))
+      (@case pending () (unreachable))
+      (@case running ($s $f $w) (unreachable))
+      (@case done ($s $f $w) (local.get $w))))
   ;; The work graph points to the result, never the other way round. Reverse
   ;; adjacency, indegrees and the heap become unreachable after planning.
   (type $Ints (array (mut i32)))
@@ -395,9 +395,9 @@
                       (local.get $count)))
                   (else
                     (@match (call $entry (local.get $r) (local.get $i))
-                      (case pending () (unreachable))
-                      (case done ($s $f $worker) (unreachable))
-                      (case running ($s $f $worker)
+                      (@case pending () (unreachable))
+                      (@case done ($s $f $worker) (unreachable))
+                      (@case running ($s $f $worker)
                         (if
                           (result i32)
                           (i64.eq (local.get $f) (local.get $now))

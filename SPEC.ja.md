@@ -120,8 +120,8 @@ nullable 参照の検査による暗黙の型絞り込みは行いません。�
   (@option.some (@inst $result i64 i32) (@result.ok i64 i32 (i64.const 42))))
 
 (@match (@inst $option i64) (result i64) (@option.none i64)
-  (case none () (i64.const 0))
-  (case some ($value) (local.get $value)))
+  (@case none () (i64.const 0))
+  (@case some ($value) (local.get $value)))
 ```
 
 型は `(@inst $option T)` と `(@inst $result T E)`。入れ子、引数・戻り値・フィールド・配列要素・明示 capture・loop 状態に使えます。
@@ -132,7 +132,7 @@ nullable 参照の検査による暗黙の型絞り込みは行いません。�
 型引数には unit も使えます。その側は payload を持たず、構築時の value と case の束縛を省略します。
 例えば `(@result.ok $unit i32)`、`(@option.some $unit)` です。unit 自体はフィールドや引数などに保存する型としては使えません。
 
-match の型指定には上のような型構築子を渡し、Option は none/some、Result は ok/err の全ケースを記述します。
+match の型指定には上のような型構築子を渡し、Option は none/some、Result は ok/err の各variantを明示ケースまたは末尾のdefaultで扱います。
 payload の個数・型と網羅性を検査し、値がない場合も case の空の束縛列 `()` は必要です。
 none と some(null)、none と some(unit)、ok(unit) と err(unit) は異なる値です。
 
@@ -151,8 +151,8 @@ enum は `@variant` 型として宣言します。ケース名は `$` を付け�
 (@variant.new $Result ok (i64.const 42))
 
 (@match $Result (result i64) (local.get $result)
-  (case ok ($value) (local.get $value))
-  (case error ($code) (i64.const -1)))
+  (@case ok ($value) (local.get $value))
+  (@case error ($code) (i64.const -1)))
 ```
 
 型ごとのケース集合は閉じており、1ケース以上が必要です。重複するケース名は認めません。
@@ -161,13 +161,15 @@ enum は `@variant` 型として宣言します。ケース名は `$` を付け�
 構築時の個数・型を検査するので、`(ref $List)` が必要な位置に `ref.null` は渡せません。
 参照先が明示的に可変なオブジェクトなら、その参照先の変更は可能です。
 
-`@match` は `(@match $Type [(result R)] subject (case name ($bindings...) body) ...)` です。
+`@match` は `(@match $Type [(result R)] subject (@case name ($bindings...) body) ...)` です。
 subject は指定した enum 型の non-null 参照でなければならず、一度だけ評価します。
-ケースの順序は自由ですが、全ケースをちょうど1回ずつ書く必要があります。未知のケース・重複・分岐漏れはエラーです。
+ケースの順序は自由ですが、各variantを明示ケースまたは末尾のdefaultでちょうど1回ずつ扱う必要があります。未知のケース・重複・分岐漏れはエラーです。
+
+末尾の `(@default body)` は、残りのvariantをpayload束縛なしで扱います。重複・途中の配置・余分なdefaultを拒否し、省略するpayloadが所有値・借用値の場合も拒否します。型・作用・所有権検査と実行時のタグ・subtype検査は維持します。Walzの分岐は `@case`・`@default` を使い、標準Component WATの `case` 宣言は元の綴りを維持します。
 束縛の個数は payload と一致させ、型はケースの宣言から決まります。同一 case 内の束縛名の重複はエラーです。
 束縛はその case の本体内だけで使え、外側の同名束縛を隠せます。選ばれた本体だけを評価します。
 各本体の型は result と適合させます。result を省略すると unit です。末尾位置の match は各 case に末尾位置を引き継ぎます。
-ワイルドカード・ガード・入れ子のパターンはありません。入れ子の分解には別の match を書きます。
+末尾の `@default` 以外のワイルドカード、ガード、入れ子のパターンはありません。入れ子の分解には別の match を書きます。
 
 ソースで enum の内部を `struct.new/get/set` することや、別の enum 型として扱うことはできません。
 `@variant.new` は引数のないケースも毎回割り当てます。`ref.eq` は参照同一性を比較し、構造的な等値比較は提供しません。
@@ -373,7 +375,7 @@ WIT は任意の effect 契約を保持しないため、生成 interface だけ
 ```wat
 (@let $ticket (@box.new i64 (i64.const 42))
   (@match (@inst $box i64) (result i64) (@move $ticket)
-    (case own ($value) (local.get $value))))
+    (@case own ($value) (local.get $value))))
 
 (@let $unused (@box.new $unit)
   (@box.close (@move $unused)))
@@ -857,7 +859,7 @@ unit の alias は payload の位置に限定し、通常の関数引数やフ�
 (@tuple.new [first] [second])         ;; expected pair<T,U>、unit成分は省略
 (@option.none) / (@option.some value)  ;; expected option<T>
 (@box.new [value])                   ;; expected own<T>
-(@match subject (case variant ($names...) body)...)
+(@match subject (@case variant ($names...) body)...)
 (@let ($first $second) subject body)
 (@result.let ($value) subject body)
 (@stream.fold-result source initial ($state $item) body)
@@ -946,3 +948,9 @@ WIT の world を指定する Component 出力は、共有 payload の async end
 
 期待型がsemanticなstring型と確定する式位置では、UTF-8文字列トークンを `@string.lit` と同じtyped Data式へ展開する。期待型がない場合や他の型を要求する場合は `E_LITERAL_TYPE`。暗黙変換、所有権、effectの規則は変更しない。
 `walz:core` の `$option.ok-or` / `$result.map-err` は通常のshared/nonunit制約を持つ単相化関数。[引数の評価順とcallbackの契約](docs/option-result.md) に従う。
+
+## 任意の表示形式
+
+Watzのmatch分岐は `case`・`default` を使い、基本形式のWalzでは `@case`・`@default` を維持します。
+
+ソースと `walz print` の基本形式はWalzのS式です。任意の `--format watz` 表示では `func`・`@export("name")`・直接書ける `match`／`if` 式を使い、同じ構文木を保ちます。保存した `.watz` 表示も読み戻せます。`module { ... }` は省略可能で、束縛には不変の `let` を使います。通常のモジュール解決・検査の前にS式へ変換し、型や実行時の意味論を追加しません。正規の言語形式はWATのS式のままです。構文・エスケープ・制限・コメント・ツール対応は[対応表](docs/review-syntax.md)に記載します。

@@ -44,8 +44,8 @@ export const macros = {
       (call (@inst $option.ok-or ?T ?E) ?value ?error)))
   (func $main (export "main") (result i64) (@effect pure)
     (@match (@$ok-or (@option.some i64 42) (i32.const 7))
-      (case ok ($value) $value)
-      (case err ($code) (i64.const -1)))))`,
+      (@case ok ($value) $value)
+      (@case err ($code) (i64.const -1)))))`,
   },
   'macro-caller-scope': {
     category: 'Syntax extensions', label: 'Diagnostic: initializer scope',

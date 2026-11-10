@@ -289,16 +289,16 @@ fn initializer_exceptions_keep_the_existing_ownership_proof_contract() {
         (@let $owner (@box.new i32 (i32.const 42))
           (@try (result i32)
             (do (@let $p (@$Pair::{:right (call $fail (local.get $flag))
-              :left (@match (@box i32) (result i32) (@move $owner) (case own ($x) (local.get $x)))})
+              :left (@match (@box i32) (result i32) (@move $owner) (@case own ($x) (local.get $x)))})
               (i32.add (struct.get $Pair $left (local.get $p)) (struct.get $Pair $right (local.get $p)))))
-            (catch $E () (@match (@box i32) (result i32) (@move $owner) (case own ($x) (local.get $x)))))))
+            (catch $E () (@match (@box i32) (result i32) (@move $owner) (@case own ($x) (local.get $x)))))))
       (func $main (export "main") (result i32) (@effect allocates)
         (i32.add (call $run (i32.const 0)) (call $run (i32.const 1)))))"#;
     run(source, "84");
     walz::verified::compile(source).unwrap();
     let invalid = source.replace(
-        ":right (call $fail (local.get $flag))\n              :left (@match (@box i32) (result i32) (@move $owner) (case own ($x) (local.get $x)))",
-        ":left (@match (@box i32) (result i32) (@move $owner) (case own ($x) (local.get $x))) :right (call $fail (local.get $flag))",
+        ":right (call $fail (local.get $flag))\n              :left (@match (@box i32) (result i32) (@move $owner) (@case own ($x) (local.get $x)))",
+        ":left (@match (@box i32) (result i32) (@move $owner) (@case own ($x) (local.get $x))) :right (call $fail (local.get $flag))",
     );
     assert_ne!(invalid, source);
     assert!(walz::check(&invalid).is_err());

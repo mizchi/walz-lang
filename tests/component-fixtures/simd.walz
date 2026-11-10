@@ -32,5 +32,5 @@
         (block (result i32)
           (@stream.close v128 (@move $rest))
           (@match (local.get $item)
-            (case none () (i32.const -1))
-            (case some ($value) (i32x4.extract_lane 0 (local.get $value)))))))))
+            (@case none () (i32.const -1))
+            (@case some ($value) (i32x4.extract_lane 0 (local.get $value)))))))))

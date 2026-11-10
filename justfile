@@ -4,7 +4,14 @@ install:
     cargo install --locked --path . --bin walz
 
 test-cli:
-    cargo test --locked --test cli --test cli_build --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test runner --test benchmarks --test inspection --test lsp
+    cargo test --locked --test cli --test cli_build --test cli_print --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test runner --test benchmarks --test inspection --test lsp
+
+print file="examples/review/main.walz" format="walz":
+    cargo run --locked --quiet -- print --format {{quote(format)}} {{quote(file)}}
+
+test-print:
+    cargo test --locked --lib review::tests
+    cargo test --locked --test cli_print --test match_arms --test match_dispatch
 
 test-runtime-cli:
     cargo test --locked --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test interface_types --test wit_values --test wit_world --test stream_batch --test wasm_bridge --test scoped_tasks --test resources --test local_cancellation --test native_async --test native_resources --test abi_limits

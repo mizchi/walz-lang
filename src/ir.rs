@@ -597,6 +597,8 @@ pub struct Expr {
 #[derive(Clone, Debug, Serialize)]
 pub struct MatchArm {
     pub variant: usize,
+    /// Default-derived arms omit shared payload bindings but still validate
+    /// the variant's runtime subtype before evaluating their body.
     pub bindings: Vec<LocalId>,
     pub body: Expr,
 }

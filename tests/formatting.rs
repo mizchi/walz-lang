@@ -66,6 +66,7 @@ fn formatter_keeps_fold_types_and_case_bindings_together() {
     let source = include_str!("../docs/readability/before/counted.gwat");
     let formatted = walz::format::source(source).unwrap();
     assert!(formatted.contains("(stream.fold-result text (pair (ref $stock.State) i32) i32\n"));
+    // The historical input is frozen; formatting preserves its tokens.
     assert!(formatted.contains("(case pair ($ledger $count)\n"));
     assert_eq!(walz::format::source(&formatted).unwrap(), formatted);
 }

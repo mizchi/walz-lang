@@ -33,7 +33,7 @@
 | `@closure`・`@capture`・`@effect`・`@type.params`・`@where` | Walz が追加した宣言・注釈 |
 | `@macro` / `@$name` | 衛生的な式マクロの宣言／呼び出し。標準 WAT の命令は再定義しない |
 
-`@` は拡張の入口に付ける。内部の `case`、`bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
+`@` は拡張の入口に付ける。内部の `bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
 
 既知の Walz `@` 名は予約され、必ず検査する。それ以外の WAT 注釈は、`@custom` やその入れ子の内容も含めて opaque として扱う。
 
@@ -289,13 +289,15 @@ pair の分解には既存の `(@let ($a $b) subject body)` を使う。どち�
     (result i64)
     (@match $Item (result i64)
       (local.get $item)
-      (case none () (i64.const 0))
-      (case count ($n) (local.get $n))))
+      (@case none () (i64.const 0))
+      (@case count ($n) (local.get $n))))
   (@test "variant"
     (i64.eq (call $get (@variant.new $Item count (i64.const 42))) (i64.const 42))))
 ```
 
-全ケースを1回ずつ書く。payload のない case も `()` が必要。型・個数・網羅性を検査する。
+明示ケースまたはdefaultで全variantを1回ずつ扱う。payload のない case も `()` が必要。型・個数・網羅性を検査する。
+
+末尾の `(@default body)` は、残りのvariantをpayload束縛なしで扱います。重複・途中の配置・余分なdefaultを拒否し、省略するpayloadが所有値・借用値の場合も拒否します。型・作用・所有権検査と実行時のタグ・subtype検査は維持します。Walzの分岐は `@case`・`@default` を使い、標準Component WATの `case` 宣言は元の綴りを維持します。
 通常の enum は `(ref $Item)`、Option/Result/pair は参照を直接操作しない値型。
 
 ## Option / Result / pair
@@ -308,14 +310,14 @@ pair の分解には既存の `(@let ($a $b) subject body)` を使う。どち�
 (@tuple.new T U first second)
 
 (@match (@inst $option T) (result R) subject
-  (case none () no-value) (case some ($value) with-value))
+  (@case none () no-value) (@case some ($value) with-value))
 (@match (@inst $result T E) (result R) subject
-  (case ok ($value) success) (case err ($error) failure))
+  (@case ok ($value) success) (@case err ($error) failure))
 (@match (@inst $tuple T U) (result R) subject
-  (case pair ($first $second) body))
+  (@case pair ($first $second) body))
 ```
 
-unit の成分は値引数と payload 束縛を省略する。例：`(@result.ok $unit i32)`、`(case ok () body)`。
+unit の成分は値引数と payload 束縛を省略する。例：`(@result.ok $unit i32)`、`(@case ok () body)`。
 Result を返す関数は `(result (@inst $result T E))`。外側は宣言、内側は値型。
 
 pair の状態を Result で返す例。match の `(result (@inst $result ...))` も外側が宣言、内側が値型である。
@@ -330,19 +332,19 @@ pair の状態を Result で返す例。match の `(result (@inst $result ...))`
     (@effect pure)
     (@match (@inst $tuple i64 i32) (result (@inst $result (@inst $tuple i64 i32) i32))
       (local.get $state)
-      (case pair ($id $count)
+      (@case pair ($id $count)
         (@result.ok (@inst $tuple i64 i32) i32
           (@tuple.new i64 i32 (local.get $id) (i32.add (local.get $count) (i32.const 1))))
       )))
   (@test "pair state"
     (@match (@inst $result (@inst $tuple i64 i32) i32) (result i32)
       (call $increment (@tuple.new i64 i32 (i64.const 7) (i32.const 41)))
-      (case ok ($state)
+      (@case ok ($state)
         (@match (@inst $tuple i64 i32) (result i32)
           (local.get $state)
-          (case pair ($id $count) (i32.eq (local.get $count) (i32.const 42))))
+          (@case pair ($id $count) (i32.eq (local.get $count) (i32.const 42))))
       )
-      (case err ($error) (i32.const 0))))
+      (@case err ($error) (i32.const 0))))
 )
 ```
 
@@ -381,12 +383,12 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
       (@result.ok (i64.const 42))))
   (@test "unit success continues"
     (@match (call $after-unit (@result.ok $unit i32))
-      (case ok ($n) (i64.eq (local.get $n) (i64.const 42)))
-      (case err ($e) (i32.const 0))))
+      (@case ok ($n) (i64.eq (local.get $n) (i64.const 42)))
+      (@case err ($e) (i32.const 0))))
   (@test "unit error propagates"
     (@match (call $after-unit (@result.err $unit i32 (i32.const 7)))
-      (case ok ($n) (i32.const 0))
-      (case err ($e) (i32.eq (local.get $e) (i32.const 7))))
+      (@case ok ($n) (i32.const 0))
+      (@case err ($e) (i32.eq (local.get $e) (i32.const 7))))
   ))
 ```
 
@@ -404,8 +406,8 @@ unit 入力の `()` は「成功payloadに名前を付けない」。成功時�
   (@test "result mapping"
     (@match (@inst $result i32 i32) (result i32)
       (call $convert (@result.ok i64 i32 (i64.const 42)))
-      (case ok ($n) (i32.eq (local.get $n) (i32.const 42)))
-      (case err ($e) (i32.const 0))))
+      (@case ok ($n) (i32.eq (local.get $n) (i32.const 42)))
+      (@case err ($e) (i32.const 0))))
 )
 ```
 
@@ -472,10 +474,10 @@ forward 参照可、循環は禁止。ファイルの公開は `(@export (type $
     ))
   (@test "short state"
     (@match (call $increment (@tuple.new (i64.const 7) (i32.const 41)))
-      (case ok ($state)
+      (@case ok ($state)
         (@let ($id $count) (local.get $state)
           (i32.eq (local.get $count) (i32.const 42))))
-      (case err ($error) (i32.const 0))))
+      (@case err ($error) (i32.const 0))))
 )
 ```
 
@@ -485,7 +487,7 @@ forward 参照可、循環は禁止。ファイルの公開は `(@export (type $
 | `(@tuple.new first second)` | 期待する pair 型。unit 成分の値引数は省略 |
 | `(@option.some value)` / `(@option.none)` / `(@box.new value)` | 期待する Option / Own 型 |
 | `(@let ($first $second) subject body)` | subject の pair を一度だけ評価して分解。unit 成分の名前は省略 |
-| `(@match subject (case ...)... )` | subject の型と期待する出力型。型付きの長い形も使用可 |
+| `(@match subject (@case ...)... )` | subject の型と期待する出力型。型付きの長い形も使用可 |
 | `(@result.let ($value) subject body)` | subject の T/E と、期待型または body で局所的に決まる U |
 | `(@stream.fold-result source initial ($state $item) body)` | source の T/E、initial または期待型の S。body は result<S,E> |
 
@@ -728,8 +730,8 @@ Core WasmのGC参照はstringへ自動変換されません。I/Oプログラム
         (@newtype.wrap $Id (i32.add (local.get $a) (local.get $b))))))
   (func $main (export "main") (result i32) (@effect pure)
     (@match (call $compute)
-      (case ok ($id) (return (@newtype.unwrap $Id (local.get $id))))
-      (case err ($code) (i32.const 0))))
+      (@case ok ($id) (return (@newtype.unwrap $Id (local.get $id))))
+      (@case err ($code) (i32.const 0))))
   (@test "newtype and flat results" (i32.eq (call $main) (i32.const 42))))
 ```
 
@@ -788,3 +790,9 @@ offsetを一度評価して領域内を検査し、非atomicに読む。`reads`�
 `(call (@inst $option.ok-or T E) optional error)` はsome→ok、none→err。errorは常に先に評価する。
 `(call (@inst $result.map-err T E U $Closure) result-value mapper)` はerrにだけclosureを一度適用し、okを保つ。
 T/E/Uはshared・nonunit、closureはE→U。unitや所有payloadには `@match` を使う。[契約と実行例](docs/option-result.md)。
+
+## 任意のWatz表示
+
+Watzのmatch分岐は `case`・`default` を使い、基本形式のWalzでは `@case`・`@default` を維持します。
+
+`walz print file.walz` は基本形式のWalz S式を出力します。`--format watz` を付けると、`func`・`@export("name")`・型付きで不変の `let`・直接書ける `match`／`if` 式・明示的な `wat.*`／`walz.*` を使うレビュー表示を選べます。`walz print file.watz` でWalzへ戻せます。`module` の囲みは省略可能で、型や実行時の意味論は追加しません。[対応表とサンプル](docs/review-syntax.md)。

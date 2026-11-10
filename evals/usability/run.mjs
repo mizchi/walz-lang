@@ -31,7 +31,7 @@ async function hashes(directory,prefix=''){
 }
 const inputs=await hashes(snapshot);
 await writeFile(join(output,'inputs.json'),JSON.stringify(inputs,null,2)+'\n');
-await writeFile(join(output,'manifest.json'),JSON.stringify({schema:'walz-usability-v2',id,inputRevision:4,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer dogfooding; not human timing or a fresh-reader score',binary,binarySha256:sha(await readFile(binary)),node:process.version},null,2)+'\n');
+await writeFile(join(output,'manifest.json'),JSON.stringify({schema:'walz-usability-v2',id,inputRevision:9,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer dogfooding; not human timing or a fresh-reader score',binary,binarySha256:sha(await readFile(binary)),node:process.version},null,2)+'\n');
 const checks=[],commands=[];
 async function command(args,{allowFailure=false}={}){
  const start=performance.now();const result=await execFile(binary,args,{cwd:root,maxBuffer:8*1024*1024,timeout:60000}).then(r=>({...r,code:0}),e=>({stdout:e.stdout??'',stderr:e.stderr??'',code:e.code??'spawn-error'}));

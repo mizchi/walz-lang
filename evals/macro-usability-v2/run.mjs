@@ -33,7 +33,7 @@ const inputs=await hashes(snapshot);await writeFile(join(output,'inputs.json'),J
 const implementation={};
 for(const directory of ['src','walz/core','crates/walz-web/src','runtime'])Object.assign(implementation,await hashes(join(root,directory),directory+'/'));
 for(const file of ['Cargo.toml','Cargo.lock','build.rs','package.json','pnpm-lock.yaml'])implementation[file]=sha(await readFile(join(root,file)));
-const manifest={schema:'walz-macro-authoring-v2',inputRevision:4,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer authoring evaluation',binary,binarySha256:sha(await readFile(binary)),git:(await execFile('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim(),node:process.version,platform:process.platform,architecture:process.arch,implementation};
+const manifest={schema:'walz-macro-authoring-v2',inputRevision:9,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer authoring evaluation',binary,binarySha256:sha(await readFile(binary)),git:(await execFile('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim(),node:process.version,platform:process.platform,architecture:process.arch,implementation};
 await writeFile(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});
 const commands=[];
 async function command(executable,args,largeOutput){

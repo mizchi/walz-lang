@@ -53,11 +53,11 @@ test('sleep, yield, streams and fallible futures use the shared JSPI runtime', a
           (block (result i64)
             (@stream.close i64 (@move $tail))
             (@match (@future.await (@inst $result i64 i32) (call $fallible 1 0))
-              (case ok ($value) $value)
-              (case err ($code) (i64.const -1)))))))
+              (@case ok ($value) $value)
+              (@case err ($code) (i64.const -1)))))))
     (func $failure (export "read-error") (result i32) (@effect host suspends)
       (@match (@future.await (@inst $result i64 i32) (call $fallible 1 7))
-        (case ok ($value) 0) (case err ($code) $code)))
+        (@case ok ($value) 0) (@case err ($code) $code)))
     (func $argument (export "with-argument") (param $n i32) (result i32) (@effect pure) $n))`);
   await page.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(page.getByTestId('run-output')).toHaveText('42n');

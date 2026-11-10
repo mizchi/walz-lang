@@ -108,7 +108,7 @@
     (@match (@inst $tuple (@inst $stream $bytes) (@inst $option $bytes))
       (result (@inst $option $bytes))
       (@stream.next $bytes (@move $s))
-      (case pair ($next $item)
+      (@case pair ($next $item)
         (block
           (result (@inst $option $bytes))
           (@stream.close $bytes (@move $next))

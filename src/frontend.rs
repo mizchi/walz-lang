@@ -3508,56 +3508,111 @@ impl Checker<'_, '_> {
         let name = items
             .get(1)
             .ok_or_else(|| tables.error(node, "missing match type"))?;
-        let (ty, result, start, subject) = if items.get(2).and_then(Sexp::head) == Some("case") {
-            let result = expected.cloned().ok_or_else(|| {
-                tables.error(
-                    node,
-                    "match output needs an expected type; add a type annotation",
-                )
-            })?;
-            let subject = self.expr(name, scope, loops, false)?;
-            let ty = match subject.ty {
-                Type::Value(ty)
-                | Type::Ref {
-                    ty,
-                    nullable: false,
-                } => ty,
-                _ => {
-                    return Err(
-                        tables.error(name, "match subject requires a non-null variant value")
-                    );
-                }
-            };
-            (ty, result, 1, subject)
-        } else {
-            let ty = if name.atom().is_some() {
-                tables.type_id(name)?
-            } else {
-                let Type::Value(ty) = tables.ty(name)? else {
-                    return Err(tables.error(name, "expected variant, option, or result type"));
+        let (ty, result, start, subject) =
+            if matches!(items.get(2).and_then(Sexp::head), Some("case" | "default")) {
+                let result = expected.cloned().ok_or_else(|| {
+                    tables.error(
+                        node,
+                        "match output needs an expected type; add a type annotation",
+                    )
+                })?;
+                let subject = self.expr(name, scope, loops, false)?;
+                let ty = match subject.ty {
+                    Type::Value(ty)
+                    | Type::Ref {
+                        ty,
+                        nullable: false,
+                    } => ty,
+                    _ => {
+                        return Err(
+                            tables.error(name, "match subject requires a non-null variant value")
+                        );
+                    }
                 };
-                ty
-            };
-            let (result, start) = self.result(items, 2)?;
-            let subject_node = items
-                .get(start)
-                .ok_or_else(|| tables.error(node, "missing match subject"))?;
-            let subject_type = if ty.0 >= self.tables.types.len() {
-                Type::Value(ty)
+                (ty, result, 1, subject)
             } else {
-                self.module.instance_type(ty)
+                let ty = if name.atom().is_some() {
+                    tables.type_id(name)?
+                } else {
+                    let Type::Value(ty) = tables.ty(name)? else {
+                        return Err(tables.error(name, "expected variant, option, or result type"));
+                    };
+                    ty
+                };
+                let (result, start) = self.result(items, 2)?;
+                let subject_node = items
+                    .get(start)
+                    .ok_or_else(|| tables.error(node, "missing match subject"))?;
+                let subject_type = if ty.0 >= self.tables.types.len() {
+                    Type::Value(ty)
+                } else {
+                    self.module.instance_type(ty)
+                };
+                let subject = self.expr_as(subject_node, scope, loops, false, &subject_type)?;
+                (ty, result, start, subject)
             };
-            let subject = self.expr_as(subject_node, scope, loops, false, &subject_type)?;
-            (ty, result, start, subject)
-        };
         let variant_count = self.variants(name, ty)?.len();
         let mut seen = BTreeSet::new();
         let mut arms = Vec::new();
-        for arm in &items[start + 1..] {
+        let clauses = &items[start + 1..];
+        for (index, arm) in clauses.iter().enumerate() {
             let parts = tables.list(arm)?;
+            if arm.head() == Some("default") {
+                let fail = |message| tables.error(arm, message).with_code("E_MATCH_DEFAULT");
+                if parts.len() != 2 {
+                    return Err(fail("expected (@default body) without payload bindings"));
+                }
+                if index + 1 != clauses.len() {
+                    return Err(fail("@default must be unique and the final match clause"));
+                }
+                let missing = self
+                    .variants(name, ty)?
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, _)| !seen.contains(index))
+                    .map(|(index, variant)| (index, variant.clone()))
+                    .collect::<Vec<_>>();
+                if missing.is_empty() {
+                    return Err(fail("@default must cover at least one remaining variant"));
+                }
+                if missing
+                    .iter()
+                    .any(|(_, variant)| variant.payloads.iter().any(|ty| !self.shared_data(ty)))
+                {
+                    return Err(fail(
+                        "@default cannot discard owned or borrowed payloads; handle these variants with @case",
+                    ));
+                }
+                let body = self.expr_as(&parts[1], scope, loops, tail, &result)?;
+                // Defaults elaborate once, then become ordinary checked arms.
+                // Bound the multiplication, including nested default bodies.
+                let mut remaining = 100_000 / missing.len();
+                let mut pending = vec![&body];
+                while let Some(expr) = pending.pop() {
+                    if remaining == 0 {
+                        return Err(fail(
+                            "@default expansion limit exceeded; move the body into a function",
+                        ));
+                    }
+                    remaining -= 1;
+                    pending.extend(expr.children());
+                }
+                for (variant, _) in missing {
+                    seen.insert(variant);
+                    arms.push(MatchArm {
+                        variant,
+                        bindings: vec![],
+                        body: body.clone(),
+                    });
+                }
+                continue;
+            }
             tables.count(arm, parts, 4)?;
             if arm.head() != Some("case") {
-                return Err(tables.error(arm, "expected (case variant ($bindings...) body)"));
+                return Err(tables.error(
+                    arm,
+                    "expected (@case variant ($bindings...) body) or (@default body)",
+                ));
             }
             let (variant, definition) = self.variant(&parts[1], ty)?;
             if !seen.insert(variant) {

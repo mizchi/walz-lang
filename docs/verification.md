@@ -3,7 +3,7 @@
 ```wat
 (@let $ticket (@box.new i64 (i64.const 42))
   (@match (@inst $box i64) (result i64) (@move $ticket)
-    (case own ($value) (local.get $value))))
+    (@case own ($value) (local.get $value))))
 ```
 
 `(@inst $box T)` is a non-copyable wrapper. Reuse after move, implicit abandonment, and storage in shared GC fields are rejected.

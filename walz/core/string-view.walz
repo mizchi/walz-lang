@@ -70,5 +70,5 @@
     (@effect pure)
     (@match
       (@string.from-bytes (call $bytes-view.to-bytes (call $string-view.bytes $v)))
-      (case none () (unreachable))
-      (case some ($value) $value))))
+      (@case none () (unreachable))
+      (@case some ($value) $value))))

@@ -20,9 +20,9 @@
     (@effect pure)
     (@match $stock.Error (result $string)
       (local.get $e)
-      (case insufficient () (@string.lit "insufficient-stock"))
-      (case overflow () (@string.lit "quantity-overflow"))
-      (case capacity () (@string.lit "capacity"))))
+      (@case insufficient () (@string.lit "insufficient-stock"))
+      (@case overflow () (@string.lit "quantity-overflow"))
+      (@case capacity () (@string.lit "capacity"))))
 
   (func $base
     (param $op $string)

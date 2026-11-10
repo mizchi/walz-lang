@@ -42,6 +42,7 @@ pub mod race;
 pub mod readonly;
 pub mod regions;
 mod resources;
+pub mod review;
 pub mod runner;
 mod scoped;
 mod sexpr;

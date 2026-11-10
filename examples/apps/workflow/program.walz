@@ -25,8 +25,8 @@
     (result (@inst $result $unit i32))
     (@effect reads writes allocates host suspends)
     (@match (local.get $result)
-      (case ok () (@result.ok))
-      (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+      (@case ok () (@result.ok))
+      (@case err ($e) (call $report.failure (local.get $n) (local.get $e))))
   )
 
   (func $app.process
@@ -36,28 +36,28 @@
     (result (@inst $result $unit i32))
     (@effect reads writes allocates host suspends)
     (@match (call $parse.command (local.get $line))
-      (case skip () (@result.ok))
-      (case invalid ()
+      (@case skip () (@result.ok))
+      (@case invalid ()
         (call $report.failure
           (local.get $n)
           (@variant.new $domain.Error invalid (@string.lit "format"))))
-      (case task ($id $duration)
+      (@case task ($id $duration)
         (call $app.mutation
           (local.get $n)
           (call $graph.add (local.get $g) (local.get $id) (local.get $duration))))
-      (case after ($id $dependency)
+      (@case after ($id $dependency)
         (call $app.mutation
           (local.get $n)
           (call $graph.after (local.get $g) (local.get $id) (local.get $dependency))))
-      (case plan ($workers)
+      (@case plan ($workers)
         (@match (call $planner.run (local.get $g) (local.get $workers))
-          (case ok ($run)
+          (@case ok ($run)
             (call $report.plan
               (local.get $n)
               (local.get $g)
               (local.get $run)
               (local.get $workers)))
-          (case err ($e) (call $report.failure (local.get $n) (local.get $e))))
+          (@case err ($e) (call $report.failure (local.get $n) (local.get $e))))
       )))
 
   (func $app.advance

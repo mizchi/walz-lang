@@ -8,8 +8,8 @@ const GOOD: &str = r#"(module
     (@let $x (@box.new i32 (i32.const 42))
       (@try (result i32)
         (do (block (result i32) (call $fail (local.get $flag))
-          (@match (@box i32) (result i32) (@move $x) (case own ($n) (local.get $n)))))
-        (catch $E () (@match (@box i32) (result i32) (@move $x) (case own ($n) (local.get $n)))))))
+          (@match (@box i32) (result i32) (@move $x) (@case own ($n) (local.get $n)))))
+        (catch $E () (@match (@box i32) (result i32) (@move $x) (@case own ($n) (local.get $n)))))))
   (func $main (export "main") (result i32) (@effect pure)
     (i32.add (call $run (i32.const 0)) (call $run (i32.const 1)))))"#;
 
@@ -40,7 +40,7 @@ fn owners_survive_caught_exceptions_and_both_paths_are_independently_verified() 
 
 #[test]
 fn exceptional_edges_cannot_lose_owners_or_uncommitted_owned_arguments() {
-    assert!(walz::check(&GOOD.replace("(catch $E () (@match (@box i32) (result i32) (@move $x) (case own ($n) (local.get $n))))", "(catch $E () (i32.const 42))")).is_err());
+    assert!(walz::check(&GOOD.replace("(catch $E () (@match (@box i32) (result i32) (@move $x) (@case own ($n) (local.get $n))))", "(catch $E () (i32.const 42))")).is_err());
     let pending = r#"(module
       (tag $E)
       (func $fail (result i32) (@effect (throws $E)) (throw $E))

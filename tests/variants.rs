@@ -35,8 +35,8 @@ fn foreign_base_values_and_inconsistent_tags_trap() {
       (type $T (@variant (empty) (value i64)))
       (func $read (export "read") (param $x (ref $T)) (result i64)
         (@match $T (result i64) (local.get $x)
-          (case empty () (i64.const 0))
-          (case value ($n) (local.get $n)))))"#,
+          (@case empty () (i64.const 0))
+          (@case value ($n) (local.get $n)))))"#,
     )
     .unwrap();
     // Insert foreign standard WAT that the source checker deliberately rejects.
@@ -73,10 +73,10 @@ fn cases_with_identical_storage_remain_distinct_and_order_independent() {
       (type $Choice (@variant (first i64) (second i64) (off) (on)))
       (func $read (param $x (ref $Choice)) (result i64)
         (@match $Choice (result i64) (local.get $x)
-          (case on () (i64.const 100))
-          (case second ($n) (i64.add (local.get $n) (i64.const 2)))
-          (case first ($n) (local.get $n))
-          (case off () (i64.const 0))))
+          (@case on () (i64.const 100))
+          (@case second ($n) (i64.add (local.get $n) (i64.const 2)))
+          (@case first ($n) (local.get $n))
+          (@case off () (i64.const 0))))
       (func $main (export "main") (result i64)
         (i64.add
           (i64.add (call $read (@variant.new $Choice first (i64.const 10)))
@@ -96,8 +96,8 @@ fn recursive_variants_support_tail_recur_and_reference_payloads() {
         (@loop $walk (bind $rest (ref $List) (local.get $xs))
           (bind $acc i64 (i64.const 0)) (result i64)
           (@match $List (result i64) (local.get $rest)
-            (case nil () (local.get $acc))
-            (case cons ($head $tail)
+            (@case nil () (local.get $acc))
+            (@case cons ($head $tail)
               (@recur $walk (local.get $tail) (i64.add (local.get $acc) (local.get $head)))))))
       (func $main (export "main") (result i64)
         (call $sum (@variant.new $List cons (i64.const 20)
@@ -121,8 +121,8 @@ fn subject_runs_once_and_only_selected_arm_runs() {
         (@let $cell (struct.new $Cell (i64.const 0))
           (i64.add
             (@match $Result (result i64) (call $next (local.get $cell))
-              (case error ($code) (unreachable))
-              (case ok ($value) (local.get $value)))
+              (@case error ($code) (unreachable))
+              (@case ok ($value) (local.get $value)))
             (struct.get $Cell $value (local.get $cell))))))"#),
         "42"
     );
@@ -143,7 +143,7 @@ fn constructor_payloads_run_once_from_left_to_right() {
         (@let $cell (struct.new $Cell (i64.const 0))
           (@match $Pair (result i64)
             (@variant.new $Pair pair (call $next (local.get $cell)) (call $next (local.get $cell)))
-            (case pair ($a $b)
+            (@case pair ($a $b)
               (i64.add (i64.const 30) (i64.add (i64.mul (local.get $a) (i64.const 10)) (local.get $b))))))))"#),
         "42"
     );
@@ -161,8 +161,8 @@ fn payload_bindings_are_lexical_and_can_be_captured_explicitly() {
           (@let $xs (array.new_fixed $Options 1 (@variant.new $Option some (i64.const 40)))
             (@let $f
               (@match $Option (result (ref $Value)) (array.get $Options (local.get $xs) (i32.const 0))
-                (case none () (@closure.new $Value (i64.const 0)))
-                (case some ($n) (@closure.new $Value (local.get $n))))
+                (@case none () (@closure.new $Value (i64.const 0)))
+                (@case some ($n) (@closure.new $Value (local.get $n))))
               (i64.add (local.get $n) (@closure.call $Value (local.get $f))))))))"#),
         "42"
     );
@@ -176,12 +176,12 @@ fn nested_and_unit_matches_preserve_control_flow() {
       (func $main (export "main") (result i64)
         (block (result i64)
           (@match $Flag (@variant.new $Flag off)
-            (case on () (unreachable)) (case off () (nop)))
+            (@case on () (unreachable)) (@case off () (nop)))
           (@match $Flag (result i64) (@variant.new $Flag on)
-            (case off () (unreachable))
-            (case on ()
+            (@case off () (unreachable))
+            (@case on ()
               (@match $Flag (result i64) (@variant.new $Flag off)
-                (case on () (unreachable)) (case off () (i64.const 42))))))))"#),
+                (@case on () (unreachable)) (@case off () (i64.const 42))))))))"#),
         "42"
     );
 }
@@ -253,35 +253,35 @@ fn matches_require_exhaustive_unique_well_typed_cases() {
         "(module (type $T (@variant (a i64) (b))) (func $f (param $x (ref $T)) (result i64) ";
     for (body, diagnostic) in [
         (
-            "(@match $T (result i64) (local.get $x) (case a ($n) (local.get $n)))",
+            "(@match $T (result i64) (local.get $x) (@case a ($n) (local.get $n)))",
             "non-exhaustive match: missing b",
         ),
         (
-            "(@match $T (result i64) (local.get $x) (case a ($n) (local.get $n)) (case a ($m) (local.get $m)) (case b () (i64.const 0)))",
+            "(@match $T (result i64) (local.get $x) (@case a ($n) (local.get $n)) (@case a ($m) (local.get $m)) (@case b () (i64.const 0)))",
             "duplicate match case",
         ),
         (
-            "(@match $T (result i64) (local.get $x) (case c () (i64.const 0)))",
+            "(@match $T (result i64) (local.get $x) (@case c () (i64.const 0)))",
             "unknown variant",
         ),
         (
-            "(@match $T (result i64) (local.get $x) (case a () (i64.const 0)) (case b () (i64.const 0)))",
+            "(@match $T (result i64) (local.get $x) (@case a () (i64.const 0)) (@case b () (i64.const 0)))",
             "payload binding count",
         ),
         (
-            "(@match $T (result i64) (local.get $x) (case a ($n) (i32.const 0)) (case b () (i64.const 0)))",
+            "(@match $T (result i64) (local.get $x) (@case a ($n) (i32.const 0)) (@case b () (i64.const 0)))",
             "type mismatch",
         ),
         (
-            "(@match $T (result i64) (local.get $x) (case a ($n) (local.get $n)) (case b () (local.get $n)))",
+            "(@match $T (result i64) (local.get $x) (@case a ($n) (local.get $n)) (@case b () (local.get $n)))",
             "unbound local",
         ),
         (
-            "(@match $T (result i64) (ref.null $T) (case a ($n) (local.get $n)) (case b () (i64.const 0)))",
+            "(@match $T (result i64) (ref.null $T) (@case a ($n) (local.get $n)) (@case b () (i64.const 0)))",
             "type mismatch",
         ),
         (
-            "(@match $T (result i64) (i64.const 0) (case a ($n) (local.get $n)) (case b () (i64.const 0)))",
+            "(@match $T (result i64) (i64.const 0) (@case a ($n) (local.get $n)) (@case b () (i64.const 0)))",
             "type mismatch",
         ),
     ] {
@@ -292,7 +292,7 @@ fn matches_require_exhaustive_unique_well_typed_cases() {
             "{source}\n{error}; expected {diagnostic}"
         );
     }
-    let error = compile("(module (type $T (@variant (a i64 i64))) (func $f (param $x (ref $T)) (@match $T (local.get $x) (case a ($n $n) (nop)))))").err().unwrap().to_string();
+    let error = compile("(module (type $T (@variant (a i64 i64))) (func $f (param $x (ref $T)) (@match $T (local.get $x) (@case a ($n $n) (nop)))))").err().unwrap().to_string();
     assert!(error.contains("duplicate payload binding"), "{error}");
 }
 
@@ -306,8 +306,8 @@ fn analysis_visits_subject_and_all_arms() {
       (func $subject (param $x (ref $T)) (result (ref $T)) (local.get $x))
       (func $choose (param $x (ref $T)) (result i64)
         (@match $T (result i64) (call $subject (local.get $x))
-          (case a ($n) (call $left (local.get $n)))
-          (case b () (call $right))))
+          (@case a ($n) (call $left (local.get $n)))
+          (@case b () (call $right))))
       (func $make (result (ref $T)) (@variant.new $T a (i64.const 42))))"#,
     )
     .unwrap();
@@ -342,9 +342,9 @@ fn malformed_variant_syntax_has_source_diagnostics() {
         "(module (type $T (@variant (a))) (func $f (@variant.new)))",
         "(module (type $T (@variant (a))) (func $f (@match)))",
         "(module (type $T (@variant (a))) (func $f (@match $T)))",
-        "(module (type $T (@variant (a))) (func $f (@match $T (@variant.new $T a) (case a))))",
+        "(module (type $T (@variant (a))) (func $f (@match $T (@variant.new $T a) (@case a))))",
         "(module (type $T (@variant (a))) (func $f (@match $T (@variant.new $T a) (other a () (nop)))))",
-        "(module (type $T (@variant (a))) (func $f (@match $T (@variant.new $T a) (case a x (nop)))))",
+        "(module (type $T (@variant (a))) (func $f (@match $T (@variant.new $T a) (@case a x (nop)))))",
     ] {
         let error = compile(source).err().unwrap().to_string();
         assert!(error.starts_with("1:"), "{error}");

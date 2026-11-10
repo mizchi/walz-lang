@@ -1,3 +1,43 @@
+# Watz clause keywords (2026-11-10)
+
+Watz match clauses now use `case` and `default` without `@`. Lowering retains canonical Walz's `@case`/`@default` forms and their checks. Other annotations, including `@export` and `@effect`, are unchanged.
+
+Reference distributions use stock-ledger v24, diagnostics v13, struct-readability v13, and macro/usability input revision 9. Earlier distributions and recorded results remain unchanged.
+
+---
+
+# Direct Watz control expressions (2026-11-10)
+
+Optional Watz printing now represents match and if directly, including `@case`/`@default`, `else if`, and explicit result types. It lowers to the same Walz source forms and retains their checks. Unsupported native shapes keep structural spelling. Canonical Walz remains the primary source and default printed form.
+
+Reference distributions use stock-ledger v23, diagnostics v12, struct-readability v12, and macro/usability input revision 8. Previous distributions and recorded results retain their bytes.
+
+---
+
+# Optional Watz printing (2026-11-10)
+
+Canonical Walz S-expressions remain the primary source and default `walz print` format. `walz print --format watz FILE` selects an optional view using `func` and `@export("name")`. `walz print FILE.watz` prints it back as Walz. The former `review` command is replaced by this print option. Watz keeps the same types, effects, ownership, and Wasm semantics.
+
+Reference distributions use stock-ledger v22, diagnostics v11, struct-readability v11, and macro/usability input revision 7. Earlier distributions and recorded results remain unchanged.
+
+---
+
+# Review notation `.watz` (2026-11-10)
+
+The TypeScript-style review notation uses `.watz`, an optional `module { ... }` wrapper, and immutable `let` bindings. The printer omits the wrapper. Canonical `.walz` source and Wasm semantics are unchanged.
+
+Reference distributions now use stock-ledger v21, diagnostics v10, struct-readability v10, and macro/usability input revision 6. Earlier distributions and recorded results remain unchanged.
+
+---
+
+# Match clauses and review notation (2026-11-10)
+
+Match arms use `@case`, with an optional final `@default` for remaining shared-payload variants. Standard Component WAT `case` declarations retain their spelling. The optional `.walz.ts` review frontend maps source forms reversibly to S-expressions and uses the existing checks/runtime.
+
+Frontend inputs/references use v7, stock-ledger v20, diagnostics v9, struct-readability v9, and macro/usability harness input revision 5. Earlier inputs and recorded results retain their bytes; new evaluations require fresh run IDs.
+
+---
+
 # Walz `@` extensions (2026-11-10)
 
 Walz extension entry points now use `@`: `@use`, `@let`, `@match`, `@effect`, `@macro`, and `@$name`. The same prefix applies to extension value types, annotations, named construction, and generic instantiation. Percent-prefixed extensions are not source aliases.

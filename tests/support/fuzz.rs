@@ -101,7 +101,7 @@ impl Expr {
                     format!("(@let ($a{id} $b{id}) {value} {body})")
                 } else {
                     format!(
-                        "(@match (@tuple i32 i32) (result i32) {value} (case pair ($a{id} $b{id}) {body}))"
+                        "(@match (@tuple i32 i32) (result i32) {value} (@case pair ($a{id} $b{id}) {body}))"
                     )
                 }
             }
@@ -117,7 +117,7 @@ impl Expr {
                 let id = *next;
                 *next += 1;
                 format!(
-                    "(@match (@result i32 i32) (result i32) (@result.{} i32 i32 {}) (case ok ($r{id}) (local.get $r{id})) (case err ($e{id}) (local.get $e{id})))",
+                    "(@match (@result i32 i32) (result i32) (@result.{} i32 i32 {}) (@case ok ($r{id}) (local.get $r{id})) (@case err ($e{id}) (local.get $e{id})))",
                     if *ok { "ok" } else { "err" },
                     a.render(short, next)
                 )

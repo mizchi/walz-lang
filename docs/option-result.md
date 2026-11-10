@@ -13,8 +13,8 @@
       (call (@inst $result.map-err i64 i32 i64 $Widen)
         (call (@inst $option.ok-or i64 i32) (@option.some i64 42) 7)
         (@closure.new $Widen))
-      (case ok ($value) $value)
-      (case err ($error) -1))))
+      (@case ok ($value) $value)
+      (@case err ($error) -1))))
 ```
 
 - `ok-or<T,E>(option<T>, E)` converts some to ok and none to err. As with an ordinary call, the error argument is evaluated first even for some. This operation does not defer effects or allocation.
@@ -36,3 +36,5 @@ Where a string type is explicit, `(@string.lit "hello")` can be written as `"hel
 ```
 
 When an initializer's expected type is unknown, as in `(@let $x "hello" ...)`, provide a type annotation or `@string.lit`. Non-UTF-8 byte sequences are not strings. `@string.byte-len` returns string length in UTF-8 bytes. There is no `@string.len` alias or implicit conversion to a Unicode character count.
+
+Match arms use `@case`. A final `(@default fallback)` can handle remaining shared payloads without binding them; owned/borrowed cases must be explicit. See [match rules](syntax.md#match-clauses).

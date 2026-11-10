@@ -405,7 +405,7 @@ fn walk_types(
             }
         }
         "match" => {
-            let inferred = items.get(2).and_then(Sexp::head) == Some("case");
+            let inferred = matches!(items.get(2).and_then(Sexp::head), Some("case" | "default"));
             if let Some(first) = items.get_mut(1) {
                 if !inferred && type_argument(first) {
                     map_type(first, f)?;

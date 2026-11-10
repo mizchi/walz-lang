@@ -3,7 +3,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-pub const USAGE: &str = "Usage: walz build [file.walz|directory] [-o output] [--target core|core-js|component]\n                [--bindings policy.json] [--wit world.wit [--world name]]\n       walz build <file.walz> <output.wasm>\n\nDefaults: main.walz, then src/main.walz. Output is target/<name>.wasm (core),\ntarget/<name>-js/ (core-js), or target/<name>.component.wasm (component).\nDirectories use their own target/ directory. -- ends option parsing.";
+pub const USAGE: &str = "Usage: walz build [file.walz|directory] [-o output] [--target core|core-js|component]\n                [--bindings policy.json] [--wit world.wit [--world name]]\n       walz build <file.walz> <output.wasm>\n\nDefaults: main.walz, src/main.walz, main.watz, src/main.watz. Output is target/<name>.wasm (core),\ntarget/<name>-js/ (core-js), or target/<name>.component.wasm (component).\nDirectories use their own target/ directory. -- ends option parsing.";
 
 #[derive(Default)]
 struct Arguments {
@@ -91,15 +91,20 @@ fn arguments(args: &[OsString]) -> Result<Arguments, String> {
 }
 
 pub(super) fn entry(directory: &Path) -> Result<PathBuf, String> {
-    [directory.join("main.walz"), directory.join("src/main.walz")]
-        .into_iter()
-        .find(|path| path.is_file())
-        .ok_or_else(|| {
-            format!(
-                "{}: no entry file; expected main.walz or src/main.walz, or pass a file to walz build",
-                directory.display()
-            )
-        })
+    [
+        directory.join("main.walz"),
+        directory.join("src/main.walz"),
+        directory.join("main.watz"),
+        directory.join("src/main.watz"),
+    ]
+    .into_iter()
+    .find(|path| path.is_file())
+    .ok_or_else(|| {
+        format!(
+            "{}: no entry file; expected main.walz or src/main.walz (also .watz), or pass a file to walz build",
+            directory.display()
+        )
+    })
 }
 
 pub fn command(args: &[OsString], legacy: bool) -> ExitCode {

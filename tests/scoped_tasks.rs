@@ -40,7 +40,7 @@ fn extension_names_remain_available_as_enum_case_labels() {
     let source = r#"(module (type $Event (@variant (task i32) (future i32) (stream i32)))
       (func $main (export "main") (result i32) (@effect allocates)
         (@match $Event (result i32) (@variant.new $Event task 42)
-          (case task ($n) $n) (case future ($n) $n) (case stream ($n) $n))))"#;
+          (@case task ($n) $n) (@case future ($n) $n) (@case stream ($n) $n))))"#;
     walz::compile(source).unwrap();
 }
 

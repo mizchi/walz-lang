@@ -10,7 +10,7 @@
     (@let $sibling (@task.spawn i32 $Work (@closure.new $Work 10))
       (@let $cancelled (@task.spawn i32 $Captured (@closure.new $Captured (call $after 60000)))
         (@let $answer (@task.join-timeout i32 5 (@move $cancelled))
-          (+ (@match (@inst $option i32) (result i32) $answer (case none () (i32.const 21)) (case some ($v) $v))
+          (+ (@match (@inst $option i32) (result i32) $answer (@case none () (i32.const 21)) (@case some ($v) $v))
              (@task.join i32 (@move $sibling)))))))
   (func $cancel (export "cancel") (result i32) (@effect host reads writes allocates suspends)
     (@let $t (@task.spawn i32 $Work (@closure.new $Work 60000))

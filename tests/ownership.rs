@@ -35,7 +35,7 @@ fn owned_values_require_explicit_move_and_an_explicit_destination() {
         run(r#"(module
       (func $take (param $x (@box i64)) (result i64) (@effect pure)
         (@match (@box i64) (result i64) (@move $x)
-          (case own ($n) (local.get $n))))
+          (@case own ($n) (local.get $n))))
       (func $main (export "main") (result i64) (@effect pure)
         (@let $x (@box.new i64 (i64.const 42)) (call $take (@move $x)))))"#),
         "42"
@@ -65,20 +65,20 @@ fn ownership_propagates_through_pairs_options_results_and_once_closures() {
     assert_eq!(
         run(r#"(module
       (@closure $Take (@capture $x (@box i64)) (result i64) (@effect pure)
-        (@match (@box i64) (result i64) (@move $x) (case own ($n) (local.get $n))))
+        (@match (@box i64) (result i64) (@move $x) (@case own ($n) (local.get $n))))
       (func $main (export "main") (result i64) (@effect allocates)
         (@let $wrapped
           (@option.some (@result (@tuple (@box i64) i64) i32)
             (@result.ok (@tuple (@box i64) i64) i32
               (@tuple.new (@box i64) i64 (@box.new i64 (i64.const 40)) (i64.const 2))))
           (@match (@option (@result (@tuple (@box i64) i64) i32)) (result i64) (@move $wrapped)
-            (case none () (i64.const -1))
-            (case some ($result)
+            (@case none () (i64.const -1))
+            (@case some ($result)
               (@match (@result (@tuple (@box i64) i64) i32) (result i64) (@move $result)
-                (case err ($e) (i64.const -2))
-                (case ok ($tuple)
+                (@case err ($e) (i64.const -2))
+                (@case ok ($tuple)
                   (@match (@tuple (@box i64) i64) (result i64) (@move $tuple)
-                    (case pair ($x $n)
+                    (@case pair ($x $n)
                       (@let $f (@closure.new $Take (@move $x))
                         (i64.add (@closure.call $Take (@move $f)) (local.get $n))))))))))))"#),
         "42"
@@ -100,7 +100,7 @@ fn branches_must_leave_the_same_owners_and_loop_edges_restore_their_contract() {
         (@let $x (@box.new i64 (i64.const 42))
           (@loop $again (bind $n i64 (i64.const 3)) (bind $x (@box i64) (@move $x)) (result i64)
             (if (result i64) (i64.eqz (local.get $n))
-              (then (@match (@box i64) (result i64) (@move $x) (case own ($v) (local.get $v))))
+              (then (@match (@box i64) (result i64) (@move $x) (@case own ($v) (local.get $v))))
               (else (@recur $again (i64.sub (local.get $n) (i64.const 1)) (@move $x))))))))"#),
         "42"
     );

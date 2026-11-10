@@ -5,7 +5,7 @@ fn core_is_the_canonical_builtin_package_and_std_is_not_a_public_alias() {
     let source = r#"(module (@use "walz:core" (type $result))
       (func $main (export "main") (result i64)
         (@match (@result.ok i64 i32 42)
-          (case ok ($value) $value) (case err ($code) 0))))"#;
+          (@case ok ($value) $value) (@case err ($code) 0))))"#;
     run(source, "42");
     let old = source.replace("walz:core", "walz:std");
     let error = walz::check(&old).unwrap_err();
@@ -77,8 +77,8 @@ fn standard_types_are_explicit_aliases_and_use_normal_instantiation() {
       (func $main (export "main") (result i64) (@effect suspends)
         (@let $f (call $ready)
           (@match (@future.await (@inst $R (@inst $O i64) i32) (@move $f))
-            (case ok ($v) (@match (local.get $v) (case none () (i64.const 0)) (case some ($n) (local.get $n))))
-            (case err ($e) (i64.const -1))))))"#,
+            (@case ok ($v) (@match (local.get $v) (@case none () (i64.const 0)) (@case some ($n) (local.get $n))))
+            (@case err ($e) (i64.const -1))))))"#,
         "42",
     );
     assert!(walz::check("(module (func $f (param $v (@inst $result i64 i32)) (nop)))").is_err());
@@ -146,7 +146,7 @@ fn standard_stream_pair_list_own_and_scalars_share_existing_checked_types() {
                ($bytes $bytes (@string.bytes (local.get $string))))
           (block (result i64)
             (@stream.close i64 (@move $input))
-            (@match (@move $owner) (case own ($n) (call $first (@list.new i64 (local.get $n)))))))))"#,
+            (@match (@move $owner) (@case own ($n) (call $first (@list.new i64 (local.get $n)))))))))"#,
         "42",
     );
 }
@@ -179,7 +179,7 @@ fn standard_imports_work_from_files_without_resolving_a_std_path() {
     let source = r#"(module (@use "walz:core" (type $result $Outcome))
       (func $main (export "main") (result i32)
         (@match (@inst $Outcome i32 i32) (result i32) (@result.ok (i32.const 42))
-          (case ok ($v) (local.get $v)) (case err ($e) (local.get $e)))))"#;
+          (@case ok ($v) (local.get $v)) (@case err ($e) (local.get $e)))))"#;
     std::fs::write(&path, source).unwrap();
     let loaded = walz::source::load(&path).unwrap();
     run(loaded.text(), "42");
@@ -224,7 +224,7 @@ fn included_units_share_identical_standard_bindings_but_reject_conflicts() {
         &main,
         r#"(module (@use "walz:core" (type $result)) (@include "library.walz")
       (func $main (export "main") (result i32)
-        (@match (call $make) (case ok ($n) (local.get $n)) (case err ($e) (local.get $e)))))"#,
+        (@match (call $make) (@case ok ($n) (local.get $n)) (@case err ($e) (local.get $e)))))"#,
     )
     .unwrap();
     run(walz::source::load(&main).unwrap().text(), "42");

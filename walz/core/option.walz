@@ -10,5 +10,5 @@
     (result (@inst $result $T $E))
     (@effect pure)
     (@match $value
-      (case none () (@result.err $error))
-      (case some ($payload) (@result.ok $payload)))))
+      (@case none () (@result.err $error))
+      (@case some ($payload) (@result.ok $payload)))))

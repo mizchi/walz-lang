@@ -26,11 +26,13 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
     (@let $answer (@inst $result i64 i32)
       (@result.ok (call $add 40 2))
       (@match $answer
-        (case ok ($value) $value)
-        (case err ($code) 0)))))
+        (@case ok ($value) $value)
+        (@case err ($code) 0)))))
 ```
 
 `@inst` supplies concrete type arguments; ordinary generic calls can infer them from arguments and the expected result. `@let` introduces an immutable binding, and `@match` handles both Result cases. The `main` function returns 42.
+
+Walz S-expressions are the default source and printed form. `walz print file.walz` prints Walz; `walz print --format watz file.walz` selects an optional [Watz view](docs/review-syntax.md) for human review.
 
 ## Try it
 

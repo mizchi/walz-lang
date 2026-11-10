@@ -1,6 +1,11 @@
 {
   "examples": [
     {
+      "path": "examples/review/main.walz",
+      "pattern": "optional Watz printing with direct match/if expressions",
+      "expected": "42"
+    },
+    {
       "path": "examples/high-level.walz",
       "pattern": "shared list traversal, named field patterns and single-evaluation updates",
       "expected": "42"

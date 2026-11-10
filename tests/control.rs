@@ -73,7 +73,7 @@ fn named_loop_branches_and_owned_block_results_are_checked() {
       (@let $x (@box.new i32 (i32.const 42))
         (@match (@box i32) (result i32)
           (block $done (result (@box i32)) (br $done (@move $x)))
-          (case own ($n) (return (local.get $n)))))))"#;
+          (@case own ($n) (return (local.get $n)))))))"#;
     let compiled = walz::verified::compile(good).unwrap();
     assert!(!compiled.analysis.opaque);
     let bad = r#"(module (func $f (result i32)

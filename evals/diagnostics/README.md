@@ -3,7 +3,7 @@
 正しい拒否と、診断を読んで原因・修正が分かることを別に評価する。
 [10ケース](suite.json)のソース、意図、正常対照、非公開テストと[5軸の基準](rubric.md)を固定して繰り返す。
 prepare ごとに現状の診断を記録し、結果から実装を改善する。
-現在はsuite v8で、`@` 接頭辞、`.walz` と `walz:core` を使う。`%` 接頭辞の直前の suite は [versions/v7.json](versions/v7.json) に保存する。ケースは維持し、threadsのeffectとatomicセル検証を含む文法資料を配布する。直前の WLT suite は [versions/v6.json](versions/v6.json)、それ以前の入力はアーカイブに保持する。
+The current suite is v13 with bare Watz `case`/`default`; [v12](versions/v12.json) is preserved; [v11](versions/v11.json) is preserved; [v10](versions/v10.json) is preserved; [v9](versions/v9.json) and [v8](versions/v8.json) are preserved. Match arms use `@case`/`@default`. It uses `@` extensions, `.walz` files, and `walz:core`. The cases retain thread effects and atomic-cell verification in their reference material. The preceding percent-prefix suite is [v7](versions/v7.json), the earlier WLT suite is [v6](versions/v6.json), and older inputs remain archived.
 compiler の[診断データ契約](../../docs/diagnostics.md)は表示から独立しているが、この評価では利用者が実際に読む CLI の表示を使う。
 
 | ケース | 確認すること |

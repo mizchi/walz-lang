@@ -56,7 +56,7 @@ const implementation={};
 for(const directory of ['src','walz/core','crates/walz-web/src','runtime'])Object.assign(implementation,await hashes(join(root,directory),directory+'/'));
 for(const file of ['Cargo.toml','Cargo.lock','build.rs','package.json','pnpm-lock.yaml'])implementation[file]=sha(await readFile(join(root,file)));
 const git=(await execFile('git',['rev-parse','HEAD'],{cwd:root})).stdout.trim();
-await writeFile(join(output,'manifest.json'),JSON.stringify({schema:'walz-macro-usability-v1',inputRevision:4,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer dogfooding',binary,binarySha256:sha(await readFile(binary)),git,node:process.version,platform:process.platform,architecture:process.arch,implementation},null,2)+'\n');
+await writeFile(join(output,'manifest.json'),JSON.stringify({schema:'walz-macro-usability-v1',inputRevision:9,referenceLanguage:'en',language:'walz',extensionPrefix:'@',createdAt:new Date().toISOString(),perspective:'nonblind implementer dogfooding',binary,binarySha256:sha(await readFile(binary)),git,node:process.version,platform:process.platform,architecture:process.arch,implementation},null,2)+'\n');
 
 const checks=[],commands=[],exploratory=[],timings=[],sizes=[],sourceMetrics={},instances=new Map();
 async function command(args){

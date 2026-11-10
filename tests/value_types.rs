@@ -32,11 +32,11 @@ fn option_and_result_are_instantiated_and_nested_as_value_types() {
         (@option.some (@result i64 i32) (@result.ok i64 i32 (i64.const 42))))
       (func $main (export "main") (result i64) (@effect pure)
         (@match (@option (@result i64 i32)) (result i64) (call $make)
-          (case none () (i64.const -1))
-          (case some ($result)
+          (@case none () (i64.const -1))
+          (@case some ($result)
             (@match (@result i64 i32) (result i64) (local.get $result)
-              (case ok ($value) (local.get $value))
-              (case err ($code) (i64.const -2)))))))"#),
+              (@case ok ($value) (local.get $value))
+              (@case err ($code) (i64.const -2)))))))"#),
         "42"
     );
 }
@@ -48,9 +48,9 @@ fn unit_results_and_none_are_distinct_cases() {
       (func $main (export "main") (result i64)
         (i64.add
           (@match (@result @unit i32) (result i64) (@result.ok @unit i32)
-            (case ok () (i64.const 40)) (case err ($code) (i64.const -1)))
+            (@case ok () (i64.const 40)) (@case err ($code) (i64.const -1)))
           (@match (@option i64) (result i64) (@option.none i64)
-            (case none () (i64.const 2)) (case some ($n) (local.get $n))))))"#),
+            (@case none () (i64.const 2)) (@case some ($n) (local.get $n))))))"#),
         "42"
     );
 }
@@ -63,14 +63,14 @@ fn value_types_work_in_fields_arrays_and_explicit_captures() {
       (type $Box (struct (field (@result i64 i32))))
       (@closure $Read (@capture $value (@option i64)) (result i64) (@effect pure)
         (@match (@option i64) (result i64) (local.get $value)
-          (case none () (i64.const 0)) (case some ($n) (local.get $n))))
+          (@case none () (i64.const 0)) (@case some ($n) (local.get $n))))
       (func $main (export "main") (result i64)
         (@let $values (array.new_fixed $Values 1 (@option.some i64 (i64.const 40)))
           (@let $box (struct.new $Box (@result.ok i64 i32 (i64.const 2)))
             (i64.add
               (@closure.call $Read (@closure.new $Read (array.get $Values (local.get $values) (i32.const 0))))
               (@match (@result i64 i32) (result i64) (struct.get $Box 0 (local.get $box))
-                (case ok ($n) (local.get $n)) (case err ($e) (i64.const 0))))))))"#),
+                (@case ok ($n) (local.get $n)) (@case err ($e) (i64.const 0))))))))"#),
         "42"
     );
 }
@@ -81,8 +81,8 @@ fn value_storage_identity_is_hidden_but_payload_null_is_preserved() {
       (func $main (export "main") (result i32)
         (@match (@option (ref null $T)) (result i32)
           (@option.some (ref null $T) (ref.null $T))
-          (case none () (i32.const 0))
-          (case some ($reference) (ref.is_null (local.get $reference))))))"#;
+          (@case none () (i32.const 0))
+          (@case some ($reference) (ref.is_null (local.get $reference))))))"#;
     assert_eq!(run(source), "1");
     let error = walz::check(
         "(module (func $f (result i32) (ref.eq (@option.none i64) (@option.none i64))))",
@@ -130,7 +130,7 @@ fn wrong_payloads_and_incomplete_matches_are_rejected() {
             "expected i32, got i64",
         ),
         (
-            "(module (func $f (@match (@option i64) (@option.none i64) (case none () (nop)))))",
+            "(module (func $f (@match (@option i64) (@option.none i64) (@case none () (nop)))))",
             "non-exhaustive match",
         ),
         (

@@ -158,7 +158,7 @@ impl Expr {
                 format!("(@try (result i64) (do {a}) (catch $Stop ($manual{id}) $manual{id}))")
             }
             Self::Own(..) => format!(
-                "(@match (@box i64) (result i64) (@box.new i64 {a}) (case own ($manual{id}) $manual{id}))"
+                "(@match (@box i64) (result i64) (@box.new i64 {a}) (@case own ($manual{id}) $manual{id}))"
             ),
             Self::Generic(..) => format!("(call (@inst $id i64) {a})"),
             Self::Bindings(..) => format!(
@@ -181,7 +181,7 @@ impl Expr {
           (@macro $choose (rule (?c:expr ?a:expr ?b:expr) (if (result i64) (i64.eqz (i64.and ?c (i64.const 1))) (then ?a) (else ?b))))
           (@macro $raise (rule (?x:expr) (throw $Stop ?x)))
           (@macro $caught (rule (?x:expr) (@try (result i64) (do ?x) (catch $Stop ($tmp) $tmp))))
-          (@macro $own (rule (?x:expr) (@match (@box i64) (result i64) (@box.new i64 ?x) (case own ($tmp) $tmp))))
+          (@macro $own (rule (?x:expr) (@match (@box i64) (result i64) (@box.new i64 ?x) (@case own ($tmp) $tmp))))
           (@macro $generic (rule (?x:expr) (call (@inst $id i64) ?x)))
           (@macro $sequence (rule (?x:expr ...) (block (result i64) (block (drop ?x) ...) (i64.const 0))))
         "#
@@ -201,9 +201,9 @@ impl Expr {
               (@let $value (@try (result i64) (do {body}) (catch $Stop ($caught) $caught))
                 (@tuple.new i64 i64 $value (struct.get $Counter $n $counter)))))
           (func $main (export "main") (result i64) (@effect reads writes allocates)
-            (@match (@tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $value)))
+            (@match (@tuple i64 i64) (result i64) (call $run) (@case pair ($value $trace) $value)))
           (func $trace (export "trace") (result i64) (@effect reads writes allocates)
-            (@match (@tuple i64 i64) (result i64) (call $run) (case pair ($value $trace) $trace))))"#
+            (@match (@tuple i64 i64) (result i64) (call $run) (@case pair ($value $trace) $trace))))"#
         )
     }
 }

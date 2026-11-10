@@ -1,0 +1,2 @@
+# Frozen frontend inputs retain whitespace included in their recorded hashes.
+benches/fixtures/frontend-v*/** whitespace=-blank-at-eol

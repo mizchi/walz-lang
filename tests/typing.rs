@@ -9,8 +9,8 @@ const SOURCE: &str = r#"(module
     (@let $option (@variant.new $Option some (i64.const 40))
       (@let $add (@closure.new $Add (i64.const 2))
         (@match $Option (result i64) (local.get $option)
-          (case none () (i64.const 0))
-          (case some ($value) (@closure.call $Add (local.get $add) (local.get $value))))))))"#;
+          (@case none () (i64.const 0))
+          (@case some ($value) (@closure.call $Add (local.get $add) (local.get $value))))))))"#;
 
 #[test]
 fn infers_let_and_pattern_bindings_and_reports_function_boundaries() {
@@ -77,7 +77,7 @@ fn type_queries_include_parameter_capture_let_loop_and_case_declarations() {
         (@let $reference (@variant.new $T some (local.get $argument))
           (@loop $walk (bind $state (ref $T) (local.get $reference)) (result i64)
             (@match $T (result i64) (local.get $state)
-              (case some ($payload) (local.get $payload)))))))"#;
+              (@case some ($payload) (local.get $payload)))))))"#;
     let module = check(source).unwrap();
     let report = typing::report(&module);
     for (name, expected) in [
@@ -173,7 +173,7 @@ fn check_rejects_incompatible_types_before_emission() {
             "expected i64, got i32",
         ),
         (
-            "(module (type $T (@variant (a))) (func $f (result i64) (@match $T (result i64) (@variant.new $T a) (case a () (i32.const 1)))))",
+            "(module (type $T (@variant (a))) (func $f (result i64) (@match $T (result i64) (@variant.new $T a) (@case a () (i32.const 1)))))",
             "expected i64, got i32",
         ),
         (

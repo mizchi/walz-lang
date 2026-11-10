@@ -1,6 +1,6 @@
 {
   "id": "stock-ledger",
-  "version": 19,
+  "version": 24,
   "apiReference": "docs/stdlib-api.md",
   "apiMembers": [
     "$string.parse-u64",
@@ -51,5 +51,6 @@
   ],
   "referenceLanguage": "en",
   "language": "walz",
-  "extensionPrefix": "@"
+  "extensionPrefix": "@",
+  "matchArms": "@case/@default"
 }

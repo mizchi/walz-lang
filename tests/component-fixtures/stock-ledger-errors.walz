@@ -13,8 +13,8 @@
         (@inst $result i64 (ref $stock.Error))
         (result (@inst $result i32 i32))
         (call $stock.add (local.get $state) (@string.lit "max") (i64.const -1))
-        (case err ($error) (@result.err i32 i32 (i32.const 999)))
-        (case ok
+        (@case err ($error) (@result.err i32 i32 (i32.const 999)))
+        (@case ok
           ($n)
           (@result.let
             ()

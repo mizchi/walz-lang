@@ -50,14 +50,14 @@ export const data = {
   },
   enums: {
     category: 'Data and types', label: 'Enums and exhaustive matches',
-    description: 'Declare a closed set of variants and match every case exactly once. Each case gives names to its typed payload.',
+    description: 'Declare closed variants, bind payloads with @case, and cover remaining shared payloads with a final @default.',
     features: ['enums'], expectation: { kind: 'run', output: '42n' },
     source: `(module
-  (type $Reading (@variant (missing) (value i64)))
+  (type $Reading (@variant (missing) (unavailable i32) (value i64)))
   (func $read (param $item (ref $Reading)) (result i64) (@effect pure)
     (@match $item
-      (case missing () 0)
-      (case value ($n) $n)))
+      (@case value ($n) $n)
+      (@default 0)))
   (func $main (export "main") (result i64) (@effect allocates)
     (call $read (@variant.new $Reading value 42))))`,
   },
@@ -70,8 +70,8 @@ export const data = {
   (func $main (export "main") (result i64) (@effect pure)
     (@let $answer (@inst $result i64 i32) (@result.ok 42)
       (@match $answer
-        (case ok ($value) $value)
-        (case err ($code) (i64.const 0))))))`,
+        (@case ok ($value) $value)
+        (@case err ($code) (i64.const 0))))))`,
   },
   'result-do': {
     category: 'Data and types', label: 'Result pipelines and error propagation',
@@ -88,8 +88,8 @@ export const data = {
         ($b (call $positive 2))
         (@result.ok (+ $a $b)))
       (@match $answer
-        (case ok ($n) $n)
-        (case err ($code) (- 0 $code))))))`,
+        (@case ok ($n) $n)
+        (@case err ($code) (- 0 $code))))))`,
   },
   'option-tuples': {
     category: 'Data and types', label: 'Option, tuples and pattern bindings',
@@ -102,8 +102,8 @@ export const data = {
     (@let $pair $Pair (@tuple.new 40 2)
       (@let ($base $extra) $pair
         (@match (@option.some i64 $base)
-          (case none () $extra)
-          (case some ($n) (+ $n $extra)))))))`,
+          (@case none () $extra)
+          (@case some ($n) (+ $n $extra)))))))`,
   },
   newtypes: {
     category: 'Data and types', label: 'Scalar newtypes and aliases',

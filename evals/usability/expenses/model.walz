@@ -54,11 +54,11 @@
       (@let $previous
         (@match (@inst $option i64) (result i64)
           (call (@inst $dict.get i64) $totals $key)
-          (case none () (i64.const 0))
-          (case some ($n) $n))
+          (@case none () (i64.const 0))
+          (@case some ($n) $n))
         (@match (call $add $previous $amount)
-          (case err ($error) (call $reject $state))
-          (case ok ($sum)
+          (@case err ($error) (call $reject $state))
+          (@case ok ($sum)
             (block
               (drop (call (@inst $dict.set i64) $totals $key $sum))
               (struct.set $State $accepted $state
@@ -101,8 +101,8 @@
           (while (< $i (@list.len $string $lines)))
           (step (+ $i 1))
           (@match (call $parse (@list.get $string $lines $i))
-            (case err ($error) (call $reject $state))
-            (case ok ($row) (call $accept $state $row))))
+            (@case err ($error) (call $reject $state))
+            (@case ok ($row) (call $accept $state $row))))
         (call $render $state))))
 
   (func $main

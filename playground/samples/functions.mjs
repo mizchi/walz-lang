@@ -75,7 +75,7 @@ export const functions = {
   (@closure $Take (@capture $ticket (@inst $box i64)) (result i64)
     (@effect pure)
     (@match (@move $ticket)
-      (case own ($value) $value)))
+      (@case own ($value) $value)))
   (func $main (export "main") (result i64) (@effect allocates)
     (@let $ticket (@box.new i64 42)
       (@let $take (@closure.new $Take (@move $ticket))

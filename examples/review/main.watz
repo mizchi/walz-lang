@@ -1,0 +1,19 @@
+// Walz review syntax: structural notation, not JavaScript execution.
+import { type $result } from "walz:core";
+@effect(pure)
+func $add($a: i64, $b: i64): i64 {
+  return ($a + $b);
+}
+@export("main")
+@effect(pure)
+func $main(): i64 {
+  let $sum: i64 = $add(40, 2), $answer: $result<i64, i32> = walz.result.ok($sum);
+  return match ($answer) {
+    case ok($value) => if<i64> ($value > 0) {
+      $value
+    } else {
+      0
+    },
+    default => 0,
+  };
+}

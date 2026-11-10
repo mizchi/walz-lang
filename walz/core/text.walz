@@ -42,8 +42,8 @@
     (result (@inst $option (@inst $tuple $string $string)))
     (@effect pure)
     (@match (call $bytes.split-once (@string.bytes $s) (@string.bytes $needle))
-      (case none () (@option.none))
-      (case some ($parts)
+      (@case none () (@option.none))
+      (@case some ($parts)
         (@let ($a $b) $parts
           (@option.some (@tuple.new (call $string.valid $a) (call $string.valid $b))))
       )))
@@ -74,8 +74,8 @@
                   $negative
                   (then -9223372036854775808)
                   (else 9223372036854775807)))
-              (case none () (@option.none))
-              (case some ($n)
+              (@case none () (@option.none))
+              (@case some ($n)
                 (@option.some (if (result i64) $negative (then (- 0 $n)) (else $n))))
             ))))
     ))
@@ -85,8 +85,8 @@
     (result $string)
     (@effect pure)
     (@match (@string.from-bytes $b)
-      (case none () (unreachable))
-      (case some ($s) $s)))
+      (@case none () (unreachable))
+      (@case some ($s) $s)))
 
   (func $string.concat
     (param $a $string)

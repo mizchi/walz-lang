@@ -15,6 +15,8 @@ for (const backend of ['core', 'component']) {
       await instrument(directory, backend);
       const {instantiate} = await import(pathToFileURL(join(directory, 'index.js')));
       const {api, __memory} = await instantiate();
+      assert.equal(await api.fallback(0), 7);
+      assert.equal(await api.fallback(1), 42);
       for (let op = 0; op < 8; op++) {
         for (const n of [-2147483648, -1, 0, 42, 2147483647]) {
           assert.equal(await api.run(op, n), (n + op) | 0);

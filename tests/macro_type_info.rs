@@ -8,7 +8,7 @@ fn projections_do_not_depend_on_normalized_type_spellings() {
         (rule (?value:expr)
           (infer (?T (option.element ?value)))
           (@match (@inst $option ?T) (result ?T) ?value
-            (case none () (unreachable)) (case some ($value) $value))))
+            (@case none () (unreachable)) (@case some ($value) $value))))
       (@macro $first
         (rule (?value:expr)
           (infer (?T (array.element ?value)) (?A (ref.heap ?value)))

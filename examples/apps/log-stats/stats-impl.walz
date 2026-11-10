@@ -56,9 +56,9 @@
     (@effect pure)
     (@match $parse.Level (result (ref $Bucket))
       (local.get $level)
-      (case info () (struct.get $State $info (local.get $s)))
-      (case warn () (struct.get $State $warn (local.get $s)))
-      (case error () (struct.get $State $error (local.get $s))))
+      (@case info () (struct.get $State $info (local.get $s)))
+      (@case warn () (struct.get $State $warn (local.get $s)))
+      (@case error () (struct.get $State $error (local.get $s))))
   )
 
   (func $count
@@ -89,7 +89,7 @@
     (@effect reads writes)
     (@match $parse.Line (result i32)
       (local.get $line)
-      (case skip ()
+      (@case skip ()
         (if
           (result i32)
           (i64.eq (call $ignored (local.get $s)) (i64.const -1))
@@ -102,7 +102,7 @@
                 (i64.add (call $ignored (local.get $s)) (i64.const 1)))
               (i32.const 1))))
       )
-      (case invalid ()
+      (@case invalid ()
         (if
           (result i32)
           (i64.eq (call $rejected (local.get $s)) (i64.const -1))
@@ -115,17 +115,17 @@
                 (i64.add (call $rejected (local.get $s)) (i64.const 1)))
               (i32.const 1))))
       )
-      (case info ($ms)
+      (@case info ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $info (local.get $s))
           (local.get $ms)))
-      (case warn ($ms)
+      (@case warn ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $warn (local.get $s))
           (local.get $ms)))
-      (case error ($ms)
+      (@case error ($ms)
         (call $accept
           (local.get $s)
           (struct.get $State $error (local.get $s))

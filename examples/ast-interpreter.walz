@@ -7,10 +7,10 @@
 
   (func $eval (param $expression (ref $Expr)) (result i64)
     (@match $Expr (result i64) (local.get $expression)
-      (case literal ($value) (local.get $value))
-      (case add ($left $right)
+      (@case literal ($value) (local.get $value))
+      (@case add ($left $right)
         (i64.add (call $eval (local.get $left)) (call $eval (local.get $right))))
-      (case multiply ($left $right)
+      (@case multiply ($left $right)
         (i64.mul (call $eval (local.get $left)) (call $eval (local.get $right))))))
 
   (func $main (export "main") (result i64)

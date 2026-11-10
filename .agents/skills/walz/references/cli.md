@@ -56,3 +56,5 @@ Core execution shows raw Wasm values. Use Core＋JSPI or a Component adapter for
 ```
 
 Save as `tests/double.test.walz`. Test conditions are i32: zero fails, nonzero succeeds. Benchmarks use `*_bench.walz`; return the measured result and vary inputs so constant folding does not erase the work. Each benchmark run reports its own environment and measurement conditions.
+
+Use `walz print src/main.walz` for the default Walz form. For the optional review view, run `walz print --format watz src/main.walz > main.watz`, `walz check main.watz`, and `walz print main.watz`. Relative imports remain relative to the review file, so keep it beside the canonical file when it has local dependencies.

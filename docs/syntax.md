@@ -7,7 +7,7 @@ Known Walz `@` names are reserved and enter the checked extension path. They are
 
 | Purpose | Syntax |
 | --- | --- |
-| Expressions/control structures | `@let`, `@for`, `@loop`, `@recur`, `@match`, `@try`, `@result.do` |
+| Expressions/control structures | `@let`, `@for`, `@loop`, `@recur`, `@match`, `@case`, `@default`, `@try`, `@result.do` |
 | Value operations | `@list.new`, `@string.lit`, `@result.ok`, `@future.await`, etc. |
 | Struct construction | `(@struct.new $T ($field expression) ...)`, also `{}` field groups and `(@$T::{...})` shorthand |
 | Value types | `$string`, `$bytes`, `$unit`, `(@inst $list T)`, `(@inst $option T)`, `(@inst $result T E)`, etc. |
@@ -16,7 +16,7 @@ Known Walz `@` names are reserved and enter the checked extension path. They are
 | Type application | `(@inst $name T...)`, shared by functions, types, aliases, and closures |
 | User-defined syntax | Declared with `@macro`, called with `@$name`; `rule`, `infer`, `when`, and `bind` are syntax inside declarations |
 
-Inside extensions, `case`, `bind`, `while`, `step`, `catch`, and `@where` constraint names are data syntax belonging to their entry points, so they have no prefix. `if`, `then`, `else`, `block`, `param`, and result-declaration `result` use WAT syntax.
+Inside extensions, `bind`, `while`, `step`, `catch`, and `@where` constraint names are data syntax belonging to their entry points, so they have no prefix. `if`, `then`, `else`, `block`, `param`, and result-declaration `result` use WAT syntax.
 
 User-defined macros expand into typed expressions without changing standard WAT instructions or the reader. Struct construction `(@$T::{...})` is fixed compiler sugar, distinct from `@$name` user-macro calls. See [syntax, hygiene, and binding rules](user-macros.md).
 
@@ -67,3 +67,9 @@ Only conversion for rerunning frozen evaluation inputs remains as an internal ev
 `just test-syntax` checks preservation of standard WAT, mixed execution, diagnostic positions, and checking boundaries.
 
 See [typed-core expressions](core-expressions.md) for numeric instructions, return/labeled branches, flat Result chaining, and scalar newtypes.
+
+## Match clauses
+
+Walz match arms are `(@case variant ($bindings...) body)`. An optional final `(@default body)` covers all remaining variants, with no payload bindings. It must be unique and cover at least one variant. Every omitted payload must be shared data: owned and borrowed payloads need explicit `@case` handling. Type, effect, ownership, and runtime tag/subtype checks are retained. Default expansion is limited to 100,000 checked expression nodes across its generated arms; factor a large body into a function when needed. Standard Component WAT variant `(case "name" ...)` declarations remain unprefixed.
+
+For a reversible alternate surface aimed at human review, see [optional Watz printing](review-syntax.md).

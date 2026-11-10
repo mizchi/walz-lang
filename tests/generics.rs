@@ -96,7 +96,7 @@ fn instantiated_bodies_are_checked_before_dce_and_owned_arguments_keep_their_con
       (func $id (@type.params $T) (param $x $T) (result $T) (@move $x))
       (func $main (export "main") (result i64)
         (@match (@box i64) (result i64) (call (@inst $id (@box i64)) (@box.new i64 (i64.const 42)))
-          (case own ($x) (local.get $x)))))"#,
+          (@case own ($x) (local.get $x)))))"#,
         "42",
     );
     for declaration in [
@@ -325,11 +325,11 @@ fn generic_variant_matches_and_constructor_type_arguments_are_expanded() {
       (@type.alias $Item (@type.params $T) $T)
       (func $main (export "main") (result i64)
         (@match (@inst $Choice i64) (result i64) (@variant.new (@inst $Choice i64) value (i64.const 42))
-          (case empty () (i64.const 0))
-          (case value ($x)
+          (@case empty () (i64.const 0))
+          (@case value ($x)
             (@match (@option i64) (result i64) (@option.some (@inst $Item i64) (local.get $x))
-              (case none () (i64.const 0))
-              (case some ($y) (local.get $y)))))))"#,
+              (@case none () (i64.const 0))
+              (@case some ($y) (local.get $y)))))))"#,
         "42",
     );
 }

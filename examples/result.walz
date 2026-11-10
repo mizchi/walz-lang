@@ -14,9 +14,9 @@
 
   (func $error-code (export "error-code") (param $n i64) (param $d i64) (result i32) (@effect pure)
     (@match (@inst $result i64 i32) (result i32) (call $divide (local.get $n) (local.get $d))
-      (case ok ($value) (i32.const 0))
-      (case err ($code) (local.get $code))))
+      (@case ok ($value) (i32.const 0))
+      (@case err ($code) (local.get $code))))
   (func $main (export "main") (result i64) (@effect pure)
     (@match (@inst $result i64 i32) (result i64) (call $divide (i64.const 84) (i64.const 2))
-      (case ok ($value) (local.get $value))
-      (case err ($code) (i64.const -1)))))
+      (@case ok ($value) (local.get $value))
+      (@case err ($code) (i64.const -1)))))

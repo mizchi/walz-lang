@@ -1,6 +1,6 @@
 {
   "id": "diagnostics",
-  "version": 8,
+  "version": 13,
   "axes": [
     "location",
     "cause",
@@ -235,5 +235,6 @@
     }
   ],
   "language": "walz",
-  "extensionPrefix": "@"
+  "extensionPrefix": "@",
+  "matchArms": "@case/@default"
 }

@@ -128,8 +128,8 @@
                       (local.get $b)
                       (i32.add (local.get $first) (i32.const 1))
                       (local.get $end))
-                    (case none () (@variant.new $Command invalid))
-                    (case some ($key)
+                    (@case none () (@variant.new $Command invalid))
+                    (@case some ($key)
                       (if
                         (result (ref $Command))
                         (i32.eq (local.get $op) (i32.const 3))
@@ -139,8 +139,8 @@
                             (call $number
                               (local.get $b)
                               (i32.add (local.get $end) (i32.const 1)))
-                            (case none () (@variant.new $Command invalid))
-                            (case some ($n)
+                            (@case none () (@variant.new $Command invalid))
+                            (@case some ($n)
                               (if
                                 (result (ref $Command))
                                 (i32.eq (local.get $op) (i32.const 1))

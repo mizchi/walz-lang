@@ -19,8 +19,8 @@
 
   (@test "exhaustive enum and selected arm"
     (@match $Option (result i32) (@variant.new $Option some (i64.const 42))
-      (case none () (unreachable))
-      (case some ($value) (i64.eq (local.get $value) (i64.const 42)))))
+      (@case none () (unreachable))
+      (@case some ($value) (i64.eq (local.get $value) (i64.const 42)))))
 
   (@test "explicit array mutation"
     (@let $values (array.new_fixed $Ints 2 (i64.const 20) (i64.const 0))

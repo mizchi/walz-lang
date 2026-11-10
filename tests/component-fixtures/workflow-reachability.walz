@@ -9,8 +9,8 @@
     (func $at $graph.at) (func $duration $graph.duration))
   (func $must (param $result (@inst $result $unit (ref $domain.Error)))
     (@match (local.get $result)
-      (case ok () (nop))
-      (case err ($e) (unreachable))))
+      (@case ok () (nop))
+      (@case err ($e) (unreachable))))
 
   (func $new (export "new") (result (ref $graph.Graph))
     (@let $g (call $graph.new)

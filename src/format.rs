@@ -173,6 +173,7 @@ fn header_end(items: &[Node]) -> usize {
             },
         ),
         "case" => Some(3),
+        "default" => Some(1),
         "struct.new" => Some(2),
         "struct.update" | "for-each" => Some(3),
         "let" if meaningful.len() == 3 => Some(1),

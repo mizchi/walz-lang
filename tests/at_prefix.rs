@@ -5,7 +5,7 @@ fn at_extensions_and_user_macros_produce_checked_ir() {
       (@macro $twice (rule (?value:expr) (@let $saved ?value (+ $saved $saved))))
       (func $main (export "main") (result i64) (@effect pure)
         (@match (@option.some i64 (@$twice (i64.const 21)))
-          (case some ($value) $value) (case none () 0))))"#;
+          (@case some ($value) $value) (@case none () 0))))"#;
     let compiled = walz::compile(source).unwrap();
     assert!(compiled.ir.is_some());
     assert!(!compiled.analysis.opaque);

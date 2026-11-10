@@ -96,8 +96,8 @@ Declare alternatives with `@variant`; the checker validates payload types and co
   (func $main (export "main") (result i64) (@effect allocates)
     (@let $decision (@variant.new $Decision answer 42)
       (@match $decision
-        (case answer ($n) $n)
-        (case missing () 0)))))
+        (@case answer ($n) $n)
+        (@case missing () 0)))))
 ```
 
 An empty payload still needs `()`. Missing/duplicate cases and incorrect payload types or counts are errors.
@@ -119,8 +119,8 @@ The outer `(result ...)` declares a WAT return type; `(@inst $result T E)` is on
   (func $main (export "main") (result i64) (@effect pure)
     (@let $value (call $positive 42)
       (@match $value
-        (case ok ($n) $n)
-        (case err ($code) 0)))))
+        (@case ok ($n) $n)
+        (@case err ($code) 0)))))
 ```
 
 Option has `none`/`some`; Result has `ok`/`err`.

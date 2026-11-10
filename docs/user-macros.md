@@ -93,8 +93,8 @@ Use a selector to inspect the checked type rather than matching the compiler's n
   (rule (?value:expr)
     (infer (?T (option.element ?value)))
     (@match (@inst $option ?T) (result ?T) ?value
-      (case none () (unreachable))
-      (case some ($value) $value))))
+      (@case none () (unreachable))
+      (@case some ($value) $value))))
 ```
 
 The defining module explicitly imports `$option` from `walz:core`. Selectors are `option.element`, `list.element`, `result.ok`, `result.err`, `tuple.first`, `tuple.second`, `box.element`, `future.element`, `stream.element`, `task.element`, `array.element` and `ref.heap`. Each takes one captured, non-repeated expression. A selector is checked against its constructor; a mismatch reports `E_MACRO_TYPE`. `ref.heap` returns the nominal heap name of either a nullable or non-null reference. `array.element` requires an array reference and respects the defining module's opaque representation boundary, including generic specializations. Queries never run the expression or mutate its inferred type.

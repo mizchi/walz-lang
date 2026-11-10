@@ -115,8 +115,8 @@
     (result (@inst $option (@inst $tuple $bytes $bytes)))
     (@effect pure)
     (@match (call $bytes.find $b $needle 0)
-      (case none () (@option.none))
-      (case some ($i)
+      (@case none () (@option.none))
+      (@case some ($i)
         (@let $next (+ $i (@bytes.len $needle))
           (@option.some
             (@tuple.new

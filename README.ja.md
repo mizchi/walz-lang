@@ -26,11 +26,13 @@ Walz は、S式の WAT（WebAssembly Text Format）のスーパーセットを�
     (@let $answer (@inst $result i64 i32)
       (@result.ok (call $add 40 2))
       (@match $answer
-        (case ok ($value) $value)
-        (case err ($code) 0)))))
+        (@case ok ($value) $value)
+        (@case err ($code) 0)))))
 ```
 
 `@inst` は型引数の具体化です。通常の汎用関数の呼び出しでは、引数と期待する結果から型引数を推論できます。`@let` で不変の値を束縛し、`@match` で Result の両ケースを処理します。この例の `main` は42を返します。
+
+ソースも印字も、基本形式はWalzのS式です。`walz print file.walz` はWalzを出力し、`walz print --format watz file.walz` で人間のレビュー向けの [Watz表示](docs/review-syntax.md) を選べます。
 
 ## 試す
 

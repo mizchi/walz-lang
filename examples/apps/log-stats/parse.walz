@@ -103,8 +103,8 @@
                       (local.get $s)
                       (i32.add (local.get $a) (i32.const 1))
                       (local.get $b))
-                    (case none () (@variant.new $Line invalid))
-                    (case some ($ms)
+                    (@case none () (@variant.new $Line invalid))
+                    (@case some ($ms)
                       (if
                         (result (ref $Line))
                         (i32.eqz (local.get $level))

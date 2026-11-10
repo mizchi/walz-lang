@@ -6,7 +6,7 @@ fn source(count: usize) -> String {
         .collect::<String>();
     let arms = (0..count)
         .rev()
-        .map(|i| format!("(case v{i} ($x) (+ $x {i}))"))
+        .map(|i| format!("(@case v{i} ($x) (+ $x {i}))"))
         .collect::<String>();
     let makers = (0..count).map(|i| format!("(func $make{i} (export \"make{i}\") (param $x i32) (result (ref $E)) (@variant.new $E v{i} $x))")).collect::<String>();
     format!(
@@ -123,6 +123,39 @@ fn raw_wasm_callers_keep_tag_and_subtype_validation() {
     check_interop(&interop_wasm());
 }
 
+#[test]
+fn defaults_keep_tag_and_subtype_validation_when_discarding_shared_payloads() {
+    let variants = (0..8).map(|i| format!("(v{i} i32)")).collect::<String>();
+    let source = format!(
+        r#"(module (type $E (@variant {variants}))
+      (func $read (export "read") (param $x (ref $E)) (result i32) (@match $x (@default 42)))
+      (func $make7 (export "make7") (param $n i32) (result (ref $E)) (@variant.new $E v7 $n)))"#
+    );
+    let built = walz::compile(&source).unwrap();
+    assert_eq!(built.wat.matches("(ref.cast ").count(), 8);
+    let mut wat = built.wat;
+    wat.truncate(wat.rfind(')').unwrap());
+    for (name, value) in [
+        ("valid", "(call $make7 (i32.const 9))"),
+        ("base", "(struct.new $E (i32.const 7))"),
+        (
+            "wrong",
+            "(struct.new $__variant_0_0 (i32.const 7) (i32.const 42))",
+        ),
+        ("invalid", "(struct.new $E (i32.const 8))"),
+    ] {
+        wat.push_str(&format!(
+            "(func (export \"{name}\") (result i32) (call $read {value}))"
+        ));
+    }
+    wat.push(')');
+    let wasm = wat::parse_str(wat).unwrap();
+    execute(&wasm, "valid", Some("42"));
+    for name in ["base", "wrong", "invalid"] {
+        execute(&wasm, name, None);
+    }
+}
+
 fn semantic_sources() -> Vec<String> {
     let variants = (0..8).map(|i| format!("(v{i} i32)")).collect::<String>();
     let subject = "(@variant.new $E v7 (i32.const 42))";
@@ -131,7 +164,10 @@ fn semantic_sources() -> Vec<String> {
             "(@match {subject} {})",
             (0..8)
                 .rev()
-                .map(|i| format!("(case v{i} ($x) {})", if i == 7 { selected } else { other }))
+                .map(|i| format!(
+                    "(@case v{i} ($x) {})",
+                    if i == 7 { selected } else { other }
+                ))
                 .collect::<String>()
         )
     };
@@ -155,9 +191,9 @@ fn semantic_sources() -> Vec<String> {
     ];
     let mut sources=bodies.into_iter().map(|body|format!("(module (tag $Err (param i32)) (type $E (@variant {variants})) (func $main (export \"main\") (result i32) {body}))")).collect::<Vec<_>>();
     let arms = (0..8)
-        .map(|i| format!("(case v{i} ($x) (@box.new i32 $x))"))
+        .map(|i| format!("(@case v{i} ($x) (@box.new i32 $x))"))
         .collect::<String>();
-    sources.push(format!("(module (@use \"walz:core\" (type $box)) (type $E (@variant {variants})) (func $main (export \"main\") (result i32) (@let $owner (type (@inst $box i32)) (@match {subject} {arms}) (@match (@move $owner) (case own ($n) $n)))))"));
+    sources.push(format!("(module (@use \"walz:core\" (type $box)) (type $E (@variant {variants})) (func $main (export \"main\") (result i32) (@let $owner (type (@inst $box i32)) (@match {subject} {arms}) (@match (@move $owner) (@case own ($n) $n)))))"));
     sources.push(include_str!("component-fixtures/match-dispatch.walz").into());
     sources
 }
@@ -176,7 +212,7 @@ fn dense_branches_preserve_return_labels_exceptions_unit_and_owned_results() {
 fn nullary_wasm() -> Vec<u8> {
     let variants = (0..8).map(|i| format!("(v{i})")).collect::<String>();
     let arms = (0..8)
-        .map(|i| format!("(case v{i} () (i32.const 42))"))
+        .map(|i| format!("(@case v{i} () (i32.const 42))"))
         .collect::<String>();
     let source = format!(
         "(module (type $E (@variant {variants})) (func $read (export \"read\") (param $x (ref $E)) (result i32) (@match $x {arms})))"

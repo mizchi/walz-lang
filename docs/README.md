@@ -17,6 +17,7 @@ Historical evaluations and dated measurements retain their original language and
 | Functions, bindings, data, loops, generics, and owners | [Language guide](language-guide.md) |
 | Implemented features and restrictions | [Feature list](features.md) |
 | WAT boundaries, numbers, early exits, and Result sequencing | [Syntax](syntax.md), [expressions](core-expressions.md), [validator](wat-validator.md) |
+| Optional Watz source printing | [Review syntax](review-syntax.md) |
 | Core types, API signatures, and naming | [walz:core](standard.md), [generated API](stdlib-api.md), [naming](naming.md) |
 | Type arguments, monomorphization, and built-in operators | [Generics](generics.md), [type classes](typeclasses.md) |
 | Named construction, traversal, and field operations | [Structs](struct-construction.md), [high-level forms](high-level-forms.md) |

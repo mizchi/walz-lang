@@ -241,7 +241,7 @@ fn per_iteration_owners_are_checked_by_the_existing_verified_contract() {
             (@for-each $x (@list.new i32 10 32)
               (@let $owner (@box.new i32 $x)
                 (@match (@box i32) (@move $owner)
-                  (case own ($value) (@struct.update $S $s ($n $old (+ $old $value)))))))
+                  (@case own ($value) (@struct.update $S $s ($n $old (+ $old $value)))))))
             (struct.get $S $n $s)))))"#;
     walz::verified::compile(source).unwrap();
     let source = r#"(module (import "host" "work" (func $work (@effect host)))

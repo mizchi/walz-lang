@@ -48,6 +48,12 @@ For example, create a project with `walz new app`, then run `cd app`, `walz run`
 
 The library publishes its source API through `@export`; the application entry module selects it through `@use`. Source-library exports are not automatically added to the application's root Wasm ABI. See [Agent skills](agent-skills.md) for the generated local skill and its reference files.
 
+## print
+
+`walz print FILE.walz` writes formatted Walz S-expressions to stdout. Pass `--format watz` for an optional Watz review view using `func`, `@export("name")`, immutable `let`, and direct `match`/`if` expressions. `--format walz` is the default; `walz print FILE.watz` prints a saved view back as Walz.
+
+Printing does not edit, type-check, expand macros, resolve imports, or optimize source. Use `check` for validation. `print` takes one file; `--` allows a filename starting with a dash. See [source printing](review-syntax.md) for the exact reversible mapping and tooling boundaries.
+
 ## build
 
 ```sh
@@ -61,7 +67,7 @@ walz build main.walz --target component
 walz build main.walz --target component --wit api.wit --world guest
 ```
 
-With no arguments, searches the current directory for `main.walz`, then `src/main.walz`. It does not search configuration files or parent directories. If both exist, `main.walz` wins. Explicit inputs also accept ordinary WAT.
+With no arguments, searches the current directory in order: `main.walz`, `src/main.walz`, `main.watz`, `src/main.watz`. It does not search configuration files or parent directories. If both exist, `main.walz` wins. Explicit inputs also accept ordinary WAT.
 
 Default output is `target/<input name without extension>.wasm`. For example, `src/main.walz` becomes `target/main.wasm`, and `foo.test.walz` becomes `target/foo.test.wasm`. A directory input uses its own entry point and `target/` directory.
 

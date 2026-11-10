@@ -2,7 +2,7 @@
 
 ```wat
 (@match (@stream.read-batch i32 256 (@move $stream))
-  (case pair ($next $items)
+  (@case pair ($next $items)
     (block
       ;; $items は不変 list<i32>。$next は引き続き一つの所有値。
       (@stream.close i32 (@move $next)))))

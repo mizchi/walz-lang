@@ -132,7 +132,7 @@ fn malformed_constraints_are_rejected_without_instantiation() {
 fn owned_closures_and_borrows_cannot_satisfy_shared_or_callable_bounds() {
     let source = r#"(module
       (@closure $Once (@capture $owner (@box i64)) (result i64)
-        (@match (@box i64) (result i64) (@move $owner) (case own ($x) (local.get $x))))
+        (@match (@box i64) (result i64) (@move $owner) (@case own ($x) (local.get $x))))
       (func $require (@type.params $F) (@where (callable $F (param) (result i64))) (nop))
       (func $f (call (@inst $require $Once))))"#;
     bound_error(source, "reusable");

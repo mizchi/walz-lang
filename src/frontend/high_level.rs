@@ -26,7 +26,7 @@ fn let_in(span: Span, local: LocalId, value: Expr, body: Expr) -> Expr {
 impl Checker<'_, '_> {
     // Value types can be interned during expression checking, after module's
     // type table was built. Nominal storage still uses the common shared check.
-    fn shared_data(&self, ty: &Type) -> bool {
+    pub(super) fn shared_data(&self, ty: &Type) -> bool {
         if self.is_owned(ty) || matches!(ty, Type::Borrow(_)) {
             return false;
         }

@@ -1,0 +1,240 @@
+{
+  "id": "diagnostics",
+  "version": 10,
+  "axes": [
+    "location",
+    "cause",
+    "expectation",
+    "repair",
+    "focus"
+  ],
+  "minimumPerAxis": 3,
+  "cases": [
+    {
+      "id": "case-01",
+      "intent": "inc(value:i32)->i32 は i32 の折り返し加算で value+1 を返す。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "i64.add"
+        }
+      ],
+      "terms": [
+        "i32",
+        "i64"
+      ],
+      "guards": {},
+      "fixture": "type-mismatch",
+      "category": "type-mismatch"
+    },
+    {
+      "id": "case-02",
+      "intent": "inc(value:i32)->i32 は value+1 を返す。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "$vale"
+        }
+      ],
+      "terms": [
+        "$vale"
+      ],
+      "guards": {},
+      "fixture": "unknown-local",
+      "category": "unknown-local"
+    },
+    {
+      "id": "case-03",
+      "intent": "sum(value:i32)->i32 は value+2 を返す。add(a,b) の宣言は維持する。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "(call $add"
+        }
+      ],
+      "terms": [
+        "2",
+        "1"
+      ],
+      "guards": {},
+      "fixture": "call-arity",
+      "category": "call-arity"
+    },
+    {
+      "id": "case-04",
+      "intent": "identity(value:i32)->i32 は value を返す。identity 内の @box.new 1回と、対応する消費1回を保つ。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "(@box.close (@move $owner))\n        (local.get"
+        }
+      ],
+      "terms": [
+        "$owner"
+      ],
+      "guards": {
+        "$identity": {
+          "own.new": 1,
+          "own.close": 1,
+          "move": 1
+        }
+      },
+      "fixture": "use-after-move",
+      "category": "use-after-move"
+    },
+    {
+      "id": "case-05",
+      "intent": "Choice は none/some(i32)。read は none なら0、some(value)ならvalue。型と match を保つ。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "(@match $Choice"
+        }
+      ],
+      "terms": [],
+      "guards": {
+        "$read": {
+          "match": 1
+        }
+      },
+      "fixture": "match-exhaustiveness",
+      "category": "match-exhaustiveness"
+    },
+    {
+      "id": "case-06",
+      "intent": "Input/Output は i32 の透明な型 alias。両名と identity(value:Input)->Output を保ち、値をそのまま返す。 program.walz は変更不可、aliases.walz のみ修正する。",
+      "editable": [
+        "aliases.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "aliases.walz",
+          "marker": "(@type.alias $Input"
+        },
+        {
+          "file": "aliases.walz",
+          "marker": "(@type.alias $Output"
+        }
+      ],
+      "terms": [
+        "$Input"
+      ],
+      "guards": {
+        "@module": {
+          "type.alias": 2
+        }
+      },
+      "guardFile": "aliases.walz",
+      "fixture": "alias-cycle",
+      "category": "alias-cycle"
+    },
+    {
+      "id": "case-07",
+      "intent": "可変 Cell の現在値を read が返す。可変フィールドと読み取りを維持し、effect 契約を満たす。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "(@effect pure)"
+        }
+      ],
+      "terms": [
+        "reads"
+      ],
+      "guards": {
+        "$read": {
+          "struct.get": 1
+        }
+      },
+      "fixture": "effect-contract",
+      "category": "effect-contract"
+    },
+    {
+      "id": "case-08",
+      "intent": "math.walz の inc(value:i32)->i32 は value+1。編集できるのは math.walz のみ。",
+      "editable": [
+        "math.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "math.walz",
+          "marker": "$missing"
+        }
+      ],
+      "terms": [
+        "$missing"
+      ],
+      "guards": {},
+      "fixture": "include-location",
+      "category": "include-location"
+    },
+    {
+      "id": "case-09",
+      "intent": "inc(value:i32)->i32 は value+1 を返す。module と関数の構造を保つ。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "(module"
+        }
+      ],
+      "terms": [
+        "("
+      ],
+      "guards": {},
+      "fixture": "unclosed-delimiter",
+      "category": "unclosed-delimiter"
+    },
+    {
+      "id": "case-10",
+      "intent": "read(state:ref lib.State)->i32 は lib の公開APIから値を返す。lib.walz は変更不可。",
+      "editable": [
+        "program.walz"
+      ],
+      "tests": 3,
+      "locations": [
+        {
+          "file": "program.walz",
+          "marker": "struct.get $lib.State"
+        }
+      ],
+      "terms": [
+        "opaque"
+      ],
+      "guards": {},
+      "fixture": "opaque-representation",
+      "category": "opaque-representation"
+    }
+  ],
+  "language": "walz",
+  "extensionPrefix": "@",
+  "matchArms": "@case/@default"
+}

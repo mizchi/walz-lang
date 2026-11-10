@@ -192,7 +192,7 @@ fn first_repeated_initializer_is_normalized_and_resolves_imported_helpers() {
         (bind ?n ?body) (@let ((?n ?value) ...) ?body)))
       (func $main (export "main") (result i64) (@effect allocates)
         (@$bindings (($owner (@box.new i64 (call $id (i64.const 42)))))
-          (@match (@box i64) (result i64) (@move $owner) (case own ($value) $value)))))"#;
+          (@match (@box i64) (result i64) (@move $owner) (@case own ($value) $value)))))"#;
     std::fs::write(&path, source).unwrap();
     let loaded = walz::source::load(&path).unwrap();
     run(loaded.text(), "42");
@@ -204,7 +204,7 @@ fn cached_generic_aliases_are_expanded_after_resolving_macro_type_applications()
         r#"(module
       (@use "walz:core" (type $option))
       (@macro $unwrap (rule (?x:expr) (infer (?T (option.element ?x)))
-        (@match (@inst $option ?T) (result ?T) ?x (case none () (unreachable)) (case some ($value) $value))))
+        (@match (@inst $option ?T) (result ?T) ?x (@case none () (unreachable)) (@case some ($value) $value))))
       (func $get (param $x (@inst $option i64)) (result i64) (@effect pure) (@$unwrap $x))
       (func $main (export "main") (result i64) (@effect pure) (call $get (@option.some i64 42))))"#,
         "42",

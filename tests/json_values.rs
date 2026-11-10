@@ -47,8 +47,8 @@ fn parser_boundaries_and_unicode_execute_in_native_wasm() {
         tests.push(format!(
             r#"(func $case{} (export "case{}") (result i32)
           (@match (call $json.parse (@string.lit "{}"))
-            (case ok ($value) (i32.const {}))
-            (case err ($offset) (i32.const {}))))"#,
+            (@case ok ($value) (i32.const {}))
+            (@case err ($offset) (i32.const {}))))"#,
             tests.len(),
             tests.len(),
             encode(&input),

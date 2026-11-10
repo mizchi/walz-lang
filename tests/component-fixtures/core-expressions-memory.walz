@@ -70,12 +70,12 @@
             (result $bytes)
             (call $fail (local.get $flag))
             (@match (@move $owner)
-              (case own ($value) (return (local.get $value))))
+              (@case own ($value) (return (local.get $value))))
           ))
         (catch $Failure
           ()
           (@match (@move $owner)
-            (case own ($value) (return (local.get $value))))
+            (@case own ($value) (return (local.get $value))))
         ))))
 
   (func $ids
@@ -119,7 +119,7 @@
     (result (@inst $option (@inst $list $Id)))
     (@effect suspends)
     (@match (@stream.next (@inst $list $Id) (@move $s))
-      (case pair ($next $item)
+      (@case pair ($next $item)
         (block
           (result (@inst $option (@inst $list $Id)))
           (@stream.close (@inst $list $Id) (@move $next))

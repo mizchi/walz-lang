@@ -117,8 +117,8 @@
     (result $string)
     (@effect reads writes allocates)
     (@match (@string.from-bytes (@bytes.slice $b $start (- $end $start)))
-      (case some ($s) $s)
-      (case none () (unreachable))))
+      (@case some ($s) $s)
+      (@case none () (unreachable))))
 
   (func $json.hex-digit
     (param $x i32)
@@ -196,8 +196,8 @@
                       (| 128 (& (>>> $n 0) 63))))
                 ))))
         ))
-      (case some ($s) $s)
-      (case none () (unreachable))))
+      (@case some ($s) $s)
+      (@case none () (unreachable))))
 
   (func $json.escape-code
     (param $c i32)
@@ -777,12 +777,12 @@
     (@result.let ($value)
       (call $json.parse $lexeme)
       (@match $value
-        (case null () (@result.err 0))
-        (case boolean ($x) (@result.err 0))
-        (case number ($x) (@result.ok $value))
-        (case string ($x) (@result.err 0))
-        (case array ($x) (@result.err 0))
-        (case object ($x) (@result.err 0))))
+        (@case null () (@result.err 0))
+        (@case boolean ($x) (@result.err 0))
+        (@case number ($x) (@result.ok $value))
+        (@case string ($x) (@result.err 0))
+        (@case array ($x) (@result.err 0))
+        (@case object ($x) (@result.err 0))))
   )
 
   (func $json.kind
@@ -790,48 +790,48 @@
     (result (ref $json-kind))
     (@effect reads writes allocates)
     (@match $value
-      (case null () (@variant.new $json-kind null))
-      (case boolean ($x) (@variant.new $json-kind boolean))
-      (case number ($x) (@variant.new $json-kind number))
-      (case string ($x) (@variant.new $json-kind string))
-      (case array ($x) (@variant.new $json-kind array))
-      (case object ($x) (@variant.new $json-kind object))))
+      (@case null () (@variant.new $json-kind null))
+      (@case boolean ($x) (@variant.new $json-kind boolean))
+      (@case number ($x) (@variant.new $json-kind number))
+      (@case string ($x) (@variant.new $json-kind string))
+      (@case array ($x) (@variant.new $json-kind array))
+      (@case object ($x) (@variant.new $json-kind object))))
 
   (func $json.as-boolean
     (param $value (ref $json-value))
     (result (@inst $option i32))
     (@effect reads writes allocates)
     (@match $value
-      (case null () (@option.none))
-      (case boolean ($x) (@option.some $x))
-      (case number ($x) (@option.none))
-      (case string ($x) (@option.none))
-      (case array ($x) (@option.none))
-      (case object ($x) (@option.none))))
+      (@case null () (@option.none))
+      (@case boolean ($x) (@option.some $x))
+      (@case number ($x) (@option.none))
+      (@case string ($x) (@option.none))
+      (@case array ($x) (@option.none))
+      (@case object ($x) (@option.none))))
 
   (func $json.as-number
     (param $value (ref $json-value))
     (result (@inst $option $string))
     (@effect reads writes allocates)
     (@match $value
-      (case null () (@option.none))
-      (case boolean ($x) (@option.none))
-      (case number ($x) (@option.some $x))
-      (case string ($x) (@option.none))
-      (case array ($x) (@option.none))
-      (case object ($x) (@option.none))))
+      (@case null () (@option.none))
+      (@case boolean ($x) (@option.none))
+      (@case number ($x) (@option.some $x))
+      (@case string ($x) (@option.none))
+      (@case array ($x) (@option.none))
+      (@case object ($x) (@option.none))))
 
   (func $json.as-string
     (param $value (ref $json-value))
     (result (@inst $option $string))
     (@effect reads writes allocates)
     (@match $value
-      (case null () (@option.none))
-      (case boolean ($x) (@option.none))
-      (case number ($x) (@option.none))
-      (case string ($x) (@option.some $x))
-      (case array ($x) (@option.none))
-      (case object ($x) (@option.none))))
+      (@case null () (@option.none))
+      (@case boolean ($x) (@option.none))
+      (@case number ($x) (@option.none))
+      (@case string ($x) (@option.some $x))
+      (@case array ($x) (@option.none))
+      (@case object ($x) (@option.none))))
 
   (func $json.prepend
     (param $array (ref $json-value))
@@ -839,13 +839,13 @@
     (result (@inst $result (ref $json-value) i32))
     (@effect reads writes allocates)
     (@match $array
-      (case null () (@result.err 0))
-      (case boolean ($x) (@result.err 0))
-      (case number ($x) (@result.err 0))
-      (case string ($x) (@result.err 0))
-      (case array ($x)
+      (@case null () (@result.err 0))
+      (@case boolean ($x) (@result.err 0))
+      (@case number ($x) (@result.err 0))
+      (@case string ($x) (@result.err 0))
+      (@case array ($x)
         (@result.ok (@variant.new $json-value array (struct.new $Items $item $x))))
-      (case object ($x) (@result.err 0))))
+      (@case object ($x) (@result.err 0))))
 
   (func $json.set
     (param $object (ref $json-value))
@@ -854,12 +854,12 @@
     (result (@inst $result (ref $json-value) i32))
     (@effect reads writes allocates)
     (@match $object
-      (case null () (@result.err 0))
-      (case boolean ($x) (@result.err 0))
-      (case number ($x) (@result.err 0))
-      (case string ($x) (@result.err 0))
-      (case array ($x) (@result.err 0))
-      (case object ($x)
+      (@case null () (@result.err 0))
+      (@case boolean ($x) (@result.err 0))
+      (@case number ($x) (@result.err 0))
+      (@case string ($x) (@result.err 0))
+      (@case array ($x) (@result.err 0))
+      (@case object ($x)
         (@let $reverse (call $json.reverse-members $x (ref.null $Members))
           (@result.ok
             (@variant.new $json-value object
@@ -874,12 +874,12 @@
     (result (@inst $option (ref $json-value)))
     (@effect reads writes allocates)
     (@match $object
-      (case null () (@option.none))
-      (case boolean ($x) (@option.none))
-      (case number ($x) (@option.none))
-      (case string ($x) (@option.none))
-      (case array ($x) (@option.none))
-      (case object ($x)
+      (@case null () (@option.none))
+      (@case boolean ($x) (@option.none))
+      (@case number ($x) (@option.none))
+      (@case string ($x) (@option.none))
+      (@case array ($x) (@option.none))
+      (@case object ($x)
         (@loop $get
           (bind $head (ref null $Members) $x)
           (bind $found (@inst $option (ref $json-value)) (@option.none))
@@ -908,11 +908,11 @@
     (result (@inst $option (ref $json-value)))
     (@effect reads writes allocates)
     (@match $array
-      (case null () (@option.none))
-      (case boolean ($x) (@option.none))
-      (case number ($x) (@option.none))
-      (case string ($x) (@option.none))
-      (case array ($x)
+      (@case null () (@option.none))
+      (@case boolean ($x) (@option.none))
+      (@case number ($x) (@option.none))
+      (@case string ($x) (@option.none))
+      (@case array ($x)
         (@loop $at
           (bind $head (ref null $Items) $x)
           (bind $index i32 $index)
@@ -930,15 +930,15 @@
                   (else (@recur $at (struct.get $Items $next $node) (- $index 1))))
               ))))
       )
-      (case object ($x) (@option.none))))
+      (@case object ($x) (@option.none))))
 
   (func $json.write
     (param $value (ref $json-value))
     (param $out (ref $string-builder))
     (@effect reads writes allocates)
     (@match $value
-      (case null () (call $string-builder.text $out (@string.lit "null")))
-      (case boolean ($x)
+      (@case null () (call $string-builder.text $out (@string.lit "null")))
+      (@case boolean ($x)
         (call $string-builder.text $out
           (if
             (result $string)
@@ -946,9 +946,9 @@
             (then (@string.lit "true"))
             (else (@string.lit "false"))))
       )
-      (case number ($x) (call $string-builder.text $out $x))
-      (case string ($x) (call $string-builder.text $out (call $json-string.quote $x)))
-      (case array ($x)
+      (@case number ($x) (call $string-builder.text $out $x))
+      (@case string ($x) (call $string-builder.text $out (call $json-string.quote $x)))
+      (@case array ($x)
         (block
           (call $string-builder.text $out (@string.lit "["))
           (@loop $write-array
@@ -968,7 +968,7 @@
                     (@recur $write-array (struct.get $Items $next $node) 0))))
             ))
           (call $string-builder.text $out (@string.lit "]"))))
-      (case object ($x)
+      (@case object ($x)
         (block
           (call $string-builder.text $out (@string.lit "{"))
           (@loop $write-object
@@ -999,12 +999,12 @@
     (block (result $string)
       ;; A standalone JSON string needs no intermediate builder or second copy.
       (@match $value
-        (case null () (nop))
-        (case boolean ($x) (nop))
-        (case number ($x) (nop))
-        (case string ($x) (return (call $json-string.quote $x)))
-        (case array ($x) (nop))
-        (case object ($x) (nop)))
+        (@case null () (nop))
+        (@case boolean ($x) (nop))
+        (@case number ($x) (nop))
+        (@case string ($x) (return (call $json-string.quote $x)))
+        (@case array ($x) (nop))
+        (@case object ($x) (nop)))
       (@let $out (call $string-builder.new)
         (block (result $string)
           (call $json.write $value $out)

@@ -3,7 +3,7 @@
   (func $local (export "local") (result i32) (@effect suspends)
     (@let $s (@stream.cons i32 20 (@stream.cons i32 22 (@stream.cons i32 100 (@stream.empty i32))))
       (@match (@stream.read-batch i32 2 (@move $s))
-        (case pair ($tail $items)
+        (@case pair ($tail $items)
           (block (result i32) (@stream.close i32 (@move $tail))
             (+ (@list.get i32 $items 0) (@list.get i32 $items 1)))))))
   (func $read (export "read") (param $s (@inst $stream i32)) (param $max i32)

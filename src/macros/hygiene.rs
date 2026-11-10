@@ -597,7 +597,9 @@ impl Instantiator<'_> {
                     ) && i == 1;
                 let field = matches!(head, "struct.get" | "struct.set" | "variant.new") && i == 2;
                 let ty = matches!(head, "ref" | "result" | "type" | "param" | "effect")
-                    || head == "match" && i == 1 && p.get(2).and_then(Sexp::head) != Some("case")
+                    || head == "match"
+                        && i == 1
+                        && !matches!(p.get(2).and_then(Sexp::head), Some("case" | "default"))
                     || head.ends_with(".const");
                 if matches!(head, "recur" | "br" | "br_if") && i == 1 {
                     let mut label = self.data(child, input, index, depth + 1)?;

@@ -1,0 +1,15 @@
+(module
+  (@use "walz:core" (type $result))
+
+  (func $add (param $a i64) (param $b i64) (result i64) (@effect pure)
+    (+ $a $b))
+
+  (func $main (export "main") (result i64) (@effect pure)
+    (@let (($sum (type i64) (call $add 40 2))
+           ($answer (type (@inst $result i64 i32)) (@result.ok $sum)))
+      (@match $answer
+        (@case ok ($value)
+          (if (result i64) (> $value 0)
+            (then $value)
+            (else 0)))
+        (@default 0)))))

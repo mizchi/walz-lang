@@ -12,7 +12,7 @@ fn aliases_are_transparent_and_forward_references_share_value_types() {
       (type $Cell (struct (field i32)))
       (func $read (param $scan $Scan) (result i32)
         (@match $Scan (result i32) (local.get $scan)
-          (case pair ($state $n)
+          (@case pair ($state $n)
             (i32.add (struct.get $Cell 0 (local.get $state)) (local.get $n)))))
       (func $main (result i32)
         (call $read (@tuple.new $State i32 (struct.new $Cell (i32.const 40)) (i32.const 2)))))"#;
@@ -135,10 +135,10 @@ fn aliases_preserve_ownership_rules() {
       (@type.alias $Wrapped (@option $Owner))
       (func $take (param $x $Wrapped) (result i64)
         (@match $Wrapped (result i64) (@move $x)
-          (case none () (i64.const 0))
-          (case some ($owner)
+          (@case none () (i64.const 0))
+          (@case some ($owner)
             (@match $Owner (result i64) (@move $owner)
-              (case own ($n) (local.get $n)))))))"#,
+              (@case own ($n) (local.get $n)))))))"#,
     )
     .unwrap();
     rejects(
@@ -172,7 +172,7 @@ fn aliases_follow_namespace_visibility_and_use_renaming() {
         (func $new (result $Scan) (@tuple.new (ref $State) i32 (struct.new $State) (i32.const 42))))
       (func $read (param $scan $Imported) (result i32)
         (@match $Imported (result i32) (local.get $scan)
-          (case pair ($state $n) (local.get $n))))
+          (@case pair ($state $n) (local.get $n))))
       (func $main (result i32) (call $read (call $lib.new))))"#,
     )
     .unwrap();

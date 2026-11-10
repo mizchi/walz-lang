@@ -67,7 +67,7 @@ fn result_context_resolves_a_generic_producer_and_preserves_explicit_application
       (func $id (@type.params $T) (param $x $T) (result $T) (@effect pure) $x)
       (func $main (export "main") (result i32) (@effect pure)
         (@let $value (type (@inst $option i64)) (call $empty)
-          (@match $value (case none () (call (@inst $id i32) 42)) (case some ($n) (i32.wrap_i64 $n))))))"#,
+          (@match $value (@case none () (call (@inst $id i32) 42)) (@case some ($n) (i32.wrap_i64 $n))))))"#,
         "42",
     );
 }
@@ -109,7 +109,7 @@ fn inference_keeps_owned_moves_bounds_and_effect_obligations() {
       (func $id (@type.params $T) (param $x $T) (result $T) (@effect pure) (@move $x))
       (func $main (export "main") (result i32) (@effect allocates)
         (@let $box (@box.new i32 42)
-          (@match (@box i32) (result i32) (call $id (@move $box)) (case own ($x) $x)))))"#,
+          (@match (@box i32) (result i32) (call $id (@move $box)) (@case own ($x) $x)))))"#,
         "42",
     );
     for (source, expected) in [
@@ -210,8 +210,8 @@ fn expected_results_supply_full_nominal_constructor_hints() {
       (type $Box (@type.params $T) (struct (field $value $T)))
       (func $take (@type.params $T) (param $x (@inst $option (ref (@inst $Box $T))))
         (result $T) (@effect pure)
-        (@match $x (case none () (unreachable))
-          (case some ($box) (struct.get (@inst $Box $T) $value $box))))
+        (@match $x (@case none () (unreachable))
+          (@case some ($box) (struct.get (@inst $Box $T) $value $box))))
       (func $main (export "main") (result i64) (@effect allocates)
         (call $take (@option.some (struct.new (@inst $Box i64) 42)))))"#,
         "42",

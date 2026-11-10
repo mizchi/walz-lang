@@ -17,8 +17,8 @@
     (result i32)
     (@effect allocates reads writes)
     (@match (call $json.parse (local.get $source))
-      (case ok ($value) (i32.const 1))
-      (case err ($offset) (i32.const 0))))
+      (@case ok ($value) (i32.const 1))
+      (@case err ($offset) (i32.const 0))))
 
   (func $normalize
     (export "normalize")

@@ -25,8 +25,8 @@ export const standard = {
     (@let (($raw (@string.bytes (@string.lit "*hello")))
            ($head (@bytes.slice $raw 0 1)))
       (@match (@string.from-bytes $head)
-        (case none () -1)
-        (case some ($text) (@bytes.get (@string.bytes $text) 0))))))`,
+        (@case none () -1)
+        (@case some ($text) (@bytes.get (@string.bytes $text) 0))))))`,
   },
   views: {
     category: 'Core library', label: 'Zero-copy string and byte views',
@@ -69,8 +69,8 @@ export const standard = {
       (block (result i64)
         (drop (call (@inst $dict.set i64) $scores (@string.lit "answer") 42))
         (@match (call (@inst $dict.get i64) $scores (@string.lit "answer"))
-          (case none () -1)
-          (case some ($score) $score))))))`,
+          (@case none () -1)
+          (@case some ($score) $score))))))`,
   },
   json: {
     category: 'Core library', label: 'JSON parsing and typed access',
@@ -80,14 +80,14 @@ export const standard = {
   (@use "walz:core" (func $json.parse) (func $json.at) (func $json.as-boolean))
   (func $main (export "main") (result i32) (@effect reads writes allocates)
     (@match (call $json.parse (@string.lit "[true,false]"))
-      (case err ($offset) -1)
-      (case ok ($array)
+      (@case err ($offset) -1)
+      (@case ok ($array)
         (@match (call $json.at $array 0)
-          (case none () -2)
-          (case some ($first)
+          (@case none () -2)
+          (@case some ($first)
             (@match (call $json.as-boolean $first)
-              (case none () -3)
-              (case some ($value) $value))))))))`,
+              (@case none () -3)
+              (@case some ($value) $value))))))))`,
   },
   simd: {
     category: 'Core library', label: 'SIMD with v128',

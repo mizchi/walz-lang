@@ -15,8 +15,8 @@
     (rule (?value:expr)
       (infer (?T (option.element ?value)))
       (@match (@inst $option ?T) (result ?T) ?value
-        (case none () (i64.const 0))
-        (case some ($value) (call $id $value)))))
+        (@case none () (i64.const 0))
+        (@case some ($value) (call $id $value)))))
   (@macro $first
     (rule (?values:expr)
       (infer (?T (array.element ?values)) (?A (ref.heap ?values)))

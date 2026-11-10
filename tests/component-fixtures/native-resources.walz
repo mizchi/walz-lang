@@ -13,5 +13,5 @@
     (@option.some (@resource $File) (@move $f)))
   (func $release (export "api-release-option") (param $v (@inst $option (@resource $File))) (@effect host writes)
     (@match (@inst $option (@resource $File)) (@move $v)
-      (case none () (nop)) (case some ($f) (@resource.close (@move $f)))))
+      (@case none () (nop)) (@case some ($f) (@resource.close (@move $f)))))
 )

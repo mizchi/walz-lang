@@ -4,8 +4,8 @@ const EXTENSION: &str = r#"(module
   (@use "walz:core" (type $result))
   (func $main (export "main") (result i64) (@effect pure)
     (@match (@inst $result i64 i32) (result i64) (@result.ok i64 i32 (i64.const 42))
-      (case ok ($value) $value)
-      (case err ($error) (i64.const 0)))))"#;
+      (@case ok ($value) $value)
+      (@case err ($error) (i64.const 0)))))"#;
 
 #[test]
 fn bridge_preserves_native_and_extension_compilation() {

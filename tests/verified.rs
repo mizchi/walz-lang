@@ -15,7 +15,7 @@ fn command(mode: &str, source: &str, path: Option<&str>) -> std::process::Output
 const GOOD: &str = r#"(module
   (func $main (export "main") (result i64) (@effect pure)
     (@let $x (@box.new i64 (i64.const 42))
-      (@match (@box i64) (result i64) (@move $x) (case own ($n) (local.get $n))))))"#;
+      (@match (@box i64) (result i64) (@move $x) (@case own ($n) (local.get $n))))))"#;
 
 #[test]
 fn contracts_are_inspectable_and_verified_execution_uses_the_checked_ir() {

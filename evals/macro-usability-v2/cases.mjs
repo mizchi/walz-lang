@@ -20,10 +20,10 @@ function optionCase(style) {
   ${consumer}
   (func $main (export "main") (result i64) (@effect pure)
     (@match (call $read (@option.some i64 42))
-      (case ok ($n) $n) (case err ($e) (i64.extend_i32_s $e))))
+      (@case ok ($n) $n) (@case err ($e) (i64.extend_i32_s $e))))
   (func $fallback (export "fallback") (result i64) (@effect pure)
     (@match (call $read (@option.none i64))
-      (case ok ($n) $n) (case err ($e) (- (i64.const 0) (i64.extend_i32_s $e))))))`};
+      (@case ok ($n) $n) (@case err ($e) (- (i64.const 0) (i64.extend_i32_s $e))))))`};
 }
 
 export function scalingSource(count,shape) {
@@ -62,11 +62,11 @@ export const cases = [
   (func $main (export "main") (result i32) (@effect pure)
     (@match (@inst $result i32 i32) (result i32)
       (@$bind-results (($a (@result.ok i32 i32 20)) ($b (@result.ok i32 i32 22))) (@result.ok (+ $a $b)))
-      (case ok ($n) $n) (case err ($e) (- 0 $e))))
+      (@case ok ($n) $n) (@case err ($e) (- 0 $e))))
   (func $fallback (export "fallback") (result i32) (@effect pure)
     (@match (@inst $result i32 i32) (result i32)
       (@$bind-results (($a (@result.err i32 i32 7)) ($b (@result.ok i32 i32 22))) (@result.ok (+ $a $b)))
-      (case ok ($n) $n) (case err ($e) (- 0 $e)))))`},
+      (@case ok ($n) $n) (@case err ($e) (- 0 $e)))))`},
   {name:'wrapped-body-delegation',required:false,expected:{main:'42'},desired:'An outer binding macro wraps the forwarded body in an ordinary block. Current docs promise whole-fragment forwarding only.',source:`(module
   (@macro $inner (rule (?name:ident ?value:expr ?body:expr)
     (bind ?name ?body) (@let ?name ?value ?body)))

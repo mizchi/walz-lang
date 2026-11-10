@@ -65,12 +65,12 @@
             (result i32)
             (call $maybe-throw (local.get $fail))
             (@match (@move $owner)
-              (case own ($value) (call $read (local.get $value))))
+              (@case own ($value) (call $read (local.get $value))))
           ))
         (catch $Failure
           ()
           (@match (@move $owner)
-            (case own ($value) (call $read (local.get $value))))
+            (@case own ($value) (call $read (local.get $value))))
         ))))
 
   (@closure $Inspect
@@ -78,7 +78,7 @@
     (result i32)
     (@effect pure)
     (@match (@move $owner)
-      (case own ($value) (return (call $read (local.get $value))))
+      (@case own ($value) (return (call $read (local.get $value))))
     ))
 
   (func $exercise
@@ -114,8 +114,8 @@
                   (then
                     (@match
                       (@result.do ($a (@result.ok (ref $Box) i32 (local.get $box))) ($b (@result.ok (ref $Box) i32 (local.get $a))) (@result.ok i32 i32 (call $read (local.get $b))))
-                      (case ok ($n) (local.get $n))
-                      (case err ($e) (i32.const -1))))
+                      (@case ok ($n) (local.get $n))
+                      (@case err ($e) (i32.const -1))))
                   (else
                     (if
                       (result i32)

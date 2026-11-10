@@ -80,6 +80,6 @@
         (struct.set $string-builder $head $b (ref.null $Chunk))
         (struct.set $string-builder $length $b 0)
         (@match (@string.from-bytes (@bytes.from-array $Array $out))
-          (case none () (unreachable))
-          (case some ($s) $s))))
+          (@case none () (unreachable))
+          (@case some ($s) $s))))
   ))

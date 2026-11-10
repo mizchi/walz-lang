@@ -2,7 +2,7 @@
 
 位置引数、名前付きS式、波括弧＋明示リテラル、波括弧＋期待型リテラルの4案を比較する。
 現在は[名前付き構築](../../docs/struct-construction.md)として4表記を実装している。導入前のv1/v2では候補構文として評価した。
-現在のprepareはv8で、`@` 接頭辞を使い、`walz:core`から`@use`し、ファイル単位でモジュールを分ける。v5で標準型名を`$string`、文字列命令を`%string.*`、短縮形を`%$Type::`に統一した。過去の入力・結果は書き換えない。v1/v2と実装確認v1では旧綴り`%Type::`、v3では型名`$text`、v4までは文字列命令`%text.*`を使っていた。
+Current preparation uses v13, including optional Watz printing with bare case/default clauses and `@case`/`@default` in reference documentation. It uses the `@` prefix, explicit `@use` from `walz:core`, and file modules. Earlier packets/results are preserved. V5 adopted `$string`, `%string.*`, and `%$Type::`; v1/v2 and implementation check v1 used `%Type::`, v3 used `$text`, and through v4 the string operations were `%text.*`.
 コンパイルできたことやソースの短さを可読性の加点に使わない。
 
 6ケースはUser、同型の数値フィールド、nestedな集計、記述順と配置順が異なる初期化、mutableなCell、実際のworkflow.Jobを参考にした構築。

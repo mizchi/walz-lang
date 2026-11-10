@@ -19,7 +19,7 @@ fn relative_file_uses_select_exports_and_aliases_without_namespace_declarations(
       (@use "./math.walz" (func $answer $calculate))
       (func $main (export "main") (result i64)
         (@match (@result.ok i64 i32 (call $calculate))
-          (case ok ($n) $n) (case err ($code) 0))))"#,
+          (@case ok ($n) $n) (@case err ($code) 0))))"#,
     )
     .unwrap();
     let loaded = walz::source::load(&path).unwrap();

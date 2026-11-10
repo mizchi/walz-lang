@@ -1,7 +1,7 @@
 #[test]
 fn immediate_shared_constructor_matches_do_not_allocate_temporary_boxes() {
     for expression in [
-        "(@match (@result i32 i32) (result i32) (@result.ok i32 i32 (i32.const 42)) (case ok ($n) (local.get $n)) (case err ($e) (local.get $e)))",
+        "(@match (@result i32 i32) (result i32) (@result.ok i32 i32 (i32.const 42)) (@case ok ($n) (local.get $n)) (@case err ($e) (local.get $e)))",
         "(@let ($a $b) (@tuple.new i32 i32 (i32.const 40) (i32.const 2)) (i32.add (local.get $a) (local.get $b)))",
     ] {
         let source = format!("(module (func $main (export \"main\") (result i32) {expression}))");

@@ -39,7 +39,7 @@
   (func $first (export "first") (param $s (@inst $stream (@inst $list $string))) (result (@inst $option (@inst $list $string))) (@effect suspends)
     (@match (@inst $tuple (@inst $stream (@inst $list $string)) (@inst $option (@inst $list $string))) (result (@inst $option (@inst $list $string)))
       (@stream.next (@inst $list $string) (@move $s))
-      (case pair ($next $item)
+      (@case pair ($next $item)
         (block (result (@inst $option (@inst $list $string))) (@stream.close (@inst $list $string) (@move $next)) (local.get $item)))))
   (func $trap-owned (export "trap-owned") (param $s (@inst $stream (@inst $list $string))) (result i32) (@effect pure)
     (block (result i32)

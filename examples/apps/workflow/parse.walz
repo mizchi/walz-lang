@@ -20,8 +20,8 @@
             (then
               (@match (@inst $option i64) (result (ref $domain.Command))
                 (call $lex.number (local.get $b) (local.get $start))
-                (case none () (@variant.new $domain.Command invalid))
-                (case some ($workers)
+                (@case none () (@variant.new $domain.Command invalid))
+                (@case some ($workers)
                   (if
                     (result (ref $domain.Command))
                     (i32.or
@@ -36,8 +36,8 @@
               (@let $second (call $lex.tab (local.get $b) (local.get $start))
                 (@match (@inst $option $string) (result (ref $domain.Command))
                   (call $lex.key (local.get $b) (local.get $start) (local.get $second))
-                  (case none () (@variant.new $domain.Command invalid))
-                  (case some ($id)
+                  (@case none () (@variant.new $domain.Command invalid))
+                  (@case some ($id)
                     (if
                       (result (ref $domain.Command))
                       (call $lex.equal
@@ -48,8 +48,8 @@
                           (call $lex.number
                             (local.get $b)
                             (i32.add (local.get $second) (i32.const 1)))
-                          (case none () (@variant.new $domain.Command invalid))
-                          (case some ($duration)
+                          (@case none () (@variant.new $domain.Command invalid))
+                          (@case some ($duration)
                             (@variant.new $domain.Command task
                               (local.get $id)
                               (local.get $duration))))
@@ -73,8 +73,8 @@
                                 (local.get $b)
                                 (i32.add (local.get $second) (i32.const 1))
                                 (@bytes.len (local.get $b)))
-                              (case none () (@variant.new $domain.Command invalid))
-                              (case some ($dependency)
+                              (@case none () (@variant.new $domain.Command invalid))
+                              (@case some ($dependency)
                                 (@variant.new $domain.Command after
                                   (local.get $id)
                                   (local.get $dependency))))
