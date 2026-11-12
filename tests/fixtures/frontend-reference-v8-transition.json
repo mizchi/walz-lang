@@ -1,0 +1,63 @@
+{
+  "schema": "walz-frontend-transition-v8",
+  "previous": "frontend-reference-v7.json",
+  "next": "frontend-reference-v8.json",
+  "previousCompiler": "7c1f463b6d059a627e913d206e9294eb5284349c",
+  "currentCompiler": "e95903793d3a720aedc6f5d778ab62adbde98e35",
+  "reasons": {
+    "json.walz": "Range/value lowering intentionally inlines helpers and removes proven explicit guards in optimized WAT. Added byte APIs change embedded library function IDs, spans, IR and analysis.",
+    "std-string.walz": "The expanded core byte API adds checked functions to the imported library, changing pre-DCE IR and analysis IDs/spans. Its emitted WAT remains identical."
+  },
+  "cases": {
+    "json.walz": {
+      "ir": {
+        "before": "17b06eabe3849521da0dd068397924044bbea613fe6d748f58960063419e5d3f",
+        "after": "b5eeac97fbb90573c92e0be8eac69117098078c8a7ce8b7c12c8508ae27cc0e7"
+      },
+      "analyze": {
+        "before": "2c0d589e72ef07cc3499626a7cd0b6f7e0013a2e885299000bfda7355c1048ce",
+        "after": "5969970671fa071f407a2c017dc3b581467fffaeb66add4262feb610d3e09351"
+      },
+      "wat": {
+        "before": "b94e6d3e415dba9f6ffe40e260242441d3f727b43da64da5bb027e2670309470",
+        "after": "d1c6ead31d0c269f43760dac2596dd8a015a788264f3c2c0e01509c638940970"
+      }
+    },
+    "std-string.walz": {
+      "ir": {
+        "before": "f4a902557c8cfe149edab77f8c2a3bf41b579ccb8e4cee28327f9e40fe1f234c",
+        "after": "2145ab17b2aacf85c300f635d9fc4f324e528be1b063065a5d93a3ea45b8b7e7"
+      },
+      "analyze": {
+        "before": "18645dc7d6da4e6eae4617b29e806b093d2b1692342706929b3757b60cebd37a",
+        "after": "d1f1522f7a56871e291adf1976d6cf4becaa2c0b242376fd0b2915f879eb303b"
+      }
+    }
+  },
+  "historicalWat": {
+    "1": {
+      "json.wlt": {
+        "before": "a14879a4c3f52bcbee64264fe3398365a01aa6609408a52bad35535bde382284",
+        "after": "15c878a646fa067363ac8915a5653675daef1c9b4afff35077bff82ae5a47f54"
+      }
+    },
+    "4": {
+      "json.wlt": {
+        "before": "37ee25d5b1048fcb36072ef7892a97ea3097c14d518abcefe51b99d2c855843f",
+        "after": "dacfcdb409533524879df14da20e6beaf5916936f230438b5ec529ca44ee7f49"
+      }
+    },
+    "5": {
+      "json.walz": {
+        "before": "b94e6d3e415dba9f6ffe40e260242441d3f727b43da64da5bb027e2670309470",
+        "after": "d1c6ead31d0c269f43760dac2596dd8a015a788264f3c2c0e01509c638940970"
+      }
+    },
+    "6": {
+      "json.walz": {
+        "before": "b94e6d3e415dba9f6ffe40e260242441d3f727b43da64da5bb027e2670309470",
+        "after": "d1c6ead31d0c269f43760dac2596dd8a015a788264f3c2c0e01509c638940970"
+      }
+    }
+  }
+}

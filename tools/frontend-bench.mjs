@@ -9,7 +9,7 @@ if (!['save', 'compare'].includes(mode) || !/^[a-zA-Z0-9_-]+$/.test(label ?? '')
 }
 const metadata = JSON.parse(execFileSync('cargo', ['metadata', '--no-deps', '--format-version', '1'], { encoding: 'utf8' }));
 const base = resolve(process.env.CRITERION_HOME ?? `${metadata.target_directory}/criterion`);
-const directory = join(base, 'frontend-v7');
+const directory = join(base, 'frontend-v8');
 let entries;
 try { entries = await readdir(directory, { recursive: true, withFileTypes: true }); }
 catch (error) { if (error.code !== 'ENOENT') throw error; entries = []; }

@@ -16,14 +16,25 @@ just frontend-bench '^check/std-types$'
 ```
 
 `frontend-save` does not overwrite existing labels. Comparisons preserve the baseline and, by default,
-save results under `target/criterion/frontend-v7/`. Setting `CRITERION_HOME` changes the base directory, but results remain separated under its `frontend-v7/` subdirectory.
+save results under `target/criterion/frontend-v8/`. Setting `CRITERION_HOME` changes the base directory, but results remain separated under its `frontend-v8/` subdirectory.
 For direct invocation options, see [Criterion's baseline documentation](https://bheisler.github.io/criterion.rs/book/user_guide/command_line_options.html).
 
 <a id="対象と条件"></a>
 
 ## Targets and conditions
 
-Inputs in `benches/fixtures/frontend-v7/` are fixed. V7 prefixes match arms with `@case`; v1–v6 inputs and references retain their original bytes. Reference checks compare v7 WAT exactly with v6/v5 and normalize only generated names/host namespaces when comparing earlier language names. IR, analysis, and diagnostic references are captured separately for v7.
+Inputs in `benches/fixtures/frontend-v8/` are fixed. V8 copies the v7 input bytes
+and records the intentional core byte API and range/value lowering changes.
+All v1–v7 inputs and references retain their original bytes.
+`frontend-reference-v8-transition.json` lists the exact before/after hashes:
+JSON changes IR, analysis, and optimized WAT; strings change pre-DCE IR and
+analysis because their imported byte library gained functions and source spans.
+String WAT, all other case hashes, and diagnostics remain unchanged.
+Earlier rename comparisons still normalize only generated names/host namespaces,
+with the JSON lowering change recorded separately for each historical namespace.
+The transition was checked against the compiler at `7c1f463`; both JSON Wasm
+outputs execute the fixture's `main` as 42. This is a new correctness baseline,
+not a rerun of the old performance measurements or a claim of full equivalence.
 Large inputs fix the compiler's internal form after file resolution. Because they contain private scope representations, CLI reference comparisons explicitly use the legacy fixture path; they are not public-source syntax examples.
 Application file imports/includes are expanded in advance,
 so API measurements exclude file reads. Create a new version when changing inputs.
@@ -62,9 +73,12 @@ For flag meanings, see [Criterion's profiling documentation](https://bheisler.gi
 ## Correctness checks
 
 `runtime/frontend-reference.test.mjs` checks fixed pre-change inputs, typed IR, analysis results, WAT, and diagnostics using SHA-256 and other comparisons.
-Do not update `tests/fixtures/frontend-reference-v7.json` for speed improvements.
-The pre-rename v1 reference is retained too, and generated WAT is checked for equality apart from internal namespace names.
-Intentional API changes require new versions of inputs and references.
+Do not overwrite `tests/fixtures/frontend-reference-v8.json` for speed improvements.
+The pre-rename v1 reference and v7 reference are retained too. Historical checks
+require every unchanged hash to match and verify both hashes for the explicitly
+recorded v8 transitions. The new v8 snapshot checks all outputs exactly, including
+native/browser WAT equality. Intentional API or generated-code changes require
+new versions of inputs and references with an explanation of each changed field.
 Rust tests also verify that using only standard types does not parse unrelated libraries, that generated indexes match their sources,
 and that concurrent calls isolate aliases and hygiene.
 

@@ -140,9 +140,9 @@ test('reserved @ effects are checked instead of discarded as WAT annotations', a
 });
 
 test('Wasm compiler matches the frozen native WAT outputs for all seven frontend fixtures', async ({ page }) => {
-  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v7.json', import.meta.url)));
+  const reference = JSON.parse(await readFile(new URL('../../tests/fixtures/frontend-reference-v8.json', import.meta.url)));
   const fixtures = await Promise.all(Object.keys(reference.cases).map(async name => ({
-    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v7/${name}`, import.meta.url), 'utf8'),
+    name, source: await readFile(new URL(`../../benches/fixtures/frontend-v8/${name}`, import.meta.url), 'utf8'),
   })));
   const actual = await page.evaluate(async fixtures => {
     const { WorkerClient } = await import('./worker-client.mjs');
