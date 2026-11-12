@@ -1,0 +1,7 @@
+{
+  "abi": "walz-js-native-experiment-v1",
+  "jsStrings": false,
+  "maximumTransferBytes": 16777216,
+  "note": "Experimental shared-value JS ABI, not Canonical ABI; no start/cancellation/host imports.",
+  "synchronous": true
+}

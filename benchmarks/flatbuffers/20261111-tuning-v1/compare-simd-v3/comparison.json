@@ -1,0 +1,101 @@
+{
+  "schema": "walz-flatbuffers-paired-v3",
+  "created": "2026-11-10T16:04:31.373Z",
+  "node": "v24.22.2",
+  "v8": "13.6.233.17-node.63",
+  "cpu": "Apple M5",
+  "before": "39f7c78fa6da5fbfe835bdc73d29145543f7b3aad0bc2250ff822676f03e0ab9",
+  "after": "556ee4dfbdab441cb3421517faf19b8516ce4cace15b52cac79ec787e1197996",
+  "method": "Same inputs and reference code. Warmup at least 4096 calls and 250ms per side before calibration; then calibrate on before and use the same iteration count for after. Alternate before/after order; GC before each side; automatic GC counts. Yield the event loop after every batch to drain fulfilled Task promises. Equality, microtask draining and cleanup checks are outside clocks. No profiler attached.",
+  "rounds": 9,
+  "targetMs": 20,
+  "cases": [
+    {
+      "name": "values-16k.encode.resident",
+      "calls": 256,
+      "beforeNs": [
+        115321.77734375004,
+        114934.40624999974,
+        114719.56250000038,
+        115201.33593749993,
+        115378.58203124962,
+        122039.38671875036,
+        119414.87890624991,
+        116332.68359375038,
+        116871.74609375006
+      ],
+      "afterNs": [
+        115991.04687499917,
+        113688.1484375003,
+        113408.85546875068,
+        113885.41796875007,
+        113927.24609375016,
+        118684.57031250035,
+        116574.38281249988,
+        115393.7148437496,
+        113588.3789062495
+      ],
+      "medianBeforeNs": 115378.58203124962,
+      "medianAfterNs": 113927.24609375016,
+      "speedup": 1.0115573605414865
+    },
+    {
+      "name": "values-16k.encode.core",
+      "calls": 128,
+      "beforeNs": [
+        148437.8203124983,
+        148453.7812500015,
+        147839.84374999904,
+        148199.87499999953,
+        146045.57031249854,
+        150426.75781250026,
+        147736.6562500002,
+        147185.87499999814,
+        147084.31249999875
+      ],
+      "afterNs": [
+        148048.17968749974,
+        145868.49218749977,
+        144537.4374999986,
+        145733.39843749977,
+        146778.96874999875,
+        145678.3828125019,
+        145410.4843749988,
+        147585.2890624978,
+        146253.57812500183
+      ],
+      "medianBeforeNs": 147839.84374999904,
+      "medianAfterNs": 145868.49218749977,
+      "speedup": 1.0159972775346957
+    },
+    {
+      "name": "values-16k.encode.component",
+      "calls": 128,
+      "beforeNs": [
+        161960.28124999627,
+        158962.23437500367,
+        157287.42968749997,
+        157976.56250000358,
+        176492.5078125046,
+        195533.5234374971,
+        181675.13281250081,
+        202530.60156250058,
+        176665.6875000052
+      ],
+      "afterNs": [
+        158760.4218750016,
+        157163.08593749773,
+        154737.6328125054,
+        153129.8828125003,
+        182524.73437500073,
+        187202.47656250422,
+        188809.24218749584,
+        179473.3046874981,
+        188464.84375000471
+      ],
+      "medianBeforeNs": 176492.5078125046,
+      "medianAfterNs": 179473.3046874981,
+      "speedup": 1.0164781949203276
+    }
+  ]
+}

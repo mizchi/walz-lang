@@ -1,0 +1,3747 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "callFrame": {
+        "functionName": "(root)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 0,
+      "children": [
+        2,
+        47,
+        64,
+        74,
+        75,
+        84,
+        97,
+        98,
+        103
+      ]
+    },
+    {
+      "id": 2,
+      "callFrame": {
+        "functionName": "profile",
+        "scriptId": "89",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+        "lineNumber": 92,
+        "columnNumber": 29
+      },
+      "hitCount": 0,
+      "children": [
+        3,
+        6,
+        79
+      ]
+    },
+    {
+      "id": 3,
+      "callFrame": {
+        "functionName": "fn",
+        "scriptId": "13",
+        "url": "node:internal/util",
+        "lineNumber": 476,
+        "columnNumber": 13
+      },
+      "hitCount": 0,
+      "children": [
+        4
+      ]
+    },
+    {
+      "id": 4,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "13",
+        "url": "node:internal/util",
+        "lineNumber": 477,
+        "columnNumber": 23
+      },
+      "hitCount": 0,
+      "children": [
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "callFrame": {
+        "functionName": "post",
+        "scriptId": "118",
+        "url": "node:inspector",
+        "lineNumber": 114,
+        "columnNumber": 6
+      },
+      "hitCount": 0
+    },
+    {
+      "id": 6,
+      "callFrame": {
+        "functionName": "fn",
+        "scriptId": "89",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+        "lineNumber": 86,
+        "columnNumber": 58
+      },
+      "hitCount": 0,
+      "children": [
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 108,
+        "columnNumber": 35
+      },
+      "hitCount": 2,
+      "children": [
+        8
+      ],
+      "positionTicks": [
+        {
+          "line": 109,
+          "ticks": 1
+        },
+        {
+          "line": 207,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "callFrame": {
+        "functionName": "invoke",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 193,
+        "columnNumber": 8
+      },
+      "hitCount": 1,
+      "children": [
+        9,
+        17
+      ],
+      "positionTicks": [
+        {
+          "line": 206,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "callFrame": {
+        "functionName": "execute",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 208,
+        "columnNumber": 9
+      },
+      "hitCount": 5,
+      "children": [
+        10,
+        27,
+        48,
+        86,
+        94
+      ],
+      "positionTicks": [
+        {
+          "line": 304,
+          "ticks": 1
+        },
+        {
+          "line": 213,
+          "ticks": 2
+        },
+        {
+          "line": 86,
+          "ticks": 1
+        },
+        {
+          "line": 291,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "callFrame": {
+        "functionName": "encode",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3190,
+        "columnNumber": 21
+      },
+      "hitCount": 11,
+      "children": [
+        11,
+        34,
+        82,
+        100
+      ],
+      "positionTicks": [
+        {
+          "line": 1071,
+          "ticks": 1
+        },
+        {
+          "line": 3212,
+          "ticks": 2
+        },
+        {
+          "line": 1754,
+          "ticks": 1
+        },
+        {
+          "line": 2476,
+          "ticks": 1
+        },
+        {
+          "line": 3196,
+          "ticks": 5
+        },
+        {
+          "line": 163,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "callFrame": {
+        "functionName": "_withGlobalCurrentThreadMeta",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1745,
+        "columnNumber": 41
+      },
+      "hitCount": 7,
+      "children": [
+        12,
+        38,
+        53
+      ],
+      "positionTicks": [
+        {
+          "line": 1760,
+          "ticks": 7
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "callFrame": {
+        "functionName": "fn",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3223,
+        "columnNumber": 14
+      },
+      "hitCount": 76,
+      "children": [
+        13,
+        19,
+        25,
+        28,
+        36,
+        40,
+        49,
+        50,
+        65,
+        73,
+        81,
+        92
+      ],
+      "positionTicks": [
+        {
+          "line": 3432,
+          "ticks": 1
+        },
+        {
+          "line": 3309,
+          "ticks": 1
+        },
+        {
+          "line": 548,
+          "ticks": 1
+        },
+        {
+          "line": 3300,
+          "ticks": 2
+        },
+        {
+          "line": 3346,
+          "ticks": 1
+        },
+        {
+          "line": 3229,
+          "ticks": 2
+        },
+        {
+          "line": 3344,
+          "ticks": 4
+        },
+        {
+          "line": 163,
+          "ticks": 1
+        },
+        {
+          "line": 3429,
+          "ticks": 1
+        },
+        {
+          "line": 3406,
+          "ticks": 2
+        },
+        {
+          "line": 3452,
+          "ticks": 4
+        },
+        {
+          "line": 3287,
+          "ticks": 1
+        },
+        {
+          "line": 3304,
+          "ticks": 2
+        },
+        {
+          "line": 3299,
+          "ticks": 3
+        },
+        {
+          "line": 3345,
+          "ticks": 2
+        },
+        {
+          "line": 3224,
+          "ticks": 1
+        },
+        {
+          "line": 3431,
+          "ticks": 42
+        },
+        {
+          "line": 3283,
+          "ticks": 2
+        },
+        {
+          "line": 1075,
+          "ticks": 1
+        },
+        {
+          "line": 3407,
+          "ticks": 1
+        },
+        {
+          "line": 3427,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3304,
+        "columnNumber": 26
+      },
+      "hitCount": 2,
+      "children": [
+        14,
+        89
+      ],
+      "positionTicks": [
+        {
+          "line": 3319,
+          "ticks": 1
+        },
+        {
+          "line": 3327,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "callFrame": {
+        "functionName": "getCurrentThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1077,
+        "columnNumber": 29
+      },
+      "hitCount": 3,
+      "children": [
+        15
+      ],
+      "positionTicks": [
+        {
+          "line": 430,
+          "ticks": 1
+        },
+        {
+          "line": 3022,
+          "ticks": 1
+        },
+        {
+          "line": 1092,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 423,
+        "columnNumber": 9
+      },
+      "hitCount": 0,
+      "children": [
+        16
+      ]
+    },
+    {
+      "id": 16,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 23,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 23
+        }
+      ]
+    },
+    {
+      "id": 89,
+      "callFrame": {
+        "functionName": "_getGlobalCurrentThreadMeta",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1734,
+        "columnNumber": 40
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1742,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "callFrame": {
+        "functionName": "_withGlobalCurrentThreadMeta",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1745,
+        "columnNumber": 41
+      },
+      "hitCount": 1,
+      "children": [
+        20,
+        39
+      ],
+      "positionTicks": [
+        {
+          "line": 1772,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "callFrame": {
+        "functionName": "fn",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3409,
+        "columnNumber": 22
+      },
+      "hitCount": 0,
+      "children": [
+        21
+      ]
+    },
+    {
+      "id": 21,
+      "callFrame": {
+        "functionName": "js-to-wasm:liiiiiiidiiii:i",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 8532
+      },
+      "hitCount": 6,
+      "children": [
+        22,
+        32,
+        85
+      ],
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "callFrame": {
+        "functionName": "wasm-function[112]",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 8532
+      },
+      "hitCount": 0,
+      "children": [
+        23
+      ]
+    },
+    {
+      "id": 23,
+      "callFrame": {
+        "functionName": "walz-file-2.message.encode",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 6005
+      },
+      "hitCount": 0,
+      "children": [
+        24,
+        95
+      ]
+    },
+    {
+      "id": 24,
+      "callFrame": {
+        "functionName": "walz-file-1.bytes",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4792
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 95,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.finish",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 5688
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "callFrame": {
+        "functionName": "walz-file-2.message.encode",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 6005
+      },
+      "hitCount": 2,
+      "children": [
+        33,
+        46,
+        54,
+        67,
+        71,
+        88,
+        101
+      ],
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "callFrame": {
+        "functionName": "walz-file-1.raw",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4468
+      },
+      "hitCount": 4,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.finish",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 5688
+      },
+      "hitCount": 14,
+      "children": [
+        77
+      ],
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 14
+        }
+      ]
+    },
+    {
+      "id": 77,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.finish",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 5688
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.bits-field",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 5190
+      },
+      "hitCount": 5,
+      "children": [
+        66
+      ],
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "callFrame": {
+        "functionName": "walz-file-1.ensure",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4267
+      },
+      "hitCount": 5,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "callFrame": {
+        "functionName": "walz-file-1.bytes",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4792
+      },
+      "hitCount": 5,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "id": 71,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.i32s",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4945
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 88,
+      "callFrame": {
+        "functionName": "walz-file-1.prep",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4568
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "callFrame": {
+        "functionName": "walz-file-1.fb.builder.end",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 5344
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "callFrame": {
+        "functionName": "__utf8",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 1211
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 18,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 18
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "callFrame": {
+        "functionName": "resolve",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2804,
+        "columnNumber": 13
+      },
+      "hitCount": 0,
+      "children": [
+        26,
+        72
+      ]
+    },
+    {
+      "id": 26,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 18,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 18
+        }
+      ]
+    },
+    {
+      "id": 72,
+      "callFrame": {
+        "functionName": "validateResourceBorrowScope",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2038,
+        "columnNumber": 33
+      },
+      "hitCount": 3,
+      "positionTicks": [
+        {
+          "line": 2054,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3258,
+        "columnNumber": 26
+      },
+      "hitCount": 4,
+      "children": [
+        29,
+        96,
+        99
+      ],
+      "positionTicks": [
+        {
+          "line": 3278,
+          "ticks": 1
+        },
+        {
+          "line": 1080,
+          "ticks": 1
+        },
+        {
+          "line": 1071,
+          "ticks": 1
+        },
+        {
+          "line": 1094,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "callFrame": {
+        "functionName": "getCurrentThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1077,
+        "columnNumber": 29
+      },
+      "hitCount": 0,
+      "children": [
+        30
+      ]
+    },
+    {
+      "id": 30,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 423,
+        "columnNumber": 9
+      },
+      "hitCount": 0,
+      "children": [
+        31
+      ]
+    },
+    {
+      "id": 31,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 19,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 19
+        }
+      ]
+    },
+    {
+      "id": 96,
+      "callFrame": {
+        "functionName": "realloc0",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3782,
+        "columnNumber": 17
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 3783,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 99,
+      "callFrame": {
+        "functionName": "_getGlobalCurrentThreadMeta",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1734,
+        "columnNumber": 40
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1742,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "callFrame": {
+        "functionName": "exit",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2841,
+        "columnNumber": 10
+      },
+      "hitCount": 8,
+      "children": [
+        37,
+        44,
+        60,
+        102
+      ],
+      "positionTicks": [
+        {
+          "line": 1071,
+          "ticks": 1
+        },
+        {
+          "line": 1072,
+          "ticks": 2
+        },
+        {
+          "line": 2875,
+          "ticks": 3
+        },
+        {
+          "line": 2148,
+          "ticks": 1
+        },
+        {
+          "line": 2878,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 26,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 26
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "callFrame": {
+        "functionName": "removeThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2140,
+        "columnNumber": 18
+      },
+      "hitCount": 2,
+      "children": [
+        45,
+        62
+      ],
+      "positionTicks": [
+        {
+          "line": 2150,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "callFrame": {
+        "functionName": "remove",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 442,
+        "columnNumber": 12
+      },
+      "hitCount": 2,
+      "children": [
+        52
+      ],
+      "positionTicks": [
+        {
+          "line": 458,
+          "ticks": 1
+        },
+        {
+          "line": 470,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 23,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 23
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "callFrame": {
+        "functionName": "clearCurrentThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1099,
+        "columnNumber": 31
+      },
+      "hitCount": 7,
+      "children": [
+        63
+      ],
+      "positionTicks": [
+        {
+          "line": 1124,
+          "ticks": 1
+        },
+        {
+          "line": 1122,
+          "ticks": 2
+        },
+        {
+          "line": 1117,
+          "ticks": 1
+        },
+        {
+          "line": 1127,
+          "ticks": 2
+        },
+        {
+          "line": 1126,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 22,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 22
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "callFrame": {
+        "functionName": "exclusiveRelease",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 809,
+        "columnNumber": 22
+      },
+      "hitCount": 2,
+      "children": [
+        61
+      ],
+      "positionTicks": [
+        {
+          "line": 812,
+          "ticks": 1
+        },
+        {
+          "line": 163,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 43,
+      "children": [
+        91
+      ],
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 43
+        }
+      ]
+    },
+    {
+      "id": 91,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "9",
+        "url": "node:internal/bootstrap/node",
+        "lineNumber": 435,
+        "columnNumber": 7
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 436,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1991,
+        "columnNumber": 34
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1996,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 42,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 42
+        }
+      ]
+    },
+    {
+      "id": 49,
+      "callFrame": {
+        "functionName": "_utf8AllocateAndEncode",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 90,
+        "columnNumber": 33
+      },
+      "hitCount": 12,
+      "children": [
+        56,
+        68
+      ],
+      "positionTicks": [
+        {
+          "line": 3783,
+          "ticks": 1
+        },
+        {
+          "line": 115,
+          "ticks": 4
+        },
+        {
+          "line": 100,
+          "ticks": 1
+        },
+        {
+          "line": 91,
+          "ticks": 2
+        },
+        {
+          "line": 101,
+          "ticks": 3
+        },
+        {
+          "line": 3238,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "callFrame": {
+        "functionName": "",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3228,
+        "columnNumber": 60
+      },
+      "hitCount": 0,
+      "children": [
+        57,
+        76
+      ]
+    },
+    {
+      "id": 57,
+      "callFrame": {
+        "functionName": "getCurrentThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1077,
+        "columnNumber": 29
+      },
+      "hitCount": 1,
+      "children": [
+        58
+      ],
+      "positionTicks": [
+        {
+          "line": 1078,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 423,
+        "columnNumber": 9
+      },
+      "hitCount": 0,
+      "children": [
+        59
+      ]
+    },
+    {
+      "id": 59,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 19,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 19
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "callFrame": {
+        "functionName": "_getGlobalCurrentThreadMeta",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1734,
+        "columnNumber": 40
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1742,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "callFrame": {
+        "functionName": "encodeInto",
+        "scriptId": "50",
+        "url": "node:internal/encoding",
+        "lineNumber": 359,
+        "columnNumber": 12
+      },
+      "hitCount": 5,
+      "children": [
+        69
+      ],
+      "positionTicks": [
+        {
+          "line": 366,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "callFrame": {
+        "functionName": "encodeInto",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 366,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "callFrame": {
+        "functionName": "endFirstSlice",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2392,
+        "columnNumber": 19
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 2393,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "callFrame": {
+        "functionName": "get buffer",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 7,
+      "positionTicks": [
+        {
+          "line": 3431,
+          "ticks": 3
+        },
+        {
+          "line": 3299,
+          "ticks": 2
+        },
+        {
+          "line": 3429,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 73,
+      "callFrame": {
+        "functionName": "dataView",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 32,
+        "columnNumber": 19
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 33,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 81,
+      "callFrame": {
+        "functionName": "set mayLeave",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 544,
+        "columnNumber": 18
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 548,
+          "ticks": 1
+        },
+        {
+          "line": 545,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 92,
+      "callFrame": {
+        "functionName": "wasm-function[113]",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 8675
+      },
+      "hitCount": 1,
+      "children": [
+        93
+      ],
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 93,
+      "callFrame": {
+        "functionName": "free",
+        "scriptId": "197",
+        "url": "wasm://wasm/mem-64af8bd6",
+        "lineNumber": 0,
+        "columnNumber": 609
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 24,
+      "children": [
+        55
+      ],
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 24
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "9",
+        "url": "node:internal/bootstrap/node",
+        "lineNumber": 435,
+        "columnNumber": 7
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 436,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "callFrame": {
+        "functionName": "getOrCreateAsyncState",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1069,
+        "columnNumber": 34
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1075,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "callFrame": {
+        "functionName": "createNewCurrentImplicitThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3097,
+        "columnNumber": 43
+      },
+      "hitCount": 11,
+      "children": [
+        35,
+        41,
+        51
+      ],
+      "positionTicks": [
+        {
+          "line": 3122,
+          "ticks": 4
+        },
+        {
+          "line": 3143,
+          "ticks": 5
+        },
+        {
+          "line": 3120,
+          "ticks": 1
+        },
+        {
+          "line": 3150,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "callFrame": {
+        "functionName": "AsyncTask",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1921,
+        "columnNumber": 17
+      },
+      "hitCount": 14,
+      "children": [
+        70
+      ],
+      "positionTicks": [
+        {
+          "line": 1932,
+          "ticks": 1
+        },
+        {
+          "line": 2008,
+          "ticks": 1
+        },
+        {
+          "line": 1953,
+          "ticks": 1
+        },
+        {
+          "line": 1901,
+          "ticks": 1
+        },
+        {
+          "line": 1923,
+          "ticks": 5
+        },
+        {
+          "line": 1919,
+          "ticks": 1
+        },
+        {
+          "line": 1860,
+          "ticks": 1
+        },
+        {
+          "line": 1992,
+          "ticks": 1
+        },
+        {
+          "line": 1944,
+          "ticks": 1
+        },
+        {
+          "line": 1922,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "callFrame": {
+        "functionName": "promiseWithResolvers",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 147,
+        "columnNumber": 31
+      },
+      "hitCount": 3,
+      "positionTicks": [
+        {
+          "line": 150,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "callFrame": {
+        "functionName": "addThread",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2116,
+        "columnNumber": 15
+      },
+      "hitCount": 3,
+      "children": [
+        42
+      ],
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 1
+        },
+        {
+          "line": 2122,
+          "ticks": 1
+        },
+        {
+          "line": 417,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "callFrame": {
+        "functionName": "insert",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 393,
+        "columnNumber": 12
+      },
+      "hitCount": 0,
+      "children": [
+        43
+      ]
+    },
+    {
+      "id": 43,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 45,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 45
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "callFrame": {
+        "functionName": "_debugLog",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 161,
+        "columnNumber": 20
+      },
+      "hitCount": 30,
+      "positionTicks": [
+        {
+          "line": 163,
+          "ticks": 30
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "callFrame": {
+        "functionName": "mayBlock",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2216,
+        "columnNumber": 14
+      },
+      "hitCount": 0,
+      "children": [
+        83
+      ]
+    },
+    {
+      "id": 83,
+      "callFrame": {
+        "functionName": "isResolvedState",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2475,
+        "columnNumber": 21
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 2476,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 100,
+      "callFrame": {
+        "functionName": "set value",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 3212,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "callFrame": {
+        "functionName": "publish",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 289,
+        "columnNumber": 9
+      },
+      "hitCount": 10,
+      "children": [
+        78
+      ],
+      "positionTicks": [
+        {
+          "line": 303,
+          "ticks": 1
+        },
+        {
+          "line": 300,
+          "ticks": 6
+        },
+        {
+          "line": 301,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "id": 78,
+      "callFrame": {
+        "functionName": "set value",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 303,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 48,
+      "callFrame": {
+        "functionName": "fn",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 3223,
+        "columnNumber": 14
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 3224,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 86,
+      "callFrame": {
+        "functionName": "enter",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 85,
+        "columnNumber": 7
+      },
+      "hitCount": 0,
+      "children": [
+        87
+      ]
+    },
+    {
+      "id": 87,
+      "callFrame": {
+        "functionName": "set value",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 4,
+      "positionTicks": [
+        {
+          "line": 86,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "id": 94,
+      "callFrame": {
+        "functionName": "set value",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 2,
+      "positionTicks": [
+        {
+          "line": 213,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "callFrame": {
+        "functionName": "create",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 119,
+        "columnNumber": 8
+      },
+      "hitCount": 20,
+      "children": [
+        18,
+        90
+      ],
+      "positionTicks": [
+        {
+          "line": 45,
+          "ticks": 1
+        },
+        {
+          "line": 121,
+          "ticks": 4
+        },
+        {
+          "line": 40,
+          "ticks": 2
+        },
+        {
+          "line": 141,
+          "ticks": 1
+        },
+        {
+          "line": 130,
+          "ticks": 2
+        },
+        {
+          "line": 120,
+          "ticks": 1
+        },
+        {
+          "line": 164,
+          "ticks": 2
+        },
+        {
+          "line": 169,
+          "ticks": 7
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "callFrame": {
+        "functionName": "taskHandle",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 44,
+        "columnNumber": 19
+      },
+      "hitCount": 28,
+      "positionTicks": [
+        {
+          "line": 46,
+          "ticks": 8
+        },
+        {
+          "line": 51,
+          "ticks": 20
+        }
+      ]
+    },
+    {
+      "id": 90,
+      "callFrame": {
+        "functionName": "deferred",
+        "scriptId": "195",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/tasks.mjs",
+        "lineNumber": 38,
+        "columnNumber": 17
+      },
+      "hitCount": 5,
+      "positionTicks": [
+        {
+          "line": 40,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "callFrame": {
+        "functionName": "now",
+        "scriptId": "139",
+        "url": "node:internal/perf/performance",
+        "lineNumber": 136,
+        "columnNumber": 5
+      },
+      "hitCount": 0,
+      "children": [
+        80
+      ]
+    },
+    {
+      "id": 80,
+      "callFrame": {
+        "functionName": "wrappedFn",
+        "scriptId": "7",
+        "url": "node:internal/errors",
+        "lineNumber": 537,
+        "columnNumber": 20
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 540,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 47,
+      "callFrame": {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 103
+    },
+    {
+      "id": 64,
+      "callFrame": {
+        "functionName": "__release_v9",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 7153
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 74,
+      "callFrame": {
+        "functionName": "get",
+        "scriptId": "9",
+        "url": "node:internal/bootstrap/node",
+        "lineNumber": 435,
+        "columnNumber": 7
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 437,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "callFrame": {
+        "functionName": "settleCompletionPromise",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 1955,
+        "columnNumber": 40
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1957,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 84,
+      "callFrame": {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "hitCount": 7
+    },
+    {
+      "id": 97,
+      "callFrame": {
+        "functionName": "#checkThreadExit",
+        "scriptId": "193",
+        "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/component/component.js",
+        "lineNumber": 2131,
+        "columnNumber": 22
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 2137,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 98,
+      "callFrame": {
+        "functionName": "alloc",
+        "scriptId": "197",
+        "url": "wasm://wasm/mem-64af8bd6",
+        "lineNumber": 0,
+        "columnNumber": 250
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "callFrame": {
+        "functionName": "walz-file-1.ensure",
+        "scriptId": "198",
+        "url": "wasm://wasm/guest-9a7b73e2",
+        "lineNumber": 0,
+        "columnNumber": 4267
+      },
+      "hitCount": 1,
+      "positionTicks": [
+        {
+          "line": 1,
+          "ticks": 1
+        }
+      ]
+    }
+  ],
+  "startTime": 759046978126,
+  "endTime": 759048007334,
+  "samples": [
+    5,
+    12,
+    16,
+    18,
+    18,
+    24,
+    10,
+    18,
+    26,
+    27,
+    12,
+    31,
+    26,
+    33,
+    35,
+    37,
+    12,
+    36,
+    38,
+    39,
+    40,
+    43,
+    31,
+    40,
+    12,
+    12,
+    45,
+    39,
+    46,
+    40,
+    47,
+    48,
+    38,
+    47,
+    49,
+    37,
+    50,
+    17,
+    47,
+    46,
+    51,
+    47,
+    31,
+    52,
+    53,
+    40,
+    51,
+    43,
+    54,
+    27,
+    55,
+    46,
+    59,
+    61,
+    51,
+    47,
+    47,
+    47,
+    63,
+    18,
+    43,
+    64,
+    65,
+    43,
+    40,
+    12,
+    66,
+    12,
+    67,
+    12,
+    12,
+    61,
+    12,
+    43,
+    39,
+    65,
+    16,
+    49,
+    47,
+    47,
+    47,
+    69,
+    38,
+    17,
+    46,
+    52,
+    52,
+    38,
+    43,
+    10,
+    61,
+    38,
+    70,
+    18,
+    51,
+    51,
+    49,
+    59,
+    71,
+    37,
+    63,
+    47,
+    47,
+    46,
+    43,
+    38,
+    12,
+    63,
+    10,
+    52,
+    12,
+    16,
+    37,
+    26,
+    72,
+    43,
+    49,
+    52,
+    7,
+    35,
+    51,
+    59,
+    73,
+    47,
+    47,
+    47,
+    54,
+    61,
+    52,
+    61,
+    61,
+    61,
+    61,
+    66,
+    46,
+    38,
+    74,
+    27,
+    12,
+    71,
+    61,
+    14,
+    17,
+    17,
+    34,
+    47,
+    47,
+    47,
+    12,
+    61,
+    68,
+    62,
+    66,
+    40,
+    16,
+    40,
+    44,
+    60,
+    65,
+    40,
+    17,
+    12,
+    12,
+    10,
+    40,
+    40,
+    47,
+    47,
+    47,
+    31,
+    31,
+    16,
+    37,
+    43,
+    28,
+    61,
+    61,
+    47,
+    63,
+    39,
+    12,
+    40,
+    12,
+    62,
+    27,
+    62,
+    12,
+    12,
+    47,
+    47,
+    35,
+    52,
+    12,
+    43,
+    17,
+    59,
+    43,
+    46,
+    37,
+    38,
+    35,
+    47,
+    63,
+    34,
+    39,
+    52,
+    40,
+    35,
+    52,
+    61,
+    47,
+    47,
+    35,
+    16,
+    10,
+    12,
+    12,
+    12,
+    63,
+    63,
+    17,
+    43,
+    28,
+    40,
+    34,
+    26,
+    51,
+    35,
+    18,
+    75,
+    36,
+    47,
+    47,
+    47,
+    43,
+    17,
+    37,
+    49,
+    26,
+    14,
+    76,
+    59,
+    77,
+    52,
+    78,
+    46,
+    12,
+    12,
+    57,
+    43,
+    61,
+    12,
+    80,
+    47,
+    47,
+    59,
+    43,
+    81,
+    9,
+    34,
+    49,
+    18,
+    12,
+    34,
+    17,
+    40,
+    43,
+    12,
+    39,
+    18,
+    83,
+    63,
+    21,
+    43,
+    84,
+    47,
+    47,
+    47,
+    43,
+    16,
+    46,
+    63,
+    51,
+    18,
+    34,
+    40,
+    21,
+    59,
+    9,
+    84,
+    85,
+    18,
+    61,
+    43,
+    33,
+    40,
+    66,
+    47,
+    47,
+    40,
+    59,
+    51,
+    49,
+    87,
+    61,
+    12,
+    37,
+    37,
+    38,
+    31,
+    17,
+    12,
+    38,
+    37,
+    31,
+    12,
+    63,
+    17,
+    47,
+    47,
+    18,
+    61,
+    63,
+    43,
+    26,
+    9,
+    88,
+    39,
+    35,
+    34,
+    12,
+    12,
+    9,
+    12,
+    14,
+    59,
+    73,
+    41,
+    67,
+    47,
+    47,
+    49,
+    43,
+    37,
+    89,
+    61,
+    12,
+    51,
+    40,
+    52,
+    87,
+    37,
+    12,
+    31,
+    49,
+    12,
+    61,
+    51,
+    90,
+    17,
+    47,
+    47,
+    47,
+    17,
+    32,
+    90,
+    16,
+    52,
+    37,
+    46,
+    91,
+    12,
+    27,
+    27,
+    33,
+    37,
+    51,
+    63,
+    37,
+    43,
+    16,
+    19,
+    47,
+    47,
+    52,
+    18,
+    61,
+    21,
+    12,
+    26,
+    34,
+    59,
+    93,
+    35,
+    9,
+    18,
+    37,
+    39,
+    51,
+    40,
+    43,
+    17,
+    40,
+    47,
+    47,
+    12,
+    37,
+    61,
+    61,
+    17,
+    38,
+    10,
+    43,
+    33,
+    10,
+    43,
+    12,
+    40,
+    35,
+    12,
+    61,
+    41,
+    43,
+    61,
+    47,
+    47,
+    47,
+    43,
+    40,
+    12,
+    66,
+    37,
+    51,
+    40,
+    44,
+    34,
+    27,
+    18,
+    39,
+    43,
+    52,
+    41,
+    32,
+    54,
+    59,
+    12,
+    47,
+    47,
+    47,
+    12,
+    16,
+    36,
+    40,
+    26,
+    47,
+    12,
+    27,
+    94,
+    72,
+    52,
+    34,
+    12,
+    17,
+    43,
+    18,
+    37,
+    35,
+    59,
+    10,
+    59,
+    12,
+    52,
+    11,
+    47,
+    43,
+    16,
+    12,
+    54,
+    28,
+    52,
+    12,
+    45,
+    47,
+    47,
+    47,
+    47,
+    28,
+    2,
+    11,
+    95,
+    12,
+    13,
+    39,
+    47,
+    37,
+    17,
+    65,
+    61,
+    16,
+    72,
+    90,
+    16,
+    38,
+    61,
+    51,
+    61,
+    84,
+    12,
+    49,
+    40,
+    59,
+    47,
+    12,
+    13,
+    61,
+    70,
+    47,
+    47,
+    47,
+    84,
+    43,
+    90,
+    84,
+    12,
+    31,
+    38,
+    59,
+    61,
+    61,
+    27,
+    26,
+    17,
+    51,
+    39,
+    51,
+    61,
+    12,
+    31,
+    38,
+    26,
+    47,
+    47,
+    47,
+    47,
+    39,
+    40,
+    36,
+    51,
+    38,
+    63,
+    38,
+    16,
+    68,
+    12,
+    51,
+    36,
+    39,
+    68,
+    65,
+    67,
+    63,
+    61,
+    67,
+    61,
+    47,
+    47,
+    47,
+    46,
+    18,
+    68,
+    31,
+    61,
+    62,
+    85,
+    27,
+    52,
+    43,
+    51,
+    8,
+    12,
+    39,
+    26,
+    18,
+    40,
+    96,
+    38,
+    61,
+    47,
+    47,
+    47,
+    84,
+    37,
+    16,
+    37,
+    26,
+    34,
+    39,
+    18,
+    51,
+    37,
+    61,
+    62,
+    67,
+    16,
+    87,
+    51,
+    12,
+    11,
+    18,
+    47,
+    47,
+    47,
+    11,
+    61,
+    31,
+    61,
+    43,
+    12,
+    68,
+    59,
+    12,
+    40,
+    40,
+    43,
+    62,
+    43,
+    16,
+    40,
+    40,
+    17,
+    63,
+    12,
+    47,
+    47,
+    47,
+    40,
+    18,
+    31,
+    7,
+    26,
+    38,
+    65,
+    35,
+    39,
+    43,
+    35,
+    18,
+    40,
+    18,
+    12,
+    94,
+    35,
+    51,
+    97,
+    47,
+    47,
+    47,
+    47,
+    52,
+    52,
+    59,
+    43,
+    31,
+    21,
+    40,
+    51,
+    12,
+    43,
+    38,
+    12,
+    51,
+    61,
+    37,
+    36,
+    90,
+    63,
+    21,
+    47,
+    47,
+    47,
+    63,
+    18,
+    36,
+    92,
+    17,
+    63,
+    43,
+    49,
+    26,
+    43,
+    40,
+    46,
+    10,
+    63,
+    12,
+    16,
+    31,
+    12,
+    59,
+    47,
+    47,
+    47,
+    43,
+    40,
+    16,
+    40,
+    18,
+    11,
+    87,
+    98,
+    31,
+    99,
+    16,
+    38,
+    52,
+    49,
+    100,
+    26,
+    12,
+    11,
+    36,
+    47,
+    47,
+    47,
+    16,
+    10,
+    51,
+    63,
+    40,
+    12,
+    46,
+    21,
+    26,
+    60,
+    18,
+    101,
+    18,
+    31,
+    52,
+    11,
+    63,
+    37,
+    102,
+    47,
+    47,
+    47,
+    40,
+    40,
+    38,
+    61,
+    12,
+    18,
+    10,
+    103,
+    43,
+    51,
+    37,
+    31,
+    84,
+    38,
+    18,
+    39,
+    40,
+    43,
+    46,
+    47,
+    47,
+    47,
+    54,
+    31,
+    51,
+    12,
+    12,
+    43,
+    39,
+    61,
+    12,
+    43,
+    65,
+    51,
+    16,
+    38,
+    26,
+    51,
+    12,
+    12,
+    47,
+    47,
+    47,
+    61,
+    88,
+    70,
+    12,
+    26,
+    52,
+    40,
+    61,
+    81,
+    59,
+    16,
+    62,
+    38,
+    63
+  ],
+  "timeDeltas": [
+    28916,
+    1375,
+    1250,
+    1292,
+    1250,
+    1250,
+    1292,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1125,
+    1292,
+    1250,
+    1250,
+    1292,
+    1250,
+    1291,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1292,
+    1250,
+    1166,
+    1042,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1167,
+    1250,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1167,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1209,
+    1291,
+    1250,
+    1292,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1083,
+    1209,
+    1000,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1292,
+    1125,
+    1292,
+    1250,
+    1250,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1084,
+    1250,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1292,
+    1250,
+    1250,
+    1208,
+    1292,
+    1167,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1292,
+    1250,
+    1292,
+    1166,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1125,
+    1250,
+    1292,
+    1083,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1083,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1292,
+    1292,
+    1250,
+    1250,
+    1250,
+    1166,
+    1209,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1125,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1042,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1125,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1209,
+    1291,
+    1209,
+    1250,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1083,
+    1250,
+    1209,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1042,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1042,
+    1250,
+    1250,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1291,
+    1000,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1292,
+    1250,
+    1291,
+    1209,
+    1208,
+    1250,
+    1250,
+    1042,
+    1250,
+    1250,
+    1250,
+    1291,
+    1209,
+    1250,
+    1291,
+    1250,
+    1292,
+    1250,
+    1292,
+    1250,
+    1250,
+    1208,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    42,
+    1250,
+    1292,
+    1208,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1250,
+    1250,
+    1209,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1292,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1125,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1291,
+    1125,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1041,
+    1292,
+    1167,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1167,
+    1291,
+    1250,
+    1250,
+    1250,
+    1209,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1125,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1209,
+    1291,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1084,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1167,
+    1291,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1000,
+    1250,
+    1292,
+    1166,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1167,
+    1250,
+    1250,
+    1125,
+    1250,
+    1291,
+    1042,
+    1250,
+    1250,
+    1250,
+    1208,
+    1292,
+    1208,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1292,
+    1208,
+    1000,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1042,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1291,
+    1209,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1292,
+    1208,
+    1042,
+    1250,
+    1250,
+    1250,
+    1292,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1291,
+    1250,
+    1250,
+    1209,
+    1250,
+    1291,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1209,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1250,
+    1208,
+    1292,
+    1250,
+    1250,
+    1250
+  ]
+}

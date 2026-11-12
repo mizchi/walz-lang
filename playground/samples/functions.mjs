@@ -21,8 +21,22 @@ export const functions = {
     (+ $a $b))
   (func $main (export "main") (result i64) (@effect pure)
     ;; The expected i64 result fixes T; 40 and 2 are also i64.
-    ;; Explicit form: (call (@inst $add i64) 40 2)
+    ;; Explicit form: (call $add<i64> 40 2), also (@inst $add i64).
     (call $add 40 2)))`,
+  },
+  'angle-generics': {
+    category: 'Functions and modules', label: 'Angle type arguments',
+    description: 'Write nested types as $result<$tuple<i32, i32>, i32> and specialize calls with $id<i32>. These spellings use the same type checking and monomorphization as @inst.',
+    features: ['generics', 'angle-applications', 'result', 'tuples'], expectation: { kind: 'run', output: '42' },
+    source: `(module
+  (@use "walz:core" (type $result) (type $tuple))
+  (func $id (@type.params $T) (param $x $T) (result $T) (@effect pure) $x)
+  (func $pair (result $result<$tuple<i32, i32>, i32>) (@effect pure)
+    (@result.ok (@tuple.new (i32.const 40) (i32.const 2))))
+  (func $main (export "main") (result i32) (@effect pure)
+    (@match (call $pair)
+      (@case err ($code) $code)
+      (@case ok ($value) (@let ($a $b) $value (call $id<i32> (+ $a $b)))))))`,
   },
   modules: {
     category: 'Functions and modules', label: 'File modules, selective uses and opaque types',

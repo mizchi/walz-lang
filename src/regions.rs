@@ -438,12 +438,18 @@ impl Context<'_> {
                 }
             }
             Buffer { op, args, .. } => {
-                for arg in args {
+                for (index, arg) in args.iter().enumerate() {
                     let objects = self.eval(arg);
-                    if let BufferOp::FromArray(ty) = op
+                    if index == 0
+                        && let BufferOp::FromArray(ty) = op
                         && matches!(&self.module.types[ty.0].kind, TypeKind::Array(f) if f.mutable)
                     {
                         self.access(&objects, Member::Element, false);
+                    }
+                    if index == 0
+                        && matches!(op, BufferOp::CopyToArray(_) | BufferOp::WriteArray(..))
+                    {
+                        self.access(&objects, Member::Element, true);
                     }
                 }
                 if !op.allocates() {
@@ -608,7 +614,9 @@ impl Context<'_> {
                 self.store(&objects, member, value, false);
                 Points::new()
             }
-            ArrayGet { ty, object, index } => {
+            ArrayGet {
+                ty, object, index, ..
+            } => {
                 let objects = self.eval(object);
                 self.eval(index);
                 let TypeKind::Array(field) = &self.module.types[ty.0].kind else {
@@ -634,6 +642,20 @@ impl Context<'_> {
             }
             ArrayLen(object) => {
                 self.eval(object);
+                Points::new()
+            }
+            ArrayCopy { args, source, .. } => {
+                for (index, arg) in args.iter().enumerate() {
+                    let objects = self.eval(arg);
+                    if index == 0 {
+                        self.access(&objects, Member::Element, true);
+                    }
+                    if index == 2
+                        && matches!(&self.module.types[source.0].kind, TypeKind::Array(f) if f.mutable)
+                    {
+                        self.access(&objects, Member::Element, false);
+                    }
+                }
                 Points::new()
             }
             Match { subject, arms, .. } => {

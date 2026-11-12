@@ -68,11 +68,28 @@ fn reference(head: &str) -> Option<(ReferenceKind, usize)> {
     Some(match head {
         "call" | "closure.call" => (ReferenceKind::Function, 1),
         "task.spawn" => (ReferenceKind::Function, 2),
-        "struct.new" | "struct.named" | "struct.get" | "struct.set" | "struct.update"
-        | "closure.new" | "bytes.from-array" | "array.new" | "array.new_fixed" | "array.get"
-        | "array.set" | "variant.new" | "ref.null" | "resource.new" | "newtype.wrap"
+        "struct.new"
+        | "struct.named"
+        | "struct.get"
+        | "struct.set"
+        | "struct.update"
+        | "closure.new"
+        | "bytes.from-array"
+        | "bytes.copy-to-array"
+        | "array.new"
+        | "array.new_fixed"
+        | "array.get"
+        | "array.get_u"
+        | "array.get_s"
+        | "array.copy"
+        | "array.set"
+        | "variant.new"
+        | "ref.null"
+        | "resource.new"
+        | "newtype.wrap"
         | "newtype.unwrap" => (ReferenceKind::Type, 1),
         "list.from-array" => (ReferenceKind::Type, 2),
+        name if crate::ir::ByteAccess::parse_write(name).is_some() => (ReferenceKind::Type, 1),
         _ => return None,
     })
 }
@@ -91,6 +108,11 @@ pub(crate) fn map_references(
     if let Some((function, index)) = reference(&head) {
         if let Some(operand) = items.get_mut(index) {
             f(function, operand)?;
+        }
+        if head == "array.copy"
+            && let Some(operand) = items.get_mut(2)
+        {
+            f(ReferenceKind::Type, operand)?;
         }
     } else if (matches!(head.as_str(), "ref" | "borrow") || head == "resource" && items.len() == 2)
         && let Some(operand) = items.last_mut()

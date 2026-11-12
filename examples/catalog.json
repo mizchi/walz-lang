@@ -1,6 +1,31 @@
 {
   "examples": [
     {
+      "path": "examples/angle-applications.walz",
+      "pattern": "angle type arguments for nested values, GC types, calls and generic closures",
+      "expected": "42"
+    },
+    {
+      "path": "examples/value-pipeline.walz",
+      "pattern": "shared Option/Result/tuple pipeline with scalarized private helper returns",
+      "expected": "42"
+    },
+    {
+      "path": "examples/range-scan.walz",
+      "pattern": "validated immutable views and guarded reads through inlined loop helpers",
+      "expected": "42"
+    },
+    {
+      "path": "examples/checked-layout.walz",
+      "pattern": "checked unsigned size arithmetic with explicit Option failure and application limits",
+      "expected": "42"
+    },
+    {
+      "path": "examples/flatbuffers/main.walz",
+      "pattern": "checked FlatBuffers encoder/decoder with records, vectors and nested tables",
+      "expected": "42"
+    },
+    {
       "path": "examples/review/main.walz",
       "pattern": "optional Watz printing with direct match/if expressions",
       "expected": "42"

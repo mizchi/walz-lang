@@ -1,0 +1,68 @@
+(module
+  (@use "walz:core" (type $option))
+  (@export
+    (func $i32.checked-add-u)
+    (func $i32.checked-mul-u)
+    (func $i32.checked-align-up-u)
+    (func $i64.checked-add-u)
+    (func $i64.checked-mul-u)
+    (func $i64.checked-align-up-u))
+
+  ;; Unsigned bit patterns; all successful sums fit in the source width.
+  (func $i32.checked-add-u
+    (param $a i32) (param $b i32) (result (@inst $option i32)) (@effect pure)
+    (if (result (@inst $option i32))
+      (i32.gt_u $b (i32.sub (i32.const -1) $a))
+      (then (@option.none))
+      (else (@option.some (i32.add $a $b)))))
+
+  ;; The zero branch must precede unsigned division.
+  (func $i32.checked-mul-u
+    (param $a i32) (param $b i32) (result (@inst $option i32)) (@effect pure)
+    (if (result (@inst $option i32)) (i32.eqz $a)
+      (then (@option.some (i32.const 0)))
+      (else (if (result (@inst $option i32))
+        (i32.gt_u $b (i32.div_u (i32.const -1) $a))
+        (then (@option.none))
+        (else (@option.some (i32.mul $a $b)))))))
+
+  ;; Alignment is a nonzero power of two, including the high-bit pattern.
+  ;; Compute padding modulo the width, then check the actual rounded sum.
+  (func $i32.checked-align-up-u
+    (param $value i32) (param $alignment i32) (result (@inst $option i32)) (@effect pure)
+    (if (result (@inst $option i32))
+      (i32.or (i32.eqz $alignment)
+        (i32.ne (i32.and $alignment (i32.sub $alignment (i32.const 1))) (i32.const 0)))
+      (then (@option.none))
+      (else (call $i32.checked-add-u $value
+        (i32.and (i32.sub (i32.const 0) $value) (i32.sub $alignment (i32.const 1)))))))
+
+  ;; Unsigned bit patterns; all successful sums fit in the source width.
+  (func $i64.checked-add-u
+    (param $a i64) (param $b i64) (result (@inst $option i64)) (@effect pure)
+    (if (result (@inst $option i64))
+      (i64.gt_u $b (i64.sub (i64.const -1) $a))
+      (then (@option.none))
+      (else (@option.some (i64.add $a $b)))))
+
+  ;; The zero branch must precede unsigned division.
+  (func $i64.checked-mul-u
+    (param $a i64) (param $b i64) (result (@inst $option i64)) (@effect pure)
+    (if (result (@inst $option i64)) (i64.eqz $a)
+      (then (@option.some (i64.const 0)))
+      (else (if (result (@inst $option i64))
+        (i64.gt_u $b (i64.div_u (i64.const -1) $a))
+        (then (@option.none))
+        (else (@option.some (i64.mul $a $b)))))))
+
+  ;; Alignment is a nonzero power of two, including the high-bit pattern.
+  ;; Compute padding modulo the width, then check the actual rounded sum.
+  (func $i64.checked-align-up-u
+    (param $value i64) (param $alignment i64) (result (@inst $option i64)) (@effect pure)
+    (if (result (@inst $option i64))
+      (i32.or (i64.eqz $alignment)
+        (i64.ne (i64.and $alignment (i64.sub $alignment (i64.const 1))) (i64.const 0)))
+      (then (@option.none))
+      (else (call $i64.checked-add-u $value
+        (i64.and (i64.sub (i64.const 0) $value) (i64.sub $alignment (i64.const 1)))))))
+)

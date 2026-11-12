@@ -1,15 +1,17 @@
 (module
-  (@use "walz:core" (type $string))
+  (@use "walz:core" (type $string) (type $option))
   (@use "./bytes-view.walz"
     (type $bytes-view)
     (func $bytes-view.new)
     (func $bytes-view.len)
     (func $bytes-view.get)
     (func $bytes-view.slice)
-    (func $bytes-view.to-bytes))
+    (func $bytes-view.is-utf8)
+    (func $bytes-view.to-string))
   (@export
     (opaque $string-view)
     (func $string-view.new)
+    (func $string-view.from-bytes-view)
     (func $string-view.byte-len)
     (func $string-view.bytes)
     (func $string-view.slice)
@@ -20,6 +22,15 @@
     (result (ref $string-view))
     (@effect allocates)
     (@$string-view::{:bytes (call $bytes-view.new (@string.bytes $source))}))
+
+  ;; Validate the selected immutable bytes in place; keep the same backing view.
+  (func $string-view.from-bytes-view
+    (param $source (ref $bytes-view))
+    (result (@inst $option (ref $string-view)))
+    (@effect allocates)
+    (if (result (@inst $option (ref $string-view))) (call $bytes-view.is-utf8 $source)
+      (then (@option.some (@$string-view::{:bytes $source})))
+      (else (@option.none))))
 
   (func $string-view.bytes
     (param $v (ref $string-view))
@@ -69,6 +80,6 @@
     (result $string)
     (@effect pure)
     (@match
-      (@string.from-bytes (call $bytes-view.to-bytes (call $string-view.bytes $v)))
+      (call $bytes-view.to-string (call $string-view.bytes $v))
       (@case none () (unreachable))
       (@case some ($value) $value))))

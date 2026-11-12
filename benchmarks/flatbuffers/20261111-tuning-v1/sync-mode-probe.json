@@ -1,0 +1,30 @@
+{
+  "schema": "walz-flatbuffers-sync-probe-v1",
+  "node": "v24.22.2",
+  "inputHash": "f1d16e819464c17f1cca0e0a5d21db04e8c974743f2ba72506551cbe504b97b3",
+  "settings": {
+    "name": "component",
+    "instantiation": "async",
+    "wasiShim": false,
+    "nodejsCompat": false,
+    "base64Cutoff": 0,
+    "noComponentErrorWrapping": false,
+    "bindgenEnableWasmExnref": true,
+    "multiMemory": true
+  },
+  "jco": "0.23.0",
+  "results": {
+    "jspi": {
+      "bytes": 143938,
+      "sha256": "51f6e17e330840e29d7bf15257eb4b49446dfb11c1ab42f1104a07cdaa64c393",
+      "hasAsyncTask": true
+    },
+    "sync": {
+      "bytes": 143938,
+      "sha256": "51f6e17e330840e29d7bf15257eb4b49446dfb11c1ab42f1104a07cdaa64c393",
+      "hasAsyncTask": true
+    }
+  },
+  "byteIdentical": true,
+  "toolSource": "// Diagnostic only: changing this option alone need not remove jco async support.\nimport { transpileBytes } from \"@bytecodealliance/jco-transpile\";\nimport { readFile, writeFile } from \"node:fs/promises\";\nimport { join, resolve } from \"node:path\";\nimport { verify } from \"./flatbuffers-bench/runner.mjs\";\nimport { hash } from \"./flatbuffers-bench/workloads.mjs\";\n\nconst [capture, output] = process.argv.slice(2);\nif (!capture || !output) throw new Error(\"usage: flatbuffers-sync-probe.mjs capture-directory output.json\");\nconst directory = resolve(capture); await verify(directory);\nconst input = await readFile(join(directory, \"component/component.wasm\"));\nconst settings = { name: \"component\", instantiation: \"async\", wasiShim: false, nodejsCompat: false,\n  base64Cutoff: 0, noComponentErrorWrapping: false, bindgenEnableWasmExnref: true, multiMemory: true };\nconst results = {};\nfor (const asyncMode of [\"jspi\", \"sync\"]) {\n  const generated = await transpileBytes(input, { ...settings, asyncMode });\n  const bytes = generated.files[\"component.js\"];\n  results[asyncMode] = { bytes: bytes.length, sha256: hash(bytes), hasAsyncTask: new TextDecoder().decode(bytes).includes(\"class AsyncTask\") };\n}\nawait writeFile(output, JSON.stringify({ schema: \"walz-flatbuffers-sync-probe-v1\", node: process.version,\n  inputHash: hash(input), settings, jco: \"0.23.0\", results, byteIdentical: results.jspi.sha256 === results.sync.sha256,\n  toolSource: await readFile(new URL(import.meta.url), \"utf8\") }, null, 2) + \"\\n\", { flag: \"wx\" });\n"
+}

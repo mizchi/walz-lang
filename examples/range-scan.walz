@@ -1,0 +1,19 @@
+(module
+  (@use "walz:core" (type $bytes-view)
+    (func $bytes-view.new) (func $bytes-view.slice) (func $bytes-view.len)
+    (func $bytes-view.read-i32-le))
+  ;; The immutable view is already validated by the caller. Each iteration
+  ;; establishes a complete unsigned four-byte range before calling the reader.
+  (func $sum (param $v (ref $bytes-view)) (result i64) (@effect pure)
+    (@let $length (call $bytes-view.len $v)
+      (@loop $scan (bind $at i32 0) (bind $total i64 0) (result i64)
+        (if (result i64) (i32.lt_u $at $length)
+          (then
+            (if (result i64) (i32.le_u 4 (- $length $at))
+              (then (@recur $scan (+ $at 4)
+                (+ $total (i64.extend_i32_s (call $bytes-view.read-i32-le $v $at)))))
+              (else $total)))
+          (else $total)))))
+  (func $main (export "main") (result i64) (@effect allocates)
+    (call $sum (call $bytes-view.slice
+      (call $bytes-view.new (@bytes.new 255 20 0 0 0 22 0 0 0 255)) 1 8))))

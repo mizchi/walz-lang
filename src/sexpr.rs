@@ -1,5 +1,23 @@
 use crate::Error;
 use crate::ir::Span;
+#[path = "sexpr/applications.rs"]
+pub(crate) mod applications;
+
+pub(crate) fn identifier(text: &str) -> bool {
+    let mut end = 0;
+    text.starts_with('$')
+        // Quoted IDs keep the existing native path, which decodes their WAT
+        // identity. The typed core stores ordinary identifiers verbatim.
+        && !text.starts_with("$\"")
+        && text.len() > 1
+        && wast::lexer::Lexer::new(text)
+            .parse(&mut end)
+            .ok()
+            .flatten()
+            .is_some_and(|t| {
+                t.kind == wast::lexer::TokenKind::Id && t.offset == 0 && end == text.len()
+            })
+}
 
 #[cfg(test)]
 thread_local! {
@@ -91,12 +109,16 @@ pub(crate) fn parse(source: &str) -> Result<Sexp, Error> {
         source,
         position: 0,
         recover: false,
+        applications: false,
     };
     reader.space()?;
-    let expression = reader.read(0)?;
+    let mut expression = reader.read(0)?;
     reader.space()?;
     if reader.position != source.len() {
         return Err(reader.error("expected one module"));
+    }
+    if reader.applications {
+        crate::applications::expand(source, &mut expression, false)?;
     }
     Ok(expression)
 }
@@ -105,6 +127,7 @@ struct Reader<'a> {
     source: &'a str,
     position: usize,
     recover: bool,
+    applications: bool,
 }
 
 /// Editor-only prefix syntax. The returned tree is never passed to checking or
@@ -115,11 +138,15 @@ pub(crate) fn editor_prefix(source: &str) -> Result<Sexp, Error> {
         source,
         position: 0,
         recover: true,
+        applications: false,
     };
     reader.space()?;
-    let syntax = reader.read(0)?;
+    let mut syntax = reader.read(0)?;
     if syntax.head() != Some("module") {
         return Err(reader.error("expected module"));
+    }
+    if reader.applications {
+        crate::applications::expand(source, &mut syntax, true)?;
     }
     Ok(syntax)
 }
@@ -249,8 +276,12 @@ impl Reader<'_> {
                     let ty = Sexp {
                         context: SyntaxContext::default(),
                         kind: Kind::Atom(name.to_owned()),
-                        span: items[0].span,
+                        span: Span {
+                            start: items[0].span.start + 1,
+                            end: items[0].span.end - 2,
+                        },
                     };
+                    self.applications |= applications::prefix(name).is_some();
                     items[0].kind = Kind::Atom("@struct.new".into());
                     items.push(ty);
                 }
@@ -349,12 +380,20 @@ impl Reader<'_> {
                     }
                 }
                 Some(_) => {
+                    let end = applications::end(self.source, start)
+                        .or_else(|| applications::compact_end(self.source, start));
                     let mut offset = start;
-                    wast::lexer::Lexer::new(self.source)
-                        .parse(&mut offset)
-                        .map_err(|error| self.error(&error.to_string()))?
-                        .ok_or_else(|| self.error("expected token"))?;
+                    if let Some(end) = end {
+                        offset = end;
+                    } else {
+                        wast::lexer::Lexer::new(self.source)
+                            .parse(&mut offset)
+                            .map_err(|error| self.error(&error.to_string()))?
+                            .ok_or_else(|| self.error("expected token"))?;
+                    }
                     self.position = offset;
+                    self.applications |=
+                        applications::prefix(&self.source[start..offset]).is_some();
                     Kind::Atom(self.source[start..self.position].to_owned())
                 }
                 None => return Err(self.error("expected module")),

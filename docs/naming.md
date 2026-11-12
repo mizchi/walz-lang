@@ -47,6 +47,9 @@ GC boxes use `@box.new` and type `(@inst $box T)`. External resources use existi
 Naming changes and ABI support are separate features. See [WIT bindings](wit-bindings.md) for current bool/char, integer, tuple, and variant support. WIT resource input/output comes later.
 For example, adding `$u32` as a transparent i32 alias would not create a type with unsigned comparison/division semantics.
 WAT i32/i64 operations and WIT boundary types are defined separately.
+Numeric helper names such as `$i32.checked-add-u` are ordinary function identifiers.
+The `-u` specifies unsigned bit-pattern semantics; the scalar type and its ABI remain i32/s32.
+See [checked size arithmetic](checked-integers.md).
 
 Built-in extension vocabulary likewise uses `@string.*`, `@tuple.*`, and `@box.*`.
 Existing internal `text` / `pair` / `own` representations in typed IR, ownership checking, and ABI policies are retained.

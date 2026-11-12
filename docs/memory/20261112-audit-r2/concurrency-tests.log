@@ -1,0 +1,21 @@
+✔ bounded stream backpressure, draining close, and one reader (3.18025ms)
+✔ rendezvous reader cancellation and write disposal release pending values (0.196042ms)
+✔ future resolves once, closes unresolved, and reader disposal closes the channel (0.1205ms)
+✔ invalid capacities and foreign handles fail closed (0.115917ms)
+✔ core: affine writers, backpressure and cancellation free resources (7438.103875ms)
+✔ component: affine writers, backpressure and cancellation free resources (3351.522ms)
+✔ core: concurrent children, GC identity, cancellation, and scope cleanup (7590.67225ms)
+✔ component: concurrent children, GC identity, cancellation, and scope cleanup (3233.117083ms)
+✔ general Worker host schedules unrelated asynchronous jobs and transfers results (62.483208ms)
+✔ CPU-bound jobs poll separate cancellation bits without stopping their sibling (30.076458ms)
+✔ retaining completed task handles does not retain a closed Worker host (25.851292ms)
+✔ core: general Workers run Walz JSPI futures and join their cancellation (7337.320834ms)
+✔ component: general Workers run Walz JSPI futures and join their cancellation (3246.327209ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10915.504291

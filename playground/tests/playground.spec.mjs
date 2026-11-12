@@ -12,6 +12,17 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
 });
 
+test('angle applications compile in the browser and run with either optimization setting', async ({ page }) => {
+  const source = await readFile(new URL('../../examples/angle-applications.walz', import.meta.url), 'utf8');
+  for (const optimize of [false, true]) {
+    await page.getByLabel('Optimize').setChecked(optimize);
+    await compile(page, source);
+    await expect(page.getByTestId('compile-status')).toContainText('Compiled successfully');
+    await page.getByRole('button', { name: 'Run', exact: true }).click();
+    await expect(page.getByTestId('run-output')).toHaveText('42');
+  }
+});
+
 test('documentation and repository links remain accessible on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const docs = page.getByRole('link', { name: 'Documentation', exact: true });

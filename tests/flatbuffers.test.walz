@@ -1,0 +1,45 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@use "../walz/flatbuffers/builder.walz" (func $fb.builder.new)
+    (func $fb.builder.start) (func $fb.builder.bits-field) (func $fb.builder.end)
+    (func $fb.builder.finish))
+  (@use "../walz/flatbuffers/reader.walz" (func $fb.root) (func $fb.bits)
+    (func $fb.vector) (func $fb.vector.sum-i32) (tag $fb.invalid))
+
+  (@test "FlatBuffers preserves 8/16/32/64-bit scalar patterns and float32 without an identifier"
+    (@let $b (call $fb.builder.new)
+      (block (result i32)
+        (call $fb.builder.start $b 4)
+        (call $fb.builder.bits-field $b 0 1 255 0)
+        (call $fb.builder.bits-field $b 1 2 43981 0)
+        (call $fb.builder.bits-field $b 2 4 (i64.extend_i32_u (i32.reinterpret_f32 (f32.const 1.5))) 0)
+        (call $fb.builder.bits-field $b 3 8 -1 0)
+        (@let $t (call $fb.root
+            (call $fb.builder.finish $b (call $fb.builder.end $b) (@bytes.new)) (@bytes.new))
+          (&& (&& (= (call $fb.bits $t 0 1 0) 255) (= (call $fb.bits $t 1 2 0) 43981))
+            (&& (f32.eq (f32.reinterpret_i32 (i32.wrap_i64 (call $fb.bits $t 2 4 0))) (f32.const 1.5))
+                (= (call $fb.bits $t 3 8 0) -1)))))))
+
+  (@test "missing and future fields return the schema's explicit default"
+    (@let $b (call $fb.builder.new)
+      (block (result i32)
+        (call $fb.builder.start $b 1)
+        (call $fb.builder.bits-field $b 0 4 42 42)
+        (@let $t (call $fb.root
+            (call $fb.builder.finish $b (call $fb.builder.end $b) (@bytes.new)) (@bytes.new))
+          (&& (= (call $fb.bits $t 0 4 42) 42) (= (call $fb.bits $t 1000 8 -1) -1))))))
+
+  (@test "signed vector sums reject other storage widths, including empty vectors"
+    (@let $b (call $fb.builder.new)
+      (block (result i32)
+        (call $fb.builder.start $b 0)
+        (@let $t (call $fb.root
+            (call $fb.builder.finish $b (call $fb.builder.end $b) (@bytes.new)) (@bytes.new))
+          (@try (result i32)
+            (do (block (result i32) (drop (call $fb.vector.sum-i32 (call $fb.vector $t 0 1))) 0))
+            (catch $fb.invalid ($code) (= $code 2)))))))
+
+  (@test "malformed roots throw the declared validation tag, never a Wasm bounds trap"
+    (@try (result i32)
+      (do (block (result i32) (drop (call $fb.root (@bytes.new 255 255 255 255) (@bytes.new))) 0))
+      (catch $fb.invalid ($code) (= $code 1)))))

@@ -1,0 +1,11 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.68s
+     Running tests/js_native.rs (target/debug/deps/js_native-972a5afd0ff375d0)
+
+running 3 tests
+test scalar_only_modules_do_not_require_a_source_byte_type ... ok
+test experimental_direct_abi_keeps_the_checked_gc_guest_and_does_not_emit_task_or_component_glue ... ok
+test unsupported_effects_owners_memories_and_boundary_shapes_are_explicit_errors ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.56s
+

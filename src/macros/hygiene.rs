@@ -588,13 +588,20 @@ impl Instantiator<'_> {
                             | "array.new"
                             | "array.new_fixed"
                             | "array.get"
+                            | "array.get_s"
+                            | "array.get_u"
                             | "array.set"
+                            | "array.copy"
+                            | "bytes.from-array"
+                            | "bytes.copy-to-array"
                             | "variant.new"
                             | "newtype.wrap"
                             | "newtype.unwrap"
                             | "resource.new"
                             | "throw"
-                    ) && i == 1;
+                    ) && i == 1
+                    || head == "array.copy" && i == 2
+                    || crate::ir::ByteAccess::parse_write(head).is_some() && i == 1;
                 let field = matches!(head, "struct.get" | "struct.set" | "variant.new") && i == 2;
                 let ty = matches!(head, "ref" | "result" | "type" | "param" | "effect")
                     || head == "match"

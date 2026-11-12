@@ -3,11 +3,13 @@
 mod abi_limits;
 mod aliases;
 pub mod analysis;
+mod applications;
 pub mod benchmark;
 mod binary;
 pub mod bindings;
 mod bounds;
 mod buffers;
+mod byte_access;
 pub mod component;
 mod construction;
 #[doc(hidden)]

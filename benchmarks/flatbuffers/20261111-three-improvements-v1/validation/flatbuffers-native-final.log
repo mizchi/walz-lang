@@ -1,0 +1,5 @@
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/flatbuffers.test.walz::"FlatBuffers preserves 8/16/32/64-bit scalar patterns and float32 without an identifier" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/flatbuffers.test.walz::"missing and future fields return the schema's explicit default" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/flatbuffers.test.walz::"signed vector sums reject other storage widths, including empty vectors" ... ok
+test /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/flatbuffers.test.walz::"malformed roots throw the declared validation tag, never a Wasm bounds trap" ... ok
+4 passed; 0 failed; 0 errors; 0 filtered out

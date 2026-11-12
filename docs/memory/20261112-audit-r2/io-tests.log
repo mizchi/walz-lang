@@ -1,0 +1,19 @@
+✔ text CLI preserves application error codes without labelling them as I/O failures (3014.415542ms)
+✔ text CLI filters UTF-8 from pipes and files, reports I/O errors and acknowledges SIGINT (2835.796959ms)
+✔ UTF-8 line input handles split codepoints, CRLF, blank lines and a final unterminated line (2.606542ms)
+✔ invalid UTF-8, bounded lines and read failures become one Result error then EOF (0.294167ms)
+✔ closing a pending read interrupts its provider and waits for its cleanup (0.686209ms)
+✔ output waits for the sink and cancellation acknowledges its cleanup (0.270583ms)
+✔ closed line readers release their provider, chunks and return values (10.75775ms)
+✔ core: real text capabilities preserve values, errors, backpressure and cancellation (2983.118334ms)
+✔ component: real text capabilities preserve values, errors, backpressure and cancellation (2709.68175ms)
+✔ core: flattened text imports handle empty and Unicode values without retaining buffers (2001.073208ms)
+✔ component: flattened text imports handle empty and Unicode values without retaining buffers (1942.861084ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9709.164208

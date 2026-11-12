@@ -37,6 +37,7 @@ The CLI and test runner use this mapping too.
 | `E_OPAQUE_REPRESENTATION` | Representation access from outside the owning file |
 | `E_ALIAS_CYCLE` | Reference cycle among transparent type aliases; shows the ordered path and each reference position |
 | `E_GENERIC_INFERENCE` | Ambiguous, unresolved, or conflicting type arguments for a generic call |
+| `E_GENERIC_SYNTAX` | Malformed angle application: empty arguments, missing comma/closing `>`, or excessive nesting |
 | `E_MACRO` / `E_MACRO_UNKNOWN` | Macro declaration/template syntax, or an undefined macro |
 | `E_MACRO_MATCH` | No rule matches the syntax and type constraints |
 | `E_MACRO_TYPE` / `E_MACRO_INFERENCE` | Type-query target mismatch, or a missing required concrete/expected type |

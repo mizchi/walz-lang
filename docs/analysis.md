@@ -48,7 +48,7 @@ Unknown external functions conservatively set every field to true. Fixed event-l
 The CLI's `run` is a minimal launcher for an import-free `main`.
 
 This analysis is a conservative approximation. It does not prove loop or recursion termination, index ranges, or the absence of allocation failure.
-There are no custom optimization passes using this analysis yet. Wasmtime/Cranelift handles subsequent code generation and optimization.
+Diagnostic effect summaries do not authorize instruction elimination. Separate typed-IR passes eliminate [private value containers](value-optimization.md) and simplify [validated immutable ranges](range-optimization.md). Wasmtime/Cranelift handles subsequent code generation and optimization.
 See [wasm-opt](wasm-opt.md) for the investigation of Binaryen as optional post-processing and the output strategy for large matches.
 
 ### Read/Write Targets and Facts from Branches
@@ -73,6 +73,6 @@ It retains unsigned `i < array.len(a)`, signed comparisons with established non-
 Loop-carried values widen to their type's upper bound rather than retaining their initial values; branch joins keep only conditions common to both paths.
 `bounds_proven=false` means "not established." Each fact concerns the normal continuation of that expression and does not rule out other traps such as allocation failure.
 
-These are analysis results. They are not yet used to relax existing pure/effect bounds or remove checks or allocations.
+These diagnostic results do not relax existing pure/effect bounds or authorize removal of checks or allocations. The range optimizer uses its own must facts over checked IR, with separate conservative call/control-flow boundaries.
 Non-escape alone also cannot justify removing reference identity or traps. i64 intervals and explicit loop invariants remain future work.
 The Rust APIs are `regions::analyze(&module)` and `flow::analyze(&module, &function)`. `analysis::analyze` reports both.

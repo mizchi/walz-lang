@@ -1,0 +1,74 @@
+(module
+  (@use "walz:core" (type $string))
+  (@use "./bytes-view.walz"
+    (type $bytes-view)
+    (func $bytes-view.new)
+    (func $bytes-view.len)
+    (func $bytes-view.get)
+    (func $bytes-view.slice)
+    (func $bytes-view.to-bytes))
+  (@export
+    (opaque $string-view)
+    (func $string-view.new)
+    (func $string-view.byte-len)
+    (func $string-view.bytes)
+    (func $string-view.slice)
+    (func $string-view.to-string))
+  (type $string-view (struct (field $bytes (ref $bytes-view))))
+  (func $string-view.new
+    (param $source $string)
+    (result (ref $string-view))
+    (@effect allocates)
+    (@$string-view::{:bytes (call $bytes-view.new (@string.bytes $source))}))
+
+  (func $string-view.bytes
+    (param $v (ref $string-view))
+    (result (ref $bytes-view))
+    (@effect pure)
+    (struct.get $string-view $bytes $v))
+
+  (func $string-view.byte-len
+    (param $v (ref $string-view))
+    (result i32)
+    (@effect pure)
+    (call $bytes-view.len (call $string-view.bytes $v)))
+  ;; The source is valid UTF-8, so only endpoints need checking.
+  (func $string-view.boundary
+    (param $v (ref $bytes-view))
+    (param $i i32)
+    (result i32)
+    (@effect pure)
+    (|| (= $i (call $bytes-view.len $v)) (!= (& (call $bytes-view.get $v $i) 192) 128)))
+
+  (func $string-view.slice
+    (param $v (ref $string-view))
+    (param $start i32)
+    (param $length i32)
+    (result (ref $string-view))
+    (@effect allocates)
+    (@let
+      (($bytes (call $string-view.bytes $v))
+       ($n (call $bytes-view.len $bytes)))
+      (if
+        (result (ref $string-view))
+        (|| (i32.gt_u $start $n) (i32.gt_u $length (- $n $start)))
+        (then (unreachable))
+        (else
+          (if
+            (result (ref $string-view))
+            (&&
+              (call $string-view.boundary $bytes $start)
+              (call $string-view.boundary $bytes (+ $start $length)))
+            (then
+              (@$string-view::{:bytes (call $bytes-view.slice $bytes $start $length)}))
+            (else (unreachable))))
+      )))
+
+  (func $string-view.to-string
+    (param $v (ref $string-view))
+    (result $string)
+    (@effect pure)
+    (@match
+      (@string.from-bytes (call $bytes-view.to-bytes (call $string-view.bytes $v)))
+      (@case none () (unreachable))
+      (@case some ($value) $value))))

@@ -133,7 +133,10 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                         }
                         Buffer { buffer, op, .. } => {
                             pending.push(Item::Type(buffer.0));
-                            if let BufferOp::FromArray(id) = op {
+                            if let BufferOp::FromArray(id)
+                            | BufferOp::CopyToArray(id)
+                            | BufferOp::WriteArray(id, _) = op
+                            {
                                 pending.push(Item::Type(id.0));
                             }
                         }
@@ -145,6 +148,10 @@ fn project_roots(module: &Module, preserve: bool) -> Module {
                                 .filter_map(|h| h.tag)
                                 .map(|id| Item::Tag(id.0)),
                         ),
+                        ArrayCopy { target, source, .. } => {
+                            pending.push(Item::Type(target.0));
+                            pending.push(Item::Type(source.0));
+                        }
                         Newtype { ty, .. }
                         | ResourceNew { ty, .. }
                         | VariantNew { ty, .. }
@@ -426,7 +433,10 @@ impl Ids {
             }
             Buffer { buffer, op, .. } => {
                 self.type_id(buffer);
-                if let BufferOp::FromArray(id) = op {
+                if let BufferOp::FromArray(id)
+                | BufferOp::CopyToArray(id)
+                | BufferOp::WriteArray(id, _) = op
+                {
                     self.type_id(id);
                 }
             }
@@ -438,6 +448,10 @@ impl Ids {
                         tag.0 = self.tags[tag.0];
                     }
                 }
+            }
+            ArrayCopy { target, source, .. } => {
+                self.type_id(target);
+                self.type_id(source);
             }
             ResourceNew { ty, .. }
             | Newtype { ty, .. }

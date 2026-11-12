@@ -73,6 +73,13 @@ It also checks the counterexample where -1 passes a signed comparison without no
 `tests/flow.rs` checks that analysis does not attach bounds_proven to the same negative index and actual Wasm traps out of bounds. It also compares interval results and concrete wrapping operations.
 This lemma does not prove soundness of Rust's abstract interpreter. memory/facts currently serve only diagnostics and are not yet grounds for eliminating generated Wasm instructions.
 
+Ranges.lean separately proves unsigned one-byte bounds, composition of validated
+subranges using natural-number subtraction, and absence of i32 offset wrapping
+under those premises. A BitVec counterexample rejects a wrapped-sum guard alone.
+The [must-range optimizer](../docs/range-optimization.md) uses these arithmetic
+rules independently of diagnostic facts. The proofs do not establish correctness
+of Rust extraction, inlining, control-flow interpretation, or Wasm lowering.
+
 <a id="信頼する実装"></a>
 
 ## Trusted implementation

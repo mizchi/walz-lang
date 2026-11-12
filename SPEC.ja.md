@@ -140,6 +140,8 @@ Option/Result は意味上の値であり、格納用の GC 参照を直接操�
 payload に通常の GC 参照を持つ場合、その参照の identity や可変性は引き続き payload 自身の規約に従います。
 バックエンドは型ごとの非公開の GC subtype を生成しますが、これは型付き IR 上で Type::Value として区別します。
 
+ローカルで構築し、match/drop だけで消費する共有の tuple/Option/Result の格納用割り当ては、未使用ローカル・複数の match・分岐・小さな関数のインライン化を含めて除去できます。default を含む payload は元の順で一度だけ評価し、通常の参照 payload の同一性と明示的な trap は維持します。構築側の try/label/loop のスコープは越えません。外へ逃げる値、owned/resource/borrow を扱う関数、同一性を持つ enum、未知の呼び出し、未確認のケースは格納表現を残します。公開 ABI のシグネチャと外部値の tag/subtype 検査を保ちます。非公開の格納用割り当てとそれによる OOM の箇所は消える場合があります。この compiler TCB の最適化は、新しい構文や汎用の multi-value 呼び出し規約を追加しません。[値の最適化](docs/value-optimization.md)を参照。
+
 ## 閉じた enum と網羅的な match
 
 enum は `@variant` 型として宣言します。ケース名は `$` を付けない ASCII 識別子で、先頭は英字または `_`、以降は英数字・`_`・`.`・`-` です。
@@ -294,7 +296,7 @@ Wasm 内にテスト登録用の可変配列や動的な呼び出し機構を生
 不変フィールドの読み取りは可変メモリの read 作用を持ちませんが、nullable な参照の読み取りの trap は別に扱います。
 GC の実行時期やオブジェクトのアドレスを取得する機能、finalizer、弱参照は提供しません。
 import は全副作用を保守的に持ち、利用者の任意の注釈で pure とみなすことはできません。
-これらの事実を型付き IR と作用の要約に保持します。現時点では独自の最適化パスは実装していません。
+これらの事実を型付き IR と作用の要約に保持します。型付き IR 上で、条件を満たす非公開の値の格納表現を除去し、検証済みの不変な範囲を最適化します。範囲検査の削除には、後述の診断用 may 解析とは別の must 解析を使い、Wasm GC 配列自体の境界検査は残します。[値の最適化](docs/value-optimization.md)・[範囲の最適化](docs/range-optimization.md)を参照。
 
 ## 外部境界と解析
 
@@ -353,8 +355,10 @@ null 検査と正常に通過した dereference を用いて non-null を精密�
 枝の合流では区間を包含し、条件は共通部分を残します。loop の持ち回り値には初期値を流用せず、宣言型の上限へ widening します。不変条件や停止性の証明は行いません。
 normal_return_possible=false は正常な継続がないと確認した場合です。true は必ず成功するという保証ではありません。bounds_proven/null_check_proven の false は未確認を表します。
 
-これらは診断用の may 解析と局所的な事実です。既存の effect 宣言・所有権の合否や、出力する Wasm は変更しません。非 escape、pure、境界確認のいずれか一つだけで identity・評価順序・trap を削除する規則も追加しません。
+これらは診断用の may 解析と局所的な事実です。既存の effect 宣言・所有権の合否を変えず、出力する Wasm の削除判断には直接使いません。非 escape、pure、診断の境界フラグだけでは、identity・評価順序・trap の削除を認めません。
 `proof/Flow.lean` は signed/non-negative の境界条件を BitVec で検査します。Rust の抽象解釈器や出力全体の健全性を証明するものではなく、負の添字の反例、区間と折り返し、別名・ループ・呼び出しは回帰テストでも確認します。
+
+独立した作業量制限付きの must-range パスは、不変な値のスナップショット、unsigned のガード、検査付きアクセスの正常終了を追います。小さな共有値の関数を、ローカル・ループの識別子を刷新してインライン化できます。各反復の持ち回り値は未知から始め、可変フィールドの再読込や未対応の呼び出し・制御構造は根拠にしません。証明した部分範囲は offset の折り返しなく合成できます。冗長な論理分岐を除いても元の条件の評価は残し、証明済みの固定幅 reader は helper の明示的な検査だけを省き、Wasm GC の境界検査を保ちます。ソースから unchecked read を要求する方法はありません。未証明のケースは検査を残し、最適化前にソース全体を検証します。`proof/Ranges.lean` は算術規則の証明であり、Rust 実装や出力 Wasm の正しさ全体を証明しません。
 
 ## WIT interface の生成
 
@@ -668,18 +672,22 @@ jco の補正には pending-copy のキャンセル接続、取消し完了後�
 | 式 | 結果と規約 |
 |---|---|
 | `(@bytes.new i32-expr...)` | `$bytes`。空も可。各式は左から一度だけ評価 |
-| `(@bytes.from-array $Array array-expr)` | 非 null の i32 配列を不変 bytes へコピー。各要素が0..255以外なら trap。可変配列にも対応 |
+| `(@bytes.from-array $Array array-expr [start length])` | 非 null の i32/i8/i16 配列の全体または範囲を不変 bytes へコピー。選択要素が0..255以外なら trap。packed 値は符号なしで読む |
+| `(@bytes.copy-to-array $Array destination at bytes start length)` | 不変 bytes を可変 packed i8 配列へ一括コピー。unit を返し、範囲外は trap |
 | `(@bytes.len bytes-expr)` | `i32` のバイト数 |
 | `(@bytes.get bytes-expr index)` | `i32` の 0..255。index は符号なし、範囲外は trap |
 | `(@bytes.slice bytes-expr start length)` | `$bytes`。start <= size かつ length <= size-start。範囲外は trap |
 | `(@string.lit "日本語")` | `$string`。ソースリテラルは UTF-8 |
 | `(@string.byte-len text-expr)` | `i32` の UTF-8 バイト数 |
 | `(@string.bytes text-expr)` | `$bytes`。内容を保つ。private storage は共有可能 |
-| `(@string.from-bytes bytes-expr)` | `(@inst $option $string)`。UTF-8 が不正なら none、正しければ some |
+| `(@string.from-bytes bytes-expr [start length])` | `(@inst $option $string)`。UTF-8 が不正なら none、正しければ some。範囲指定時は検証してからコピー |
+| `(@bytes.is-utf8 bytes-expr [start length])` | i32 の 0/1。payload を割り当てず、全体または指定範囲を厳密に検証 |
 
 不正な continuation、切れた系列、overlong、surrogate、U+10FFFF より大きい値を拒否します。
-NUL・BOM は通常のデータとして保存します。正規化、grapheme、コードポイント添字、比較・連結などの文字列ライブラリはまだありません。
+NUL・BOM は通常のデータとして保存します。正規化、grapheme、コードポイント添字はこの API の対象外で、検索・比較・連結は core ライブラリが提供します。
 text の byte-len は JS string.length と異なります。bytes の任意の部分列は UTF-8 とは限らないため、text への変換には常に検証を使います。
+
+省略可能な start/length は符号なし i32 として start <= size、length <= size-start を順に検査する。オペランドは左から一度ずつ評価してから範囲と UTF-8 を検査する。範囲外は trap、範囲内の不正 UTF-8 は 0/none。空範囲は周辺のバイトにかかわらず有効。検証と ASCII の先読みは選択範囲だけを読む。範囲付き `@string.from-bytes` は検証後にその範囲だけ独立した不変 storage にコピーし、1引数形式の共有動作は維持する。opaque view では `$bytes-view.is-utf8` / `$bytes-view.to-string` を使う。`$string-view.from-bytes-view` は検証した範囲を共有する option<string-view> を返し、小さな GC header だけを割り当てる。view は元のバッファを保持し、その後の slice は文字境界を要求する。実体化すると元バッファから分離し、現在は再検証する。型・effect・所有権・opaque 検査は維持し、validator と lowering は引き続き compiler TCB。[view](docs/views.md#validate-a-byte-range-as-a-string-view) を参照。
 
 WIT は bytes を `list<u8>`、text を `string` とします。内部 GC 参照は ABI に出しません。
 [Canonical ABI](https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md) の UTF-8 設定を使い、どちらも ptr/byte-length の2つの i32へ flatten し、線形メモリ上の size=8 / align=4 として処理します。
@@ -774,7 +782,13 @@ Node の handle 管理は runtime/node-io.mjs に分離します。通常完了�
 
 ## 文字列ライブラリと配列のコピー
 
-`@bytes.from-array` の引数は指定した配列型の非 null 参照で、式を一度だけ評価する。
+`@bytes.from-array` の引数は指定した配列型の非 null 参照で、各オペランドを左から一度ずつ評価する。結果は独立した不変スナップショットで、その後の配列への書込みで変化しない。start/length は符号なしで start <= size、length <= size-start を満たす必要があり、選択した要素だけを変換する。`@bytes.copy-to-array` は不変 bytes を読み、指定配列に書き込む writes 効果を持つ。bytes の private 格納領域を公開しない。
+
+型付き GC 配列は標準 WAT の packed i8/i16 を受け付ける。値の型は i32 で、格納時は切り詰め、読取り時は `array.get_s` / `array.get_u` で符号拡張方法を明示する。unpacked 配列には従来の `array.get` を使う。`array.copy $Destination $Source dst at src start length` は左から評価し、Wasm の範囲検査・null・重複範囲のコピーの意味を維持する。型付き部分では可変コピー先と数値要素／格納型の一致を要求し、可変コピー元の reads とコピー先の writes を追跡する。参照配列のコピーは標準 WAT validator 経路に残る。両方の型に opaque 検査を適用し、list/array-view 変換は unpacked 格納を要求する。
+
+固定幅読み取りは `(@bytes.read-FORMAT-ENDIAN bytes offset)`。FORMAT は i16/u16/i32/i64/f32/f64、ENDIAN は le/be。`$bytes.read-*` と `$bytes-view.read-*` を import して呼ぶこともでき、view ではその可視範囲を検査する。i16/u16/i32 は i32、それ以外は対応する Wasm 数値型を返す。i16 は符号拡張、u16 はゼロ拡張。`(@array.write-FORMAT-ENDIAN $Array destination offset value)` は i16/i32/i64/f32/f64 に対応し、指定した可変 packed i8 配列の非 null 参照を要求して unit を返す。i16 は下位16bitを格納する。浮動小数点はビット再解釈で、Wasm 内では符号付きゼロや NaN payload を維持する。JS number 境界での NaN payload 保持は保証しない。オペランドを左から一度ずつ評価後、offset <= size、width <= size-offset を符号なしで検査する。非整列を許可し、不完全な範囲は trap。書き込みは全範囲を検査してから変更する。読み取りは pure、書き込みは writes で、opaque・所有権検査を省略しない。現在の出力は GC アクセスとシフトで、線形 scratch memory は不要。[固定幅アクセス](docs/byte-access.md) を参照。
+
+`walz:core` は `$i32.checked-add-u`、`$i32.checked-mul-u`、`$i32.checked-align-up-u` と i64 版を提供する。同じ幅のスカラー2つを受け取り、pure 効果で同じスカラーの Option を返す。入力は最上位ビットを含めて符号なしビット列として扱う。加算・乗算は数学的な結果が符号なしの幅を超えれば none。整列は非ゼロの2の累乗に切り上げ、不正な整列値・overflow は none。最上位ビットの2の累乗も有効。成功したゼロは some(0)。通常の call として引数を左から一度ずつ評価する。Wasm の wrapping、数値型、ABI の符号付き格納は変更せず、アプリケーションの上限は呼び出し側で別に検査する。既存の型・effect・所有権検査を通るライブラリ関数であり、構文や未検証の算術仮定を追加しない。[検査付き整数](docs/checked-integers.md) を参照。
 元配列と格納域を共有せず、元配列を後から変更しても bytes/text の内容は変わらない。
 可変配列を読む場合は reads を持ち、memory 解析にも対象の要素読み取りを残す。返す値から元配列への参照はない。
 新しい bytes 自身に観測可能な identity はないので、格納用の物理的な割当てと semantic allocates は区別する。
@@ -893,6 +907,8 @@ WIT binding の生成と対応型は [WIT binding](docs/wit-bindings.md) を参�
 ## 利用者定義のジェネリクス
 
 `(@type.params $T ...)` と `(@inst $name T...)` により、関数・型・alias・クロージャを単相化する。
+
+型および関数・heap 型の参照位置では `$name<T, U>` を同じ意味の糖衣として使える。入れ子の値型、GC 参照、呼び出し、構築、汎用クロージャ、具体化した関数の宣言的 export に対応する。`<` は名前に隣接させ、カンマで引数を区切り、内部の空白・コメント・改行と末尾カンマを許す。空や不正な引数列は `E_GENERIC_SYNTAX`。引数には既存の S 式の型も書け、参照 wrapper は明示する。その名前空間で宣言/import した完全一致の名前を優先し、`@inst` で適用を明示できる。ローカル・束縛名・引用した WAT 識別子・メタデータ・演算子は再解釈しない。元の span を保って展開し、既存の型・制約・effect・所有権・opaque 検査と具体化のキャッシュを使う。formatter と Watz 表示にも対応し、エディターの未完の構文はコンパイルしない。
 適用時の検査、再帰と展開の上限、公開 ABI、map/fold は [単相化の契約](docs/generics.md) を参照。
 `@type.params` 直後の where は shared/nonunit/callable、組み込みのAdd/Sub/Mul/Div/Eq/Ord/Logical/Bitwise/Shiftとcallableのeffect上限を具体化時に検査する。
 固定の基本型インスタンスで演算子を解決し、制約を消去して既存の閉じたIRへ変換する。利用者定義class/implや抽象的なbody検査は追加しない。[型クラスと演算子](docs/typeclasses.md)を参照。

@@ -57,6 +57,7 @@ proof-check:
     lean +v4.34.1 proof/Delivery.lean
     lean +v4.34.1 proof/Tasks.lean
     lean +v4.34.1 proof/Flow.lean
+    lean +v4.34.1 proof/Ranges.lean
     lean +v4.34.1 proof/AtomicCells.lean
 
 verify file="examples/verified-laws.walz":
@@ -244,6 +245,83 @@ test-views:
     cargo test --locked --test views --test array_views
     node --expose-gc --test runtime/views.test.mjs runtime/array-views.test.mjs
 
+test-flatbuffers:
+    cargo run --locked --quiet -- test tests/flatbuffers.test.walz
+    node --expose-gc --test runtime/flatbuffers.test.mjs runtime/flatbuffers-pipeline.test.mjs runtime/flatbuffers-bench.test.mjs runtime/flatbuffers-inspect.test.mjs runtime/component-bundle.test.mjs
+
+test-packed-arrays:
+    cargo test --locked --test packed_arrays
+    node --test runtime/packed-arrays.test.mjs
+
+test-byte-access:
+    cargo test --locked --test byte_access
+    node --expose-gc --test runtime/byte-access.test.mjs
+
+test-utf8-views:
+    cargo test --locked --test utf8_views
+    node --expose-gc --test runtime/utf8-views.test.mjs
+
+test-checked-integers:
+    cargo test --locked --test checked_integers
+    node --expose-gc --test runtime/checked-integers.test.mjs
+
+test-range-optimization:
+    cargo test --locked --test range_optimization
+    lean +v4.34.1 proof/Ranges.lean
+    node --expose-gc --test runtime/range-optimization.test.mjs
+
+test-value-optimization:
+    cargo test --locked --test value_optimization --test optimization
+    node --expose-gc --test runtime/value-optimization.test.mjs
+
+test-angle-applications:
+    cargo test --locked --test angle_applications --test generics --test generic_bounds --test cli_print
+    node --test runtime/angle-applications.test.mjs
+
+# Experimental synchronous direct GC ABI; the stable CLI targets are unchanged.
+build-js-native file="examples/flatbuffers/main.walz" output="target/js-native" mode="js-strings":
+    node runtime/build-js-native.mjs {{quote(file)}} {{quote(output)}} {{quote(mode)}}
+
+test-js-native:
+    cargo test --locked --test js_native
+    node --expose-gc --test runtime/js-native.test.mjs
+
+test-js-native-e2e:
+    pnpm exec playwright test --config playwright.js-native.config.mjs
+
+js-native-capture output="target/js-native-bench/capture":
+    node runtime/js-native-bench.mjs capture {{quote(output)}}
+
+bench-js-native snapshot output:
+    node --expose-gc runtime/js-native-bench.mjs run {{quote(snapshot)}} {{quote(output)}}
+
+size-js-native snapshot output optimizer="target/wasm-opt-research/binaryen-version_133/bin/wasm-opt":
+    node runtime/js-native-bench.mjs size {{quote(snapshot)}} {{quote(output)}} {{quote(optimizer)}}
+
+flatbuffers-capture output="target/flatbuffers-bench/capture":
+    node runtime/flatbuffers-bench.mjs capture {{quote(output)}}
+
+bench-flatbuffers snapshot="target/flatbuffers-bench/capture" output="target/flatbuffers-bench/run-1" rounds="9":
+    node --expose-gc runtime/flatbuffers-bench.mjs run {{quote(snapshot)}} {{quote(output)}} {{quote(rounds)}}
+
+bench-flatbuffers-pipeline snapshot output rounds="7":
+    node --expose-gc runtime/flatbuffers-bench.mjs pipeline {{quote(snapshot)}} {{quote(output)}} {{quote(rounds)}}
+
+profile-flatbuffers snapshot output filter="":
+    node --expose-gc runtime/flatbuffers-inspect.mjs profile {{quote(snapshot)}} {{quote(output)}} {{quote(filter)}}
+
+size-flatbuffers snapshot output optimizer="target/wasm-opt-research/binaryen-version_133/bin/wasm-opt":
+    node runtime/flatbuffers-size.mjs {{quote(snapshot)}} {{quote(output)}} {{quote(optimizer)}}
+
+optimize-flatbuffers snapshot output optimizer="target/wasm-opt-research/binaryen-version_133/bin/wasm-opt" mode="O3":
+    node runtime/flatbuffers-size.mjs optimize {{quote(snapshot)}} {{quote(output)}} {{quote(optimizer)}} {{quote(mode)}}
+
+compare-flatbuffers before after output filter="":
+    node --expose-gc runtime/flatbuffers-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(output)}} {{quote(filter)}}
+
+probe-flatbuffers-sync snapshot output:
+    node runtime/flatbuffers-sync-probe.mjs {{quote(snapshot)}} {{quote(output)}}
+
 test-naming:
     cargo test --locked --test naming --test wit --test wit_bindings --test standard --test surface
 
@@ -382,6 +460,9 @@ check-walz-format file="examples/apps/log-stats/main.walz":
 memory-check:
     node --expose-gc --test runtime/memory.test.mjs runtime/retention.test.mjs
     node --expose-gc runtime/memory-audit.mjs
+
+memory-recent output="target/recent-memory-audit/current":
+    node --expose-gc runtime/recent-memory-audit.mjs {{quote(output)}}
 
 bind wit policy output:
     cargo run --locked --quiet -- bind {{quote(wit)}} {{quote(policy)}} {{quote(output)}}

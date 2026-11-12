@@ -5,6 +5,8 @@ The [generated standard API listing](stdlib-api.md) documents public names, comp
 See [naming and WIT mapping](naming.md) for types, associated functions, and the distinction from WIT built-ins.
 See [collections](collections.md) for generic text-key dictionaries and builders for immutable lists.
 See [zero-copy views](views.md) for types sharing subranges of bytes/string and arbitrary GC arrays.
+See [fixed-width byte access](byte-access.md) for endian-specific bytes/view readers and mutable packed-array writers.
+See [checked integers](checked-integers.md) for size/offset addition, multiplication, and alignment with explicit Option failure.
 
 ```wat
 (module

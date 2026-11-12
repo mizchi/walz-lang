@@ -1,0 +1,250 @@
+{
+  "backend": "core",
+  "node": "v24.22.2",
+  "date": "2026-11-12T08:33:04.663Z",
+  "cases": [
+    {
+      "fixture": "buffers",
+      "batch": 1000,
+      "warmupBatches": 1,
+      "measuredBatches": 6,
+      "generatedJs": 43574,
+      "javascript": {
+        "raw": 43574,
+        "gzip": 13865,
+        "brotli": 12131
+      },
+      "heapGrowth": 38072,
+      "samples": [
+        {
+          "heapUsed": 5332512,
+          "external": 2463861,
+          "arrayBuffers": 219419,
+          "rss": 69238784,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5361456,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 71581696,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5361648,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 71581696,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5361840,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 71581696,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5370176,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 72122368,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5370584,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 72138752,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "values",
+      "batch": 1000,
+      "warmupBatches": 1,
+      "measuredBatches": 6,
+      "generatedJs": 43657,
+      "javascript": {
+        "raw": 43657,
+        "gzip": 13888,
+        "brotli": 12150
+      },
+      "heapGrowth": 48632,
+      "samples": [
+        {
+          "heapUsed": 5694272,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 95158272,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5713224,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 98910208,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5713920,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 101744640,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5741656,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106168320,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5740352,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106201088,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 5742904,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106201088,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "event-loop",
+      "batch": 200,
+      "warmupBatches": 1,
+      "measuredBatches": 6,
+      "generatedJs": 42569,
+      "javascript": {
+        "raw": 42569,
+        "gzip": 13813,
+        "brotli": 12098
+      },
+      "heapGrowth": 48176,
+      "samples": [
+        {
+          "heapUsed": 6003616,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106315776,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 6043080,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106807296,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 6047896,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106807296,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 6048088,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106807296,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 6048280,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106807296,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        },
+        {
+          "heapUsed": 6051792,
+          "external": 2463901,
+          "arrayBuffers": 219419,
+          "rss": 106807296,
+          "linear": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          }
+        }
+      ]
+    }
+  ]
+}

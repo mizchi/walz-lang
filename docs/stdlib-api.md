@@ -87,6 +87,18 @@ import: `(func $bytes.find-byte)`. Effects are the declared upper bound; the bod
 )
 ```
 
+### `$bytes.is-utf8`
+
+import: `(func $bytes.is-utf8)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.is-utf8
+  (param $source $bytes)
+  (result i32)
+  (@effect pure)
+)
+```
+
 ### `$bytes.parse-u64`
 
 import: `(func $bytes.parse-u64)`. Effects are the declared upper bound; the body is checked.
@@ -98,6 +110,162 @@ import: `(func $bytes.parse-u64)`. Effects are the declared upper bound; the bod
   (param $length i32)
   (param $limit i64)
   (result (@inst $option i64))
+  (@effect pure)
+)
+```
+
+### `$bytes.read-f32-be`
+
+import: `(func $bytes.read-f32-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-f32-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result f32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-f32-le`
+
+import: `(func $bytes.read-f32-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-f32-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result f32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-f64-be`
+
+import: `(func $bytes.read-f64-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-f64-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result f64)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-f64-le`
+
+import: `(func $bytes.read-f64-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-f64-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result f64)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i16-be`
+
+import: `(func $bytes.read-i16-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i16-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i16-le`
+
+import: `(func $bytes.read-i16-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i16-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i32-be`
+
+import: `(func $bytes.read-i32-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i32-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i32-le`
+
+import: `(func $bytes.read-i32-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i32-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i64-be`
+
+import: `(func $bytes.read-i64-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i64-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result i64)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-i64-le`
+
+import: `(func $bytes.read-i64-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-i64-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result i64)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-u16-be`
+
+import: `(func $bytes.read-u16-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-u16-be
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes.read-u16-le`
+
+import: `(func $bytes.read-u16-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes.read-u16-le
+  (param $source $bytes)
+  (param $offset i32)
+  (result i32)
   (@effect pure)
 )
 ```
@@ -230,6 +398,18 @@ import: `(func $bytes-view.get)`. Effects are the declared upper bound; the body
 )
 ```
 
+### `$bytes-view.is-utf8`
+
+import: `(func $bytes-view.is-utf8)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.is-utf8
+  (param $v (ref $bytes-view))
+  (result i32)
+  (@effect pure)
+)
+```
+
 ### `$bytes-view.len`
 
 import: `(func $bytes-view.len)`. Effects are the declared upper bound; the body is checked.
@@ -251,6 +431,162 @@ import: `(func $bytes-view.new)`. Effects are the declared upper bound; the body
   (param $source $bytes)
   (result (ref $bytes-view))
   (@effect allocates)
+)
+```
+
+### `$bytes-view.read-f32-be`
+
+import: `(func $bytes-view.read-f32-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-f32-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result f32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-f32-le`
+
+import: `(func $bytes-view.read-f32-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-f32-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result f32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-f64-be`
+
+import: `(func $bytes-view.read-f64-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-f64-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result f64)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-f64-le`
+
+import: `(func $bytes-view.read-f64-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-f64-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result f64)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i16-be`
+
+import: `(func $bytes-view.read-i16-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i16-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i16-le`
+
+import: `(func $bytes-view.read-i16-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i16-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i32-be`
+
+import: `(func $bytes-view.read-i32-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i32-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i32-le`
+
+import: `(func $bytes-view.read-i32-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i32-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i64-be`
+
+import: `(func $bytes-view.read-i64-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i64-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i64)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-i64-le`
+
+import: `(func $bytes-view.read-i64-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-i64-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i64)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-u16-be`
+
+import: `(func $bytes-view.read-u16-be)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-u16-be
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.read-u16-le`
+
+import: `(func $bytes-view.read-u16-le)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.read-u16-le
+  (param $source (ref $bytes-view))
+  (param $offset i32)
+  (result i32)
+  (@effect pure)
 )
 ```
 
@@ -276,6 +612,18 @@ import: `(func $bytes-view.to-bytes)`. Effects are the declared upper bound; the
 (func $bytes-view.to-bytes
   (param $v (ref $bytes-view))
   (result $bytes)
+  (@effect pure)
+)
+```
+
+### `$bytes-view.to-string`
+
+import: `(func $bytes-view.to-string)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-view.to-string
+  (param $v (ref $bytes-view))
+  (result (@inst $option $string))
   (@effect pure)
 )
 ```
@@ -310,6 +658,18 @@ import: `(func $string-view.bytes)`. Effects are the declared upper bound; the b
   (param $v (ref $string-view))
   (result (ref $bytes-view))
   (@effect pure)
+)
+```
+
+### `$string-view.from-bytes-view`
+
+import: `(func $string-view.from-bytes-view)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $string-view.from-bytes-view
+  (param $source (ref $bytes-view))
+  (result (@inst $option (ref $string-view)))
+  (@effect allocates)
 )
 ```
 
@@ -1139,5 +1499,88 @@ import: `(func $json.stringify)`. Effects are the declared upper bound; the body
   (param $value (ref $json-value))
   (result $string)
   (@effect reads writes allocates)
+)
+```
+
+
+## `checked-integer.walz`
+
+Implementation: [walz/core/checked-integer.walz](../walz/core/checked-integer.walz).
+
+### `$i32.checked-add-u`
+
+import: `(func $i32.checked-add-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i32.checked-add-u
+  (param $a i32)
+  (param $b i32)
+  (result (@inst $option i32))
+  (@effect pure)
+)
+```
+
+### `$i32.checked-align-up-u`
+
+import: `(func $i32.checked-align-up-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i32.checked-align-up-u
+  (param $value i32)
+  (param $alignment i32)
+  (result (@inst $option i32))
+  (@effect pure)
+)
+```
+
+### `$i32.checked-mul-u`
+
+import: `(func $i32.checked-mul-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i32.checked-mul-u
+  (param $a i32)
+  (param $b i32)
+  (result (@inst $option i32))
+  (@effect pure)
+)
+```
+
+### `$i64.checked-add-u`
+
+import: `(func $i64.checked-add-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i64.checked-add-u
+  (param $a i64)
+  (param $b i64)
+  (result (@inst $option i64))
+  (@effect pure)
+)
+```
+
+### `$i64.checked-align-up-u`
+
+import: `(func $i64.checked-align-up-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i64.checked-align-up-u
+  (param $value i64)
+  (param $alignment i64)
+  (result (@inst $option i64))
+  (@effect pure)
+)
+```
+
+### `$i64.checked-mul-u`
+
+import: `(func $i64.checked-mul-u)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $i64.checked-mul-u
+  (param $a i64)
+  (param $b i64)
+  (result (@inst $option i64))
+  (@effect pure)
 )
 ```

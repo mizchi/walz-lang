@@ -1,0 +1,10 @@
+✔ core: string sugar and core combinators preserve evaluation and identity (2181.343292ms)
+✔ component: string sugar and core combinators preserve evaluation and identity (2252.655917ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4569.8745

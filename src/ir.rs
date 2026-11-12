@@ -230,6 +230,22 @@ pub struct Field {
     pub name: Option<String>,
     pub ty: Type,
     pub mutable: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub packed: Option<Packed>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub enum Packed {
+    I8,
+    I16,
+}
+impl Packed {
+    pub fn wat(self) -> &'static str {
+        match self {
+            Self::I8 => "i8",
+            Self::I16 => "i16",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -615,11 +631,42 @@ pub struct CatchArm {
 pub enum BufferOp {
     New,
     FromArray(TypeId),
+    CopyToArray(TypeId),
     Len,
     Get,
     Slice,
     Encode,
     Decode,
+    IsUtf8,
+    Read(ByteAccess),
+    /// Compiler-only form: explicit helper guards were proved by the range pass.
+    /// Wasm GC array bounds checks are still emitted for every byte read.
+    #[doc(hidden)]
+    ReadProven(ByteAccess),
+    WriteArray(TypeId, ByteAccess),
+}
+
+/// Wire storage formats; 16-bit values are represented as i32 in the typed core.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize)]
+pub enum ByteFormat {
+    I16,
+    U16,
+    I32,
+    I64,
+    F32,
+    F64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize)]
+pub enum ByteOrder {
+    Little,
+    Big,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Serialize)]
+pub struct ByteAccess {
+    pub format: ByteFormat,
+    pub order: ByteOrder,
 }
 
 impl BufferOp {
@@ -631,7 +678,16 @@ impl BufferOp {
         )
     }
     pub fn may_trap(self) -> bool {
-        self.allocates() || self == Self::Get
+        self.allocates()
+            || self == Self::Get
+            || matches!(
+                self,
+                Self::CopyToArray(_)
+                    | Self::Read(_)
+                    | Self::ReadProven(_)
+                    | Self::WriteArray(..)
+                    | Self::IsUtf8
+            )
     }
 }
 
@@ -799,6 +855,8 @@ pub enum ExprKind {
     },
     ArrayGet {
         ty: TypeId,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        signed: Option<bool>,
         object: Box<Expr>,
         index: Box<Expr>,
     },
@@ -809,6 +867,11 @@ pub enum ExprKind {
         value: Box<Expr>,
     },
     ArrayLen(Box<Expr>),
+    ArrayCopy {
+        target: TypeId,
+        source: TypeId,
+        args: Vec<Expr>,
+    },
     Null(TypeId),
     IsNull(Box<Expr>),
     AsNonNull(Box<Expr>),
@@ -837,7 +900,8 @@ impl Expr {
             | Numeric { args, .. }
             | Simd { args, .. }
             | Call { args, .. }
-            | Delivery { args, .. } => args.iter().collect(),
+            | Delivery { args, .. }
+            | ArrayCopy { args, .. } => args.iter().collect(),
             StructNew { values, .. }
             | VariantNew { values, .. }
             | Throw { values, .. }
@@ -913,7 +977,8 @@ impl Expr {
             | Numeric { args, .. }
             | Simd { args, .. }
             | Call { args, .. }
-            | Delivery { args, .. } => args.iter_mut().collect(),
+            | Delivery { args, .. }
+            | ArrayCopy { args, .. } => args.iter_mut().collect(),
             StructNew { values, .. }
             | VariantNew { values, .. }
             | Throw { values, .. }

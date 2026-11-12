@@ -163,7 +163,7 @@ impl State {
     }
 }
 
-fn literal(text: &str) -> Option<u32> {
+pub(crate) fn literal(text: &str) -> Option<u32> {
     let text = text.replace('_', "");
     let (negative, text) = if let Some(t) = text.strip_prefix('-') {
         (true, t)
@@ -690,6 +690,12 @@ impl Visitor<'_> {
                 value.range = Some(object.length.unwrap_or(Range::FULL));
                 value.length_of = object.length_key.or(object.key);
                 "array.len".into()
+            }
+            ArrayCopy { args, .. } => {
+                for arg in args {
+                    self.eval(arg, s);
+                }
+                "array.copy".into()
             }
             ArrayGet { object, index, .. } | ArraySet { object, index, .. } => {
                 let object = self.eval(object, s);

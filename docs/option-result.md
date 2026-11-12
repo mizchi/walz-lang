@@ -38,3 +38,8 @@ Where a string type is explicit, `(@string.lit "hello")` can be written as `"hel
 When an initializer's expected type is unknown, as in `(@let $x "hello" ...)`, provide a type annotation or `@string.lit`. Non-UTF-8 byte sequences are not strings. `@string.byte-len` returns string length in UTF-8 bytes. There is no `@string.len` alias or implicit conversion to a Unicode character count.
 
 Match arms use `@case`. A final `(@default fallback)` can handle remaining shared payloads without binding them; owned/borrowed cases must be explicit. See [match rules](syntax.md#match-clauses).
+
+The [value optimizer](value-optimization.md) can eliminate private shared
+tuple/Option/Result carriers used only by matches/drops, including small inlined
+helper returns. Payload evaluation still occurs once, even for `@default`.
+Escaping/owned containers and public ABI representations remain unchanged.

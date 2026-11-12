@@ -1,5 +1,10 @@
 # メモリ管理と実測
 
+Latest verification: [2026-11-12 runtime, GC, and compiler audit](docs/memory/20261112-audit-r2/README.md).
+It covers both JSPI backends, both experimental native JS outputs, recent lowering,
+Worker/task/I/O cleanup, and repeated Wasm compiler calls. Re-run recent cases with
+`just memory-recent`; the dated report preserves the measured source hashes and limits.
+
 GC 値の寿命は Wasm GC に委ねる。ランタイムで手動管理するのは、ABI の線形バッファと外部の readable handle に限定する。
 独自の GC、参照カウント、GC オブジェクトの登録表、GC による外部 resource の暗黙 close は追加しない。
 割当て回数と処理時間のチューニングは [PROFILE.md](PROFILE.md) に記録する。ここでは反復後の保持と解放を検査する。

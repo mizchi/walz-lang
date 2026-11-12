@@ -1,0 +1,1705 @@
+{
+  "schema": "walz-flatbuffers-size-v2",
+  "node": "v24.22.2",
+  "vite": "8.3.7",
+  "created": "2026-11-10T16:13:08.154Z",
+  "captureHash": "39f7c78fa6da5fbfe835bdc73d29145543f7b3aad0bc2250ff822676f03e0ab9",
+  "optimizer": {
+    "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+    "version": "wasm-opt version 133 (version_133)",
+    "sha256": "81041e09f332df94db1c2009a64d8f3b85f0431a2c920ccd014d3ceebb343402"
+  },
+  "method": "Vite ES library, oxc minification, esnext; gzip level 9 and Brotli quality 11. Sum independently compressed deployed JS/Wasm assets. Inlined Wasm is counted inside JS only. Rebundle each optimized variant. Maps and unused external files are excluded. Source module attribution is pre-minifier rendered length.",
+  "bundles": {
+    "js": {
+      "raw": 16150,
+      "gzip": 4001,
+      "brotli": 3592,
+      "entry": "reference-js/walz-runtime.js",
+      "assets": {
+        "walz-runtime.js": {
+          "raw": 16150,
+          "gzip": 4001,
+          "brotli": 3592,
+          "sha256": "f77cc3b2992a1c8b5c87dafc923217e3c4c8025a9e45f36e7722f9678beae772"
+        }
+      },
+      "inlinedAssetHashes": [],
+      "modules": [
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+          "renderedLength": 9774
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+          "renderedLength": 5725
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference.mjs",
+          "renderedLength": 2385
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/flatbuffers.js",
+          "renderedLength": 2167
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/utils.js",
+          "renderedLength": 562
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/constants.js",
+          "renderedLength": 468
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/encoding.js",
+          "renderedLength": 462
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/reference.entry.mjs",
+          "renderedLength": 222
+        },
+        {
+          "path": "\u0000rolldown/runtime.js",
+          "renderedLength": 154
+        }
+      ]
+    },
+    "core": {
+      "raw": 25313,
+      "gzip": 7934,
+      "brotli": 7124,
+      "entry": "core-original-js/walz-runtime.js",
+      "assets": {
+        "walz-runtime.js": {
+          "raw": 24311,
+          "gzip": 7291,
+          "brotli": 6566,
+          "sha256": "79d51eeeab12f3c4e07af5aeda90152491980c68c3754582822950ac39431d71"
+        },
+        "__vite-browser-external-q4xEsQeL.js": {
+          "raw": 226,
+          "gzip": 198,
+          "brotli": 157,
+          "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+        },
+        "rolldown-runtime-CYdcPHCu.js": {
+          "raw": 776,
+          "gzip": 445,
+          "brotli": 401,
+          "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+        }
+      },
+      "inlinedAssetHashes": [],
+      "modules": [
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/tasks.mjs",
+          "renderedLength": 12019
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/core.mjs",
+          "renderedLength": 6948
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/bindings.mjs",
+          "renderedLength": 5113
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/host.mjs",
+          "renderedLength": 4506
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/resources.mjs",
+          "renderedLength": 2161
+        },
+        {
+          "path": "\u0000rolldown/runtime.js",
+          "renderedLength": 1155
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/index.js",
+          "renderedLength": 216
+        },
+        {
+          "path": "__vite-browser-external",
+          "renderedLength": 146
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original.entry.mjs",
+          "renderedLength": 0
+        }
+      ]
+    },
+    "component": {
+      "raw": 110220,
+      "gzip": 33122,
+      "brotli": 28410,
+      "entry": "component-original-js/walz-runtime.js",
+      "assets": {
+        "walz-runtime.js": {
+          "raw": 109218,
+          "gzip": 32479,
+          "brotli": 27852,
+          "sha256": "6c27dd1c5db4e26b29f4506b1d38fc1b2b96c958c0989669e22d3acd99141ade"
+        },
+        "__vite-browser-external-q4xEsQeL.js": {
+          "raw": 226,
+          "gzip": 198,
+          "brotli": 157,
+          "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+        },
+        "rolldown-runtime-CYdcPHCu.js": {
+          "raw": 776,
+          "gzip": 445,
+          "brotli": 401,
+          "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+        }
+      },
+      "inlinedAssetHashes": [
+        "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+        "5dff83a51d6e10afcf1ecd0008236d482f2719e3df93c32c336010d8fb84e27d"
+      ],
+      "modules": [
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/component.js",
+          "renderedLength": 120412
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/tasks.mjs",
+          "renderedLength": 12024
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/host.mjs",
+          "renderedLength": 6641
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/resources.mjs",
+          "renderedLength": 2166
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/index.js",
+          "renderedLength": 1767
+        },
+        {
+          "path": "\u0000rolldown/runtime.js",
+          "renderedLength": 1155
+        },
+        {
+          "path": "__vite-browser-external",
+          "renderedLength": 146
+        },
+        {
+          "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original.entry.mjs",
+          "renderedLength": 0
+        }
+      ]
+    }
+  },
+  "wasm": {
+    "core": {
+      "original": {
+        "assets": {
+          "core.wasm": {
+            "raw": 13911,
+            "gzip": 5997,
+            "brotli": 5337,
+            "sha256": "cc93bee471bb41b4900aa02c8e480a53c83979ff93f07c4531c2dbab1dd38c83",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 706,
+                "payloadBytes": 703
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 110,
+                "payloadBytes": 108
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 134,
+                "payloadBytes": 131
+              },
+              {
+                "id": 10,
+                "bytes": 7621,
+                "payloadBytes": 7618
+              },
+              {
+                "id": 0,
+                "name": "name",
+                "bytes": 5195,
+                "payloadBytes": 5192
+              }
+            ]
+          },
+          "memory.wasm": {
+            "raw": 1188,
+            "gzip": 737,
+            "brotli": 670,
+            "sha256": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 11,
+                "payloadBytes": 9
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 686,
+                "payloadBytes": 683
+              },
+              {
+                "id": 0,
+                "name": "name",
+                "bytes": 315,
+                "payloadBytes": 312
+              }
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 25313,
+          "gzip": 7934,
+          "brotli": 7124,
+          "entry": "core-original-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 24311,
+              "gzip": 7291,
+              "brotli": 6566,
+              "sha256": "79d51eeeab12f3c4e07af5aeda90152491980c68c3754582822950ac39431d71"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/tasks.mjs",
+              "renderedLength": 12019
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/core.mjs",
+              "renderedLength": 6948
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/bindings.mjs",
+              "renderedLength": 5113
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/host.mjs",
+              "renderedLength": 4506
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/resources.mjs",
+              "renderedLength": 2161
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original/index.js",
+              "renderedLength": 216
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-original.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [],
+        "deployedTotal": {
+          "raw": 40412,
+          "gzip": 14668,
+          "brotli": 13131
+        }
+      },
+      "strip": {
+        "assets": {
+          "core.wasm": {
+            "raw": 7931,
+            "gzip": 3897,
+            "brotli": 3546,
+            "sha256": "e2aca31f012cd534d6f16085effb44ba0653db2d9fd749fa04c9ad25c83934b2",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 706,
+                "payloadBytes": 703
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 110,
+                "payloadBytes": 108
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 134,
+                "payloadBytes": 131
+              },
+              {
+                "id": 10,
+                "bytes": 6836,
+                "payloadBytes": 6833
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/core.wasm"
+            ]
+          },
+          "memory.wasm": {
+            "raw": 876,
+            "gzip": 539,
+            "brotli": 504,
+            "sha256": "546f5298ddfc3aec85c9bc3f668036a8dc1d25318b00298301c7ee82bef7d9b5",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 11,
+                "payloadBytes": 9
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 689,
+                "payloadBytes": 686
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/memory.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/memory.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 25295,
+          "gzip": 7933,
+          "brotli": 7125,
+          "entry": "core-strip-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 24293,
+              "gzip": 7290,
+              "brotli": 6567,
+              "sha256": "124fc4629252f3fdf1b26547979d2c630cc69d2412a9e254b7d02c991b8b00f1"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/tasks.mjs",
+              "renderedLength": 12016
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/core.mjs",
+              "renderedLength": 6945
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/bindings.mjs",
+              "renderedLength": 5110
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/host.mjs",
+              "renderedLength": 4503
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/resources.mjs",
+              "renderedLength": 2158
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip/index.js",
+              "renderedLength": 213
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-strip.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [],
+        "deployedTotal": {
+          "raw": 34102,
+          "gzip": 12369,
+          "brotli": 11175
+        }
+      },
+      "O3": {
+        "assets": {
+          "core.wasm": {
+            "raw": 5995,
+            "gzip": 3022,
+            "brotli": 2801,
+            "sha256": "681cac8c606817c06bc7441b19b2202aa9fc371e1f96996465a27e4d95c32d54",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 390,
+                "payloadBytes": 387
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 40,
+                "payloadBytes": 38
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 134,
+                "payloadBytes": 131
+              },
+              {
+                "id": 10,
+                "bytes": 5286,
+                "payloadBytes": 5283
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-O3",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/core.wasm"
+            ]
+          },
+          "memory.wasm": {
+            "raw": 842,
+            "gzip": 531,
+            "brotli": 504,
+            "sha256": "1c9f08786b0f988b2d6a8062853c2e9f7278bab379f68b184aabe3fb19894de6",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 10,
+                "payloadBytes": 8
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 656,
+                "payloadBytes": 653
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/memory.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-O3",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/memory.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 25277,
+          "gzip": 7932,
+          "brotli": 7125,
+          "entry": "core-O3-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 24275,
+              "gzip": 7289,
+              "brotli": 6567,
+              "sha256": "39fe98e76fe6642fe80a13267934a0a5890805f6f099ed1ff6d88e4416a083d8"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/tasks.mjs",
+              "renderedLength": 12013
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/core.mjs",
+              "renderedLength": 6942
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/bindings.mjs",
+              "renderedLength": 5107
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/host.mjs",
+              "renderedLength": 4500
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/resources.mjs",
+              "renderedLength": 2155
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3/index.js",
+              "renderedLength": 210
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-O3.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [],
+        "deployedTotal": {
+          "raw": 32114,
+          "gzip": 11485,
+          "brotli": 10430
+        }
+      },
+      "Oz": {
+        "assets": {
+          "core.wasm": {
+            "raw": 5868,
+            "gzip": 3044,
+            "brotli": 2818,
+            "sha256": "fff940bdc27530641aa45f3618e8b565b808b920828d7ed7ff5f142ab25de0b0",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 400,
+                "payloadBytes": 397
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 45,
+                "payloadBytes": 43
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 134,
+                "payloadBytes": 131
+              },
+              {
+                "id": 10,
+                "bytes": 5144,
+                "payloadBytes": 5141
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-Oz",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/core.wasm"
+            ]
+          },
+          "memory.wasm": {
+            "raw": 842,
+            "gzip": 525,
+            "brotli": 491,
+            "sha256": "0fdde8687476ba096b3c7bf7c881a295c2a825fa9fc506eb4911d96a7890ca87",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 10,
+                "payloadBytes": 8
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 656,
+                "payloadBytes": 653
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/core/memory.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-Oz",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/memory.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 25277,
+          "gzip": 7932,
+          "brotli": 7124,
+          "entry": "core-Oz-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 24275,
+              "gzip": 7289,
+              "brotli": 6566,
+              "sha256": "a7d0e0ab062e885ce6e976fe5a7c0518daafa66c8eff1208a2379c3da8e98c75"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/tasks.mjs",
+              "renderedLength": 12013
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/core.mjs",
+              "renderedLength": 6942
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/bindings.mjs",
+              "renderedLength": 5107
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/host.mjs",
+              "renderedLength": 4500
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/resources.mjs",
+              "renderedLength": 2155
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz/index.js",
+              "renderedLength": 210
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/core-Oz.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [],
+        "deployedTotal": {
+          "raw": 31987,
+          "gzip": 11501,
+          "brotli": 10433
+        }
+      }
+    },
+    "component": {
+      "original": {
+        "assets": {
+          "component.core.wasm": {
+            "raw": 1194,
+            "gzip": 740,
+            "brotli": 673,
+            "sha256": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 11,
+                "payloadBytes": 9
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 686,
+                "payloadBytes": 683
+              },
+              {
+                "id": 0,
+                "name": "name",
+                "bytes": 321,
+                "payloadBytes": 318
+              }
+            ]
+          },
+          "component.core2.wasm": {
+            "raw": 14476,
+            "gzip": 6256,
+            "brotli": 5570,
+            "sha256": "5dff83a51d6e10afcf1ecd0008236d482f2719e3df93c32c336010d8fb84e27d",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 751,
+                "payloadBytes": 748
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 118,
+                "payloadBytes": 116
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 122,
+                "payloadBytes": 120
+              },
+              {
+                "id": 10,
+                "bytes": 7906,
+                "payloadBytes": 7903
+              },
+              {
+                "id": 0,
+                "name": "name",
+                "bytes": 5434,
+                "payloadBytes": 5431
+              }
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 110220,
+          "gzip": 33122,
+          "brotli": 28410,
+          "entry": "component-original-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 109218,
+              "gzip": 32479,
+              "brotli": 27852,
+              "sha256": "6c27dd1c5db4e26b29f4506b1d38fc1b2b96c958c0989669e22d3acd99141ade"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [
+            "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+            "5dff83a51d6e10afcf1ecd0008236d482f2719e3df93c32c336010d8fb84e27d"
+          ],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/component.js",
+              "renderedLength": 120412
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/tasks.mjs",
+              "renderedLength": 12024
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/host.mjs",
+              "renderedLength": 6641
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/resources.mjs",
+              "renderedLength": 2166
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original/index.js",
+              "renderedLength": 1767
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-original.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [
+          "component.core.wasm",
+          "component.core2.wasm"
+        ],
+        "deployedTotal": {
+          "raw": 110220,
+          "gzip": 33122,
+          "brotli": 28410
+        }
+      },
+      "strip": {
+        "assets": {
+          "component.core.wasm": {
+            "raw": 876,
+            "gzip": 539,
+            "brotli": 504,
+            "sha256": "546f5298ddfc3aec85c9bc3f668036a8dc1d25318b00298301c7ee82bef7d9b5",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 11,
+                "payloadBytes": 9
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 689,
+                "payloadBytes": 686
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/component.core.wasm"
+            ]
+          },
+          "component.core2.wasm": {
+            "raw": 8229,
+            "gzip": 4032,
+            "brotli": 3641,
+            "sha256": "a565ebe38e39efbedccf15f343a05a8178ee5f16f23804af29aed2d877e57bab",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 751,
+                "payloadBytes": 748
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 118,
+                "payloadBytes": 116
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 122,
+                "payloadBytes": 120
+              },
+              {
+                "id": 10,
+                "bytes": 7093,
+                "payloadBytes": 7090
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core2.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/component.core2.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 101452,
+          "gzip": 29589,
+          "brotli": 25565,
+          "entry": "component-strip-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 100450,
+              "gzip": 28946,
+              "brotli": 25007,
+              "sha256": "21e727f2de747781ca606f8040fb17d71cc08eeff6f58d13f3377c1aee173abd"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [
+            "546f5298ddfc3aec85c9bc3f668036a8dc1d25318b00298301c7ee82bef7d9b5",
+            "a565ebe38e39efbedccf15f343a05a8178ee5f16f23804af29aed2d877e57bab"
+          ],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/component.js",
+              "renderedLength": 111653
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/tasks.mjs",
+              "renderedLength": 12021
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/host.mjs",
+              "renderedLength": 6638
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/resources.mjs",
+              "renderedLength": 2163
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip/index.js",
+              "renderedLength": 1764
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-strip.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [
+          "component.core.wasm",
+          "component.core2.wasm"
+        ],
+        "deployedTotal": {
+          "raw": 101452,
+          "gzip": 29589,
+          "brotli": 25565
+        }
+      },
+      "O3": {
+        "assets": {
+          "component.core.wasm": {
+            "raw": 842,
+            "gzip": 531,
+            "brotli": 504,
+            "sha256": "1c9f08786b0f988b2d6a8062853c2e9f7278bab379f68b184aabe3fb19894de6",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 10,
+                "payloadBytes": 8
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 656,
+                "payloadBytes": 653
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-O3",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/component.core.wasm"
+            ]
+          },
+          "component.core2.wasm": {
+            "raw": 5914,
+            "gzip": 3003,
+            "brotli": 2783,
+            "sha256": "d2b5058d0c537b27312ed1250c58e27072f686f60824783f739b1c6c05d47c42",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 415,
+                "payloadBytes": 412
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 39,
+                "payloadBytes": 37
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 122,
+                "payloadBytes": 120
+              },
+              {
+                "id": 10,
+                "bytes": 5193,
+                "payloadBytes": 5190
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core2.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-O3",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/component.core2.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 98312,
+          "gzip": 28100,
+          "brotli": 24361,
+          "entry": "component-O3-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 97310,
+              "gzip": 27457,
+              "brotli": 23803,
+              "sha256": "56d9fb1e06625f5d3fab2aea16e16f407080f575c7936c44dc672bdf689411ec"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [
+            "1c9f08786b0f988b2d6a8062853c2e9f7278bab379f68b184aabe3fb19894de6",
+            "d2b5058d0c537b27312ed1250c58e27072f686f60824783f739b1c6c05d47c42"
+          ],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/component.js",
+              "renderedLength": 108522
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/tasks.mjs",
+              "renderedLength": 12018
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/host.mjs",
+              "renderedLength": 6635
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/resources.mjs",
+              "renderedLength": 2160
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3/index.js",
+              "renderedLength": 1761
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-O3.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [
+          "component.core.wasm",
+          "component.core2.wasm"
+        ],
+        "deployedTotal": {
+          "raw": 98312,
+          "gzip": 28100,
+          "brotli": 24361
+        }
+      },
+      "Oz": {
+        "assets": {
+          "component.core.wasm": {
+            "raw": 842,
+            "gzip": 525,
+            "brotli": 491,
+            "sha256": "0fdde8687476ba096b3c7bf7c881a295c2a825fa9fc506eb4911d96a7890ca87",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 27,
+                "payloadBytes": 25
+              },
+              {
+                "id": 3,
+                "bytes": 10,
+                "payloadBytes": 8
+              },
+              {
+                "id": 5,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 33,
+                "payloadBytes": 31
+              },
+              {
+                "id": 7,
+                "bytes": 101,
+                "payloadBytes": 99
+              },
+              {
+                "id": 10,
+                "bytes": 656,
+                "payloadBytes": 653
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-Oz",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/component.core.wasm"
+            ]
+          },
+          "component.core2.wasm": {
+            "raw": 5786,
+            "gzip": 3022,
+            "brotli": 2800,
+            "sha256": "b6724096bf6a5c6b9282ed3016d88cfcdff69f98922ebc1c4f411b4fbaa7307e",
+            "sections": [
+              {
+                "id": 1,
+                "bytes": 425,
+                "payloadBytes": 422
+              },
+              {
+                "id": 2,
+                "bytes": 121,
+                "payloadBytes": 119
+              },
+              {
+                "id": 3,
+                "bytes": 44,
+                "payloadBytes": 42
+              },
+              {
+                "id": 13,
+                "bytes": 7,
+                "payloadBytes": 5
+              },
+              {
+                "id": 6,
+                "bytes": 9,
+                "payloadBytes": 7
+              },
+              {
+                "id": 7,
+                "bytes": 122,
+                "payloadBytes": 120
+              },
+              {
+                "id": 10,
+                "bytes": 5050,
+                "payloadBytes": 5047
+              }
+            ],
+            "command": [
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/component/component.core2.wasm",
+              "--enable-gc",
+              "--enable-reference-types",
+              "--enable-exception-handling",
+              "--enable-bulk-memory",
+              "--enable-mutable-globals",
+              "--enable-multivalue",
+              "--enable-multimemory",
+              "--enable-simd",
+              "--strip-debug",
+              "--strip-producers",
+              "--strip-target-features",
+              "-Oz",
+              "-o",
+              "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/component.core2.wasm"
+            ]
+          }
+        },
+        "bundle": {
+          "raw": 98140,
+          "gzip": 28103,
+          "brotli": 24311,
+          "entry": "component-Oz-js/walz-runtime.js",
+          "assets": {
+            "walz-runtime.js": {
+              "raw": 97138,
+              "gzip": 27460,
+              "brotli": 23753,
+              "sha256": "c8130113fa314f054aa5e89cec233d39e3a645931906208855451d509c404328"
+            },
+            "__vite-browser-external-q4xEsQeL.js": {
+              "raw": 226,
+              "gzip": 198,
+              "brotli": 157,
+              "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+            },
+            "rolldown-runtime-CYdcPHCu.js": {
+              "raw": 776,
+              "gzip": 445,
+              "brotli": 401,
+              "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+            }
+          },
+          "inlinedAssetHashes": [
+            "0fdde8687476ba096b3c7bf7c881a295c2a825fa9fc506eb4911d96a7890ca87",
+            "b6724096bf6a5c6b9282ed3016d88cfcdff69f98922ebc1c4f411b4fbaa7307e"
+          ],
+          "modules": [
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/component.js",
+              "renderedLength": 108350
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/tasks.mjs",
+              "renderedLength": 12018
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/host.mjs",
+              "renderedLength": 6635
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/resources.mjs",
+              "renderedLength": 2160
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz/index.js",
+              "renderedLength": 1761
+            },
+            {
+              "path": "\u0000rolldown/runtime.js",
+              "renderedLength": 1155
+            },
+            {
+              "path": "__vite-browser-external",
+              "renderedLength": 146
+            },
+            {
+              "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/size-after-v2/component-Oz.entry.mjs",
+              "renderedLength": 0
+            }
+          ]
+        },
+        "inlinedWasm": [
+          "component.core.wasm",
+          "component.core2.wasm"
+        ],
+        "deployedTotal": {
+          "raw": 98140,
+          "gzip": 28103,
+          "brotli": 24311
+        }
+      }
+    }
+  },
+  "validation": [
+    "core/original: bundled JS + Wasm, all four inputs + malformed input",
+    "core/strip: bundled JS + Wasm, all four inputs + malformed input",
+    "core/O3: bundled JS + Wasm, all four inputs + malformed input",
+    "core/Oz: bundled JS + Wasm, all four inputs + malformed input",
+    "component/original: bundled JS + Wasm, all four inputs + malformed input",
+    "component/strip: bundled JS + Wasm, all four inputs + malformed input",
+    "component/O3: bundled JS + Wasm, all four inputs + malformed input",
+    "component/Oz: bundled JS + Wasm, all four inputs + malformed input"
+  ]
+}

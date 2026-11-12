@@ -1,0 +1,24 @@
+/** @module Interface walz:generated/api@0.1.0 **/
+export function inspect(p0: T17): T20;
+export function transform(p0: T17, p1: number): T21;
+export function inspectBatch(p0: T22): T23;
+export function transformBatch(p0: T22, p1: number): T24;
+export function encode(p0: T13): T17;
+export function decode(p0: T17): T25;
+export type WalzUnit = import('./walz-runtime-delivery.js').WalzUnit;
+export type T11 = import('./walz-runtime-delivery.js').T11;
+export type T0 = import('./walz-runtime-delivery.js').T0;
+export type T12 = import('./walz-runtime-delivery.js').T12;
+export type T13 = import('./walz-runtime-delivery.js').T13;
+export type T17 = import('./walz-runtime-delivery.js').T17;
+export type T18 = import('./walz-runtime-delivery.js').T18;
+export type T19 = import('./walz-runtime-delivery.js').T19;
+export type T20 = import('./walz-runtime-delivery.js').T20;
+export type T21 = import('./walz-runtime-delivery.js').T21;
+export type T22 = import('./walz-runtime-delivery.js').T22;
+export type T23 = import('./walz-runtime-delivery.js').T23;
+export type T24 = import('./walz-runtime-delivery.js').T24;
+export type T25 = import('./walz-runtime-delivery.js').T25;
+export type T26 = import('./walz-runtime-delivery.js').T26;
+export type T27 = import('./walz-runtime-delivery.js').T27;
+export type T28 = import('./walz-runtime-delivery.js').T28;

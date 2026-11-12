@@ -1,0 +1,22 @@
+{
+  "before": "../20261111-three-improvements-v1/capture-final",
+  "after": "capture-final",
+  "identical": {
+    "component/component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+    "component/component.core2.wasm": "369d2a93b8c8174a75dad98ce2dfbb64373e50d18c4c27aab1fe894373ae2c87",
+    "component/component.js": "d47d495198a2c5ef3027295f6fc8e8d915782ee5dac046cdc584596a17131751",
+    "component/component.wasm": "deae2b575ab492f2d84cf751eaeffd136de152869955640f33d8335c700eae31",
+    "component/host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+    "component/index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+    "component/resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+    "component/tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19",
+    "core/bindings.mjs": "5672e27a17923540eb52c6ce3a751a74faa5bd9a5ef6dbde4f255d9d7860c4d9",
+    "core/core.mjs": "89c9d5870b320f04c64b32e52da018754a598916b4f43552d5ec7c14ab5fcfc0",
+    "core/core.wasm": "6ea4d63c93a2a5bc4bec067495a531ce78046f287cd8f4b7833ef1d0a5f39c81",
+    "core/host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+    "core/index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+    "core/memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+    "core/resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+    "core/tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "head": {
+    "callFrame": {
+      "functionName": "(root)",
+      "scriptId": "0",
+      "url": "",
+      "lineNumber": -1,
+      "columnNumber": -1
+    },
+    "selfSize": 0,
+    "id": 1,
+    "children": [
+      {
+        "callFrame": {
+          "functionName": "",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1
+        },
+        "selfSize": 0,
+        "id": 2,
+        "children": [
+          {
+            "callFrame": {
+              "functionName": "profile",
+              "scriptId": "89",
+              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+              "lineNumber": 92,
+              "columnNumber": 29
+            },
+            "selfSize": 0,
+            "id": 3,
+            "children": [
+              {
+                "callFrame": {
+                  "functionName": "fn",
+                  "scriptId": "89",
+                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+                  "lineNumber": 84,
+                  "columnNumber": 48
+                },
+                "selfSize": 0,
+                "id": 4,
+                "children": [
+                  {
+                    "callFrame": {
+                      "functionName": "decode",
+                      "scriptId": "175",
+                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-bench/reference.mjs",
+                      "lineNumber": 42,
+                      "columnNumber": 10
+                    },
+                    "selfSize": 32784,
+                    "id": 5,
+                    "children": [
+                      {
+                        "callFrame": {
+                          "functionName": "slice",
+                          "scriptId": "0",
+                          "url": "",
+                          "lineNumber": -1,
+                          "columnNumber": -1
+                        },
+                        "selfSize": 196912,
+                        "id": 6,
+                        "children": []
+                      },
+                      {
+                        "callFrame": {
+                          "functionName": "text",
+                          "scriptId": "175",
+                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-bench/reference.mjs",
+                          "lineNumber": 32,
+                          "columnNumber": 15
+                        },
+                        "selfSize": 0,
+                        "id": 7,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "__string",
+                              "scriptId": "181",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/reference-package/js/byte-buffer.js",
+                              "lineNumber": 174,
+                              "columnNumber": 12
+                            },
+                            "selfSize": 0,
+                            "id": 8,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "subarray",
+                                  "scriptId": "0",
+                                  "url": "",
+                                  "lineNumber": -1,
+                                  "columnNumber": -1
+                                },
+                                "selfSize": 32864,
+                                "id": 9,
+                                "children": []
+                              },
+                              {
+                                "callFrame": {
+                                  "functionName": "decode",
+                                  "scriptId": "50",
+                                  "url": "node:internal/encoding",
+                                  "lineNumber": 481,
+                                  "columnNumber": 8
+                                },
+                                "selfSize": 32784,
+                                "id": 12,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "callFrame": {
+                          "functionName": "ByteBuffer",
+                          "scriptId": "181",
+                          "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/reference-package/js/byte-buffer.js",
+                          "lineNumber": 10,
+                          "columnNumber": 15
+                        },
+                        "selfSize": 65632,
+                        "id": 11,
+                        "children": []
+                      },
+                      {
+                        "callFrame": {
+                          "functionName": "readInt64",
+                          "scriptId": "181",
+                          "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-v1/capture/reference-package/js/byte-buffer.js",
+                          "lineNumber": 69,
+                          "columnNumber": 13
+                        },
+                        "selfSize": 98352,
+                        "id": 10,
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "samples": [
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 14
+    },
+    {
+      "size": 32784,
+      "nodeId": 12,
+      "ordinal": 12
+    },
+    {
+      "size": 32864,
+      "nodeId": 6,
+      "ordinal": 11
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 10
+    },
+    {
+      "size": 32784,
+      "nodeId": 5,
+      "ordinal": 8
+    },
+    {
+      "size": 32832,
+      "nodeId": 6,
+      "ordinal": 7
+    },
+    {
+      "size": 32816,
+      "nodeId": 11,
+      "ordinal": 13
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 5
+    },
+    {
+      "size": 32864,
+      "nodeId": 6,
+      "ordinal": 4
+    },
+    {
+      "size": 32864,
+      "nodeId": 6,
+      "ordinal": 2
+    },
+    {
+      "size": 32816,
+      "nodeId": 11,
+      "ordinal": 9
+    },
+    {
+      "size": 32864,
+      "nodeId": 9,
+      "ordinal": 3
+    },
+    {
+      "size": 32864,
+      "nodeId": 6,
+      "ordinal": 6
+    },
+    {
+      "size": 32832,
+      "nodeId": 6,
+      "ordinal": 1
+    }
+  ]
+}

@@ -1,0 +1,1386 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.70s
+     Running unittests src/lib.rs (target/debug/deps/walz-87410821c1168b7f)
+
+running 28 tests
+test benchmark::tests::statistics_preserve_raw_samples_and_use_sample_deviation ... ok
+test lsp::memory_contracts::unsaved_source_snapshots_share_the_immutable_buffer ... ok
+test aliases::tests::type_positions_include_nested_payloads_but_exclude_all_other_names ... ok
+test aliases::tests::forward_aliases_expand_without_touching_local_names ... ok
+test lsp::protocol::tests::framing_rejects_truncation_and_oversized_allocations ... ok
+test abi_limits::tests::shared_type_graph_is_visited_once_per_vertex ... ok
+test lsp::protocol::tests::cancellation_tracks_only_live_requests ... ok
+test diagnostic::name_tests::source_names_replace_whole_identifiers_and_bound_shared_expansion ... ok
+test review::tests::long_structural_calls_are_indented_for_review ... ok
+test review::tests::encoded_atoms_do_not_inject_forms_and_excessive_nesting_is_rejected ... ok
+test generics::inference::tests::cached_inferred_call_sites_survive_a_later_specialization_restart ... ok
+test review::tests::reserved_spelling_and_nested_generic_types_roundtrip ... ok
+test review::tests::shadowing_keeps_explicit_let_and_comment_lines_never_become_forms ... ok
+test sexpr::editor_completion_tests::only_missing_parentheses_are_completed_and_lexical_contents_are_preserved ... ok
+test review::tests::watz_case_keywords_lower_to_prefixed_walz_clauses ... ok
+test binary::tests::expanded_wit_graphs_are_bounded_before_building_shape_strings ... ok
+test review::tests::control_expressions_preserve_result_headers_and_case_patterns ... ok
+test review::tests::module_is_optional_and_let_keeps_the_canonical_binding_semantics ... ok
+test review::tests::controls_keep_opaque_data_and_unsupported_wat_shapes_explicit ... ok
+test standard::performance_contracts::type_only_imports_do_not_parse_library_implementations ... ok
+test ir::numeric_tests::declared_numeric_signatures_match_wasm_validation ... ok
+test typeclasses::tests::every_class_method_has_the_declared_scalar_signature ... ok
+test standard::performance_contracts::generated_index_matches_source_exports_and_alias_ranges ... ok
+test lsp::memory_contracts::editor_snapshots_are_bounded_and_closed_documents_retire ... ok
+test simd::tests::every_registered_signature_agrees_with_the_wasm_validator ... ok
+test standard::performance_contracts::parsing_cached_templates_does_not_share_import_aliases_or_hygiene ... ok
+test aliases::tests::cyclic_and_exponentially_expanding_aliases_are_bounded ... ok
+test review::tests::active_programs_roundtrip_their_exact_form_tree ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running unittests src/main.rs (target/debug/deps/walz-0e6ea57e60495a76)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/abi_limits.rs (target/debug/deps/abi_limits-11d64fbed28185d8)
+
+running 3 tests
+test inline_abi_work_is_bounded_before_flattening_or_arithmetic_overflow ... ok
+test adapter_parameter_limits_do_not_restrict_standard_core_wat ... ok
+test small_shared_dags_and_lists_keep_their_existing_contract ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s
+
+     Running tests/application_harness.rs (target/debug/deps/application_harness-4a9a12f36a5cad62)
+
+running 2 tests
+test application_selection_uses_declarations_not_a_reserved_export_name_pattern ... ok
+test application_backends_hide_harness_exports_after_checking_the_whole_source ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.89s
+
+     Running tests/arithmetic_classes.rs (target/debug/deps/arithmetic_classes-547785e9c55c9e02)
+
+running 3 tests
+test arithmetic_constraints_work_in_generic_functions_and_reject_missing_instances ... ok
+test sub_mul_and_div_resolve_to_the_same_wasm_as_native_scalar_operations ... ok
+test arithmetic_keeps_wasm_wrapping_division_rounding_and_traps ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+     Running tests/array_views.rs (target/debug/deps/array_views-0da97b1793aab234)
+
+running 4 tests
+test source_kind_bounds_and_public_abi_are_checked ... ok
+test constructor_rejects_wrong_elements_before_get_is_used_and_views_remain_opaque ... ok
+test array_views_share_ranges_check_bounds_and_release_parent_and_backing ... ok
+test immutable_arrays_nondefaultable_references_and_simd_elements_materialize ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/at_prefix.rs (target/debug/deps/at_prefix-951b71ca2ce0ab2f)
+
+running 4 tests
+test percent_extensions_are_rejected_and_missing_prefix_help_uses_at ... ok
+test native_annotations_strings_comments_and_identifiers_keep_their_bytes ... ok
+test at_effects_cannot_be_discarded_as_wat_annotations ... ok
+test at_extensions_and_user_macros_produce_checked_ir ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/benchmarks.rs (target/debug/deps/benchmarks-a3b5e3ea9bda7b14)
+
+running 10 tests
+test declarations_check_types_names_and_keep_generated_functions_private ... ok
+test batch_wrapper_counts_iterations_and_retains_only_the_latest_gc_result ... ok
+test discovery_skips_symlinks_and_explicit_paths_and_separator_still_work ... ok
+test discovery_listing_filtering_and_tests_are_separate ... ok
+test unsupported_suspension_and_missing_runtime_are_reported_without_skipping_checks ... ok
+test empty_selection_and_invalid_options_fail ... ok
+test selection_projects_unrelated_imports_and_supports_static_generic_libraries ... ok
+test runs_resident_wasm_batches_and_emits_raw_samples_as_json ... ok
+test failures_timeouts_and_compile_errors_do_not_hide_peers ... ok
+test benchmark_generation_avoids_user_names_and_keeps_law_verification ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.90s
+
+     Running tests/branding.rs (target/debug/deps/branding-f887fe8fde23a7d6)
+
+running 1 test
+test walz_cli_and_source_tests_work_outside_the_checkout ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/buffers.rs (target/debug/deps/buffers-eca0c782a26a6e52)
+
+running 4 tests
+test buffers_cannot_be_mutated_or_observed_as_references ... ok
+test buffer_operations_accept_abrupt_operands_without_compiler_panics ... ok
+test byte_slices_lower_to_a_bulk_gc_copy ... ok
+test immutable_bytes_and_utf8_text_have_checked_types_and_portable_abi ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+
+     Running tests/cheatsheet.rs (target/debug/deps/cheatsheet-c47409cb63fcc4ee)
+
+running 1 test
+test cheatsheet_complete_modules_compile_and_their_tests_execute ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests/cli.rs (target/debug/deps/cli-0b5c436a7e8ba65a)
+
+running 7 tests
+test reports_expression_and_binding_types_without_running_the_program ... ok
+test reports_effects_as_json_and_checks_without_executing ... ok
+test static_type_errors_use_source_type_names ... ok
+test rejects_invalid_usage_and_reports_source_diagnostics ... ok
+test emits_valid_wasm_and_inspectable_wat_and_ir ... ok
+test expected_runtime_failures_are_not_counted_as_successful_examples ... ok
+test runs_all_gc_examples ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.61s
+
+     Running tests/cli_async.rs (target/debug/deps/cli_async-f34f31dd243b96d2)
+
+running 2 tests
+test async_deadlines_cancel_and_dispose_before_reporting_and_listing_does_not_load_host ... ok
+test async_cli_cases_share_checked_host_configuration_and_isolate_instances ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.84s
+
+     Running tests/cli_build.rs (target/debug/deps/cli_build-fffa51b7c3c6050a)
+
+running 7 tests
+test failed_builds_leave_no_output_and_missing_entries_explain_the_convention ... ok
+test discovery_skips_generated_directories_and_allows_explicit_opt_in ... ok
+test build_finds_a_project_entry_and_creates_its_output_directory ... ok
+test build_supports_default_named_and_legacy_positional_outputs ... ok
+test build_rejects_invalid_options_and_preserves_sources_on_output_aliases ... ok
+test runner_option_terminators_preserve_filenames_that_look_like_global_flags ... ok
+test installed_command_help_and_version_require_no_runtime_or_source ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/cli_deadlines.rs (target/debug/deps/cli_deadlines-68ccbf3c1ee69e67)
+
+running 1 test
+test run_deadline_reports_timeout_after_host_cleanup ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.03s
+
+     Running tests/cli_new.rs (target/debug/deps/cli_new-d9afa9e4b4654637)
+
+running 3 tests
+test new_refuses_existing_files_directories_and_symlinks_without_modification ... ok
+test new_handles_help_options_and_literal_paths ... ok
+test new_generates_an_offline_project_with_working_build_run_test_and_bench ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+     Running tests/cli_print.rs (target/debug/deps/cli_print-7ca3bd405afe683e)
+
+running 8 tests
+test review_type_queries_map_instruction_names_back_to_the_input ... ok
+test review_tests_and_benchmarks_use_the_ordinary_runners ... ok
+test source_publication_and_inline_wasm_exports_remain_distinct ... ok
+test review_modules_mix_with_sexpressions_and_keep_diagnostic_locations ... ok
+test print_formats_are_explicit_read_only_and_validate_options ... ok
+test review_examples_and_semantic_rejections_use_the_same_backend ... ok
+test review_output_is_reversible_and_review_files_build_and_run ... ok
+test direct_controls_run_once_preserve_branches_and_report_original_positions ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/cli_run.rs (target/debug/deps/cli_run-60415ec510f1eb0c)
+
+running 9 tests
+test cli_argument_contract_cannot_be_retyped_or_overridden ... ok
+test run_usage_errors_are_distinct_from_guest_failures ... ok
+test native_run_selects_an_export_passes_arguments_and_supports_exit_codes ... ok
+test cli_arguments_are_available_through_a_typed_host_binding ... ok
+test interrupting_the_parent_waits_for_node_guest_and_host_disposal ... ok
+test jspi_run_works_with_arguments_and_gc_values_across_suspension ... ok
+test explicit_host_modules_use_the_checked_policy_and_bigint_arguments ... ok
+test filesystem_value_adapter_requires_named_file_grants_and_closes_both_endpoints ... ok
+test text_io_requires_explicit_capabilities_and_leaves_stdout_for_program_output ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.36s
+
+     Running tests/cli_targets.rs (target/debug/deps/cli_targets-4895817ce960a50b)
+
+running 4 tests
+test component_metadata_cannot_overwrite_an_aliased_source ... ok
+test bundled_outputs_cannot_overwrite_the_source_or_its_links ... ok
+test core_js_build_is_a_standalone_runtime_bundle ... ok
+test build_targets_have_distinct_default_outputs_and_reject_unknown_targets ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.12s
+
+     Running tests/collections.rs (target/debug/deps/collections-7b7adeca83569c3d)
+
+running 2 tests
+test collection_bounds_effects_and_opaque_layouts_are_checked_before_dce ... ok
+test dictionary_and_list_builder_contracts_run_on_wasm_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/component.rs (target/debug/deps/component-50b5950f96461993)
+
+running 3 tests
+test trusted_event_loop_contracts_are_fixed_and_ownership_still_applies ... ok
+test component_build_emits_a_valid_canonical_interface_and_rejects_unknown_bindings ... ok
+test imported_and_exported_interface_aliases_roundtrip_as_wit ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.88s
+
+     Running tests/control.rs (target/debug/deps/control-7e43226cd282e002)
+
+running 3 tests
+test early_exits_cannot_discard_owners_or_cross_mismatched_label_types ... ok
+test typed_returns_and_labeled_branches_keep_native_wat_order_and_results ... ok
+test named_loop_branches_and_owned_block_results_are_checked ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.92s
+
+     Running tests/core_js.rs (target/debug/deps/core_js-be96e9a62518e59d)
+
+running 3 tests
+test core_js_preserves_trusted_import_and_portable_export_checks ... ok
+test core_js_does_not_overwrite_its_source_with_an_artifact ... ok
+test core_js_builds_valid_modules_and_only_required_boundary_codecs ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+
+     Running tests/dce.rs (target/debug/deps/dce-9e0bb4940b08d292)
+
+running 5 tests
+test native_wat_with_initialization_or_unused_imports_is_preserved ... ok
+test unreachable_code_is_still_type_effect_and_ownership_checked ... ok
+test checked_output_retains_only_exported_functions_and_transitive_dependencies ... ok
+test projection_keeps_closure_environments_recursive_types_tags_and_tests ... ok
+test unused_trusted_imports_do_not_require_host_capabilities_or_abi_codecs ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.79s
+
+     Running tests/delivery.rs (target/debug/deps/delivery-630765d39aa4a625)
+
+running 6 tests
+test endpoints_are_opaque_owned_values_and_payloads_are_shared_for_now ... ok
+test suspension_is_checked_and_propagates_without_hiding_payload_effects ... ok
+test stream_end_and_completion_error_remain_separate_values ... ok
+test delivery_evaluates_arguments_once_and_preserves_gc_payload_references ... ok
+test ready_future_is_consumed_by_await_and_supports_result_and_unit ... ok
+test finite_stream_preserves_order_and_returns_an_owner_even_at_end ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/diagnostics.rs (target/debug/deps/diagnostics-e84eef2adaa20639)
+
+running 16 tests
+test alias_cycle_reports_the_ordered_edges_and_a_non_prescriptive_repair ... ok
+test alias_cycle_edges_keep_their_individual_include_locations ... ok
+test included_cli_errors_keep_related_locations_and_do_not_panic_at_eof ... ok
+test distant_unknown_names_list_visible_bindings_without_guessing_a_replacement ... ok
+test call_arity_counts_only_source_arguments_and_names_the_callee ... ok
+test opaque_diagnostic_identifies_type_owner_and_declaration ... ok
+test effect_diagnostic_explains_declared_bound_and_transitive_cause ... ok
+test unknown_local_suggests_only_visible_bindings_and_limits_capture_advice ... ok
+test moved_value_diagnostic_identifies_binding_and_first_move ... ok
+test effect_provenance_ignores_caught_throws_and_finds_handler_rethrows ... ok
+test inner_type_errors_do_not_blame_an_outer_call_or_result_bound ... ok
+test numeric_repair_hint_uses_the_surrounding_type_without_implying_a_cast ... ok
+test included_primary_and_related_spans_map_independently_with_unicode_columns ... ok
+test type_errors_explain_numeric_operand_parameter_and_declared_result_origins ... ok
+test effect_provenance_handles_recursive_calls_and_unknown_imports ... ok
+test branch_move_provenance_retains_each_reachable_origin ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/differential.rs (target/debug/deps/differential-2e7d4addfe83c682)
+
+running 4 tests
+test reducer_can_shrink_a_payload_while_preserving_its_required_wrapper ... ok
+test reducer_preserves_the_failure_and_reaches_a_structural_minimum ... ok
+test seeded_module_graphs_share_types_without_leaking_private_aliases ... ok
+test seeded_programs_agree_across_macro_expansion_optimization_and_engines ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.36s
+
+     Running tests/documentation.rs (target/debug/deps/documentation-487d082b6f1febe0)
+
+running 3 tests
+test english_and_japanese_references_keep_the_same_walz_examples ... ok
+test entry_guides_link_to_existing_local_documents_and_examples ... ok
+test introductory_guides_compile_run_and_support_the_documented_project_workflow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/effects.rs (target/debug/deps/effects-9965d72d89dcfa57)
+
+running 4 tests
+test malformed_contracts_are_rejected ... ok
+test recursive_call_graph_cannot_hide_an_effect ... ok
+test throws_contracts_track_escaping_tags_and_handler_rethrows ... ok
+test contracts_check_transitive_mutation_and_do_not_trust_import_annotations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/esm_inspection.rs (target/debug/deps/esm_inspection-af371824b0aa19f4)
+
+running 4 tests
+test metadata_keeps_effect_ownership_and_portable_boundary_checks ... ok
+test metadata_uses_unsaved_content_and_original_utf8_export_positions_without_writing ... ok
+test metadata_loads_static_dependencies_and_preserves_checker_errors ... ok
+test unused_macro_templates_cannot_capture_export_navigation ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/esm_metadata.rs (target/debug/deps/esm_metadata-05ee83ae46c14ec9)
+
+running 2 tests
+test core_js_build_records_files_for_incremental_consumers ... ok
+test core_js_exposes_checked_esm_names_shapes_and_suspension ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+
+     Running tests/examples.rs (target/debug/deps/examples-0d5da8b3abe4af76)
+
+running 4 tests
+test capability_probes_record_reproducible_language_limits ... ok
+test representative_program_effects_remain_visible ... ok
+test additional_inputs_exercise_boundary_and_failure_results ... ok
+test every_catalog_example_is_checked_and_produces_valid_wasm ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.22s
+
+     Running tests/exception_ownership.rs (target/debug/deps/exception_ownership-50e7fbe1327ce609)
+
+running 4 tests
+test explicit_throw_cannot_abandon_a_previously_evaluated_owned_operand ... ok
+test exceptional_edges_cannot_lose_owners_or_uncommitted_owned_arguments ... ok
+test nested_handlers_and_throwing_closures_preserve_owner_states ... ok
+test owners_survive_caught_exceptions_and_both_paths_are_independently_verified ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.25s
+
+     Running tests/expression_sugar.rs (target/debug/deps/expression_sugar-342556b96fcbb884)
+
+running 17 tests
+test inspection_keeps_the_source_type_and_spans_of_short_expressions ... ok
+test malformed_declarations_are_diagnostics_and_not_panics ... ok
+test literal_sugar_does_not_claim_native_stack_instruction_tokens ... ok
+test numeric_elision_requires_a_known_scalar_type_and_valid_wat_literal ... ok
+test short_expressions_survive_formatting_and_native_wat_remains_unchanged ... ok
+test operators_determine_operand_types_independently_of_the_result_type ... ok
+test declarations_supply_types_for_calls_results_conditions_arrays_and_fields ... ok
+test short_local_resolution_keeps_lexical_scope_and_field_labels_separate ... ok
+test let_type_annotations_keep_aliases_generics_references_and_native_wat ... ok
+test inferred_value_forms_do_not_confuse_local_atoms_with_types ... ok
+test result_do_bound_locals_are_values_even_when_they_share_a_type_name ... ok
+test generic_functions_closures_match_and_loop_bindings_use_the_same_rules ... ok
+test namespace_type_resolution_preserves_short_local_reads_and_explicit_type_operands ... ok
+test generic_constructor_type_operands_survive_parameter_renaming ... ok
+test short_locals_and_constants_emit_the_same_wasm_as_explicit_expressions ... ok
+test simd_operands_and_explicit_newtype_wraps_provide_scalar_expectations ... ok
+test shorthand_does_not_move_owned_values_or_skip_static_contracts ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/flow.rs (target/debug/deps/flow-3e30a161eb6231dc)
+
+running 9 tests
+test null_guards_refine_aliases_but_not_the_opposite_branch ... ok
+test labeled_branch_results_do_not_inherit_facts_from_the_normal_tail ... ok
+test unsigned_guard_proves_bounds_and_normal_array_length_proves_non_null ... ok
+test fixed_lengths_and_wrapping_arithmetic_use_wasm_bits ... ok
+test loop_carried_values_are_widened_and_only_normal_paths_refine_continuations ... ok
+test allocation_length_snapshots_prove_map_output_bounds_without_aliasing_the_arrays ... ok
+test signed_guard_needs_nonnegative_index_and_distinct_arrays_are_not_equal ... ok
+test inferred_ranges_contain_concrete_wrapping_results_at_boundary_constants ... ok
+test signed_negative_index_counterexample_is_a_real_wasm_trap ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/formatting.rs (target/debug/deps/formatting-7c913a02a0ac8731)
+
+running 13 tests
+test formatter_keeps_short_macro_inputs_out_of_the_header ... ok
+test formatting_an_empty_binding_list_preserves_its_delimiters ... ok
+test formatter_keeps_fold_types_and_case_bindings_together ... ok
+test formatter_exposes_pattern_let_continuation_even_when_it_fits_one_line ... ok
+test grouped_binding_comments_keep_their_order_and_do_not_swallow_delimiters ... ok
+test formatter_bounds_closing_groups_in_deeply_nested_code ... ok
+test formatter_groups_contracts_and_macro_headers_and_attaches_closing_delimiters ... ok
+test grouped_let_keeps_the_continuation_out_of_the_binding_header ... ok
+test formatter_does_not_put_a_closing_delimiter_in_a_line_comment ... ok
+test grouped_bindings_align_and_long_result_subjects_separate_the_continuation ... ok
+test formatter_preserves_native_tokens_comments_and_is_idempotent ... ok
+test format_cli_checks_then_writes_only_a_valid_source_file ... ok
+test formatter_preserves_catalog_and_application_binaries ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.55s
+
+     Running tests/generic_bounds.rs (target/debug/deps/generic_bounds-6b66341189164a80)
+
+running 12 tests
+test malformed_constraints_are_rejected_without_instantiation ... ok
+test owned_closures_and_borrows_cannot_satisfy_shared_or_callable_bounds ... ok
+test unit_and_non_nominal_callbacks_fail_at_application_before_invalid_headers ... ok
+test callback_effect_bounds_use_trusted_import_policy_and_never_trust_a_pure_annotation ... ok
+test shared_checks_recursive_gc_data_without_hiding_borrowed_fields ... ok
+test imported_constraints_use_concrete_aliases_and_report_both_source_files ... ok
+test inferred_effects_are_checked_even_when_the_callback_is_never_called ... ok
+test callback_effect_bounds_follow_calls_and_preserve_caught_exception_semantics ... ok
+test constraints_apply_to_types_aliases_and_generic_closures ... ok
+test constraint_only_types_do_not_create_runtime_functions_or_abi_requirements ... ok
+test callable_checks_nominal_closure_signature_before_the_template_body ... ok
+test shared_and_nonunit_bounds_check_even_an_unused_type_argument ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/generic_diagnostics.rs (target/debug/deps/generic_diagnostics-2b47cb9d3a96f89c)
+
+running 2 tests
+test nested_generic_names_are_exact_and_user_written_mono_suffixes_are_not_erased ... ok
+test monomorphized_errors_show_source_types_arguments_and_local_aliases ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/generic_inference.rs (target/debug/deps/generic_inference-0bfded1fddb4533d)
+
+running 11 tests
+test cyclic_aliases_cannot_turn_type_inference_into_unbounded_expansion ... ok
+test malformed_generic_type_syntax_is_diagnosed_without_panicking ... ok
+test many_call_sites_share_one_inferred_specialization ... ok
+test closure_argument_signature_resolves_map_output_without_context ... ok
+test imported_aliases_reexports_and_type_inspection_keep_source_locations ... ok
+test inference_keeps_owned_moves_bounds_and_effect_obligations ... ok
+test result_context_resolves_a_generic_producer_and_preserves_explicit_applications ... ok
+test recursive_calls_reuse_the_instance_and_changing_types_is_rejected ... ok
+test expected_results_supply_full_nominal_constructor_hints ... ok
+test constructed_aliases_and_nominal_applications_unify_structurally ... ok
+test argument_and_expected_types_resolve_nested_calls_without_a_default_width ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.55s
+
+     Running tests/generics.rs (target/debug/deps/generics-e21009b069e92bc4)
+
+running 13 tests
+test malformed_applications_and_infinite_specialization_report_errors ... ok
+test callback_effects_are_checked_after_specialization ... ok
+test expansion_limits_and_invalid_unused_type_arguments_are_diagnostics ... ok
+test concrete_arguments_are_not_captured_by_other_type_parameters ... ok
+test functions_aliases_nominal_types_and_closures_share_explicit_type_application ... ok
+test generic_opaque_types_keep_their_template_namespace ... ok
+test substitution_preserves_value_names_and_recursive_type_identity ... ok
+test file_imports_share_instances_and_can_export_a_concrete_application ... ok
+test transparent_generic_aliases_share_keys_and_generated_names_avoid_source_names ... ok
+test generic_variant_matches_and_constructor_type_arguments_are_expanded ... ok
+test instantiated_bodies_are_checked_before_dce_and_owned_arguments_keep_their_contracts ... ok
+test recursion_and_alias_arguments_reuse_one_concrete_instance ... ok
+test generic_list_map_and_fold_are_concrete_and_preserve_callback_effects ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/high_level.rs (target/debug/deps/high_level-b8ca4626ac06b8e9)
+
+running 11 tests
+test new_sugar_preserves_opaque_representation_boundaries ... ok
+test field_patterns_reject_duplicates_unknown_fields_invalid_binders_and_nullable_subjects ... ok
+test for_each_rejects_wrong_collections_patterns_results_and_repeated_moves ... ok
+test updates_enforce_mutability_type_effect_and_binder_scope ... ok
+test abrupt_and_nullable_update_targets_remain_valid_wasm ... ok
+test editor_tracks_new_bindings_in_checked_and_error_recovery_snapshots ... ok
+test generic_type_arguments_and_field_names_have_separate_roles ... ok
+test formatter_preserves_field_patterns_and_is_idempotent ... ok
+test per_iteration_owners_are_checked_by_the_existing_verified_contract ... ok
+test hidden_temporaries_do_not_enter_source_scope_and_outer_exit_labels_still_work ... ok
+test shared_list_patterns_field_snapshots_and_updates_execute_in_both_optimization_modes ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.04s
+
+     Running tests/inspection.rs (target/debug/deps/inspection-e18ab9841e118d9e)
+
+running 5 tests
+test equal_result_types_do_not_hide_distinct_generic_instances ... ok
+test loaded_snapshot_queries_do_not_require_the_file_to_still_exist ... ok
+test type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances ... ok
+test type_queries_validate_coordinates_errors_and_native_limits ... ok
+test json_check_keeps_success_failure_and_native_validation_machine_readable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/interface_types.rs (target/debug/deps/interface_types-92f9115c3bf60cc9)
+
+running 3 tests
+test flags_share_the_pinned_component_limit_of_32_names ... ok
+test abi_annotations_reject_mutability_recursion_and_wrong_storage ... ok
+test explicit_portable_types_preserve_nominal_checking_and_both_abis ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.76s
+
+     Running tests/js_native.rs (target/debug/deps/js_native-bb764c50e78064ea)
+
+running 3 tests
+test scalar_only_modules_do_not_require_a_source_byte_type ... ok
+test experimental_direct_abi_keeps_the_checked_gc_guest_and_does_not_emit_task_or_component_glue ... ok
+test unsupported_effects_owners_memories_and_boundary_shapes_are_explicit_errors ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.97s
+
+     Running tests/json_namespace.rs (target/debug/deps/json_namespace-568cb620d4a5fd54)
+
+running 3 tests
+test json_construction_parsing_and_object_writing_have_distinct_public_names ... ok
+test plain_strings_and_builders_do_not_depend_on_json_and_construction_is_selective ... ok
+test frozen_import_adaptation_preserves_aliases_and_ignores_comments_and_strings ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/json_values.rs (target/debug/deps/json_values-84393de415591729)
+
+running 3 tests
+test published_json_values_remain_immutable_for_effect_analysis ... ok
+test parser_boundaries_and_unicode_execute_in_native_wasm ... ok
+test json_parser_is_a_checked_library_without_new_language_primitives ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.07s
+
+     Running tests/language.rs (target/debug/deps/language-4c76b60accc8de07)
+
+running 14 tests
+test effects_propagate_through_calls_and_recursion ... ok
+test effect_facts_distinguish_mutation_nullability_and_allocation ... ok
+test gc_structs_recursive_types_and_explicit_mutation ... ok
+test captured_references_share_explicit_mutable_objects ... ok
+test recur_updates_all_state_simultaneously ... ok
+test captures_are_value_snapshots_and_nominal_types_do_not_mix ... ok
+test arrays_and_loops_with_explicit_state ... ok
+test malformed_input_has_diagnostics_instead_of_panics ... ok
+test closures_have_explicit_captures_and_can_escape_their_creator ... ok
+test rejects_programs_outside_the_analyzable_core ... ok
+test folded_wat_and_immutable_lexical_bindings ... ok
+test tail_recur_can_be_nested_under_let_and_unit_blocks ... ok
+test closure_environment_stays_live_during_allocation_pressure ... ok
+test constants_arrays_and_reference_operations_keep_wasm_semantics ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/laws.rs (target/debug/deps/laws-53c827d148eef52e)
+
+running 3 tests
+test proof_semantics_preserve_signedness_wrapping_masked_shifts_and_branching ... ok
+test laws_are_universally_proved_and_run_through_the_same_gate_in_normal_run ... ok
+test false_laws_block_execution_and_unsupported_semantics_are_rejected ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.10s
+
+     Running tests/library.rs (target/debug/deps/library-3d8df78c35b85d8f)
+
+running 4 tests
+test array_to_bytes_copies_and_checks_unsigned_octets ... ok
+test standard_library_has_executable_language_tests ... ok
+test standard_library_search_parse_and_builder_contracts_execute_natively ... ok
+test builder_representation_and_mutation_effects_are_checked ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+
+     Running tests/lists.rs (target/debug/deps/lists-4a980f2dc759db85)
+
+running 4 tests
+test list_representation_and_owned_elements_are_rejected ... ok
+test abrupt_list_operands_are_bottom_typed_without_panics ... ok
+test aliases_nondefaultable_elements_and_list_paths_keep_their_types ... ok
+test lists_are_shared_values_with_portable_nested_shapes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s
+
+     Running tests/local_cancellation.rs (target/debug/deps/local_cancellation-0246af95823a8dd6)
+
+running 1 test
+test local_cancellation_is_typed_affine_and_portable_to_both_js_backends ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.72s
+
+     Running tests/log_stats.rs (target/debug/deps/log_stats-992243b06fd7dc3b)
+
+running 2 tests
+test native_log_workload_checks_all_rows_and_resets_state_between_rounds ... ok
+test log_statistics_modules_have_checked_effect_boundaries_and_native_model_tests ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running tests/logical_bits.rs (target/debug/deps/logical_bits-585f04ea5e6a1905)
+
+running 11 tests
+test numeric_bit_operations_require_matching_integer_widths_and_known_types ... ok
+test inspection_and_formatting_keep_logical_and_shift_operand_types ... ok
+test skipped_rhs_still_obeys_type_and_effect_contracts ... ok
+test logical_operators_emit_the_same_wasm_as_explicit_short_circuit_if ... ok
+test logical_bitwise_and_shift_bounds_resolve_in_generic_functions ... ok
+test skipped_rhs_never_traps_throws_or_returns ... ok
+test short_circuit_and_eager_bits_evaluate_their_reached_operands_once_in_source_order ... ok
+test logical_values_use_i32_truth_and_return_canonical_zero_or_one ... ok
+test bitwise_and_shift_instances_emit_native_integer_operations ... ok
+test logical_and_shift_laws_reuse_the_existing_proof_semantics ... ok
+test conditional_rhs_cannot_consume_an_outer_owner_on_only_one_path ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+     Running tests/lsp.rs (target/debug/deps/lsp-c236ad52554fe4ab)
+
+running 8 tests
+test utf16_positions_round_trip_and_reject_half_surrogates ... ok
+test incomplete_edits_keep_current_declarations_and_offer_core_imports ... ok
+test declaration_recovery_keeps_wat_type_function_and_local_names_separate ... ok
+test incremental_changes_use_utf16_and_invalidate_importers ... ok
+test recovery_uses_current_positions_and_lexical_shadowing_without_old_types ... ok
+test stdio_framing_shutdown_and_cancellation_are_protocol_only ... ok
+test erroneous_current_revisions_keep_declarations_navigation_and_completion ... ok
+test unsaved_modules_share_checked_snapshots_and_utf16_definitions ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/macro_composition.rs (target/debug/deps/macro_composition-97b23f9573e339a1)
+
+running 13 tests
+test inconsistent_delegated_interfaces_are_rejected_even_without_an_outer_bind ... ok
+test delegation_does_not_grant_binding_to_initializers_or_undeclared_bodies ... ok
+test repeated_binders_are_unique_and_initializers_do_not_capture_new_names ... ok
+test hundreds_of_independent_functions_expand_with_the_existing_limits ... ok
+test repeated_binding_interfaces_can_be_delegated ... ok
+test first_repeated_initializer_is_normalized_and_resolves_imported_helpers ... ok
+test repeated_type_fragments_resolve_in_the_callers_file ... ok
+test root_delegation_chains_are_replayed_before_a_generic_environment_restart ... ok
+test binding_contracts_can_be_delegated_across_multiple_macro_layers ... ok
+test local_expansion_and_a_later_generic_restart_preserve_types_and_origins ... ok
+test cached_generic_aliases_are_expanded_after_resolving_macro_type_applications ... ok
+test macro_output_keeps_type_and_function_namespaces_distinct_and_invalid_types_diagnostic ... ok
+test repeated_binders_expand_before_let_lowering_and_preserve_caller_hygiene ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.54s
+
+     Running tests/macro_differential.rs (target/debug/deps/macro_differential-c958fa0592f5d4bb)
+
+running 3 tests
+test shrinking_retains_the_failure_class_and_reduces_nested_payloads ... ok
+test expanded_and_manual_inputs_enforce_equal_static_obligations ... ok
+test seeded_user_macros_agree_with_manual_expansion_model_and_engines ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.26s
+
+     Running tests/macro_resume.rs (target/debug/deps/macro_resume-33b00d674bc451fe)
+
+running 6 tests
+test macro_diagnostics_explain_trailing_repetition_and_whole_body_forwarding ... ok
+test caller_scope_hint_identifies_the_captured_initializer_without_guessing ... ok
+test composed_expansions_reject_excessive_depth_without_overflowing_the_host_stack ... ok
+test speculative_operator_retry_replays_syntax_without_temporary_local_ids ... ok
+test resuming_preserves_outer_locals_labels_and_speculative_type_queries ... ok
+test one_function_can_expand_512_siblings_without_revisiting_its_prefix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running tests/macro_type_info.rs (target/debug/deps/macro_type_info-50547c6edf671c9b)
+
+running 7 tests
+test array_reflection_respects_opaque_module_boundaries ... ok
+test generic_opaque_arrays_keep_their_privacy_during_type_queries ... ok
+test structured_type_information_uses_public_constructors ... ok
+test wrong_projection_kind_is_a_diagnostic_and_does_not_run_input ... ok
+test a_query_does_not_evaluate_or_retain_the_inputs_effects ... ok
+test every_selector_reifies_the_exact_payload_and_nullable_heap_identity ... ok
+test projections_do_not_depend_on_normalized_type_spellings ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/macro_usage.rs (target/debug/deps/macro_usage-ffbbadd45c62ab96)
+
+running 3 tests
+test lsp_expansion_returns_usage_and_structured_types ... ok
+test report_distinguishes_syntax_usage_from_runtime_evaluations ... ok
+test cli_has_a_readable_usage_view_and_keeps_default_json ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/macros.rs (target/debug/deps/macros-22c648e0e1900c58)
+
+running 12 tests
+test exception_effects_are_distinct_from_traps_and_propagate_through_calls ... ok
+test malformed_macros_and_payload_types_are_rejected ... ok
+test normal_return_does_not_run_handlers_and_rethrow_escapes_the_current_handler ... ok
+test standard_exception_instructions_can_be_used_directly ... ok
+test native_wat_can_use_standard_names_and_structural_types ... ok
+test exceptions_and_for_keep_evaluation_order_and_work_inside_tests ... ok
+test empty_for_skips_body_and_step_and_nested_handlers_keep_lexical_scopes ... ok
+test for_is_a_macro_with_simultaneous_steps_and_an_immutable_induction_binding ... ok
+test try_catch_uses_native_tags_and_supports_multiple_and_gc_payloads ... ok
+test standard_wat_remains_unchanged_including_stack_syntax_and_data_bytes ... ok
+test catch_all_catches_exceptions_but_does_not_catch_traps ... ok
+test opaque_native_wat_is_validated_but_never_assumed_pure ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/match_arms.rs (target/debug/deps/match_arms-8a21a5f9775db810)
+
+running 7 tests
+test unprefixed_arms_request_the_explicit_spelling ... ok
+test defaults_are_unique_final_and_cover_at_least_one_case ... ok
+test default_expansion_has_a_finite_work_budget ... ok
+test default_preserves_type_effect_scope_and_ownership_checks ... ok
+test default_macro_bodies_keep_local_scope_and_owned_results ... ok
+test defaults_evaluate_the_subject_and_selected_body_once ... ok
+test case_and_default_cover_remaining_variants_in_both_match_forms ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/match_dispatch.rs (target/debug/deps/match_dispatch-3955d0bd6d476c21)
+
+running 6 tests
+test wasm_opt_open_world_preserves_values_and_traps ... ignored, requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt
+test nullary_cases_still_validate_the_runtime_subtype ... ok
+test defaults_keep_tag_and_subtype_validation_when_discarding_shared_payloads ... ok
+test large_dense_matches_use_one_tag_load_and_keep_every_case_cast ... ok
+test raw_wasm_callers_keep_tag_and_subtype_validation ... ok
+test dense_branches_preserve_return_labels_exceptions_unit_and_owned_results ... ok
+
+test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+     Running tests/modules.rs (target/debug/deps/modules-3b183d7585105471)
+
+running 7 tests
+test namespace_visibility_is_checked_before_flattening ... ok
+test malformed_module_forms_report_errors_without_panicking ... ok
+test namespace_value_aliases_qualify_only_type_positions_and_keep_privacy ... ok
+test nested_modules_and_forward_uses_have_no_runtime_module_objects ... ok
+test static_namespaces_link_public_functions_types_and_aliases ... ok
+test namespace_resolution_preserves_existing_type_effect_and_ownership_checks ... ok
+test file_includes_are_relative_static_and_cycle_checked ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/naming.rs (target/debug/deps/naming-e806ded73e61d3f7)
+
+running 5 tests
+test wit_uses_string_and_tuple_while_policy_shapes_keep_their_contracts ... ok
+test native_wat_identifiers_are_not_subject_to_library_naming_rules ... ok
+test public_extension_vocabulary_is_strict_and_legacy_types_keep_their_prefixes ... ok
+test historical_imports_and_extension_names_preserve_bindings_and_locations ... ok
+test standard_types_and_related_functions_use_wit_style_public_names ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/native_async.rs (target/debug/deps/native_async-c7834a5d8c46d4e9)
+
+running 2 tests
+test native_engine_runs_the_canonical_future_producer_without_javascript ... ignored, requires Wasmtime 50+ with stackful Component async; just test-native-engine
+test native_async_world_uses_standard_internal_producers ... ok
+
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.01s
+
+     Running tests/native_resources.rs (target/debug/deps/native_resources-80297b737ccbbf83)
+
+running 4 tests
+test generated_resource_bindings_check_own_borrow_and_keep_the_destructor ... ok
+test numeric_resource_factories_are_not_native_own_handles ... ok
+test native_resource_own_and_borrow_use_the_original_wit_identity ... ok
+test generated_typed_imports_and_reexported_resource_aliases_compile ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.03s
+
+     Running tests/newtypes.rs (target/debug/deps/newtypes-3b392571a8e038dd)
+
+running 5 tests
+test erasing_newtypes_does_not_enable_dead_code_elimination_when_disabled ... ok
+test abrupt_newtype_operands_keep_their_nominal_dependencies_during_linking ... ok
+test scalar_newtypes_are_nominal_and_erase_without_gc_allocations ... ok
+test opaque_newtypes_keep_representation_private_and_laws_erase_after_checking ... ok
+test newtypes_work_in_gc_storage_values_and_portable_scalar_boundaries ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+
+     Running tests/opaque.rs (target/debug/deps/opaque-f288722397bde6ba)
+
+running 1 test
+test opaque_types_hide_representation_through_aliases_and_inferred_references ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/optimization.rs (target/debug/deps/optimization-0c40170d3913f30a)
+
+running 4 tests
+test owned_payloads_keep_the_checked_match_protocol ... ok
+test immediate_shared_constructor_matches_do_not_allocate_temporary_boxes ... ok
+test unused_payload_traps_are_preserved_and_raw_wat_is_unchanged ... ok
+test removing_an_unreachable_suspend_preserves_the_public_async_contract ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
+
+     Running tests/option_result.rs (target/debug/deps/option_result-483e9847eead50a9)
+
+running 1 test
+test core_combinators_preserve_types_conditional_callbacks_and_effect_contracts ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+
+     Running tests/ownership.rs (target/debug/deps/ownership-3e7077964508ea00)
+
+running 5 tests
+test owners_cannot_escape_through_shared_storage_or_exception_paths ... ok
+test close_and_return_preserve_evaluation_order_and_shared_values_stay_reusable ... ok
+test ownership_propagates_through_pairs_options_results_and_once_closures ... ok
+test branches_must_leave_the_same_owners_and_loop_edges_restore_their_contract ... ok
+test owned_values_require_explicit_move_and_an_explicit_destination ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/packed_arrays.rs (target/debug/deps/packed_arrays-a1bb01f6ac2d5bae)
+
+running 4 tests
+test packed_access_and_copy_storage_mutability_and_effects_are_enforced ... ok
+test bulk_operations_do_not_expose_opaque_array_storage ... ok
+test imported_macros_keep_packed_storage_in_the_definition_type_namespace ... ok
+test packed_gc_arrays_and_bulk_byte_snapshots_are_checked_and_do_not_need_linear_memory ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.92s
+
+     Running tests/performance_warnings.rs (target/debug/deps/performance_warnings-aeaadf78fe33da9c)
+
+running 10 tests
+test wasm_opt_advice_examples_preserve_values_traps_and_host_identity ... ignored, requires Binaryen 133; run just test-wasm-opt /path/to/wasm-opt
+test lsp_performance_warnings_are_opt_in_cached_and_clear_on_edit_or_disable ... ok
+test host_escape_warns_at_the_allocation_but_scalar_host_arguments_do_not ... ok
+test native_wat_coverage_and_errors_remain_explicit ... ok
+test warnings_preserve_module_identities_and_original_import_locations ... ok
+test cold_initializers_dead_functions_and_scalar_mutability_are_quiet ... ok
+test macro_generated_duplicates_share_one_warning_and_async_check_does_not_require_a_backend ... ok
+test list_copies_nested_loop_initializers_and_unreachable_branches_are_distinguished ... ok
+test loop_copy_warnings_follow_checked_calls_and_do_not_fail_the_check ... ok
+test documented_copy_rewrite_removes_the_warning_without_weakening_effect_checks ... ok
+
+test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.90s
+
+     Running tests/profiling.rs (target/debug/deps/profiling-ce20e2d4654a31b6)
+
+running 1 test
+test native_guest_profile_driver_runs_the_actual_text_guest_and_checks_cleanup ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.02s
+
+     Running tests/race_free.rs (target/debug/deps/race_free-1da849d8bac0e461)
+
+running 6 tests
+test raw_addresses_forgery_offsets_and_partial_aliases_cannot_get_a_certificate ... ok
+test certified_memory_accesses_preserve_local_gc_ownership_checks ... ok
+test static_cell_aliases_work_across_files_and_do_not_escape_as_integers ... ok
+test verification_has_no_host_callbacks_resizing_raw_exports_or_gc_boundary ... ok
+test kernel_rejects_tampered_layouts_and_non_atomic_or_wrong_width_footprints ... ok
+test static_atomic_cells_have_a_machine_checked_conditional_race_contract ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.19s
+
+     Running tests/readable_stock.rs (target/debug/deps/readable_stock-87b891a8654f0807)
+
+running 1 test
+test counted_ledger_compiles_without_repeated_state_types ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running tests/readable_syntax.rs (target/debug/deps/readable_syntax-5acd8097b28f93a8)
+
+running 13 tests
+test result_propagation_keeps_the_exact_error_type ... ok
+test missing_or_wrong_constructor_context_is_rejected ... ok
+test expected_types_reach_arguments_fields_and_annotated_bindings ... ok
+test expected_types_reach_storage_exception_and_loop_operands ... ok
+test pair_patterns_lower_to_one_match_and_consume_owned_payloads ... ok
+test constructors_use_their_expected_value_type ... ok
+test short_macros_preserve_ownership_and_effect_boundaries ... ok
+test short_match_uses_subject_and_expected_output_types ... ok
+test short_result_let_uses_subject_error_and_expected_or_body_success ... ok
+test inferred_composite_types_survive_checking_and_emission ... ok
+test short_fold_infers_state_and_result_without_leaking_probe_locals ... ok
+test fold_evaluates_source_then_initial_once ... ok
+test short_macros_preserve_cleanup_and_error_execution ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests/readonly_regions.rs (target/debug/deps/readonly_regions-b9442f3114ab637f)
+
+running 3 tests
+test readonly_regions_reject_overlap_overflow_and_forged_or_mutating_access ... ok
+test bounded_readonly_loads_extend_the_atomic_certificate_without_raw_access ... ok
+test independent_kernel_rejects_readonly_certificate_tampering_and_checks_unused_layouts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.96s
+
+     Running tests/regions.rs (target/debug/deps/regions-81b0993865b9c213)
+
+running 8 tests
+test suspension_invalidates_mutable_reference_contents_across_calls ... ok
+test escape_follows_stores_cycles_and_containers_without_escaping_callee_private_values ... ok
+test returns_and_block_branch_payloads_remain_visible_as_escaping_references ... ok
+test distinguishes_input_mutation_from_fresh_output_and_return_escape ... ok
+test substitutes_argument_and_capture_effects_and_tracks_returned_aliases ... ok
+test containers_and_ready_future_payloads_preserve_reference_aliases ... ok
+test weak_updates_keep_old_aliases_and_recur_propagates_new_objects ... ok
+test unknown_imports_and_recursive_paths_widen_conservatively ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/resources.rs (target/debug/deps/resources-ad6fb764402e2284)
+
+running 7 tests
+test a_branch_cannot_carry_a_borrow_out_of_using ... ok
+test borrowed_resources_cannot_escape_or_be_duplicated ... ok
+test dce_retains_the_implicit_destructor_of_a_raw_resource_factory ... ok
+test resources_and_borrows_resolve_across_an_opaque_namespace ... ok
+test using_closes_before_recurring_outside_its_scope ... ok
+test resource_using_is_typed_and_independently_checks_ownership ... ok
+test a_trusted_reader_factory_returns_an_independent_affine_endpoint ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s
+
+     Running tests/result_do.rs (target/debug/deps/result_do-a9a9e87c25a54a36)
+
+running 2 tests
+test result_do_preserves_error_types_unit_payloads_and_ownership ... ok
+test result_do_evaluates_once_left_to_right_and_stops_at_the_first_error ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/runner.rs (target/debug/deps/runner-968f99ce255c18f4)
+
+running 8 tests
+test tests_keep_explicit_gc_effects_and_a_closed_call_graph ... ok
+test list_and_filter_work_without_a_runtime_and_empty_selection_is_an_error ... ok
+test test_names_and_bodies_are_checked_without_exposing_generated_functions ... ok
+test reports_empty_suites_missing_runtime_and_invalid_arguments ... ok
+test failures_traps_and_compile_errors_do_not_hide_later_tests ... ok
+test discovers_nested_test_files_deduplicates_and_accepts_nonzero_results ... ok
+test runs_committed_language_test_suites ... ok
+test infinite_tests_time_out_and_the_runner_continues ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+
+     Running tests/scalar.rs (target/debug/deps/scalar-3c236c7b4b8e1703)
+
+running 2 tests
+test numeric_conversion_types_and_trapping_effects_are_checked ... ok
+test standard_numeric_instructions_remain_in_the_typed_core ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/scoped_macros.rs (target/debug/deps/scoped_macros-d561059c975523bf)
+
+running 2 tests
+test result_propagation_does_not_hide_unconsumed_owners_or_effects ... ok
+test scoped_result_macros_have_executable_cleanup_tests ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/scoped_tasks.rs (target/debug/deps/scoped_tasks-23e3f0cc63495362)
+
+running 4 tests
+test task_handles_cannot_cross_the_portable_abi_or_be_forged_as_variants ... ok
+test extension_names_remain_available_as_enum_case_labels ... ok
+test nominal_task_results_work_after_representation_erasure ... ok
+test scoped_spawn_checks_closures_results_ownership_and_both_backends ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.58s
+
+     Running tests/simd.rs (target/debug/deps/simd-ed29ff7d8250b306)
+
+running 8 tests
+test native_simd_memory_keeps_the_wat_path_without_bypassing_contracts ... ok
+test trusted_host_policies_also_reject_vector_abi_shapes ... ok
+test invalid_lanes_shuffle_constants_and_operand_types_are_rejected ... ok
+test portable_boundaries_reject_vectors_recursively_and_laws_do_not_skip_them ... ok
+test simd_operands_keep_left_to_right_evaluation_and_effects ... ok
+test scalar_bit_counts_use_standard_width_and_zero_semantics ... ok
+test typed_simd_covers_vector_shapes_and_mixed_scalar_operands ... ok
+test vectors_are_shared_values_in_gc_storage_captures_generics_and_lists ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+
+     Running tests/simd_kernels.rs (target/debug/deps/simd_kernels-d3259fead217486a)
+
+running 1 test
+test jsimd_style_kernels_stay_inside_the_checked_core ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/skill.rs (target/debug/deps/skill-342f5ec8e940b359)
+
+running 1 test
+test portable_skill_examples_are_checked_walz_programs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/standard.rs (target/debug/deps/standard-152573793a14f11c)
+
+running 11 tests
+test malformed_standard_aliases_are_diagnostics ... ok
+test legacy_package_conversion_preserves_wasm_imports_literals_and_source_positions ... ok
+test frozen_text_imports_keep_local_names_and_original_diagnostic_offsets ... ok
+test included_units_share_identical_standard_bindings_but_reject_conflicts ... ok
+test string_is_the_canonical_standard_alias_for_utf8_text ... ok
+test standard_types_are_explicit_aliases_and_use_normal_instantiation ... ok
+test standard_imports_work_from_files_without_resolving_a_std_path ... ok
+test unknown_packages_and_exports_are_source_errors_and_privacy_is_preserved ... ok
+test standard_stream_pair_list_own_and_scalars_share_existing_checked_types ... ok
+test core_is_the_canonical_builtin_package_and_std_is_not_a_public_alias ... ok
+test standard_functions_are_embedded_selective_and_can_be_renamed ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/static_imports.rs (target/debug/deps/static_imports-1f7791b5d55ed48c)
+
+running 7 tests
+test dotted_private_bindings_are_not_implicitly_reexported ... ok
+test file_import_diagnostics_and_graph_failures_are_reported_at_the_source ... ok
+test file_modules_do_not_introduce_initialization_or_imported_test_roots ... ok
+test wasm_export_can_name_a_statically_imported_function_without_a_wrapper ... ok
+test generated_file_identities_are_hygienic_and_missing_exports_have_locations ... ok
+test file_types_share_identity_and_opaque_representations_stay_private ... ok
+test named_file_imports_are_private_cached_and_selectively_linked ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/static_use.rs (target/debug/deps/static_use-737552b98c871922)
+
+running 2 tests
+test namespaces_atom_uses_old_imports_and_ambiguous_file_names_are_rejected ... ok
+test relative_file_uses_select_exports_and_aliases_without_namespace_declarations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/stdlib_tuning.rs (target/debug/deps/stdlib_tuning-4df57998524805c7)
+
+running 1 test
+test unescaped_json_strings_do_not_call_escape_helpers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests/stock_ledger.rs (target/debug/deps/stock_ledger-a3eee7677213c7af)
+
+running 1 test
+test stock_ledger_models_and_effect_boundaries_are_checked ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+     Running tests/stream_batch.rs (target/debug/deps/stream_batch-882516193402ed32)
+
+running 1 test
+test batch_primitive_preserves_ready_order_and_affine_tail_in_all_backends ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+     Running tests/string_sugar.rs (target/debug/deps/string_sugar-7e74a2ecb85d3bc2)
+
+running 2 tests
+test string_literals_need_an_expected_string_type_and_diagnostics_use_surface_names ... ok
+test expected_string_literals_match_explicit_wasm_and_portable_boundaries ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.82s
+
+     Running tests/struct_construction.rs (target/debug/deps/struct_construction-7064beb89edfe16c)
+
+running 18 tests
+test adjacent_reserved_string_tokens_are_not_silently_coerced_or_split_by_formatting ... ok
+test constructor_markers_inside_native_annotations_are_not_reinterpreted ... ok
+test bare_constants_elaborate_from_the_field_type_to_the_same_wasm ... ok
+test named_field_errors_are_static_and_point_to_the_source ... ok
+test initializers_keep_source_order_and_evaluate_once_without_capturing_locals ... ok
+test abrupt_initializers_stop_before_later_values ... ok
+test empty_structs_malformed_maps_and_field_names_have_separate_roles ... ok
+test formatter_keeps_field_groups_comments_and_quoted_identifiers ... ok
+test compact_construction_keeps_the_dollar_type_identifier ... ok
+test unreachable_initializers_still_undergo_effect_validation ... ok
+test opaque_types_effects_and_anonymous_fields_keep_their_contracts ... ok
+test generic_functions_and_import_aliases_do_not_rewrite_field_labels ... ok
+test generic_types_namespaces_and_nested_text_values_use_existing_resolution ... ok
+test named_construction_preserves_gc_identity_and_literal_string_contents ... ok
+test short_literals_do_not_add_defaults_or_implicit_wraps_and_coercions ... ok
+test numeric_literals_follow_the_declared_wasm_type_without_conversion ... ok
+test named_fields_braces_and_literal_elision_are_independent ... ok
+test initializer_exceptions_keep_the_existing_ownership_proof_contract ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+
+     Running tests/surface.rs (target/debug/deps/surface-f3fa3d8f30c42ad8)
+
+running 20 tests
+test native_fallback_cannot_bypass_opaque_type_privacy ... ok
+test native_fallback_never_weakens_recur_or_semantic_contracts ... ok
+test frozen_plural_effects_keep_strings_annotations_and_diagnostic_offsets ... ok
+test frozen_legacy_inputs_keep_original_diagnostic_locations ... ok
+test frozen_legacy_inputs_preserve_comments_strings_and_native_wat ... ok
+test grouped_let_preserves_scope_types_ownership_and_expansion_limits ... ok
+test native_macro_binding_does_not_add_a_branch_label ... ok
+test grouped_initializers_observe_effects_once_in_source_order ... ok
+test cli_has_no_migration_command_or_write_option ... ok
+test native_instructions_can_surround_a_prefixed_lexical_binding ... ok
+test singular_effect_requires_a_prefix_and_replaces_the_plural_spelling ... ok
+test unprefixed_extension_entries_are_not_accepted_in_strict_mode ... ok
+test native_wat_keeps_its_own_loop_import_export_and_multi_result_semantics ... ok
+test native_macro_locals_respect_type_uses_and_quoted_identifier_identity ... ok
+test file_linking_is_explicit_and_never_interprets_a_wasm_type_import_as_a_path ... ok
+test opaque_wat_annotations_are_never_walz_expansion_or_file_directives ... ok
+test native_state_loops_update_arguments_simultaneously_and_for_preserves_order ... ok
+test grouped_let_initializes_left_to_right_with_annotations_and_shadowing ... ok
+test prefixed_expressions_types_annotations_and_instantiations_are_checked ... ok
+test singular_effect_annotations_keep_function_and_callable_contracts ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/text_io.rs (target/debug/deps/text_io-b36bde44e87eae7c)
+
+running 3 tests
+test text_io_wit_contract_is_valid_with_future_stream_and_result_shapes ... ok
+test clock_and_text_capabilities_are_distinct_component_interfaces ... ok
+test text_io_contracts_check_types_effects_and_capabilities_in_both_backends ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.52s
+
+     Running tests/threads.rs (target/debug/deps/threads-3739ff40c6f95197)
+
+running 9 tests
+test shared_memory_types_effects_and_atomic_immediates_are_checked ... ok
+test native_threads_wat_stays_unchanged ... ok
+test file_modules_resolve_memory_names_and_dce_removes_unused_memory_capabilities ... ok
+test synchronization_and_blocking_propagate_without_becoming_jspi_suspension ... ok
+test fences_without_memory_and_unshared_atomic_wait_follow_core_validation ... ok
+test atomics_preserve_affine_ownership_and_do_not_transport_gc_values ... ok
+test every_threads_opcode_is_typed_and_emitted_in_both_optimization_modes ... ok
+test memory_indices_limits_and_reserved_abi_capability_are_checked ... ok
+test imported_memory_has_a_core_host_boundary_and_cannot_be_erased_into_wit ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.97s
+
+     Running tests/type_aliases.rs (target/debug/deps/type_aliases-8aa66e84e0b8f889)
+
+running 12 tests
+test aliases_do_not_rewrite_names_in_other_namespaces ... ok
+test aliases_cover_storage_signatures_captures_and_tag_payloads ... ok
+test aliases_follow_namespace_visibility_and_use_renaming ... ok
+test malformed_cyclic_duplicate_and_heap_aliases_are_rejected ... ok
+test aliases_cover_loop_bindings_results_and_value_constructor_arguments ... ok
+test unit_aliases_are_only_accepted_as_constructed_payloads ... ok
+test aliases_preserve_ownership_rules ... ok
+test aliases_are_transparent_and_forward_references_share_value_types ... ok
+test aliases_cannot_expose_opaque_representation ... ok
+test aliases_work_in_explicit_scoped_forms_and_inferred_constructors ... ok
+test unused_aliases_are_checked_without_changing_executable_types ... ok
+test recursive_expansion_is_bounded_before_allocating_large_types ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+     Running tests/typeclasses.rs (target/debug/deps/typeclasses-aa2441347f7553a6)
+
+running 14 tests
+test class_bounds_apply_to_types_aliases_and_closures_even_without_operator_calls ... ok
+test malformed_class_constraints_are_checked_without_instantiation ... ok
+test inspection_distinguishes_comparison_results_from_their_operands ... ok
+test formatting_and_native_wat_keep_their_original_tokens ... ok
+test operators_reject_mixed_types_unsupported_instances_and_bad_arity ... ok
+test unavailable_class_instances_are_rejected_before_dead_code_elimination ... ok
+test deferred_operand_typing_preserves_local_hygiene_source_order_and_single_evaluation ... ok
+test abrupt_operands_and_owned_values_retain_their_existing_static_contracts ... ok
+test nested_unannotated_operators_reuse_typed_operands_with_bounded_work ... ok
+test generic_add_eq_and_ord_constraints_resolve_after_monomorphization ... ok
+test either_operand_can_supply_the_type_without_defaulting_numeric_literals ... ok
+test add_instances_use_the_expected_scalar_type_and_emit_plain_numeric_instructions ... ok
+test integer_eq_and_ord_keep_operand_width_and_signed_order ... ok
+test class_operators_use_the_existing_law_and_ownership_verifier ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.27s
+
+     Running tests/typing.rs (target/debug/deps/typing-9d204e04469e0b09)
+
+running 8 tests
+test unit_never_and_nullable_references_are_distinct_static_types ... ok
+test imported_and_forward_function_signatures_are_available_to_checking ... ok
+test type_queries_include_parameter_capture_let_loop_and_case_declarations ... ok
+test expression_queries_respect_shadowing_and_utf8_byte_offsets ... ok
+test suspension_is_conservative_at_unknown_imports_and_propagates ... ok
+test infers_let_and_pattern_bindings_and_reports_function_boundaries ... ok
+test optional_let_annotations_are_checked_and_preserved ... ok
+test check_rejects_incompatible_types_before_emission ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/user_macros.rs (target/debug/deps/user_macros-ed9c44064da6dcc7)
+
+running 15 tests
+test macro_heads_are_syntax_signatures_instead_of_generated_operand_types ... ok
+test argument_errors_keep_their_span_and_definition_errors_have_expansion_context ... ok
+test malformed_patterns_unknown_macros_and_expansion_limits_are_diagnostics ... ok
+test expansion_cannot_bypass_effects_ownership_or_checked_core_validation ... ok
+test reports_retain_inferred_types_duplicate_origins_and_nested_expansion_history ... ok
+test file_macros_keep_definition_site_helpers_private_and_support_reexports ... ok
+test explicit_binders_scope_only_the_declared_body_and_respect_shadowing ... ok
+test expected_types_are_explicit_and_never_guess_numeric_widths ... ok
+test explicit_type_fragments_resolve_in_the_callers_file ... ok
+test templates_are_hygienic_and_inputs_are_evaluated_once_when_bound ... ok
+test intentional_scope_is_preserved_through_nested_captured_macro_calls ... ok
+test nominal_and_constructed_inferred_types_and_alias_guards_remain_concrete ... ok
+test trailing_repetition_and_nested_calls_compose_without_reader_changes ... ok
+test inferred_types_drive_rules_type_templates_and_generic_specializations ... ok
+test templates_reuse_checked_memory_and_sequential_binding_forms ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.02s
+
+     Running tests/user_macros_lsp.rs (target/debug/deps/user_macros_lsp-249a98c0ed26a36c)
+
+running 5 tests
+test generated_temporary_ranges_do_not_hide_argument_types ... ok
+test erased_arguments_do_not_receive_the_macro_results_checked_type ... ok
+test macro_completion_uses_its_own_namespace_and_imported_definitions_map_to_the_library ... ok
+test incomplete_imported_macro_bodies_recover_current_bindings_and_source_locations ... ok
+test macros_offer_signature_definition_expansion_and_binding_completion_in_current_revision ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/value_types.rs (target/debug/deps/value_types-8ea79e49ca143ea9)
+
+running 6 tests
+test wrong_payloads_and_incomplete_matches_are_rejected ... ok
+test value_types_and_contracts_are_visible_in_type_and_effect_reports ... ok
+test option_and_result_are_instantiated_and_nested_as_value_types ... ok
+test value_storage_identity_is_hidden_but_payload_null_is_preserved ... ok
+test unit_results_and_none_are_distinct_cases ... ok
+test value_types_work_in_fields_arrays_and_explicit_captures ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/variants.rs (target/debug/deps/variants-a3ec5c514c5350b4)
+
+running 11 tests
+test malformed_variant_syntax_has_source_diagnostics ... ok
+test invalid_declarations_and_constructors_are_rejected ... ok
+test analysis_visits_subject_and_all_arms ... ok
+test matches_require_exhaustive_unique_well_typed_cases ... ok
+test nested_and_unit_matches_preserve_control_flow ... ok
+test constructor_payloads_run_once_from_left_to_right ... ok
+test cases_with_identical_storage_remain_distinct_and_order_independent ... ok
+test recursive_variants_support_tail_recur_and_reference_payloads ... ok
+test subject_runs_once_and_only_selected_arm_runs ... ok
+test payload_bindings_are_lexical_and_can_be_captured_explicitly ... ok
+test foreign_base_values_and_inconsistent_tags_trap ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/verified.rs (target/debug/deps/verified-72112d7c636e6c38)
+
+running 5 tests
+test verified_mode_rejects_unknown_code_unchecked_exports_and_missing_kernel ... ok
+test ready_delivery_runs_only_after_the_same_ownership_gate_and_exports_stay_protected ... ok
+test contracts_are_inspectable_and_verified_execution_uses_the_checked_ir ... ok
+test independent_kernel_rejects_double_use_branch_mismatch_and_lost_loop_owners ... ok
+test independent_kernel_checks_graph_edges_contexts_and_terminals ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.81s
+
+     Running tests/views.rs (target/debug/deps/views-c1ceb311db9e43d8)
+
+running 3 tests
+test view_layouts_effects_and_explicit_abi_materialization_are_checked ... ok
+test views_read_nested_relative_ranges_without_copying_payloads ... ok
+test subviews_share_storage_without_retaining_parents_and_copies_detach ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/wasm_bridge.rs (target/debug/deps/wasm_bridge-8004cdaa4293dcda)
+
+running 3 tests
+test raw_memory_cannot_bypass_race_contracts_or_owned_values ... ok
+test file_modules_keep_named_memory_dependencies_through_dce ... ok
+test wat_memory_instructions_and_typed_macros_share_validator_types ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s
+
+     Running tests/wasm_use.rs (target/debug/deps/wasm_use-a866b0ee304c150b)
+
+running 5 tests
+test invalid_and_untyped_wasm_report_the_import_site ... ok
+test missing_exports_foreign_imports_and_binary_includes_fail_closed ... ok
+test unsupported_async_and_owned_exports_are_rejected_only_when_selected ... ok
+test wasm_uses_keep_type_effect_privacy_and_dce_checks ... ok
+test typed_component_exports_are_selected_cached_and_embedded ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.66s
+
+     Running tests/wit.rs (target/debug/deps/wit-df57975c5a9a3846)
+
+running 4 tests
+test rejects_nonportable_types_and_escaping_exceptions ... ok
+test imported_suspension_becomes_async_only_after_escaping_errors_are_handled ... ok
+test delivery_types_preserve_wasi_shapes_and_reads_have_async_signatures ... ok
+test emits_wit_for_nested_options_results_and_unit_payloads ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/wit_bindings.rs (target/debug/deps/wit_bindings-ede2e311a1910f68)
+
+running 5 tests
+test wit_generation_rejects_flags_exceeding_the_component_limit ... ok
+test wit_generation_rejects_missing_authority_and_unsupported_shapes ... ok
+test generated_lists_resolve_aliases_and_reject_owned_elements_early ... ok
+test generated_imports_require_separate_trusted_policy ... ok
+test wit_records_enums_flags_unsigned_and_export_scaffolds_share_checked_types ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.21s
+
+     Running tests/wit_values.rs (target/debug/deps/wit_values-80397edbfd385ac6)
+
+running 2 tests
+test wit_bindings_generate_all_shared_value_shapes ... ok
+test annotated_wit_values_compile_with_both_abis_and_keep_checked_storage ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s
+
+     Running tests/wit_world.rs (target/debug/deps/wit_world-5d1edc4f8ee128e7)
+
+running 1 test
+test native_world_exports_use_original_interfaces_without_private_delivery_imports ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.92s
+
+     Running tests/workflow.rs (target/debug/deps/workflow-7d9374b20f41fdff)
+
+running 3 tests
+test workflow_ready_queue_handles_ordering_and_interleaved_updates ... ok
+test workflow_stress_workloads_run_natively_and_keep_wide_timestamps ... ok
+test workflow_has_checked_effect_boundaries_and_runs_its_model_tests ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+
+     Running unittests src/lib.rs (target/debug/deps/walz_web-7ef57c253c059446)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api.rs (target/debug/deps/api-4a1a1b425b78ad42)
+
+running 5 tests
+test bridge_preserves_diagnostics_and_recovers_after_failure ... ok
+test browser_execution_keeps_type_effect_ownership_binding_and_proof_checks ... ok
+test bridge_preserves_native_and_extension_compilation ... ok
+test scoped_tasks_compile_to_a_browser_execution_bundle ... ok
+test browser_execution_matches_native_codegen_and_preserves_export_metadata ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
+
+   Doc-tests walz
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests walz_web
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

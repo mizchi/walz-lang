@@ -14,6 +14,7 @@ mod functions;
 mod imports;
 mod interface;
 mod interface_variant;
+pub mod js_native;
 mod lists;
 mod native_delivery;
 pub mod profiling;

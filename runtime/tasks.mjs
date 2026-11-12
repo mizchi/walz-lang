@@ -6,9 +6,7 @@ function materializeError(error, seen) {
   seen ??= new Set();
   if (seen.has(error)) return;
   seen.add(error);
-  // V8's lazy CallSites can retain the guest and its closures after a failed
-  // task. Read ordinary stacks before publishing errors, including cleanup
-  // failures and causes, without replacing the original error or its identity.
+  // Materialize lazy V8 stacks (including causes) so errors do not retain guests.
   try {
     void error.stack;
   } catch {
@@ -36,6 +34,7 @@ export class TaskTimeoutError extends TaskCancelledError {
 const cancellationError=reason=>reason instanceof TaskTimeoutError?reason:new TaskCancelledError(reason);
 const terminal = new Set(["returned", "cancelled", "failed"]);
 const asyncFunctionPrototype = Object.getPrototypeOf(async function () {});
+const noop = () => {};
 function deferred() {
   return Promise.withResolvers();
 }
@@ -109,7 +108,6 @@ export class Tasks {
         typeof fn === "function" ? (...args) => this.invoke(name, args) : fn,
       ]),
     );
-    // Both aliases must use the scheduler; raw exports are never exposed.
     return {
       ...visible,
       api,
@@ -117,20 +115,22 @@ export class Tasks {
       start: this.start.bind(this),
     };
   }
-  create(name, args, options = {}) {
+  create(name, args, options = {}, inline = false) {
     if (!Object.hasOwn(this.raw, name) || typeof this.raw[name] !== "function")
       throw new TypeError(`unknown export ${name}`);
     if (!Array.isArray(args))
       throw new TypeError("task arguments must be an array");
     if(options.timeoutMs!==undefined&&(!Number.isInteger(options.timeoutMs)||options.timeoutMs<0||options.timeoutMs>2147483647))throw new RangeError('invalid timeoutMs');
     if(options.signal&&typeof options.signal.addEventListener!=='function')throw new TypeError('expected AbortSignal');
-    const result = deferred(),
-      done = deferred();
-    result.promise.catch(() => {});
+    // Inline sync calls retain cleanup state without an asynchronous observer.
+    const result = inline && !this.asyncExports.has(name) ? null : deferred(),
+      done = result ? deferred() : null;
+    // Handle fulfillment too: a discarded descendant must not await Future values.
+    result?.promise.then(noop, noop);
     const record = {
       id: this.nextId++,
       name,
-      args: [...args],
+      args: inline ? args : [...args],
       state: "queued",
       started: false,
       settling: false,
@@ -141,6 +141,7 @@ export class Tasks {
       reads: new Set(),
       blocking: new Set(),
     };
+    if (!result) return record;
     const cancel = (reason) => {
       if (terminal.has(record.state) || record.settling) return done.promise;
       if (record.state === "cancelling") return done.promise;
@@ -203,7 +204,7 @@ export class Tasks {
         );
       return this.start(name, args).result;
     }
-    const record = this.create(name, args);
+    const record = this.create(name, args, {}, true);
     return this.execute(record, true);
   }
   execute(record, inline = false) {
@@ -251,9 +252,7 @@ export class Tasks {
         try { this.cleanupGuest(); }
         catch (cleanupError) { failures.push(cleanupError); }
       }
-      // Jco schedules disposal when readable ends are dropped. The bridge
-      // registers each disposal before its microtask starts, so no timer race
-      // or fixed grace period is needed here.
+      // The bridge registers Jco disposal before its microtask starts.
       while (record.disposals.length) {
         const results = await Promise.allSettled(record.disposals.splice(0));
         failures.push(
@@ -293,15 +292,17 @@ export class Tasks {
     record.cancel = undefined;
     record.detach?.();
     record.detach = undefined;
-    if (cancelled) record.result.reject(cancellationError(record.reason));
-    else if (error) record.result.reject(error);
-    else if (typeof value?.resolveAsValue === "function")
-      value.resolveAsValue(record.result.resolve);
-    else record.result.resolve(value);
-    record.done.resolve({ status: record.state, started: record.started });
+    if (record.result) {
+      if (cancelled) record.result.reject(cancellationError(record.reason));
+      else if (error) record.result.reject(error);
+      else if (typeof value?.resolveAsValue === "function")
+        value.resolveAsValue(record.result.resolve);
+      else record.result.resolve(value);
+    }
+    record.done?.resolve({ status: record.state, started: record.started });
     this.active = null;
     this.flag.value = 0;
-    queueMicrotask(() => this.pump());
+    if (this.queue.length) queueMicrotask(() => this.pump());
   }
   disposal(thunk) {
     const operation = Promise.resolve().then(thunk);

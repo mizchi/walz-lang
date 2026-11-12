@@ -34,4 +34,8 @@ pub(crate) const LIBRARIES: &[(&str, &str)] = &[
         "json-value.walz",
         include_str!("../walz/core/json-value.walz"),
     ),
+    (
+        "checked-integer.walz",
+        include_str!("../walz/core/checked-integer.walz"),
+    ),
 ];

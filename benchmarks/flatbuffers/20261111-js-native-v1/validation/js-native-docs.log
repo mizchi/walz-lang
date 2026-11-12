@@ -1,0 +1,28 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.98s
+     Running tests/documentation.rs (target/debug/deps/documentation-bf71f8daa2b99cdc)
+
+running 3 tests
+test english_and_japanese_references_keep_the_same_walz_examples ... ok
+test entry_guides_link_to_existing_local_documents_and_examples ... ok
+test introductory_guides_compile_run_and_support_the_documented_project_workflow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.14s
+
+     Running tests/examples.rs (target/debug/deps/examples-f1670824865ab5d5)
+
+running 4 tests
+test capability_probes_record_reproducible_language_limits ... ok
+test representative_program_effects_remain_visible ... ok
+test additional_inputs_exercise_boundary_and_failure_results ... ok
+test every_catalog_example_is_checked_and_produces_valid_wasm ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.48s
+
+     Running tests/skill.rs (target/debug/deps/skill-9eb60a1e1295bb8d)
+
+running 1 test
+test portable_skill_examples_are_checked_walz_programs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

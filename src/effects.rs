@@ -159,6 +159,17 @@ fn direct(expression: &Expr, module: &Module, functions: &[EffectSet]) -> Effect
             };
             effects.reads = field.mutable;
         }
+        ArrayCopy { source, .. } => {
+            let TypeKind::Array(field) = &module.types[source.0].kind else {
+                unreachable!()
+            };
+            effects.reads = field.mutable;
+            effects.writes = true;
+        }
+        Buffer {
+            op: BufferOp::CopyToArray(_) | BufferOp::WriteArray(..),
+            ..
+        } => effects.writes = true,
         StructSet { .. } | ArraySet { .. } => effects.writes = true,
         Throw { tag, .. } => {
             effects.throws.insert(*tag);
@@ -341,6 +352,14 @@ fn origin(
             let operation = match expression.kind {
                 ExprKind::StructGet { .. } => "mutable struct.get",
                 ExprKind::ArrayGet { .. } => "mutable array.get",
+                ExprKind::Buffer {
+                    op: BufferOp::WriteArray(..),
+                    ..
+                } => "fixed-width array write",
+                ExprKind::Buffer {
+                    op: BufferOp::CopyToArray(_),
+                    ..
+                } => "bytes.copy-to-array",
                 ExprKind::Buffer { .. } => "bytes.from-array",
                 ExprKind::StructSet { .. } => "struct.set",
                 ExprKind::ArraySet { .. } => "array.set",

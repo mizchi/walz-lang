@@ -131,6 +131,9 @@ expected result type. `match<$Variant, R> (subject)` retains an explicit variant
 and `(result R)`; `match<$Variant> (subject)` retains an omitted result declaration.
 These are source annotations, not runtime generic dispatch.
 
+Canonical `.walz` also accepts `$List<i64>` and nested angle type arguments as
+shorthand for `@inst`; see [application rules](generics.md#angle-application-shorthand).
+
 Value-producing if expressions use `if<R> (condition) { value } else { value }`.
 `<R>` maps exactly to `(result R)`; omitting it retains the canonical omitted
 result declaration, which means unit. There is no new result-type inference.

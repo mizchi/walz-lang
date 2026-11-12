@@ -1,0 +1,11 @@
+✔ pipeline reference sums retain exact i64 results across Number accumulation chunks (7.084625ms)
+✔ core: FlatBuffers queries and batches avoid materialized ABI records (1928.069958ms)
+✔ component: FlatBuffers queries and batches avoid materialized ABI records (1985.398833ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4017.902125

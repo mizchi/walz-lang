@@ -23,6 +23,11 @@ Historical evaluations and dated measurements retain their original language and
 | Named construction, traversal, and field operations | [Structs](struct-construction.md), [high-level forms](high-level-forms.md) |
 | Option, Result, strings, lists, dictionaries, and views | [Value operations](option-result.md), [lists](lists.md), [collections](collections.md), [views](views.md) |
 | JSON, SIMD, and indexes | [JSON](json-values.md), [SIMD](simd.md), [succinct data](succinct.md) |
+| Read and write FlatBuffers | [FlatBuffers library](../walz/flatbuffers/README.md) |
+| Endian-specific integers and floating-point bytes | [Fixed-width byte access](byte-access.md) |
+| Checked sizes, offsets, and alignment | [Checked integers](checked-integers.md) |
+| Reuse validated bounds across helpers and loops | [Immutable range optimization](range-optimization.md) |
+| Remove private tuple/Option/Result allocations | [Value optimization](value-optimization.md) |
 | File visibility and removal of unused definitions | [Static modules and DCE](static-modules.md) |
 | Define syntax extensions | [Hygienic expression macros](user-macros.md) |
 | Read and write Walz with an agent | [Portable Walz skill](agent-skills.md) |
@@ -35,6 +40,7 @@ Historical evaluations and dated measurements retain their original language and
 | Import Walz as ESM in Vite | [Vite](vite.md) |
 | Type-check without generated declarations | [TS7 Content Mapper](content-mapper.md) |
 | JS ABI, Future/Stream, and cancellation | [Runtime](runtime.md), [batch transfers](stream-batches.md) |
+| Experimental smaller synchronous JS output | [Direct GC / JS string ABI](js-native-experiment.md) |
 | Writers, scoped child tasks, and deadlines | [Child tasks](scoped-tasks.md) |
 | WIT, Components, and typed Wasm dependencies | [Bindings](wit-bindings.md), [native worlds](native-worlds.md), [Wasm @use](wasm-use.md) |
 | Explicit standard I/O and files | [CLI](cli.md), [WASI value adapter](wasi-files.md) |
@@ -46,6 +52,7 @@ Historical evaluations and dated measurements retain their original language and
 | Topic | Guide |
 | --- | --- |
 | Types, effects, and memory analysis | [Static analysis](analysis.md), [JSON diagnostics and type queries](tooling.md) |
+| GC reachability, cleanup, and retained-memory checks | [Memory management](../MEMORY.md), [2026-11-12 audit](memory/20261112-audit-r2/README.md) |
 | Ownership, external resources, laws, and proof boundaries | [Verification](verification.md), [resources](resources.md), [independent kernels](../proof/README.md) |
 | Editor integration and errors | [LSP](lsp.md), [diagnostics](diagnostics.md) |
 | Language tests and benchmarks | [Testing](testing.md), [benchmarking](benchmarking.md) |

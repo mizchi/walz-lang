@@ -1,0 +1,59 @@
+{
+  "name": "@mizchi/walz-runtime",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "typescript": {
+    "contentMapper": {
+      "exec": ["node", "content-mapper/server.mjs"],
+      "compilerOptions": [],
+      "dynamicConfig": true
+    }
+  },
+  "exports": {
+    "./vite": {
+      "types": "./vite/index.d.ts",
+      "import": "./vite/index.mjs"
+    },
+    "./vite/client": {
+      "types": "./vite/client.d.ts"
+    },
+    "./vite/types": {
+      "types": "./vite/runtime.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@bytecodealliance/jco-transpile": "0.23.0"
+  },
+  "peerDependencies": {
+    "vite": "^8.3.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": { "optional": true }
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "^24.19.2",
+    "flatbuffers": "25.9.23",
+    "typescript": "7.0.2",
+    "vite": "8.3.7"
+  },
+  "scripts": {
+    "playground:build": "node tools/build-playground.mjs",
+    "playground": "node tools/serve-playground.mjs",
+    "test:playground": "playwright test --config playwright.playground.config.mjs",
+    "test": "node --test --test-force-exit runtime/*.test.mjs",
+    "test:e2e": "playwright test",
+    "build:component": "node runtime/build.mjs",
+    "test:vite": "node --test vite/*.test.mjs",
+    "test:content-mapper": "node --test content-mapper/*.test.mjs",
+    "dev:vite": "vite --config examples/vite/vite.config.mjs",
+    "build:vite": "vite build --config examples/vite/vite.config.mjs"
+  }
+}

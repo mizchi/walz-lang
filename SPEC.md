@@ -152,6 +152,8 @@ Option/Result are semantic values, not types exposing their storage GC reference
 If a payload contains an ordinary GC reference, its identity and mutability continue to follow the payload's own rules.
 The backend generates private GC subtypes per type, distinguished as Type::Value in typed IR.
 
+Shared private tuple/Option/Result storage may be eliminated when constructed locally and consumed only by matches/drops, including unused locals, multiple matches, branches, and bounded helper inlining. Payloads still evaluate once in source order, including defaults; ordinary payload identity and explicit traps remain. Fusion never crosses producer try/label/loop scopes. Escaping values, owned/resource/borrow functions, identity-bearing enums, unknown calls, and unproved cases keep their representation. Public ABI signatures and foreign tag/subtype checks remain. Private carrier allocation/OOM points can disappear. This compiler TCB pass adds no syntax or general multi-value calling convention. See [value optimization](docs/value-optimization.md).
+
 <a id="閉じた-enum-と網羅的な-match"></a>
 
 ## Closed Enums and Exhaustive Match
@@ -320,7 +322,7 @@ Optimization must preserve left-to-right evaluation order, executed branches, ex
 Immutable-field reads have no mutable-memory read effect, but traps when reading nullable references are handled separately.
 There is no facility for observing GC timing or object addresses, and no finalizers or weak references.
 Imports conservatively have all effects; arbitrary user annotations cannot make them pure.
-These facts are retained in typed IR and effect summaries. No custom optimization passes are currently implemented.
+These facts are retained in typed IR and effect summaries. Typed-IR passes eliminate eligible private value containers and simplify validated immutable ranges. Range elimination uses a separate must analysis, not the diagnostic may summaries below; Wasm GC array bounds checks remain. See [value optimization](docs/value-optimization.md) and [range optimization](docs/range-optimization.md).
 
 <a id="外部境界と解析"></a>
 
@@ -385,8 +387,10 @@ Null checks and successfully completed dereferences refine non-null facts. Repea
 At branch joins, intervals are enclosed and only common conditions are retained. Loop-carried values widen to the declared type's upper bound instead of reusing initial values. Invariants and termination are not proved.
 Normal_return_possible=false means normal continuation has been ruled out. True does not guarantee success. False bounds_proven/null_check_proven means unconfirmed.
 
-These are diagnostic may analyses and local facts. They do not change existing effect-declaration/ownership acceptance or emitted Wasm. No rule is added to remove identity, evaluation order, or traps based solely on non-escape, pure, or proven bounds.
+These are diagnostic may analyses and local facts. They do not change existing effect-declaration/ownership acceptance or directly drive emitted Wasm. Non-escape, pure, or a diagnostic bounds flag alone never authorizes removing identity, evaluation order, or traps.
 `proof/Flow.lean` checks signed/non-negative bounds conditions with BitVec. It does not prove soundness of the Rust abstract interpreter or all output; negative-index counterexamples, intervals/wrapping, aliases, loops, and calls are also covered by regression tests.
+
+A separate bounded must-range pass tracks immutable snapshots, unsigned guards, and successful checked accesses on normal paths. Small shared-value helpers can be inlined with fresh locals/loop labels. Loop-carried values start unknown on every trip; mutable reloads and unsupported calls/control flow do not supply evidence. Proved subranges compose without offset wrapping. Redundant logical branches retain evaluation of their original condition; a proven fixed-width reader omits explicit helper guards while retaining Wasm GC bounds checks. Source cannot request unchecked reads. Unproved cases stay checked, and source validation precedes optimization. `proof/Ranges.lean` proves the arithmetic rules, not correctness of the Rust implementation or emitted Wasm.
 
 <a id="wit-interface-の生成"></a>
 
@@ -725,18 +729,22 @@ Storing numbers into bytes uses the low 8 bits, as with Wasm i8.
 | Expression | Result and rules |
 |---|---|
 | `(@bytes.new i32-expr...)` | `$bytes`; empty is allowed; evaluates each expression once from the left |
-| `(@bytes.from-array $Array array-expr)` | Copies a non-null i32 array into immutable bytes; traps if an element is outside 0..255; mutable arrays are supported |
+| `(@bytes.from-array $Array array-expr [start length])` | Copies all or a range of a non-null i32/i8/i16 array into immutable bytes; selected values outside 0..255 trap; packed values are read unsigned |
+| `(@bytes.copy-to-array $Array destination at bytes start length)` | Copies immutable bytes into a mutable packed i8 array; returns unit and traps on invalid ranges |
 | `(@bytes.len bytes-expr)` | Byte count as `i32` |
 | `(@bytes.get bytes-expr index)` | `i32` in 0..255; unsigned index; out of bounds traps |
 | `(@bytes.slice bytes-expr start length)` | `$bytes`; requires start <= size and length <= size-start; out of bounds traps |
 | `(@string.lit "日本語")` | `$string`; source literals are UTF-8 |
 | `(@string.byte-len text-expr)` | UTF-8 byte count as `i32` |
 | `(@string.bytes text-expr)` | `$bytes`; preserves content; private storage can be shared |
-| `(@string.from-bytes bytes-expr)` | `(@inst $option $string)`; none for invalid UTF-8, some otherwise |
+| `(@string.from-bytes bytes-expr [start length])` | `(@inst $option $string)`; none for invalid UTF-8, some otherwise; explicit ranges validate before copying |
+| `(@bytes.is-utf8 bytes-expr [start length])` | i32 0/1; strict validation of the complete value or selected range, without a payload allocation |
 
 Invalid continuations, truncated sequences, overlong encodings, surrogates, and values above U+10FFFF are rejected.
-NUL and BOM are retained as ordinary data. Normalization, graphemes, code-point indexing, and string-library features such as comparison/concatenation are not yet provided.
+NUL and BOM are retained as ordinary data. Normalization, graphemes, and code-point indexing are outside this API; search/comparison/concatenation are provided by the core library.
 Text byte-len differs from JS string.length. An arbitrary byte subsequence need not be UTF-8, so conversion to text always validates it.
+
+Optional ranges use unsigned i32 start/length and require start <= size, then length <= size-start. Operands evaluate once from left to right before bounds/UTF-8 checks. Out-of-bounds ranges trap; bounded invalid UTF-8 returns 0/none. Empty ranges are valid regardless of surrounding bytes. Validation and ASCII lookahead read only the selected range. A ranged `@string.from-bytes` validates before allocating/copying exactly that range into independent immutable storage; the one-argument form retains its existing sharing behavior. `$bytes-view.is-utf8` and `$bytes-view.to-string` expose these operations through opaque views. `$string-view.from-bytes-view` returns option<string-view> sharing the validated range, allocating only small GC headers. Views retain the original buffer, and later string-view slices require UTF-8 boundaries. Materialization detaches storage and currently revalidates. Type/effect/ownership/opaque checks remain unchanged; the validator/lowering remain compiler TCB. See [views](docs/views.md#validate-a-byte-range-as-a-string-view).
 
 WIT maps bytes to `list<u8>` and text to `string`. Internal GC references do not cross the ABI.
 Using the UTF-8 setting of the [Canonical ABI](https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md), both flatten to two i32 values, ptr/byte-length, and use size=8 / align=4 in linear memory.
@@ -839,7 +847,13 @@ This WIT and integration code are Walz-specific, not wasi:* package implementati
 
 ## String Library and Array Copying
 
-The argument of `@bytes.from-array` is a non-null reference to the specified array type; its expression is evaluated once.
+The argument of `@bytes.from-array` is a non-null reference to the specified array type. Operands are evaluated once, from left to right. The result is an independent immutable snapshot; later array writes cannot change it. Range checks use unsigned start/length, requiring start <= size and length <= size-start. Only selected elements are converted. `@bytes.copy-to-array` reads immutable bytes and writes the destination; it has the writes effect and cannot expose private bytes storage.
+
+Typed GC arrays accept standard WAT packed i8/i16 storage, with i32 values truncated on stores and explicit `array.get_s`/`array.get_u` extension on loads. Bare `array.get` remains for unpacked arrays. Standard `array.copy $Destination $Source dst at src start length` evaluates operands left to right and preserves Wasm bounds, null and overlapping-copy semantics. Its typed subset requires a mutable destination and matching numeric element/storage types; it reads mutable sources and writes the destination. Reference-array copies remain on the standard WAT validator path. Opaque representations remain private for both source and destination. Typed list/array-view conversion continues to require unpacked storage.
+
+Fixed-width byte reads use `(@bytes.read-FORMAT-ENDIAN bytes offset)`, with FORMAT `i16/u16/i32/i64/f32/f64` and ENDIAN `le/be`. Imported `$bytes.read-*` and `$bytes-view.read-*` functions provide the same operations; views enforce their own logical range. Reads return i32 for i16/u16/i32, otherwise the named Wasm numeric type. i16 sign-extends, u16 zero-extends. `(@array.write-FORMAT-ENDIAN $Array destination offset value)` supports i16/i32/i64/f32/f64 on non-null named mutable packed i8 arrays and returns unit. i16 writes truncate to 16 bits. Floating-point accesses reinterpret bits, including signed zero and NaN payloads within Wasm; JS number boundaries need not preserve NaN payloads. Operands evaluate once from left to right, followed by unsigned range checks (`offset <= size`, `width <= size-offset`). Unaligned accesses are allowed. Incomplete ranges trap, and writes validate the entire range before mutation. Reads are pure; writes have the writes effect and cannot bypass opaque storage or ownership checks. Current lowering uses GC accesses and shifts, without linear scratch memory. See [fixed-width byte access](docs/byte-access.md).
+
+`walz:core` provides `$i32.checked-add-u`, `$i32.checked-mul-u`, and `$i32.checked-align-up-u`, with i64 counterparts. Each takes two scalars of its named width, has the pure effect, and returns Option of the same scalar. Inputs are interpreted as unsigned bit patterns, including high-bit patterns. Add/mul return none when the mathematical result exceeds the unsigned width. Alignment rounds up to a nonzero power of two and returns none for invalid alignment or overflow; the high-bit power of two is valid. A successful zero is some(0). Arguments evaluate once left to right as ordinary calls. Wasm wrapping arithmetic, numeric types, and ABI signed storage mappings are unchanged; callers check application limits separately. These are library functions with existing type/effect/ownership checks, not new syntax or unchecked arithmetic assumptions. See [checked integers](docs/checked-integers.md).
 Storage is not shared with the original array, so later array changes do not alter bytes/text content.
 Reading a mutable array has reads, and memory analysis retains element reads on that target. The returned value has no reference to the original array.
 New bytes have no observable identity, so physical storage allocation is distinguished from semantic allocates.
@@ -972,6 +986,8 @@ Owned elements and borrow storage are not permitted.
 ## User-Defined Generics
 
 `(@type.params $T ...)` and `(@inst $name T...)` monomorphize functions, types, aliases, and closures.
+
+`$name<T, U>` is an equivalent surface shorthand in type and nominal function/heap reference positions, including nested value types, GC references, calls, construction, generic closures, and concrete declarative function exports. `<` is adjacent to the name; commas separate arguments, whitespace/comments/newlines and a trailing comma are allowed, and empty/malformed lists produce `E_GENERIC_SYNTAX`. Arguments can contain existing S-expression types; reference wrappers stay explicit. Literal names declared/imported in the namespace take precedence over shorthand, and `@inst` remains an unambiguous explicit application. Locals, binders, quoted WAT identifiers, metadata, and operators are not reinterpreted. Lowering retains source spans and uses existing type/bound/effect/ownership/opaque checks and specialization caching. The formatter and Watz view support the shorthand; partial editor syntax is never compiled.
 See [Monomorphization contract](docs/generics.md) for application-time checks, recursion/expansion limits, public ABI, and map/fold.
 Where immediately after `@type.params` checks shared/nonunit/callable, built-in Add/Sub/Mul/Div/Eq/Ord/Logical/Bitwise/Shift, and callable effect bounds at instantiation.
 Operators resolve against fixed basic-type instances, constraints are erased, and output becomes existing closed IR. No user-defined class/impl or abstract body checking is added. See [Type classes and operators](docs/typeclasses.md).

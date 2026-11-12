@@ -22,7 +22,7 @@ fn result(module: &Module, value: &Type) -> String {
     }
 }
 
-fn quoted(text: &str) -> String {
+pub(crate) fn quoted(text: &str) -> String {
     let mut output = String::from("\"");
     for byte in text.bytes() {
         match byte {
@@ -39,7 +39,10 @@ fn quoted(text: &str) -> String {
 }
 
 fn storage(module: &Module, field: &Field) -> String {
-    let value = ty(module, &field.ty);
+    let value = field
+        .packed
+        .map(|p| p.wat().to_owned())
+        .unwrap_or_else(|| ty(module, &field.ty));
     if field.mutable {
         format!("(mut {value})")
     } else {
@@ -52,7 +55,11 @@ fn variant_type(ty: TypeId, variant: usize) -> String {
 }
 
 pub(crate) fn emit(module: &Module) -> String {
-    emit_inner(module, None)
+    emit_inner(module, None, false)
+}
+
+pub(crate) fn emit_js_strings(module: &Module) -> String {
+    emit_inner(module, None, true)
 }
 
 /// Runner-only instrumentation. The exported global makes each result
@@ -113,12 +120,24 @@ pub(crate) fn benchmark(module: &Module, export: &str) -> String {
 }
 
 pub(crate) fn emit_component(module: &Module, adapter: &crate::component::Adapter<'_>) -> String {
-    emit_inner(module, Some(adapter))
+    emit_inner(module, Some(adapter), false)
 }
 
-fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) -> String {
+fn emit_inner(
+    module: &Module,
+    adapter: Option<&crate::component::Adapter<'_>>,
+    js_strings: bool,
+) -> String {
     let child_tasks = crate::task_children::enabled(module);
     let mut output = String::from("(module\n");
+    let literals = if js_strings {
+        crate::component::js_native::literals(module)
+    } else {
+        Default::default()
+    };
+    if js_strings {
+        output.push_str(&crate::component::js_native::string_imports(&literals));
+    }
     // One explicit recursion group supports forward and recursive GC types.
     if module
         .types
@@ -176,6 +195,9 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
                         "(type $__list_storage_{index} (array (mut {element})))\n"
                     ));
                     format!("(struct (field (ref $__list_storage_{index})))")
+                }
+                TypeKind::Value(ValueType::Text) if js_strings => {
+                    "(struct (field externref) (field (mut (ref null $__byte_storage))))".into()
                 }
                 TypeKind::Value(ValueType::Bytes | ValueType::Text) => {
                     "(struct (field (ref $__byte_storage)))".into()
@@ -276,7 +298,8 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             .collect::<String>();
         output.push_str(&format!("  (tag {} (param{payloads}))\n", tag.name));
     }
-    output.push_str(&crate::buffers::helpers(module));
+    output.push_str(&crate::buffers::helpers_with_js_strings(module, js_strings));
+    output.push_str(&crate::byte_access::helpers(module));
     output.push_str(&crate::lists::helpers(module));
     output.push_str(&crate::readonly::helpers(module));
     for (i, t) in module.types.iter().enumerate() {
@@ -307,6 +330,8 @@ fn emit_inner(module: &Module, adapter: Option<&crate::component::Adapter<'_>>) 
             labels: vec![],
             task_scope: "(local.get $__scope)".into(),
             child_tasks,
+            js_strings,
+            literals: &literals,
         };
         let body = emitter.expression(body);
         output.push_str(&format!("  (func {}", function.name));
@@ -379,6 +404,8 @@ struct Emitter<'a> {
     labels: Vec<(LoopId, usize, Type, String)>,
     task_scope: String,
     child_tasks: bool,
+    js_strings: bool,
+    literals: &'a std::collections::BTreeMap<Vec<u8>, usize>,
 }
 enum Cleanup {
     Resource(LocalId, TypeId, usize),
@@ -651,15 +678,27 @@ impl Emitter<'_> {
                 let Type::Value(id) = expression.ty else {
                     unreachable!()
                 };
-                format!(
-                    "(struct.new {} (array.new_fixed $__byte_storage {}{}))",
-                    self.module.types[id.0].name,
-                    bytes.len(),
-                    bytes
-                        .iter()
-                        .map(|b| format!(" (i32.const {b})"))
-                        .collect::<String>()
-                )
+                if self.js_strings
+                    && matches!(
+                        self.module.types[id.0].kind,
+                        TypeKind::Value(ValueType::Text)
+                    )
+                {
+                    format!(
+                        "(struct.new {} (global.get $__js_literal_{}) (ref.null $__byte_storage))",
+                        self.module.types[id.0].name, self.literals[bytes]
+                    )
+                } else {
+                    format!(
+                        "(struct.new {} (array.new_fixed $__byte_storage {}{}))",
+                        self.module.types[id.0].name,
+                        bytes.len(),
+                        bytes
+                            .iter()
+                            .map(|b| format!(" (i32.const {b})"))
+                            .collect::<String>()
+                    )
+                }
             }
             Buffer { op, buffer, args } => match op {
                 BufferOp::New => {
@@ -675,13 +714,32 @@ impl Emitter<'_> {
                 }
                 BufferOp::Len => {
                     let id = *buffer;
-                    format!(
-                        "(array.len {})",
-                        crate::buffers::storage(
-                            &self.module.types[id.0].name,
-                            &self.expression(&args[0])
+                    if self.js_strings
+                        && matches!(
+                            self.module.types[id.0].kind,
+                            TypeKind::Value(ValueType::Text)
                         )
-                    )
+                    {
+                        let bytes = self
+                            .module
+                            .types
+                            .iter()
+                            .find(|t| matches!(t.kind, TypeKind::Value(ValueType::Bytes)))
+                            .unwrap();
+                        format!(
+                            "(array.len (struct.get {} 0 (call $__text_bytes {})))",
+                            bytes.name,
+                            self.expression(&args[0])
+                        )
+                    } else {
+                        format!(
+                            "(array.len {})",
+                            crate::buffers::storage(
+                                &self.module.types[id.0].name,
+                                &self.expression(&args[0])
+                            )
+                        )
+                    }
                 }
                 BufferOp::Get => {
                     let id = *buffer;
@@ -695,13 +753,41 @@ impl Emitter<'_> {
                     )
                 }
                 BufferOp::FromArray(id) => format!(
-                    "(call $__bytes_from_array_{}{})",
+                    "(call $__bytes_from_array_{}{}{})",
+                    if args.len() == 3 { "range_" } else { "" },
                     id.0,
                     self.arguments(args)
                 ),
+                BufferOp::CopyToArray(id) => {
+                    format!("(call $__bytes_copy_to_{}{})", id.0, self.arguments(args))
+                }
                 BufferOp::Slice => format!("(call $__bytes_slice{})", self.arguments(args)),
                 BufferOp::Encode => format!("(call $__text_bytes{})", self.arguments(args)),
-                BufferOp::Decode => format!("(call $__text_decode{})", self.arguments(args)),
+                BufferOp::Decode => format!(
+                    "(call $__text_decode{}{})",
+                    if args.len() == 3 { "_range" } else { "" },
+                    self.arguments(args)
+                ),
+                BufferOp::IsUtf8 => format!(
+                    "(call $__bytes_is_utf8{}{})",
+                    if args.len() == 3 { "_range" } else { "" },
+                    self.arguments(args)
+                ),
+                BufferOp::Read(access) => {
+                    format!("(call {}{})", access.read_helper(), self.arguments(args))
+                }
+                BufferOp::ReadProven(access) => {
+                    format!(
+                        "(call {}_proven{})",
+                        access.read_helper(),
+                        self.arguments(args)
+                    )
+                }
+                BufferOp::WriteArray(id, access) => format!(
+                    "(call {}{})",
+                    access.write_helper(*id),
+                    self.arguments(args)
+                ),
             },
             Const { ty, literal } => format!("({}.const {literal})", ty.wat()),
             Wasm { instruction, args } if instruction.readonly.is_some() => {
@@ -900,8 +986,18 @@ impl Emitter<'_> {
                 values.len(),
                 self.arguments(values)
             ),
-            ArrayGet { ty, object, index } => format!(
-                "(array.get {} {} {})",
+            ArrayGet {
+                ty,
+                signed,
+                object,
+                index,
+            } => format!(
+                "(array.get{} {} {} {})",
+                match signed {
+                    None => "",
+                    Some(true) => "_s",
+                    Some(false) => "_u",
+                },
                 self.module.types[ty.0].name,
                 self.expression(object),
                 self.expression(index)
@@ -919,6 +1015,16 @@ impl Emitter<'_> {
                 self.expression(value)
             ),
             ArrayLen(object) => format!("(array.len {})", self.expression(object)),
+            ArrayCopy {
+                target,
+                source,
+                args,
+            } => format!(
+                "(array.copy {} {}{})",
+                self.module.types[target.0].name,
+                self.module.types[source.0].name,
+                self.arguments(args)
+            ),
             Null(ty) => format!("(ref.null {})", self.module.types[ty.0].name),
             IsNull(value) => format!("(ref.is_null {})", self.expression(value)),
             AsNonNull(value) => format!("(ref.as_non_null {})", self.expression(value)),

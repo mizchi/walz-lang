@@ -1,0 +1,17 @@
+✔ FlatBuffers benchmark fixes inputs covering Unicode, bytes and numeric vectors (7.89925ms)
+✔ official reference materializes every field and returns independently owned encode/decode buffers (13.780709ms)
+✔ FlatBuffers benchmark rejects changed captures and incorrect measured implementations (3.766125ms)
+✔ FlatBuffers comparison reports raw samples with a rotating measurement order (261.112542ms)
+✔ current benchmark drains fulfilled promise jobs between measured batches (280.769459ms)
+✔ benchmark batches drain queued Task-like promise jobs before cleanup and the next batch (3.500875ms)
+✔ paired comparisons reject different inputs or reference programs (1.205583ms)
+✔ FlatBuffers CPU summaries use sample durations and include callees separately (0.15125ms)
+✔ Wasm section sizes include section overhead and reject truncated inputs (0.140541ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 617.328458

@@ -1,0 +1,17 @@
+[WebServer] (node:20158) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:20158) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:20774) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 runtime/js-native-e2e/native.spec.mjs:2:75 › utf8: direct native ABI preserves bytes and JS strings (157ms)
+  ✓  2 runtime/js-native-e2e/native.spec.mjs:2:75 › utf8: bundled native ABI preserves bytes and JS strings (69ms)
+  ✓  3 runtime/js-native-e2e/native.spec.mjs:2:75 › js-strings: direct native ABI preserves bytes and JS strings (70ms)
+  ✓  4 runtime/js-native-e2e/native.spec.mjs:2:75 › js-strings: bundled native ABI preserves bytes and JS strings (66ms)
+  ✓  5 runtime/js-native-e2e/native.spec.mjs:16:43 › core: portable codec, JSPI and cancellation retain their existing protocol (107ms)
+  ✓  6 runtime/js-native-e2e/native.spec.mjs:16:43 › component: portable codec, JSPI and cancellation retain their existing protocol (124ms)
+
+  6 passed (17.9s)

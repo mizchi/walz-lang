@@ -541,10 +541,27 @@ impl Index {
                     self.walk(source, text, body, scope, globals, locals);
                 }
             }
-            Some(
-                "call" | "closure.call" | "struct.get" | "struct.set" | "struct.new" | "array.get"
-                | "array.set" | "array.new" | "array.new_fixed" | "ref.null" | "ref.cast",
-            ) => {
+            Some(name)
+                if matches!(
+                    name,
+                    "call"
+                        | "closure.call"
+                        | "struct.get"
+                        | "struct.set"
+                        | "struct.new"
+                        | "array.get"
+                        | "array.get_s"
+                        | "array.get_u"
+                        | "array.copy"
+                        | "bytes.from-array"
+                        | "bytes.copy-to-array"
+                        | "array.set"
+                        | "array.new"
+                        | "array.new_fixed"
+                        | "ref.null"
+                        | "ref.cast"
+                ) || crate::ir::ByteAccess::parse_write(name).is_some() =>
+            {
                 if let Some(operand) = p.get(1) {
                     let name = if matches!(head(operand), Some("inst")) {
                         operand.list().and_then(|p| p.get(1))
@@ -569,7 +586,16 @@ impl Index {
                         );
                     }
                 }
-                let start = if matches!(head(n), Some("struct.get" | "struct.set")) {
+                if head(n) == Some("array.copy")
+                    && let Some(operand) = p.get(2)
+                    && let Some(name) = operand.atom()
+                {
+                    self.reference(
+                        operand,
+                        globals.get(&(scope.into(), "type".into(), name.into())),
+                    );
+                }
+                let start = if matches!(head(n), Some("struct.get" | "struct.set" | "array.copy")) {
                     3
                 } else {
                     2

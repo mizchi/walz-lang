@@ -1,0 +1,42 @@
+(module
+  (@use "walz:core"
+    (func $i32.checked-add-u) (func $i32.checked-mul-u) (func $i32.checked-align-up-u)
+    (func $i64.checked-add-u) (func $i64.checked-mul-u) (func $i64.checked-align-up-u))
+  (@test "checked addition keeps full unsigned widths and rejects overflow"
+    (&&
+      (@match (call $i32.checked-add-u -1 0) (@case none () 0) (@case some ($v) (= $v -1)))
+      (&&
+        (@match (call $i32.checked-add-u -1 1) (@case none () 1) (@case some ($v) 0))
+        (&&
+          (@match (call $i64.checked-add-u -1 0) (@case none () 0) (@case some ($v) (= $v -1)))
+          (@match (call $i64.checked-add-u -1 1) (@case none () 1) (@case some ($v) 0))))))
+  (@test "checked multiplication guards zero division and distinguishes some zero"
+    (&&
+      (@match (call $i32.checked-mul-u 0 -1) (@case none () 0) (@case some ($v) (= $v 0)))
+      (&&
+        (@match (call $i32.checked-mul-u -1 2) (@case none () 1) (@case some ($v) 0))
+        (&&
+          (@match (call $i64.checked-mul-u 0 -1) (@case none () 0) (@case some ($v) (= $v 0)))
+          (@match (call $i64.checked-mul-u -1 1) (@case none () 0) (@case some ($v) (= $v -1)))))))
+  (@test "alignment permits high-bit powers of two and detects rounding overflow"
+    (&&
+      (@match (call $i32.checked-align-up-u 1 -2147483648)
+        (@case none () 0) (@case some ($v) (= $v -2147483648)))
+      (&&
+        (@match (call $i32.checked-align-up-u -1 2) (@case none () 1) (@case some ($v) 0))
+        (&&
+          (@match (call $i64.checked-align-up-u 1 -9223372036854775808)
+            (@case none () 0) (@case some ($v) (= $v -9223372036854775808)))
+          (@match (call $i64.checked-align-up-u -1 1) (@case none () 0) (@case some ($v) (= $v -1)))))))
+  (@test "zero and non-power-of-two alignments are ordinary failures"
+    (&&
+      (@match (call $i32.checked-align-up-u 0 0) (@case none () 1) (@case some ($v) 0))
+      (&&
+        (@match (call $i32.checked-align-up-u 42 3) (@case none () 1) (@case some ($v) 0))
+        (&&
+          (@match (call $i64.checked-align-up-u 0 0) (@case none () 1) (@case some ($v) 0))
+          (@match (call $i64.checked-align-up-u 42 6) (@case none () 1) (@case some ($v) 0))))))
+  (@test "ordinary Wasm arithmetic retains wrapping semantics"
+    (&& (= (i32.add (i32.const -1) (i32.const 1)) (i32.const 0))
+      (= (i64.mul (i64.const -1) (i64.const 2)) (i64.const -2))))
+)

@@ -4,6 +4,7 @@
     (type $string)
     (type $future)
     (type $unit)
+    (type $option)
     (func $bytes-view.new)
     (func $bytes-view.slice)
     (func $bytes-view.get)
@@ -13,7 +14,8 @@
     (func $string-view.slice)
     (func $string-view.byte-len)
     (func $string-view.bytes)
-    (func $string-view.to-string))
+    (func $string-view.to-string)
+    (func $string-view.from-bytes-view))
   (func $bytes
     (export "bytes")
     (param $input $bytes)
@@ -82,4 +84,16 @@
         (result $string)
         (@future.await $unit (@move $pause))
         (call $string-view.to-string $v))))
+  (func $after-bytes
+    (export "after-bytes")
+    (param $input $bytes) (param $start i32) (param $length i32)
+    (param $pause (@inst $future $unit))
+    (result (@inst $option $string)) (@effect allocates suspends)
+    (@let $value (call $string-view.from-bytes-view
+      (call $bytes-view.slice (call $bytes-view.new $input) $start $length))
+      (block (result (@inst $option $string))
+        (@future.await $unit (@move $pause))
+        (@match $value
+          (@case none () (@option.none))
+          (@case some ($v) (@option.some (call $string-view.to-string $v)))))))
 )

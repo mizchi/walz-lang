@@ -118,6 +118,16 @@ Import Walz basic types explicitly from `walz:core`. Wasm types such as `i32` ar
 ```
 
 Apply types and generic functions with `(@inst $name T...)`. Ordinary `call $generic` can omit type arguments uniquely determined by arguments/expected type. `$string` / `$bytes` / `$unit` are aliases without type arguments, referenced by name. Aliases such as `(type $result $Outcome)` are supported too.
+
+The shorter `$name<T, U>` spelling is equivalent in type/function/heap positions:
+
+```text
+(result $result<$tuple<i32, i32>, i32>)
+(param $box (ref $Box<i32>))
+(call $identity<i64> 42)
+```
+
+Nested arguments, whitespace/comments inside `<...>`, and a trailing comma are allowed. Keep `<` adjacent to the name. An exact declared/imported WAT name such as `$f<i32>` wins; `(@inst $f i32)` explicitly selects the generic. Local names and operators are unchanged. [Full rules and example](docs/generics.md#angle-application-shorthand).
 Names bind only in their importing scope. There is no implicit prelude; import names in each file that uses them. Select standard functions from `$string.*`, `$bytes.*`, `$list.map` / `$list.fold`, `$string-builder.*`, and `$json.*`. `walz:core` is neither a file path nor a host import; it uses ordinary library static linking and DCE.
 `@string.lit`, `@result.ok`, `@future.await`, and similar forms are fixed compiler syntax manipulating values. Refer to types using imported names and `@inst`.
 See the [Standard API reference](docs/stdlib-api.md), generated from public declarations, for complete function types, constraints, and effects.
@@ -282,6 +292,9 @@ Bare strings are also allowed in parameters, results, fields, list elements, and
 (array.get $Ints array index)
 (array.set $Ints array index value)
 (array.len array)
+(type $Octets (array (mut i8)))      ;; packed i8/i16 storage; values are i32
+(array.get_u $Octets array index)    ;; or get_s for signed extension
+(array.copy $Octets $Octets dst dst-index src src-index length)
 (ref.null $Cell)
 (ref.as_non_null nullable)           ;; null なら trap。暗黙の型絞り込みはない
 (ref.is_null reference)
@@ -653,11 +666,19 @@ See [Boundaries, DCE, and unsupported scope](docs/static-modules.md).
 | Expression/function | Result |
 |---|---|
 | `(@bytes.new i32-expr...)` | Immutable bytes |
-| `(@bytes.from-array $Array array)` | Copies a non-null i32 array; elements outside 0..255 trap |
+| `(@bytes.from-array $Array array [start length])` | Immutable snapshot of all/part of an i32, i8 or i16 array; selected unsigned values outside 0..255 trap |
+| `(@bytes.copy-to-array $Array dst at bytes start length)` | Bulk copy into mutable packed i8 storage; bounds violations trap |
+| `(@bytes.read-i32-le b offset)` / `$bytes.read-i32-le(b,offset)` | Fixed-width read; formats i16/u16/i32/i64/f32/f64, each le/be; incomplete ranges trap |
+| `$bytes-view.read-i32-le(view,offset)` | Same reads relative to the view; checks the entire visible range |
+| `(@array.write-i32-le $Array dst offset value)` | Mutable packed i8 only; formats i16/i32/i64/f32/f64, each le/be; checks the full range before writes |
 | `(@bytes.len b)` / `(@bytes.get b index)` | Length / element in 0..255; unsigned index; out of bounds traps |
 | `(@bytes.slice b start length)` | Copied bytes; out of bounds traps |
 | `(@string.lit "日本語")` / `(@string.byte-len t)` | Text / UTF-8 byte length |
-| `(@string.bytes t)` / `(@string.from-bytes b)` | Bytes / option<text>; invalid UTF-8 gives none |
+| `(@string.bytes t)` / `(@string.from-bytes b [start length])` | Bytes / option<text>; invalid UTF-8 gives none; explicit ranges validate before copying |
+| `(@bytes.is-utf8 b [start length])` / `$bytes-view.is-utf8(view)` | Strict UTF-8 validation without a payload copy; invalid ranges trap |
+| `$string-view.from-bytes-view(view)` | option<string-view> sharing the validated byte range; materialize with `$string-view.to-string` |
+| `$i32.checked-add-u(a,b)` / `$i32.checked-mul-u(a,b)` | option<i32>; unsigned bit patterns, none on overflow; matching `$i64.*` helpers return option<i64> |
+| `$i32.checked-align-up-u(value,alignment)` | option<i32>; nonzero power-of-two alignment, none on invalid alignment/overflow; also `$i64.*` |
 | `$string.concat(text,text)` | Text concatenation |
 | `$string.u64(i64)` / `$string.s64(i64)` | Unsigned/signed decimal conversion of a bit pattern |
 | `$json.from-string(text)` | Constructs a JSON string value (parse documents with `$json.parse`) |

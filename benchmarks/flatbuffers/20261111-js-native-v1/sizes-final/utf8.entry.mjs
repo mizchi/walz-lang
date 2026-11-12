@@ -1,0 +1,1 @@
+export {instantiate} from "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8/index.js";

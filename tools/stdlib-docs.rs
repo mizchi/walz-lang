@@ -24,6 +24,14 @@ impl StdError for Error {}
 #[allow(dead_code)]
 #[path = "../src/sexpr.rs"]
 mod sexpr;
+
+// This source catalogue preserves declarations and source spelling; compilation
+// performs contextual elaboration through the library's real applications pass.
+mod applications {
+    pub(crate) fn expand(_: &str, _: &mut crate::sexpr::Sexp, _: bool) -> Result<(), crate::Error> {
+        Ok(())
+    }
+}
 #[path = "../src/standard_sources.rs"]
 mod standard_sources;
 

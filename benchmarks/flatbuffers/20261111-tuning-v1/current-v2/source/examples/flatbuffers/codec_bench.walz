@@ -1,0 +1,14 @@
+(module
+  (@use "walz:core" (type $bytes) (type $list) (type $option) (type $result))
+  (@use "./message.walz" (type $Bool) (type $Child) (type $Message)
+    (func $message.encode) (func $message.decode))
+
+  ;; Includes record construction, encoding, validation, and materialization.
+  ;; No host calls or ABI transfer occur inside the measured loop.
+  (@bench "FlatBuffers message roundtrip" (param $i i32) (result i32)
+    (@let $m (@$Message::{:id (i64.extend_i32_s $i) :name "日本語🦀"
+        :values (@list.new i32 $i 20 22) :payload (@bytes.new 0 128 255)
+        :enabled (@newtype.wrap $Bool 1) :weight 1.25 :child (@option.none (ref $Child))})
+      (@match (call $message.decode (call $message.encode $m))
+        (@case ok ($decoded) (i32.wrap_i64 (struct.get $Message $id $decoded)))
+        (@case err ($code) (unreachable))))))

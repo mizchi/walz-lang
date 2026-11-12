@@ -1,12 +1,26 @@
 (module
-  (@use "walz:core" (type $bytes))
+  (@use "walz:core" (type $bytes) (type $string) (type $option))
   (@export
     (opaque $bytes-view)
     (func $bytes-view.new)
     (func $bytes-view.len)
     (func $bytes-view.get)
     (func $bytes-view.slice)
-    (func $bytes-view.to-bytes))
+    (func $bytes-view.to-bytes)
+    (func $bytes-view.is-utf8)
+    (func $bytes-view.to-string)
+    (func $bytes-view.read-i16-le)
+    (func $bytes-view.read-i16-be)
+    (func $bytes-view.read-u16-le)
+    (func $bytes-view.read-u16-be)
+    (func $bytes-view.read-i32-le)
+    (func $bytes-view.read-i32-be)
+    (func $bytes-view.read-i64-le)
+    (func $bytes-view.read-i64-be)
+    (func $bytes-view.read-f32-le)
+    (func $bytes-view.read-f32-be)
+    (func $bytes-view.read-f64-le)
+    (func $bytes-view.read-f64-be))
   ;; Every view points to the original immutable bytes, never to another view.
   (type $bytes-view
     (struct (field $source $bytes) (field $start i32) (field $length i32)))
@@ -63,4 +77,119 @@
     (@bytes.slice
       (struct.get $bytes-view $source $v)
       (struct.get $bytes-view $start $v)
-      (call $bytes-view.len $v))))
+      (call $bytes-view.len $v)))
+  (func $bytes-view.is-utf8
+    (param $v (ref $bytes-view)) (result i32) (@effect pure)
+    (@bytes.is-utf8 (struct.get $bytes-view $source $v)
+      (struct.get $bytes-view $start $v) (struct.get $bytes-view $length $v)))
+  ;; Validate before copying, and materialize only the visible range.
+  (func $bytes-view.to-string
+    (param $v (ref $bytes-view)) (result (@inst $option $string)) (@effect pure)
+    (@string.from-bytes (struct.get $bytes-view $source $v)
+      (struct.get $bytes-view $start $v) (struct.get $bytes-view $length $v)))
+
+  ;; Offsets are unsigned and relative to the visible range, not the owner.
+  (func $bytes-view.check-width
+    (param $v (ref $bytes-view)) (param $offset i32) (param $width i32)
+    (@effect pure)
+    (@let $n (call $bytes-view.len $v)
+      (block
+        (if (i32.gt_u $offset $n) (then (unreachable)) (else (nop)))
+        (if (i32.gt_u $width (- $n $offset)) (then (unreachable)) (else (nop))))))
+
+  (func $bytes-view.read-i16-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 2)
+      (@bytes.read-i16-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-i16-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 2)
+      (@bytes.read-i16-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-u16-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 2)
+      (@bytes.read-u16-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-u16-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 2)
+      (@bytes.read-u16-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-i32-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 4)
+      (@bytes.read-i32-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-i32-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result i32)
+    (@effect pure)
+    (block (result i32)
+      (call $bytes-view.check-width $source $offset 4)
+      (@bytes.read-i32-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-i64-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result i64)
+    (@effect pure)
+    (block (result i64)
+      (call $bytes-view.check-width $source $offset 8)
+      (@bytes.read-i64-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-i64-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result i64)
+    (@effect pure)
+    (block (result i64)
+      (call $bytes-view.check-width $source $offset 8)
+      (@bytes.read-i64-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-f32-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result f32)
+    (@effect pure)
+    (block (result f32)
+      (call $bytes-view.check-width $source $offset 4)
+      (@bytes.read-f32-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-f32-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result f32)
+    (@effect pure)
+    (block (result f32)
+      (call $bytes-view.check-width $source $offset 4)
+      (@bytes.read-f32-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-f64-le
+    (param $source (ref $bytes-view)) (param $offset i32) (result f64)
+    (@effect pure)
+    (block (result f64)
+      (call $bytes-view.check-width $source $offset 8)
+      (@bytes.read-f64-le (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+
+  (func $bytes-view.read-f64-be
+    (param $source (ref $bytes-view)) (param $offset i32) (result f64)
+    (@effect pure)
+    (block (result f64)
+      (call $bytes-view.check-width $source $offset 8)
+      (@bytes.read-f64-be (struct.get $bytes-view $source $source)
+        (+ (struct.get $bytes-view $start $source) $offset))))
+)

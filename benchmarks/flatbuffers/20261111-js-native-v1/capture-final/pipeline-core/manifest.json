@@ -1,0 +1,65 @@
+{
+  "abi": "walz-core-js-v2",
+  "esm": {
+    "exports": {
+      "decode": {
+        "jsName": "decode",
+        "params": [
+          "bytes"
+        ],
+        "result": "(result (record (id i64) (name text) (values (list i32)) (payload bytes) (enabled bool) (weight f64) (child (option (record (count i32) (label text))))) i32)",
+        "suspends": false
+      },
+      "encode": {
+        "jsName": "encode",
+        "params": [
+          "(record (id i64) (name text) (values (list i32)) (payload bytes) (enabled bool) (weight f64) (child (option (record (count i32) (label text)))))"
+        ],
+        "result": "bytes",
+        "suspends": false
+      },
+      "inspect": {
+        "jsName": "inspect",
+        "params": [
+          "bytes"
+        ],
+        "result": "(result (record (id i64) (name text) (count i32) (sum i64) (size i32) (enabled bool) (weight f64) (child (option i32))) i32)",
+        "suspends": false
+      },
+      "inspect-batch": {
+        "jsName": "inspectBatch",
+        "params": [
+          "(list bytes)"
+        ],
+        "result": "(list (result (record (id i64) (name text) (count i32) (sum i64) (size i32) (enabled bool) (weight f64) (child (option i32))) i32))",
+        "suspends": false
+      },
+      "transform": {
+        "jsName": "transform",
+        "params": [
+          "bytes",
+          "i32"
+        ],
+        "result": "(result bytes i32)",
+        "suspends": false
+      },
+      "transform-batch": {
+        "jsName": "transformBatch",
+        "params": [
+          "(list bytes)",
+          "i32"
+        ],
+        "result": "(list (result bytes i32))",
+        "suspends": false
+      }
+    },
+    "schema": "walz-esm-v1"
+  },
+  "imports": [],
+  "sourceFiles": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/flatbuffers/message.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/flatbuffers/pipeline.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/flatbuffers/builder.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/flatbuffers/reader.walz"
+  ]
+}

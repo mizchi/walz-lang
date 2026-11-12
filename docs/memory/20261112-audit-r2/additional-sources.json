@@ -1,0 +1,17 @@
+{
+  "Cargo.lock": "c679ace51080b93c5074c9dfe174de82df6cc0b6e88876146582e4278e2785bd",
+  "Cargo.toml": "fa8b8aa200d489121e3d72a855c9edff686d182f62fe2b508fee3c82c49372f5",
+  "build.rs": "223cc2f7330f2976bf8013f958bf15937e7327be68d722d10f6c6896c13f488f",
+  "crates/walz-web/Cargo.toml": "38f65fca14c8dc7de62506014799c38abdd5f46dfb78ad4597b13366d97b03fd",
+  "crates/walz-web/src/lib.rs": "52b767d4f9231d4ab2d900e010fbe5e8e8bafd67d8f9345de256d82780458595",
+  "crates/walz-web/tests/api.rs": "303499144b1a66cabadcd3993e81db3d116ace0fba2b18e507af2341649c0348",
+  "justfile": "96931d1257e62640cf3a5cdbc253641f46cdc6b6e6e69055cf1c6a539006698a",
+  "package.json": "68bf72be84754fcc4c0632f5cbdbfe697da8895da49ad3a38eee00b5fefe8b74",
+  "pnpm-lock.yaml": "c4a379f3d18f947a4753e00a847cd6b4b453756d573c80d7530b7435447c666c",
+  "runtime/core-expressions-memory.mjs": "1129110ec8a46abf226f543b9d6129395a58180b7979c4b4020b84f4b50ab08c",
+  "runtime/memory-audit.mjs": "6ce243ca3b020e8abb6fde41e48f6986bd70c16bbc5a3ea007f6fe8c419442d9",
+  "runtime/recent-memory-audit.mjs": "6c2aa07e1dd024797e3cd9cf32cb39609995068fc877a92d4c1e6f765d36c319",
+  "runtime/testing/memory.mjs": "cb83eb47e674617253cdb31a842be6c5cf32ddea53a4c0910a2207c2b6507b97",
+  "rust-toolchain.toml": "f85f74c3f9bf13cfb68855f5e125bbd206d6e07440f7d3145a5872ad14e2bdb2",
+  "tests/gc-fixtures/recent-optimizations.walz": "b79a613ebf9330c69baf5c117463342165efbe44855cb5b4280f26ac43ed4438"
+}

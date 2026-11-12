@@ -1,0 +1,2840 @@
+{
+  "version": 2,
+  "date": "2026-11-12T08:26:52.445Z",
+  "node": "v24.22.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "head": "7c1f463b6d059a627e913d206e9294eb5284349c",
+  "method": {
+    "warmupBatches": 1,
+    "measuredBatches": 6,
+    "gcsPerSample": 4,
+    "callsPerBatch": 250,
+    "retainedGrowthLimit": 2097152,
+    "maxCollectionPasses": 8
+  },
+  "cases": [
+    {
+      "name": "core/views-ranges",
+      "callsPerBatch": 250,
+      "heapGrowth": 29368,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 5719952,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73711616,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 5736992,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73957376,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 5746600,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73973760,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 5747120,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73973760,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 5747448,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73973760,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 5749320,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 73973760,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "core/utf8-views",
+      "callsPerBatch": 250,
+      "heapGrowth": 63992,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 6045408,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 75317248,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6059416,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 75350016,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6075128,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 75350016,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6107320,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 75399168,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6109216,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 75399168,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6109400,
+          "external": 2694809,
+          "arrayBuffers": 215864,
+          "rss": 77676544,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "core/value-fusion",
+      "callsPerBatch": 250,
+      "heapGrowth": 37592,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 6417160,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78462976,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6439040,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78528512,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6453864,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78528512,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6454160,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78528512,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6454456,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78528512,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6454752,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78528512,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "core/angle-applications",
+      "callsPerBatch": 250,
+      "heapGrowth": 33160,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 6608264,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78741504,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6622328,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78839808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6634576,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78856192,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6634872,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78856192,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6635168,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78856192,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6641424,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 78856192,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "core/flatbuffers",
+      "callsPerBatch": 250,
+      "heapGrowth": 73880,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 6895624,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 79659008,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6953744,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 80084992,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6968616,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 80150528,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6968912,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 80183296,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6969208,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 80183296,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 6969504,
+          "external": 2726281,
+          "arrayBuffers": 215864,
+          "rss": 80183296,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "handles": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "component/views-ranges",
+      "callsPerBatch": 250,
+      "heapGrowth": 18896,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 7479416,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 80969728,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 7487272,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 80969728,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 7489592,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 80969728,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 7493720,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 80969728,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 7497944,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 81608704,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 7498312,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 85639168,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "component/utf8-views",
+      "callsPerBatch": 250,
+      "heapGrowth": 12960,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 8179560,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94322688,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8187888,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94371840,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8188304,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94371840,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8189144,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94371840,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8191168,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94371840,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8192520,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 94371840,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "component/value-fusion",
+      "callsPerBatch": 250,
+      "heapGrowth": 5952,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 8787448,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 95993856,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8791200,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96010240,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8791576,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96010240,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8792560,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96043008,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8792960,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96043008,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 8793400,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96043008,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "component/angle-applications",
+      "callsPerBatch": 250,
+      "heapGrowth": 7536,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 9297688,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96206848,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9300224,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96305152,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9300608,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96321536,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9300800,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96337920,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9304856,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96337920,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9305224,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 96337920,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "component/flatbuffers",
+      "callsPerBatch": 250,
+      "heapGrowth": 24704,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 9946328,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98189312,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9952888,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98271232,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9972608,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98353152,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9970264,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98353152,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9970664,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98353152,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        },
+        {
+          "heapUsed": 9971032,
+          "external": 2726285,
+          "arrayBuffers": 215868,
+          "rss": 98353152,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "scopes": 0,
+            "bufferRegistry": 0,
+            "tasks": 0,
+            "futures": 0,
+            "streams": 0,
+            "futureEnds": 0,
+            "streamEnds": 0,
+            "handles": 0,
+            "threads": 0,
+            "subtasks": 0
+          },
+          "scopes": {
+            "resources": 0,
+            "queued": 0,
+            "active": 0,
+            "reads": 0,
+            "blocking": 0,
+            "disposals": 0,
+            "children": 0
+          }
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-utf8/views-ranges",
+      "callsPerBatch": 250,
+      "heapGrowth": 10192,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 9952304,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98779136,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 9959808,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98828288,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 9961376,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98828288,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 9961920,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98828288,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 9962208,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98828288,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 9962496,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98828288,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-utf8/utf8-views",
+      "callsPerBatch": 250,
+      "heapGrowth": 31312,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10039072,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98893824,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10048768,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98910208,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10068184,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98910208,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10070024,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98910208,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10070312,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98910208,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10070384,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98910208,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-utf8/value-fusion",
+      "callsPerBatch": 250,
+      "heapGrowth": 31920,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10088656,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98975744,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10097904,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98992128,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10119712,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98992128,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10120000,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98992128,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10120288,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98992128,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10120576,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 98992128,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-utf8/angle-applications",
+      "callsPerBatch": 250,
+      "heapGrowth": 9920,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10147416,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10154528,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10156472,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10156760,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10157048,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10157336,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99057664,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-utf8/flatbuffers",
+      "callsPerBatch": 250,
+      "heapGrowth": 59208,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10274656,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99205120,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10321896,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99237888,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10330880,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99254272,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10333288,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99254272,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10333576,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99254272,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10333864,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99254272,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-js-strings/views-ranges",
+      "callsPerBatch": 250,
+      "heapGrowth": 10936,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10294824,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99303424,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10303328,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99319808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10304896,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99319808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10305184,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99319808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10305472,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99319808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10305760,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99319808,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-js-strings/utf8-views",
+      "callsPerBatch": 250,
+      "heapGrowth": 17944,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10390168,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99368960,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10405120,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99352576,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10407464,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99352576,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10407752,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99352576,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10408040,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99352576,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10408112,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99352576,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-js-strings/value-fusion",
+      "callsPerBatch": 250,
+      "heapGrowth": 20720,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10433904,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99401728,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10451032,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10453760,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10454048,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10454336,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10454624,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-js-strings/angle-applications",
+      "callsPerBatch": 250,
+      "heapGrowth": 13704,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10483856,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10494752,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10496696,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10496984,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10497272,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10497560,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99418112,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "native-js-strings/flatbuffers",
+      "callsPerBatch": 250,
+      "heapGrowth": 52016,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 10626368,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99565568,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10667848,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99614720,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10675400,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99631104,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10677808,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99631104,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10678096,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99631104,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        },
+        {
+          "heapUsed": 10678384,
+          "external": 2726257,
+          "arrayBuffers": 215840,
+          "rss": 99631104,
+          "linearBytes": 65536,
+          "live": 0,
+          "tables": {
+            "hostHandles": 0,
+            "boundaryBuffers": 0,
+            "scratchCapacityBytes": 65536
+          },
+          "scopes": {}
+        }
+      ],
+      "discardedInstance": {
+        "allCollected": true,
+        "collectionPasses": 1
+      }
+    },
+    {
+      "name": "wasm-compiler/repeated-success-and-errors",
+      "callsPerBatch": 96,
+      "heapGrowth": 21808,
+      "arrayBufferGrowth": 0,
+      "samples": [
+        {
+          "heapUsed": 11253152,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 143704064,
+          "linearBytes": 2293760
+        },
+        {
+          "heapUsed": 11254912,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 143704064,
+          "linearBytes": 2293760
+        },
+        {
+          "heapUsed": 11255072,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 143818752,
+          "linearBytes": 2293760
+        },
+        {
+          "heapUsed": 11255232,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 143900672,
+          "linearBytes": 2293760
+        },
+        {
+          "heapUsed": 11274800,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 143982592,
+          "linearBytes": 2293760
+        },
+        {
+          "heapUsed": 11274960,
+          "external": 4954493,
+          "arrayBuffers": 215852,
+          "rss": 144064512,
+          "linearBytes": 2293760
+        }
+      ]
+    }
+  ],
+  "artifacts": {
+    "rawGc": "4ff005809e1aa87532c4f3c1706404474c472b7f7844c30b799c9ce9d960b606",
+    "core/views-ranges": {
+      "bindings.mjs": "e8d3975965290f3ad65c09b94b9101c88d83826513a48acbacaff61d33148e84",
+      "core.mjs": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1",
+      "core.wasm": "716cbd0b7892b327c0db2b5a3671b5a75d5e6c0c454bfecbfc6359168bf67427",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+      "manifest.json": "fa38e576b5d293307d5ad69f3ca49d30eb97f840880901e5b83a672f85079cd5",
+      "memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "core/utf8-views": {
+      "bindings.mjs": "978f6a86a9d8d8d9ca9dae1d45212839d95f8f82474ec04cc09d8660f81ea7a0",
+      "core.mjs": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1",
+      "core.wasm": "792ce38a869fcc54d2bfaf4f0e042691d9ada6185aa25a0daed15ca73dc752e0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+      "manifest.json": "f43ce83136918a8ec0af700a1b16dd9a15768bbc01bfd81f5485441fb218201b",
+      "memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "core/value-fusion": {
+      "bindings.mjs": "6aa53f5e059ab53875528509d226fe763b138184fb35e1e29bd067197d838693",
+      "core.mjs": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1",
+      "core.wasm": "1061a6f01d97df53d47552bcaa1358a309a82e0fb29b8e171cdf477c223cbd64",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+      "manifest.json": "e8cb33b614c1f078589462dd31e1d44f09e3114b625854812efaf60c3f2bed45",
+      "memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "core/angle-applications": {
+      "bindings.mjs": "519bb2a6ab0564b6736c5094a1581bbd10a7c9f09dfcf14c33a309c591e75d86",
+      "core.mjs": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1",
+      "core.wasm": "c013d3566ec73e404a5c773cface13bf80dc23ddf4353dbd7f58590c59fa7003",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+      "manifest.json": "7c841136aded9f7057d2f99e5784108454fe92f6f99666399a937d5f2e7d8b04",
+      "memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "core/flatbuffers": {
+      "bindings.mjs": "5672e27a17923540eb52c6ce3a751a74faa5bd9a5ef6dbde4f255d9d7860c4d9",
+      "core.mjs": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1",
+      "core.wasm": "73c79b47b31b8ebe71caa455f1aff9fc4ce8949b3eef87f0469aad2c440db8f0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add",
+      "manifest.json": "1d9753ca658fb63627d1773cd5b9223a20a94cffd1a13bf1713cd665aefcf6e3",
+      "memory.wasm": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "component/views-ranges": {
+      "component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+      "component.core2.wasm": "59fc8092f6cef9522955d5bb29b04741622309567592c1901c52c00a497cb304",
+      "component.js": "0b12eda329d661f86a8349613910822e311797a3def556f7015051b73b62d2fd",
+      "component.wasm": "db34a3ae588b30877108fc890ee8e4ec6d2b06ad41964541cdcfe36c7980bf55",
+      "component.wasm.json": "e872de0bcda165152c0601f6096849e5d879093fbafee02203590e82aab020b0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "component/utf8-views": {
+      "component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+      "component.core2.wasm": "a0a4a1a5ba42de521a2e8290c7c9b29af2ff151d70481b0d9a0b22cb1afd58e2",
+      "component.js": "2c25d98f5af0895481c2d03f1aaad77b17c0f194f4cab45b074be06734bbb5fc",
+      "component.wasm": "5fb8a62857827d5d667331d420abe26e99107256dadbf00ed8210c7360f3c43a",
+      "component.wasm.json": "e872de0bcda165152c0601f6096849e5d879093fbafee02203590e82aab020b0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "component/value-fusion": {
+      "component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+      "component.core2.wasm": "8d18649a179cc96a11f19460c33465eea09f0e166c1eb701e1d0552c69680a64",
+      "component.js": "f4fd834bea56c5830269155613cc49bdbd735aefe6c77831016429a3f85fbb01",
+      "component.wasm": "777daf86461c762b2609ae860b91eb7adb5d2a7edf89e9c09e041a19a2c9801b",
+      "component.wasm.json": "e872de0bcda165152c0601f6096849e5d879093fbafee02203590e82aab020b0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "component/angle-applications": {
+      "component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+      "component.core2.wasm": "9210bc92c81eebdbee1fc0c414f9f11fa2b6b7e453ee09f812b7f37df007bf0d",
+      "component.js": "936a49e8e8f4ba3d299192200e938e3012f23537b153fd2b2fbb30c5876eed4a",
+      "component.wasm": "df36a31e1724fb85452337f5fc97a9332e7ce19565758c4272c0d168b190c14c",
+      "component.wasm.json": "e872de0bcda165152c0601f6096849e5d879093fbafee02203590e82aab020b0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "component/flatbuffers": {
+      "component.core.wasm": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5",
+      "component.core2.wasm": "595372610bc039f2bab21af9fef6a2d8765624c7eee16df7e75092f5fb992f83",
+      "component.js": "960253cfb04c2b5c3762863f33ffaf898b81f4e54d815a0af40e092465f803a8",
+      "component.wasm": "0a03d6fa6c59a4234150ea03fe761625fac266c9ecf3265a39ee533107cadead",
+      "component.wasm.json": "e872de0bcda165152c0601f6096849e5d879093fbafee02203590e82aab020b0",
+      "host.mjs": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd",
+      "index.js": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892",
+      "package.json": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035",
+      "resources.mjs": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8",
+      "tasks.mjs": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+    },
+    "native-utf8/views-ranges": {
+      "bindings.mjs": "b84cfe9b6ea43120f3efc18b19312b2a485cbe1eb70b9df03594bd8b9d459121",
+      "index.js": "b14b5766acafea70688c5ea053f751b36bb982d0313e08e3464a28dbc699c87e",
+      "manifest.json": "7c70582200fa9a6443d9f62c448e6c09644d48b9a204625795a0ac7a3802fdcb",
+      "native.wasm": "7ec936d7914ba29b12154961bc750ac5059e5dab0af166cf7dbb9547d3b4459f",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-utf8/utf8-views": {
+      "bindings.mjs": "3026dfe029b4d7325201c2f23873c66c72b8e308b55fb53bedffd023329d6622",
+      "index.js": "b14b5766acafea70688c5ea053f751b36bb982d0313e08e3464a28dbc699c87e",
+      "manifest.json": "7c70582200fa9a6443d9f62c448e6c09644d48b9a204625795a0ac7a3802fdcb",
+      "native.wasm": "73336a43838c90be5d329af1c35c0257cd4af7c057320960359dad56bab9e1bc",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-utf8/value-fusion": {
+      "bindings.mjs": "0f869efa84a9ef0a98073bf9ea1c34254fd279ea60ab964a5fa51274f681c4a9",
+      "index.js": "b14b5766acafea70688c5ea053f751b36bb982d0313e08e3464a28dbc699c87e",
+      "manifest.json": "7c70582200fa9a6443d9f62c448e6c09644d48b9a204625795a0ac7a3802fdcb",
+      "native.wasm": "41fa38e926b5e66289ea4872cbf26675d12bcc67c55a244d204ba662664f34e7",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-utf8/angle-applications": {
+      "bindings.mjs": "46b359419863d164699f35664dad799ebf6765dc6af11e6f4bb15ae7ee2b5c71",
+      "index.js": "b14b5766acafea70688c5ea053f751b36bb982d0313e08e3464a28dbc699c87e",
+      "manifest.json": "7c70582200fa9a6443d9f62c448e6c09644d48b9a204625795a0ac7a3802fdcb",
+      "native.wasm": "7bddc4f3e49e74bcf9baccbb513f1380d59c1252ecaef9301b212fcef2464c01",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-utf8/flatbuffers": {
+      "bindings.mjs": "4aa2de75ef0b7174b60f65645b7a8ff6caf463d94f95e826d35eb96f09d1e7cf",
+      "index.js": "b14b5766acafea70688c5ea053f751b36bb982d0313e08e3464a28dbc699c87e",
+      "manifest.json": "7c70582200fa9a6443d9f62c448e6c09644d48b9a204625795a0ac7a3802fdcb",
+      "native.wasm": "ef1c1a19a5366733f33436fdbc0f7907462ba29b4fa401995b15f2ea737f3bc1",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-js-strings/views-ranges": {
+      "bindings.mjs": "b84cfe9b6ea43120f3efc18b19312b2a485cbe1eb70b9df03594bd8b9d459121",
+      "index.js": "153c404e60fefaed11812a070a4e8516ac084a853f92c190ffeb899f34f2f357",
+      "manifest.json": "be2f1487aee8f4d3ebfbcccf82c0e0682f37c53cd1118271a85e338b86b466fd",
+      "native.wasm": "e8ac73d07d4398bafeaf9feaa34b9c25863b873c5bbe459ec656930df35d7832",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-js-strings/utf8-views": {
+      "bindings.mjs": "8db72772b4773720208b958930f288e5af1fa0e3b6cfe6c8af8a71e645b77562",
+      "index.js": "153c404e60fefaed11812a070a4e8516ac084a853f92c190ffeb899f34f2f357",
+      "manifest.json": "be2f1487aee8f4d3ebfbcccf82c0e0682f37c53cd1118271a85e338b86b466fd",
+      "native.wasm": "c22f2fbf0da817a8c008b7209efa92b617a29f0adca1261e61ec5685ec4e78ba",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-js-strings/value-fusion": {
+      "bindings.mjs": "0f869efa84a9ef0a98073bf9ea1c34254fd279ea60ab964a5fa51274f681c4a9",
+      "index.js": "153c404e60fefaed11812a070a4e8516ac084a853f92c190ffeb899f34f2f357",
+      "manifest.json": "be2f1487aee8f4d3ebfbcccf82c0e0682f37c53cd1118271a85e338b86b466fd",
+      "native.wasm": "ec7a9fd242874e9a59190f481e852217c801dbc84a0605f85c936ed760fcaaba",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-js-strings/angle-applications": {
+      "bindings.mjs": "46b359419863d164699f35664dad799ebf6765dc6af11e6f4bb15ae7ee2b5c71",
+      "index.js": "153c404e60fefaed11812a070a4e8516ac084a853f92c190ffeb899f34f2f357",
+      "manifest.json": "be2f1487aee8f4d3ebfbcccf82c0e0682f37c53cd1118271a85e338b86b466fd",
+      "native.wasm": "68d14c1368b6276be689ab91ca2c746be40f529399c7230b1c32d64c051adf0a",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "native-js-strings/flatbuffers": {
+      "bindings.mjs": "bf892758f1e2de92f92f7fbc76016f884b5f73741983d776963575a2e7d4d6ac",
+      "index.js": "153c404e60fefaed11812a070a4e8516ac084a853f92c190ffeb899f34f2f357",
+      "manifest.json": "be2f1487aee8f4d3ebfbcccf82c0e0682f37c53cd1118271a85e338b86b466fd",
+      "native.wasm": "fa3c7badb48a589ba8598ec91be5362d2a02fbb0b4367e78ae4c0598f8069059",
+      "package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+      "runtime.mjs": "36813f2c6aa29c9b42cb1e0f4d75bfc0964bbad3e19976834fb55fe3c67b916c"
+    },
+    "compiler": {
+      "package.json": "25a17b7b078d78c560b1d488982afdb740d888f7a428bd6fa2f415ada00aebb7",
+      "walz_web.js": "c9d7d4741f1c2607a112622c904b0593882a5af03f54bc48390fb064604c080c",
+      "walz_web_bg.wasm": "3499eb2820432b432744763e121f7484ab1ccf12178e38cd18b74dcaa1a9a8fe"
+    }
+  },
+  "rawGc": {
+    "checkedObjects": 389,
+    "collectionPasses": 1,
+    "allCollected": true,
+    "pinnedControl": true,
+    "liveViewControl": true,
+    "detachedCopyControl": true,
+    "liveClosureControl": true
+  },
+  "sources": {
+    "count": 564,
+    "sha256": "6e437f6c0d0b69eed52ce13181e3fc6df910a73553b878371c00c226166fd1c3",
+    "file": "sources.json"
+  }
+}

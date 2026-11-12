@@ -108,6 +108,16 @@ Walz の基本型は `walz:core` から明示的に import する。`i32` など
 ```
 
 型も汎用関数も `(@inst $name T...)` で適用する。通常の `call $generic` は引数・期待型から一意に決まる型引数を省略できる。`$string` / `$bytes` / `$unit` は型引数なしの alias なので、その名前で参照する。`(type $result $Outcome)` のような別名も使える。
+
+型・関数・heap 型の位置では、短い `$name<T, U>` も同じ意味になる。
+
+```text
+(result $result<$tuple<i32, i32>, i32>)
+(param $box (ref $Box<i32>))
+(call $identity<i64> 42)
+```
+
+入れ子、`<...>` 内の空白・改行・コメント、末尾カンマを許す。`<` は名前に隣接させる。`$f<i32>` という完全一致の WAT 名を宣言/import している場合はその名前を優先し、`(@inst $f i32)` で汎用関数の適用を明示できる。ローカル名や演算子は変わらない。[規則と実行例](docs/generics.md#angle-application-shorthand)を参照。
 名前は import したスコープにだけ束縛される。暗黙の prelude はなく、別ファイル で使う名前もそこで import する。標準関数は `$string.*`、`$bytes.*`、`$list.map` / `$list.fold`、`$string-builder.*`、`$json.*` から選ぶ。`walz:core` はファイルパスやホスト import ではなく、通常のライブラリの静的リンクと DCE を使う。
 `@string.lit`・`@result.ok`・`@future.await` などは値を操作するコンパイラの固定構文。型の参照には import した名前と `@inst` を使う。
 関数の完全な型・型制約・effect は、公開宣言から生成する [標準 API 一覧](docs/stdlib-api.md) を参照する。
@@ -264,6 +274,9 @@ pair の分解には既存の `(@let ($a $b) subject body)` を使う。どち�
 (array.get $Ints array index)
 (array.set $Ints array index value)
 (array.len array)
+(type $Octets (array (mut i8)))      ;; i8/i16 の packed 格納。値の型は i32
+(array.get_u $Octets array index)    ;; 符号拡張は get_s
+(array.copy $Octets $Octets dst dst-index src src-index length)
 (ref.null $Cell)
 (ref.as_non_null nullable)           ;; null なら trap。暗黙の型絞り込みはない
 (ref.is_null reference)
@@ -619,11 +632,19 @@ WIT付きComponentは`(@use "./math.wasm" (func $math.add $add))`で選択でき
 | 式・関数 | 結果 |
 |---|---|
 | `(@bytes.new i32-expr...)` | 不変 bytes |
-| `(@bytes.from-array $Array array)` | 非 null の i32 配列をコピー。各要素0..255以外は trap |
+| `(@bytes.from-array $Array array [start length])` | i32/i8/i16 配列の全体または範囲を不変スナップショットにする。選択した値が符号なしで0..255以外なら trap |
+| `(@bytes.copy-to-array $Array dst at bytes start length)` | 可変 packed i8 配列へ一括コピー。範囲外は trap |
+| `(@bytes.read-i32-le b offset)` / `$bytes.read-i32-le(b,offset)` | 固定幅読み取り。i16/u16/i32/i64/f32/f64 × le/be。全範囲が入らなければ trap |
+| `$bytes-view.read-i32-le(view,offset)` | view を基準に同じ読み取り。可視範囲内に全バイトが入る必要がある |
+| `(@array.write-i32-le $Array dst offset value)` | 可変 packed i8 専用。i16/i32/i64/f32/f64 × le/be。全範囲を検査してから書く |
 | `(@bytes.len b)` / `(@bytes.get b index)` | 長さ／0..255の要素。添字は符号なし、範囲外は trap |
 | `(@bytes.slice b start length)` | コピーした bytes。範囲外は trap |
 | `(@string.lit "日本語")` / `(@string.byte-len t)` | text／UTF-8 byte 長 |
-| `(@string.bytes t)` / `(@string.from-bytes b)` | bytes／option<text>。不正 UTF-8 は none |
+| `(@string.bytes t)` / `(@string.from-bytes b [start length])` | bytes／option<text>。不正 UTF-8 は none。範囲指定時は検証してからコピー |
+| `(@bytes.is-utf8 b [start length])` / `$bytes-view.is-utf8(view)` | payload をコピーしない厳密な UTF-8 検証。範囲外は trap |
+| `$string-view.from-bytes-view(view)` | 検証済み範囲を共有する option<string-view>。実体化は `$string-view.to-string` |
+| `$i32.checked-add-u(a,b)` / `$i32.checked-mul-u(a,b)` | option<i32>。符号なしビット列として検査し、overflow は none。`$i64.*` 版は option<i64> |
+| `$i32.checked-align-up-u(value,alignment)` | option<i32>。整列値は非ゼロの2の累乗。不正な整列・overflow は none。`$i64.*` 版もある |
 | `$string.concat(text,text)` | text の連結 |
 | `$string.u64(i64)` / `$string.s64(i64)` | ビットパターンの符号なし／符号付き十進数化 |
 | `$json.from-string(text)` | JSONのstring値を構築（文書の解析は `$json.parse`） |

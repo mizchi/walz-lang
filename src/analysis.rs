@@ -85,6 +85,7 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
         Buffer { op, .. } => {
             effects.allocates = op.allocates();
             effects.may_trap = op.may_trap();
+            effects.writes = matches!(op, BufferOp::CopyToArray(_) | BufferOp::WriteArray(..));
         }
         Numeric { op, .. } => effects.may_trap = op.signature().may_trap,
         Delivery { op, .. } => {
@@ -142,6 +143,14 @@ fn visit(expression: &Expr, module: &Module, calls: &mut BTreeSet<FunctionId>) -
             effects.may_trap = true; // Bounds checks, even for non-null arrays.
         }
         ArraySet { .. } => {
+            effects.writes = true;
+            effects.may_trap = true;
+        }
+        ArrayCopy { source, .. } => {
+            let TypeKind::Array(field) = &module.types[source.0].kind else {
+                unreachable!()
+            };
+            effects.reads = field.mutable;
             effects.writes = true;
             effects.may_trap = true;
         }

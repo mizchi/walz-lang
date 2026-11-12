@@ -1,0 +1,54 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 4.16s
+     Running tests/buffers.rs (target/debug/deps/buffers-1d953040211cdb94)
+
+running 4 tests
+test buffers_cannot_be_mutated_or_observed_as_references ... ok
+test buffer_operations_accept_abrupt_operands_without_compiler_panics ... ok
+test byte_slices_lower_to_a_bulk_gc_copy ... ok
+test immutable_bytes_and_utf8_text_have_checked_types_and_portable_abi ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+
+     Running tests/inspection.rs (target/debug/deps/inspection-eb4bf8539b8f3f42)
+
+running 5 tests
+test loaded_snapshot_queries_do_not_require_the_file_to_still_exist ... ok
+test equal_result_types_do_not_hide_distinct_generic_instances ... ok
+test type_queries_map_imported_unicode_sources_and_preserve_aliases_and_instances ... ok
+test type_queries_validate_coordinates_errors_and_native_limits ... ok
+test json_check_keeps_success_failure_and_native_validation_machine_readable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.26s
+
+     Running tests/packed_arrays.rs (target/debug/deps/packed_arrays-628fc3002e99a59d)
+
+running 4 tests
+test packed_access_and_copy_storage_mutability_and_effects_are_enforced ... ok
+test bulk_operations_do_not_expose_opaque_array_storage ... ok
+test imported_macros_keep_packed_storage_in_the_definition_type_namespace ... ok
+test packed_gc_arrays_and_bulk_byte_snapshots_are_checked_and_do_not_need_linear_memory ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.14s
+
+     Running tests/user_macros.rs (target/debug/deps/user_macros-0b43bc5b49c9465d)
+
+running 15 tests
+test malformed_patterns_unknown_macros_and_expansion_limits_are_diagnostics ... ok
+test argument_errors_keep_their_span_and_definition_errors_have_expansion_context ... ok
+test macro_heads_are_syntax_signatures_instead_of_generated_operand_types ... ok
+test expansion_cannot_bypass_effects_ownership_or_checked_core_validation ... ok
+test reports_retain_inferred_types_duplicate_origins_and_nested_expansion_history ... ok
+test trailing_repetition_and_nested_calls_compose_without_reader_changes ... ok
+test inferred_types_drive_rules_type_templates_and_generic_specializations ... ok
+test explicit_binders_scope_only_the_declared_body_and_respect_shadowing ... ok
+test templates_are_hygienic_and_inputs_are_evaluated_once_when_bound ... ok
+test explicit_type_fragments_resolve_in_the_callers_file ... ok
+test intentional_scope_is_preserved_through_nested_captured_macro_calls ... ok
+test expected_types_are_explicit_and_never_guess_numeric_widths ... ok
+test nominal_and_constructed_inferred_types_and_alias_guards_remain_concrete ... ok
+test file_macros_keep_definition_site_helpers_private_and_support_reexports ... ok
+test templates_reuse_checked_memory_and_sequential_binding_forms ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.12s
+

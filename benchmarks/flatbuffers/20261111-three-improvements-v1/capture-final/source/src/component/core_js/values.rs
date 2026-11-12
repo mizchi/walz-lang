@@ -1,0 +1,217 @@
+//! Generate only the concrete boundary value conversions used by this module.
+use super::super::Adapter;
+use super::super::abi::{align, type_key};
+use crate::ir::*;
+
+pub(super) fn read(ty: &Type, p: &str) -> String {
+    format!("r_{}({p})", type_key(ty))
+}
+pub(super) fn write(ty: &Type, p: &str, v: &str) -> String {
+    format!("w_{}({p},{v});", type_key(ty))
+}
+
+fn numeric_array(a: &Adapter<'_>, ty: &Type) -> Option<&'static str> {
+    match ty {
+        Type::Num(NumType::I32) => Some("Int32Array"),
+        Type::Num(NumType::I64) => Some("BigInt64Array"),
+        Type::Num(NumType::F32) => Some("Float32Array"),
+        Type::Num(NumType::F64) => Some("Float64Array"),
+        Type::Newtype(_) => match a.interface_type(ty) {
+            Some(crate::interface::AbiType::U8) => Some("Uint8Array"),
+            Some(crate::interface::AbiType::S8) => Some("Int8Array"),
+            Some(crate::interface::AbiType::U16) => Some("Uint16Array"),
+            Some(crate::interface::AbiType::S16) => Some("Int16Array"),
+            Some(crate::interface::AbiType::U32) => Some("Uint32Array"),
+            Some(crate::interface::AbiType::U64) => Some("BigUint64Array"),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+pub(super) fn prelude(a: &Adapter<'_>) -> &'static str {
+    if a.types.iter().any(|ty| {
+        matches!(ty, Type::Value(id) if matches!(a.value(*id), ValueType::List(t) if numeric_array(a,t).is_some()))
+    }) {
+        // TypedArray views use native endian, while the ABI is little-endian.
+        // Intrinsic getters distinguish actual element types from proxies or
+        // objects with a forged prototype, without consulting user properties.
+        "const __walzLE=new Uint8Array(new Uint16Array([1]).buffer)[0]===1;\n\
+         const __walzTA=Object.getPrototypeOf(Uint8Array.prototype);\n\
+         const __walzTag=Object.getOwnPropertyDescriptor(__walzTA,Symbol.toStringTag).get;\n\
+         const __walzLen=Object.getOwnPropertyDescriptor(__walzTA,'length').get;\n"
+    } else {
+        ""
+    }
+}
+
+pub(super) fn codec(a: &Adapter<'_>, ty: &Type) -> (String, String) {
+    if a.interface_type(ty).is_some() {
+        return a.interface_codec(ty);
+    }
+    let view = "c.view()";
+    match ty {
+        Type::Num(n) => {
+            let (method, check) = match n {
+                NumType::I32 => (
+                    "Int32",
+                    "if(!Number.isInteger(v)||v < -2147483648||v > 2147483647)throw new TypeError('expected s32');",
+                ),
+                NumType::I64 => (
+                    "BigInt64",
+                    "if(typeof v!=='bigint'||v < -9223372036854775808n||v > 9223372036854775807n)throw new TypeError('expected s64');",
+                ),
+                NumType::F32 => (
+                    "Float32",
+                    "if(typeof v!=='number')throw new TypeError('expected f32');",
+                ),
+                NumType::F64 => (
+                    "Float64",
+                    "if(typeof v!=='number')throw new TypeError('expected f64');",
+                ),
+                NumType::V128 => unreachable!("v128 is not a portable ABI type"),
+            };
+            (
+                format!("return {view}.get{method}(p,true);"),
+                format!("{check}{view}.set{method}(p,v,true);"),
+            )
+        }
+        Type::Unit => (
+            "if(c.view().getUint8(p)!==0)throw new TypeError('invalid unit');return 'value';"
+                .into(),
+            "if(v!=='value')throw new TypeError('expected unit');c.view().setUint8(p,0);".into(),
+        ),
+        Type::Value(id) => match a.value(*id) {
+            ValueType::Bytes | ValueType::Text => {
+                let text = matches!(a.value(*id), ValueType::Text);
+                let r = if text {
+                    "return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);"
+                } else {
+                    "return bytes;"
+                };
+                let w = if text {
+                    "if(typeof v!=='string')throw new TypeError('expected string');const bytes=new TextEncoder().encode(v);"
+                } else {
+                    "if(!(v instanceof Uint8Array))throw new TypeError('expected Uint8Array');const bytes=v;"
+                };
+                (
+                    format!(
+                        "const q=c.view().getUint32(p,true),n=c.view().getUint32(p+4,true);const bytes=new Uint8Array(c.memory.buffer,q,n).slice();{r}"
+                    ),
+                    format!(
+                        "{w}const q=bytes.length?c.alloc(bytes.length):0;new Uint8Array(c.memory.buffer,q,bytes.length).set(bytes);c.view().setUint32(p,q,true);c.view().setUint32(p+4,bytes.length,true);"
+                    ),
+                )
+            }
+            ValueType::List(payload) => {
+                let layout = a.layout(payload);
+                let stride = layout.size;
+                let align = layout.align;
+                let limit = (16 * 1024 * 1024) / stride;
+                let r = read(payload, &format!("q+i*{stride}"));
+                let w = write(payload, &format!("q+i*{stride}"), "v[i]");
+                let typed = numeric_array(a, payload);
+                let read = if let Some(typed) = typed {
+                    // Construct an owning copy before post-return frees the ABI
+                    // buffer. Identical element types also preserve NaN bits.
+                    format!(
+                        "if(__walzLE)return new {typed}(new {typed}(c.memory.buffer,q,n));const out=new {typed}(n);for(let i=0;i<n;i++)out[i]={r};return out;"
+                    )
+                } else {
+                    format!("return Array.from({{length:n}},(_,i)=>{r});")
+                };
+                let valid = typed
+                    .map(|typed| format!("(Array.isArray(v)||v instanceof {typed})"))
+                    .unwrap_or("Array.isArray(v)".into());
+                let bulk = typed.map(|typed| {
+                    // The intrinsic length must match the validated length:
+                    // TypedArray subclasses can shadow their length property.
+                    // Empty detached views retain the existing empty-list path.
+                    format!("if(__walzLE&&__walzTag.call(v)==='{typed}'&&__walzLen.call(v)===n){{if(n)new {typed}(c.memory.buffer,q,n).set(v);return;}}")
+                }).unwrap_or_default();
+                (
+                    format!(
+                        "const q=c.view().getUint32(p,true),n=c.view().getUint32(p+4,true);if(n>{limit}||q%{align}||q+n*{stride}>c.memory.buffer.byteLength)throw new TypeError('invalid list bounds');{read}"
+                    ),
+                    format!(
+                        "if(!{valid}||v.length>{limit})throw new TypeError('expected bounded list');const n=v.length,q=n?c.alloc(n*{stride}):0;c.view().setUint32(p,q,true);c.view().setUint32(p+4,n,true);{bulk}for(let i=0;i<n;i++){{{w}}}"
+                    ),
+                )
+            }
+            ValueType::Future(_) | ValueType::Stream(_) => (
+                format!("return c.take({},c.view().getUint32(p,true));", id.0),
+                format!("c.view().setUint32(p,c.add({},v),true);", id.0),
+            ),
+            ValueType::Pair { first, second } => {
+                let p = format!("p+{}", align(a.layout(first).size, a.layout(second).align));
+                (
+                    format!("return [{},{}];", read(first, "p"), read(second, &p)),
+                    format!(
+                        "if(!Array.isArray(v)||v.length!==2)throw new TypeError('expected pair');{}{}",
+                        write(first, "p", "v[0]"),
+                        write(second, &p, "v[1]")
+                    ),
+                )
+            }
+            ValueType::Option(payload) => {
+                let p = format!("p+{}", align(1, a.layout(ty).align));
+                let nested = matches!(payload,Type::Value(id) if matches!(a.value(*id),ValueType::Option(_)));
+                let (none, some, is_none, value) = if nested {
+                    (
+                        "{tag:'none'}",
+                        format!("{{tag:'some',val:{}}}", read(payload, &p)),
+                        "v?.tag==='none'",
+                        "v.val",
+                    )
+                } else {
+                    ("undefined", read(payload, &p), "v===undefined", "v")
+                };
+                let check = if nested {
+                    "if(v?.tag!=='none'&&v?.tag!=='some')throw new TypeError('expected option');"
+                } else {
+                    ""
+                };
+                (
+                    format!(
+                        "const tag=c.view().getUint8(p);if(tag===0)return {none};if(tag!==1)throw new TypeError('invalid option');return {some};"
+                    ),
+                    format!(
+                        "{check}if({is_none})c.view().setUint8(p,0);else{{c.view().setUint8(p,1);{}}}",
+                        write(payload, &p, value)
+                    ),
+                )
+            }
+            ValueType::Result { ok, err } => {
+                let p = format!("p+{}", align(1, a.layout(ty).align));
+                let r = |t: &Type| {
+                    if *t == Type::Unit {
+                        "undefined".into()
+                    } else {
+                        read(t, &p)
+                    }
+                };
+                let w = |t: &Type| {
+                    if *t == Type::Unit {
+                        String::new()
+                    } else {
+                        write(t, &p, "v.val")
+                    }
+                };
+                (
+                    format!(
+                        "const tag=c.view().getUint8(p);if(tag===0)return {{tag:'ok',val:{}}};if(tag===1)return {{tag:'err',val:{}}};throw new TypeError('invalid result');",
+                        r(ok),
+                        r(err)
+                    ),
+                    format!(
+                        "if(v?.tag==='ok'){{c.view().setUint8(p,0);{}}}else if(v?.tag==='err'){{c.view().setUint8(p,1);{}}}else throw new TypeError('expected result');",
+                        w(ok),
+                        w(err)
+                    ),
+                )
+            }
+            _ => unreachable!("portable types only"),
+        },
+        _ => unreachable!("portable types only"),
+    }
+}

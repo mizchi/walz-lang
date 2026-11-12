@@ -1,0 +1,13 @@
+✔ the core package rename preserves v1 WAT apart from generated namespace names (1916.54675ms)
+✔ the Walz rename preserves frozen v4 WAT apart from generated names and host namespaces (2132.740084ms)
+✔ the @ prefix preserves frozen v5 WAT exactly (1295.890541ms)
+✔ @case preserves frozen v6 WAT exactly (1797.169959ms)
+✔ frontend tuning preserves frozen inputs, typed IR, analysis, WAT and diagnostics (4446.960042ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11630.122208

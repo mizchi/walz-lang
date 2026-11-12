@@ -1,0 +1,584 @@
+{
+  "head": {
+    "callFrame": {
+      "functionName": "(root)",
+      "scriptId": "0",
+      "url": "",
+      "lineNumber": -1,
+      "columnNumber": -1
+    },
+    "selfSize": 0,
+    "id": 1,
+    "children": [
+      {
+        "callFrame": {
+          "functionName": "",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1
+        },
+        "selfSize": 0,
+        "id": 2,
+        "children": [
+          {
+            "callFrame": {
+              "functionName": "profile",
+              "scriptId": "89",
+              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+              "lineNumber": 92,
+              "columnNumber": 29
+            },
+            "selfSize": 0,
+            "id": 3,
+            "children": [
+              {
+                "callFrame": {
+                  "functionName": "fn",
+                  "scriptId": "89",
+                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+                  "lineNumber": 83,
+                  "columnNumber": 48
+                },
+                "selfSize": 0,
+                "id": 4,
+                "children": [
+                  {
+                    "callFrame": {
+                      "functionName": "encode",
+                      "scriptId": "175",
+                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-bench/reference.mjs",
+                      "lineNumber": 37,
+                      "columnNumber": 12
+                    },
+                    "selfSize": 32880,
+                    "id": 5,
+                    "children": [
+                      {
+                        "callFrame": {
+                          "functionName": "encodeWith",
+                          "scriptId": "175",
+                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-bench/reference.mjs",
+                          "lineNumber": 3,
+                          "columnNumber": 21
+                        },
+                        "selfSize": 0,
+                        "id": 6,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "slice",
+                              "scriptId": "0",
+                              "url": "",
+                              "lineNumber": -1,
+                              "columnNumber": -1
+                            },
+                            "selfSize": 32864,
+                            "id": 27,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "asUint8Array",
+                              "scriptId": "180",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                              "lineNumber": 77,
+                              "columnNumber": 16
+                            },
+                            "selfSize": 0,
+                            "id": 24,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "subarray",
+                                  "scriptId": "0",
+                                  "url": "",
+                                  "lineNumber": -1,
+                                  "columnNumber": -1
+                                },
+                                "selfSize": 65624,
+                                "id": 25,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "prep",
+                              "scriptId": "180",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                              "lineNumber": 91,
+                              "columnNumber": 8
+                            },
+                            "selfSize": 35680,
+                            "id": 13,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "growByteBuffer",
+                                  "scriptId": "180",
+                                  "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                                  "lineNumber": 273,
+                                  "columnNumber": 25
+                                },
+                                "selfSize": 0,
+                                "id": 14,
+                                "children": [
+                                  {
+                                    "callFrame": {
+                                      "functionName": "allocate",
+                                      "scriptId": "181",
+                                      "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                                      "lineNumber": 18,
+                                      "columnNumber": 19
+                                    },
+                                    "selfSize": 65568,
+                                    "id": 15,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "Uint8Array",
+                                          "scriptId": "0",
+                                          "url": "",
+                                          "lineNumber": -1,
+                                          "columnNumber": -1
+                                        },
+                                        "selfSize": 98456,
+                                        "id": 16,
+                                        "children": []
+                                      },
+                                      {
+                                        "callFrame": {
+                                          "functionName": "ByteBuffer",
+                                          "scriptId": "181",
+                                          "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                                          "lineNumber": 10,
+                                          "columnNumber": 15
+                                        },
+                                        "selfSize": 32816,
+                                        "id": 18,
+                                        "children": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "callFrame": {
+                                  "functionName": "capacity",
+                                  "scriptId": "181",
+                                  "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                                  "lineNumber": 45,
+                                  "columnNumber": 12
+                                },
+                                "selfSize": 32960,
+                                "id": 17,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "startObject",
+                              "scriptId": "180",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                              "lineNumber": 299,
+                              "columnNumber": 15
+                            },
+                            "selfSize": 98496,
+                            "id": 26,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "endObject",
+                              "scriptId": "180",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                              "lineNumber": 316,
+                              "columnNumber": 13
+                            },
+                            "selfSize": 32800,
+                            "id": 7,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "startVector",
+                              "scriptId": "180",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                              "lineNumber": 420,
+                              "columnNumber": 15
+                            },
+                            "selfSize": 0,
+                            "id": 8,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "prep",
+                                  "scriptId": "180",
+                                  "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                                  "lineNumber": 91,
+                                  "columnNumber": 8
+                                },
+                                "selfSize": 0,
+                                "id": 9,
+                                "children": [
+                                  {
+                                    "callFrame": {
+                                      "functionName": "growByteBuffer",
+                                      "scriptId": "180",
+                                      "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                                      "lineNumber": 273,
+                                      "columnNumber": 25
+                                    },
+                                    "selfSize": 426608,
+                                    "id": 10,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "Uint8Array",
+                                          "scriptId": "0",
+                                          "url": "",
+                                          "lineNumber": -1,
+                                          "columnNumber": -1
+                                        },
+                                        "selfSize": 393832,
+                                        "id": 23,
+                                        "children": []
+                                      },
+                                      {
+                                        "callFrame": {
+                                          "functionName": "allocate",
+                                          "scriptId": "181",
+                                          "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                                          "lineNumber": 18,
+                                          "columnNumber": 19
+                                        },
+                                        "selfSize": 0,
+                                        "id": 11,
+                                        "children": [
+                                          {
+                                            "callFrame": {
+                                              "functionName": "Uint8Array",
+                                              "scriptId": "0",
+                                              "url": "",
+                                              "lineNumber": -1,
+                                              "columnNumber": -1
+                                            },
+                                            "selfSize": 32864,
+                                            "id": 19,
+                                            "children": []
+                                          },
+                                          {
+                                            "callFrame": {
+                                              "functionName": "ByteBuffer",
+                                              "scriptId": "181",
+                                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                                              "lineNumber": 10,
+                                              "columnNumber": 15
+                                            },
+                                            "selfSize": 32816,
+                                            "id": 12,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "callFrame": {
+                          "functionName": "Builder",
+                          "scriptId": "180",
+                          "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/builder.js",
+                          "lineNumber": 9,
+                          "columnNumber": 15
+                        },
+                        "selfSize": 0,
+                        "id": 20,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "allocate",
+                              "scriptId": "181",
+                              "url": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-tuning-v1/after-scalar/reference-package/js/byte-buffer.js",
+                              "lineNumber": 18,
+                              "columnNumber": 19
+                            },
+                            "selfSize": 0,
+                            "id": 21,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "Uint8Array",
+                                  "scriptId": "0",
+                                  "url": "",
+                                  "lineNumber": -1,
+                                  "columnNumber": -1
+                                },
+                                "selfSize": 164040,
+                                "id": 22,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "samples": [
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 48
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 47
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 45
+    },
+    {
+      "size": 32832,
+      "nodeId": 26,
+      "ordinal": 44
+    },
+    {
+      "size": 32800,
+      "nodeId": 22,
+      "ordinal": 41
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 39
+    },
+    {
+      "size": 32864,
+      "nodeId": 25,
+      "ordinal": 38
+    },
+    {
+      "size": 32864,
+      "nodeId": 22,
+      "ordinal": 29
+    },
+    {
+      "size": 32832,
+      "nodeId": 26,
+      "ordinal": 37
+    },
+    {
+      "size": 32864,
+      "nodeId": 16,
+      "ordinal": 3
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 21
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 36
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 35
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 23
+    },
+    {
+      "size": 32832,
+      "nodeId": 23,
+      "ordinal": 22
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 33
+    },
+    {
+      "size": 32832,
+      "nodeId": 23,
+      "ordinal": 32
+    },
+    {
+      "size": 32784,
+      "nodeId": 15,
+      "ordinal": 9
+    },
+    {
+      "size": 32800,
+      "nodeId": 22,
+      "ordinal": 28
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 27
+    },
+    {
+      "size": 32864,
+      "nodeId": 27,
+      "ordinal": 31
+    },
+    {
+      "size": 32832,
+      "nodeId": 26,
+      "ordinal": 30
+    },
+    {
+      "size": 32864,
+      "nodeId": 22,
+      "ordinal": 25
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 26
+    },
+    {
+      "size": 32832,
+      "nodeId": 23,
+      "ordinal": 42
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 24
+    },
+    {
+      "size": 32816,
+      "nodeId": 18,
+      "ordinal": 8
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 46
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 34
+    },
+    {
+      "size": 32800,
+      "nodeId": 7,
+      "ordinal": 1
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 19
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 20
+    },
+    {
+      "size": 32864,
+      "nodeId": 25,
+      "ordinal": 18
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 14
+    },
+    {
+      "size": 32832,
+      "nodeId": 23,
+      "ordinal": 16
+    },
+    {
+      "size": 32816,
+      "nodeId": 22,
+      "ordinal": 12
+    },
+    {
+      "size": 32960,
+      "nodeId": 17,
+      "ordinal": 4
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 13
+    },
+    {
+      "size": 32880,
+      "nodeId": 5,
+      "ordinal": 17
+    },
+    {
+      "size": 32864,
+      "nodeId": 23,
+      "ordinal": 40
+    },
+    {
+      "size": 32784,
+      "nodeId": 10,
+      "ordinal": 15
+    },
+    {
+      "size": 35680,
+      "nodeId": 13,
+      "ordinal": 10
+    },
+    {
+      "size": 32816,
+      "nodeId": 10,
+      "ordinal": 43
+    },
+    {
+      "size": 32864,
+      "nodeId": 19,
+      "ordinal": 11
+    },
+    {
+      "size": 32864,
+      "nodeId": 16,
+      "ordinal": 6
+    },
+    {
+      "size": 32832,
+      "nodeId": 16,
+      "ordinal": 5
+    },
+    {
+      "size": 32816,
+      "nodeId": 12,
+      "ordinal": 2
+    },
+    {
+      "size": 32784,
+      "nodeId": 15,
+      "ordinal": 7
+    }
+  ]
+}

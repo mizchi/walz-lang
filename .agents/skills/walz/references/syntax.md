@@ -47,6 +47,13 @@ Grouped bindings are initialized once, left to right. No `local.set` on a let bi
 (@list.new i64 20 22)
 ```
 
+Type and function applications also accept `$name<T, U>`, e.g.
+`$result<$tuple<i32, i32>, i32>`, `(ref $Box<i32>)`, and
+`(call $identity<i64> 42)`. Keep `<` adjacent to the name; arguments allow nesting,
+comments/newlines and a trailing comma. Exact declared/imported WAT names win;
+use `@inst` to explicitly apply a generic when a literal name collides. This
+changes no inference, constraints, ownership, or runtime behavior.
+
 Prefer expected-type constructors such as `(@result.ok 42)` when a declared Result type supplies both type arguments. Otherwise spell out all required type arguments; Result takes **both** success and error types.
 
 ```wat
@@ -79,7 +86,13 @@ Prefer expected-type constructors such as `(@result.ok 42)` when a declared Resu
 (@closure.call $Add closure 2)
 ```
 
-Named construction requires all fields. GC references may alias mutable data. Captures are explicit; owned captures make a closure single-use. Packed arrays and arbitrary WAT instructions may require the validator path rather than typed-core analysis.
+Named construction requires all fields. GC references may alias mutable data. Captures are explicit; owned captures make a closure single-use. Packed i8/i16 arrays use i32 values and `array.get_s`/`array.get_u`; numeric `array.copy` is checked, including effects and opaque storage. `@bytes.from-array $A array [start length]` takes an immutable snapshot; `@bytes.copy-to-array $A dst at bytes start length` bulk-copies into mutable i8 storage. Arbitrary WAT instructions may still require the validator path.
+
+Fixed-width reads are `(@bytes.read-i32-le bytes offset)` or imported `$bytes.read-i32-le` / `$bytes-view.read-i32-le` functions. Formats are i16/u16/i32/i64/f32/f64, with explicit le/be. i16 sign-extends to i32; u16 zero-extends. `(@array.write-i32-le $A array offset value)` writes only to named mutable i8 arrays (formats i16/i32/i64/f32/f64 × le/be, writes effect). Unsigned byte offsets may be unaligned; the full range must fit, relative to the visible range for views. Operands evaluate once left to right; all destination bounds are checked before mutation. Bytes stay immutable.
+
+`$string-view.from-bytes-view(view)` returns option<string-view> after validating just the visible UTF-8 range, sharing its immutable backing bytes. It has allocates for a small view header, with no payload copy. `$bytes-view.is-utf8(view)` and `(@bytes.is-utf8 bytes [start length])` return i32 0/1. Invalid ranges trap; bounded invalid UTF-8 returns 0/none. `$bytes-view.to-string(view)` or `(@string.from-bytes bytes start length)` validates before copying the range into an owned string. BOM and NUL are preserved. Small views retain entire buffers; materialize to detach. String-view slices still require character boundaries.
+
+Import `$i32.checked-add-u`, `$i32.checked-mul-u`, `$i32.checked-align-up-u` or their `$i64.*` counterparts for unsigned size arithmetic. Two same-width operands produce Option of that width; overflow/invalid alignment gives none, zero success gives some(0). Alignment must be a nonzero power of two, including the high-bit pattern. Negative signed displays still represent unsigned bit patterns. Normal Wasm arithmetic keeps wrapping, and buffer/application limits are separate. These are pure ordinary functions; Option can allocate physically and all operands are evaluated before the call.
 
 ## Generics, state, ownership
 

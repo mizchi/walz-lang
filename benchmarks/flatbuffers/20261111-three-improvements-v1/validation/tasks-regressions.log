@@ -1,0 +1,24 @@
+✔ Core bindings roll back partially encoded owned inputs and preserve nested option distinctions (7785.702583ms)
+✔ scalar Core output has no Component dependency or text codecs (1958.212083ms)
+✔ exported ends and cancelled late producers do not retain Core instances (1976.928833ms)
+✔ Core keeps the existing shared-payload restriction for delivery (845.779709ms)
+✔ failed task history does not retain Core stores through lazy error stacks (1658.770875ms)
+✔ host failures stay fatal through catch_all and falsy rejection reasons (1735.40225ms)
+✔ core: deadline scopes wait for child disposal and isolate other calls (8033.305709ms)
+✔ component: deadline scopes wait for child disposal and isolate other calls (2030.903792ms)
+✔ inline synchronous exports allocate no unobserved promises and preserve returned thenables (2.154792ms)
+✔ start still publishes synchronous results, Future values, and completion acknowledgments (0.838625ms)
+✔ inline cleanup remains busy until disposal completes and then runs queued work (0.413083ms)
+✔ inline failure runs guest/boundary cleanup, resets flags, and preserves error identity (0.216375ms)
+✔ queued cancellation never enters the guest; completion wins over a later cancel (7840.222333ms)
+✔ running cancellation acknowledges cleanup before reusing the instance, including unread owners and catch_all (1937.514792ms)
+✔ repeated cancellations reclaim buffers, ignore late completion and report failed disposal (1957.518ms)
+✔ pending future/stream reads cancel without faking payloads and await asynchronous host disposal (1739.625125ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16006.116459

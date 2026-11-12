@@ -38,7 +38,9 @@ Enumerate the types/functions to use from `walz:core`. This module does not impl
 | --- | --- | --- | --- |
 | String/bytes | UTF-8 strings, immutable byte sequences, search/split/integer parsing, builders | Byte positions differ from character positions; general Unicode normalization is not provided | [Generated API reference](stdlib-api.md), [core library](../walz/core/README.md) |
 | List/dict/builders | Immutable lists, map/fold, mutable string-keyed dictionaries, list builders | Elements must be shareable; dictionaries are mutable GC references, with updates visible through aliases | [Lists](lists.md), [collections](collections.md) |
-| Zero-copy views | Bytes-view/string-view/array-view reference ranges in original data | Views allocate small GC values too; a small view can retain an entire source buffer | [Views](views.md) |
+| Zero-copy views | Bytes-view/string-view/array-view reference ranges; validate bytes-view as string-view without copying | Views allocate small GC values too; a small view can retain an entire source buffer | [Views](views.md) |
+| Fixed-width byte access | Explicit le/be integer/float reads from bytes/views and writes to packed i8 arrays | Unsigned byte offsets, complete-range checks, unaligned access; bytes remain immutable | [Byte access](byte-access.md) |
+| Checked size arithmetic | i32/i64 unsigned checked add, multiply, and power-of-two alignment | Option failure; ordinary Wasm arithmetic still wraps; application limits remain explicit | [Checked integers](checked-integers.md) |
 | JSON | Value construction/traversal/parsing/stringification implemented in Walz | Preserves number lexemes; consult APIs for conversion ranges between JSON numbers and binary floats | [JSON](json-values.md), [parser measurements](json-parser-bench.md) |
 | SIMD | V128, Wasm SIMD instructions, kernels, bulk numeric-list ABI transfer | No ABI directly passing v128 to JS; use numeric lists or linear memory | [SIMD](simd.md), [kernels](simd-kernels.md) |
 | Succinct data structures | Bitsets, rank/select, indexes, persistent Wasm instances, readonly shared payloads | Hosts must obey layout/publication/lifetime contracts | [Succinct](succinct.md) |
@@ -56,7 +58,7 @@ See the source-generated [Standard API reference](stdlib-api.md) for exact param
 | Opaque/module boundaries | Hidden representations, explicit public names/aliases, static linking and DCE | Even unused ordinary functions are checked before removal; no cycles, wildcards, or Walz dynamic imports | [Static modules](static-modules.md) |
 | Read-only analysis | Reports call graphs, reference provenance/escape, i32 ranges, array lengths, and more | Retains unknown/opaque regions; analysis results alone do not remove checks | [Analysis](analysis.md) |
 | Laws/independent contract checking | Lean checks integer laws, ownership certificates, and restricted race-free contracts | Not a semantic-preservation or termination proof for the entire compiler/VM/host | [Verification](verification.md), [proofs](../proof/README.md) |
-| Optimization/advice | Typed-IR simplification, reachability elimination, wasm-opt output, explicitly enabled performance warnings | External optimization is optional; warnings are advice, not behavioral or speed guarantees | [Wasm-opt](wasm-opt.md) |
+| Optimization/advice | Private tuple/Option/Result scalarization, immutable-range guard elimination, bounded helper inlining, reachability elimination, wasm-opt output, opt-in performance warnings | Escaping/owned carriers retain storage; unproved ranges and GC bounds checks remain; speed depends on the workload | [Value optimization](value-optimization.md), [range optimization](range-optimization.md), [wasm-opt](wasm-opt.md) |
 
 <a id="非同期並行並列"></a>
 

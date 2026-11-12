@@ -1,0 +1,1795 @@
+{
+  "schema": "walz-flatbuffers-profile-v1",
+  "created": "2026-11-10T17:27:44.473Z",
+  "node": "v24.22.2",
+  "v8": "13.6.233.17-node.63",
+  "cpu": "Apple M5",
+  "captureHash": "d56c1b4805d007a59747adfb9cf8c234ea27948a7d0f2a19dc926ae91af9ae94",
+  "durationMs": 1000,
+  "method": "CPU and sampled JS-heap allocation passes are separate; warmup/setup/validation excluded. Wasm GC allocations may not appear in heap sampling. Profiled throughput is not a speed benchmark.",
+  "cases": [
+    {
+      "name": "small.encode.core",
+      "cpu": {
+        "totalUs": 1011709,
+        "samples": 805,
+        "functions": [
+          {
+            "name": "r_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 124832,
+            "inclusiveUs": 179667,
+            "selfPercent": 12.33872585891793,
+            "inclusivePercent": 17.75876264815278
+          },
+          {
+            "name": "encode",
+            "url": "node:internal/encoding",
+            "selfUs": 82169,
+            "inclusiveUs": 95960,
+            "selfPercent": 8.121801822460807,
+            "inclusivePercent": 9.484940827846742
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 49414,
+            "inclusiveUs": 59040,
+            "selfPercent": 4.884210776023541,
+            "inclusivePercent": 5.835670138350059
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 45169,
+            "inclusiveUs": 52586,
+            "selfPercent": 4.464623720852537,
+            "inclusivePercent": 5.197739666247903
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 37545,
+            "inclusiveUs": 52504,
+            "selfPercent": 3.7110473466184444,
+            "inclusivePercent": 5.189634568833528
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 37293,
+            "inclusiveUs": 44793,
+            "selfPercent": 3.6861389984669506,
+            "inclusivePercent": 4.427458883928086
+          },
+          {
+            "name": "(garbage collector)",
+            "url": "",
+            "selfUs": 29959,
+            "inclusiveUs": 29959,
+            "selfPercent": 2.961226993137355,
+            "inclusivePercent": 2.961226993137355
+          },
+          {
+            "name": "call",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 27417,
+            "inclusiveUs": 841085,
+            "selfPercent": 2.709968973291727,
+            "inclusivePercent": 83.13507144841056
+          },
+          {
+            "name": "create",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 27250,
+            "inclusiveUs": 27250,
+            "selfPercent": 2.6934622505087926,
+            "inclusivePercent": 2.6934622505087926
+          },
+          {
+            "name": "w_v12",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 27040,
+            "inclusiveUs": 88044,
+            "selfPercent": 2.6727052937158806,
+            "inclusivePercent": 8.702502399405363
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 25874,
+            "inclusiveUs": 28291,
+            "selfPercent": 2.557454762189523,
+            "inclusivePercent": 2.7963574506107984
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 24125,
+            "inclusiveUs": 31833,
+            "selfPercent": 2.384578964899986,
+            "inclusivePercent": 3.1464581218512437
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 23750,
+            "inclusiveUs": 30041,
+            "selfPercent": 2.3475129706269295,
+            "inclusivePercent": 2.9693320905517298
+          },
+          {
+            "name": "w_v13",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 23666,
+            "inclusiveUs": 182254,
+            "selfPercent": 2.3392101879097646,
+            "inclusivePercent": 18.014468587311175
+          },
+          {
+            "name": "w_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 23416,
+            "inclusiveUs": 86165,
+            "selfPercent": 2.31449952506106,
+            "inclusivePercent": 8.5167770574345
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 20041,
+            "inclusiveUs": 25082,
+            "selfPercent": 1.980905576603549,
+            "inclusivePercent": 2.479171382284827
+          },
+          {
+            "name": "walz-file-1.fb.builder.bits-field",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 20001,
+            "inclusiveUs": 30128,
+            "selfPercent": 1.9769518705477562,
+            "inclusivePercent": 2.977931401223079
+          },
+          {
+            "name": "__lower_flat_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 19457,
+            "inclusiveUs": 19457,
+            "selfPercent": 1.9231814681889752,
+            "inclusivePercent": 1.9231814681889752
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 14959,
+            "inclusiveUs": 14959,
+            "selfPercent": 1.4785872222150835,
+            "inclusivePercent": 1.4785872222150835
+          },
+          {
+            "name": "(program)",
+            "url": "",
+            "selfUs": 14833,
+            "inclusiveUs": 14833,
+            "selfPercent": 1.4661330481393364,
+            "inclusivePercent": 1.4661330481393364
+          },
+          {
+            "name": "encodeUtf8String",
+            "url": "",
+            "selfUs": 13791,
+            "inclusiveUs": 13791,
+            "selfPercent": 1.3631390053859362,
+            "inclusivePercent": 1.3631390053859362
+          },
+          {
+            "name": "execute",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 12375,
+            "inclusiveUs": 886751,
+            "selfPercent": 1.2231778110108738,
+            "inclusivePercent": 87.64881996700632
+          },
+          {
+            "name": "post",
+            "url": "node:inspector",
+            "selfUs": 11542,
+            "inclusiveUs": 11542,
+            "selfPercent": 1.1408418823989903,
+            "inclusivePercent": 1.1408418823989903
+          },
+          {
+            "name": "__lift_buffer_13",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 11168,
+            "inclusiveUs": 13751,
+            "selfPercent": 1.1038747307773282,
+            "inclusivePercent": 1.3591852993301434
+          },
+          {
+            "name": "walz-file-1.ensure",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 10127,
+            "inclusiveUs": 10127,
+            "selfPercent": 1.0009795306753226,
+            "inclusivePercent": 1.0009795306753226
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 10042,
+            "inclusiveUs": 10042,
+            "selfPercent": 0.9925779053067632,
+            "inclusivePercent": 0.9925779053067632
+          },
+          {
+            "name": "walz-file-1.fb.builder.finish",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 10000,
+            "inclusiveUs": 17542,
+            "selfPercent": 0.9884265139481808,
+            "inclusivePercent": 1.7338977907678985
+          },
+          {
+            "name": "walz-file-1.bytes",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 10000,
+            "inclusiveUs": 15041,
+            "selfPercent": 0.9884265139481808,
+            "inclusivePercent": 1.4866923196294588
+          },
+          {
+            "name": "w_r9",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 9958,
+            "inclusiveUs": 481668,
+            "selfPercent": 0.9842751225895985,
+            "inclusivePercent": 47.60934221203924
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 9626,
+            "inclusiveUs": 9626,
+            "selfPercent": 0.9514593623265187,
+            "inclusivePercent": 0.9514593623265187
+          },
+          {
+            "name": "profile",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 8750,
+            "inclusiveUs": 943042,
+            "selfPercent": 0.8648731997046583,
+            "inclusivePercent": 93.21277165667202
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 7708,
+            "inclusiveUs": 7708,
+            "selfPercent": 0.7618791569512577,
+            "inclusivePercent": 0.7618791569512577
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 7500,
+            "inclusiveUs": 7500,
+            "selfPercent": 0.7413198854611356,
+            "inclusivePercent": 0.7413198854611356
+          },
+          {
+            "name": "invoke",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 7457,
+            "inclusiveUs": 921458,
+            "selfPercent": 0.7370696514511584,
+            "inclusivePercent": 91.07935186896627
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 7417,
+            "inclusiveUs": 7417,
+            "selfPercent": 0.7331159453953656,
+            "inclusivePercent": 0.7331159453953656
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 7292,
+            "inclusiveUs": 7292,
+            "selfPercent": 0.7207606139710134,
+            "inclusivePercent": 0.7207606139710134
+          },
+          {
+            "name": "publish",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 6376,
+            "inclusiveUs": 8876,
+            "selfPercent": 0.63022074529336,
+            "inclusivePercent": 0.8773273737804053
+          },
+          {
+            "name": "walz-file-1.fb.builder.i32s",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 6374,
+            "inclusiveUs": 6374,
+            "selfPercent": 0.6300230599905704,
+            "inclusivePercent": 0.6300230599905704
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 6291,
+            "inclusiveUs": 6291,
+            "selfPercent": 0.6218191199248004,
+            "inclusivePercent": 0.6218191199248004
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 6250,
+            "inclusiveUs": 6250,
+            "selfPercent": 0.6177665712176129,
+            "inclusivePercent": 0.6177665712176129
+          },
+          {
+            "name": "api.encode",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 6000,
+            "inclusiveUs": 847085,
+            "selfPercent": 0.5930559083689084,
+            "inclusivePercent": 83.72812735677947
+          },
+          {
+            "name": "set value",
+            "url": "",
+            "selfUs": 5957,
+            "inclusiveUs": 5957,
+            "selfPercent": 0.5888056743589313,
+            "inclusivePercent": 0.5888056743589313
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 5126,
+            "inclusiveUs": 5126,
+            "selfPercent": 0.5066674310498375,
+            "inclusivePercent": 0.5066674310498375
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 5082,
+            "inclusiveUs": 5082,
+            "selfPercent": 0.5023183543884655,
+            "inclusivePercent": 0.5023183543884655
+          },
+          {
+            "name": "__bytes_from_array_range_4",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 5042,
+            "inclusiveUs": 5042,
+            "selfPercent": 0.4983646483326727,
+            "inclusivePercent": 0.4983646483326727
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 5041,
+            "inclusiveUs": 5041,
+            "selfPercent": 0.49826580568127793,
+            "inclusivePercent": 0.49826580568127793
+          },
+          {
+            "name": "walz-file-1.ensure",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 5041,
+            "inclusiveUs": 5041,
+            "selfPercent": 0.49826580568127793,
+            "inclusivePercent": 0.49826580568127793
+          },
+          {
+            "name": "walz-file-2.message.encode",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 5000,
+            "inclusiveUs": 91376,
+            "selfPercent": 0.4942132569740904,
+            "inclusivePercent": 9.031846113852897
+          },
+          {
+            "name": "walz-file-1.fb.builder.start",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 5000,
+            "inclusiveUs": 5000,
+            "selfPercent": 0.4942132569740904,
+            "inclusivePercent": 0.4942132569740904
+          },
+          {
+            "name": "walz-file-1.fb.builder.end",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 4959,
+            "inclusiveUs": 4959,
+            "selfPercent": 0.49016070826690283,
+            "inclusivePercent": 0.49016070826690283
+          },
+          {
+            "name": "closeScope",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/resources.mjs",
+            "selfUs": 4958,
+            "inclusiveUs": 4958,
+            "selfPercent": 0.49006186561550796,
+            "inclusivePercent": 0.49006186561550796
+          },
+          {
+            "name": "alloc",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 3792,
+            "inclusiveUs": 3792,
+            "selfPercent": 0.3748113340891502,
+            "inclusivePercent": 0.3748113340891502
+          },
+          {
+            "name": "enter",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 3792,
+            "inclusiveUs": 9749,
+            "selfPercent": 0.3748113340891502,
+            "inclusivePercent": 0.9636170084480814
+          },
+          {
+            "name": "alloc",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 3750,
+            "inclusiveUs": 3750,
+            "selfPercent": 0.3706599427305678,
+            "inclusivePercent": 0.3706599427305678
+          },
+          {
+            "name": "wasm-function[106]",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 3749,
+            "inclusiveUs": 145957,
+            "selfPercent": 0.370561100079173,
+            "inclusivePercent": 14.426776869633462
+          },
+          {
+            "name": "__lift_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 3709,
+            "inclusiveUs": 5001,
+            "selfPercent": 0.3666073940233802,
+            "inclusivePercent": 0.49431209962548517
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 3709,
+            "inclusiveUs": 3709,
+            "selfPercent": 0.3666073940233802,
+            "inclusivePercent": 0.3666073940233802
+          },
+          {
+            "name": "set value",
+            "url": "",
+            "selfUs": 3708,
+            "inclusiveUs": 3708,
+            "selfPercent": 0.3665085513719854,
+            "inclusivePercent": 0.3665085513719854
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 2583,
+            "inclusiveUs": 2583,
+            "selfPercent": 0.2553105685528151,
+            "inclusivePercent": 0.2553105685528151
+          },
+          {
+            "name": "call",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 2542,
+            "inclusiveUs": 2542,
+            "selfPercent": 0.25125801984562757,
+            "inclusivePercent": 0.25125801984562757
+          },
+          {
+            "name": "walz-file-1.raw",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2541,
+            "inclusiveUs": 2541,
+            "selfPercent": 0.25115917719423275,
+            "inclusivePercent": 0.25115917719423275
+          },
+          {
+            "name": "__lift_list_12",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2541,
+            "inclusiveUs": 2541,
+            "selfPercent": 0.25115917719423275,
+            "inclusivePercent": 0.25115917719423275
+          },
+          {
+            "name": "walz-file-1.prep",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2500,
+            "inclusiveUs": 2500,
+            "selfPercent": 0.2471066284870452,
+            "inclusivePercent": 0.2471066284870452
+          },
+          {
+            "name": "walz-file-1.fb.builder.new",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2500,
+            "inclusiveUs": 2500,
+            "selfPercent": 0.2471066284870452,
+            "inclusivePercent": 0.2471066284870452
+          },
+          {
+            "name": "walz-file-1.ensure",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2500,
+            "inclusiveUs": 2500,
+            "selfPercent": 0.2471066284870452,
+            "inclusivePercent": 0.2471066284870452
+          },
+          {
+            "name": "set value",
+            "url": "",
+            "selfUs": 2500,
+            "inclusiveUs": 2500,
+            "selfPercent": 0.2471066284870452,
+            "inclusivePercent": 0.2471066284870452
+          },
+          {
+            "name": "walz-file-1.fb.builder.finish",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 2459,
+            "inclusiveUs": 2459,
+            "selfPercent": 0.24305407977985766,
+            "inclusivePercent": 0.24305407977985766
+          },
+          {
+            "name": "alloc",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 2458,
+            "inclusiveUs": 2458,
+            "selfPercent": 0.24295523712846281,
+            "inclusivePercent": 0.24295523712846281
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 2417,
+            "inclusiveUs": 2417,
+            "selfPercent": 0.23890268842127527,
+            "inclusivePercent": 0.23890268842127527
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 1292,
+            "inclusiveUs": 1292,
+            "selfPercent": 0.12770470560210495,
+            "inclusivePercent": 0.12770470560210495
+          },
+          {
+            "name": "walz-file-1.slot",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1292,
+            "inclusiveUs": 1292,
+            "selfPercent": 0.12770470560210495,
+            "inclusivePercent": 0.12770470560210495
+          },
+          {
+            "name": "now",
+            "url": "",
+            "selfUs": 1292,
+            "inclusiveUs": 1292,
+            "selfPercent": 0.12770470560210495,
+            "inclusivePercent": 0.12770470560210495
+          },
+          {
+            "name": "create",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 1292,
+            "inclusiveUs": 1292,
+            "selfPercent": 0.12770470560210495,
+            "inclusivePercent": 0.12770470560210495
+          },
+          {
+            "name": "walz-file-1.raw",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1291,
+            "inclusiveUs": 1291,
+            "selfPercent": 0.12760586295071014,
+            "inclusivePercent": 0.12760586295071014
+          },
+          {
+            "name": "walz-file-1.fb.builder.bits-field",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1291,
+            "inclusiveUs": 1291,
+            "selfPercent": 0.12760586295071014,
+            "inclusivePercent": 0.12760586295071014
+          },
+          {
+            "name": "walz-file-1.prep",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.offset",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.bytes",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "__lower_flat_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "execute",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.fb.builder.new",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.prep",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.slot",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "__lower_flat_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "walz-file-1.fb.builder.end",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.1235533142435226,
+            "inclusivePercent": 0.1235533142435226
+          },
+          {
+            "name": "alloc",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 1208,
+            "inclusiveUs": 1208,
+            "selfPercent": 0.11940192288494023,
+            "inclusivePercent": 0.11940192288494023
+          },
+          {
+            "name": "walz-file-1.slot",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1041,
+            "inclusiveUs": 1041,
+            "selfPercent": 0.1028952001020056,
+            "inclusivePercent": 0.1028952001020056
+          },
+          {
+            "name": "(root)",
+            "url": "",
+            "selfUs": 0,
+            "inclusiveUs": 1011709,
+            "selfPercent": 0,
+            "inclusivePercent": 100
+          },
+          {
+            "name": "fn",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 11542,
+            "selfPercent": 0,
+            "inclusivePercent": 1.1408418823989903
+          },
+          {
+            "name": "(anonymous)",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 11542,
+            "selfPercent": 0,
+            "inclusivePercent": 1.1408418823989903
+          },
+          {
+            "name": "fn",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 921458,
+            "selfPercent": 0,
+            "inclusivePercent": 91.07935186896627
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 921458,
+            "selfPercent": 0,
+            "inclusivePercent": 91.07935186896627
+          },
+          {
+            "name": "js-to-wasm:i:i",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 147207,
+            "selfPercent": 0,
+            "inclusivePercent": 14.550330183876984
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 481668,
+            "selfPercent": 0,
+            "inclusivePercent": 47.60934221203924
+          },
+          {
+            "name": "alloc",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1208,
+            "selfPercent": 0,
+            "inclusivePercent": 0.11940192288494023
+          },
+          {
+            "name": "alloc",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 3792,
+            "selfPercent": 0,
+            "inclusivePercent": 0.3748113340891502
+          },
+          {
+            "name": "w_f64",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 30041,
+            "selfPercent": 0,
+            "inclusivePercent": 2.9693320905517298
+          },
+          {
+            "name": "w_i64",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 31833,
+            "selfPercent": 0,
+            "inclusivePercent": 3.1464581218512437
+          },
+          {
+            "name": "w_v14",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 25082,
+            "selfPercent": 0,
+            "inclusivePercent": 2.479171382284827
+          },
+          {
+            "name": "w_n7",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 28291,
+            "selfPercent": 0,
+            "inclusivePercent": 2.7963574506107984
+          },
+          {
+            "name": "finish",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 184793,
+            "selfPercent": 0,
+            "inclusivePercent": 18.265430079202616
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 179667,
+            "selfPercent": 0,
+            "inclusivePercent": 17.75876264815278
+          },
+          {
+            "name": "wasm-function[107]",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 5126,
+            "selfPercent": 0,
+            "inclusivePercent": 0.5066674310498375
+          },
+          {
+            "name": "now",
+            "url": "node:internal/perf/performance",
+            "selfUs": 0,
+            "inclusiveUs": 1292,
+            "selfPercent": 0,
+            "inclusivePercent": 0.12770470560210495
+          }
+        ]
+      },
+      "allocations": [
+        {
+          "name": "call",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+          "sampledBytes": 12631832
+        },
+        {
+          "name": "w_v13",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 4594072
+        },
+        {
+          "name": "create",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+          "sampledBytes": 2957296
+        },
+        {
+          "name": "Set",
+          "url": "",
+          "sampledBytes": 2559712
+        },
+        {
+          "name": "w_v12",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 2526808
+        },
+        {
+          "name": "w_v10",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 2362768
+        },
+        {
+          "name": "execute",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+          "sampledBytes": 2196960
+        },
+        {
+          "name": "api.encode",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 1509696
+        },
+        {
+          "name": "slice",
+          "url": "",
+          "sampledBytes": 1509664
+        },
+        {
+          "name": "fn",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+          "sampledBytes": 787808
+        }
+      ]
+    },
+    {
+      "name": "bytes-64k.encode.core",
+      "cpu": {
+        "totalUs": 1008958,
+        "samples": 796,
+        "functions": [
+          {
+            "name": "__lower_flat_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 301545,
+            "inclusiveUs": 301545,
+            "selfPercent": 29.886774276035275,
+            "inclusivePercent": 29.886774276035275
+          },
+          {
+            "name": "__lift_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 273205,
+            "inclusiveUs": 273205,
+            "selfPercent": 27.077935850649876,
+            "inclusivePercent": 27.077935850649876
+          },
+          {
+            "name": "walz-file-1.ensure",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 154126,
+            "inclusiveUs": 154126,
+            "selfPercent": 15.275759744211353,
+            "inclusivePercent": 15.275759744211353
+          },
+          {
+            "name": "r_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 88752,
+            "inclusiveUs": 90002,
+            "selfPercent": 8.79640183238549,
+            "inclusivePercent": 8.920292024048573
+          },
+          {
+            "name": "(garbage collector)",
+            "url": "",
+            "selfUs": 71500,
+            "inclusiveUs": 71500,
+            "selfPercent": 7.086518963128297,
+            "inclusivePercent": 7.086518963128297
+          },
+          {
+            "name": "w_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 32708,
+            "inclusiveUs": 36251,
+            "selfPercent": 3.241760311132872,
+            "inclusivePercent": 3.5929146703827115
+          },
+          {
+            "name": "__bytes_from_array_range_4",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 24833,
+            "inclusiveUs": 24833,
+            "selfPercent": 2.4612521036554544,
+            "inclusivePercent": 2.4612521036554544
+          },
+          {
+            "name": "walz-file-1.bytes",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 18623,
+            "inclusiveUs": 172749,
+            "selfPercent": 1.8457656314732624,
+            "inclusivePercent": 17.12152537568462
+          },
+          {
+            "name": "post",
+            "url": "node:inspector",
+            "selfUs": 7750,
+            "inclusiveUs": 7750,
+            "selfPercent": 0.768119188311109,
+            "inclusivePercent": 0.768119188311109
+          },
+          {
+            "name": "encode",
+            "url": "node:internal/encoding",
+            "selfUs": 3791,
+            "inclusiveUs": 3791,
+            "selfPercent": 0.3757341732757954,
+            "inclusivePercent": 0.3757341732757954
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 3543,
+            "inclusiveUs": 3543,
+            "selfPercent": 0.35115435924983995,
+            "inclusivePercent": 0.35115435924983995
+          },
+          {
+            "name": "encode",
+            "url": "node:internal/encoding",
+            "selfUs": 2542,
+            "inclusiveUs": 2542,
+            "selfPercent": 0.25194309376604374,
+            "inclusivePercent": 0.25194309376604374
+          },
+          {
+            "name": "w_r9",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 2459,
+            "inclusiveUs": 56124,
+            "selfPercent": 0.2437167850396151,
+            "inclusivePercent": 5.562570493519056
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 2417,
+            "inclusiveUs": 2417,
+            "selfPercent": 0.23955407459973557,
+            "inclusivePercent": 0.23955407459973557
+          },
+          {
+            "name": "create",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 2334,
+            "inclusiveUs": 2334,
+            "selfPercent": 0.23132776587330692,
+            "inclusivePercent": 0.23132776587330692
+          },
+          {
+            "name": "publish",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 1375,
+            "inclusiveUs": 1375,
+            "selfPercent": 0.13627921082939032,
+            "inclusivePercent": 0.13627921082939032
+          },
+          {
+            "name": "free",
+            "url": "wasm://wasm/70873fda",
+            "selfUs": 1292,
+            "inclusiveUs": 1292,
+            "selfPercent": 0.12805290210296166,
+            "inclusivePercent": 0.12805290210296166
+          },
+          {
+            "name": "walz-file-1.fb.builder.end",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1291,
+            "inclusiveUs": 1291,
+            "selfPercent": 0.1279537899496312,
+            "inclusivePercent": 0.1279537899496312
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 1291,
+            "inclusiveUs": 57415,
+            "selfPercent": 0.1279537899496312,
+            "inclusivePercent": 5.6905242834686875
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1291,
+            "inclusiveUs": 2457,
+            "selfPercent": 0.1279537899496312,
+            "inclusivePercent": 0.2435185607329542
+          },
+          {
+            "name": "w_v14",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 1291,
+            "inclusiveUs": 8624,
+            "selfPercent": 0.1279537899496312,
+            "inclusivePercent": 0.8547432103219361
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1291,
+            "inclusiveUs": 1291,
+            "selfPercent": 0.1279537899496312,
+            "inclusivePercent": 0.1279537899496312
+          },
+          {
+            "name": "__lift_buffer_13",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1250,
+            "inclusiveUs": 2542,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.25194309376604374
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.12389019166308211
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.12389019166308211
+          },
+          {
+            "name": "w_i64",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 2541,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.2518439816127133
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.12389019166308211
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12389019166308211,
+            "inclusivePercent": 0.12389019166308211
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 1166,
+            "inclusiveUs": 1166,
+            "selfPercent": 0.11556477078332299,
+            "inclusivePercent": 0.11556477078332299
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1042,
+            "inclusiveUs": 1042,
+            "selfPercent": 0.10327486377034525,
+            "inclusivePercent": 0.10327486377034525
+          },
+          {
+            "name": "(root)",
+            "url": "",
+            "selfUs": 0,
+            "inclusiveUs": 1008958,
+            "selfPercent": 0,
+            "inclusivePercent": 100
+          },
+          {
+            "name": "profile",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 937458,
+            "selfPercent": 0,
+            "inclusivePercent": 92.9134810368717
+          },
+          {
+            "name": "fn",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 7750,
+            "selfPercent": 0,
+            "inclusivePercent": 0.768119188311109
+          },
+          {
+            "name": "(anonymous)",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 7750,
+            "selfPercent": 0,
+            "inclusivePercent": 0.768119188311109
+          },
+          {
+            "name": "fn",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 929708,
+            "selfPercent": 0,
+            "inclusivePercent": 92.1453618485606
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 929708,
+            "selfPercent": 0,
+            "inclusivePercent": 92.1453618485606
+          },
+          {
+            "name": "invoke",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 929708,
+            "selfPercent": 0,
+            "inclusivePercent": 92.1453618485606
+          },
+          {
+            "name": "execute",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 927374,
+            "selfPercent": 0,
+            "inclusivePercent": 91.9140340826873
+          },
+          {
+            "name": "api.encode",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 925999,
+            "selfPercent": 0,
+            "inclusivePercent": 91.7777548718579
+          },
+          {
+            "name": "call",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 925999,
+            "selfPercent": 0,
+            "inclusivePercent": 91.7777548718579
+          },
+          {
+            "name": "js-to-wasm:i:i",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 778582,
+            "selfPercent": 0,
+            "inclusivePercent": 77.16693856434064
+          },
+          {
+            "name": "wasm-function[106]",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 778582,
+            "selfPercent": 0,
+            "inclusivePercent": 77.16693856434064
+          },
+          {
+            "name": "walz-file-2.message.encode",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 198873,
+            "selfPercent": 0,
+            "inclusivePercent": 19.710731269289703
+          },
+          {
+            "name": "walz-file-1.fb.builder.finish",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 24833,
+            "selfPercent": 0,
+            "inclusivePercent": 2.4612521036554544
+          },
+          {
+            "name": "walz-file-2.child.encode",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 1291,
+            "selfPercent": 0,
+            "inclusivePercent": 0.1279537899496312
+          },
+          {
+            "name": "__lift_r8",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 2542,
+            "selfPercent": 0,
+            "inclusivePercent": 0.25194309376604374
+          },
+          {
+            "name": "__lift_v13",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 2542,
+            "selfPercent": 0,
+            "inclusivePercent": 0.25194309376604374
+          },
+          {
+            "name": "w_v13",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 4999,
+            "selfPercent": 0,
+            "inclusivePercent": 0.495461654498998
+          },
+          {
+            "name": "w_r8",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 6083,
+            "selfPercent": 0,
+            "inclusivePercent": 0.6028992287092227
+          },
+          {
+            "name": "w_v13",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 5041,
+            "selfPercent": 0,
+            "inclusivePercent": 0.4996243649388775
+          },
+          {
+            "name": "w_i32",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1042,
+            "selfPercent": 0,
+            "inclusivePercent": 0.10327486377034525
+          },
+          {
+            "name": "w_v12",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1250,
+            "selfPercent": 0,
+            "inclusivePercent": 0.12389019166308211
+          },
+          {
+            "name": "finish",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 90002,
+            "selfPercent": 0,
+            "inclusivePercent": 8.920292024048573
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 90002,
+            "selfPercent": 0,
+            "inclusivePercent": 8.920292024048573
+          }
+        ]
+      },
+      "allocations": [
+        {
+          "name": "call",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+          "sampledBytes": 67654232
+        },
+        {
+          "name": "w_r9",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 295288
+        },
+        {
+          "name": "w_v13",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 164096
+        },
+        {
+          "name": "slice",
+          "url": "",
+          "sampledBytes": 98528
+        },
+        {
+          "name": "api.encode",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 98448
+        },
+        {
+          "name": "w_r8",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 98448
+        },
+        {
+          "name": "Set",
+          "url": "",
+          "sampledBytes": 65680
+        },
+        {
+          "name": "w_v12",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 65648
+        },
+        {
+          "name": "fn",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+          "sampledBytes": 65632
+        },
+        {
+          "name": "create",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+          "sampledBytes": 32832
+        },
+        {
+          "name": "view",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+          "sampledBytes": 32824
+        },
+        {
+          "name": "execute",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+          "sampledBytes": 32800
+        }
+      ]
+    },
+    {
+      "name": "values-16k.encode.core",
+      "cpu": {
+        "totalUs": 1008583,
+        "samples": 803,
+        "functions": [
+          {
+            "name": "walz-file-1.fb.builder.i32s",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 407127,
+            "inclusiveUs": 407127,
+            "selfPercent": 40.36623659133656,
+            "inclusivePercent": 40.36623659133656
+          },
+          {
+            "name": "__lower_flat_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 278498,
+            "inclusiveUs": 278498,
+            "selfPercent": 27.612799343237,
+            "inclusivePercent": 27.612799343237
+          },
+          {
+            "name": "__lift_list_12",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 88044,
+            "inclusiveUs": 88044,
+            "selfPercent": 8.729474916789199,
+            "inclusivePercent": 8.729474916789199
+          },
+          {
+            "name": "r_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 86791,
+            "inclusiveUs": 90541,
+            "selfPercent": 8.60524121465462,
+            "inclusivePercent": 8.977049980021476
+          },
+          {
+            "name": "(garbage collector)",
+            "url": "",
+            "selfUs": 64417,
+            "inclusiveUs": 64417,
+            "selfPercent": 6.386881396969808,
+            "inclusivePercent": 6.386881396969808
+          },
+          {
+            "name": "w_v12",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 33791,
+            "inclusiveUs": 36332,
+            "selfPercent": 3.350343997469717,
+            "inclusivePercent": 3.602281616882299
+          },
+          {
+            "name": "__bytes_from_array_range_4",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 18625,
+            "inclusiveUs": 18625,
+            "selfPercent": 1.8466502013220527,
+            "inclusivePercent": 1.8466502013220527
+          },
+          {
+            "name": "post",
+            "url": "node:inspector",
+            "selfUs": 7541,
+            "inclusiveUs": 7541,
+            "selfPercent": 0.7476826399017235,
+            "inclusivePercent": 0.7476826399017235
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 3792,
+            "inclusiveUs": 3792,
+            "selfPercent": 0.37597302353896506,
+            "inclusivePercent": 0.37597302353896506
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 3750,
+            "inclusiveUs": 3750,
+            "selfPercent": 0.37180876536685625,
+            "inclusivePercent": 0.37180876536685625
+          },
+          {
+            "name": "encode",
+            "url": "node:internal/encoding",
+            "selfUs": 2542,
+            "inclusiveUs": 2542,
+            "selfPercent": 0.25203676841667966,
+            "inclusivePercent": 0.25203676841667966
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 2541,
+            "inclusiveUs": 2541,
+            "selfPercent": 0.2519376194125818,
+            "inclusivePercent": 0.2519376194125818
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 2500,
+            "inclusiveUs": 2500,
+            "selfPercent": 0.24787251024457083,
+            "inclusivePercent": 0.24787251024457083
+          },
+          {
+            "name": "w_v10",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 1291,
+            "inclusiveUs": 3791,
+            "selfPercent": 0.1280013642902964,
+            "inclusivePercent": 0.3758738745348672
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12393625512228541,
+            "inclusivePercent": 0.12393625512228541
+          },
+          {
+            "name": "enter",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12393625512228541,
+            "inclusivePercent": 0.12393625512228541
+          },
+          {
+            "name": "set value",
+            "url": "",
+            "selfUs": 1250,
+            "inclusiveUs": 1250,
+            "selfPercent": 0.12393625512228541,
+            "inclusivePercent": 0.12393625512228541
+          },
+          {
+            "name": "create",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 1209,
+            "inclusiveUs": 1209,
+            "selfPercent": 0.11987114595427446,
+            "inclusivePercent": 0.11987114595427446
+          },
+          {
+            "name": "get buffer",
+            "url": "",
+            "selfUs": 1208,
+            "inclusiveUs": 1208,
+            "selfPercent": 0.11977199695017662,
+            "inclusivePercent": 0.11977199695017662
+          },
+          {
+            "name": "__lift_buffer_10",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 1166,
+            "inclusiveUs": 1166,
+            "selfPercent": 0.11560773877806783,
+            "inclusivePercent": 0.11560773877806783
+          },
+          {
+            "name": "(root)",
+            "url": "",
+            "selfUs": 0,
+            "inclusiveUs": 1008583,
+            "selfPercent": 0,
+            "inclusivePercent": 100
+          },
+          {
+            "name": "profile",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 944166,
+            "selfPercent": 0,
+            "inclusivePercent": 93.61311860303019
+          },
+          {
+            "name": "fn",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 7541,
+            "selfPercent": 0,
+            "inclusivePercent": 0.7476826399017235
+          },
+          {
+            "name": "(anonymous)",
+            "url": "node:internal/util",
+            "selfUs": 0,
+            "inclusiveUs": 7541,
+            "selfPercent": 0,
+            "inclusivePercent": 0.7476826399017235
+          },
+          {
+            "name": "fn",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-inspect.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 936625,
+            "selfPercent": 0,
+            "inclusivePercent": 92.86543596312848
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 936625,
+            "selfPercent": 0,
+            "inclusivePercent": 92.86543596312848
+          },
+          {
+            "name": "invoke",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 936625,
+            "selfPercent": 0,
+            "inclusivePercent": 92.86543596312848
+          },
+          {
+            "name": "execute",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 935416,
+            "selfPercent": 0,
+            "inclusivePercent": 92.7455648171742
+          },
+          {
+            "name": "api.encode",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 932916,
+            "selfPercent": 0,
+            "inclusivePercent": 92.49769230692962
+          },
+          {
+            "name": "call",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 932916,
+            "selfPercent": 0,
+            "inclusivePercent": 92.49769230692962
+          },
+          {
+            "name": "js-to-wasm:i:i",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 793460,
+            "selfPercent": 0,
+            "inclusivePercent": 78.67076879146288
+          },
+          {
+            "name": "wasm-function[106]",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 793460,
+            "selfPercent": 0,
+            "inclusivePercent": 78.67076879146288
+          },
+          {
+            "name": "walz-file-2.message.encode",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 425752,
+            "selfPercent": 0,
+            "inclusivePercent": 42.21288679265861
+          },
+          {
+            "name": "walz-file-1.fb.builder.finish",
+            "url": "wasm://wasm/7ce5518e",
+            "selfUs": 0,
+            "inclusiveUs": 18625,
+            "selfPercent": 0,
+            "inclusivePercent": 1.8466502013220527
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 48915,
+            "selfPercent": 0,
+            "inclusivePercent": 4.8498735354452736
+          },
+          {
+            "name": "w_r9",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 48915,
+            "selfPercent": 0,
+            "inclusivePercent": 4.8498735354452736
+          },
+          {
+            "name": "w_v13",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 6334,
+            "selfPercent": 0,
+            "inclusivePercent": 0.6280097919556447
+          },
+          {
+            "name": "w_v14",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1250,
+            "selfPercent": 0,
+            "inclusivePercent": 0.12393625512228541
+          },
+          {
+            "name": "w_i64",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1208,
+            "selfPercent": 0,
+            "inclusivePercent": 0.11977199695017662
+          },
+          {
+            "name": "view",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 1208,
+            "selfPercent": 0,
+            "inclusivePercent": 0.11977199695017662
+          },
+          {
+            "name": "finish",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 90541,
+            "selfPercent": 0,
+            "inclusivePercent": 8.977049980021476
+          },
+          {
+            "name": "(anonymous)",
+            "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+            "selfUs": 0,
+            "inclusiveUs": 90541,
+            "selfPercent": 0,
+            "inclusivePercent": 8.977049980021476
+          }
+        ]
+      },
+      "allocations": [
+        {
+          "name": "call",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/core.mjs",
+          "sampledBytes": 67216032
+        },
+        {
+          "name": "execute",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/tasks.mjs",
+          "sampledBytes": 196736
+        },
+        {
+          "name": "slice",
+          "url": "",
+          "sampledBytes": 98528
+        },
+        {
+          "name": "Set",
+          "url": "",
+          "sampledBytes": 98520
+        },
+        {
+          "name": "w_v12",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 98512
+        },
+        {
+          "name": "w_v13",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 98448
+        },
+        {
+          "name": "w_r9",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 65688
+        },
+        {
+          "name": "api.encode",
+          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-three-improvements-v1/capture-final/core/bindings.mjs",
+          "sampledBytes": 32832
+        }
+      ]
+    }
+  ]
+}

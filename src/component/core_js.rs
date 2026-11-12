@@ -228,7 +228,7 @@ fn parse(wat: &str) -> Result<Vec<u8>, Error> {
     Ok(wasm)
 }
 
-fn collect(adapter: &Adapter<'_>, ty: &Type, used: &mut BTreeSet<Type>) {
+pub(super) fn collect(adapter: &Adapter<'_>, ty: &Type, used: &mut BTreeSet<Type>) {
     if !used.insert(ty.clone()) {
         return;
     }

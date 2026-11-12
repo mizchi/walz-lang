@@ -1,0 +1,9 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+error[E0432]: unresolved import `walz::component::js_native`
+ --> tests/js_native.rs:1:22
+  |
+1 | use walz::component::js_native::{Mode, compile};
+  |                      ^^^^^^^^^ could not find `js_native` in `component`
+
+For more information about this error, try `rustc --explain E0432`.
+error: could not compile `walz` (test "js_native") due to 1 previous error

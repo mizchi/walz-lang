@@ -105,13 +105,8 @@ impl Tables<'_> {
         if name.starts_with("$__") {
             return Err(self.error(node, "the $__ prefix is reserved"));
         }
-        if !name.starts_with('$')
-            || name.len() == 1
-            || !name[1..]
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'.' | b'-'))
-        {
-            return Err(self.error(node, "expected ASCII $identifier"));
+        if !crate::sexpr::identifier(name) {
+            return Err(self.error(node, "expected $identifier"));
         }
         Ok(name.to_owned())
     }
@@ -437,7 +432,12 @@ impl Tables<'_> {
         } else {
             (self.ty(node)?, false)
         };
-        Ok(Field { name, ty, mutable })
+        Ok(Field {
+            name,
+            ty,
+            mutable,
+            packed: None,
+        })
     }
 
     fn type_name(&self, ty: &Type) -> String {
@@ -804,6 +804,7 @@ pub(crate) fn check<'b>(
                     name: Some(tables.name(&parts[1])?),
                     ty: tables.ty(&parts[2])?,
                     mutable: false,
+                    packed: None,
                 });
             }
             TypeKind::Closure {
@@ -853,7 +854,33 @@ pub(crate) fn check<'b>(
                 }
                 Some("array") => {
                     tables.count(&items[2], definition, 2)?;
-                    TypeKind::Array(tables.field(None, &definition[1])?)
+                    let node = &definition[1];
+                    let element = if node.head() == Some("mut") {
+                        tables
+                            .list(node)?
+                            .get(1)
+                            .ok_or_else(|| tables.error(node, "missing array storage type"))?
+                    } else {
+                        node
+                    };
+                    let packed = match element.atom() {
+                        Some("i8") => Some(Packed::I8),
+                        Some("i16") => Some(Packed::I16),
+                        _ => None,
+                    };
+                    TypeKind::Array(if packed.is_some() {
+                        if node.head() == Some("mut") {
+                            tables.count(node, tables.list(node)?, 2)?;
+                        }
+                        Field {
+                            name: None,
+                            ty: Type::Num(NumType::I32),
+                            mutable: node.head() == Some("mut"),
+                            packed,
+                        }
+                    } else {
+                        tables.field(None, node)?
+                    })
                 }
                 Some("variant") => {
                     if definition.len() == 1 {
@@ -3137,13 +3164,23 @@ impl Checker<'_, '_> {
                         Data(text.as_bytes().to_vec()),
                     )
                 }
-                "bytes.from-array" | "bytes.new" | "bytes.len" | "bytes.get" | "bytes.slice"
-                | "text.byte-len" | "text.bytes" | "text.from-bytes" => {
-                    self.buffer_expr(node, items, scope, loops)?
+                head if ByteAccess::parse_read(head).is_some()
+                    || ByteAccess::parse_write(head).is_some() =>
+                {
+                    self.byte_access_expr(node, items, scope, loops)?
                 }
-                "array.new" | "array.new_fixed" | "array.get" | "array.set" => {
-                    self.array_expr(node, items, scope, loops)?
-                }
+                "bytes.from-array"
+                | "bytes.copy-to-array"
+                | "bytes.new"
+                | "bytes.len"
+                | "bytes.get"
+                | "bytes.is-utf8"
+                | "bytes.slice"
+                | "text.byte-len"
+                | "text.bytes"
+                | "text.from-bytes" => self.buffer_expr(node, items, scope, loops)?,
+                "array.new" | "array.new_fixed" | "array.get" | "array.get_s" | "array.get_u"
+                | "array.set" | "array.copy" => self.array_expr(node, items, scope, loops)?,
                 "array.len" => {
                     count(2)?;
                     let object = self.expr(&items[1], scope, loops, false)?;
@@ -3266,7 +3303,9 @@ impl Checker<'_, '_> {
             _ => {
                 tables.count(node, items, 4)?;
                 let array = tables.type_id(&items[2])?;
-                if self.array(node, array)?.ty != payload {
+                if self.array(node, array)?.ty != payload
+                    || self.array(node, array)?.packed.is_some()
+                {
                     return Err(tables.error(node, "list.from-array element type mismatch"));
                 }
                 (
@@ -3285,6 +3324,52 @@ impl Checker<'_, '_> {
         Ok((result, ExprKind::List { op, list, args }))
     }
 
+    fn byte_access_expr(
+        &mut self,
+        node: &Sexp,
+        items: &[Sexp],
+        scope: &Scope,
+        loops: &[LoopContext],
+    ) -> Result<(Type, ExprKind), Error> {
+        let head = node.head().unwrap();
+        let buffer = self.tables.intern_value(ValueType::Bytes);
+        let i32ty = Type::Num(NumType::I32);
+        let (op, start, params, result) = if let Some(access) = ByteAccess::parse_read(head) {
+            (
+                BufferOp::Read(access),
+                1,
+                vec![Type::Value(buffer), i32ty],
+                Type::Num(access.value_type()),
+            )
+        } else {
+            let access = ByteAccess::parse_write(head).unwrap();
+            self.tables.count(node, items, 5)?;
+            let id = self.tables.type_id(&items[1])?;
+            let field = self.array(node, id)?;
+            if !field.mutable || field.packed != Some(Packed::I8) {
+                return Err(self
+                    .tables
+                    .error(node, "fixed-width byte writes require a mutable i8 array"));
+            }
+            (
+                BufferOp::WriteArray(id, access),
+                2,
+                vec![
+                    Type::Ref {
+                        ty: id,
+                        nullable: false,
+                    },
+                    i32ty,
+                    Type::Num(access.value_type()),
+                ],
+                Type::Unit,
+            )
+        };
+        self.tables.count(node, items, start + params.len())?;
+        let args = self.expressions_as(&items[start..], scope, loops, &params)?;
+        Ok((result, ExprKind::Buffer { op, buffer, args }))
+    }
+
     fn buffer_expr(
         &mut self,
         node: &Sexp,
@@ -3293,13 +3378,27 @@ impl Checker<'_, '_> {
         loops: &[LoopContext],
     ) -> Result<(Type, ExprKind), Error> {
         let head = node.head().unwrap();
-        if head == "bytes.from-array" {
-            self.tables.count(node, items, 3)?;
+        if head == "bytes.from-array" || head == "bytes.copy-to-array" {
+            let copy = head == "bytes.copy-to-array";
+            if copy {
+                self.tables.count(node, items, 7)?;
+            } else if !matches!(items.len(), 3 | 5) {
+                return Err(self.tables.error(
+                    node,
+                    "bytes.from-array expects array, optionally start and length",
+                ));
+            }
             let ty = self.tables.type_id(&items[1])?;
-            if self.array(node, ty)?.ty != Type::Num(NumType::I32) {
+            let field = self.array(node, ty)?;
+            if field.ty != Type::Num(NumType::I32) {
                 return Err(self
                     .tables
                     .error(node, "bytes.from-array needs an i32 array"));
+            }
+            if copy && (!field.mutable || field.packed != Some(Packed::I8)) {
+                return Err(self
+                    .tables
+                    .error(node, "bytes.copy-to-array requires a mutable i8 array"));
             }
             let value = self.expr(&items[2], scope, loops, false)?;
             self.check(
@@ -3311,12 +3410,29 @@ impl Checker<'_, '_> {
                 &value,
             )?;
             let buffer = self.tables.intern_value(ValueType::Bytes);
+            let mut args = vec![value];
+            for (index, argument) in items.iter().enumerate().skip(3) {
+                let expected = if copy && index == 4 {
+                    Type::Value(buffer)
+                } else {
+                    Type::Num(NumType::I32)
+                };
+                args.push(self.expr_as(argument, scope, loops, false, &expected)?);
+            }
             return Ok((
-                Type::Value(buffer),
+                if copy {
+                    Type::Unit
+                } else {
+                    Type::Value(buffer)
+                },
                 ExprKind::Buffer {
-                    op: BufferOp::FromArray(ty),
+                    op: if copy {
+                        BufferOp::CopyToArray(ty)
+                    } else {
+                        BufferOp::FromArray(ty)
+                    },
                     buffer,
-                    args: vec![value],
+                    args,
                 },
             ));
         }
@@ -3328,17 +3444,34 @@ impl Checker<'_, '_> {
             "bytes.len" => (BufferOp::Len, vec![bytes], i32ty),
             "text.byte-len" => (BufferOp::Len, vec![text], i32ty),
             "bytes.get" => (BufferOp::Get, vec![bytes, i32ty.clone()], i32ty),
+            "bytes.is-utf8" | "text.from-bytes" => {
+                if !matches!(items.len(), 2 | 4) {
+                    return Err(self.tables.error(
+                        node,
+                        "expected bytes, optionally followed by start and length",
+                    ));
+                }
+                let mut params = vec![bytes];
+                if items.len() == 4 {
+                    params.extend([i32ty.clone(), i32ty.clone()]);
+                }
+                if head == "bytes.is-utf8" {
+                    (BufferOp::IsUtf8, params, i32ty)
+                } else {
+                    (
+                        BufferOp::Decode,
+                        params,
+                        Type::Value(self.tables.intern_value(ValueType::Option(text))),
+                    )
+                }
+            }
             "bytes.slice" => (
                 BufferOp::Slice,
                 vec![bytes.clone(), i32ty.clone(), i32ty],
                 bytes,
             ),
             "text.bytes" => (BufferOp::Encode, vec![text], bytes),
-            _ => (
-                BufferOp::Decode,
-                vec![bytes],
-                Type::Value(self.tables.intern_value(ValueType::Option(text))),
-            ),
+            _ => unreachable!("registered buffer operation"),
         };
         self.tables.count(node, items, params.len() + 1)?;
         let args = self.expressions_as(&items[1..], scope, loops, &params)?;
@@ -3845,6 +3978,37 @@ impl Checker<'_, '_> {
         )?;
         let field = self.array(node, ty)?;
         match head {
+            "array.copy" => {
+                self.tables.count(node, items, 8)?;
+                let source = self.tables.type_id(&items[2])?;
+                let from = self.array(node, source)?;
+                if !field.mutable
+                    || field.ty != from.ty
+                    || field.packed != from.packed
+                    || !matches!(field.ty, Type::Num(_))
+                {
+                    return Err(self.tables.error(node, "array.copy requires a mutable destination and matching numeric storage types"));
+                }
+                let params = [
+                    Type::Ref { ty, nullable: true },
+                    Type::Num(NumType::I32),
+                    Type::Ref {
+                        ty: source,
+                        nullable: true,
+                    },
+                    Type::Num(NumType::I32),
+                    Type::Num(NumType::I32),
+                ];
+                let args = self.expressions_as(&items[3..], scope, loops, &params)?;
+                Ok((
+                    Type::Unit,
+                    ArrayCopy {
+                        target: ty,
+                        source,
+                        args,
+                    },
+                ))
+            }
             "array.new" => {
                 self.tables.count(node, items, 4)?;
                 let initial = self.expr_as(&items[2], scope, loops, false, &field.ty)?;
@@ -3893,18 +4057,26 @@ impl Checker<'_, '_> {
                     ArrayFixed { ty, values },
                 ))
             }
-            "array.get" | "array.set" => {
-                self.tables
-                    .count(node, items, if head == "array.get" { 4 } else { 5 })?;
+            "array.get" | "array.get_s" | "array.get_u" | "array.set" => {
+                let get = head != "array.set";
+                self.tables.count(node, items, if get { 4 } else { 5 })?;
+                if get && (field.packed.is_some() == (head == "array.get")) {
+                    return Err(self.tables.error(node, "packed arrays require array.get_s or array.get_u; unpacked arrays require array.get"));
+                }
                 let object = self.expr(&items[2], scope, loops, false)?;
                 let index =
                     self.expr_as(&items[3], scope, loops, false, &Type::Num(NumType::I32))?;
                 self.check(&items[2], &Type::Ref { ty, nullable: true }, &object)?;
-                if head == "array.get" {
+                if get {
                     Ok((
                         field.ty,
                         ArrayGet {
                             ty,
+                            signed: if head == "array.get" {
+                                None
+                            } else {
+                                Some(head == "array.get_s")
+                            },
                             object: Box::new(object),
                             index: Box::new(index),
                         },

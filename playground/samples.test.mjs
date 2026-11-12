@@ -6,7 +6,7 @@ test('the language tour covers the main features with explicit outcomes', () => 
   const required = new Set([
     'bindings', 'operators', 'scalars', 'native-wat', 'control-flow', 'loops',
     'recursion', 'structs', 'arrays', 'enums', 'option', 'result', 'tuples',
-    'lists', 'closures', 'generics', 'type-bounds', 'modules', 'opaque',
+    'lists', 'closures', 'generics', 'angle-applications', 'type-bounds', 'modules', 'opaque',
     'effects', 'ownership', 'resources', 'futures', 'streams', 'cancellation',
     'strings', 'bytes', 'views', 'array-views', 'json', 'simd', 'tests', 'benchmarks', 'laws',
     'diagnostics',

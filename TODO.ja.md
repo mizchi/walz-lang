@@ -5,6 +5,34 @@
 小さい言語仕様、WAT の包含、Wasm GC、静的解析のしやすさを維持する。
 チェックは実装と回帰検査の完了を意味し、設計だけでは付けない。
 
+## バイナリ codec からのコア改善（1 → 2 → 3 → 4 → 5）
+
+- [x] 1: 固定幅・明示 endian の bytes 読み取りと packed 配列への書き込み。型付き操作と `walz:core` の bytes/view API を追加。unsigned offset、16bit の符号拡張、整数／浮動小数点のビット保持、評価順、変更前の全範囲検査を定義。両 endian・非整列・view 内の境界・effect・opaque・両 JS backend を検査済み。
+- [x] 2: immutable bytes-view の範囲を直接 UTF-8 検証し、payload をコピーせず string-view にする。明示的な実体化、元バッファの保持、全 backend での厳密な UTF-8 規約を記載・検査済み。
+- [x] 3: サイズ／offset の加算・乗算・整列を検査する core helper。Wasm i32/i64 の wrapping を変更せず、失敗を明示し、暗黙の数値変換を増やさない。
+- [x] 4: 検証済みの不変範囲を view・小さな共有値の関数のインライン化・各反復の unsigned ガード経由で引き継ぐ。独立した must 解析で証明した冗長な検査を除き、未確認の検査と Wasm GC 配列の境界検査は残す。
+- [x] 5: 条件を満たす共有の tuple/Option/Result の格納用割り当てを、ローカルの match/drop・分岐・小さな関数のインライン化経由で除去。内部の戻り値にも適用し、payload の同一性・評価順・明示的な trap/例外・所有権の境界と公開 ABI を維持。
+- [ ] 後続: 大きい関数・再帰・ループで持ち回る値の汎用 multi-value 特殊化。現在の consumer fusion は未確認・escape の格納表現を残し、コード複製量を制限する。
+- [ ] 後続: 可変バッファを消費して immutable bytes/list にする freeze。内部 storage の排他所有を先に定義する。現在の Own は一意性を保証しない。コピー削減と保持される capacity の両方を測定。
+
+構文の追加は小さく保ち、codec 固有命令より core API と型付き IR を優先する。ABI/runtime は [FlatBuffers の公開計画](walz/flatbuffers/TODO.md) を参照。
+
+1 の仕様は[固定幅アクセス](docs/byte-access.md)に記載し、FlatBuffers の reader/builder でも使用する。`just test-byte-access` で再検査でき、Chromium は `runtime/e2e/byte-access.spec.mjs` に収録。workspace テスト、`just check`、両 JS backend、bytes/FlatBuffers の Chromium 8件が成功。
+
+2 は `$string-view.from-bytes-view`、`$bytes-view.is-utf8` / `to-string`、`@bytes.is-utf8` / `@string.from-bytes` の範囲指定を追加。共通 validator は選択範囲だけを読み、不正 UTF-8 は none/0、範囲外は trap。検証成功後にコピーする。FlatBuffers も範囲付き decode を使用。[view の規約](docs/views.md#validate-a-byte-range-as-a-string-view)を参照。`just test-utf8-views` と `just test-views` で再検査できる。GC 同一性・解放、suspend/reject/cancel、4方式での厳密な decoder との比較、workspace テスト、`just check`、Node 23件、Chromium 20件が成功。
+
+3 は `$i32.checked-add-u`、`$i32.checked-mul-u`、`$i32.checked-align-up-u` と i64 版の通常関数6つを追加。Option を返し、符号なしの最上位ビットと非ゼロの2の累乗の整列に対応する。不正な整列・overflow は none。[規約](docs/checked-integers.md)と[レイアウト例](examples/checked-layout.walz)を参照。FlatBuffers は要素ループ外でベクトルの byte 数を一度だけ検査し、アプリ側の上限を維持する。再実行は `just test-checked-integers`。Wasmtime の最適化 on/off、4方式と無限精度 BigInt の比較、workspace 681件、Node 11件、`just check`、対象を絞った Chromium 8件が成功。最初の全 fixture 起動は300秒でタイムアウトしたため、対象 fixture を独立して再ビルドした。
+
+4 は、ローカル・ループ識別子を刷新する作業量制限付きインライン化と、不変なスナップショット・アクセスの正常終了・unsigned ガードを追う must 解析を追加。検証済みの部分範囲を折り返しなく合成し、ループの初期値は不変条件に使わない。証明した reader は helper 内の明示的な検査2つを省き、GC の `array.get_u` の検査と元の分岐条件の評価は維持する。診断情報は削除判断に使わない。signed/i64 推論、再帰・一般的な関数間契約、未対応の制御構造をまたぐ範囲は検査を残す。[規約](docs/range-optimization.md)と[走査例](examples/range-scan.walz)を参照。再実行は `just test-range-optimization`。最適化 on/off の raw Wasm 比較で null trap・ホスト副作用・例外・可変フィールドの再読込・複数のネストしたループ呼び出しを検査。workspace 686件が成功（既存の ignore 3件）、`just check`、`just proof-check`、Node 19件、現行ソースを再ビルドした範囲・FlatBuffers の Chromium 8件も成功。Lean の証明対象は算術規則で、処理系全体ではない。ベンチマーク上の速度向上は未計測。
+
+5 は Wasm 関数のシグネチャを変えず、consumer fusion と共有値の関数のインライン化を使用。対象のローカル値を payload のローカル変数に置き換え、複数の match・未使用値・検査付き関数の入れ子・unit/null の区別・tuple/Result を返す処理にも対応。従来の構築直後の Result 最適化が `@default` の payload の副作用・trap まで落とす不具合も修正した。未知・escape・外部値の subtype 検査、構築側の try/label/loop のスコープ、同一性を持つ enum、owned/resource/borrow を扱う関数は規約を維持し、作業量制限で中止した変換は元に戻す。[規約](docs/value-optimization.md)と[パイプライン例](examples/value-pipeline.walz)を参照し、`just test-value-optimization` で再検査できる。workspace 692件（既存の ignore 3件）、`just check`、`just proof-check`、Node 35件、対象を絞った値・範囲・FlatBuffers の Chromium 12件が成功。raw Wasm の最適化 on/off、ホストの評価履歴、不正な外部値、4方式と BigInt の比較、payload の reject/cancel、ABI の後始末を検査。汎用 multi-value と速度の実測は後続で、変換の正しさは compiler TCB に属し、新しい Lean の証明対象ではない。
+
+## Angle 型引数表記
+
+- [x] 型・関数・heap 型の参照位置で `$Name<T, U>` を `@inst` の糖衣として受け付ける。入れ子の値型、汎用クロージャ、名前付き構築、マクロの型引数、具体化した export に対応。参照 wrapper の明示、既存の検査と具体化の共有、元の位置、WAT のリテラル名、演算子を維持し、formatter・Watz 表示・LSP の回復・Playground サンプルにも対応。
+
+[規則](docs/generics.md#angle-application-shorthand)と[実行例](examples/angle-applications.walz)を参照し、`just test-angle-applications` で再検査できる。最適化 on/off で明示的な `@inst` と出力 Wasm が一致することを検査。名前空間・import の別名、WAT の通常名・引用名・suffix を含む名前、不正／深い適用、型制約、エラー位置、未完の編集バッファにも対応。workspace 701件（既存の ignore 3件）、`just check`、`just proof-check`、文書検査、Node 5件（4方式とサンプルの網羅性）、新しくビルドした Wasm コンパイラを使う独立した Chromium Playground 2件が成功。日英チートシート・仕様と Walz skill の参照を更新し、既存の Playground プロセスは維持した。
+
 ## ユーザー定義構文（1 → 2 → 3 → 4）
 
 - [x] 1: 構文ノードの識別・展開コンテキスト・入力と出力の対応を保持。複製・削除・定義元を追跡。

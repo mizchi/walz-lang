@@ -81,14 +81,8 @@ fn qualified(scope: &str, name: &str) -> String {
 }
 fn identifier(source: &str, node: &Sexp) -> Result<String, Error> {
     let n = atom(node);
-    if !n.starts_with('$')
-        || n.len() < 2
-        || n.starts_with("$__")
-        || !n[1..]
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-' | b'.'))
-    {
-        return Err(Error::at(source, node.span, "expected ASCII $identifier"));
+    if !n.starts_with('$') || n.len() < 2 || n.starts_with("$__") || !crate::sexpr::identifier(&n) {
+        return Err(Error::at(source, node.span, "expected $identifier"));
     }
     Ok(n)
 }
@@ -641,6 +635,23 @@ fn resolve_application(
     node: &mut Sexp,
     parameters: &BTreeSet<String>,
 ) -> Result<(), Error> {
+    // Macro type captures are identified after initial surface parsing. Apply
+    // the same sugar here, with namespace-aware literal-name precedence.
+    if node
+        .atom()
+        .is_some_and(|s| crate::sexpr::applications::prefix(s).is_some())
+        && resolve(source, scopes, scope, kind, node).is_err()
+    {
+        let literal_types = scopes[scope]
+            .definitions
+            .iter()
+            .chain(&scopes[scope].aliases)
+            .filter(|(symbol, _)| symbol.kind == SymbolKind::Type)
+            .flat_map(|(symbol, concrete)| [symbol.name.clone(), concrete.clone()])
+            .collect();
+        let application = crate::sexpr::applications::parse(source, node, &literal_types)?;
+        *node = crate::syntax::normalize(source, &application)?;
+    }
     let name = if node.head().is_some_and(|h| h.starts_with('$')) {
         let Kind::List(items) = &mut node.kind else {
             unreachable!()
@@ -732,6 +743,21 @@ impl Expanded {
         for function in &module.functions {
             let mut pending = function.body.iter().collect::<Vec<_>>();
             while let Some(e) = pending.pop() {
+                if let ArrayCopy {
+                    target,
+                    source: from,
+                    ..
+                } = &e.kind
+                {
+                    for id in [target, from] {
+                        self.validate_representation(
+                            source,
+                            &module.types[id.0].name,
+                            e.span,
+                            origins,
+                        )?;
+                    }
+                }
                 let ty = match &e.kind {
                     ResourceNew { ty, .. }
                     | Newtype { ty, .. }
@@ -754,7 +780,10 @@ impl Expanded {
                         ..
                     } => Some(*ty),
                     Buffer {
-                        op: crate::ir::BufferOp::FromArray(ty),
+                        op:
+                            crate::ir::BufferOp::FromArray(ty)
+                            | crate::ir::BufferOp::CopyToArray(ty)
+                            | crate::ir::BufferOp::WriteArray(ty, _),
                         ..
                     } => Some(*ty),
                     _ => None,

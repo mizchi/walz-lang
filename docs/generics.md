@@ -4,6 +4,49 @@ Place `(@type.params $T ...)` immediately after a declaration name. The syntax i
 and `@closure`; explicit application uses `(@inst $name T...)`. Ordinary function calls
 can omit type arguments uniquely determined by the arguments and expected type. This introduces no user-defined traits, dictionary passing, or runtime type erasure. Ordinary WAT functions and calls remain available unchanged.
 
+## Angle application shorthand
+
+Write `$Name<T, U>` in a type or nominal function/heap reference position as a
+short form of `(@inst $Name T U)`. Both spellings use the same constraint checks,
+monomorphized instances, effects, ownership, opacity, and ABI.
+
+```text
+(result $result<$tuple<i32, i32>, i32>)
+(param $pending $future<$result<$string, i32>>)
+(param $box (ref $Box<i32>))
+(call $identity<i64> 42)
+(struct.new $Box<i32> 42)
+(@$Box<i32>::{:value 42})
+(@closure.new $Adder<i32> 40)
+(export "identity" (func $identity<i64>))
+```
+
+The opening `<` is adjacent to `$Name`. Arguments are comma-separated and can
+contain whitespace, newlines, WAT comments, nested applications, or existing
+S-expression types such as `(ref null $Node)`. A trailing comma is allowed;
+empty lists and missing/doubled separators produce `E_GENERIC_SYNTAX`.
+`(ref $Box<i32>)` still explicitly requests a GC reference; shorthand adds no
+implicit reference conversion. It also works in aliases and macro `type` arguments.
+Declarations still use `(@type.params $T ...)`; write `$T` inside an application
+when referring to that parameter, for example `$option<$T>`.
+
+Only type/reference positions interpret the shorthand. Locals, declaration names,
+strings, comments, and opaque annotation data retain their meaning. `<`, `>`, and
+shift operators are unchanged. If that namespace declares/imports an exact literal
+WAT name such as `$f<i32>`, the literal name wins. Use `(@inst $f i32)` to force
+application of `$f` in that case. Quoted WAT identifiers remain literal.
+
+The formatter preserves the selected source spelling, including comments inside
+the argument list. The optional Watz view displays applied types using angle
+notation. Diagnostics and editor queries retain original source locations;
+incomplete editor applications never become checked code.
+
+See [the complete example](../examples/angle-applications.walz). Run
+`just test-angle-applications` for syntax/ABI regressions; the Playground includes
+an **Angle type arguments** sample.
+
+## Declarations and specialization
+
 ```wat
 (module
   (func $identity (@type.params $T) (param $x $T) (result $T) (@effect pure)

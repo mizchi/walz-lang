@@ -1,0 +1,24 @@
+✔ Core bindings roll back partially encoded owned inputs and preserve nested option distinctions (3108.142208ms)
+✔ scalar Core output has no Component dependency or text codecs (2612.864375ms)
+✔ exported ends and cancelled late producers do not retain Core instances (2273.536084ms)
+✔ Core keeps the existing shared-payload restriction for delivery (894.32225ms)
+✔ failed task history does not retain Core stores through lazy error stacks (2719.069084ms)
+✔ host failures stay fatal through catch_all and falsy rejection reasons (1843.0335ms)
+✔ core: FlatBuffers interoperates, validates hostile input and releases ABI handles (3216.375166ms)
+✔ component: FlatBuffers interoperates, validates hostile input and releases ABI handles (2729.478791ms)
+✔ experimental utf8: native values preserve UTF-8, bounds, snapshots and Result errors (6210.407209ms)
+✔ experimental js-strings: native values preserve UTF-8, bounds, snapshots and Result errors (4429.491042ms)
+✔ core: packed GC copies preserve snapshots, order, truncation, overlap and bounds (3117.47225ms)
+✔ component: packed GC copies preserve snapshots, order, truncation, overlap and bounds (2703.046958ms)
+✔ inline synchronous exports allocate no unobserved promises and preserve returned thenables (5.210208ms)
+✔ start still publishes synchronous results, Future values, and completion acknowledgments (5.4605ms)
+✔ inline cleanup remains busy until disposal completes and then runs queued work (0.391792ms)
+✔ inline failure runs guest/boundary cleanup, resets flags, and preserves error identity (0.686625ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13545.746666

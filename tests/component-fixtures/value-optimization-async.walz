@@ -1,0 +1,7 @@
+(module
+  (@use "walz:core" (type $result))
+  (import "walz:host/event-loop@0.1.0" "sleep" (func $sleep (param $ms i32)))
+  (func $wait (param $ms i32) (result i64) (@effect host suspends)
+    (block (result i64) (call $sleep $ms) 42))
+  (func $main (export "main") (param $ms i32) (result i64) (@effect host suspends)
+    (@match (@result.ok i64 i32 (call $wait $ms)) (@default 42))))

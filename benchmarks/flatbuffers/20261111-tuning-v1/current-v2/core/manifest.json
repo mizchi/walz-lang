@@ -1,0 +1,37 @@
+{
+  "abi": "walz-core-js-v2",
+  "esm": {
+    "exports": {
+      "decode": {
+        "jsName": "decode",
+        "params": [
+          "bytes"
+        ],
+        "result": "(result (record (id i64) (name text) (values (list i32)) (payload bytes) (enabled bool) (weight f64) (child (option (record (count i32) (label text))))) i32)",
+        "suspends": false
+      },
+      "encode": {
+        "jsName": "encode",
+        "params": [
+          "(record (id i64) (name text) (values (list i32)) (payload bytes) (enabled bool) (weight f64) (child (option (record (count i32) (label text)))))"
+        ],
+        "result": "bytes",
+        "suspends": false
+      },
+      "main": {
+        "jsName": "main",
+        "params": [],
+        "result": "i32",
+        "suspends": false
+      }
+    },
+    "schema": "walz-esm-v1"
+  },
+  "imports": [],
+  "sourceFiles": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/flatbuffers/main.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/flatbuffers/message.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/flatbuffers/builder.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/flatbuffers/reader.walz"
+  ]
+}

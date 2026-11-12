@@ -1,0 +1,203 @@
+(module
+  (@use "walz:core" (type $bytes) (type $option) (type $tuple))
+  (@export
+    (func $bytes.concat)
+    (func $bytes.equal)
+    (func $bytes.find-byte)
+    (func $bytes.find)
+    (func $bytes.split-once)
+    (func $bytes.parse-u64))
+  (func $bytes.equal
+    (param $a $bytes)
+    (param $b $bytes)
+    (result i32)
+    (@effect pure)
+    (if
+      (result i32)
+      (!= (@bytes.len $a) (@bytes.len $b))
+      (then 0)
+      (else
+        (@loop $compare
+          (bind $i i32 0)
+          (result i32)
+          (if
+            (result i32)
+            (= $i (@bytes.len $a))
+            (then 1)
+            (else
+              (if
+                (result i32)
+                (!= (@bytes.get $a $i) (@bytes.get $b $i))
+                (then 0)
+                (else (@recur $compare (+ $i 1))))
+            ))))
+    ))
+  ;; Return the length when absent or start is out of range. byte is unsigned.
+  (func $bytes.find-byte
+    (param $b $bytes)
+    (param $start i32)
+    (param $byte i32)
+    (result i32)
+    (@effect pure)
+    (@loop $scan
+      (bind $i i32 $start)
+      (result i32)
+      (if
+        (result i32)
+        (i32.ge_u $i (@bytes.len $b))
+        (then (@bytes.len $b))
+        (else
+          (if
+            (result i32)
+            (= (@bytes.get $b $i) $byte)
+            (then $i)
+            (else (@recur $scan (+ $i 1))))
+        ))))
+
+  (func $bytes.matches
+    (param $b $bytes)
+    (param $needle $bytes)
+    (param $start i32)
+    (result i32)
+    (@effect pure)
+    (@loop $scan
+      (bind $i i32 0)
+      (result i32)
+      (if
+        (result i32)
+        (= $i (@bytes.len $needle))
+        (then 1)
+        (else
+          (if
+            (result i32)
+            (!= (@bytes.get $b (+ $start $i)) (@bytes.get $needle $i))
+            (then 0)
+            (else (@recur $scan (+ $i 1))))
+        ))))
+
+  (func $bytes.find
+    (param $b $bytes)
+    (param $needle $bytes)
+    (param $start i32)
+    (result (@inst $option i32))
+    (@effect pure)
+    (if
+      (result (@inst $option i32))
+      (i32.gt_u $start (@bytes.len $b))
+      (then (@option.none))
+      (else
+        (if
+          (result (@inst $option i32))
+          (i32.gt_u (@bytes.len $needle) (- (@bytes.len $b) $start))
+          (then (@option.none))
+          (else
+            (@let $last (- (@bytes.len $b) (@bytes.len $needle))
+              (@loop $scan
+                (bind $i i32 $start)
+                (result (@inst $option i32))
+                (if
+                  (result (@inst $option i32))
+                  (call $bytes.matches $b $needle $i)
+                  (then (@option.some $i))
+                  (else
+                    (if
+                      (result (@inst $option i32))
+                      (= $i $last)
+                      (then (@option.none))
+                      (else (@recur $scan (+ $i 1))))
+                  ))))
+          ))))
+  )
+
+  (func $bytes.split-once
+    (param $b $bytes)
+    (param $needle $bytes)
+    (result (@inst $option (@inst $tuple $bytes $bytes)))
+    (@effect pure)
+    (@match (call $bytes.find $b $needle 0)
+      (@case none () (@option.none))
+      (@case some ($i)
+        (@let $next (+ $i (@bytes.len $needle))
+          (@option.some
+            (@tuple.new
+              (@bytes.slice $b 0 $i)
+              (@bytes.slice $b $next (- (@bytes.len $b) $next))))
+        ))))
+  ;; ASCII decimal over a checked range; test the cutoff before multiplication.
+  (func $bytes.parse-u64
+    (param $b $bytes)
+    (param $start i32)
+    (param $length i32)
+    (param $limit i64)
+    (result (@inst $option i64))
+    (@effect pure)
+    (if
+      (result (@inst $option i64))
+      (| (i32.eqz $length) (i32.gt_u $start (@bytes.len $b)))
+      (then (@option.none))
+      (else
+        (if
+          (result (@inst $option i64))
+          (i32.gt_u $length (- (@bytes.len $b) $start))
+          (then (@option.none))
+          (else
+            (@let
+              (($cutoff (i64.div_u $limit 10))
+               ($last (i32.wrap_i64 (i64.rem_u $limit 10)))
+               ($end (+ $start $length)))
+              (@loop $digits
+                (bind $i i32 $start)
+                (bind $n i64 0)
+                (result (@inst $option i64))
+                (if
+                  (result (@inst $option i64))
+                  (= $i $end)
+                  (then (@option.some $n))
+                  (else
+                    (@let $d (- (@bytes.get $b $i) 48)
+                      (if
+                        (result (@inst $option i64))
+                        (|
+                          (i32.gt_u $d 9)
+                          (|
+                            (i64.gt_u $n $cutoff)
+                            (& (= $n $cutoff) (i32.gt_u $d $last))))
+                        (then (@option.none))
+                        (else
+                          (@recur $digits (+ $i 1) (+ (* $n 10) (i64.extend_i32_u $d))))
+                      ))))
+              ))))
+      )))
+  (type $Array (array (mut i32)))
+  (func $bytes.concat
+    (param $a $bytes)
+    (param $b $bytes)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let $n (+ (@bytes.len $a) (@bytes.len $b))
+      (if
+        (result $bytes)
+        (i32.lt_u $n (@bytes.len $a))
+        (then (unreachable))
+        (else
+          (@let $out (array.new $Array 0 $n)
+            (@loop $copy
+              (bind $i i32 0)
+              (result $bytes)
+              (if
+                (result $bytes)
+                (= $i $n)
+                (then (@bytes.from-array $Array $out))
+                (else
+                  (block
+                    (result $bytes)
+                    (array.set $Array $out $i
+                      (if
+                        (result i32)
+                        (i32.lt_u $i (@bytes.len $a))
+                        (then (@bytes.get $a $i))
+                        (else (@bytes.get $b (- $i (@bytes.len $a))))
+                      ))
+                    (@recur $copy (+ $i 1))))
+              ))))
+      ))))

@@ -1,0 +1,278 @@
+{
+  "schema": "walz-js-native-size-v1",
+  "created": "2026-11-10T18:24:37.457Z",
+  "captureHash": "c03af0dc3003f8d47677395071bfbd42cd4431cb5422f9ac57e15b92a4ea1bd6",
+  "node": "v24.22.2",
+  "vite": "8.3.7",
+  "optimizer": {
+    "version": "wasm-opt version 133 (version_133)",
+    "sha256": "81041e09f332df94db1c2009a64d8f3b85f0431a2c920ccd014d3ceebb343402"
+  },
+  "method": "Same Vite ES/oxc and gzip9/Brotli11 method as the previous codec. Native Wasm kept external and counted separately; maps and unused files excluded. O3 uses explicit features, open world, preserves traps. Bundled outputs are actually instantiated and fully checked.",
+  "variants": {
+    "utf8": {
+      "js": {
+        "raw": 8083,
+        "gzip": 3251,
+        "brotli": 2856,
+        "entry": "utf8-js/walz-runtime.js",
+        "assets": {
+          "walz-runtime.js": {
+            "raw": 7081,
+            "gzip": 2608,
+            "brotli": 2298,
+            "sha256": "5657d3625f2524f197fac3b1d01cf23777f88d278d81066b40cae34fe87ce7e1"
+          },
+          "__vite-browser-external-q4xEsQeL.js": {
+            "raw": 226,
+            "gzip": 198,
+            "brotli": 157,
+            "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+          },
+          "rolldown-runtime-CYdcPHCu.js": {
+            "raw": 776,
+            "gzip": 445,
+            "brotli": 401,
+            "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+          }
+        },
+        "inlinedAssetHashes": [],
+        "modules": [
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8/runtime.mjs",
+            "renderedLength": 4937
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8/bindings.mjs",
+            "renderedLength": 3037
+          },
+          {
+            "path": "\u0000rolldown/runtime.js",
+            "renderedLength": 1155
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8/index.js",
+            "renderedLength": 405
+          },
+          {
+            "path": "__vite-browser-external",
+            "renderedLength": 146
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8.entry.mjs",
+            "renderedLength": 0
+          }
+        ]
+      },
+      "wasm": {
+        "raw": 11600,
+        "gzip": 5034,
+        "brotli": 4540,
+        "sha256": "0eba5b605a993f8a6c244a2fa92014ea482e70d04c47da6423f82a1a92a1c719"
+      },
+      "total": {
+        "raw": 19683,
+        "gzip": 8285,
+        "brotli": 7396
+      }
+    },
+    "utf8-O3": {
+      "js": {
+        "raw": 8092,
+        "gzip": 3254,
+        "brotli": 2859,
+        "entry": "utf8-O3-js/walz-runtime.js",
+        "assets": {
+          "walz-runtime.js": {
+            "raw": 7090,
+            "gzip": 2611,
+            "brotli": 2301,
+            "sha256": "b518f7cf4a708b4d53d0cab54c0126279a4bee69a0f3822332f43897a1ba1eed"
+          },
+          "__vite-browser-external-q4xEsQeL.js": {
+            "raw": 226,
+            "gzip": 198,
+            "brotli": 157,
+            "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+          },
+          "rolldown-runtime-CYdcPHCu.js": {
+            "raw": 776,
+            "gzip": 445,
+            "brotli": 401,
+            "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+          }
+        },
+        "inlinedAssetHashes": [],
+        "modules": [
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8-O3/runtime.mjs",
+            "renderedLength": 4940
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8-O3/bindings.mjs",
+            "renderedLength": 3040
+          },
+          {
+            "path": "\u0000rolldown/runtime.js",
+            "renderedLength": 1155
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8-O3/index.js",
+            "renderedLength": 408
+          },
+          {
+            "path": "__vite-browser-external",
+            "renderedLength": 146
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/utf8-O3.entry.mjs",
+            "renderedLength": 0
+          }
+        ]
+      },
+      "wasm": {
+        "raw": 5285,
+        "gzip": 2715,
+        "brotli": 2491,
+        "sha256": "a1794feb74e476d5125a12b44f445a9d2da945b4a0ce50fddfc5003738b794a7"
+      },
+      "total": {
+        "raw": 13377,
+        "gzip": 5969,
+        "brotli": 5350
+      }
+    },
+    "js-strings": {
+      "js": {
+        "raw": 8156,
+        "gzip": 3254,
+        "brotli": 2884,
+        "entry": "js-strings-js/walz-runtime.js",
+        "assets": {
+          "walz-runtime.js": {
+            "raw": 7154,
+            "gzip": 2611,
+            "brotli": 2326,
+            "sha256": "3e06dd24bf8921b61b63e28ca590400c5d9af9b134eab3d529854a3525449b8d"
+          },
+          "__vite-browser-external-q4xEsQeL.js": {
+            "raw": 226,
+            "gzip": 198,
+            "brotli": 157,
+            "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+          },
+          "rolldown-runtime-CYdcPHCu.js": {
+            "raw": 776,
+            "gzip": 445,
+            "brotli": 401,
+            "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+          }
+        },
+        "inlinedAssetHashes": [],
+        "modules": [
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings/runtime.mjs",
+            "renderedLength": 4943
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings/bindings.mjs",
+            "renderedLength": 3103
+          },
+          {
+            "path": "\u0000rolldown/runtime.js",
+            "renderedLength": 1155
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings/index.js",
+            "renderedLength": 410
+          },
+          {
+            "path": "__vite-browser-external",
+            "renderedLength": 146
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings.entry.mjs",
+            "renderedLength": 0
+          }
+        ]
+      },
+      "wasm": {
+        "raw": 11874,
+        "gzip": 5174,
+        "brotli": 4660,
+        "sha256": "3a0d2a59dc3e0a2fc9ce3949a47867601caa0e29065e298cfe55d949e4002c34"
+      },
+      "total": {
+        "raw": 20030,
+        "gzip": 8428,
+        "brotli": 7544
+      }
+    },
+    "js-strings-O3": {
+      "js": {
+        "raw": 8165,
+        "gzip": 3257,
+        "brotli": 2874,
+        "entry": "js-strings-O3-js/walz-runtime.js",
+        "assets": {
+          "walz-runtime.js": {
+            "raw": 7163,
+            "gzip": 2614,
+            "brotli": 2316,
+            "sha256": "b5e288ea99046586bbaf045f8080c9fab4a344f188549810cff96f258da9136f"
+          },
+          "__vite-browser-external-q4xEsQeL.js": {
+            "raw": 226,
+            "gzip": 198,
+            "brotli": 157,
+            "sha256": "db7ff7bfe95922b0a06e296e4ba02f989dc215abb5361a6bbe675a99fd329768"
+          },
+          "rolldown-runtime-CYdcPHCu.js": {
+            "raw": 776,
+            "gzip": 445,
+            "brotli": 401,
+            "sha256": "fdc73b39de44f9840817ff01d78c2ad013ca2c2d7824dfe881b902263e952da8"
+          }
+        },
+        "inlinedAssetHashes": [],
+        "modules": [
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings-O3/runtime.mjs",
+            "renderedLength": 4946
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings-O3/bindings.mjs",
+            "renderedLength": 3106
+          },
+          {
+            "path": "\u0000rolldown/runtime.js",
+            "renderedLength": 1155
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings-O3/index.js",
+            "renderedLength": 413
+          },
+          {
+            "path": "__vite-browser-external",
+            "renderedLength": 146
+          },
+          {
+            "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/flatbuffers/20261111-js-native-v1/sizes-final/js-strings-O3.entry.mjs",
+            "renderedLength": 0
+          }
+        ]
+      },
+      "wasm": {
+        "raw": 5440,
+        "gzip": 2829,
+        "brotli": 2627,
+        "sha256": "633cb83958b3f346115709cdb50be357f7598f2857596abde9ee8b95e86395e4"
+      },
+      "total": {
+        "raw": 13605,
+        "gzip": 6086,
+        "brotli": 5501
+      }
+    }
+  }
+}

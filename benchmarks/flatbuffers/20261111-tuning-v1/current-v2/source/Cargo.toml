@@ -1,0 +1,58 @@
+[package]
+name = "walz"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+default-run = "walz"
+description = "A small typed language extending WAT for Wasm GC"
+repository = "https://github.com/mizchi/walz-lang"
+readme = "README.md"
+license = "Apache-2.0"
+
+[workspace]
+members = [".", "crates/walz-web"]
+default-members = ["."]
+
+[[bench]]
+name = "frontend"
+harness = false
+
+[[example]]
+name = "stdlib-docs"
+path = "tools/stdlib-docs.rs"
+
+[[example]]
+name = "json-bench"
+path = "tools/json-bench.rs"
+
+[[example]]
+name = "bench-capture"
+path = "tools/bench-capture.rs"
+
+[dependencies]
+wat = "=1.262.0"
+wast = "=262.0.0"
+wasmparser = "=0.262.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+wit-parser = "=0.262.0"
+same-file = "1.0.6"
+wasmprinter = "=0.262.0"
+wasm-encoder = "=0.262.0"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ctrlc = { version = "3.5.2", features = ["termination"] }
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1.6", features = ["process"] }
+
+[build-dependencies]
+wast = "=262.0.0"
+
+[profile.dev]
+debug = 0
+
+[dev-dependencies]
+criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support", "html_reports"] }

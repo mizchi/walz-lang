@@ -9,6 +9,8 @@ Import the needed functions and types from `walz:core` explicitly. Sources bundl
 Use `$option.ok-or` / `$result.map-err` for Option→Result and error conversion. See [evaluation order and constraints](../../docs/option-result.md).
 For complete types, type constraints, and effects, see the [generated standard API list](../../docs/stdlib-api.md). Update it from public declarations with `just stdlib-docs` and check source agreement with `just check-stdlib-docs`.
 The standard string type is `$string`. `bytes-view.walz` / `string-view.walz` provide [zero-copy views](../../docs/views.md), distinguishing shared subranges from explicit copies.
+`$string-view.from-bytes-view` validates only the visible UTF-8 bytes and returns an optional shared string view. `$bytes-view.to-string` explicitly validates/materializes an owned string; invalid UTF-8 returns none before copying.
+`bytes.walz` and `bytes-view.walz` also expose [fixed-width endian-specific readers](../../docs/byte-access.md). Mutable packed i8 arrays use explicit `@array.write-*` operations; bytes remain immutable.
 `dict.walz` provides generic dictionaries with text keys; `list-builder.walz` constructs immutable lists. See [collections](../../docs/collections.md) for type constraints, mutation, and snapshot contracts.
 
 ```wat
@@ -48,6 +50,13 @@ See [static modules and DCE](../../docs/static-modules.md) for details. `include
 | json.walz | `$json.object-builder.finish(o)` | Returns JSON-object text and resets to empty; repeated finish returns `{}` |
 
 Search, splitting, and integer parsing have semantic effect `pure`. Physical GC allocation to store values may still occur.
+
+`checked-integer.walz` provides `$i32.checked-add-u`, `$i32.checked-mul-u`, and
+`$i32.checked-align-up-u`, with matching `$i64.*` functions. They interpret unsigned
+bit patterns and return Option; overflow and invalid alignment give none.
+Alignment must be a nonzero power of two. Buffer/application limits are separate.
+See [checked integers](../../docs/checked-integers.md) and the
+[layout example](../../examples/checked-layout.walz).
 Positions and lengths are treated as unsigned i32 bit patterns. `-1` is the maximum value and an invalid parsing range.
 No string normalization or Unicode character/grapheme-count operations are performed. Splitting on an empty separator returns `(empty, original value)`.
 bytes splitting accepts arbitrary byte sequences; text splitting preserves valid UTF-8 boundaries.

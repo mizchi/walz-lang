@@ -69,10 +69,16 @@ impl Reader<'_> {
                 _ => {
                     // Includes WAT quoted identifiers, whose embedded quotes and
                     // braces must remain part of the same token.
-                    wast::lexer::Lexer::new(self.source)
-                        .parse(&mut self.offset)
-                        .map_err(|e| self.error(start, &e.to_string()))?
-                        .ok_or_else(|| self.error(start, "expected token"))?;
+                    let end = crate::sexpr::applications::end(self.source, start)
+                        .or_else(|| crate::sexpr::applications::compact_end(self.source, start));
+                    if let Some(end) = end {
+                        self.offset = end;
+                    } else {
+                        wast::lexer::Lexer::new(self.source)
+                            .parse(&mut self.offset)
+                            .map_err(|e| self.error(start, &e.to_string()))?
+                            .ok_or_else(|| self.error(start, "expected token"))?;
+                    }
                     nodes.push(Node::Token(self.source[start..self.offset].to_owned()));
                 }
             }

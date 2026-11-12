@@ -57,6 +57,7 @@ fn entry(name: &str) -> bool {
             | "stream"
     ) || [
         "closure.",
+        "array.write-",
         "newtype.",
         "list.",
         "bytes.",

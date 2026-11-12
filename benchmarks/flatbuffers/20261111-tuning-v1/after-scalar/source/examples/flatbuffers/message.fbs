@@ -1,0 +1,19 @@
+namespace Walz.Example;
+
+table Child {
+  count:int;
+  label:string;
+}
+
+table Message {
+  id:long;
+  name:string;
+  values:[int];
+  payload:[ubyte];
+  enabled:bool = true;
+  weight:double;
+  child:Child;
+}
+
+root_type Message;
+file_identifier "WLZF";

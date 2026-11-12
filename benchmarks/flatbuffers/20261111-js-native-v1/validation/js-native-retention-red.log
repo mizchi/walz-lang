@@ -1,0 +1,25 @@
+✖ experimental utf8: native values preserve UTF-8, bounds, snapshots and Result errors (4817.569708ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4873.774042
+
+✖ failing tests:
+
+test at runtime/js-native.test.mjs:16:41
+✖ experimental utf8: native values preserve UTF-8, bounds, snapshots and Result errors (4817.569708ms)
+  AssertionError [ERR_ASSERTION]: keeping a failed-call error must not retain its guest memory
+      at TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/js-native.test.mjs:73:11)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

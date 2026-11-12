@@ -1,0 +1,39 @@
+[WebServer] (node:87904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:87904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] Browser fixtures: 8/89 (14s)
+[WebServer] Browser fixtures: 16/89 (21s)
+[WebServer] Browser fixtures: 24/89 (30s)
+[WebServer] Browser fixtures: 32/89 (38s)
+[WebServer] Browser fixtures: 40/89 (46s)
+[WebServer] Browser fixtures: 48/89 (53s)
+[WebServer] Browser fixtures: 56/89 (60s)
+[WebServer] Browser fixtures: 64/89 (68s)
+[WebServer] Browser fixtures: 72/89 (76s)
+[WebServer] Browser fixtures: 80/89 (85s)
+[WebServer] Browser fixtures: 88/89 (93s)
+[WebServer] Browser fixtures: 89/89 (94s)
+
+Running 16 tests using 1 worker
+
+(node:95855) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 runtime/e2e/flatbuffers.spec.mjs:4:3 › core: direct FlatBuffers loads actual browser Wasm assets (155ms)
+  ✓   2 runtime/e2e/flatbuffers.spec.mjs:4:3 › core: bundled FlatBuffers loads actual browser Wasm assets (69ms)
+  ✓   3 runtime/e2e/flatbuffers.spec.mjs:4:3 › component: direct FlatBuffers loads actual browser Wasm assets (74ms)
+  ✓   4 runtime/e2e/flatbuffers.spec.mjs:4:3 › component: bundled FlatBuffers loads actual browser Wasm assets (67ms)
+  ✓   5 runtime/e2e/jspi.spec.mjs:5:5 › component › Chromium resumes GC code through real JSPI while the browser event loop progresses (188ms)
+  ✓   6 runtime/e2e/jspi.spec.mjs:48:5 › component › browser bindings lift futures, streams and canonical variant values (85ms)
+  ✓   7 runtime/e2e/jspi.spec.mjs:85:5 › component › a rejected host call settles the caller and traps the instance (69ms)
+  ✓   8 runtime/e2e/jspi.spec.mjs:109:5 › component › browser task cancellation unwinds catch_all, closes owners and preserves the instance (102ms)
+  ✓   9 runtime/e2e/jspi.spec.mjs:161:5 › component › browser cancellation detaches pending future and stream buffers before disposal (101ms)
+  ✓  10 runtime/e2e/jspi.spec.mjs:218:5 › component › browser bytes/text ABI preserves UTF-8 and releases nested canonical allocations (77ms)
+  ✓  11 runtime/e2e/jspi.spec.mjs:5:5 › core › Chromium resumes GC code through real JSPI while the browser event loop progresses (113ms)
+  ✓  12 runtime/e2e/jspi.spec.mjs:48:5 › core › browser bindings lift futures, streams and canonical variant values (59ms)
+  ✓  13 runtime/e2e/jspi.spec.mjs:85:5 › core › a rejected host call settles the caller and traps the instance (58ms)
+  ✓  14 runtime/e2e/jspi.spec.mjs:109:5 › core › browser task cancellation unwinds catch_all, closes owners and preserves the instance (79ms)
+  ✓  15 runtime/e2e/jspi.spec.mjs:161:5 › core › browser cancellation detaches pending future and stream buffers before disposal (62ms)
+  ✓  16 runtime/e2e/jspi.spec.mjs:218:5 › core › browser bytes/text ABI preserves UTF-8 and releases nested canonical allocations (75ms)
+
+  16 passed (1.6m)

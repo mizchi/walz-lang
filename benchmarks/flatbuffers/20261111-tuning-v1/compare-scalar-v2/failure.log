@@ -1,0 +1,49 @@
+small.encode.resident: 0.23 → 0.22 µs, 1.03×
+small.decode.resident: 0.11 → 0.11 µs, 1.06×
+small.encode.core: 2.48 → 2.45 µs, 1.01×
+small.decode.core: 2.95 → 2.91 µs, 0.99×
+small.encode.component: 8.08 → 7.34 µs, 1.08×
+
+<--- Last few GCs --->
+
+[77399:0xc5140c000]    24952 ms: Mark-Compact 3354.2 (3470.6) -> 3325.7 (3479.6) MB, pooled: 0 MB, 502.12 / 0.00 ms  (average mu = 0.175, current mu = 0.066) testing; GC in old space requested
+[77399:0xc5140c000]    25490 ms: Mark-Compact 3363.1 (3481.9) -> 3336.3 (3490.6) MB, pooled: 0 MB, 504.67 / 0.00 ms  (average mu = 0.122, current mu = 0.061) testing; GC in old space requested
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x10454760c node::(anonymous namespace)::DefaultAbortHandler(char const*, char const*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 2: 0x104547870 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 3: 0x1047dad94 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 4: 0x104a3ac88 v8::internal::Heap::stack() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 5: 0x104a3e05c v8::internal::Heap::HasLowYoungGenerationAllocationRate() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 6: 0x104a4f250 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 7: 0x104a4eb24 void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 8: 0x105413fd8 PushAllRegistersAndIterateStack [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+ 9: 0x104a3898c v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+10: 0x1049b4a8c v8::internal::(anonymous namespace)::InvokeGC(v8::Isolate*, v8::internal::(anonymous namespace)::GCOptions) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+11: 0x1049b3f78 v8::internal::GCExtension::GC(v8::FunctionCallbackInfo<v8::Value> const&) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+12: 0x10546a818 Builtins_CallApiCallbackGeneric [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+13: 0x12452d4ac 
+14: 0x1054a77e8 Builtins_AsyncFunctionAwaitResolveClosure [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+15: 0x10557ce58 Builtins_PromiseFulfillReactionJob [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+16: 0x105496bd0 Builtins_RunMicrotasks [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+17: 0x1054667b0 Builtins_JSRunMicrotasksEntry [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+18: 0x10497e508 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+19: 0x10497ed7c v8::internal::(anonymous namespace)::InvokeWithTryCatch(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+20: 0x10497eeb8 v8::internal::Execution::TryRunMicrotasks(v8::internal::Isolate*, v8::internal::MicrotaskQueue*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+21: 0x1049ae5b8 v8::internal::MicrotaskQueue::RunMicrotasks(v8::internal::Isolate*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+22: 0x1049aef18 v8::internal::MicrotaskQueue::PerformCheckpoint(v8::Isolate*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+23: 0x1044130b8 node::InternalCallbackScope::Close() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+24: 0x104412a90 node::InternalCallbackScope::~InternalCallbackScope() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+25: 0x10454d270 node::fs::FileHandle::CloseReq::Resolve() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+26: 0x1045690f4 node::fs::FileHandle::ClosePromise()::$_0::__invoke(uv_fs_s*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+27: 0x10453d244 node::MakeLibuvRequestCallback<uv_fs_s, void (*)(uv_fs_s*)>::Wrapper(uv_fs_s*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+28: 0x10543fef0 uv__work_done [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+29: 0x105443940 uv__async_io [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+30: 0x105458238 uv__io_poll [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+31: 0x105444294 uv_run [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+32: 0x1044146a8 node::SpinEventLoopInternal(node::Environment*) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+33: 0x1045a3828 node::NodeMainInstance::Run() [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+34: 0x1044f3dfc node::Start(int, char**) [/Users/mz/.local/share/mise/installs/node/24.22.2/bin/node]
+35: 0x1874144e4 start [/usr/lib/dyld]

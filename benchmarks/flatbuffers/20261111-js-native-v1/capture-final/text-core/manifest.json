@@ -1,0 +1,121 @@
+{
+  "abi": "walz-core-js-v2",
+  "esm": {
+    "exports": {
+      "bytes": {
+        "jsName": "bytes",
+        "params": [
+          "bytes"
+        ],
+        "result": "bytes",
+        "suspends": false
+      },
+      "concat": {
+        "jsName": "concat",
+        "params": [
+          "text",
+          "text"
+        ],
+        "result": "text",
+        "suspends": false
+      },
+      "echo": {
+        "jsName": "echo",
+        "params": [
+          "text"
+        ],
+        "result": "text",
+        "suspends": false
+      },
+      "floats": {
+        "jsName": "floats",
+        "params": [
+          "(list f32)"
+        ],
+        "result": "(list f32)",
+        "suspends": false
+      },
+      "from-bytes": {
+        "jsName": "fromBytes",
+        "params": [
+          "bytes"
+        ],
+        "result": "(option text)",
+        "suspends": false
+      },
+      "length": {
+        "jsName": "length",
+        "params": [
+          "text"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "length-catch": {
+        "jsName": "lengthCatch",
+        "params": [
+          "text"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "literal": {
+        "jsName": "literal",
+        "params": [],
+        "result": "text",
+        "suspends": false
+      },
+      "longs": {
+        "jsName": "longs",
+        "params": [
+          "(list i64)"
+        ],
+        "result": "(list i64)",
+        "suspends": false
+      },
+      "nested": {
+        "jsName": "nested",
+        "params": [
+          "(list (list i32))"
+        ],
+        "result": "(list (list i32))",
+        "suspends": false
+      },
+      "options": {
+        "jsName": "options",
+        "params": [
+          "(option (option text))"
+        ],
+        "result": "(option (option text))",
+        "suspends": false
+      },
+      "trap": {
+        "jsName": "trap",
+        "params": [],
+        "result": "unit",
+        "suspends": false
+      },
+      "unit-list": {
+        "jsName": "unitList",
+        "params": [
+          "(list unit)"
+        ],
+        "result": "(list unit)",
+        "suspends": false
+      },
+      "units": {
+        "jsName": "units",
+        "params": [
+          "(pair unit (option unit))"
+        ],
+        "result": "(pair unit (option unit))",
+        "suspends": false
+      }
+    },
+    "schema": "walz-esm-v1"
+  },
+  "imports": [],
+  "sourceFiles": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/tests/component-fixtures/js-native.walz"
+  ]
+}

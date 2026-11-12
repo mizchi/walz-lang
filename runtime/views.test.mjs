@@ -65,6 +65,37 @@ for (const backend of ["core", "component"])
       assert.equal(await pending, "🦀");
       clean();
 
+      const frame = Uint8Array.of(255, ...encoder.encode("\ufeff日🦀"), 255);
+      const delayed = new Promise(resolve => { resume = resolve; });
+      const validated = api.afterBytes(frame, 1, frame.length - 2, delayed);
+      await tick();
+      frame.fill(255); // Guest has entered suspension with its immutable input.
+      if (global.gc) await collect();
+      resume();
+      assert.equal(await validated, "\ufeff日🦀");
+      clean();
+
+      for (const cancel of [false, true]) {
+        const scope = await make();
+        let deliver, reject;
+        const pause = new Promise((resolve, fail) => { deliver = resolve; reject = fail; });
+        const task = scope.start("afterBytes", [encoder.encode("a".repeat(65536)), 0, 65536, pause]);
+        const failed = task.result.then(() => null, error => error);
+        await tick();
+        if (global.gc) await collect();
+        if (cancel) {
+          assert.equal((await task.cancel()).status, "cancelled");
+          assert.equal((await failed).name, "TaskCancelledError");
+          deliver();
+        } else {
+          reject(new Error("UTF-8 view suspension failed"));
+          assert.ok(await failed);
+          await task.done;
+        }
+        await tick();
+        scope.clean();
+      }
+
       // A Wasm trap terminates an instance; isolate each invalid input.
       for (const [method, args] of [
         ["bytes", [new Uint8Array([1, 2, 3]), -1, 0, 0, 0]],

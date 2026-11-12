@@ -6,6 +6,7 @@ import {build as buildSuccinct} from './succinct/build.mjs';
 import {buildWasmUse} from './testing/wasm-use.mjs';
 import { build } from "./build.mjs";
 import { build as buildCore } from "./build-core.mjs";
+import { bundle } from "./flatbuffers-size.mjs";
 import {execFile as execFileCallback} from 'node:child_process';
 import {promisify} from 'node:util';
 const directory = resolve("target/browser-tests");
@@ -24,6 +25,16 @@ const privateCells = join(directory, "atomic-cells-private.walz");
 await writeFile(privateCells, (await readFile("tests/component-fixtures/atomic-cells.walz", "utf8"))
   .replace('(import "env" "memory" (memory $shared 1 1 shared))', '(memory $shared 1 1 shared)'));
 const jobs=[];
+for (const [backend, compile] of [["core", buildCore], ["component", build]]) jobs.push(async () => {
+  const source = join(directory, backend, "flatbuffers"), output = join(directory, backend, "flatbuffers-bundled");
+  await compile("examples/flatbuffers/main.walz", source);
+  await rm(output, { recursive: true, force: true });
+  await mkdir(output, { recursive: true });
+  const result = await bundle(`export {instantiate} from ${JSON.stringify(join(source, "index.js"))};`, "codec", output);
+  if (backend === "core") for (const name of ["core.wasm", "memory.wasm"])
+    await copyFile(join(source, name), join(output, "codec-js", name));
+  await writeFile(join(output, "entry.json"), JSON.stringify({ entry: result.entry }));
+});
 jobs.push(()=>buildWasmUse(join(directory,'component/wasm-use')));
 for(const backend of ['core','component'])jobs.push(()=>buildSuccinct(join(directory,backend,'succinct'),{backend}));
 for (const [backend, compile] of [
@@ -36,6 +47,15 @@ for (const [backend, compile] of [
       `tests/component-fixtures/${name}.walz`,
     ]),
     ["interface-types", "tests/component-fixtures/interface-types.walz"],
+    ["packed-arrays", "tests/component-fixtures/packed-arrays.walz"],
+    ["byte-access", "tests/component-fixtures/byte-access.walz"],
+    ["utf8-views", "tests/component-fixtures/utf8-views.walz"],
+    ["checked-integers", "tests/component-fixtures/checked-integers.walz"],
+    ["checked-layout", "examples/checked-layout.walz"],
+    ["range-optimization", "tests/component-fixtures/range-optimization.walz"],
+    ["value-optimization", "tests/component-fixtures/value-optimization.walz"],
+    ["value-optimization-async", "tests/component-fixtures/value-optimization-async.walz"],
+    ["flatbuffers-pipeline", "examples/flatbuffers/pipeline.walz"],
     ...["wit-values","stream-batch","deadlines","local-cancellation","option-result","high-level","high-level-async","worker-job","user-macros"].map(name=>[name,`tests/component-fixtures/${name}.walz`]),
     ["wasm-bridge", "tests/component-fixtures/wasm-bridge.walz"],
     ["scoped-tasks", "tests/component-fixtures/scoped-tasks.walz"],

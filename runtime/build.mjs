@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { adaptJspiGlue } from "./jco-compat.mjs";
+import { bindCoreModuleUrls } from "./jco-urls.mjs";
 
 const execFile = promisify(execFileCallback);
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -32,6 +33,7 @@ export async function build(source, directory, options = {}) {
     bindgenEnableWasmExnref: true,
     multiMemory: true,
   });
+  const coreModuleNames = Object.keys(generated.files).filter(name => name.endsWith(".wasm")).sort();
   for (const [name, bytes] of Object.entries(generated.files)) {
     const path = resolve(output, name);
     if (!path.startsWith(output + "/"))
@@ -40,7 +42,9 @@ export async function build(source, directory, options = {}) {
     await writeFile(
       path,
       name.endsWith(".js")
-        ? adaptJspiGlue(new TextDecoder().decode(bytes))
+        ? (name === "component.js"
+            ? bindCoreModuleUrls(adaptJspiGlue(new TextDecoder().decode(bytes)), coreModuleNames)
+            : adaptJspiGlue(new TextDecoder().decode(bytes)))
         : bytes,
     );
   }

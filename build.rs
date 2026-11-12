@@ -33,9 +33,18 @@ mod sexpr;
 #[path = "src/standard_sources.rs"]
 mod sources;
 
+// Catalogue generation retains declarations and source spans. Type elaboration
+// belongs to the compiler; standard-library regression tests check that path.
+mod applications {
+    pub(crate) fn expand(_: &str, _: &mut crate::sexpr::Sexp, _: bool) -> Result<(), crate::Error> {
+        Ok(())
+    }
+}
+
 fn main() -> Result<(), Box<dyn StdError>> {
     for file in [
         "src/sexpr.rs",
+        "src/sexpr/applications.rs",
         "src/standard_catalogue.rs",
         "src/standard_sources.rs",
         "walz/core/types.walz",

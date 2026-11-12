@@ -158,6 +158,8 @@ Completion reports status=returned/cancelled/failed and started indicating wheth
 Cancellation is cooperative. It does not forcibly stop CPU-only work, roll back changes already made, or stop language-side producer tasks.
 If a custom host cannot finish an in-flight operation, completion confirmation keeps waiting. Failed cleanup returns failed and AggregateError and prevents reuse of the instance.
 For direct `api` calls, async exports execute sequentially. Synchronous exports remain synchronous and return busy errors while another task executes or cleans up. Use `start` to queue synchronous exports too.
+
+An idle synchronous `api` call keeps a cleanup record but does not create a public Task handle or result/completion Promises. Returned Future/thenable values remain values rather than being awaited internally. Asynchronous disposal still keeps the instance busy until cleanup finishes. `start()` always creates an observable queued task, including its cancellation acknowledgment and Result Promise.
 The Component ABI and manifest use version=2. Regenerate old output with `just build-js`.
 The Lean model verifies one-time receipt, delivery order, termination, and close, and is compared against actual Wasm execution.
 
@@ -196,3 +198,10 @@ See [SPEC.md](../SPEC.md#文字列ライブラリと配列のコピー) for the 
 Shared memory can be passed to Core＋JSPI through `imports: { env: { memory } }`. It is retained separately from ABI temporary memory and shares the host's `WebAssembly.Memory` itself. See [type, ownership, Worker, and Component boundaries](threads.md).
 
 To execute in another Worker, explicitly create a [generic WorkerHost](worker-host.md). A driver can instantiate another Core＋JSPI/Component program, await Futures, and return cloneable results. It provides per-task cancellation and join; CPU work needs cooperative cancellation checks. `@task.spawn` and GC references remain within the same agent. [Succinct indexes](succinct.md) also use the shared host.
+
+### Experimental synchronous JS output
+
+The [direct GC / JS string experiment](js-native-experiment.md) removes queued
+Task/resource machinery only for an explicitly selected synchronous shared-value
+profile. It keeps the stable Core＋JSPI and Component paths intact and measures
+native strings separately from smaller generic glue.

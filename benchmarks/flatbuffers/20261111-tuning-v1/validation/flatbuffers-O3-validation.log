@@ -1,0 +1,10 @@
+✔ core: FlatBuffers interoperates, validates hostile input and releases ABI handles (51.320417ms)
+✔ component: FlatBuffers interoperates, validates hostile input and releases ABI handles (60.861125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168.519833

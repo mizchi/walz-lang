@@ -1,0 +1,107 @@
+(module
+  (@use "walz:core" (type $list))
+  (@export
+    (opaque $array-view)
+    (func $array-view.new)
+    (func $array-view.len)
+    (func $array-view.get)
+    (func $array-view.slice)
+    (func $array-view.to-list))
+
+  ;; A concrete generic closure ties the element type to the nominal array
+  ;; type at construction, even if no get is ever called by the user.
+  (@closure $Reader
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (@capture $source (ref $A))
+    (param $index i32)
+    (result $T)
+    (@effect reads)
+    (array.get $A $source $index))
+
+  (type $array-view
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (struct
+      (field $reader (ref (@inst $Reader $T $A)))
+      (field $start i32)
+      (field $length i32)))
+  (type $Storage
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (array (mut $T)))
+
+  (func $array-view.new
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (param $source (ref $A))
+    (result (ref (@inst $array-view $T $A)))
+    (@effect allocates)
+    (@struct.new (@inst $array-view $T $A)
+      ($reader (@closure.new (@inst $Reader $T $A) $source))
+      ($start 0)
+      ($length (array.len $source))))
+
+  (func $array-view.len
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (param $v (ref (@inst $array-view $T $A)))
+    (result i32)
+    (@effect pure)
+    (struct.get (@inst $array-view $T $A) $length $v))
+
+  (func $array-view.get
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (param $v (ref (@inst $array-view $T $A)))
+    (param $index i32)
+    (result $T)
+    (@effect reads)
+    (if (result $T)
+      (i32.ge_u $index (call (@inst $array-view.len $T $A) $v))
+      (then (unreachable))
+      (else
+        (@closure.call (@inst $Reader $T $A)
+          (struct.get (@inst $array-view $T $A) $reader $v)
+          (+ (struct.get (@inst $array-view $T $A) $start $v) $index)))))
+
+  (func $array-view.slice
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (param $v (ref (@inst $array-view $T $A)))
+    (param $start i32)
+    (param $length i32)
+    (result (ref (@inst $array-view $T $A)))
+    (@effect allocates)
+    (@let $n (call (@inst $array-view.len $T $A) $v)
+      (if (result (ref (@inst $array-view $T $A)))
+        (|| (i32.gt_u $start $n) (i32.gt_u $length (- $n $start)))
+        (then (unreachable))
+        (else
+          (@struct.new (@inst $array-view $T $A)
+            ($reader (struct.get (@inst $array-view $T $A) $reader $v))
+            ($start (+ (struct.get (@inst $array-view $T $A) $start $v) $start))
+            ($length $length))))))
+
+  ;; Copy only the visible elements. No reader or source-array reference is
+  ;; stored in the returned list; reference-valued elements remain shared.
+  (func $array-view.to-list
+    (@type.params $T $A)
+    (@where (shared $T $A) (nonunit $T))
+    (param $v (ref (@inst $array-view $T $A)))
+    (result (@inst $list $T))
+    (@effect reads writes allocates)
+    (@let $n (call (@inst $array-view.len $T $A) $v)
+      (if (result (@inst $list $T)) (i32.eqz $n)
+        (then (@list.new $T))
+        (else
+          (@let $out
+            (array.new (@inst $Storage $T)
+              (call (@inst $array-view.get $T $A) $v 0) $n)
+            (block (result (@inst $list $T))
+              (@for $copy (bind $i i32 1)
+                (while (i32.lt_u $i $n)) (step (+ $i 1))
+                (array.set (@inst $Storage $T) $out $i
+                  (call (@inst $array-view.get $T $A) $v $i)))
+              (@list.from-array $T (@inst $Storage $T) $out)))))))
+)
