@@ -1,0 +1,29 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 1.01s
+     Running unittests src/lib.rs (target/debug/deps/walz-16ea6012cb2396fa)
+
+running 2 tests
+test regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls ... FAILED
+test regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views ... FAILED
+
+failures:
+
+---- regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls stdout ----
+
+thread 'regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls' (36592790) panicked at src/regions.rs:974:9:
+unchanged dependencies must not be reevaluated: 30/30
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views stdout ----
+
+thread 'regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views' (36592789) panicked at src/regions.rs:974:9:
+unchanged dependencies must not be reevaluated: 16/16
+
+
+failures:
+    regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views
+    regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

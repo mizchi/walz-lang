@@ -1,0 +1,4 @@
+Two completed 24-group runs; nine samples per variant.
+Identical inputs, tasks, controls, method and compiler hash.
+Only executed source change: walz/table/number-column.walz.
+All archived source and Wasm hashes verified.

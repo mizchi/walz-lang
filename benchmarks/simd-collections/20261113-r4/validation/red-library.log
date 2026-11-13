@@ -1,0 +1,39 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.96s
+     Running tests/simd_collections.rs (target/debug/deps/simd_collections-15fa0e7b1b0e99ef)
+
+running 3 tests
+test simd_collections_use_checked_gc_storage_and_vector_instructions ... FAILED
+test simd_collection_storage_is_opaque_and_effects_remain_checked ... FAILED
+test simd_collection_examples_execute_on_wasmtime ... FAILED
+
+failures:
+
+---- simd_collections_use_checked_gc_storage_and_vector_instructions stdout ----
+
+thread 'simd_collections_use_checked_gc_storage_and_vector_instructions' (35458253) panicked at tests/simd_collections.rs:5:80:
+called `Result::unwrap()` on an `Err` value: Error { diagnostic: Diagnostic { code: "E_TOOL", message: "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/simd-collections/portable.walz: No such file or directory (os error 2)", primary: None, related: [], notes: [], help: [] } }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- simd_collection_storage_is_opaque_and_effects_remain_checked stdout ----
+
+thread 'simd_collection_storage_is_opaque_and_effects_remain_checked' (35458252) panicked at tests/simd_collections.rs:30:49:
+called `Result::unwrap()` on an `Err` value: Error { diagnostic: Diagnostic { code: "E_TOOL", message: "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/bitmap.walz: No such file or directory (os error 2)", primary: None, related: [], notes: [], help: [] } }
+
+---- simd_collection_examples_execute_on_wasmtime stdout ----
+
+thread 'simd_collection_examples_execute_on_wasmtime' (35458251) panicked at tests/simd_collections.rs:42:5:
+ERROR tests/simd-collections.test.walz: No such file or directory (os error 2)
+0 passed; 0 failed; 1 errors; 0 filtered out
+
+
+
+
+failures:
+    simd_collection_examples_execute_on_wasmtime
+    simd_collection_storage_is_opaque_and_effects_remain_checked
+    simd_collections_use_checked_gc_storage_and_vector_instructions
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.01s
+
+error: test failed, to rerun pass `--test simd_collections`

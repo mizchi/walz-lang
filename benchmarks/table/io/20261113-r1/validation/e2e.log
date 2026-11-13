@@ -1,0 +1,14 @@
+[WebServer] (node:93941) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:93941) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:94133) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 runtime/e2e/table.spec.mjs:3:1 › resident table facade performs relational pipelines and joins in Chromium (212ms)
+  ✓  2 runtime/e2e/table.spec.mjs:55:46 › core: portable table snapshots preserve scalar values and clean ABI allocations (67ms)
+  ✓  3 runtime/e2e/table.spec.mjs:55:46 › component: portable table snapshots preserve scalar values and clean ABI allocations (84ms)
+
+  3 passed (10.8s)

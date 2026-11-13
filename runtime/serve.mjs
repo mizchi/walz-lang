@@ -7,6 +7,7 @@ import {buildWasmUse} from './testing/wasm-use.mjs';
 import { build } from "./build.mjs";
 import { build as buildCore } from "./build-core.mjs";
 import { bundle } from "./flatbuffers-size.mjs";
+import { build as buildTable } from "./table/build.mjs";
 import {execFile as execFileCallback} from 'node:child_process';
 import {promisify} from 'node:util';
 const directory = resolve("target/browser-tests");
@@ -25,6 +26,13 @@ const privateCells = join(directory, "atomic-cells-private.walz");
 await writeFile(privateCells, (await readFile("tests/component-fixtures/atomic-cells.walz", "utf8"))
   .replace('(import "env" "memory" (memory $shared 1 1 shared))', '(memory $shared 1 1 shared)'));
 const jobs=[];
+jobs.push(async () => {
+  const output = join(directory, "table");
+  await rm(output, { recursive: true, force: true });
+  await buildTable(output);
+  const result = await bundle(`export {instantiate,op,desc} from ${JSON.stringify(resolve("runtime/table/index.mjs"))};`, "table", output);
+  await writeFile(join(output, "entry.json"), JSON.stringify({ entry: result.entry }));
+});
 for (const [backend, compile] of [["core", buildCore], ["component", build]]) jobs.push(async () => {
   const source = join(directory, backend, "flatbuffers"), output = join(directory, backend, "flatbuffers-bundled");
   await compile("examples/flatbuffers/main.walz", source);
@@ -64,6 +72,9 @@ for (const [backend, compile] of [
     ["threads-private", privateThreads],
     ["atomic-cells-private", privateCells],
     ["simd-kernels", "examples/simd-kernels/portable.walz"],
+    ["simd-collections", "examples/simd-collections/portable.walz"],
+    ["dictionary-column", "examples/dictionary-column/portable.walz"],
+    ["table", "examples/table/portable.walz"],
     ["resources", "examples/resources/main.walz"],
     ["wit-bindings", "examples/wit/main.walz"],
     ["text-io", "examples/io/text-filter.walz"],

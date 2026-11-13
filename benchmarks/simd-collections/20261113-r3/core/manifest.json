@@ -1,0 +1,146 @@
+{
+  "abi": "walz-core-js-v2",
+  "esm": {
+    "exports": {
+      "between": {
+        "jsName": "between",
+        "params": [
+          "(list i32)",
+          "i32",
+          "i32"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "combine": {
+        "jsName": "combine",
+        "params": [
+          "i32",
+          "(list i32)",
+          "(list i32)",
+          "i32"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "complement": {
+        "jsName": "complement",
+        "params": [
+          "i32",
+          "(list i32)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "count": {
+        "jsName": "count",
+        "params": [
+          "i32",
+          "(list i32)"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "count-between": {
+        "jsName": "countBetween",
+        "params": [
+          "(list i32)",
+          "i32",
+          "i32"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "count-eq": {
+        "jsName": "countEq",
+        "params": [
+          "(list i32)",
+          "i32"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "equal": {
+        "jsName": "equal",
+        "params": [
+          "(list i32)",
+          "i32"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "get": {
+        "jsName": "get",
+        "params": [
+          "(list i32)",
+          "i32"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "indices": {
+        "jsName": "indices",
+        "params": [
+          "i32",
+          "(list i32)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "intersection-count": {
+        "jsName": "intersectionCount",
+        "params": [
+          "i32",
+          "(list i32)",
+          "(list i32)"
+        ],
+        "result": "i32",
+        "suspends": false
+      },
+      "query": {
+        "jsName": "query",
+        "params": [
+          "(list i32)",
+          "(list i32)",
+          "i32",
+          "i32",
+          "i32"
+        ],
+        "result": "(record (count i32) (sum i64) (indices (list i32)))",
+        "suspends": false
+      },
+      "roundtrip": {
+        "jsName": "roundtrip",
+        "params": [
+          "(list i32)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "sum": {
+        "jsName": "sum",
+        "params": [
+          "(list i32)"
+        ],
+        "result": "i64",
+        "suspends": false
+      },
+      "sum-where": {
+        "jsName": "sumWhere",
+        "params": [
+          "(list i32)",
+          "(list i32)"
+        ],
+        "result": "i64",
+        "suspends": false
+      }
+    },
+    "schema": "walz-esm-v1"
+  },
+  "imports": [],
+  "sourceFiles": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/simd-collections/portable.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/bitmap.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/i32-column.walz"
+  ]
+}

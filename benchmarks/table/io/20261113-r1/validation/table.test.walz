@@ -1,0 +1,39 @@
+(module
+  (@use "walz:core" (type $string) (type $list))
+  (@use "../walz/table/value.walz" (type $cell) (func $cell.new) (func $cell.number) (func $cell.compare))
+  (@use "../walz/table/engine.walz" (type $table) (type $column) (type $expr)
+    (func $column.new) (func $table.new) (func $table.num-rows) (func $table.column) (func $table.get)
+    (func $table.filter) (func $table.groupby) (func $table.rollup)
+    (func $expr.column) (func $expr.number) (func $expr.ge) (func $expr.lt) (func $expr.and) (func $expr.sum) (func $expr.count))
+  (@use "../walz/table/join.walz" (type $join-column) (func $join-column.new) (func $table.join))
+  (func $n (param $x i32) (result (ref $cell)) (@effect allocates) (call $cell.new 3 (f64.convert_i32_s $x) ""))
+  (func $input (result (ref $table)) (@effect reads writes allocates)
+    (call $table.new (@list.new (ref $column) (call $column.new "x" (@list.new (ref $cell)
+      (call $n 20) (call $n 100) (call $n 22) (call $n 3)))) 4))
+  (@test "table expressions filter and aggregate without mutating input"
+    (@let (($t (call $input)) ($x (call $expr.column 0))
+           ($selected (call $table.filter $t (call $expr.and (call $expr.ge $x (call $expr.number (f64.const 10)))
+             (call $expr.lt $x (call $expr.number (f64.const 30))))))
+           ($out (call $table.rollup $selected (@list.new $string "sum" "count")
+             (@list.new (ref $expr) (call $expr.sum $x) (call $expr.count)))))
+      (&& (= (call $table.num-rows $t) 4)
+        (&& (f64.eq (call $cell.number (call $table.get $out 0 0)) (f64.const 42))
+            (f64.eq (call $cell.number (call $table.get $out 1 0)) (f64.const 2))))))
+  (@test "grouping distinguishes invalid values but merges signed zero"
+    (@let (($t (call $table.new (@list.new (ref $column) (call $column.new "key" (@list.new (ref $cell)
+             (call $n 0) (call $cell.new 3 (f64.const -0) "") (call $cell.new 3 (f64.const nan) "")
+             (call $cell.new 1 (f64.const 0) "") (call $cell.new 0 (f64.const 0) "")))) 5))
+           ($grouped (call $table.groupby $t (@list.new (ref $column) (call $table.column $t 0))))
+           ($out (call $table.rollup $grouped (@list.new $string "count") (@list.new (ref $expr) (call $expr.count)))))
+      (&& (= (call $table.num-rows $out) 4) (f64.eq (call $cell.number (call $table.get $out 1 0)) (f64.const 2)))))
+  (@test "hash joins preserve multiplicity and append unmatched rows"
+    (@let (($a (call $table.new (@list.new (ref $column) (call $column.new "key"
+             (@list.new (ref $cell) (call $n 1) (call $n 2) (call $n 2)))) 3))
+           ($b (call $table.new (@list.new (ref $column) (call $column.new "key"
+             (@list.new (ref $cell) (call $n 2) (call $n 2) (call $n 3)))) 3))
+           ($keys (@list.new i32 0)) ($layout (@list.new (ref $join-column) (call $join-column.new "key" 0 0 0)))
+           ($out (call $table.join $a $b $keys $keys $layout 1)))
+      (&& (= (call $table.num-rows $out) 5) (f64.eq (call $cell.number (call $table.get $out 0 4)) (f64.const 1)))))
+  (@test "string ordering uses JS UTF-16 order for well-formed Unicode"
+    (< (call $cell.compare (call $cell.new 4 (f64.const 0) "🦀") (call $cell.new 4 (f64.const 0) "￿")) 0))
+)

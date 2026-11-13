@@ -1,0 +1,16 @@
+✔ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (2.106125ms)
+✔ bulk facade preserves scalar tags, special names and input/output snapshots (10.690625ms)
+✔ bulk transfer boundary calls scale with columns, not numeric cells (3.465375ms)
+✔ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (132.832667ms)
+✔ native table constructors reject malformed values, schemas and expression nodes (0.7395ms)
+✔ Walz table verbs agree with Arquero on immutable column pipelines (6.623041ms)
+✔ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (4.788334ms)
+✔ retained Walz tables release JS sources and discarded table wrappers (6.522667ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 237.871417

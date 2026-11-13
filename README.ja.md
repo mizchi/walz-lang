@@ -2,7 +2,11 @@
 
 [English](README.md) | 日本語
 
-Walz は、S式の WAT（WebAssembly Text Format）のスーパーセットを維持しながら、Wasm GC を前提にジェネリクスや高水準の命令を追加したプログラミング言語です。Wasm の意味論を保ちつつ、WAT をより書きやすくすることを目指しています。
+Walz は、JavaScript・TypeScriptから使う検索・集計・バイナリ処理エンジンなど、データ処理ライブラリをWebAssemblyで実装するための、WATのスーパーセット言語です。
+
+WATのS式構文とWasmの意味論を維持し、Wasm GCを前提にジェネリクスと高水準の操作を追加します。GCによる構造化データと明示的なSIMD命令を同じプログラムで扱い、型付き拡張コアでは型・effect・所有権を検査します。
+
+実装例には[Arquero風のテーブル処理](docs/table.md)、[列データの絞り込みと集計](docs/dictionary-column.md)、[bitmapと数値演算](docs/simd-collections.md)、[簡潔データ構造の索引](docs/succinct.md)、[JSON処理](docs/json-values.md)があります。データを計算内で保持し、必要に応じて処理をまとめます。[辞書列の検索](benchmarks/dictionary-column/README.md)と[テーブルの計測](benchmarks/table/README.md)では、保持済みデータの処理と、構築・ABI変換・入出力全体の費用を分けています。
 
 データ構造の抽象は、[WASI 0.3](https://github.com/WebAssembly/WASI/releases/tag/v0.3.0) の `result`・`option`・`stream`・`future` を想定し、WIT や Component Model との受け渡しがしやすい形にそろえています。これらの型は `walz:core` から明示的に import します。現在の ABI とホスト連携の対応範囲は [ランタイム](docs/runtime.md) を参照してください。
 

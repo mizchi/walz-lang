@@ -1,0 +1,22 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 1.09s
+     Running tests/table.rs (target/debug/deps/table-2b6f163c29d3516e)
+
+running 1 test
+test table_roots_keep_checked_ir_and_gc_storage ... FAILED
+
+failures:
+
+---- table_roots_keep_checked_ir_and_gc_storage stdout ----
+
+thread 'table_roots_keep_checked_ir_and_gc_storage' (36291050) panicked at tests/table.rs:21:5:
+numeric filters must emit SIMD comparisons
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    table_roots_keep_checked_ir_and_gc_storage
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 38.80s
+
+error: test failed, to rerun pass `--test table`

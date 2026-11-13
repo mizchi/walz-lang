@@ -1,0 +1,167 @@
+{
+  "schema": "walz-table-opt-probe-v1",
+  "created": "2026-11-13T05:39:40.770Z",
+  "node": "v24.22.2",
+  "v8": "13.6.233.17-node.63",
+  "cpu": "Apple M5",
+  "snapshot": "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/20261113-r2",
+  "captureSha256": "a00e3360025a5768cbd7d7f7b8c48d2645976df15f81ffa78bcd9f0da5f93d71",
+  "inputSha256": "9db7bba799e9f0afd5252d911fcf5fd0c015f9f92007f93088ae616a09357b57",
+  "optimizer": {
+    "version": "wasm-opt version 133 (version_133)",
+    "sha256": "81041e09f332df94db1c2009a64d8f3b85f0431a2c920ccd014d3ceebb343402",
+    "command": [
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/wasm-opt-research/binaryen-version_133/bin/wasm-opt",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/20261113-r2/kernel/core.wasm",
+      "--enable-gc",
+      "--enable-reference-types",
+      "--enable-exception-handling",
+      "--enable-bulk-memory",
+      "--enable-mutable-globals",
+      "--enable-multivalue",
+      "--enable-multimemory",
+      "--enable-simd",
+      "-O3",
+      "-g",
+      "-o",
+      "/Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/probes/20261113-wasm-opt-r2/optimized/core.wasm"
+    ],
+    "closedWorld": false,
+    "fastMath": false
+  },
+  "artifacts": {
+    "original": {
+      "bytes": 38084,
+      "sha256": "bcf09ae7380027fe0d22fe84fb1e9c0d76d58737b913f210d97c1d59a6f30934"
+    },
+    "O3": {
+      "bytes": 20449,
+      "sha256": "f168fba79e2746c0528110469373c4c658156334d57548f2610ed2351d4ce7eb"
+    }
+  },
+  "method": "Separate from profiles. Four variants, rotating order, nine 20ms batches, at least 500ms/32 calls warmup; forced GC and complete row validation outside clocks. Same captured JS facade and inputs; kernel postprocessing only. Not a full language/API conformance suite.",
+  "cases": [
+    {
+      "name": "simple",
+      "iterations": {
+        "simd.original": 7,
+        "simd.O3": 6,
+        "packed-scalar.original": 6,
+        "packed-scalar.O3": 6
+      },
+      "samplesUs": {
+        "simd.original": [
+          3065.0892857142285,
+          3185.5892857142862,
+          2838.7142857142994,
+          3316.6368571429693,
+          3137.511999999983,
+          3054.339285714247,
+          3294.3511428571323,
+          2878.898857142823,
+          3450.0118571426615
+        ],
+        "simd.O3": [
+          3057.4166666666165,
+          2789.132000000033,
+          3487.375000000005,
+          3158.3124999998895,
+          2916.6041666665783,
+          3126.6736666666475,
+          2819.972333333226,
+          2923.465333333297,
+          3012.965333333341
+        ],
+        "packed-scalar.original": [
+          4064.798666666699,
+          3354.277833333375,
+          3425.388833333424,
+          3542.3333333333176,
+          3460.9236666666825,
+          3645.861166666691,
+          3370.1179999999717,
+          3651.1458333334303,
+          3584.3195000000683
+        ],
+        "packed-scalar.O3": [
+          3493.569500000073,
+          3665.4929999999695,
+          3462.0833333333394,
+          3623.1666666665965,
+          3416.6666666666665,
+          3472.1249999999295,
+          3418.4444999999264,
+          3297.4444999999832,
+          3563.4513333334326
+        ]
+      },
+      "medianUs": {
+        "simd.original": 3137.511999999983,
+        "simd.O3": 3012.965333333341,
+        "packed-scalar.original": 3542.3333333333176,
+        "packed-scalar.O3": 3472.1249999999295
+      }
+    },
+    {
+      "name": "compound",
+      "iterations": {
+        "simd.original": 5,
+        "simd.O3": 5,
+        "packed-scalar.original": 2,
+        "packed-scalar.O3": 3
+      },
+      "samplesUs": {
+        "simd.original": [
+          4260.541599999851,
+          4725.54999999993,
+          4648.675000000003,
+          4130.983200000264,
+          4384.100000000035,
+          4339.9750000000495,
+          4369.733400000041,
+          4279.008400000021,
+          4170.624999999927
+        ],
+        "simd.O3": [
+          3804.108400000041,
+          4278.974999999991,
+          3996.366599999965,
+          3723.441599999933,
+          3992.333399999916,
+          4021.0081999997783,
+          4063.1334000001516,
+          4136.575000000084,
+          4329.516599999988
+        ],
+        "packed-scalar.original": [
+          6689.312499999687,
+          7791.146000000481,
+          8211.021000000073,
+          7558.416500000021,
+          7459.95800000037,
+          6709.416499999861,
+          6883.3749999994325,
+          7398.062499999469,
+          6856.979000000138
+        ],
+        "packed-scalar.O3": [
+          6107.250000000325,
+          6580.8886666666995,
+          6484.055666666488,
+          6034.9999999998545,
+          5599.416666666609,
+          5752.70833333343,
+          6023.388999999952,
+          6523.958333333212,
+          6018.486000000242
+        ]
+      },
+      "medianUs": {
+        "simd.original": 4339.9750000000495,
+        "simd.O3": 4021.0081999997783,
+        "packed-scalar.original": 7398.062499999469,
+        "packed-scalar.O3": 6034.9999999998545
+      }
+    }
+  ]
+}

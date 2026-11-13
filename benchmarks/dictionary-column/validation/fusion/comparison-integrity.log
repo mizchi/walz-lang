@@ -1,0 +1,9 @@
+Suite 2 runs have identical frozen executable sources, input/configuration hashes, executed artifacts and compiler-binary hashes. Inputs match suite 1.
+Full inventory differs only in these documentation files edited during the primary run:
+walz/simd/README.ja.md
+  r3 24e4d88a266dfd26daa9b3138144ea586db7a250379e81bb57b273539adf6d66
+  r4 3e239c3dc2d52848aed43156f037547d32e1770be2ae840f4fdc4c78bf553a1b
+walz/simd/README.md
+  r3 d7269512b59781f1b22720685fbd7c49fb4c0bec93e9f7fb829e0bd42b98302d
+  r4 15382af81d65b8d6d22af42d1b7775adbdba438316e7709e1f49678b86e96bbf
+No measured code or artifact changed between suite 2 runs.

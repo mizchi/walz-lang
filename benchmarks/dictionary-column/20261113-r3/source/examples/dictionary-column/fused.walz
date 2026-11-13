@@ -1,0 +1,11 @@
+(module
+  (@use "walz:core" (type $string) (type $list))
+  (@use "../../walz/simd/dictionary-column.walz"
+    (func $dictionary-column.from-list) (func $dictionary-column.query-between))
+  (@use "../../walz/simd/i32-column.walz" (type $i32-query-result) (func $i32-column.from-list))
+  (func $main (export "main") (result i64) (@effect reads writes allocates)
+    (@let (($countries (call $dictionary-column.from-list (@list.new $string "JP" "US" "JP" "FR")))
+           ($amounts (call $i32-column.from-list (@list.new i32 20 100 22 3)))
+           ($answer (call $dictionary-column.query-between $countries $amounts
+             (@list.new $string "JP" "JP" "missing") 10 30)))
+      (struct.get $i32-query-result $sum $answer))))

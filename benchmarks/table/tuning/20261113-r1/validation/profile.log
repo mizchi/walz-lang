@@ -1,0 +1,26 @@
+node --expose-gc runtime/table-profile.mjs 'benchmarks/table/tuning/20261113-r1/final' 'benchmarks/table/profiles/20261113-r2' ''
+scalar.compound: unprofiled 9303.0 us
+packed-scalar.compound: unprofiled 3066.6 us
+simd.compound: unprofiled 1686.4 us
+simd.simple: unprofiled 1217.4 us
+simd.ingest-only: unprofiled 6935.3 us
+simd.cold-ingest-filter: unprofiled 11669.4 us
+simd.materialize-only: unprofiled 16984.7 us
+simd.filter-materialize: unprofiled 17580.0 us
+arquero.compound: unprofiled 2761.4 us
+arquero.filter-materialize: unprofiled 5238.7 us
+simd.small-compound: unprofiled 39.2 us
+simd.nullable-compound: unprofiled 1728.1 us
+scalar.compound: walz-file-2.binary 44.4%, walz-file-2.eval 28.1%, walz-file-2.at 5.3%, walz-file-2.number 4.8%
+packed-scalar.compound: walz-file-2.numeric-mask 43.2%, walz-file-2.filter-packed 27.0%, walz-file-1.scalar 17.9%, walz-file-2.collect-masks 6.0%
+simd.compound: walz-file-2.filter-packed 48.1%, walz-file-1.number-column.compare-pair 19.1%, walz-file-2.numeric-mask 15.0%, walz-file-2.collect-masks 10.5%
+simd.simple: walz-file-2.collect-masks 55.0%, walz-file-2.filter-packed 31.2%, __list_from_61_20 5.3%, post 4.7%
+simd.ingest-only: (garbage collector) 55.2%, table 19.6%, cells-import 10.0%, post 5.6%
+simd.cold-ingest-filter: (garbage collector) 48.5%, table 17.3%, cells-import 7.4%, post 6.0%
+simd.materialize-only: objects 74.8%, (anonymous) 10.5%, post 4.8%, column-export 3.6%
+simd.filter-materialize: objects 69.1%, (anonymous) 9.1%, post 5.1%, walz-file-2.collect-masks 3.9%
+arquero.compound: (anonymous) 70.9%, filter 13.7%, _filter 8.4%, post 4.8%
+arquero.filter-materialize: (anonymous) 44.3%, scan 13.4%, (garbage collector) 10.0%, filter 7.8%
+simd.small-compound: walz-file-2.filter-packed 42.1%, walz-file-1.number-column.compare-pair 14.5%, walz-file-2.numeric-mask 12.3%, walz-file-2.collect-masks 8.5%
+simd.nullable-compound: walz-file-2.filter-packed 46.6%, walz-file-1.number-column.compare-pair 20.3%, walz-file-2.numeric-mask 14.6%, walz-file-2.collect-masks 12.3%
+node runtime/table-profile-analyze.mjs 'benchmarks/table/profiles/20261113-r2' 'benchmarks/table/profiles/20261113-r2/analysis.json'

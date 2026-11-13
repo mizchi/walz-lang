@@ -1,0 +1,9 @@
+20261113-r1 core archived artifacts relocate, execute, and release ABI values
+20261113-r1 component archived artifacts relocate, execute, and release ABI values
+20261113-r2 core archived artifacts relocate, execute, and release ABI values
+20261113-r2 component archived artifacts relocate, execute, and release ABI values
+Existing output refused: node:internal/fs/promises:1571
+  return await PromisePrototypeThen(
+         ^
+
+Existing report remains unchanged. All archived source/input/artifact hashes verified.

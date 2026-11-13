@@ -1,0 +1,17 @@
+(module
+  (@use "walz:core" (type $string) (type $list))
+  (@use "../../walz/table/value.walz" (type $cell) (func $cell.new) (func $cell.number))
+  (@use "../../walz/table/engine.walz" (type $column) (type $expr)
+    (func $column.new) (func $table.new) (func $table.filter) (func $table.rollup) (func $table.get)
+    (func $expr.column) (func $expr.number) (func $expr.ge) (func $expr.lt) (func $expr.and) (func $expr.sum))
+  (func $main (export "main") (result i32) (@effect reads writes allocates)
+    (@let (($amounts (call $column.new "amount" (@list.new (ref $cell)
+             (call $cell.new 3 (f64.const 20) "") (call $cell.new 3 (f64.const 100) "")
+             (call $cell.new 3 (f64.const 22) "") (call $cell.new 3 (f64.const 3) ""))))
+           ($table (call $table.new (@list.new (ref $column) $amounts) 4))
+           ($value (call $expr.column 0))
+           ($filtered (call $table.filter $table (call $expr.and
+             (call $expr.ge $value (call $expr.number (f64.const 10)))
+             (call $expr.lt $value (call $expr.number (f64.const 30))))))
+           ($result (call $table.rollup $filtered (@list.new $string "sum") (@list.new (ref $expr) (call $expr.sum $value)))))
+      (i32.trunc_f64_s (call $cell.number (call $table.get $result 0 0))))))

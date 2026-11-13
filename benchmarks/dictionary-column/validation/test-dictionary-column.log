@@ -1,0 +1,26 @@
+cargo test --locked --test dictionary_column
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.90s
+     Running tests/dictionary_column.rs (target/debug/deps/dictionary_column-a2e0121b2bcba6fc)
+
+running 3 tests
+test dictionary_storage_and_read_effects_are_not_bypassed ... ok
+test dictionary_columns_stay_in_the_checked_core_and_reuse_simd ... ok
+test dictionary_column_language_tests_execute_natively ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+node --expose-gc --test runtime/dictionary-column.test.mjs runtime/dictionary-bench.test.mjs
+✔ dictionary benchmark controls preserve complete results and distinguish precomputed indexes (3.654667ms)
+✔ dictionary benchmark references retain zero IDs, UTF-8 keys and strict validation (0.48225ms)
+✔ core: dictionary columns roundtrip exact values, validate codes, and compose SIMD selections (3169.10525ms)
+✔ component: dictionary columns roundtrip exact values, validate codes, and compose SIMD selections (2192.647709ms)
+✔ dictionary columns release construction inputs and keep dictionary, codes and selections independently (1083.68575ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6495.45375

@@ -1,0 +1,17 @@
+{"mode":"resident","operation":"intersection-count","n":128,"mediansUs":{"js":0.004698178875629244,"walzScalar":0.023341323619176495,"walz":0.021732134557122793}}
+{"mode":"resident","operation":"count-between","n":128,"mediansUs":{"js":0.05492243302583508,"jsBranchless":0.04211688829080817,"walzScalar":0.05536693698319671,"walz":0.03978758609699578}}
+{"mode":"resident","operation":"sum-where","n":128,"mediansUs":{"js":0.07295690738019729,"jsBranchless":0.06091357775987047,"walzScalar":0.09525889936957642,"walz":0.06556002038204445}}
+{"mode":"resident","operation":"intersection-count","n":4096,"mediansUs":{"js":0.12040496074947968,"walzScalar":0.07674353225991666,"walz":0.040304599759343876}}
+{"mode":"resident","operation":"count-between","n":4096,"mediansUs":{"js":3.5103133677113294,"jsBranchless":2.2716431971440105,"walzScalar":1.4751667988892065,"walz":0.8491753272512151}}
+{"mode":"resident","operation":"sum-where","n":4096,"mediansUs":{"js":4.1304964200478835,"jsBranchless":2.6579155999132036,"walzScalar":2.476956389672355,"walz":1.301710349316709}}
+{"mode":"resident","operation":"intersection-count","n":65536,"mediansUs":{"js":1.849427073668628,"walzScalar":0.9333635182779751,"walz":0.3771919651141335}}
+{"mode":"resident","operation":"count-between","n":65536,"mediansUs":{"js":119.16498265896219,"jsBranchless":36.983861271679324,"walzScalar":24.042630057809777,"walz":13.150289017338938}}
+{"mode":"resident","operation":"sum-where","n":65536,"mediansUs":{"js":152.46477235772974,"jsBranchless":41.347902439023215,"walzScalar":38.25880487804865,"walz":19.928861788618477}}
+{"mode":"resident","operation":"intersection-count","n":262144,"mediansUs":{"js":7.768949637542335,"walzScalar":3.5773243037010114,"walz":1.439844715757072}}
+{"mode":"resident","operation":"count-between","n":262144,"mediansUs":{"js":655.2625000000262,"jsBranchless":145.22640000001653,"walzScalar":95.74026666662878,"walz":51.525000000037835}}
+{"mode":"resident","operation":"sum-where","n":262144,"mediansUs":{"js":793.468320000029,"jsBranchless":163.33331999994698,"walzScalar":150.12163999999757,"walz":79.36163999998826}}
+{"mode":"one-shot","operation":"count-between","n":128,"mediansUs":{"js":0.10629453156453189,"jsBranchless":0.0847239646162814,"core":0.6272868918378127,"component":3.736647165259012}}
+{"mode":"one-shot","operation":"count-between","n":4096,"mediansUs":{"js":3.6038561244332814,"jsBranchless":2.2442887232666284,"core":4.82534024627337,"component":8.075745301361419}}
+{"mode":"one-shot","operation":"count-between","n":65536,"mediansUs":{"js":126.81552419352586,"jsBranchless":38.51310483872611,"core":116.61121774194461,"component":142.55308870968057}}
+{"mode":"one-shot","operation":"count-between","n":262144,"mediansUs":{"js":693.0223214285434,"jsBranchless":152.36010714293766,"core":413.73064285718493,"component":405.758928571361}}
+report: /Users/mz/ghq/github.com/mizchi/wlt-lang/target/simd-collections-bench/20261113-r3/report.json

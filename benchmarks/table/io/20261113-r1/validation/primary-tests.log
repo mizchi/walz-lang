@@ -1,0 +1,19 @@
+✔ row materialization preserves own properties, descriptors, prototypes and values (1.850959ms)
+✔ materialization bypasses inherited setters without executing generated code (0.084833ms)
+✔ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (2.846084ms)
+✔ bulk facade preserves scalar tags, special names and input/output snapshots (14.430541ms)
+✔ bulk transfer boundary calls scale with columns, not numeric cells (2.757166ms)
+✔ numeric ingestion stays unboxed and lazy views preserve Cell identity (0.977791ms)
+✔ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (144.007083ms)
+✔ native table constructors reject malformed values, schemas and expression nodes (0.824333ms)
+✔ Walz table verbs agree with Arquero on immutable column pipelines (6.95025ms)
+✔ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (5.229958ms)
+✔ retained Walz tables release JS sources and discarded table wrappers (7.663292ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 265.729167

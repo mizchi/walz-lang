@@ -1,0 +1,20 @@
+✔ CPU summaries merge call sites without double-counting recursive inclusive time (0.46375ms)
+✔ sampled allocation totals merge sites and normalize by actual calls (4.071416ms)
+✔ the block model proves short-circuit masks and counts skipped comparisons (0.356417ms)
+✔ profiling rejects modified archived Wasm, inputs and facade sources (7.788292ms)
+✔ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (2.185792ms)
+✔ bulk facade preserves scalar tags, special names and input/output snapshots (10.614625ms)
+✔ bulk transfer boundary calls scale with columns, not numeric cells (5.067584ms)
+✔ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (163.768042ms)
+✔ native table constructors reject malformed values, schemas and expression nodes (0.749458ms)
+✔ Walz table verbs agree with Arquero on immutable column pipelines (6.365042ms)
+✔ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (4.607917ms)
+✔ retained Walz tables release JS sources and discarded table wrappers (6.502ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 252.272666

@@ -1,0 +1,17 @@
+✔ table expressions resolve aggregate namespace aliases after minification (3.613792ms)
+✔ table expression validation does not execute host functions or accept prototype methods (0.765667ms)
+✔ core: a table pipeline runs through the value ABI and releases all buffers (10703.5575ms)
+✔ component: a table pipeline runs through the value ABI and releases all buffers (2592.943417ms)
+✔ CPU summaries merge call sites without double-counting recursive inclusive time (0.79125ms)
+✔ sampled allocation totals merge sites and normalize by actual calls (6.030375ms)
+✔ the block model proves short-circuit masks and counts skipped comparisons (0.778583ms)
+✔ profiling rejects modified archived Wasm, inputs and facade sources (14.952125ms)
+✔ table declarations infer scalar fields and reject invalid schemas and constructors (374.556375ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13482.086791

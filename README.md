@@ -2,7 +2,11 @@
 
 English | [日本語](README.ja.md)
 
-Walz is a programming language that preserves WAT's S-expression syntax and remains a superset of standard WAT. Built for Wasm GC, it adds generics and higher-level operations to make WebAssembly programs easier to write while preserving Wasm semantics.
+Walz is a WAT-superset language for building data-processing libraries on WebAssembly: search, aggregation, and binary processing engines that can be used from JavaScript and TypeScript.
+
+It preserves WAT's S-expression syntax and Wasm semantics, adding generics and higher-level operations built on Wasm GC. Structured GC data and explicit SIMD instructions can be used in the same program, with type, effect, and ownership checks for the typed extension core.
+
+Current examples include [Arquero-style table processing](docs/table.md), [column filtering and aggregation](docs/dictionary-column.md), [bitmap and numeric kernels](docs/simd-collections.md), [succinct indexes](docs/succinct.md), and [JSON processing](docs/json-values.md). Keep data inside a computation and batch work when useful; [dictionary queries](benchmarks/dictionary-column/README.md) and [table measurements](benchmarks/table/README.md) distinguish resident operations from construction, ABI conversion and complete input/output costs.
 
 Its data abstractions are designed around `result`, `option`, `stream`, and `future` as used by [WASI 0.3](https://github.com/WebAssembly/WASI/releases/tag/v0.3.0), to ease interoperation through WIT and the Component Model. These types are explicitly imported from `walz:core`. See the [runtime documentation](docs/runtime.md) for the current ABI and host support.
 

@@ -1,0 +1,13 @@
+node --expose-gc runtime/table-opt-probe.mjs 'benchmarks/table/20261113-r2' 'benchmarks/table/probes/20261113-wasm-opt-r2' 'target/wasm-opt-research/binaryen-version_133/bin/wasm-opt'
+simple {
+  'simd.original': 3137.511999999983,
+  'simd.O3': 3012.965333333341,
+  'packed-scalar.original': 3542.3333333333176,
+  'packed-scalar.O3': 3472.1249999999295
+}
+compound {
+  'simd.original': 4339.9750000000495,
+  'simd.O3': 4021.0081999997783,
+  'packed-scalar.original': 7398.062499999469,
+  'packed-scalar.O3': 6034.9999999998545
+}

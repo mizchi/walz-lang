@@ -1,0 +1,4 @@
+cargo run --locked --quiet --example stdlib-docs -- --check
+cargo fmt --all -- --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized] target(s) in 0.17s

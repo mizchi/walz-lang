@@ -1,0 +1,44 @@
+{
+  "schema": "walz-table-artifact-v2",
+  "version": 2,
+  "note": "Artifact capture, not timing results; paired I/O timings are in ../paired/results.json.",
+  "artifacts": {
+    "core": "7107613f87df71223055207c024f360d2c1988fbb3f60d4aa55c3705029fbf5a",
+    "compiler": "e9e131ff583f40023e7428827a6909b3a436a6719997ba538dcc370762437abe"
+  },
+  "compiler": {
+    "command": "cargo build --locked --release --bin walz; target/release/walz build examples/table/kernel.walz target/table-io/primary-final/core.wasm",
+    "profile": "release, normal type/effect/ownership/region analysis enabled",
+    "head": "4cb97dfcae8ba104f20ec02e1aca3b701f123c7f"
+  },
+  "inputs": {
+    "4096-numeric": "c55622a8385c051bd300f9220bebca2ac68fe7660c4e0a4de1ae4cefb04c9a00",
+    "4096-nullable": "5fe49f6f60fa1ea53ad3fce4ae2f97e25a59b418ac75763184fe1da6b196d916",
+    "65536-numeric": "e77b02d0a8af6d5eabe06e0eaa95045d91b39a3e455ee072d712ee6b392603dd",
+    "65536-nullable": "238952ae876d49d6f91f8968fe06e27e3bf92922e906e3d249aa67c0b5a8e4a4",
+    "262144-numeric": "9db7bba799e9f0afd5252d911fcf5fd0c015f9f92007f93088ae616a09357b57",
+    "262144-nullable": "5a6947cc328483cd3a041bc6a83e7f964b11cbfe67510f96ecaac482c570fb95"
+  },
+  "sources": {
+    "Cargo.lock": "c679ace51080b93c5074c9dfe174de82df6cc0b6e88876146582e4278e2785bd",
+    "Cargo.toml": "fa8b8aa200d489121e3d72a855c9edff686d182f62fe2b508fee3c82c49372f5",
+    "examples/table/kernel.walz": "9ecaffd98b2a3a37d2095baa674b1a7aa002a9a21769a027453d88f3d2b0388d",
+    "package.json": "57ad4d82cb21f5c84bc8aaf94184720e76b5d9ba8facbbe5bc95d1f840244334",
+    "pnpm-lock.yaml": "b8e5d669702be95df544c16d5637cd3e6b31a20ad1bd699a5be958e245d009af",
+    "runtime/table/build.mjs": "6acd159d1a32a22195c90287387a900cc57511866f220b070ee8b2677408d750",
+    "runtime/table/expressions.mjs": "81989214ac40edf7fc13b0294556a2ab22acc8b2b8874f2b49e023b2be4bbff0",
+    "runtime/table/index.d.ts": "0a4e11cee28c918588c47419de1a055411547bcb5c74557e30636ff44a0e0745",
+    "runtime/table/index.mjs": "5e46a80d15b3c6f461778993d981ab0c12ebe22c31b23655642d5c83d5ffd95e",
+    "runtime/table/materialize.mjs": "18b714334bb0c32fd0ad98351f1b7ee1fae4cfdf2e5bc1ff6a4aed6d51930eba",
+    "runtime/table-io-bench.mjs": "4504889503ae5771e17f30370cf2fb740730320cdadf50f466763542d2480559",
+    "src/regions.rs": "faa66fa03bae21a68f52f653837cf790843eb7397ea224df4db19000bf3a9def",
+    "walz/table/README.ja.md": "f6fbf3344bee2924e786a48e430ff431f8d0d2899a9d4f8078cc2861467be14f",
+    "walz/table/README.md": "94080628081c8e964e03c239455d201b6bc11195cf73188e2fabac1815bde18b",
+    "walz/table/column.walz": "dea5c609e69119d5e1aa0422b79cc0a3080379f9b026a4cf702a64a8ad522af0",
+    "walz/table/engine.walz": "68d9454567ec63fb714fa088bd2e88e85ed63ae256c3814d5b4b311b3298d1fe",
+    "walz/table/join.walz": "30c8b33b07a4784a7d3a7aad53013e43f004e1ed8fee9968ada6753cb4754ef4",
+    "walz/table/number-column.walz": "1ef7ba2dc8273c830d7e4d80dfa4cccef983afbe09b960eb3e8d6a865b07b489",
+    "walz/table/numeric-store.walz": "b2824024fb87292cb90751ce814be21a331a0bca1e163503b4b8610069479bc6",
+    "walz/table/value.walz": "785046827b3744e5ae74035c53920db0bf2e113e56a6210ec456665ab55134c5"
+  }
+}

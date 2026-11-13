@@ -1,0 +1,9 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 1.03s
+     Running tests/table.rs (target/debug/deps/table-2b6f163c29d3516e)
+
+running 1 test
+test table_storage_and_effect_contracts_are_checked ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.39s
+

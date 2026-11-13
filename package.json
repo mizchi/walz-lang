@@ -6,12 +6,19 @@
   "type": "module",
   "typescript": {
     "contentMapper": {
-      "exec": ["node", "content-mapper/server.mjs"],
+      "exec": [
+        "node",
+        "content-mapper/server.mjs"
+      ],
       "compilerOptions": [],
       "dynamicConfig": true
     }
   },
   "exports": {
+    "./table": {
+      "types": "./runtime/table/index.d.ts",
+      "import": "./runtime/table/index.mjs"
+    },
     "./vite": {
       "types": "./vite/index.d.ts",
       "import": "./vite/index.mjs"
@@ -29,17 +36,21 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@bytecodealliance/jco-transpile": "0.23.0"
+    "@bytecodealliance/jco-transpile": "0.23.0",
+    "acorn": "8.15.0"
   },
   "peerDependencies": {
     "vite": "^8.3.0"
   },
   "peerDependenciesMeta": {
-    "vite": { "optional": true }
+    "vite": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
     "@types/node": "^24.19.2",
+    "arquero": "8.0.3",
     "flatbuffers": "25.9.23",
     "typescript": "7.0.2",
     "vite": "8.3.7"

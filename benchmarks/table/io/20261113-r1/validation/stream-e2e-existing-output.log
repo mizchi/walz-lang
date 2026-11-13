@@ -1,0 +1,22 @@
+[WebServer] (node:5163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:5163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] node:internal/fs/promises:1345
+[WebServer]   return new FileHandle(await PromisePrototypeThen(
+[WebServer]                         ^
+[WebServer] 
+[WebServer] Error: EEXIST: file already exists, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/browser/table/table.entry.mjs'
+[WebServer]     at async open (node:internal/fs/promises:1345:25)
+[WebServer]     at async writeFile (node:internal/fs/promises:1972:14)
+[WebServer]     at async bundle (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/flatbuffers-size.mjs:23:3)
+[WebServer]     at async file:///Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/browser-server.mjs:10:14 {
+[WebServer]   errno: -17,
+[WebServer]   code: 'EEXIST',
+[WebServer]   syscall: 'open',
+[WebServer]   path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/browser/table/table.entry.mjs'
+[WebServer] }
+[WebServer] 
+[WebServer] Node.js v24.22.2
+Error: Process from config.webServer was not able to start. Exit code: 1
+

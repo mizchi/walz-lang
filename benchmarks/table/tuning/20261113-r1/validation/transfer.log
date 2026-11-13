@@ -1,0 +1,11 @@
+✔ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (1.899292ms)
+✔ bulk facade preserves scalar tags, special names and input/output snapshots (4.916583ms)
+✔ bulk transfer boundary calls scale with columns, not numeric cells (1.68275ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.348625

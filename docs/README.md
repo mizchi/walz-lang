@@ -23,6 +23,9 @@ Historical evaluations and dated measurements retain their original language and
 | Named construction, traversal, and field operations | [Structs](struct-construction.md), [high-level forms](high-level-forms.md) |
 | Option, Result, strings, lists, dictionaries, and views | [Value operations](option-result.md), [lists](lists.md), [collections](collections.md), [views](views.md) |
 | JSON, SIMD, and indexes | [JSON](json-values.md), [SIMD](simd.md), [succinct data](succinct.md) |
+| Immutable SIMD bitmaps and i32 columns | [SIMD collections](simd-collections.md), [library](../walz/simd/README.md) |
+| Dictionary-encoded string columns | [Dictionary columns](dictionary-column.md) |
+| Arquero-style table transformations and JS/TS facade | [Table processing](table.md) |
 | Read and write FlatBuffers | [FlatBuffers library](../walz/flatbuffers/README.md) |
 | Endian-specific integers and floating-point bytes | [Fixed-width byte access](byte-access.md) |
 | Checked sizes, offsets, and alignment | [Checked integers](checked-integers.md) |

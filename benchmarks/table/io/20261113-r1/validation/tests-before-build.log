@@ -1,0 +1,153 @@
+✔ row materialization preserves own properties, descriptors, prototypes and values (1.774458ms)
+✔ materialization bypasses inherited setters without executing generated code (0.086375ms)
+✖ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (1.285042ms)
+✖ bulk facade preserves scalar tags, special names and input/output snapshots (0.97ms)
+✖ bulk transfer boundary calls scale with columns, not numeric cells (0.415583ms)
+✖ numeric ingestion stays unboxed and lazy views preserve Cell identity (0.286667ms)
+✖ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (1.583375ms)
+✖ native table constructors reject malformed values, schemas and expression nodes (0.669708ms)
+✖ Walz table verbs agree with Arquero on immutable column pipelines (0.697542ms)
+✖ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (0.40525ms)
+✖ retained Walz tables release JS sources and discarded table wrappers (0.26775ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 2
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.537208
+
+✖ failing tests:
+
+test at runtime/table-transfer.test.mjs:17:1
+✖ numeric transfer has checked borrowing, snapshot isolation and trap cleanup (1.285042ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async readFile (node:internal/fs/promises:2003:14)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-transfer.test.mjs:18:46)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table-transfer.test.mjs:44:1
+✖ bulk facade preserves scalar tags, special names and input/output snapshots (0.97ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-transfer.test.mjs:50:13)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table-transfer.test.mjs:66:1
+✖ bulk transfer boundary calls scale with columns, not numeric cells (0.415583ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-transfer.test.mjs:76:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table-transfer.test.mjs:93:1
+✖ numeric ingestion stays unboxed and lazy views preserve Cell identity (0.286667ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async readFile (node:internal/fs/promises:2003:14)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-transfer.test.mjs:94:46)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table.test.mjs:20:1
+✖ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (1.583375ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table.test.mjs:37:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table.test.mjs:57:1
+✖ native table constructors reject malformed values, schemas and expression nodes (0.669708ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async readFile (node:internal/fs/promises:2003:14)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table.test.mjs:58:46)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table.test.mjs:80:1
+✖ Walz table verbs agree with Arquero on immutable column pipelines (0.697542ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table.test.mjs:81:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table.test.mjs:111:1
+✖ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (0.40525ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table.test.mjs:112:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }
+
+test at runtime/table.test.mjs:141:1
+✖ retained Walz tables release JS sources and discarded table wrappers (0.26775ms)
+  Error: ENOENT: no such file or directory, open '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+      at async open (node:internal/fs/promises:1345:25)
+      at async Module.readFile (node:internal/fs/promises:2003:14)
+      at async instantiate (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table/index.mjs:17:44)
+      at async TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table.test.mjs:142:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/Users/mz/ghq/github.com/mizchi/wlt-lang/target/table-io/primary/core.wasm'
+  }

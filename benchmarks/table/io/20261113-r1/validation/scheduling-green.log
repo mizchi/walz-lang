@@ -1,0 +1,12 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 1.84s
+     Running unittests src/lib.rs (target/debug/deps/walz-16ea6012cb2396fa)
+
+running 4 tests
+test regions::scheduling_tests::store_delta_includes_empty_slot_creation_and_preserves_projection ... ok
+test regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls ... ok
+test regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views ... ok
+test regions::scheduling_tests::memoized_substitution_preserves_overlapping_aliases_and_unknown_roots ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.01s
+

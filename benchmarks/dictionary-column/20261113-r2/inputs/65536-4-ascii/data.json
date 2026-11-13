@@ -1,0 +1,16 @@
+{
+  "n": 65536,
+  "cardinality": 4,
+  "unicode": false,
+  "vocabulary": [
+    "category-0",
+    "category-1",
+    "category-2",
+    "category-3",
+    "category-4"
+  ],
+  "lo": -500,
+  "hi": 500,
+  "values": "vocabulary[ids[i]]",
+  "positiveControl": "amounts[0] = 42"
+}

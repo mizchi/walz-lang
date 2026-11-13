@@ -1,0 +1,85 @@
+{
+  "schema": "walz-table-profile-analysis-v1",
+  "profileSha256": "e787250f401e4464b39548f52fb35bbf53a975164c2a45eda0245d14e4ebab5d",
+  "inputSha256": "9db7bba799e9f0afd5252d911fcf5fd0c015f9f92007f93088ae616a09357b57",
+  "blockModel": {
+    "physicalRows": 262144,
+    "blocks": 131072,
+    "passes": 2,
+    "selected": 25918,
+    "eagerLeafComparisons": 1048576,
+    "shortCircuitLeafComparisons": 648054,
+    "leafReduction": 0.38196754455566406,
+    "zeroRangeBlocks": 83863,
+    "zeroLowerBlocks": 20898,
+    "fullLeftOrBlocksReached": 11637,
+    "zeroRangePercent": 63.982391357421875,
+    "caveat": "Counterfactual model of the original unfused two-scan plan on captured input, not executed-call counts or a timing estimate for the selected artifact."
+  },
+  "cases": [
+    {
+      "name": "simd.compound",
+      "medianUs": 1703.8999999999985,
+      "acornSelfPercent": 0.9151994961573395,
+      "inspectorSelfPercent": 0.7717736968462863,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 0.29498876343541836
+    },
+    {
+      "name": "simd.simple",
+      "medianUs": 1143.7851052631613,
+      "acornSelfPercent": 1.0405895503850293,
+      "inspectorSelfPercent": 0.6265132069222489,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 2.3874803345201623
+    },
+    {
+      "name": "simd.ingest-only",
+      "medianUs": 8029.250000000047,
+      "acornSelfPercent": 0,
+      "inspectorSelfPercent": 0.6715772089182493,
+      "bridgeSelfPercent": 0.08805945499587119,
+      "gcSelfPercent": 4.090173410404624
+    },
+    {
+      "name": "simd.cold-ingest-filter",
+      "medianUs": 10062.167000000045,
+      "acornSelfPercent": 0.33252170426276734,
+      "inspectorSelfPercent": 0.6512597837355866,
+      "bridgeSelfPercent": 0.041218973654151045,
+      "gcSelfPercent": 4.545298662790544
+    },
+    {
+      "name": "simd.materialize-only",
+      "medianUs": 6236.763666666472,
+      "acornSelfPercent": 0,
+      "inspectorSelfPercent": 0.8385399539625124,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 8.821308780006577
+    },
+    {
+      "name": "simd.filter-materialize",
+      "medianUs": 7258.562500000153,
+      "acornSelfPercent": 0.1645503300221419,
+      "inspectorSelfPercent": 0.7816140676051739,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 7.451497144722674
+    },
+    {
+      "name": "simd.small-compound",
+      "medianUs": 36.33876811594271,
+      "acornSelfPercent": 10.19279622422787,
+      "inspectorSelfPercent": 0.6624161629543761,
+      "bridgeSelfPercent": 1.675382959344208,
+      "gcSelfPercent": 0.12691893682205846
+    },
+    {
+      "name": "simd.nullable-compound",
+      "medianUs": 1680.5485833333478,
+      "acornSelfPercent": 0.5403173620126327,
+      "inspectorSelfPercent": 0.6561752729707663,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 0.28670035875590705
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "walz-table-artifact-v2",
+  "version": 2,
+  "note": "Artifact-only capture for profiling; paired timings are in the parent tuning-v2 results.",
+  "artifacts": {
+    "core": "859d98c69600378af96ff52cffecb4f57bc8aebd64a034d1a06318425d04748a"
+  },
+  "inputs": {
+    "4096-numeric": "c55622a8385c051bd300f9220bebca2ac68fe7660c4e0a4de1ae4cefb04c9a00",
+    "4096-nullable": "5fe49f6f60fa1ea53ad3fce4ae2f97e25a59b418ac75763184fe1da6b196d916",
+    "65536-numeric": "e77b02d0a8af6d5eabe06e0eaa95045d91b39a3e455ee072d712ee6b392603dd",
+    "65536-nullable": "238952ae876d49d6f91f8968fe06e27e3bf92922e906e3d249aa67c0b5a8e4a4",
+    "262144-numeric": "9db7bba799e9f0afd5252d911fcf5fd0c015f9f92007f93088ae616a09357b57",
+    "262144-nullable": "5a6947cc328483cd3a041bc6a83e7f964b11cbfe67510f96ecaac482c570fb95"
+  },
+  "sources": {
+    "examples/table/kernel.walz": "d4c839632afd2f7ceedbec58e543f3bccab9598ac7b7c8d240a66ef39679facf",
+    "runtime/table/build.mjs": "6acd159d1a32a22195c90287387a900cc57511866f220b070ee8b2677408d750",
+    "runtime/table/expressions.mjs": "81989214ac40edf7fc13b0294556a2ab22acc8b2b8874f2b49e023b2be4bbff0",
+    "runtime/table/index.d.ts": "0a4e11cee28c918588c47419de1a055411547bcb5c74557e30636ff44a0e0745",
+    "runtime/table/index.mjs": "338af8470080c1da21f25581aeb9386aaabc5950b04e63bf8b5323c14bdce8b2",
+    "walz/table/engine.walz": "008810d0f126a191b1c4ccf6de64ae684995f162d7a273512653bdbd2851a05d",
+    "walz/table/join.walz": "4740bedcb26d1b52204e7884d640a414c042e6a39b95c46981c38b3867d8c87f",
+    "walz/table/number-column.walz": "bff0845c98da5a245f4793b18519afec3ba32a8db22ccb45bb6f7122926bccf1",
+    "walz/table/value.walz": "785046827b3744e5ae74035c53920db0bf2e113e56a6210ec456665ab55134c5"
+  }
+}

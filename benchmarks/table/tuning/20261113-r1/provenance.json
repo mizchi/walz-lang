@@ -1,0 +1,59 @@
+{
+  "schema": "walz-table-tuning-provenance-v1",
+  "head": "4cb97dfcae8ba104f20ec02e1aca3b701f123c7f",
+  "compilerSha256": "d396cb8bd940f855e479f6a1b52dd2e832de37997bfb29f02e30c996434110da",
+  "sameCompilerAsBaseline": false,
+  "compileCommands": [
+    [
+      "cargo",
+      "run",
+      "--locked",
+      "--quiet",
+      "--",
+      "build",
+      "target/table-tuning/stage1/source/examples/table/kernel.walz",
+      "target/table-tuning/stage1/core.wasm"
+    ],
+    [
+      "cargo",
+      "run",
+      "--locked",
+      "--quiet",
+      "--",
+      "build",
+      "target/table-tuning/stage2/source/examples/table/kernel.walz",
+      "target/table-tuning/stage2/core.wasm"
+    ],
+    [
+      "cargo",
+      "run",
+      "--locked",
+      "--quiet",
+      "--",
+      "build",
+      "target/table-tuning/stage3/source/examples/table/kernel.walz",
+      "target/table-tuning/stage3/core.wasm"
+    ],
+    [
+      "cargo",
+      "run",
+      "--locked",
+      "--quiet",
+      "--",
+      "build",
+      "target/table-tuning/stage4/source/examples/table/kernel.walz",
+      "target/table-tuning/stage4/core.wasm"
+    ],
+    [
+      "cargo",
+      "run",
+      "--locked",
+      "--quiet",
+      "--",
+      "build",
+      "target/table-tuning/stage5/source/examples/table/kernel.walz",
+      "target/table-tuning/stage5/core.wasm"
+    ]
+  ],
+  "checks": "All 5 frozen stage inventories match their captured hashes; current executable table sources match stage5; all 15 groups contain 9 samples per variant."
+}

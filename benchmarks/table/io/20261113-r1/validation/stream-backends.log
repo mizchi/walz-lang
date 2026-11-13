@@ -1,0 +1,13 @@
+✔ table expressions resolve aggregate namespace aliases after minification (2.046542ms)
+✔ table expression validation does not execute host functions or accept prototype methods (0.528125ms)
+✔ core: a table pipeline runs through the value ABI and releases all buffers (9040.055041ms)
+✔ component: a table pipeline runs through the value ABI and releases all buffers (2283.302542ms)
+✔ table declarations infer scalar fields and reject invalid schemas and constructors (177.188084ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11441.937375

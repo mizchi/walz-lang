@@ -1,0 +1,9 @@
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `test` profile [unoptimized] target(s) in 0.82s
+     Running tests/table.rs (target/debug/deps/table-2b6f163c29d3516e)
+
+running 1 test
+test table_roots_keep_checked_ir_and_gc_storage ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 51.97s
+

@@ -1,0 +1,15 @@
+✔ core: a table pipeline runs through the value ABI and releases all buffers (6395.066292ms)
+✔ component: a table pipeline runs through the value ABI and releases all buffers (2250.732ms)
+✔ numeric filter execution modes preserve tags, tails, sparse order and short circuiting (52222.448542ms)
+✔ native table constructors reject malformed values, schemas and expression nodes (0.880666ms)
+✔ Walz table verbs agree with Arquero on immutable column pipelines (8.796416ms)
+✔ Walz tables preserve null, undefined, NaN, stable order, Unicode and join multiplicity (6.314958ms)
+✔ retained Walz tables release JS sources and discarded table wrappers (10.732709ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 52348.727667

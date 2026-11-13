@@ -1,0 +1,24 @@
+cargo test --locked --test simd_collections
+    Finished `test` profile [unoptimized] target(s) in 0.06s
+     Running tests/simd_collections.rs (target/debug/deps/simd_collections-15fa0e7b1b0e99ef)
+
+running 3 tests
+test simd_collection_storage_is_opaque_and_effects_remain_checked ... ok
+test simd_collections_use_checked_gc_storage_and_vector_instructions ... ok
+test simd_collection_examples_execute_on_wasmtime ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.21s
+
+node --expose-gc --test runtime/simd-collections.test.mjs
+✔ resident bitmaps and columns agree with independent scalar oracles at lane, word and vector boundaries (993.004708ms)
+✔ resident snapshots and selections release their inputs and temporary owners (817.892792ms)
+✔ core: SIMD collections compose through the value ABI and reclaim buffers after results and traps (1904.225792ms)
+✔ component: SIMD collections compose through the value ABI and reclaim buffers after results and traps (1931.971708ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5739.749

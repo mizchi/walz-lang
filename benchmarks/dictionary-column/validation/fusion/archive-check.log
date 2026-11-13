@@ -1,0 +1,5 @@
+20261113-r3 core archives relocate, both query implementations execute, zero live ABI allocations/tables
+20261113-r3 component archives relocate, both query implementations execute, zero live ABI allocations/tables
+20261113-r4 core archives relocate, both query implementations execute, zero live ABI allocations/tables
+20261113-r4 component archives relocate, both query implementations execute, zero live ABI allocations/tables
+Existing output rejected before build; report unchanged. All archived source/input/artifact hashes verified.

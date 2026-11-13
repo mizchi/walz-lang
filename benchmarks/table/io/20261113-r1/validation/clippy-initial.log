@@ -1,0 +1,34 @@
+cargo run --locked --quiet --example stdlib-docs -- --check
+cargo fmt --all -- --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+    Checking walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+error: initializing a reference-counted pointer in `vec![elem; len]`
+   --> src/regions.rs:917:25
+    |
+917 |     let mut summaries = vec![Rc::new(Summary::default()); count];
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: each element will point to the same `Rc` instance
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.99.0/index.html#rc_clone_in_vec_init
+    = note: `-D clippy::rc-clone-in-vec-init` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::rc_clone_in_vec_init)]`
+help: consider initializing each `Rc` element individually
+    |
+917 ~     let mut summaries = {
+918 +         let mut v = Vec::with_capacity(count);
+919 +         (0..count).for_each(|_| v.push(Rc::new(..)));
+920 +         v
+921 ~     };
+    |
+help: or if this is intentional, consider extracting the `Rc` initialization to a variable
+    |
+917 ~     let mut summaries = {
+918 +         let data = Rc::new(..);
+919 +         vec![data; count]
+920 ~     };
+    |
+
+error: could not compile `walz` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `walz` (lib test) due to 1 previous error
+error: Recipe `check` failed on line 489 with exit code 101

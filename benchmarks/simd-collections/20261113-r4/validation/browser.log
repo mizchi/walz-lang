@@ -1,0 +1,27 @@
+[WebServer] (node:84559) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:84559) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] Browser fixtures: 8/109 (13s)
+[WebServer] Browser fixtures: 16/109 (20s)
+[WebServer] Browser fixtures: 24/109 (28s)
+[WebServer] Browser fixtures: 32/109 (36s)
+[WebServer] Browser fixtures: 40/109 (43s)
+[WebServer] Browser fixtures: 48/109 (51s)
+[WebServer] Browser fixtures: 56/109 (59s)
+[WebServer] Browser fixtures: 64/109 (66s)
+[WebServer] Browser fixtures: 72/109 (73s)
+[WebServer] Browser fixtures: 80/109 (81s)
+[WebServer] Browser fixtures: 88/109 (89s)
+[WebServer] Browser fixtures: 96/109 (97s)
+[WebServer] Browser fixtures: 104/109 (105s)
+[WebServer] Browser fixtures: 109/109 (110s)
+
+Running 2 tests using 1 worker
+
+(node:93140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 runtime/e2e/simd-collections.spec.mjs:3:46 › core: immutable SIMD collections preserve tails, exact sums and portable cleanup (154ms)
+  ✓  2 runtime/e2e/simd-collections.spec.mjs:3:46 › component: immutable SIMD collections preserve tails, exact sums and portable cleanup (71ms)
+
+  2 passed (1.9m)

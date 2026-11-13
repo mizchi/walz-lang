@@ -5,6 +5,83 @@
 小さい言語仕様、WAT の包含、Wasm GC、静的解析のしやすさを維持する。
 チェックは実装と回帰検査の完了を意味し、設計だけでは付けない。
 
+## SIMDライブラリの計画
+
+opaqueな格納表現と明示的なeffectを持つ通常のライブラリとして実装する。
+構築・ABI変換と保持済みデータのクエリを分けて測り、速いJS実装と
+スカラーWasmの対照を置いてからSIMDの効果を評価する。
+
+- [x] 基盤: 不変のdense bitmapとi32列、集合演算、正確なi64合計、
+  値ABIのバッチ処理、GC・ABI・Chromium検査、測定記録の保存。
+- [x] 1a: 文字列の辞書符号化列。一意な辞書と検証済みSIMDコード列を公開し、
+  値による選択・復号・辞書とコードのsnapshotを提供する。構築用の可変索引は保持しない。
+- [ ] 1b: 16／8 laneで比較するu8／u16列。表現可能な値と末尾laneを検査し、
+  コードを暗黙に切り詰めない。
+- [ ] 1c: 同じ長さのvalidity bitmapを使うnullable列。行ごとにOptionを作らず、
+  欠損値の選択・集計・復号の規約を定める。
+- [ ] 2: 少数bitの整数・enum向けBit-sliced index。bit幅・plane長・paddingを検査し、
+  値を個別に復号せずに条件を評価する。
+- [ ] 3: SIMDによる積集合・差集合を持つ整列整数集合。順序・一意性・論理末尾を検査し、
+  疎な集合とdense bitmapの使い分けを測る。
+- [ ] 4: SoAの矩形・座標列による一括ヒットテスト・可視判定。
+  範囲・行の対応・NaN／無限大の規約を定め、選択bitmapを返す。
+- [ ] 5: SIMDのhex／Base64 codecとbyte分類器。不正入力・長さ・padding・
+  block境界の規約を定め、単発のABI変換込みでも測定する。
+- [ ] 6: 不変のSwiss Table型索引。制御byteの一致後にもキーを照合し、
+  capacity・探索終了・衝突処理を検査する。
+
+[SIMDコレクション](docs/simd-collections.md)を参照。1〜6は候補であり、
+既存基盤の速度測定はこれらの速度を示すものではない。
+[辞書列API](docs/dictionary-column.md)の初版はi32コードを使う。
+native・両JS backend・強制GC・不正snapshot・Chromiumを検査済み。
+INと範囲の行クエリは、選択・昇順の行ID列挙・正確な合計を融合し、中間bitmapを作らない。
+任意の不変な集計・行ID索引は未実装で、公開された列は構築用の索引を保持しない。
+
+## Arquero風のテーブルライブラリ
+
+- [x] `walz/table/`のスカラー版初実装。不変の列・選択行、select/filter/derive/
+  groupby/rollup/orderby/slice、inner・outer・semi・antiの等値結合、基本集計、
+  式・スキーマの検査、JS・TS向けAPI、Core＋JSPI・Componentの一括snapshot。
+  公式Arquero 8.0.3との比較、native、GC、trap後の解放、型定義、Chromiumを検査する。
+- [x] 数値filterを固定入力で公式Arqueroと直接計測する。元のセル評価・同じ配置の
+  スカラー比較・SIMD・JSのcount走査を比較し、常駐処理・構築＋初回query・query＋
+  出力変換を分ける。2回分を`benchmarks/table/`に保存し、専用コレクションの速度と混同しない。
+- [ ] 集計・join・整列と、構築単独・出力単独の計測を、入力型とbackendを広げて追加する。
+- [x] 保存済みtable成果物をプロファイルする。12種類のCPU・heap、別passのフェーズ計測、
+  export呼び出し回数、検査済みのblock短絡モデル、Binaryen 133の比較実験を保存した。
+  `benchmarks/table/profiles/20261113-r1/`を参照。
+- [x] 数値・bool・nullishの一括構築・出力と、列名解決・行数取得を外へ出す内部readerを追加した。
+  最大640KiBのバッファをchecked borrowとfinallyで再利用し、型タグとsnapshotを保つ。
+  文字列とbig-endian環境ではscalar I/Oを維持する。
+- [x] base/orderが同じ選択列である不変条件を保持し、その場合はfilterを一度だけ走査する。
+- [x] 全域的な数値計画のpairマスクで、ANDが0／ORが全bitなら他方の評価を省略する。
+  汎用scalar式の短絡評価・trapは維持する。
+- [x] 同じ列への順序比較2つを融合し、blockを再利用してvectorの論理合成後に一度だけ
+  bitmask化する。汎用計画と同じ数値配置のスカラー比較を対照として維持する。
+- [x] privateなpairマスクから必要な長さの行ID配列を作り、prefixの確保とcopyを除いた。
+  公開listのsnapshot構築は維持する。
+- [ ] 数値列の主表現を型付きにしてCell確保を減らし、列指向の利用者には行object構築を避ける。
+  変更後profileでは、構築時のGCとJS object構築が主な費用になっている。
+- [ ] 比較pairを超える計画全体の特殊化と、定数のhoistを評価する。
+- [ ] scalar filterの中間値を安全な範囲でunbox化する。derive・出力の値の意味と
+  実行される分岐のtrapを維持する。
+- [ ] 各targetとブラウザの検証後、tableの`wasm-opt -O3`を選択可能にする。
+  raw Coreの実験ではSIMDが1.04倍／1.08倍になった。標準ビルドは現状を維持する。
+- [ ] 既存SIMD・辞書列を使う物理列と実行計画の特殊化。
+  null・undefined・NaN、JSの数値変換、文字列の順序、浮動小数点の集計規則を保つ。
+- [x] 数値定数との比較と論理合成のfilterに、必要時に構築するf64x2キャッシュを統合する。
+  厳密・非厳密比較の型マスク、安全なスカラーフォールバック、元のセル評価と同じ配置の
+  スカラー比較モードをnative・Core＋JSPI・Componentで検査する。
+  集計はf64の加算順序を維持し、辞書列の実行計画は別に進める。
+- [ ] assign/concat/dedupe/except/intersect/union、fold/pivot/spread/unroll、
+  impute/lookup/cross/sample、reduce/relocate/rename/unorder、選択helper、params、
+  カスタム関数、window、追加集計の互換範囲を広げる。
+- [ ] Arrow・ファイル形式と、構築・出力の一括転送adapter。
+- [ ] 大きいGC式モジュールのコンパイル・engine初期化・実行を分けてプロファイルする。
+  現在のdebug nativeワークフローには費用がかかる。
+
+対応範囲は[テーブル処理ガイド](docs/table.md)、比較・所有検査の再実行は`just test-table`。
+
 ## バイナリ codec からのコア改善（1 → 2 → 3 → 4 → 5）
 
 - [x] 1: 固定幅・明示 endian の bytes 読み取りと packed 配列への書き込み。型付き操作と `walz:core` の bytes/view API を追加。unsigned offset、16bit の符号拡張、整数／浮動小数点のビット保持、評価順、変更前の全範囲検査を定義。両 endian・非整列・view 内の境界・effect・opaque・両 JS backend を検査済み。

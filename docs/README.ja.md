@@ -19,6 +19,9 @@ WALZを使うための現行ガイド。まず[導入](getting-started.md)、[�
 | 名前付き構築、list走査、フィールド操作 | [struct](struct-construction.md)・[高水準の糖衣](high-level-forms.md) |
 | Option、Result、文字列、list、dict、view | [値操作](option-result.md)・[list](lists.md)・[collections](collections.md)・[views](views.md) |
 | JSON、SIMD、索引 | [JSON](json-values.md)・[SIMD](simd.md)・[succinct](succinct.md) |
+| 不変なSIMD bitmapとi32列 | [SIMDコレクション](simd-collections.md)・[ライブラリ](../walz/simd/README.ja.md) |
+| 文字列の辞書符号化列 | [辞書列](dictionary-column.md) |
+| Arquero風のテーブル処理とJS・TS向けAPI | [テーブル処理](table.md) |
 | FlatBuffersを読み書きする | [FlatBuffersライブラリ](../walz/flatbuffers/README.ja.md) |
 | バイト列から整数・浮動小数点を読み書きする | [固定幅・endian 指定アクセス](byte-access.md) |
 | サイズ・offset・整列の計算を検査する | [検査付き整数演算](checked-integers.md) |

@@ -1,0 +1,2 @@
+Verified 80 groups, nine samples per variant, all medians, source/input/executed-artifact hashes, canonical inventory digest, and exact little-endian input reconstruction.
+Inputs/configurations match suite version 1 exactly; query variants are paired within suite version 2.

@@ -1,0 +1,30 @@
+✖ numeric ingestion stays unboxed and lazy views preserve Cell identity (2.001958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37.29375
+
+✖ failing tests:
+
+test at runtime/table-transfer.test.mjs:90:1
+✖ numeric ingestion stays unboxed and lazy views preserve Cell identity (2.001958ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-transfer.test.mjs:92:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

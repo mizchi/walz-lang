@@ -1,0 +1,7 @@
+   Compiling wasm-encoder v0.262.0
+   Compiling termcolor v1.4.1
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+   Compiling wasmprinter v0.262.0
+   Compiling wast v262.0.0
+   Compiling wat v1.262.0
+    Finished `release` profile [optimized] target(s) in 17.43s

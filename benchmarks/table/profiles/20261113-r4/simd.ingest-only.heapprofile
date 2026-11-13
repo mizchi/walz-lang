@@ -1,0 +1,745 @@
+{
+  "head": {
+    "callFrame": {
+      "functionName": "(root)",
+      "scriptId": "0",
+      "url": "",
+      "lineNumber": -1,
+      "columnNumber": -1
+    },
+    "selfSize": 0,
+    "id": 1,
+    "children": [
+      {
+        "callFrame": {
+          "functionName": "",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1
+        },
+        "selfSize": 0,
+        "id": 2,
+        "children": [
+          {
+            "callFrame": {
+              "functionName": "profile",
+              "scriptId": "89",
+              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+              "lineNumber": 85,
+              "columnNumber": 29
+            },
+            "selfSize": 0,
+            "id": 3,
+            "children": [
+              {
+                "callFrame": {
+                  "functionName": "batch",
+                  "scriptId": "89",
+                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+                  "lineNumber": 70,
+                  "columnNumber": 14
+                },
+                "selfSize": 0,
+                "id": 4,
+                "children": [
+                  {
+                    "callFrame": {
+                      "functionName": "",
+                      "scriptId": "89",
+                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+                      "lineNumber": 55,
+                      "columnNumber": 28
+                    },
+                    "selfSize": 0,
+                    "id": 5,
+                    "children": [
+                      {
+                        "callFrame": {
+                          "functionName": "table",
+                          "scriptId": "334",
+                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/index.mjs",
+                          "lineNumber": 56,
+                          "columnNumber": 16
+                        },
+                        "selfSize": 113281296,
+                        "id": 6,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "next",
+                              "scriptId": "0",
+                              "url": "",
+                              "lineNumber": -1,
+                              "columnNumber": -1
+                            },
+                            "selfSize": 32800,
+                            "id": 12,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "transfer",
+                              "scriptId": "334",
+                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/index.mjs",
+                              "lineNumber": 48,
+                              "columnNumber": 19
+                            },
+                            "selfSize": 0,
+                            "id": 7,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "Uint8Array",
+                                  "scriptId": "0",
+                                  "url": "",
+                                  "lineNumber": -1,
+                                  "columnNumber": -1
+                                },
+                                "selfSize": 32864,
+                                "id": 8,
+                                "children": []
+                              }
+                            ]
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "Table",
+                              "scriptId": "334",
+                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/index.mjs",
+                              "lineNumber": 107,
+                              "columnNumber": 13
+                            },
+                            "selfSize": 32800,
+                            "id": 10,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "readChunk",
+                              "scriptId": "338",
+                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/input.mjs",
+                              "lineNumber": 2,
+                              "columnNumber": 25
+                            },
+                            "selfSize": 65696,
+                            "id": 11,
+                            "children": []
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "js-to-wasm:ri:r",
+                              "scriptId": "339",
+                              "url": "wasm://wasm/0002ba7a",
+                              "lineNumber": 0,
+                              "columnNumber": 7864
+                            },
+                            "selfSize": 16777600,
+                            "id": 9,
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "samples": [
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 118
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 117
+    },
+    {
+      "size": 32784,
+      "nodeId": 6,
+      "ordinal": 114
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 113
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 112
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 107
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 102
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 110
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 101
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 116
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 99
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 58
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 95
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 93
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 90
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 89
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 83
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 87
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 84
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 91
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 96
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 50
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 82
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 115
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 86
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 38
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 79
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 5
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 88
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 64
+    },
+    {
+      "size": 32800,
+      "nodeId": 12,
+      "ordinal": 78
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 71
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 72
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 109
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 68
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 45
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 66
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 77
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 63
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 62
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 106
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 49
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 51
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 60
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 92
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 59
+    },
+    {
+      "size": 32864,
+      "nodeId": 11,
+      "ordinal": 97
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 57
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 47
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 56
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 55
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 75
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 54
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 53
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 104
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 70
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 52
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 105
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 103
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 48
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 94
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 26
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 32
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 34
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 27
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 46
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 81
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 42
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 100
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 37
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 69
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 33
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 30
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 29
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 39
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 1
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 41
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 2
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 22
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 25
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 24
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 6
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 19
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 20
+    },
+    {
+      "size": 32864,
+      "nodeId": 8,
+      "ordinal": 3
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 74
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 73
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 18
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 15
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 17
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 36
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 21
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 28
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 14
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 12
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 76
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 65
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 98
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 43
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 7
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 80
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 35
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 40
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 11
+    },
+    {
+      "size": 32832,
+      "nodeId": 11,
+      "ordinal": 23
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 10
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 9
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 8
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 61
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 13
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 4
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 85
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 111
+    },
+    {
+      "size": 262168,
+      "nodeId": 6,
+      "ordinal": 67
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 31
+    },
+    {
+      "size": 32800,
+      "nodeId": 10,
+      "ordinal": 16
+    },
+    {
+      "size": 2097176,
+      "nodeId": 6,
+      "ordinal": 108
+    },
+    {
+      "size": 1048600,
+      "nodeId": 9,
+      "ordinal": 44
+    }
+  ]
+}

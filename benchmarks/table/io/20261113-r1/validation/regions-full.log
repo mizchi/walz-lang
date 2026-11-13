@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized] target(s) in 0.10s
+     Running tests/regions.rs (target/debug/deps/regions-b033c982fb5bdb87)
+
+running 8 tests
+test escape_follows_stores_cycles_and_containers_without_escaping_callee_private_values ... ok
+test suspension_invalidates_mutable_reference_contents_across_calls ... ok
+test returns_and_block_branch_payloads_remain_visible_as_escaping_references ... ok
+test substitutes_argument_and_capture_effects_and_tracks_returned_aliases ... ok
+test distinguishes_input_mutation_from_fresh_output_and_return_escape ... ok
+test containers_and_ready_future_payloads_preserve_reference_aliases ... ok
+test weak_updates_keep_old_aliases_and_recur_propagates_new_objects ... ok
+test unknown_imports_and_recursive_paths_widen_conservatively ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

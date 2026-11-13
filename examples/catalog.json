@@ -478,6 +478,26 @@
       "path": "examples/views.walz",
       "pattern": "zero-copy UTF-8 views with relative ranges and explicit ABI materialization",
       "expected": "42"
+    },
+    {
+      "path": "examples/simd-collections/main.walz",
+      "pattern": "immutable SIMD columns compose bitmap filters and exact i64 aggregation",
+      "expected": "42"
+    },
+    {
+      "path": "examples/dictionary-column/main.walz",
+      "pattern": "dictionary-encoded strings compose SIMD selections and exact numeric aggregation",
+      "expected": "42"
+    },
+    {
+      "path": "examples/dictionary-column/fused.walz",
+      "pattern": "fused dictionary IN and range queries return rows and exact i64 sums without intermediate bitmaps",
+      "expected": "42"
+    },
+    {
+      "path": "examples/table/main.walz",
+      "pattern": "native table expressions filter and aggregate immutable scalar columns",
+      "expected": "42"
     }
   ],
   "probes": [

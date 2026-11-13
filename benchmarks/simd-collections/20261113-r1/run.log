@@ -1,0 +1,17 @@
+{"mode":"resident","operation":"intersection-count","n":128,"mediansUs":{"js":0.004492789537042322,"walz":0.020650260412160643}}
+{"mode":"resident","operation":"count-between","n":128,"mediansUs":{"js":0.053831466791791564,"walz":0.038529512013740004}}
+{"mode":"resident","operation":"sum-where","n":128,"mediansUs":{"js":0.07228493090260216,"walz":0.06425928190836083}}
+{"mode":"resident","operation":"intersection-count","n":4096,"mediansUs":{"js":0.12078743668527156,"walz":0.04014548279441753}}
+{"mode":"resident","operation":"count-between","n":4096,"mediansUs":{"js":3.4594578558225395,"walz":0.8531885397412919}}
+{"mode":"resident","operation":"sum-where","n":4096,"mediansUs":{"js":3.7541367623604627,"walz":1.2071038676236332}}
+{"mode":"resident","operation":"intersection-count","n":65536,"mediansUs":{"js":1.9127138581534506,"walz":0.37120596771267395}}
+{"mode":"resident","operation":"count-between","n":65536,"mediansUs":{"js":113.9651437908493,"walz":12.794934640522923}}
+{"mode":"resident","operation":"sum-where","n":65536,"mediansUs":{"js":140.3035328467212,"walz":19.64385401459991}}
+{"mode":"resident","operation":"intersection-count","n":262144,"mediansUs":{"js":7.739323472915982,"walz":1.4425662696888626}}
+{"mode":"resident","operation":"count-between","n":262144,"mediansUs":{"js":633.0467272727026,"walz":50.630060606057334}}
+{"mode":"resident","operation":"sum-where","n":262144,"mediansUs":{"js":760.8926153845739,"walz":77.19388461534366}}
+{"mode":"one-shot","operation":"count-between","n":128,"mediansUs":{"js":0.09752908876966729,"core":0.5878110864166755,"component":3.5582537586612037}}
+{"mode":"one-shot","operation":"count-between","n":4096,"mediansUs":{"js":3.4997925655491513,"core":4.821150016594863,"component":8.149103883173197}}
+{"mode":"one-shot","operation":"count-between","n":65536,"mediansUs":{"js":118.15798611111303,"core":102.74536805555574,"component":114.62934027777767}}
+{"mode":"one-shot","operation":"count-between","n":262144,"mediansUs":{"js":695.4874999999447,"core":434.63889999996655,"component":442.313899999984}}
+report: /Users/mz/ghq/github.com/mizchi/wlt-lang/target/simd-collections-bench/20261113-r1/report.json

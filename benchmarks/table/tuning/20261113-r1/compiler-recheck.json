@@ -1,0 +1,8 @@
+{
+  "schema": "walz-table-compiler-output-recheck-v1",
+  "baselineSha256": "bcf09ae7380027fe0d22fe84fb1e9c0d76d58737b913f210d97c1d59a6f30934",
+  "rebuiltSha256": "bcf09ae7380027fe0d22fe84fb1e9c0d76d58737b913f210d97c1d59a6f30934",
+  "byteIdentical": true,
+  "compilerSha256AfterCargoRun": "5222218a8846fa8d158b30696d59efbe42a538a4aedd527f63ebe3aaf639c0ae",
+  "note": "Compiler/core source hashes match the original inventory (136 files). The native binary hash from cargo test may differ from cargo run; compare the emitted Wasm directly."
+}

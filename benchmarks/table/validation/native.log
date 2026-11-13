@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized] target(s) in 0.05s
+     Running tests/table.rs (target/debug/deps/table-2b6f163c29d3516e)
+
+running 3 tests
+test table_storage_and_effect_contracts_are_checked ... ok
+test table_roots_keep_checked_ir_and_gc_storage ... ok
+test native_table_programs_execute_on_wasmtime has been running for over 60 seconds
+test native_table_programs_execute_on_wasmtime ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 240.04s
+

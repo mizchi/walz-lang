@@ -1,0 +1,10 @@
+    Finished `test` profile [unoptimized] target(s) in 0.10s
+     Running tests/dictionary_column.rs (target/debug/deps/dictionary_column-a2e0121b2bcba6fc)
+
+running 3 tests
+test dictionary_storage_and_read_effects_are_not_bypassed ... ok
+test dictionary_columns_stay_in_the_checked_core_and_reuse_simd ... ok
+test dictionary_column_language_tests_execute_natively ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+

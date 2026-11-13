@@ -1,0 +1,22 @@
+cargo test --locked --test documentation --test cheatsheet
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized] target(s) in 0.16s
+     Running tests/cheatsheet.rs (target/debug/deps/cheatsheet-7e32617af6d5387e)
+
+running 1 test
+test cheatsheet_complete_modules_compile_and_their_tests_execute ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running tests/documentation.rs (target/debug/deps/documentation-bf71f8daa2b99cdc)
+
+running 3 tests
+test english_and_japanese_references_keep_the_same_walz_examples ... ok
+test entry_guides_link_to_existing_local_documents_and_examples ... ok
+test introductory_guides_compile_run_and_support_the_documented_project_workflow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.51s
+

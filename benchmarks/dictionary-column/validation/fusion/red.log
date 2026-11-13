@@ -1,0 +1,32 @@
+    Finished `test` profile [unoptimized] target(s) in 0.25s
+     Running tests/dictionary_column.rs (target/debug/deps/dictionary_column-a2e0121b2bcba6fc)
+
+running 3 tests
+test dictionary_columns_stay_in_the_checked_core_and_reuse_simd ... FAILED
+test dictionary_storage_and_read_effects_are_not_bypassed ... ok
+test dictionary_column_language_tests_execute_natively ... FAILED
+
+failures:
+
+---- dictionary_columns_stay_in_the_checked_core_and_reuse_simd stdout ----
+
+thread 'dictionary_columns_stay_in_the_checked_core_and_reuse_simd' (35845937) panicked at tests/dictionary_column.rs:10:53:
+called `Result::unwrap()` on an `Err` value: Error { diagnostic: Diagnostic { code: "E_CHECK", message: "unknown func `$dictionary-column.query-between`", primary: Some(Label { span: Span { start: 406, end: 438 }, location: Location { path: None, line: 8, column: 11 }, message: "" }), related: [], notes: [], help: [] } }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- dictionary_column_language_tests_execute_natively stdout ----
+
+thread 'dictionary_column_language_tests_execute_natively' (35845936) panicked at tests/dictionary_column.rs:49:5:
+ERROR /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/dictionary-column.test.walz: /Users/mz/ghq/github.com/mizchi/wlt-lang/tests/dictionary-column.test.walz:10:11: unknown func `$dictionary-column.query-between`
+0 passed; 0 failed; 1 errors; 0 filtered out
+
+
+
+
+failures:
+    dictionary_column_language_tests_execute_natively
+    dictionary_columns_stay_in_the_checked_core_and_reuse_simd
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+error: test failed, to rerun pass `--test dictionary_column`

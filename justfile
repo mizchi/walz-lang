@@ -91,6 +91,47 @@ test-simd-kernels:
     cargo test --locked --test simd_kernels --test simd
     node --expose-gc --test runtime/simd-kernels.test.mjs runtime/simd-kernels-bench.test.mjs
 
+test-simd-collections:
+    cargo test --locked --test simd_collections
+    node --expose-gc --test runtime/simd-collections.test.mjs
+
+test-dictionary-column:
+    cargo test --locked --test dictionary_column
+    node --expose-gc --test runtime/dictionary-column.test.mjs runtime/dictionary-bench.test.mjs
+
+bench-dictionary-column output:
+    node --expose-gc runtime/dictionary-column-bench.mjs {{quote(output)}}
+
+build-table output="target/table":
+    node runtime/table/build.mjs {{quote(output)}}
+
+test-table:
+    cargo test --locked --test table
+    node runtime/table/build.mjs target/table-tests
+    WALZ_TABLE_KERNEL=target/table-tests node --expose-gc --test runtime/table.test.mjs runtime/table-transfer.test.mjs runtime/table-input.test.mjs runtime/table-materialize.test.mjs runtime/table-portable.test.mjs runtime/table-types.test.mjs runtime/table-expressions.test.mjs
+
+bench-table output:
+    node --expose-gc runtime/table-bench.mjs {{quote(output)}}
+
+profile-table snapshot output filter="":
+    node --expose-gc runtime/table-profile.mjs {{quote(snapshot)}} {{quote(output)}} {{quote(filter)}}
+    node runtime/table-profile-analyze.mjs {{quote(output)}} {{quote(output + "/analysis.json")}}
+
+test-table-profile:
+    node --test runtime/table-profile.test.mjs
+
+probe-table-wasm-opt snapshot output optimizer="target/wasm-opt-research/binaryen-version_133/bin/wasm-opt":
+    node --expose-gc runtime/table-opt-probe.mjs {{quote(snapshot)}} {{quote(output)}} {{quote(optimizer)}}
+
+bench-table-tuning baseline stages output:
+    node --expose-gc runtime/table-tuning.mjs {{quote(baseline)}} {{quote(stages)}} {{quote(output)}}
+
+bench-table-io baseline candidate output:
+    node --expose-gc runtime/table-io-bench.mjs {{quote(baseline)}} {{quote(candidate)}} {{quote(output)}}
+
+bench-simd-collections output:
+    node --expose-gc runtime/simd-collections-bench.mjs {{quote(output)}}
+
 simd-kernels-capture output="target/simd-kernels/current" jsimd="../jsimd":
     node runtime/simd-kernels-bench.mjs capture {{quote(output)}} {{quote(jsimd)}}
 

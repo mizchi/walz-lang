@@ -1,0 +1,16 @@
+simd.compound: unprofiled 1622.9 us
+simd.simple: unprofiled 1150.9 us
+simd.ingest-only: unprofiled 7744.2 us
+simd.cold-ingest-filter: unprofiled 9162.4 us
+simd.materialize-only: unprofiled 4362.2 us
+simd.filter-materialize: unprofiled 5642.4 us
+simd.small-compound: unprofiled 37.9 us
+simd.nullable-compound: unprofiled 1755.9 us
+simd.compound: walz-file-4.filter-packed 49.9%, walz-file-2.number-column.compare-pair 20.4%, walz-file-4.numeric-mask 14.8%, walz-file-4.collect-masks 12.3%
+simd.simple: walz-file-4.collect-masks 57.1%, walz-file-4.filter-packed 33.1%, __list_from_64_26 5.6%, (garbage collector) 2.4%
+simd.ingest-only: readChunk 40.6%, numeric-import 19.8%, walz-file-1.numeric-store.new 8.0%, __list_from_63_7 7.7%
+simd.cold-ingest-filter: readChunk 32.6%, numeric-import 16.6%, walz-file-1.numeric-store.new 7.7%, walz-file-4.collect-masks 7.4%
+simd.materialize-only: (anonymous) 28.6%, output.<computed> 25.8%, column-export 13.8%, createRows 13.2%
+simd.filter-materialize: (anonymous) 22.6%, output.<computed> 20.0%, walz-file-4.collect-masks 12.4%, column-export 11.3%
+simd.small-compound: walz-file-4.filter-packed 40.8%, walz-file-2.number-column.compare-pair 17.6%, walz-file-4.numeric-mask 13.2%, walz-file-4.collect-masks 9.6%
+simd.nullable-compound: walz-file-4.filter-packed 50.0%, walz-file-2.number-column.compare-pair 19.3%, walz-file-4.numeric-mask 16.3%, walz-file-4.collect-masks 11.9%

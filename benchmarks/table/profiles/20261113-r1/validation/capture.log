@@ -1,0 +1,25 @@
+node --expose-gc runtime/table-profile.mjs 'benchmarks/table/20261113-r2' 'benchmarks/table/profiles/20261113-r1' ''
+scalar.compound: unprofiled 18621.3 us
+packed-scalar.compound: unprofiled 7597.3 us
+simd.compound: unprofiled 4549.9 us
+simd.simple: unprofiled 2928.8 us
+simd.ingest-only: unprofiled 32801.1 us
+simd.cold-ingest-filter: unprofiled 37560.8 us
+simd.materialize-only: unprofiled 49453.3 us
+simd.filter-materialize: unprofiled 51635.3 us
+arquero.compound: unprofiled 2668.4 us
+arquero.filter-materialize: unprofiled 5041.2 us
+simd.small-compound: unprofiled 91.0 us
+simd.nullable-compound: unprofiled 4685.6 us
+scalar.compound: walz-file-2.binary 46.3%, walz-file-2.eval 25.8%, walz-file-2.filter-rows 6.9%, post 4.8%
+packed-scalar.compound: walz-file-2.numeric-mask 56.2%, walz-file-1.scalar 20.7%, walz-file-2.filter-packed 16.9%, post 4.9%
+simd.compound: walz-file-2.numeric-mask 68.5%, walz-file-2.filter-packed 24.9%, post 4.6%, (garbage collector) 0.8%
+simd.simple: walz-file-2.filter-packed 82.5%, __list_from_60_20 4.8%, walz-file-2.prefix 4.8%, post 4.7%
+simd.ingest-only: js-to-wasm:rir: 31.2%, (garbage collector) 24.6%, js-to-wasm:idr:r 17.4%, table 6.4%
+simd.cold-ingest-filter: js-to-wasm:rir: 28.1%, (garbage collector) 21.6%, js-to-wasm:idr:r 13.3%, (anonymous) 7.0%
+simd.materialize-only: (anonymous) 32.9%, js-to-wasm:r:d 11.1%, js-to-wasm:rii:r 10.5%, js-to-wasm:r:i 8.0%
+simd.filter-materialize: (anonymous) 29.7%, js-to-wasm:r:d 11.1%, js-to-wasm:rii:r 9.7%, js-to-wasm:r:i 8.5%
+arquero.compound: (anonymous) 68.8%, filter 16.0%, _filter 8.1%, post 4.8%
+arquero.filter-materialize: (anonymous) 44.5%, scan 11.9%, (garbage collector) 10.3%, (anonymous) 8.2%
+simd.small-compound: walz-file-2.numeric-mask 66.9%, walz-file-2.filter-packed 21.0%, post 4.7%, visit 0.6%
+simd.nullable-compound: walz-file-2.numeric-mask 67.3%, walz-file-2.filter-packed 26.6%, post 4.7%, (garbage collector) 0.9%

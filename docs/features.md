@@ -43,6 +43,9 @@ Enumerate the types/functions to use from `walz:core`. This module does not impl
 | Checked size arithmetic | i32/i64 unsigned checked add, multiply, and power-of-two alignment | Option failure; ordinary Wasm arithmetic still wraps; application limits remain explicit | [Checked integers](checked-integers.md) |
 | JSON | Value construction/traversal/parsing/stringification implemented in Walz | Preserves number lexemes; consult APIs for conversion ranges between JSON numbers and binary floats | [JSON](json-values.md), [parser measurements](json-parser-bench.md) |
 | SIMD | V128, Wasm SIMD instructions, kernels, bulk numeric-list ABI transfer | No ABI directly passing v128 to JS; use numeric lists or linear memory | [SIMD](simd.md), [kernels](simd-kernels.md) |
+| SIMD collections | Immutable dense bitmap and i32 columns; Boolean selection, fused counts and exact sums | Agent-local GC storage; construction copies data; compare resident and ABI-inclusive costs separately | [Collections](simd-collections.md), [library](../walz/simd/README.md) |
+| Dictionary columns | Unique string dictionaries with validated SIMD i32 codes; decoding, equality/IN selections and batched counts | Dictionary-local IDs, exact UTF-8 equality; no nullable or narrow-code representation yet | [Dictionary columns](dictionary-column.md) |
+| Table processing | Immutable relational verbs, fused f64x2 filters, aligned scans, bounded bulk numeric I/O, Arquero-style JS/TS facade and portable batches | Lazy caches add memory; 640-KiB raw transfer cap; scalar aggregates/string I/O; partial Arquero compatibility | [Tables](table.md) |
 | Succinct data structures | Bitsets, rank/select, indexes, persistent Wasm instances, readonly shared payloads | Hosts must obey layout/publication/lifetime contracts | [Succinct](succinct.md) |
 
 See the source-generated [Standard API reference](stdlib-api.md) for exact parameters, results, and effects.

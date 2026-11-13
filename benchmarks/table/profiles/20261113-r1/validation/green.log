@@ -1,0 +1,13 @@
+node --test runtime/table-profile.test.mjs
+✔ CPU summaries merge call sites without double-counting recursive inclusive time (0.484209ms)
+✔ sampled allocation totals merge sites and normalize by actual calls (2.60975ms)
+✔ the block model proves short-circuit masks and counts skipped comparisons (0.3635ms)
+✔ profiling rejects modified archived Wasm, inputs and facade sources (6.139292ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.659459

@@ -1,0 +1,29 @@
+[WebServer] (node:87593) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:87593) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] Browser fixtures: 8/114 (26s)
+[WebServer] Browser fixtures: 16/114 (42s)
+[WebServer] Browser fixtures: 24/114 (54s)
+[WebServer] Browser fixtures: 32/114 (61s)
+[WebServer] Browser fixtures: 40/114 (69s)
+[WebServer] Browser fixtures: 48/114 (76s)
+[WebServer] Browser fixtures: 56/114 (84s)
+[WebServer] Browser fixtures: 64/114 (91s)
+[WebServer] Browser fixtures: 72/114 (99s)
+[WebServer] Browser fixtures: 80/114 (107s)
+[WebServer] Browser fixtures: 88/114 (114s)
+[WebServer] Browser fixtures: 96/114 (122s)
+[WebServer] Browser fixtures: 104/114 (129s)
+[WebServer] Browser fixtures: 112/114 (137s)
+[WebServer] Browser fixtures: 114/114 (139s)
+
+Running 3 tests using 1 worker
+
+(node:95459) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 runtime/e2e/table.spec.mjs:3:1 › resident table facade performs relational pipelines and joins in Chromium (148ms)
+  ✓  2 runtime/e2e/table.spec.mjs:35:46 › core: portable table snapshots preserve scalar values and clean ABI allocations (68ms)
+  ✓  3 runtime/e2e/table.spec.mjs:35:46 › component: portable table snapshots preserve scalar values and clean ABI allocations (74ms)
+
+  3 passed (2.3m)

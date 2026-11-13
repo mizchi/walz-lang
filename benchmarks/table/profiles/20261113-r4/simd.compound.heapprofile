@@ -1,0 +1,2101 @@
+{
+  "head": {
+    "callFrame": {
+      "functionName": "(root)",
+      "scriptId": "0",
+      "url": "",
+      "lineNumber": -1,
+      "columnNumber": -1
+    },
+    "selfSize": 0,
+    "id": 1,
+    "children": [
+      {
+        "callFrame": {
+          "functionName": "",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1
+        },
+        "selfSize": 0,
+        "id": 2,
+        "children": [
+          {
+            "callFrame": {
+              "functionName": "profile",
+              "scriptId": "89",
+              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+              "lineNumber": 85,
+              "columnNumber": 29
+            },
+            "selfSize": 0,
+            "id": 3,
+            "children": [
+              {
+                "callFrame": {
+                  "functionName": "batch",
+                  "scriptId": "89",
+                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+                  "lineNumber": 70,
+                  "columnNumber": 14
+                },
+                "selfSize": 0,
+                "id": 4,
+                "children": [
+                  {
+                    "callFrame": {
+                      "functionName": "",
+                      "scriptId": "89",
+                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/table-profile.mjs",
+                      "lineNumber": 51,
+                      "columnNumber": 28
+                    },
+                    "selfSize": 22177888,
+                    "id": 5,
+                    "children": [
+                      {
+                        "callFrame": {
+                          "functionName": "Table",
+                          "scriptId": "334",
+                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/index.mjs",
+                          "lineNumber": 107,
+                          "columnNumber": 13
+                        },
+                        "selfSize": 0,
+                        "id": 53,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "from",
+                              "scriptId": "0",
+                              "url": "",
+                              "lineNumber": -1,
+                              "columnNumber": -1
+                            },
+                            "selfSize": 0,
+                            "id": 54,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "",
+                                  "scriptId": "334",
+                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/index.mjs",
+                                  "lineNumber": 110,
+                                  "columnNumber": 81
+                                },
+                                "selfSize": 65680,
+                                "id": 55,
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "callFrame": {
+                          "functionName": "compile",
+                          "scriptId": "335",
+                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                          "lineNumber": 20,
+                          "columnNumber": 23
+                        },
+                        "selfSize": 0,
+                        "id": 6,
+                        "children": [
+                          {
+                            "callFrame": {
+                              "functionName": "visit",
+                              "scriptId": "335",
+                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                              "lineNumber": 28,
+                              "columnNumber": 16
+                            },
+                            "selfSize": 0,
+                            "id": 45,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "visit",
+                                  "scriptId": "335",
+                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                                  "lineNumber": 28,
+                                  "columnNumber": 16
+                                },
+                                "selfSize": 32784,
+                                "id": 46,
+                                "children": [
+                                  {
+                                    "callFrame": {
+                                      "functionName": "node",
+                                      "scriptId": "335",
+                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                                      "lineNumber": 26,
+                                      "columnNumber": 15
+                                    },
+                                    "selfSize": 65576,
+                                    "id": 70,
+                                    "children": []
+                                  },
+                                  {
+                                    "callFrame": {
+                                      "functionName": "visit",
+                                      "scriptId": "335",
+                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                                      "lineNumber": 28,
+                                      "columnNumber": 16
+                                    },
+                                    "selfSize": 0,
+                                    "id": 47,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "visit",
+                                          "scriptId": "335",
+                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                                          "lineNumber": 28,
+                                          "columnNumber": 16
+                                        },
+                                        "selfSize": 0,
+                                        "id": 48,
+                                        "children": [
+                                          {
+                                            "callFrame": {
+                                              "functionName": "columnAt",
+                                              "scriptId": "335",
+                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/benchmarks/table/io/20261113-r1/candidate-stream/source/runtime/table/expressions.mjs",
+                                              "lineNumber": 22,
+                                              "columnNumber": 19
+                                            },
+                                            "selfSize": 65600,
+                                            "id": 49,
+                                            "children": []
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "callFrame": {
+                              "functionName": "parseExpressionAt",
+                              "scriptId": "336",
+                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                              "lineNumber": 6221,
+                              "columnNumber": 26
+                            },
+                            "selfSize": 0,
+                            "id": 7,
+                            "children": [
+                              {
+                                "callFrame": {
+                                  "functionName": "parseExpressionAt",
+                                  "scriptId": "336",
+                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                  "lineNumber": 651,
+                                  "columnNumber": 54
+                                },
+                                "selfSize": 32832,
+                                "id": 8,
+                                "children": [
+                                  {
+                                    "callFrame": {
+                                      "functionName": "Parser",
+                                      "scriptId": "336",
+                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                      "lineNumber": 505,
+                                      "columnNumber": 28
+                                    },
+                                    "selfSize": 32832,
+                                    "id": 9,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "getOptions",
+                                          "scriptId": "336",
+                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                          "lineNumber": 428,
+                                          "columnNumber": 19
+                                        },
+                                        "selfSize": 32824,
+                                        "id": 73,
+                                        "children": []
+                                      },
+                                      {
+                                        "callFrame": {
+                                          "functionName": "pp$3.enterScope",
+                                          "scriptId": "336",
+                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                          "lineNumber": 3757,
+                                          "columnNumber": 26
+                                        },
+                                        "selfSize": 32832,
+                                        "id": 56,
+                                        "children": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "callFrame": {
+                                      "functionName": "pp$5.parseExpression",
+                                      "scriptId": "336",
+                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                      "lineNumber": 2645,
+                                      "columnNumber": 31
+                                    },
+                                    "selfSize": 0,
+                                    "id": 10,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "pp$5.parseMaybeAssign",
+                                          "scriptId": "336",
+                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                          "lineNumber": 2660,
+                                          "columnNumber": 32
+                                        },
+                                        "selfSize": 0,
+                                        "id": 11,
+                                        "children": [
+                                          {
+                                            "callFrame": {
+                                              "functionName": "pp$5.parseMaybeConditional",
+                                              "scriptId": "336",
+                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                              "lineNumber": 2715,
+                                              "columnNumber": 37
+                                            },
+                                            "selfSize": 0,
+                                            "id": 12,
+                                            "children": [
+                                              {
+                                                "callFrame": {
+                                                  "functionName": "pp$5.parseExprOps",
+                                                  "scriptId": "336",
+                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                  "lineNumber": 2732,
+                                                  "columnNumber": 28
+                                                },
+                                                "selfSize": 0,
+                                                "id": 13,
+                                                "children": [
+                                                  {
+                                                    "callFrame": {
+                                                      "functionName": "pp$5.parseMaybeUnary",
+                                                      "scriptId": "336",
+                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                      "lineNumber": 2781,
+                                                      "columnNumber": 31
+                                                    },
+                                                    "selfSize": 0,
+                                                    "id": 14,
+                                                    "children": [
+                                                      {
+                                                        "callFrame": {
+                                                          "functionName": "pp$5.parseExprAtom",
+                                                          "scriptId": "336",
+                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                          "lineNumber": 2957,
+                                                          "columnNumber": 29
+                                                        },
+                                                        "selfSize": 0,
+                                                        "id": 15,
+                                                        "children": [
+                                                          {
+                                                            "callFrame": {
+                                                              "functionName": "pp$5.parseParenAndDistinguishExpression",
+                                                              "scriptId": "336",
+                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                              "lineNumber": 3167,
+                                                              "columnNumber": 50
+                                                            },
+                                                            "selfSize": 32784,
+                                                            "id": 16,
+                                                            "children": [
+                                                              {
+                                                                "callFrame": {
+                                                                  "functionName": "pp$5.parseMaybeAssign",
+                                                                  "scriptId": "336",
+                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                  "lineNumber": 2660,
+                                                                  "columnNumber": 32
+                                                                },
+                                                                "selfSize": 0,
+                                                                "id": 17,
+                                                                "children": [
+                                                                  {
+                                                                    "callFrame": {
+                                                                      "functionName": "pp$5.parseMaybeConditional",
+                                                                      "scriptId": "336",
+                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                      "lineNumber": 2715,
+                                                                      "columnNumber": 37
+                                                                    },
+                                                                    "selfSize": 0,
+                                                                    "id": 18,
+                                                                    "children": [
+                                                                      {
+                                                                        "callFrame": {
+                                                                          "functionName": "pp$5.parseExprOps",
+                                                                          "scriptId": "336",
+                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                          "lineNumber": 2732,
+                                                                          "columnNumber": 28
+                                                                        },
+                                                                        "selfSize": 0,
+                                                                        "id": 19,
+                                                                        "children": [
+                                                                          {
+                                                                            "callFrame": {
+                                                                              "functionName": "pp$5.parseMaybeUnary",
+                                                                              "scriptId": "336",
+                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                              "lineNumber": 2781,
+                                                                              "columnNumber": 31
+                                                                            },
+                                                                            "selfSize": 0,
+                                                                            "id": 20,
+                                                                            "children": [
+                                                                              {
+                                                                                "callFrame": {
+                                                                                  "functionName": "pp$5.parseExprAtom",
+                                                                                  "scriptId": "336",
+                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                  "lineNumber": 2957,
+                                                                                  "columnNumber": 29
+                                                                                },
+                                                                                "selfSize": 0,
+                                                                                "id": 21,
+                                                                                "children": [
+                                                                                  {
+                                                                                    "callFrame": {
+                                                                                      "functionName": "pp$5.parseArrowExpression",
+                                                                                      "scriptId": "336",
+                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                      "lineNumber": 3494,
+                                                                                      "columnNumber": 36
+                                                                                    },
+                                                                                    "selfSize": 0,
+                                                                                    "id": 22,
+                                                                                    "children": [
+                                                                                      {
+                                                                                        "callFrame": {
+                                                                                          "functionName": "pp$5.parseFunctionBody",
+                                                                                          "scriptId": "336",
+                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                          "lineNumber": 3516,
+                                                                                          "columnNumber": 33
+                                                                                        },
+                                                                                        "selfSize": 0,
+                                                                                        "id": 23,
+                                                                                        "children": [
+                                                                                          {
+                                                                                            "callFrame": {
+                                                                                              "functionName": "pp$5.parseMaybeAssign",
+                                                                                              "scriptId": "336",
+                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                              "lineNumber": 2660,
+                                                                                              "columnNumber": 32
+                                                                                            },
+                                                                                            "selfSize": 0,
+                                                                                            "id": 24,
+                                                                                            "children": [
+                                                                                              {
+                                                                                                "callFrame": {
+                                                                                                  "functionName": "pp$5.parseMaybeConditional",
+                                                                                                  "scriptId": "336",
+                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                  "lineNumber": 2715,
+                                                                                                  "columnNumber": 37
+                                                                                                },
+                                                                                                "selfSize": 0,
+                                                                                                "id": 25,
+                                                                                                "children": [
+                                                                                                  {
+                                                                                                    "callFrame": {
+                                                                                                      "functionName": "pp$5.parseExprOps",
+                                                                                                      "scriptId": "336",
+                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                      "lineNumber": 2732,
+                                                                                                      "columnNumber": 28
+                                                                                                    },
+                                                                                                    "selfSize": 0,
+                                                                                                    "id": 26,
+                                                                                                    "children": [
+                                                                                                      {
+                                                                                                        "callFrame": {
+                                                                                                          "functionName": "pp$5.parseExprOp",
+                                                                                                          "scriptId": "336",
+                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                          "lineNumber": 2745,
+                                                                                                          "columnNumber": 27
+                                                                                                        },
+                                                                                                        "selfSize": 0,
+                                                                                                        "id": 27,
+                                                                                                        "children": [
+                                                                                                          {
+                                                                                                            "callFrame": {
+                                                                                                              "functionName": "pp$5.parseExprOp",
+                                                                                                              "scriptId": "336",
+                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                              "lineNumber": 2745,
+                                                                                                              "columnNumber": 27
+                                                                                                            },
+                                                                                                            "selfSize": 0,
+                                                                                                            "id": 28,
+                                                                                                            "children": [
+                                                                                                              {
+                                                                                                                "callFrame": {
+                                                                                                                  "functionName": "pp$5.parseExprOp",
+                                                                                                                  "scriptId": "336",
+                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                  "lineNumber": 2745,
+                                                                                                                  "columnNumber": 27
+                                                                                                                },
+                                                                                                                "selfSize": 0,
+                                                                                                                "id": 29,
+                                                                                                                "children": [
+                                                                                                                  {
+                                                                                                                    "callFrame": {
+                                                                                                                      "functionName": "pp$5.buildBinary",
+                                                                                                                      "scriptId": "336",
+                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                      "lineNumber": 2770,
+                                                                                                                      "columnNumber": 27
+                                                                                                                    },
+                                                                                                                    "selfSize": 0,
+                                                                                                                    "id": 50,
+                                                                                                                    "children": [
+                                                                                                                      {
+                                                                                                                        "callFrame": {
+                                                                                                                          "functionName": "pp$2.startNodeAt",
+                                                                                                                          "scriptId": "336",
+                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                          "lineNumber": 3855,
+                                                                                                                          "columnNumber": 27
+                                                                                                                        },
+                                                                                                                        "selfSize": 32824,
+                                                                                                                        "id": 51,
+                                                                                                                        "children": []
+                                                                                                                      }
+                                                                                                                    ]
+                                                                                                                  },
+                                                                                                                  {
+                                                                                                                    "callFrame": {
+                                                                                                                      "functionName": "pp$5.parseMaybeUnary",
+                                                                                                                      "scriptId": "336",
+                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                      "lineNumber": 2781,
+                                                                                                                      "columnNumber": 31
+                                                                                                                    },
+                                                                                                                    "selfSize": 0,
+                                                                                                                    "id": 30,
+                                                                                                                    "children": [
+                                                                                                                      {
+                                                                                                                        "callFrame": {
+                                                                                                                          "functionName": "pp$5.parseExprAtom",
+                                                                                                                          "scriptId": "336",
+                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                          "lineNumber": 2957,
+                                                                                                                          "columnNumber": 29
+                                                                                                                        },
+                                                                                                                        "selfSize": 0,
+                                                                                                                        "id": 31,
+                                                                                                                        "children": [
+                                                                                                                          {
+                                                                                                                            "callFrame": {
+                                                                                                                              "functionName": "pp$5.parseParenAndDistinguishExpression",
+                                                                                                                              "scriptId": "336",
+                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                              "lineNumber": 3167,
+                                                                                                                              "columnNumber": 50
+                                                                                                                            },
+                                                                                                                            "selfSize": 0,
+                                                                                                                            "id": 32,
+                                                                                                                            "children": [
+                                                                                                                              {
+                                                                                                                                "callFrame": {
+                                                                                                                                  "functionName": "push",
+                                                                                                                                  "scriptId": "0",
+                                                                                                                                  "url": "",
+                                                                                                                                  "lineNumber": -1,
+                                                                                                                                  "columnNumber": -1
+                                                                                                                                },
+                                                                                                                                "selfSize": 65664,
+                                                                                                                                "id": 52,
+                                                                                                                                "children": []
+                                                                                                                              },
+                                                                                                                              {
+                                                                                                                                "callFrame": {
+                                                                                                                                  "functionName": "pp$5.parseMaybeAssign",
+                                                                                                                                  "scriptId": "336",
+                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                  "lineNumber": 2660,
+                                                                                                                                  "columnNumber": 32
+                                                                                                                                },
+                                                                                                                                "selfSize": 0,
+                                                                                                                                "id": 33,
+                                                                                                                                "children": [
+                                                                                                                                  {
+                                                                                                                                    "callFrame": {
+                                                                                                                                      "functionName": "pp$5.parseMaybeConditional",
+                                                                                                                                      "scriptId": "336",
+                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                      "lineNumber": 2715,
+                                                                                                                                      "columnNumber": 37
+                                                                                                                                    },
+                                                                                                                                    "selfSize": 0,
+                                                                                                                                    "id": 34,
+                                                                                                                                    "children": [
+                                                                                                                                      {
+                                                                                                                                        "callFrame": {
+                                                                                                                                          "functionName": "pp$5.parseExprOps",
+                                                                                                                                          "scriptId": "336",
+                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                          "lineNumber": 2732,
+                                                                                                                                          "columnNumber": 28
+                                                                                                                                        },
+                                                                                                                                        "selfSize": 0,
+                                                                                                                                        "id": 35,
+                                                                                                                                        "children": [
+                                                                                                                                          {
+                                                                                                                                            "callFrame": {
+                                                                                                                                              "functionName": "pp$5.parseExprOp",
+                                                                                                                                              "scriptId": "336",
+                                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                              "lineNumber": 2745,
+                                                                                                                                              "columnNumber": 27
+                                                                                                                                            },
+                                                                                                                                            "selfSize": 0,
+                                                                                                                                            "id": 36,
+                                                                                                                                            "children": [
+                                                                                                                                              {
+                                                                                                                                                "callFrame": {
+                                                                                                                                                  "functionName": "pp$5.parseExprOp",
+                                                                                                                                                  "scriptId": "336",
+                                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                  "lineNumber": 2745,
+                                                                                                                                                  "columnNumber": 27
+                                                                                                                                                },
+                                                                                                                                                "selfSize": 0,
+                                                                                                                                                "id": 37,
+                                                                                                                                                "children": [
+                                                                                                                                                  {
+                                                                                                                                                    "callFrame": {
+                                                                                                                                                      "functionName": "pp$5.parseExprOp",
+                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                      "lineNumber": 2745,
+                                                                                                                                                      "columnNumber": 27
+                                                                                                                                                    },
+                                                                                                                                                    "selfSize": 0,
+                                                                                                                                                    "id": 38,
+                                                                                                                                                    "children": [
+                                                                                                                                                      {
+                                                                                                                                                        "callFrame": {
+                                                                                                                                                          "functionName": "pp$5.buildBinary",
+                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                          "lineNumber": 2770,
+                                                                                                                                                          "columnNumber": 27
+                                                                                                                                                        },
+                                                                                                                                                        "selfSize": 0,
+                                                                                                                                                        "id": 39,
+                                                                                                                                                        "children": [
+                                                                                                                                                          {
+                                                                                                                                                            "callFrame": {
+                                                                                                                                                              "functionName": "pp$2.startNodeAt",
+                                                                                                                                                              "scriptId": "336",
+                                                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                              "lineNumber": 3855,
+                                                                                                                                                              "columnNumber": 27
+                                                                                                                                                            },
+                                                                                                                                                            "selfSize": 32824,
+                                                                                                                                                            "id": 40,
+                                                                                                                                                            "children": []
+                                                                                                                                                          }
+                                                                                                                                                        ]
+                                                                                                                                                      }
+                                                                                                                                                    ]
+                                                                                                                                                  },
+                                                                                                                                                  {
+                                                                                                                                                    "callFrame": {
+                                                                                                                                                      "functionName": "pp$5.buildBinary",
+                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                      "lineNumber": 2770,
+                                                                                                                                                      "columnNumber": 27
+                                                                                                                                                    },
+                                                                                                                                                    "selfSize": 0,
+                                                                                                                                                    "id": 74,
+                                                                                                                                                    "children": [
+                                                                                                                                                      {
+                                                                                                                                                        "callFrame": {
+                                                                                                                                                          "functionName": "pp$2.startNodeAt",
+                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                          "lineNumber": 3855,
+                                                                                                                                                          "columnNumber": 27
+                                                                                                                                                        },
+                                                                                                                                                        "selfSize": 32824,
+                                                                                                                                                        "id": 75,
+                                                                                                                                                        "children": []
+                                                                                                                                                      }
+                                                                                                                                                    ]
+                                                                                                                                                  },
+                                                                                                                                                  {
+                                                                                                                                                    "callFrame": {
+                                                                                                                                                      "functionName": "pp$5.parseMaybeUnary",
+                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                      "lineNumber": 2781,
+                                                                                                                                                      "columnNumber": 31
+                                                                                                                                                    },
+                                                                                                                                                    "selfSize": 0,
+                                                                                                                                                    "id": 41,
+                                                                                                                                                    "children": [
+                                                                                                                                                      {
+                                                                                                                                                        "callFrame": {
+                                                                                                                                                          "functionName": "pp$5.parseSubscript",
+                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                          "lineNumber": 2891,
+                                                                                                                                                          "columnNumber": 30
+                                                                                                                                                        },
+                                                                                                                                                        "selfSize": 0,
+                                                                                                                                                        "id": 57,
+                                                                                                                                                        "children": [
+                                                                                                                                                          {
+                                                                                                                                                            "callFrame": {
+                                                                                                                                                              "functionName": "pp$5.parseIdent",
+                                                                                                                                                              "scriptId": "336",
+                                                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                              "lineNumber": 3634,
+                                                                                                                                                              "columnNumber": 26
+                                                                                                                                                            },
+                                                                                                                                                            "selfSize": 0,
+                                                                                                                                                            "id": 58,
+                                                                                                                                                            "children": [
+                                                                                                                                                              {
+                                                                                                                                                                "callFrame": {
+                                                                                                                                                                  "functionName": "pp.next",
+                                                                                                                                                                  "scriptId": "336",
+                                                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                                  "lineNumber": 5388,
+                                                                                                                                                                  "columnNumber": 18
+                                                                                                                                                                },
+                                                                                                                                                                "selfSize": 0,
+                                                                                                                                                                "id": 59,
+                                                                                                                                                                "children": [
+                                                                                                                                                                  {
+                                                                                                                                                                    "callFrame": {
+                                                                                                                                                                      "functionName": "pp.nextToken",
+                                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                                      "lineNumber": 5428,
+                                                                                                                                                                      "columnNumber": 23
+                                                                                                                                                                    },
+                                                                                                                                                                    "selfSize": 0,
+                                                                                                                                                                    "id": 60,
+                                                                                                                                                                    "children": [
+                                                                                                                                                                      {
+                                                                                                                                                                        "callFrame": {
+                                                                                                                                                                          "functionName": "pp.getTokenFromCode",
+                                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                                          "lineNumber": 5684,
+                                                                                                                                                                          "columnNumber": 30
+                                                                                                                                                                        },
+                                                                                                                                                                        "selfSize": 32784,
+                                                                                                                                                                        "id": 61,
+                                                                                                                                                                        "children": []
+                                                                                                                                                                      }
+                                                                                                                                                                    ]
+                                                                                                                                                                  }
+                                                                                                                                                                ]
+                                                                                                                                                              }
+                                                                                                                                                            ]
+                                                                                                                                                          }
+                                                                                                                                                        ]
+                                                                                                                                                      },
+                                                                                                                                                      {
+                                                                                                                                                        "callFrame": {
+                                                                                                                                                          "functionName": "pp$5.parseExprAtom",
+                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                          "lineNumber": 2957,
+                                                                                                                                                          "columnNumber": 29
+                                                                                                                                                        },
+                                                                                                                                                        "selfSize": 0,
+                                                                                                                                                        "id": 42,
+                                                                                                                                                        "children": [
+                                                                                                                                                          {
+                                                                                                                                                            "callFrame": {
+                                                                                                                                                              "functionName": "pp$5.parseIdent",
+                                                                                                                                                              "scriptId": "336",
+                                                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                              "lineNumber": 3634,
+                                                                                                                                                              "columnNumber": 26
+                                                                                                                                                            },
+                                                                                                                                                            "selfSize": 0,
+                                                                                                                                                            "id": 43,
+                                                                                                                                                            "children": [
+                                                                                                                                                              {
+                                                                                                                                                                "callFrame": {
+                                                                                                                                                                  "functionName": "pp$5.parseIdentNode",
+                                                                                                                                                                  "scriptId": "336",
+                                                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                                  "lineNumber": 3646,
+                                                                                                                                                                  "columnNumber": 30
+                                                                                                                                                                },
+                                                                                                                                                                "selfSize": 32824,
+                                                                                                                                                                "id": 44,
+                                                                                                                                                                "children": []
+                                                                                                                                                              }
+                                                                                                                                                            ]
+                                                                                                                                                          }
+                                                                                                                                                        ]
+                                                                                                                                                      }
+                                                                                                                                                    ]
+                                                                                                                                                  }
+                                                                                                                                                ]
+                                                                                                                                              },
+                                                                                                                                              {
+                                                                                                                                                "callFrame": {
+                                                                                                                                                  "functionName": "pp$5.buildBinary",
+                                                                                                                                                  "scriptId": "336",
+                                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                  "lineNumber": 2770,
+                                                                                                                                                  "columnNumber": 27
+                                                                                                                                                },
+                                                                                                                                                "selfSize": 0,
+                                                                                                                                                "id": 71,
+                                                                                                                                                "children": [
+                                                                                                                                                  {
+                                                                                                                                                    "callFrame": {
+                                                                                                                                                      "functionName": "pp$2.startNodeAt",
+                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                      "lineNumber": 3855,
+                                                                                                                                                      "columnNumber": 27
+                                                                                                                                                    },
+                                                                                                                                                    "selfSize": 32824,
+                                                                                                                                                    "id": 72,
+                                                                                                                                                    "children": []
+                                                                                                                                                  }
+                                                                                                                                                ]
+                                                                                                                                              },
+                                                                                                                                              {
+                                                                                                                                                "callFrame": {
+                                                                                                                                                  "functionName": "pp.next",
+                                                                                                                                                  "scriptId": "336",
+                                                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                  "lineNumber": 5388,
+                                                                                                                                                  "columnNumber": 18
+                                                                                                                                                },
+                                                                                                                                                "selfSize": 0,
+                                                                                                                                                "id": 66,
+                                                                                                                                                "children": [
+                                                                                                                                                  {
+                                                                                                                                                    "callFrame": {
+                                                                                                                                                      "functionName": "pp.nextToken",
+                                                                                                                                                      "scriptId": "336",
+                                                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                      "lineNumber": 5428,
+                                                                                                                                                      "columnNumber": 23
+                                                                                                                                                    },
+                                                                                                                                                    "selfSize": 0,
+                                                                                                                                                    "id": 67,
+                                                                                                                                                    "children": [
+                                                                                                                                                      {
+                                                                                                                                                        "callFrame": {
+                                                                                                                                                          "functionName": "pp.getTokenFromCode",
+                                                                                                                                                          "scriptId": "336",
+                                                                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                          "lineNumber": 5684,
+                                                                                                                                                          "columnNumber": 30
+                                                                                                                                                        },
+                                                                                                                                                        "selfSize": 0,
+                                                                                                                                                        "id": 68,
+                                                                                                                                                        "children": [
+                                                                                                                                                          {
+                                                                                                                                                            "callFrame": {
+                                                                                                                                                              "functionName": "pp.readNumber",
+                                                                                                                                                              "scriptId": "336",
+                                                                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                                                              "lineNumber": 5878,
+                                                                                                                                                              "columnNumber": 24
+                                                                                                                                                            },
+                                                                                                                                                            "selfSize": 32784,
+                                                                                                                                                            "id": 69,
+                                                                                                                                                            "children": []
+                                                                                                                                                          }
+                                                                                                                                                        ]
+                                                                                                                                                      }
+                                                                                                                                                    ]
+                                                                                                                                                  }
+                                                                                                                                                ]
+                                                                                                                                              }
+                                                                                                                                            ]
+                                                                                                                                          }
+                                                                                                                                        ]
+                                                                                                                                      }
+                                                                                                                                    ]
+                                                                                                                                  }
+                                                                                                                                ]
+                                                                                                                              }
+                                                                                                                            ]
+                                                                                                                          }
+                                                                                                                        ]
+                                                                                                                      }
+                                                                                                                    ]
+                                                                                                                  }
+                                                                                                                ]
+                                                                                                              }
+                                                                                                            ]
+                                                                                                          }
+                                                                                                        ]
+                                                                                                      },
+                                                                                                      {
+                                                                                                        "callFrame": {
+                                                                                                          "functionName": "pp$5.parseMaybeUnary",
+                                                                                                          "scriptId": "336",
+                                                                                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                          "lineNumber": 2781,
+                                                                                                          "columnNumber": 31
+                                                                                                        },
+                                                                                                        "selfSize": 0,
+                                                                                                        "id": 62,
+                                                                                                        "children": [
+                                                                                                          {
+                                                                                                            "callFrame": {
+                                                                                                              "functionName": "pp$5.parseExprAtom",
+                                                                                                              "scriptId": "336",
+                                                                                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                              "lineNumber": 2957,
+                                                                                                              "columnNumber": 29
+                                                                                                            },
+                                                                                                            "selfSize": 0,
+                                                                                                            "id": 63,
+                                                                                                            "children": [
+                                                                                                              {
+                                                                                                                "callFrame": {
+                                                                                                                  "functionName": "pp$5.parseIdent",
+                                                                                                                  "scriptId": "336",
+                                                                                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                  "lineNumber": 3634,
+                                                                                                                  "columnNumber": 26
+                                                                                                                },
+                                                                                                                "selfSize": 0,
+                                                                                                                "id": 64,
+                                                                                                                "children": [
+                                                                                                                  {
+                                                                                                                    "callFrame": {
+                                                                                                                      "functionName": "pp$5.parseIdentNode",
+                                                                                                                      "scriptId": "336",
+                                                                                                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                                                                                      "lineNumber": 3646,
+                                                                                                                      "columnNumber": 30
+                                                                                                                    },
+                                                                                                                    "selfSize": 32824,
+                                                                                                                    "id": 65,
+                                                                                                                    "children": []
+                                                                                                                  }
+                                                                                                                ]
+                                                                                                              }
+                                                                                                            ]
+                                                                                                          }
+                                                                                                        ]
+                                                                                                      }
+                                                                                                    ]
+                                                                                                  }
+                                                                                                ]
+                                                                                              }
+                                                                                            ]
+                                                                                          }
+                                                                                        ]
+                                                                                      }
+                                                                                    ]
+                                                                                  }
+                                                                                ]
+                                                                              }
+                                                                            ]
+                                                                          }
+                                                                        ]
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "callFrame": {
+                                      "functionName": "pp.nextToken",
+                                      "scriptId": "336",
+                                      "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                      "lineNumber": 5428,
+                                      "columnNumber": 23
+                                    },
+                                    "selfSize": 0,
+                                    "id": 76,
+                                    "children": [
+                                      {
+                                        "callFrame": {
+                                          "functionName": "pp.getTokenFromCode",
+                                          "scriptId": "336",
+                                          "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                          "lineNumber": 5684,
+                                          "columnNumber": 30
+                                        },
+                                        "selfSize": 0,
+                                        "id": 77,
+                                        "children": [
+                                          {
+                                            "callFrame": {
+                                              "functionName": "pp.finishToken",
+                                              "scriptId": "336",
+                                              "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                              "lineNumber": 5532,
+                                              "columnNumber": 25
+                                            },
+                                            "selfSize": 0,
+                                            "id": 78,
+                                            "children": [
+                                              {
+                                                "callFrame": {
+                                                  "functionName": "types$1.parenL.updateContext",
+                                                  "scriptId": "336",
+                                                  "url": "file:///Users/mz/ghq/github.com/mizchi/wlt-lang/node_modules/.pnpm/acorn@8.15.0/node_modules/acorn/dist/acorn.mjs",
+                                                  "lineNumber": 2500,
+                                                  "columnNumber": 39
+                                                },
+                                                "selfSize": 32928,
+                                                "id": 79,
+                                                "children": []
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "samples": [
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 217
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 216
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 215
+    },
+    {
+      "size": 32864,
+      "nodeId": 55,
+      "ordinal": 214
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 213
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 212
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 211
+    },
+    {
+      "size": 32816,
+      "nodeId": 70,
+      "ordinal": 210
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 207
+    },
+    {
+      "size": 32832,
+      "nodeId": 52,
+      "ordinal": 203
+    },
+    {
+      "size": 32784,
+      "nodeId": 16,
+      "ordinal": 202
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 201
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 200
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 199
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 197
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 65
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 155
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 196
+    },
+    {
+      "size": 32928,
+      "nodeId": 79,
+      "ordinal": 192
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 188
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 25
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 187
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 180
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 10
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 179
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 178
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 204
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 176
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 175
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 170
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 167
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 164
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 28
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 160
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 39
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 157
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 154
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 40
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 147
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 146
+    },
+    {
+      "size": 33040,
+      "nodeId": 5,
+      "ordinal": 6
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 145
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 140
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 139
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 205
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 136
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 134
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 144
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 132
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 162
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 131
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 130
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 30
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 129
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 168
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 166
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 96
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 151
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 128
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 53
+    },
+    {
+      "size": 32832,
+      "nodeId": 56,
+      "ordinal": 126
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 174
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 122
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 8
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 183
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 121
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 5
+    },
+    {
+      "size": 32816,
+      "nodeId": 55,
+      "ordinal": 119
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 191
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 118
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 86
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 115
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 102
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 109
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 208
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 137
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 108
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 153
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 141
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 21
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 107
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 142
+    },
+    {
+      "size": 32832,
+      "nodeId": 8,
+      "ordinal": 106
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 113
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 3
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 105
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 198
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 104
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 103
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 100
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 127
+    },
+    {
+      "size": 32832,
+      "nodeId": 9,
+      "ordinal": 1
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 99
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 98
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 97
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 184
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 73
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 150
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 95
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 189
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 110
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 24
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 94
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 101
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 195
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 120
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 78
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 16
+    },
+    {
+      "size": 32832,
+      "nodeId": 52,
+      "ordinal": 82
+    },
+    {
+      "size": 32824,
+      "nodeId": 40,
+      "ordinal": 29
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 46
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 81
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 15
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 80
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 93
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 79
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 209
+    },
+    {
+      "size": 32784,
+      "nodeId": 61,
+      "ordinal": 149
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 77
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 62
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 143
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 124
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 76
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 123
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 72
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 186
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 90
+    },
+    {
+      "size": 34720,
+      "nodeId": 5,
+      "ordinal": 14
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 70
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 69
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 68
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 74
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 83
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 193
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 163
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 138
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 36
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 66
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 84
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 64
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 117
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 63
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 42
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 111
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 85
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 60
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 92
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 23
+    },
+    {
+      "size": 32824,
+      "nodeId": 51,
+      "ordinal": 58
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 171
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 57
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 56
+    },
+    {
+      "size": 32784,
+      "nodeId": 46,
+      "ordinal": 133
+    },
+    {
+      "size": 34176,
+      "nodeId": 5,
+      "ordinal": 13
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 87
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 61
+    },
+    {
+      "size": 32824,
+      "nodeId": 72,
+      "ordinal": 173
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 51
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 49
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 182
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 54
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 22
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 38
+    },
+    {
+      "size": 32784,
+      "nodeId": 49,
+      "ordinal": 185
+    },
+    {
+      "size": 32824,
+      "nodeId": 75,
+      "ordinal": 181
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 20
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 44
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 59
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 172
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 43
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 165
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 91
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 152
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 206
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 47
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 34
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 114
+    },
+    {
+      "size": 32816,
+      "nodeId": 49,
+      "ordinal": 48
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 156
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 88
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 33
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 190
+    },
+    {
+      "size": 32784,
+      "nodeId": 69,
+      "ordinal": 159
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 7
+    },
+    {
+      "size": 32816,
+      "nodeId": 70,
+      "ordinal": 169
+    },
+    {
+      "size": 32832,
+      "nodeId": 5,
+      "ordinal": 67
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 45
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 116
+    },
+    {
+      "size": 32824,
+      "nodeId": 73,
+      "ordinal": 177
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 71
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 27
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 26
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 135
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 75
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 35
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 125
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 4
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 50
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 11
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 194
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 2
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 18
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 17
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 89
+    },
+    {
+      "size": 35424,
+      "nodeId": 5,
+      "ordinal": 32
+    },
+    {
+      "size": 33376,
+      "nodeId": 5,
+      "ordinal": 31
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 19
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 9
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 52
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 161
+    },
+    {
+      "size": 32824,
+      "nodeId": 65,
+      "ordinal": 158
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 12
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 112
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 148
+    },
+    {
+      "size": 103696,
+      "nodeId": 5,
+      "ordinal": 37
+    },
+    {
+      "size": 131096,
+      "nodeId": 5,
+      "ordinal": 55
+    },
+    {
+      "size": 32824,
+      "nodeId": 44,
+      "ordinal": 41
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "abi": "walz-core-js-v2",
+  "esm": {
+    "exports": {
+      "count-encoded": {
+        "jsName": "countEncoded",
+        "params": [
+          "(record (dictionary (list text)) (codes (list i32)))",
+          "(list text)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "count-many": {
+        "jsName": "countMany",
+        "params": [
+          "(list text)",
+          "(list text)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "decode": {
+        "jsName": "decode",
+        "params": [
+          "(record (dictionary (list text)) (codes (list i32)))"
+        ],
+        "result": "(list text)",
+        "suspends": false
+      },
+      "encode": {
+        "jsName": "encode",
+        "params": [
+          "(list text)"
+        ],
+        "result": "(record (dictionary (list text)) (codes (list i32)))",
+        "suspends": false
+      },
+      "equal": {
+        "jsName": "equal",
+        "params": [
+          "(record (dictionary (list text)) (codes (list i32)))",
+          "text"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      },
+      "get": {
+        "jsName": "get",
+        "params": [
+          "(record (dictionary (list text)) (codes (list i32)))",
+          "i32"
+        ],
+        "result": "text",
+        "suspends": false
+      },
+      "query": {
+        "jsName": "query",
+        "params": [
+          "(list text)",
+          "(list i32)",
+          "(list text)",
+          "i32",
+          "i32"
+        ],
+        "result": "(record (count i32) (sum i64) (indices (list i32)))",
+        "suspends": false
+      },
+      "select": {
+        "jsName": "select",
+        "params": [
+          "(list text)",
+          "(list text)"
+        ],
+        "result": "(list i32)",
+        "suspends": false
+      }
+    },
+    "schema": "walz-esm-v1"
+  },
+  "imports": [],
+  "sourceFiles": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/dictionary-column/portable.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/bitmap.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/dictionary-column.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/simd/i32-column.walz"
+  ]
+}

@@ -1,0 +1,145 @@
+   Compiling zerocopy v0.8.63
+   Compiling syn v3.0.9
+   Compiling syn v2.0.119
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.15
+   Compiling autocfg v1.5.1
+   Compiling regex-syntax v0.8.11
+   Compiling clap_lex v1.1.1
+   Compiling ciborium-io v0.2.2
+   Compiling either v1.19.0
+   Compiling anstyle v1.0.14
+   Compiling cc v1.11.1
+   Compiling itertools v0.13.0
+   Compiling cast v0.3.0
+   Compiling num-traits v0.2.19
+   Compiling clap_builder v4.6.7
+   Compiling walkdir v2.5.0
+   Compiling page_size v0.6.0
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling regex-automata v0.4.18
+   Compiling alloca v0.4.0
+   Compiling criterion-plot v0.8.2
+   Compiling serde_derive v1.0.229
+   Compiling clap v4.6.7
+   Compiling zerocopy-derive v0.8.63
+   Compiling regex v1.13.1
+   Compiling serde v1.0.229
+   Compiling wasmparser v0.262.0
+   Compiling tinytemplate v1.2.1
+   Compiling half v2.7.1
+   Compiling ciborium-ll v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling criterion v0.8.2
+   Compiling wit-parser v0.262.0
+   Compiling wasmprinter v0.262.0
+   Compiling walz v0.1.0 (/Users/mz/ghq/github.com/mizchi/wlt-lang)
+    Finished `release` profile [optimized] target(s) in 28.22s
+     Running unittests src/lib.rs (target/release/deps/walz-bcd719e4b8579ea0)
+
+running 33 tests
+test benchmark::tests::statistics_preserve_raw_samples_and_use_sample_deviation ... ok
+test aliases::tests::type_positions_include_nested_payloads_but_exclude_all_other_names ... ok
+test diagnostic::name_tests::source_names_replace_whole_identifiers_and_bound_shared_expansion ... ok
+test aliases::tests::forward_aliases_expand_without_touching_local_names ... ok
+test lsp::protocol::tests::framing_rejects_truncation_and_oversized_allocations ... ok
+test lsp::memory_contracts::unsaved_source_snapshots_share_the_immutable_buffer ... ok
+test lsp::protocol::tests::cancellation_tracks_only_live_requests ... ok
+test optimize::range_facts::tests::shared_term_dags_exhaust_queries_conservatively ... ok
+test abi_limits::tests::shared_type_graph_is_visited_once_per_vertex ... ok
+test generics::inference::tests::cached_inferred_call_sites_survive_a_later_specialization_restart ... ok
+test regions::scheduling_tests::store_delta_includes_empty_slot_creation_and_preserves_projection ... ok
+test regions::scheduling_tests::dependency_schedule_preserves_recursive_aliases_and_unknown_calls ... ok
+test binary::tests::expanded_wit_graphs_are_bounded_before_building_shape_strings ... ok
+test regions::scheduling_tests::dependency_schedule_preserves_cached_reference_views ... ok
+test regions::scheduling_tests::memoized_substitution_preserves_overlapping_aliases_and_unknown_roots ... ok
+test review::tests::control_expressions_preserve_result_headers_and_case_patterns ... ok
+test review::tests::encoded_atoms_do_not_inject_forms_and_excessive_nesting_is_rejected ... ok
+test review::tests::long_structural_calls_are_indented_for_review ... ok
+test review::tests::reserved_spelling_and_nested_generic_types_roundtrip ... ok
+test review::tests::module_is_optional_and_let_keeps_the_canonical_binding_semantics ... ok
+test review::tests::shadowing_keeps_explicit_let_and_comment_lines_never_become_forms ... ok
+test review::tests::watz_case_keywords_lower_to_prefixed_walz_clauses ... ok
+test sexpr::editor_completion_tests::only_missing_parentheses_are_completed_and_lexical_contents_are_preserved ... ok
+test ir::numeric_tests::declared_numeric_signatures_match_wasm_validation ... ok
+test standard::performance_contracts::type_only_imports_do_not_parse_library_implementations ... ok
+test typeclasses::tests::every_class_method_has_the_declared_scalar_signature ... ok
+test standard::performance_contracts::generated_index_matches_source_exports_and_alias_ranges ... ok
+test simd::tests::every_registered_signature_agrees_with_the_wasm_validator ... ok
+test review::tests::controls_keep_opaque_data_and_unsupported_wat_shapes_explicit ... ok
+test lsp::memory_contracts::editor_snapshots_are_bounded_and_closed_documents_retire ... ok
+test standard::performance_contracts::parsing_cached_templates_does_not_share_import_aliases_or_hygiene ... ok
+test aliases::tests::cyclic_and_exponentially_expanding_aliases_are_bounded ... ok
+test review::tests::active_programs_roundtrip_their_exact_form_tree ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/optimization.rs (target/release/deps/optimization-2d14450198bb7053)
+
+running 4 tests
+test owned_payloads_keep_the_checked_match_protocol ... ok
+test immediate_shared_constructor_matches_do_not_allocate_temporary_boxes ... ok
+test unused_payload_traps_are_preserved_and_raw_wat_is_unchanged ... ok
+test removing_an_unreachable_suspend_preserves_the_public_async_contract ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
+
+     Running tests/range_optimization.rs (target/release/deps/range_optimization-3b1f4cf886b318d4)
+
+running 4 tests
+test a_successful_read_proves_the_same_range_for_a_later_read ... ok
+test signed_guards_wrapped_sums_mutable_reload_and_loop_initial_values_are_not_proofs ... ok
+test validated_view_ranges_reach_reads_through_calls_and_loop_guards ... ok
+test optimized_and_original_wasm_agree_on_traps_side_effects_and_raw_open_world_inputs ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/readonly_regions.rs (target/release/deps/readonly_regions-d76b8efeac5c8799)
+
+running 3 tests
+test readonly_regions_reject_overlap_overflow_and_forged_or_mutating_access ... ok
+test bounded_readonly_loads_extend_the_atomic_certificate_without_raw_access ... ok
+test independent_kernel_rejects_readonly_certificate_tampering_and_checks_unused_layouts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.12s
+
+     Running tests/regions.rs (target/release/deps/regions-bba86e6fcba41cce)
+
+running 8 tests
+test suspension_invalidates_mutable_reference_contents_across_calls ... ok
+test returns_and_block_branch_payloads_remain_visible_as_escaping_references ... ok
+test substitutes_argument_and_capture_effects_and_tracks_returned_aliases ... ok
+test escape_follows_stores_cycles_and_containers_without_escaping_callee_private_values ... ok
+test distinguishes_input_mutation_from_fresh_output_and_return_escape ... ok
+test unknown_imports_and_recursive_paths_widen_conservatively ... ok
+test containers_and_ready_future_payloads_preserve_reference_aliases ... ok
+test weak_updates_keep_old_aliases_and_recur_propagates_new_objects ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/table.rs (target/release/deps/table-0c0a60a6038503eb)
+
+running 3 tests
+test table_storage_and_effect_contracts_are_checked ... ok
+test native_table_programs_execute_on_wasmtime has been running for over 60 seconds
+test table_roots_keep_checked_ir_and_gc_storage has been running for over 60 seconds
+test table_roots_keep_checked_ir_and_gc_storage ... ok
+test native_table_programs_execute_on_wasmtime ... FAILED
+
+failures:
+
+---- native_table_programs_execute_on_wasmtime stdout ----
+
+thread 'native_table_programs_execute_on_wasmtime' (36641624) panicked at tests/table.rs:77:5:
+
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    native_table_programs_execute_on_wasmtime
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 311.32s
+
+error: test failed, to rerun pass `--test table`

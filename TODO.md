@@ -7,6 +7,100 @@
 Preserve a small language specification, inclusion of WAT, Wasm GC, and ease of static analysis.
 Checkmarks mean implementation and regression checks are complete; design alone does not qualify.
 
+## SIMD library roadmap
+
+Keep these as ordinary libraries with opaque storage and explicit effects.
+Measure construction/ABI costs separately from resident queries, and compare
+against strong JS and scalar Wasm controls before claiming SIMD gains.
+
+- [x] Foundation: immutable dense bitmap and i32 columns, Boolean selection,
+  exact i64 sums, portable query batches, GC/ABI/Chromium checks, and frozen measurements.
+- [x] 1a: Dictionary-encoded string columns. Publish a unique dictionary and
+  validated SIMD code column; support value-based selection, decoding, and
+  explicit dictionary/code snapshots without retaining a mutable build index.
+- [ ] 1b: Narrow u8/u16 columns for 16/8-lane comparison. Validate representable
+  values and tail lanes rather than silently truncating codes.
+- [ ] 1c: Nullable columns with a same-length validity bitmap. Define selection,
+  aggregation, and decoding of missing values without an Option object per row.
+- [ ] 2: Bit-sliced indexes for small-width integers/enums. Validate bit width,
+  plane lengths, and padding; compare predicates without decoding every value.
+- [ ] 3: Sorted integer sets with SIMD intersection/difference. Check ordering,
+  uniqueness, logical tails, and sparse-vs-dense crossover points.
+- [ ] 4: SoA rectangle/coordinate columns for batched hit tests and visibility.
+  Define bounds, row alignment, and NaN/infinity policy; return selection bitmaps.
+- [ ] 5: SIMD hex/Base64 codecs and byte classifiers. Specify invalid-input,
+  length/padding, and block-boundary behavior; include one-shot ABI costs.
+- [ ] 6: Immutable Swiss-table-style indexes. Keep key equality checks after
+  control-byte matching; validate capacity, probe termination, and collisions.
+
+See [SIMD collections](docs/simd-collections.md). Priorities 1–6 are candidates;
+performance results for the existing foundation do not establish their speed.
+The [dictionary-column API](docs/dictionary-column.md) uses i32 codes initially;
+native, both stable JS backends, forced GC, invalid snapshots, and Chromium are checked.
+Its IN/range row query now fuses selection, ordered row emission, and exact sum
+without intermediate bitmaps. Optional immutable count/postings indexes remain
+future work; the published column does not retain a construction index.
+
+## Arquero-style table library
+
+- [x] Initial scalar implementation in `walz/table/`: immutable columns and row
+  selections, select/filter/derive/groupby/rollup/orderby/slice, inner/outer/semi/anti
+  equijoins, scalar aggregates, checked expression/schema boundaries, JS/TS facade,
+  and Core + JSPI / Component pipeline snapshots. Compare with official Arquero
+  8.0.3; check native execution, GC, trap cleanup, TypeScript, and Chromium.
+- [x] Capture numeric-filter Arquero benchmarks with fixed inputs, original/packed
+  scalar/SIMD controls and a direct JS count scan. Separate resident queries,
+  fresh ingestion + query, and query + materialization. Preserve both runs in
+  `benchmarks/table/`; do not transfer specialized collection speed claims here.
+- [ ] Extend table benchmarks to aggregation, joins, ordering and standalone
+  output/ingestion across more input types and backends.
+- [x] Profile captured table artifacts: twelve CPU/heap workloads, separate
+  unprofiled phase timings, exact export-call counts, tested block-short-circuit
+  model and a separate Binaryen 133 probe. See `benchmarks/table/profiles/20261113-r1/`.
+- [x] Batch numeric/Boolean/nullish I/O and hoist output column lookup/row count.
+  Use a bounded 640-KiB transfer buffer with checked borrows/finally cleanup;
+  strings and big-endian hosts retain scalar I/O. Preserve scalar tags and snapshots.
+- [x] Track identical base/order selections and filter once when the invariant holds.
+- [x] Short-circuit total numeric pair masks (AND zero / OR full) before evaluating
+  the other subtree, while preserving general scalar short-circuit/trap behavior.
+- [x] Fuse same-column ordered-comparison pairs, reusing block loads and converting
+  vector Boolean results to bitmasks once. Retain the generic plan and packed scalar control.
+- [x] Allocate exact numeric row-ID capacity from private pair masks, avoiding the
+  prefix allocation/copy while preserving the public list snapshot constructor.
+- [x] Use immutable primary numeric/tag storage for bulk Core input, lazy
+  canonical Cell views, direct numeric output and CSP-safe row materialization.
+  Preserve snapshots and declare native accessor cache effects explicitly.
+- [ ] Extend bulk column output beyond `array(name)` to a complete columnar
+  result API. Strings/portable snapshots still use Cells; scalar evaluation can
+  materialize them, and SIMD preparation retains an additional packed cache.
+- [ ] Reduce region-analysis cost for complex table/canonical-view alias graphs.
+  Dependency scheduling and exact substitution/set-union reuse preserve analysis
+  facts, but large native programs can still spend minutes in region summaries.
+- [ ] Reduce repeated numeric input validation/publication using a checked opaque
+  builder. Retain immutable snapshots and all tag/Boolean checks. The complete
+  I/O suite still trails Arquero; input validation/copying remains significant.
+- [ ] Evaluate whole-plan specialization and constant hoisting beyond fused pairs.
+- [ ] Keep scalar filter temporaries unboxed where safe; retain generic value
+  semantics for derive/materialization and executed-branch traps.
+- [ ] Offer optional `wasm-opt -O3` table postprocessing after full target/browser
+  validation. Raw Core probe shows 1.04x/1.08x SIMD improvements; default is unchanged.
+- [ ] Specialize physical columns and plan execution using existing SIMD/dictionary
+  kernels. Preserve null/undefined/NaN distinctions, JS numeric conversion rules,
+  exact string ordering, and floating-point accumulation behavior.
+- [x] Integrate lazy f64x2 caches for numeric constant comparisons and Boolean
+  filter trees, with strict/loose type masks, safe scalar fallback and matching
+  boxed/packed scalar controls across native, Core + JSPI and Component APIs.
+  Aggregates retain scalar f64 order; dictionary planning remains separate work.
+- [ ] Extend compatibility: assign/concat/dedupe/except/intersect/union, fold/pivot/
+  spread/unroll, impute/lookup/cross/sample, reduce/relocate/rename/unorder,
+  selection helpers, parameters, custom functions, and window/additional aggregates.
+- [ ] Add Arrow and file formats, plus bulk ingestion/materialization adapters.
+- [ ] Profile compilation, engine instantiation, and execution separately for
+  larger GC expression modules; the debug native workflow is currently costly.
+
+See the [table guide](docs/table.md) for the current compatibility boundary and
+`just test-table` for the reproducible differential/ownership checks.
+
 ## Core improvements from binary codecs (1 → 2 → 3 → 4 → 5)
 
 - [x] 1: Fixed-width, explicit-endian byte reads and packed-array writes. Typed operations and `walz:core` bytes/view readers specify unsigned offsets, signed 16-bit extension, bit-preserving integer/float conversion, evaluation order, and complete-range checks before mutation. Both endians, unaligned accesses, logical view bounds, effects, opacity, and both JS backends are checked.

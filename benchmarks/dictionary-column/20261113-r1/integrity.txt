@@ -1,0 +1,2 @@
+Verified 80 comparisons, nine samples per variant, every median, all captured source/input/artifact hashes, the canonical-JSON manifest digest, and exact reconstruction of all little-endian input arrays.
+Suite version 1; source manifest 549ffbb79be9b0dc6e2f4a2a9ff7121bb0b8193eb1661cf9832cdb4204501f65.

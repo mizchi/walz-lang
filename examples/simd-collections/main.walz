@@ -1,0 +1,12 @@
+(module
+  (@use "walz:core" (type $list))
+  (@use "../../walz/simd/bitmap.walz" (func $bitmap.and))
+  (@use "../../walz/simd/i32-column.walz" (func $i32-column.from-list)
+    (func $i32-column.between) (func $i32-column.eq) (func $i32-column.sum-where))
+  (func $main (export "main") (result i64) (@effect reads writes allocates)
+    (@let (($prices (call $i32-column.from-list (@list.new i32 10 20 22 70)))
+           ($categories (call $i32-column.from-list (@list.new i32 1 2 2 1)))
+           ($selected (call $bitmap.and
+             (call $i32-column.between $prices 10 30)
+             (call $i32-column.eq $categories 2))))
+      (call $i32-column.sum-where $prices $selected))))

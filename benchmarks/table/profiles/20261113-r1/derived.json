@@ -1,0 +1,114 @@
+{
+  "schema": "walz-table-profile-derived-v1",
+  "blockModel": {
+    "physicalRows": 262144,
+    "blocks": 131072,
+    "passes": 2,
+    "eagerLeafComparisons": 1048576,
+    "shortCircuitLeafComparisons": 648054,
+    "leafReduction": 0.38196754455566406,
+    "zeroRangeBlocks": 83863,
+    "zeroLowerBlocks": 20898,
+    "fullLeftOrBlocksReached": 11637,
+    "zeroRangePercent": 63.982391357421875,
+    "caveat": "Exact source-level pair-mask model on the archived input, not an implemented or timed optimization. Short-circuit is legal only for the already-proved total numeric plan."
+  },
+  "cases": [
+    {
+      "name": "scalar.compound",
+      "medianUs": 18621.332999999824,
+      "acornSelfPercent": 0.2792109525031638,
+      "inspectorSelfPercent": 4.793616518264075,
+      "bridgeSelfPercent": 0.03950800210877912,
+      "gcSelfPercent": 1.035109655250013
+    },
+    {
+      "name": "packed-scalar.compound",
+      "medianUs": 7597.333500000104,
+      "acornSelfPercent": 0.2402915436006851,
+      "inspectorSelfPercent": 4.868755318953439,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 0.48577926509568886
+    },
+    {
+      "name": "simd.compound",
+      "medianUs": 4549.874999999929,
+      "acornSelfPercent": 0.4821489194244219,
+      "inspectorSelfPercent": 4.640937647413344,
+      "bridgeSelfPercent": 0.03973405520045672,
+      "gcSelfPercent": 0.799957786539755
+    },
+    {
+      "name": "simd.simple",
+      "medianUs": 2928.7797142856757,
+      "acornSelfPercent": 0.39881673382279015,
+      "inspectorSelfPercent": 4.703654193185254,
+      "bridgeSelfPercent": 0.039615457507826426,
+      "gcSelfPercent": 2.5169443234852475
+    },
+    {
+      "name": "simd.ingest-only",
+      "medianUs": 32801.08400000063,
+      "acornSelfPercent": 0,
+      "inspectorSelfPercent": 5.851750588592694,
+      "bridgeSelfPercent": 48.603363246826746,
+      "gcSelfPercent": 24.606298248063954
+    },
+    {
+      "name": "simd.cold-ingest-filter",
+      "medianUs": 37560.75000000055,
+      "acornSelfPercent": 0.038371995933182385,
+      "inspectorSelfPercent": 5.5920584089312815,
+      "bridgeSelfPercent": 41.37796600179765,
+      "gcSelfPercent": 21.603433710381683
+    },
+    {
+      "name": "simd.materialize-only",
+      "medianUs": 49453.2500000023,
+      "acornSelfPercent": 0,
+      "inspectorSelfPercent": 4.793460023172058,
+      "bridgeSelfPercent": 36.32543727356795,
+      "gcSelfPercent": 5.353839074274427
+    },
+    {
+      "name": "simd.filter-materialize",
+      "medianUs": 51635.332999998354,
+      "acornSelfPercent": 0.12129717745201263,
+      "inspectorSelfPercent": 4.9275001012391675,
+      "bridgeSelfPercent": 35.13037073783105,
+      "gcSelfPercent": 5.417814043897303
+    },
+    {
+      "name": "arquero.compound",
+      "medianUs": 2668.4271250001075,
+      "acornSelfPercent": 0.636748795275845,
+      "inspectorSelfPercent": 4.8274576277635415,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 0
+    },
+    {
+      "name": "arquero.filter-materialize",
+      "medianUs": 5041.233199999988,
+      "acornSelfPercent": 0.5623466615300392,
+      "inspectorSelfPercent": 4.836688193191265,
+      "bridgeSelfPercent": 0,
+      "gcSelfPercent": 10.2674045499706
+    },
+    {
+      "name": "simd.small-compound",
+      "medianUs": 91.0165393258368,
+      "acornSelfPercent": 3.5627412054315912,
+      "inspectorSelfPercent": 4.714238068768363,
+      "bridgeSelfPercent": 0.6060509807035656,
+      "gcSelfPercent": 0.20119113793377272
+    },
+    {
+      "name": "simd.nullable-compound",
+      "medianUs": 4685.562499999833,
+      "acornSelfPercent": 0.28024426996589735,
+      "inspectorSelfPercent": 4.724117693710841,
+      "bridgeSelfPercent": 0.03965421524308034,
+      "gcSelfPercent": 0.8511380759774764
+    }
+  ]
+}
