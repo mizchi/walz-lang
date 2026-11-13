@@ -19,7 +19,7 @@ for(const backend of ['core','component'])test(`${backend}: WIT lists traverse i
       later: func() -> future<list<string>>;
     } world guest { import collections; }`);
     await writeFile(policy,JSON.stringify({imports:['echo','wide','later'].map(name=>({module:namespace,name,suspends:false,capability:'collections'}))}));
-    await execFile('cargo',['run','--quiet','--','bind',wit,policy,gen]);
+    await execFile('cargo',['run','--quiet','--','wit-bindgen',wit,policy,gen]);
     const ty="(@list (@result (@tuple i64 @string) (@list @string)))";
     await writeFile(source,`(module (@include "gen/bindings.walz")
       (func $echo (export "echo") (param $v ${ty}) (result ${ty}) (@effect host) (call $collections.echo (local.get $v)))

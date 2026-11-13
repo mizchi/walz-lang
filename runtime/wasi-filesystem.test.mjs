@@ -116,7 +116,7 @@ for(const backend of ['core','component']) test(`${backend}: file adapter transp
   const directory=await mkdtemp(join(tmpdir(),'walz-file-abi-'));
   try {
     for(const name of ['main.walz','batch.walz','filesystem.wit','policy.json'])await copyFile(`examples/wasi-files/${name}`,join(directory,name));
-    await execFile('cargo',['run','--locked','--quiet','--','bind',join(directory,'filesystem.wit'),join(directory,'policy.json'),join(directory,'generated')]);
+    await execFile('cargo',['run','--locked','--quiet','--','wit-bindgen',join(directory,'filesystem.wit'),join(directory,'policy.json'),join(directory,'generated')]);
     const {build}=await import(backend==='core'?'./build-core.mjs':'./build.mjs');
     const out=join(directory,'out');await build(join(directory,'main.walz'),out,{bindings:join(directory,'generated/bindings.json')});
     const input=join(directory,'input'),output=join(directory,'output');await writeFile(input,new Uint8Array([65,66]));

@@ -1,6 +1,9 @@
 # File Modules, @use/@export, and DCE
 
-In addition to `.walz` definitions, synchronous exports using shareable values can be imported from closed Component `.wasm` files with WIT. See [Wasm @use](wasm-use.md) for the type, effect, and output-target contract of `(@use "./math.wasm" (func $math.add $add))`.
+`@use` selects source definitions without instantiating them. Binary `.wasm`
+dependencies require `(component $Constructor)` in a Component entry, followed by
+explicit `instantiate` and `@connect`. See [binary constructors](wasm-use.md).
+
 
 `@include` inserts declarations through textual expansion. It creates neither a scope nor a loaded-file cache.
 To select functions, types, tags, or memories, use `@use` with an explicit relative path.
@@ -37,7 +40,7 @@ The [executable example](../examples/modules.walz) returns 42 with `just run exa
 | `(@use "walz:core" (func $string.u64 $unsigned))` | Selects a public identifier from the built-in core |
 | `(export "name" (func $local))` | Exposes a Wasm/Component API from the root; statically imported functions are allowed |
 | `(export "name")` inside a function | Existing Wasm ABI export |
-| `(import "host" "member" (func ...))` | Existing Wasm/WIT host import |
+| `(import "host" "member" (func ...))` | External instantiation requirement; supplied by a host or a Component |
 
 Each file has an independent static scope. Declarations from a loaded file do not flow into the caller.
 Names imported by dependencies also remain private unless exported.

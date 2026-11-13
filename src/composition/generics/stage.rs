@@ -22,7 +22,7 @@ impl Context<'_> {
             policy,
             depth,
         } = self;
-        let mut binds = vec![];
+        let mut connections = vec![];
         let mut instances = vec![];
         // Parse all declarations through the same contract as final wiring, even
         // though this probe exports only the namespaces the arguments depend on.
@@ -30,13 +30,13 @@ impl Context<'_> {
             .list()
             .unwrap()
             .iter()
-            .filter(|n| n.head() == Some("@bind"))
+            .filter(|n| n.head() == Some("@connect"))
         {
-            super::super::bindings::declaration(n, &mut binds, &mut instances)?;
+            super::super::connections::declaration(n, &mut connections, &mut instances)?;
         }
-        binds.retain(|b| namespaces.contains(&b.module));
+        connections.retain(|b| namespaces.contains(&b.module));
         instances.retain(|b| namespaces.contains(&b.module));
-        if binds.is_empty() && instances.is_empty() {
+        if connections.is_empty() && instances.is_empty() {
             return Ok(BoundImports {
                 resolve: Default::default(),
                 interfaces: Default::default(),
@@ -56,7 +56,7 @@ impl Context<'_> {
                             | "@file.use"
                             | "@file.namespace"
                             | "@world"
-                            | "@bind"
+                            | "@connect"
                             | "@expose"
                             | "export"
                     )
@@ -78,7 +78,7 @@ impl Context<'_> {
             .iter()
             .map(render)
             .collect::<Vec<_>>();
-        super::super::bindings::resolve(&raw, &Default::default(), &mut binds, &instances)
+        super::super::connections::resolve(&raw, &Default::default(), &mut connections, &instances)
             .map_err(phase_error)
     }
 }

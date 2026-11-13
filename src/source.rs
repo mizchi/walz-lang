@@ -364,7 +364,6 @@ fn includes<'a>(
 struct Modules {
     names: std::collections::BTreeMap<PathBuf, String>,
     units: Vec<(String, Source)>,
-    unavailable: BTreeMap<PathBuf, Vec<crate::binary::Unavailable>>,
     size: usize,
     reviews: BTreeMap<PathBuf, Arc<crate::review::Translation>>,
 }
@@ -499,16 +498,22 @@ fn expand(
                 let length = std::fs::metadata(&target)
                     .map_err(|e| Error::message(e.to_string()))?
                     .len();
-                if length > crate::binary::MAX_BINARY as u64 {
+                if length > crate::composition::embedded::MAX_BINARY as u64 {
                     return Err(Error::at(
                         &original,
                         node.span,
                         "component dependency exceeds 4 MiB",
                     )
-                    .with_code("E_COMPONENT_SOURCE"));
+                    .with_code("E_COMPONENT_SOURCE")
+                    .with_path(&canonical));
                 }
                 let bytes = std::fs::read(&target).map_err(|e| Error::message(e.to_string()))?;
-                let text = crate::composition::embedded::declaration(name, &bytes)?;
+                let text =
+                    crate::composition::embedded::declaration(name, &bytes).map_err(|e| {
+                        Error::at(&original, node.span, &e.diagnostic().message)
+                            .with_code("E_COMPONENT_SOURCE")
+                            .with_path(&canonical)
+                    })?;
                 output.append(&text, node.span.start, &canonical, &original)?;
                 output.chunks.last_mut().unwrap().generated = true;
                 output.chunks.push(Chunk {
@@ -567,6 +572,11 @@ fn expand(
             continue;
         }
         if import {
+            if target.extension().is_some_and(|ext| ext == "wasm") {
+                return Err(Error::at(&original, node.span,
+                    "Wasm @use requires (component $Constructor); instantiate it explicitly and supply imports with @connect")
+                    .with_code("E_WASM_USE").with_path(&canonical));
+            }
             let target = normalize_path(&target).map_err(|e| {
                 Error::at(&original, node.span, format!("{}: {e}", target.display()))
                     .with_path(&canonical)
@@ -588,30 +598,7 @@ fn expand(
                     migration: None,
                     reviews: BTreeMap::new(),
                 };
-                if target.extension().is_some_and(|ext| ext == "wasm") {
-                    let load = || -> Result<(String, Vec<crate::binary::Unavailable>), Error> {
-                        let length = std::fs::metadata(&target)
-                            .map_err(|e| Error::message(e.to_string()))?
-                            .len();
-                        if length > crate::binary::MAX_BINARY as u64 {
-                            return Err(Error::message("Wasm binary exceeds 4 MiB".into()));
-                        }
-                        let bytes =
-                            std::fs::read(&target).map_err(|e| Error::message(e.to_string()))?;
-                        crate::binary::source(&bytes, &name)
-                    };
-                    let (generated, unavailable) = load().map_err(|e| {
-                        Error::at(&original, node.span, &e.diagnostic().message)
-                            .with_code("E_WASM_USE")
-                            .with_path(&canonical)
-                    })?;
-                    modules.unavailable.insert(target.clone(), unavailable);
-                    let original = Arc::from(format!("(module\n{generated})"));
-                    unit.append(&generated, "(module\n".len(), &target, &original)?;
-                    unit.chunks.last_mut().unwrap().generated = true;
-                } else {
-                    expand(&target, true, stack, &mut unit, modules, legacy, overlays)?;
-                }
+                expand(&target, true, stack, &mut unit, modules, legacy, overlays)?;
                 modules.size += unit.text.len() + 64;
                 if modules.size > MAX_SOURCE {
                     return Err(Error::message("expanded source exceeds 16 MiB".into()));
@@ -619,23 +606,6 @@ fn expand(
                 modules.units.push((name.clone(), unit));
                 name
             };
-            if let Some(unavailable) = modules.unavailable.get(&target) {
-                for binding in &parts[2..] {
-                    let selector = binding.list().and_then(|p| p.get(1)).and_then(Sexp::atom);
-                    if let Some(export) = unavailable
-                        .iter()
-                        .find(|e| Some(e.selector.as_str()) == selector)
-                    {
-                        return Err(Error::at(
-                            &original,
-                            binding.span,
-                            format!("{}: {}", export.selector, export.reason),
-                        )
-                        .with_code("E_WASM_USE")
-                        .with_path(&canonical));
-                    }
-                }
-            }
             output.append(
                 &format!("(@file.use {name} "),
                 node.span.start,
@@ -656,7 +626,7 @@ fn expand(
                 return Err(Error::at(
                     &original,
                     node.span,
-                    "binary modules require @use, not @include",
+                    "binary components require @use with (component $Constructor), then explicit instantiate",
                 )
                 .with_code("E_WASM_USE")
                 .with_path(&canonical));
@@ -886,7 +856,11 @@ fn append_range(
     for chunk in &input.chunks {
         let start = chunk.start.max(range.start);
         let end = chunk.end.min(range.end);
-        if start < end {
+        // Empty generated chunks retain binary dependency provenance without
+        // claiming a source range (notably after static file namespaces link).
+        if start < end
+            || chunk.generated && chunk.start == chunk.end && range.contains(&chunk.start)
+        {
             output.append(
                 &input.text[start..end],
                 chunk.offset + start - chunk.start,

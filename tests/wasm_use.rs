@@ -16,156 +16,145 @@ fn library(directory: &Path) {
     std::fs::write(directory.join("math.wasm"), compiled.wasm).unwrap();
 }
 
+fn entry(directory: &Path, body: &str) -> walz::source::Source {
+    let main = directory.join("main.walz");
+    std::fs::write(&main, body).unwrap();
+    walz::source::load(&main).unwrap()
+}
+
 #[test]
-fn typed_component_exports_are_selected_cached_and_embedded() {
+fn constructors_snapshot_original_binary_and_connect_selected_functions() {
     let dir = tempfile::tempdir().unwrap();
     library(dir.path());
     std::fs::write(
         dir.path().join("facade.walz"),
-        r#"(module (@use "./math.wasm" (func $next $forward)) (@export (func $forward)))"#,
+        r#"(@lib
+      (import "math" "next" (func $next (result i32)))
+      (func $forward (result i32) (@effect host) (call $next))
+      (@export (func $forward)))"#,
     )
     .unwrap();
-    let main = dir.path().join("main.walz");
-    std::fs::write(&main, r#"(module
-      (@use "./math.wasm" (func $add $sum) (func $next))
-      (@use "./facade.walz" (func $forward))
-      (func $main (export "main") (result i32) (@effect host) (call $sum (call $next) (call $forward))))"#).unwrap();
-    let source = walz::source::load(&main).unwrap();
+    let source = entry(
+        dir.path(),
+        r#"(component
+      (@use "./math.wasm" (component $Math))
+      (instance $math (instantiate $Math))
+      (alias export $math "add" (func $sum))
+      (alias export $math "next" (func $next))
+      (@lib (@use "./facade.walz" (func $forward))
+        (import "math" "add" (func $add (param $a i32) (param $b i32) (result i32)))
+        (func $main (result i32) (@effect host) (call $add (call $forward) (call $forward))))
+      (@connect "math" "add" $sum) (@connect "math" "next" $next)
+      (@expose "main" $main))"#,
+    );
     assert!(source.paths().any(|p| p.ends_with("math.wasm")));
-    let checked = walz::check(source.text()).unwrap();
-    assert_eq!(
-        checked
-            .functions
-            .iter()
-            .filter(|f| f.name.ends_with(".next"))
-            .count(),
-        1
-    );
-    let compiled = walz::component::compile(source.text()).unwrap();
-    assert_eq!(compiled.wat.matches("(component $binary").count(), 1);
     let foreign = std::fs::read(dir.path().join("math.wasm")).unwrap();
-    assert!(compiled.wasm.windows(foreign.len()).any(|w| w == foreign));
-    let roundtrip = wat::parse_str(&compiled.wat).unwrap();
+    std::fs::remove_file(dir.path().join("math.wasm")).unwrap();
+    let built = walz::composition::compile(source.text(), &Default::default()).unwrap();
+    assert!(built.wasm.windows(foreign.len()).any(|w| w == foreign));
+    assert!(built.manifest["imports"].as_array().unwrap().is_empty());
+    assert_eq!(built.manifest["connections"].as_array().unwrap().len(), 2);
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
-        .validate_all(&roundtrip)
+        .validate_all(&wat::parse_str(&built.wat).unwrap())
         .unwrap();
-    assert!(
-        !compiled.manifest["imports"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|i| i["module"]
-                .as_str()
-                .is_some_and(|s| s.starts_with("walz:component/")))
+}
+
+#[test]
+fn explicit_connections_keep_type_effect_and_capability_checks() {
+    let dir = tempfile::tempdir().unwrap();
+    library(dir.path());
+    for (body, needle) in [
+        ("(call $add (i64.const 1) 2)", "type"),
+        ("(call $hidden)", "unknown"),
+        ("(call $add 1 2)", "effect"),
+    ] {
+        let effect = if needle == "effect" { "pure" } else { "host" };
+        let source = entry(
+            dir.path(),
+            &format!(
+                r#"(component
+          (@use "./math.wasm" (component $Math)) (instance $m (instantiate $Math))
+          (alias export $m "add" (func $foreign))
+          (@lib (import "math" "add" (func $add (param $a i32) (param $b i32) (result i32)))
+            (func $run (result i32) (@effect {effect}) {body}))
+          (@connect "math" "add" $foreign) (@expose "run" $run))"#
+            ),
+        );
+        let error = walz::compile(source.text()).err().unwrap();
+        assert!(error.to_string().contains(needle), "{error}");
+    }
+}
+
+#[test]
+fn binary_constructors_can_require_explicit_imports() {
+    let dir = tempfile::tempdir().unwrap();
+    let bytes = wat::parse_str(
+        r#"(component (import "host" (func $host (result s32))) (export "answer" (func $host)))"#,
+    )
+    .unwrap();
+    std::fs::write(dir.path().join("math.wasm"), bytes).unwrap();
+    let source = entry(
+        dir.path(),
+        r#"(component
+      (import "host" (func $host (result s32)))
+      (@use "./math.wasm" (component $Math))
+      (instance $m (instantiate $Math (with "host" (func $host))))
+      (alias export $m "answer" (func $answer)) (export "answer" (func $answer)))"#,
     );
-    let core = walz::compile(source.text()).err().unwrap();
-    assert_eq!(core.diagnostic().code, "E_COMPONENT_USE_BACKEND");
-    let core = walz::component::core_js::compile(source.text())
+    let built = walz::compile(source.text()).unwrap();
+    wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
+        .validate_all(&built.wasm)
+        .unwrap();
+    let error = walz::compile(&source.text().replace(" (with \"host\" (func $host))", ""))
         .err()
         .unwrap();
-    assert_eq!(core.diagnostic().code, "E_COMPONENT_USE_BACKEND");
-    // Loading snapshots binary contents as well as text files.
-    std::fs::remove_file(dir.path().join("math.wasm")).unwrap();
-    walz::component::compile(source.text()).unwrap();
+    assert!(error.to_string().contains("host"), "{error}");
 }
 
 #[test]
-fn wasm_uses_keep_type_effect_privacy_and_dce_checks() {
-    let dir = tempfile::tempdir().unwrap();
-    library(dir.path());
-    let main = dir.path().join("main.walz");
-    for (body, message) in [
-        (
-            r#"(func $main (export "main") (result i32) (@effect host) (call $add (i64.const 1) 2))"#,
-            "type",
-        ),
-        (
-            r#"(func $main (export "main") (result i32) (@effect pure) (call $add 1 2))"#,
-            "effect",
-        ),
-        (
-            r#"(func $main (export "main") (result i32) (@effect host) (call $next))"#,
-            "unknown",
-        ),
-    ] {
-        std::fs::write(
-            &main,
-            format!(r#"(module (@use "./math.wasm" (func $add)) {body})"#),
-        )
-        .unwrap();
-        let source = walz::source::load(&main).unwrap();
-        let error = walz::check(source.text()).unwrap_err().to_string();
-        assert!(error.contains(message), "{error}");
-    }
-    std::fs::write(&main, r#"(module (@use "./math.wasm" (func $add)) (func $main (export "main") (result i32) (@effect pure) 42))"#).unwrap();
-    let source = walz::source::load(&main).unwrap();
-    let compiled = walz::component::compile(source.text()).unwrap();
-    assert!(!compiled.wat.contains("(component $binary"));
-    walz::compile(source.text()).unwrap();
-}
-
-#[test]
-fn unsupported_async_and_owned_exports_are_rejected_only_when_selected() {
-    let dir = tempfile::tempdir().unwrap();
-    let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/component-fixtures/wasm-use");
-    let source = std::fs::read_to_string(fixture.join("library.walz")).unwrap();
-    let compiled = walz::component::compile_with_world(
-        &source,
-        &Default::default(),
-        &fixture.join("library.wit"),
-        Some("library"),
-    )
-    .unwrap();
-    std::fs::write(dir.path().join("library.wasm"), compiled.wasm).unwrap();
-    let main = dir.path().join("main.walz");
-    for selector in ["$math.later", "$math.double", "$math.consume"] {
-        std::fs::write(&main, format!("(module\n (@use \"./library.wasm\" (func $math.add $add))\n (@use \"./library.wasm\" (func {selector})))")).unwrap();
-        let error = walz::source::load(&main).err().unwrap();
-        assert_eq!(error.diagnostic().code, "E_WASM_USE");
-        assert!(error.to_string().contains("main.walz:3:"), "{error}");
-        assert!(
-            error.to_string().contains("cancellation/lifetime"),
-            "{error}"
-        );
-    }
-}
-
-#[test]
-fn missing_exports_foreign_imports_and_binary_includes_fail_closed() {
-    let dir = tempfile::tempdir().unwrap();
-    library(dir.path());
-    let main = dir.path().join("main.walz");
-    std::fs::write(&main, "(module\n (@use \"./math.wasm\" (func $absent)))").unwrap();
-    let source = walz::source::load(&main).unwrap();
-    let error = source.diagnostic(walz::check(source.text()).unwrap_err());
-    assert!(error.to_string().contains("main.walz:2:"), "{error}");
-    std::fs::write(&main, "(module (@include \"./math.wasm\"))").unwrap();
-    assert!(
-        walz::source::load(&main)
-            .err()
-            .unwrap()
-            .to_string()
-            .contains("require @use")
-    );
-    let bytes = wat::parse_str("(component (import \"host\" (func)))").unwrap();
-    std::fs::write(dir.path().join("math.wasm"), bytes).unwrap();
-    std::fs::write(&main, "(module (@use \"./math.wasm\" (func $host)))").unwrap();
-    let error = walz::source::load(&main).err().unwrap();
-    assert!(error.to_string().contains("must be closed"), "{error}");
-}
-
-#[test]
-fn invalid_and_untyped_wasm_report_the_import_site() {
+fn binary_constructor_errors_keep_the_original_use_site() {
     let dir = tempfile::tempdir().unwrap();
     let main = dir.path().join("main.walz");
     for bytes in [
         vec![0, 1, 2],
-        wat::parse_str("(module (func (export \"add\")))").unwrap(),
+        wat::parse_str("(module)").unwrap(),
+        vec![0; 4 * 1024 * 1024 + 1],
     ] {
         std::fs::write(dir.path().join("math.wasm"), bytes).unwrap();
-        std::fs::write(&main, "(module\n  (@use \"./math.wasm\" (func $add)))").unwrap();
+        std::fs::write(
+            &main,
+            "(component\n (@use \"./math.wasm\" (component $Math)))",
+        )
+        .unwrap();
         let error = walz::source::load(&main).err().unwrap();
-        assert_eq!(error.diagnostic().code, "E_WASM_USE");
+        assert_eq!(error.diagnostic().code, "E_COMPONENT_SOURCE");
         assert!(error.to_string().contains("main.walz:2:"), "{error}");
     }
+    std::fs::write(&main, "(component (@include \"./math.wasm\"))").unwrap();
+    assert_eq!(
+        walz::source::load(&main).err().unwrap().diagnostic().code,
+        "E_WASM_USE"
+    );
+}
+
+#[test]
+fn async_and_owned_binary_ports_use_native_component_contracts() {
+    let dir = tempfile::tempdir().unwrap();
+    let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/component-fixtures/wasm-use");
+    for name in ["library.walz", "library.wit", "main.walz", "facade.walz"] {
+        std::fs::copy(fixture.join(name), dir.path().join(name)).unwrap();
+    }
+    let source = walz::source::load(dir.path().join("library.walz")).unwrap();
+    let binary = walz::component::compile_with_world(
+        source.text(),
+        &Default::default(),
+        &dir.path().join("library.wit"),
+        Some("library"),
+    )
+    .unwrap();
+    std::fs::write(dir.path().join("library.wasm"), binary.wasm).unwrap();
+    let source = walz::source::load(dir.path().join("main.walz")).unwrap();
+    let built = walz::composition::compile(source.text(), &Default::default()).unwrap();
+    assert!(built.wit.contains("future<s64>"), "{}", built.wit);
+    assert!(built.wit.contains("async func"), "{}", built.wit);
 }

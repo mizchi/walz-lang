@@ -18,7 +18,7 @@ test-runtime-cli:
     node --expose-gc --test runtime/interface-types.test.mjs runtime/wit-values.test.mjs runtime/wit-world.test.mjs runtime/stream-batch.test.mjs runtime/deadlines.test.mjs runtime/wasi-filesystem.test.mjs runtime/channels.test.mjs runtime/scoped-tasks.test.mjs runtime/wasm-bridge.test.mjs runtime/local-cancellation.test.mjs runtime/native-async.test.mjs runtime/native-resources.test.mjs
 
 test-composition:
-    cargo test --locked --test composition --test composition_resources --test composition_generics --test composition_queries --test composition_arguments --test wit_world --test native_async --test native_resources
+    cargo test --locked --test connection_syntax --test composition --test composition_resources --test composition_generics --test composition_queries --test composition_arguments --test wit_world --test native_async --test native_resources
     node --expose-gc --test runtime/composition.test.mjs runtime/composition-resources.test.mjs runtime/composition-generics.test.mjs runtime/composition-queries.test.mjs runtime/composition-arguments.test.mjs runtime/jco-native-results.test.mjs runtime/native-async.test.mjs runtime/wit-world.test.mjs
 
 test-composition-e2e:
@@ -720,12 +720,12 @@ succinct-build output="target/succinct/library" backend="core":
 bench-succinct id reference="../jsimd":
     node --expose-gc --experimental-wasm-modules runtime/succinct/bench.mjs {{quote(id)}} {{quote(reference)}}
 
-# WIT-decoded Component dependencies, value ABI copies, and explicit limits.
+# Explicit binary constructors, native value ABI copies, and initialization.
 test-wasm-use:
-    cargo test --locked --lib binary::tests
+    cargo test --locked --lib wit_bindgen::projection_limits
     cargo test --locked --test wasm_use --test static_imports --test modules
     node --expose-gc --test runtime/wasm-use.test.mjs
-    pnpm exec playwright test runtime/e2e/wasm-use.spec.mjs
+    pnpm exec playwright test --config playwright.composition.config.mjs wasm-use.spec.mjs
 
 # Hygienic syntax objects, inferred type queries, static imports and editor scopes.
 test-user-macros:

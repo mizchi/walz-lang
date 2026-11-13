@@ -119,3 +119,15 @@ Wasmtime の checkout への path dependency はありません。依存は Carg
 - `just build-workflow` → `just workflow`：JSON Lines をパースし、全レコードを `expected.json` と照合。
 
 CLI の回帰検査は一時ディレクトリから `wlt test .` を実行し、改名後のテスト探索が checkout の場所に依存しないことも確かめます。
+
+## Explicit Component connections (2026-11-14)
+
+Component `@bind` is now `@connect`; the WIT generator command is
+`walz wit-bindgen`. Loop `(bind ...)`, macro binders and `--bindings` retain their
+existing contracts. There are no compatibility aliases for the removed names.
+
+The maintained `test-wasm-use` harness now selects binary constructors and
+instantiates them explicitly, using native Component async/lifetime semantics.
+Its Chromium case runs with the composition server. It no longer measures the
+retired implicit per-path instance or SDK queued-cancellation behavior. Recorded
+evaluation inputs and benchmark captures remain unchanged.

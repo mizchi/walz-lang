@@ -332,7 +332,7 @@ fn filesystem_value_adapter_requires_named_file_grants_and_closes_both_endpoints
     }
     success(run(
         dir.path(),
-        &["bind", "filesystem.wit", "policy.json", "generated"],
+        &["wit-bindgen", "filesystem.wit", "policy.json", "generated"],
         "",
     ));
     std::fs::write(dir.path().join("input.bin"), [65, 66]).unwrap();

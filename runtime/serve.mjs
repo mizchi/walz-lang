@@ -18,7 +18,7 @@ for(const name of ['worker-driver.mjs','worker-walz-driver.mjs'])await copyFile(
 const wasiSource=join(directory,'wasi-source');await mkdir(wasiSource,{recursive:true});
 for(const name of ['main.walz','batch.walz','filesystem.wit','policy.json'])await copyFile('examples/wasi-files/'+name,join(wasiSource,name));
 await rm(join(wasiSource,'generated'),{recursive:true,force:true});
-await promisify(execFileCallback)('cargo',['run','--locked','--quiet','--','bind',join(wasiSource,'filesystem.wit'),join(wasiSource,'policy.json'),join(wasiSource,'generated')]);
+await promisify(execFileCallback)('cargo',['run','--locked','--quiet','--','wit-bindgen',join(wasiSource,'filesystem.wit'),join(wasiSource,'policy.json'),join(wasiSource,'generated')]);
 const privateThreads = join(directory, "threads-private.walz");
 await writeFile(privateThreads, (await readFile("tests/component-fixtures/threads.walz", "utf8"))
   .replace('(import "env" "memory" (memory $shared 1 2 shared))', '(memory $shared 1 2 shared)'));

@@ -102,7 +102,7 @@ fn wit_records_enums_flags_unsigned_and_export_scaffolds_share_checked_types() {
     std::fs::write(dir.path().join("grants.json"), grants).unwrap();
     let out = std::process::Command::new(env!("CARGO_BIN_EXE_walz"))
         .args([
-            "bind",
+            "wit-bindgen",
             path.to_str().unwrap(),
             dir.path().join("grants.json").to_str().unwrap(),
             dir.path().join("generated").to_str().unwrap(),

@@ -19,7 +19,7 @@ Experimental [compiler parts written in Walz](docs/selfhost.md) include a parser
 - Hygienic expression macros with explicit binding scopes and queries to the ordinary type checker.
 - Type, effect, and ownership checking for the typed extension core.
 - Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
-- Static `@lib` libraries and explicit Component composition with generic source constructors, inferred `@expose` / `@bind` adapters and `build --wit` interface generation. See [Component composition](docs/component-composition.md).
+- Static `@lib` libraries and explicit Component composition with generic source constructors, inferred `@expose` / `@connect` adapters and `build --wit` interface generation. See [Component composition](docs/component-composition.md).
 - CLI, browser playground, LSP, Vite ESM imports, and a TS7 Content Mapper.
 
 ```wat

@@ -13,7 +13,7 @@ mod cli_new;
 mod cli_print;
 mod cli_run;
 
-const USAGE: &str = "Usage: walz <command> [options]\n\n  print [--format walz|watz] <file>             Print Walz or an optional Watz view\n  new <directory>                              Create a Walz application\n  build [file.walz|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.walz (default: tests/)\n  bench [paths...]                             Run *_bench.walz (default: .)\n\n  walz <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.walz>\n  walz check --json <file.walz>\n  walz esm-metadata <file.walz> [--stdin]       Checked JavaScript ABI as JSON\n  walz lsp [--bindings policy.json]            Language Server Protocol over stdio\n  walz macro-expand [--text] <file.walz>                 Checked expansion history as JSON\n  walz type-at <file.walz> <line> <column> [--source <file.walz>]\n  walz component <file.walz> <output.wasm>\n  walz <core-js|profile-text> <file.walz> <output-directory>\n  walz bind <input.wit> <policy.json> <output-directory> [--world name]\n\nUse walz <command> --help for options; walz --version for the version.";
+const USAGE: &str = "Usage: walz <command> [options]\n\n  print [--format walz|watz] <file>             Print Walz or an optional Watz view\n  new <directory>                              Create a Walz application\n  build [file.walz|directory] [-o output] [--target core|core-js|component]\n  test [paths...]                              Run *.test.walz (default: tests/)\n  bench [paths...]                             Run *_bench.walz (default: .)\n\n  walz <check|types|wat|expand|wit|analyze|ir|contracts|race-contracts|proof|verify|run|run-verified|component-wat|fmt|fmt-check> <file.walz>\n  walz check --json <file.walz>\n  walz esm-metadata <file.walz> [--stdin]       Checked JavaScript ABI as JSON\n  walz lsp [--bindings policy.json]            Language Server Protocol over stdio\n  walz macro-expand [--text] <file.walz>                 Checked expansion history as JSON\n  walz type-at <file.walz> <line> <column> [--source <file.walz>]\n  walz component <file.walz> <output.wasm>\n  walz <core-js|profile-text> <file.walz> <output-directory>\n  walz wit-bindgen <input.wit> <policy.json> <output-directory> [--world name]\n\nUse walz <command> --help for options; walz --version for the version.";
 const TEST_USAGE: &str = "Usage: walz test [paths...] [--target core|core-js] [--bindings policy.json] [--host host.mjs] [--filter text] [--list] [--timeout-ms N]\n\nRecursively find *.test.walz under tests/ by default. Explicit files may have any name.\nEach test runs in a fresh Wasmtime (core) or Node.js 24+ (core-js) process.\n--list checks and lists tests without executing them. -- ends option parsing.";
 const COMMANDS: &[&str] = &[
     "print",
@@ -21,7 +21,7 @@ const COMMANDS: &[&str] = &[
     "build",
     "test",
     "bench",
-    "bind",
+    "wit-bindgen",
     "type-at",
     "esm-metadata",
     "lsp",
@@ -473,6 +473,12 @@ fn execute_source(
 
 fn main() -> ExitCode {
     let mut args = std::env::args_os().skip(1).collect::<Vec<_>>();
+    if args.first().is_some_and(|s| s == "bind") {
+        eprintln!(
+            "walz bind has been removed; use walz wit-bindgen <input.wit> <policy.json> <output-directory> [--world name]"
+        );
+        return ExitCode::from(2);
+    }
     if args.len() == 1 && matches!(args[0].to_str(), Some("--version" | "-V")) {
         println!("walz {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
@@ -556,7 +562,7 @@ fn main() -> ExitCode {
         .position(|s| s == "--legacy-syntax")
         .map(|i| args.remove(i))
         .is_some();
-    if args.first().is_some_and(|s| s == "bind") {
+    if args.first().is_some_and(|s| s == "wit-bindgen") {
         let world = if let Some(i) = args.iter().position(|s| s == "--world") {
             let Some(value) = args.get(i + 1).and_then(|s| s.to_str()).map(str::to_owned) else {
                 eprintln!("--world requires a world name");
@@ -569,7 +575,7 @@ fn main() -> ExitCode {
         };
         if args.len() != 4 {
             eprintln!(
-                "Usage: walz bind <input.wit> <policy.json> <output-directory> [--world name]"
+                "Usage: walz wit-bindgen <input.wit> <policy.json> <output-directory> [--world name]"
             );
             return ExitCode::from(2);
         }

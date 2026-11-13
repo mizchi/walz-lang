@@ -32,7 +32,7 @@
     (func $consume (param $v $PendingString) (result $String) (@effect host suspends) (call $host-consume (@move $v)))
     (func $field (param $v (@component.type "host" (type "item") (field "value")))
       (result i32) (@effect pure) $v))
-  (@bind "host" (instance $host))
+  (@connect "host" (instance $host))
   (@expose "echo" $echo) (@expose "number" $number) (@expose "read" $read)
   (@expose "echo-item" $echo-item) (@expose "ready-item" $ready-item)
   (@expose "copy-item" $copy-item)

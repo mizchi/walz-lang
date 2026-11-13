@@ -8,13 +8,13 @@
 ## Componentの構成
 
 - [x] 静的な `@lib` とCore Module・Componentを分離。外部Componentは定義として選択し、明示的にinstantiateする。
-- [x] `@expose` / `@bind` の具体的な値アダプターを推論し、型・effect・所有権・証明の検査を保つ。
+- [x] `@expose` / `@connect` の具体的な値アダプターを推論し、型・effect・所有権・証明の検査を保つ。
 - [x] `build --wit` でworld.witを生成し、`--wit-input` で既存契約を検証する。
 - [x] メモリの同一性とaliasを記録し、生成ABIコードのメモリ参照を明示。Core externrefのFFIメタデータを検証する。
 - [x] Node/Chromiumで値・非同期接続・インスタンスの分離・正常終了時のバッファ解放・native失敗の分離を確認する。
-- [x] instance形式の `@bind` からresource interfaceとown/borrowを推論する。型alias・所有関数の単相化・canonical drop・例外時のスコープ解放を保ち、Node/Chromiumで同一性・close回数・バッファ・ホストオブジェクトの到達性を確認する。明示的なnative WIT backendも引き続き利用可能。
+- [x] instance形式の `@connect` からresource interfaceとown/borrowを推論する。型alias・所有関数の単相化・canonical drop・例外時のスコープ解放を保ち、Node/Chromiumで同一性・close回数・バッファ・ホストオブジェクトの到達性を確認する。明示的なnative WIT backendも引き続き利用可能。
 - [x] ソースComponentコンストラクターの明示的な型引数を追加。閉じた値型の正規化、既存の制約・検査、定義の共有、独立したinstance、具体的なWITを保ち、Node/Chromiumで値・endpointのmove・失敗・バッファ解放を検査する。
-- [x] 明示したbindから読み取る `@component.type` を追加。ABIのscalar型、名前付き型のport、共有payload制限、resourceの所有権を保ち、静的モジュール・コンストラクターとのフェーズ境界・nativeホスト戻り値の解放とreject・Node/Chromiumを検査する。
+- [x] 明示した接続から読み取る `@component.type` を追加。ABIのscalar型、名前付き型のport、共有payload制限、resourceの所有権を保ち、静的モジュール・コンストラクターとのフェーズ境界・nativeホスト戻り値の解放とreject・Node/Chromiumを検査する。
 - [x] 可視で閉じたnominal型の内部配置と、先行する接続先への段階的な型照会を追加。opaqueの境界、phantom型の同一性、ABI注釈、独立したinstance、resourceの同一性を保つexport ascriptionを検証し、WIT再検証・Node・Chromiumで確認する。
 - [ ] 転送中のコピーを先に解放せず、対応ホストのnative破棄・キャンセルAPIを定める。
 
@@ -323,7 +323,7 @@ JSON 値・parser・配列・null・小数/指数の字句を扱う API を追�
 
 ## 4. モジュールと可視性
 
-- [x] WIT付きの閉じたComponent `.wasm`の同期・共有値exportを`@use`する。型・effect検査、選択・別名・再export、同一インスタンス、依存全体のDCEと静的埋込み。
+- [x] バイナリComponentは `@use` で定義を選択し、`instantiate` / `@connect` で状態・型付き接続を明示する。未使用インスタンスの初期化も維持する。
 - [ ] Component依存のasync／Future／Stream／resource境界。取消し例外・join・端点の寿命の契約を定めてから受理する。
 - [ ] Component依存のホストcapabilityの明示的な接続と、Core／Core＋JSPIでの呼出し。現状はComponent出力のみ。
 

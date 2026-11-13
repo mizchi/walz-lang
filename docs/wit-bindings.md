@@ -1,6 +1,6 @@
 # Generating Bindings from WIT
 
-`walz bind host.wit policy.json generated [--world name]` creates `bindings.walz`, `bindings.json`, shared `types.walz`, and implementation template `exports.walz`.
+`walz wit-bindgen host.wit policy.json generated [--world name]` creates `bindings.walz`, `bindings.json`, shared `types.walz`, and implementation template `exports.walz`.
 For multiple WIT worlds, select with `--world` or the world argument of Rust API `wit_bindgen::generate`.
 Use named imports to select needed functions from the generated module, then specify
 `--bindings generated/bindings.json` during compilation. In the JS build API, pass

@@ -7,7 +7,6 @@ use std::collections::{BTreeMap, BTreeSet};
 const MEMORY_LIMIT: u32 = 16 * 1024 * 1024;
 
 mod abi;
-mod binary;
 pub(crate) mod bound_imports;
 pub mod core_js;
 mod endpoints;
@@ -214,10 +213,6 @@ fn assemble(
         let group = world
             .filter(|w| w.has_native_imports())
             .map_or(group, |w| w.import_group_index(namespace, module));
-        if let Some(linked) = binary::render(module, namespace, group, functions) {
-            text.push_str(&linked);
-            continue;
-        }
         if let Some(world) = world.filter(|w| w.native_imports_for(namespace)) {
             for (i, f) in functions {
                 if let Some(id) = world.close_resource(module, f) {
@@ -492,7 +487,8 @@ fn assemble(
     let text = format!(
         "(component\n{prefix}{delivery}(alias export $delivery \"walz-unit\" (type $unit))\n{aliases}{text}"
     );
-    let (text, wasm) = binary::assemble(module, text)?;
+    let wasm =
+        wat::parse_str(&text).map_err(|e| Error::message(format!("component assembly: {e}")))?;
     wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
         .validate_all(&wasm)
         .map_err(|e| Error::message(format!("component validation: {e}")))?;

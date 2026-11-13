@@ -1,17 +1,27 @@
-# @use of Component Wasm with WIT
+# Binary Component constructors
 
-In addition to `.walz`, `@use` can read executable Component `.wasm` files with WIT types. It extracts export parameter/result types from the binary and converts them to Walz types. It neither searches for a separate WIT file at runtime nor guesses an ABI from integer pointers in Core Wasm.
+`@use` selects a definition from a relative file. For a `.wasm` dependency, select
+`(component $Constructor)`, then use standard Component `instantiate` and `alias`
+to create state and select ports. Loading a definition never runs its initializer.
+Function/type selection directly from `.wasm` is rejected, including unused uses.
 
 ```wat
-(module
-  (@use "./math.wasm" (func $math.add $add))
-  (func $main (export "main") (result i32) (@effect host)
-    (call $add 20 22)))
+(component
+  (@use "./math.wasm" (component $Math))
+  (instance $math (instantiate $Math))
+  (alias export $math "example:math/math" (instance $api))
+  (@lib
+    (import "math" "add" (func $add (param $a i32) (param $b i32) (result i32)))
+    (func $main (result i32) (@effect host) (call $add 20 22)))
+  (@connect "math" (instance $api))
+  (@expose "main" $main))
 ```
 
-When a WIT world exports a `math` interface, the function name is `$math.add`; direct world functions use `$add`. Aliasing and re-exporting through `.walz` follow ordinary file-module rules. Name collisions are rejected.
+Here `import` declares an external requirement. `@connect` supplies that requirement
+from an explicitly selected Component port. The same requirement can instead be
+provided by the host at instantiation. `@use` grants no host capability.
 
-## Building a Library
+## Building the dependency
 
 `math.wit`:
 
@@ -34,40 +44,48 @@ world library { export math; }
 ```sh
 walz build math.walz --target component --wit-input math.wit --world library -o math.wasm
 walz check main.walz
-walz build main.walz --target component -o main.component.wasm
-# Node／ブラウザ用の生成JSと一緒に配布する場合
+walz build main.walz --wit -o main.component.wasm
+# Generate JavaScript and binary artifacts for Node or browsers.
 node runtime/build.mjs main.walz target/main
 ```
 
-In JS, await calls as in `const {api} = await instantiate(); const value = await api.main();`. Even for a WIT synchronous function, the JSPI adapter handling calls between Components may return a Promise. The host awaits the actual asynchronous function and does not start the next job before completion.
+The resulting JS uses the native composition adapter:
+`const {api} = await instantiate(); const value = await api.main();`.
+Native composition has no SDK `start`/queued-task interface. Async ports and owned
+Future/Stream/resource values follow the existing native Component contracts;
+traps and cancellation follow instance/store lifetime. Native JS mappings unwrap
+`result` successes and throw a `ComponentError` with `.payload` for failures. Do not free canonical
+buffers while native work may still refer to them.
 
-Use `--wit-input` to create a Component matching the original world. Ordinary Walz Component output contains internal delivery imports, so reusable libraries use this form. Core Wasm with only WIT metadata and WIT packages containing only type definitions are not executable Components. Convert Core Wasm to a Component with Canonical ABI wrappers first.
+## State, initialization, and types
 
-## Types, Effects, and Ownership
+Two `instantiate` declarations create independent defined memories, globals, and
+resource identities. Aliases of one instance share its state. Repeated `@use`
+selections never imply shared state. An unused explicit `instantiate` still runs
+its initializer, can trap, and is retained in source order. Selecting an unused
+constructor alone causes no initialization. There is no DCE inside the binary.
 
-The initial version supports **synchronous functions using shareable values in Components without host imports**.
+The source loader snapshots the validated binary, preserving its custom sections.
+The output embeds those bytes; distributing it needs no original source files.
+A dependency may have imports: supply them explicitly using standard `with`
+arguments. Component validation checks the actual port types, including nominal
+resource identities. Raw Core Wasm and WIT-only packages are not Component
+constructors; wrap Core Wasm with Canonical ABI adapters first.
 
-- Types must be representable by existing WIT value adapters, including s32/s64/f32/f64, strings, bytes, shareable-element lists, records, enums, flags, tuples, and option/result.
-- Unsigned, bool, char, and similar types use the same nominal types as existing WIT bindings. Import required records or unsigned types explicitly, for example `(type $math.point $Point)` or `(type $wit-u32 $Count)`.
-- Existing type, effect, opaque, and ownership checks apply. WIT provides no purity proof, so external calls conservatively have `host` effects and are not treated as `pure`.
-- Selecting async functions or parameters/results containing Future, Stream, or resource produces `E_WASM_USE`, including nested types. Supported synchronous exports remain usable even if the same binary contains unsupported exports.
+`@component.type` reads WIT-compatible types from an explicit `@connect` and adds
+no capability. Use type aliases for named values and preserve public type ports
+when exporting records/resources. External functions retain `host` effects even
+when their ABI is known. Type/effect/ownership/proof checks still apply; a WIT
+signature does not prove purity or release external resources.
 
-In the current JS execution system, cancellation of Futures across Component boundaries can turn Walz cancellation exceptions into ordinary traps. WIT type information alone cannot specify cancellation, join, or endpoint lifetimes, so these remain rejected until boundary contracts are established. Existing support for Futures/Streams inside Walz and explicit host bindings is unchanged.
+Limits are 4 MiB per binary and 16 MiB expanded source. WIT projections also bound
+expanded type graphs before constructing shape strings. `@include` does not load
+binary dependencies. Executable Component composition uses Component output;
+static `.walz` libraries retain ordinary selective linking and DCE for Core output.
 
-## Linking and Execution
-
-The binary is snapshotted when loaded. Repeated imports of the same canonical path produce one reachable Component dependency instance, sharing internal state. Different files are distinct dependencies.
-
-Generated Components embed the original binary unchanged and pass values through the Canonical ABI. Wasm GC references and raw memory do not pass to other instances. Distributed artifacts still run after the original `.walz`, `.wasm`, and `.wit` files are deleted. Internal dependencies do not appear in the host-import list.
-
-DCE removes unused function bindings; when an entire dependency is unreachable, its embedding and instantiation are also removed. This does not perform function-level DCE inside used dependency binaries. Initialization/start of reachable dependencies follows ordinary Component execution and never runs during type checking.
-
-Current limitations:
-
-- Output requires `--target component`. Core/Core+JSPI output is rejected with `E_COMPONENT_USE_BACKEND`; Core output is possible if DCE removes the dependency.
-- Components with imports must first be closed by explicitly composing required capabilities. Unknown host functionality is never allowed automatically.
-- Use `@use`, not `@include`, for `.wasm`. Limits are 4 MiB per binary and 16 MiB for all expanded source.
-- WIT types also have expansion/depth limits, checked before expanding shared type graphs into enormous strings.
-- Obtaining types from WIT does not prove external implementation purity, termination, or internal resource release. `@race-free` continues to reject external functions.
-
-`just test-wasm-use` checks top-level/interface exports, aliases/re-exports/shared instances, type/effect rejection, DCE, execution without original files, ABI-region release, cancellation of unstarted jobs, unsupported-boundary rejection, and Chromium. See the [execution fixture](../tests/component-fixtures/wasm-use).
+`just test-wasm-use` checks definition snapshots, explicit imports, type/effect
+errors, separate/shared state, scalar and structured value copies, async/Future
+ports, retained start traps, normal ABI-buffer retirement, and Chromium. The
+[fixture](../tests/component-fixtures/wasm-use) demonstrates a static facade
+connected to a binary instance. See [Component composition](component-composition.md)
+for constructors, resources, type queries, and memory identity.

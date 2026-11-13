@@ -56,11 +56,11 @@ export const functions = {
     (call $number (call $make-id 42))))`,
   },
   'component-imports': {
-    category: 'Functions and modules', label: 'WIT-typed Component Wasm imports (CLI)',
-    description: 'Select typed exports from a closed Component .wasm with @use. The CLI reads WIT types from the binary and embeds the dependency in Component output. This single-file playground cannot resolve relative files.',
+    category: 'Functions and modules', label: 'Binary Component constructors (CLI)',
+    description: 'Select a binary Component constructor with @use, instantiate it explicitly, and connect checked ports with @connect. The CLI snapshots the binary; this single-file playground cannot resolve relative files.',
     features: ['modules', 'component-imports', 'effects'],
     expectation: { kind: 'diagnostic', code: 'E_SOURCE_REQUIRED' },
-    source: `(module
+    source: `(component
   ;; math.wit describes a closed library:
   ;; package example:math;
   ;; interface math { add: func(a: s32, b: s32) -> s32; }
@@ -72,13 +72,17 @@ export const functions = {
   ;;     (result i32) (@effect pure) (+ $a $b)))
   ;;
   ;; Build a Canonical ABI library with the CLI:
-  ;; walz build math.walz --target component --wit math.wit --world library -o math.wasm
+  ;; walz build math.walz --target component --wit-input math.wit --world library -o math.wasm
   ;; Then build this file with --target component.
-  ;; Imports currently accept synchronous shared values.
   ;; WIT does not prove purity, so the call has a host effect.
-  (@use "./math.wasm" (func $math.add $add))
-  (func $main (export "main") (result i32) (@effect host)
-    (call $add 20 22)))`,
+  (@use "./math.wasm" (component $Math))
+  (instance $math (instantiate $Math))
+  (alias export $math "example:math/math" (instance $api))
+  (@lib
+    (import "math" "add" (func $add (param $a i32) (param $b i32) (result i32)))
+    (func $main (result i32) (@effect host) (call $add 20 22)))
+  (@connect "math" (instance $api))
+  (@expose "main" $main))`,
   },
   ownership: {
     category: 'Functions and modules', label: 'Owned values and once-call closures',

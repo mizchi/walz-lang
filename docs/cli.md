@@ -48,6 +48,15 @@ For example, create a project with `walz new app`, then run `cd app`, `walz run`
 
 The library publishes its source API through `@export`; the application entry module selects it through `@use`. Source-library exports are not automatically added to the application's root Wasm ABI. See [Agent skills](agent-skills.md) for the generated local skill and its reference files.
 
+## wit-bindgen
+
+`walz wit-bindgen api.wit policy.json generated [--world guest]` generates typed
+imports in `bindings.walz`, shared `types.walz`, implementation stubs in
+`exports.walz`, and checked `bindings.json`. The policy grants explicit host
+capabilities; `--bindings generated/bindings.json` selects it for checking/building.
+See [WIT bindings](wit-bindings.md). Component-to-Component wiring uses `@connect`;
+WIT code generation does not instantiate a Component.
+
 ## print
 
 `walz print FILE.walz` writes formatted Walz S-expressions to stdout. Pass `--format watz` for an optional Watz review view using `func`, `@export("name")`, immutable `let`, and direct `match`/`if` expressions. `--format walz` is the default; `walz print FILE.watz` prints a saved view back as Walz.

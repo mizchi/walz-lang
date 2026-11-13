@@ -7,7 +7,7 @@ The referenced specification is pinned to [WASI v0.3.0](https://github.com/WebAs
 The API passed to Walz is `walz:filesystem/files@0.3.0`. This is a Walz value adapter and does not claim to implement the `wasi:filesystem` resource ABI. The host owns descriptors; guests receive only selected names, byte streams, completion futures, and result errors.
 
 ```sh
-walz bind examples/wasi-files/filesystem.wit examples/wasi-files/policy.json examples/wasi-files/generated
+walz wit-bindgen examples/wasi-files/filesystem.wit examples/wasi-files/policy.json examples/wasi-files/generated
 walz run examples/wasi-files --target core-js \
   --bindings examples/wasi-files/generated/bindings.json --read-file input=./input.bin
 walz run examples/wasi-files --target core-js --invoke write \

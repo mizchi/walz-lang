@@ -799,7 +799,7 @@ After type/effect/ownership/opaque checks on all definitions, definitions unreac
 Native WAT `(import "host" "member" ...)` and `(export "name" ...)` retain their meanings, separately from `@use` / `@export`.
 See [Static modules and DCE](docs/static-modules.md).
 
-`@use "./library.wasm"` selects synchronous, shared-value exports from a WIT-bearing Component with no host imports. World-level functions use `$name`; interface members use `$interface.name`, with WIT types read from the binary. Calls have `host` effect. Async and Future/Stream/resource boundaries are rejected at the selection site without affecting unselected exports. The Component is embedded once in Component output; unused dependencies are eliminated in full. There is no individual DCE inside its code or composition into Core output. [Type, ABI, and cancellation restrictions](docs/wasm-use.md).
+`(@use "./math.wasm" (component $Math))` selects a binary constructor. Use explicit `instantiate`, `alias`, and `@connect` for state and imports; function/type selection from `.wasm` is rejected. Async and owned ports use native Component contracts. Unused explicit instances retain initialization. [Examples and limits](docs/wasm-use.md).
 
 <a id="値だけを渡す-text-io-capability"></a>
 
@@ -1074,7 +1074,7 @@ with ordinary static `@use`/`@export`. A standalone library is not a build entry
 
 Inside a Component, `(@expose "public-name" $function<concrete-types...>)`
 monomorphizes and checks the implementation, then infers a portable Canonical ABI
-export. `(@bind "module" "member" $component-function)` supplies a Walz import
+export. `(@connect "module" "member" $component-function)` supplies a Walz import
 with the selected Component function. Actual parameter names and async status
 come from that function; final Component validation checks type compatibility.
 It retains a host effect/capability. Standard Component definitions and explicit
@@ -1136,7 +1136,7 @@ Native traps/cancellation follow instance/store lifetime; SDK cleanup guarantees
 do not apply to arbitrary native hosts.
 
 Portable value inference includes supported shared data and Future/Stream
-endpoints. `(@bind "namespace" (instance $target))` additionally infers imported
+endpoints. `(@connect "namespace" (instance $target))` additionally infers imported
 resource contracts for `@expose`: source declarations retain explicit own/borrow,
 moves and destructor imports, which map to canonical drop. Imported type aliases
 are resolved by validator identity; unrelated resource definitions never unify by

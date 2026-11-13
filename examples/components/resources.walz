@@ -24,7 +24,7 @@
     (func $release (param $v (@inst $option (@resource $File))) (@effect host writes)
       (@match (@inst $option (@resource $File)) (@move $v)
         (@case none () (nop)) (@case some ($f) (@resource.close (@move $f))))))
-  (@bind "test:resources/host" (instance $files))
+  (@connect "test:resources/host" (instance $files))
   (@expose "make" $make) (@expose "echo" $echo) (@expose "read" $borrow)
   (@expose "handled" $handled)
   (@expose "close" $close) (@expose "optional" $optional) (@expose "release-option" $release))

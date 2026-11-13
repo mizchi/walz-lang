@@ -3,7 +3,7 @@
 Walz distinguishes a static library from an executable Core module or Component.
 Standard `(module ...)`, `(component ...)`, `instantiate`, `canon lift`, and
 `canon lower` retain their WebAssembly meanings. The extensions `@expose` and
-`@bind` infer value adapters from checked implementation signatures.
+`@connect` infer value adapters from checked implementation signatures.
 
 ## Static library and public API
 
@@ -68,17 +68,17 @@ cannot be expressed in WIT; asking for WIT then reports that limitation.
   (@lib
     (import "counter" "next" (func $next (result i32)))
     (func $run (result i32) (@effect host) (call $next)))
-  (@bind "counter" "next" $next)
+  (@connect "counter" "next" $next)
   (@expose "run" $run))
 ```
 
-`@bind "module" "member" $component-function` supplies the corresponding
+`@connect "module" "member" $component-function` supplies the corresponding
 Walz import. The actual Component function determines parameter names and async
 status; final Component validation checks its full type against the checked
 implementation. This also works for an imported or aliased Component function.
-Calling it remains a host capability in the Walz effect system; a binding cannot
+Calling it remains a host capability in the Walz effect system; a connection cannot
 make a call pure or override the compiler's fixed host contracts. Duplicate ports
-and incompatible signatures are errors. All live imports need explicit bindings
+and incompatible signatures are errors. All live imports need explicit connections
 or their usual independently checked host policy.
 
 Selecting `(component $Counter)` loads a constructor, from a relative `.walz`
@@ -86,12 +86,28 @@ Component source or `.wasm` Component binary. It does not instantiate it. Two
 explicit instantiations have independent defined memories and globals; multiple
 aliases of one instance share state. Standard instance declarations and their
 initialization order survive compilation, even if no exported function uses them.
-Binary dependency custom sections are preserved. Existing function-selecting
-`@use "./library.wasm" (func ...)` retains its more restricted static-linking rules.
+Binary dependency custom sections are preserved. Direct function/type selection
+from `.wasm` is rejected; use a constructor and explicit instance ports. See
+[binary constructors](wasm-use.md).
 
 The complete [example](../examples/components/main.walz) combines a generic
-static library, two counter instances, an explicit binding, bytes, and native
+static library, two counter instances, an explicit connection, bytes, and native
 Future/Stream operations.
+
+## Names and phases
+
+| Form | Meaning | When state is created |
+| --- | --- | --- |
+| `@use` | Select source definitions or a Component constructor | No initialization |
+| `import` | Declare an external instantiation requirement, supplied by a host or another Component | When the enclosing module/Component is instantiated |
+| `instantiate` | Create an instance with explicit `with` arguments | In declaration order, even when unused |
+| `@connect` | Supply a checked implementation import from a Component function or instance | Uses the selected instance; creates no implicit provider |
+| `@expose` | Infer the public Canonical ABI adapter for a checked function | Part of the enclosing Component |
+| `walz wit-bindgen` | Generate Walz declarations and policy files from WIT | Build-time code generation |
+
+`@bind` and `walz bind` have been removed. Loop `(bind ...)` declarations,
+macro binding operations, `--bindings`, and generated `bindings.json` keep their
+existing meanings.
 
 ## Generic Component constructors
 
@@ -155,7 +171,7 @@ Ordinary type/effect/ownership/proof checks still apply to every concrete body.
 Public values still need portable WIT types:
 `v128`, boxes and task handles may be used internally but cannot be exposed
 implicitly. Pass resource identity via
-typed runtime instance imports and `@bind`, and keep shared linear memory an
+typed runtime instance imports and `@connect`, and keep shared linear memory an
 explicit runtime connection. Named public values receive native type ports;
 exported instance ascriptions give each interface its own value naming aliases,
 checked by Component subtyping. Imported resources keep their actual defining
@@ -181,7 +197,7 @@ values, nested carriers, owned endpoint transfer and asynchronous consumption.
 ## Connected type queries
 
 `@component.type` reads the actual, validated graph selected by an explicit
-`@bind`. It introduces no import or capability. Use it in value-type positions,
+`@connect`. It introduces no import or capability. Use it in value-type positions,
 including transparent aliases, function signatures, typed lets and generic
 function arguments:
 
@@ -195,8 +211,8 @@ function arguments:
 
 The namespace is the local connection name, not a guessed WIT package or file.
 `param` takes a zero-based decimal index or the WIT parameter name as a string.
-`result` selects the result; `type` selects a named export of an instance binding.
-Individual function bindings support parameter/result queries, without granting
+`result` selects the result; `type` selects a named export of an instance connection.
+Individual function connections support parameter/result queries, without granting
 access to their whole defining interface. Projections can chain
 `option.element`, `list.element`, `result.ok`, `result.err`, `tuple.first`,
 `tuple.second`, `future.element`, `stream.element`, `(field "name")`,
@@ -227,11 +243,11 @@ that constructor application**, including already specialized instances:
 
 ```text
 (instance $first (instantiate $Echo<i64>))
-(@bind "first" (instance $first))
+(@connect "first" (instance $first))
 (instance $second (instantiate $Echo<(@component.type "first" (result "echo"))>))
 ```
 
-Binding declarations may appear later; their target graph must already be
+Connection declarations may appear later; their target graph must already be
 available. Only queries reachable from the requested arguments participate in
 that stage. An unused alias may refer to a later connection and is still checked
 with the final implementation. The compiler validates the preceding graph
@@ -254,7 +270,7 @@ to 1,024 instance exports and 16 MiB.
 Use the instance form when a connection includes resource types:
 
 ```text
-(@bind "test:resources/host" (instance $files))
+(@connect "test:resources/host" (instance $files))
 ```
 
 The selected instance supplies its exported type graph and function contracts.
@@ -269,9 +285,9 @@ The source destructor import has the usual name `[resource-drop]file` and an
 `i32 -> unit` implementation signature. Its Close contract is inferred only for
 the declared resource destructor, and the adapter supplies `canon resource.drop`;
 the host does not implement a function of that name. Unrelated numeric factories
-are not interpreted as own handles. Namespaces cannot combine an instance binding
-with function bindings or override fixed host contracts. Function bindings in
-other namespaces can coexist with resource bindings.
+are not interpreted as own handles. Namespaces cannot combine an instance connection
+with function connections or override fixed host contracts. Function connections in
+other namespaces can coexist with resource connections.
 
 `@expose` infers own/borrow and supported Option/Result/pair carriers from the
 checked source. Owners still require `@move`; a borrow neither closes nor becomes
@@ -295,8 +311,8 @@ closed host object with a WeakRef.
 Private Component providers can also keep resources entirely behind a scalar
 public API; see the [scoped-provider fixture](../tests/component-fixtures/composition-private-resources.walz).
 Their constructor identity and destructor state remain per instance. A locally
-defined provider uses a qualified WIT namespace for its resource instance binding;
-an alias of an imported resource can use a local binding namespace because its
+defined provider uses a qualified WIT namespace for its resource instance connection;
+an alias of an imported resource can use a local connection namespace because its
 defining interface is already known. Raw Core
 providers must distinguish imported borrowed handles from borrows of a resource
 they define: the latter receive the representation directly, as specified by the
@@ -373,7 +389,7 @@ authority; externref stays a Core/JS value. Portable opaque handles use resource
 `walz:world-v1` is reserved for the compiler's package/world metadata.
 
 Inference covers portable shared values, future/stream endpoints and imported
-resource own/borrow through explicit instance bindings. Function and source
+resource own/borrow through explicit instance connections. Function and source
 Component constructor specialization are supported with the boundaries above.
 Arbitrary host memory proofs, runtime type parameters, copying opaque/resource
 representations, cyclic constructor inference and native SDK task scheduling
@@ -382,7 +398,7 @@ remain outside this composition layer.
 Run `just test-composition`, `just test-composition-e2e`, and `just test-runtime-cli`.
 The tests check actual Wasm validation and execution, type/effect failures,
 constructor identity, memory aliases, Core+JSPI/data-memory separation, async
-bindings, Unicode/bytes/stream transfer, normal buffer retirement, and native
+connections, Unicode/bytes/stream transfer, normal buffer retirement, and native
 failure isolation. The [Canonical ABI](https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md)
 and [concurrency model](https://github.com/WebAssembly/component-model/blob/main/design/mvp/Concurrency.md)
 remain the runtime semantics.

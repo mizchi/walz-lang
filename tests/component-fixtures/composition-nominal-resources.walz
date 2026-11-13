@@ -25,7 +25,7 @@
         (@try (result i32)
           (do (@using $f (call $new) (block (result i32) (throw $Stop) 0)))
           (catch $Stop () 42))))
-    (@bind "test:resources/host" (instance $files))
+    (@connect "test:resources/host" (instance $files))
     (@expose "make" $make) (@expose "read" $borrow) (@expose "close" $close)
     (@expose "echo" $echo) (@expose "handled" $handled))
   (instance $left (instantiate $Files<(ref $Item)> (with "test:resources/host" (instance $host))))

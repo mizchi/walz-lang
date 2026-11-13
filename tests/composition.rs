@@ -72,7 +72,7 @@ fn binds_component_functions_to_internal_import_ports() {
       (@lib
         (import "host" "double" (func $double (param $x i32) (result i32)))
         (func $answer (result i32) (@effect host) (call $double 21)))
-      (@bind "host" "double" $double)
+      (@connect "host" "double" $double)
       (@expose "answer" $answer))"#;
     let built = walz::composition::compile(source, &Default::default()).unwrap();
     valid(&built.wasm);
@@ -142,7 +142,7 @@ fn external_component_use_loads_a_constructor_and_preserves_instances() {
       (alias export $a "next" (func $next))
       (@lib (import "counter" "next" (func $next (result i32)))
         (func $run (result i32) (@effect host) (call $next)))
-      (@bind "counter" "next" $next) (@expose "run" $run)
+      (@connect "counter" "next" $next) (@expose "run" $run)
       (export "b" (instance $b)))"#;
     std::fs::write(dir.path().join("main.walz"), source).unwrap();
     let loaded = walz::source::load(dir.path().join("main.walz")).unwrap();
@@ -277,7 +277,7 @@ fn bind_type_mismatch_and_false_purity_are_rejected() {
       (func $f (param "x" s32) (result s32) (canon lift (core func $m "f")))
       (@lib (import "dep" "f" (func $f (param $x TYPE) (result TYPE)))
         (func $run (param $x TYPE) (result TYPE) (@effect EFFECT) (call $f $x)))
-      (@bind "dep" "f" $f) (@expose "run" $run))"#;
+      (@connect "dep" "f" $f) (@expose "run" $run))"#;
     for (ty, effect) in [("i64", "host"), ("i32", "pure")] {
         assert!(walz::compile(&base.replace("TYPE", ty).replace("EFFECT", effect)).is_err());
     }

@@ -8,7 +8,7 @@ use crate::{
 };
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
-mod bindings;
+mod connections;
 mod contract;
 pub(crate) mod embedded;
 mod generics;

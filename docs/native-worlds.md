@@ -1,10 +1,10 @@
 # Native WIT worlds
 
-`walz build main.walz --target component --wit-input api.wit --world guest -o dist/app.component.wasm` builds a Component with the original WIT interface names and type identities. With generated imports, also pass `--bindings generated/bindings.json`. `walz bind api.wit policy.json generated --world guest` generates typed imports, types, and export stubs; implement the stubs before building. Interface exports map to source exports named `interface-function`.
+`walz build main.walz --target component --wit-input api.wit --world guest -o dist/app.component.wasm` builds a Component with the original WIT interface names and type identities. With generated imports, also pass `--bindings generated/bindings.json`. `walz wit-bindgen api.wit policy.json generated --world guest` generates typed imports, types, and export stubs; implement the stubs before building. Interface exports map to source exports named `interface-function`.
 
 This boundary uses the standard Canonical ABI. The resulting Component does not import Walz's private delivery runtime. The executable inputs are [async](../tests/component-fixtures/native-async.walz), [async WIT](../tests/component-fixtures/native-async.wit), [resources](../tests/component-fixtures/native-resources.walz), and [resource WIT](../tests/component-fixtures/native-resources.wit).
 
-For source-defined composition, use `(component ...)`, `@expose`, `@bind`, and `@world`. `build --wit` emits the checked public WIT; `--wit-input` consumes an existing contract. See [Component composition](component-composition.md).
+For source-defined composition, use `(component ...)`, `@expose`, `@connect`, and `@world`. `build --wit` emits the checked public WIT; `--wit-input` consumes an existing contract. See [Component composition](component-composition.md).
 
 ## Async values
 
@@ -16,7 +16,7 @@ The pinned jco transpiler in JSPI mode runs the generated Component without the 
 
 Imported WIT resources keep their nominal Canonical ABI identity, including aliases reexported by another interface. Generated source types are `@resource $R` for an owned handle and `@borrow $R` for a borrowed parameter. An owner is consumed with `@move`, `@resource.close`, or a transfer through a typed boundary. A borrow cannot escape as an owner or be closed. This does not introduce general reference lifetimes.
 
-Native factories and functions must use typed own/borrow signatures. Numeric factory bindings are rejected: regenerate them with `walz bind`. The generator derives a `[resource-drop]name` operation from the granted resource authority; the adapter connects it to `canon resource.drop` rather than requiring a host function of that name. Host destructors run when ownership is explicitly closed. Transferring an owner removes the guest's cleanup registration, so it cannot close the same handle twice.
+Native factories and functions must use typed own/borrow signatures. Numeric factory bindings are rejected: regenerate them with `walz wit-bindgen`. The generator derives a `[resource-drop]name` operation from the granted resource authority; the adapter connects it to `canon resource.drop` rather than requiring a host function of that name. Host destructors run when ownership is explicitly closed. Transferring an owner removes the guest's cleanup registration, so it cannot close the same handle twice.
 
 Owned resources may appear in the supported `option`, `result`, and two-element pair forms. Lists, ABI records/variants, and future/stream payloads remain restricted to shared values. Ordinary Core＋JSPI and SDK Component value adapters reject typed resource parameters/results; their existing SDK resource capabilities are a separate interface.
 

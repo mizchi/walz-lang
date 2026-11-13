@@ -31,7 +31,7 @@
 | `(@use "./file.walz" ...)` / `(@export ...)` | Walz ソースの選択的な静的リンク／ソース API の公開 |
 | `(@use "walz:core" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
 | `@closure`・`@capture`・`@effect`・`@type.params`・`@where` | Walz が追加した宣言・注釈 |
-| `@lib`・`@world`・`@expose`・`@bind` | 静的実装・生成WITの命名・推論したComponent公開関数・明示的なComponent関数の接続 |
+| `@lib`・`@world`・`@expose`・`@connect` | 静的実装・生成WITの命名・推論したComponent公開関数・明示的なComponent関数の接続 |
 | `@macro` / `@$name` | 衛生的な式マクロの宣言／呼び出し。標準 WAT の命令は再定義しない |
 
 `@` は拡張の入口に付ける。内部の `bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
@@ -47,13 +47,15 @@
   (@expose "answer" $answer))
 ```
 
-`walz build main.walz --wit` でComponentと `world.wit` を生成する。`@lib` ファイルは `@export` と選択的な `@use` を使い、実行エントリーを持たない。`(@bind "module" "member" $component-function)` はComponent型を検査してWalzのimportを供給する。`(@use "./worker.wasm" (component $Worker))` は定義を読み込み、instantiateは明示する。[実行例](examples/components/main.walz)と[契約・制限](docs/component-composition.md)を参照。
+`import` はホストまたは他のComponentが供給する外部依存、`@use` は定義の選択を表す。`walz wit-bindgen api.wit policy.json generated` で型付き宣言と bindings.json を生成する。
+
+`walz build main.walz --wit` でComponentと `world.wit` を生成する。`@lib` ファイルは `@export` と選択的な `@use` を使い、実行エントリーを持たない。`(@connect "module" "member" $component-function)` はComponent型を検査してWalzのimportを供給する。`(@use "./worker.wasm" (component $Worker))` は定義を読み込み、instantiateは明示する。[実行例](examples/components/main.walz)と[契約・制限](docs/component-composition.md)を参照。
 
 標準 WAT 単体はそのまま検証・コンパイルする。以下の型付きコアでは型・effect・所有権を検査する。
 コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `@let` / `@loop` / `@for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`@effect pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
 型付きコアの戻り値は0個（unit）または1値。pair も1値として返す。標準 WAT の `(result i32 i64)` は標準 WAT 経路で扱い、型付きコアの pair 分解へは変換しない。
 
-resourceを含む接続は `(@bind "test:resources/host" (instance $files))` と書く。
+resourceを含む接続は `(@connect "test:resources/host" (instance $files))` と書く。
 `@resource` のkind・`@borrow`・`@move`・destructor importは明示したまま、接続契約を推論しcanonical dropを供給する。
 [resourceの例](examples/components/resources.walz)はWIT入力ファイルやpolicy JSONを必要としない。
 
@@ -65,7 +67,7 @@ genericなスコープではComponentを名前で参照する。可視なstruct/
 閉じた内部配置として渡せる。opaqueな表現やresourceは明示的なinterfaceで扱う。
 [genericコンストラクターの例](examples/components/generics.walz)と[型付きコンストラクター](examples/components/typed-constructors.walz)を参照。
 
-`@component.type` は明示的な `@bind` から値型を読み取り、権限は追加しない。
+`@component.type` は明示的な `@connect` から値型を読み取り、権限は追加しない。
 シグネチャやaliasに使う。
 
 ```text
@@ -638,7 +640,7 @@ try/catch は Wasm 例外の糖衣。ゼロ除算・境界違反等の trap は 
 
 ## モジュール・不透明な公開型
 
-WIT付きComponentは`(@use "./math.wasm" (func $math.add $add))`で選択できる。型はバイナリから取得する。初版はホストimportなし・同期・共有値の関数に限定し、呼出しには`host` effectが必要。出力は`--target component`。[制限と例](docs/wasm-use.md)。
+`(@use "./math.wasm" (component $Math))` でバイナリの定義を選び、`instantiate`・`alias`・`@connect` で状態と接続を明示する。`.wasm` からの関数・型の直接選択は拒否する。async・所有値はネイティブComponentの契約に従い、未使用の明示的なインスタンスも初期化する。[例と制限](docs/wasm-use.md)。
 
 ```wat
 ;; stock.walz: 1ファイルが1モジュール、宣言は既定で非公開

@@ -740,7 +740,7 @@ import した別名を `@export` で再公開できます。衝突・未定義�
 ネイティブWATの `(import "host" "member" ...)` と `(export "name" ...)` の意味は維持します。`@use` / `@export` とは別です。
 詳細は [静的モジュールとDCE](docs/static-modules.md) を参照してください。
 
-`@use "./library.wasm"`は、ホストimportのないWIT付きComponentから同期・共有値のexportを選択する。world直下の関数は`$name`、interface内は`$interface.name`で指定し、バイナリからWITの型を得る。呼出しは`host` effectを持つ。asyncとFuture／Stream／resource境界は選択位置で拒否し、未選択のexportには影響しない。Component出力へ一度だけ埋め込み、未使用の依存全体はDCEする。内部コードの個別DCEやCore出力への合成は行わない。[型・ABI・取消しの制約](docs/wasm-use.md)。
+`(@use "./math.wasm" (component $Math))` でバイナリの定義を選び、`instantiate`・`alias`・`@connect` で状態と接続を明示する。`.wasm` からの関数・型の直接選択は拒否する。async・所有値はネイティブComponentの契約に従い、未使用の明示的なインスタンスも初期化する。[例と制限](docs/wasm-use.md)。
 
 ## 値だけを渡す text I/O capability
 
@@ -978,7 +978,7 @@ Watzのmatch分岐は `case`・`default` を使い、基本形式のWalzでは `
 通常の `@use` / `@export` で選択し、単独でcheckできるがbuildのエントリーにはしない。
 
 Component内の `(@expose "public-name" $function<具体型...>)` は、実装を単相化・検査して
-portableなCanonical ABI公開関数を推論する。`(@bind "module" "member" $component-function)`
+portableなCanonical ABI公開関数を推論する。`(@connect "module" "member" $component-function)`
 は選択したComponent関数でWalzのimportを供給する。引数名とasync性を実際の関数から取り、
 最終的なComponent validatorで型の互換性を検証する。host effect/capabilityは保つ。
 標準Component定義と明示的なinstantiate順序は維持する。
@@ -1027,7 +1027,7 @@ canonical操作は特定のメモリを選ぶ。メモリの同一性はCoreイ�
 保持し、キャンセル要求だけでは解放しない。nativeのtrap/cancellationはinstance/storeの寿命に
 従い、任意のnativeホストにSDKのcleanup保証は適用しない。
 
-値の推論は共有データ・Future/Streamに対応する。さらに `(@bind "namespace" (instance $target))`
+値の推論は共有データ・Future/Streamに対応する。さらに `(@connect "namespace" (instance $target))`
 からimported resourceの契約を推論し、`@expose` に適用する。ソース側のown/borrow・move・
 destructor importは明示したままcanonical dropに接続する。import型aliasはvalidatorの同一性で
 解決し、表現や名前が似た別resourceを同一視しない。呼び出せるのは宣言したimportだけで、

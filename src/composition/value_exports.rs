@@ -29,11 +29,11 @@ fn project(
     root: bool,
 ) -> Result<(String, String, BTreeMap<String, String>), Error> {
     let ns = "walz-value-projection";
-    let bound = bindings::resolve(
+    let bound = connections::resolve(
         raw,
         embedded,
         &mut [],
-        &[bindings::InstanceBind {
+        &[connections::InstanceConnection {
             module: ns.into(),
             target: target.into(),
         }],

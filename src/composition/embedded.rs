@@ -2,6 +2,7 @@
 //! replacement is indexed by explicit constructor declarations; custom-section
 //! bytes are never interpreted as executable source.
 use super::*;
+pub(crate) const MAX_BINARY: usize = 4 * 1024 * 1024;
 pub(super) type Registry = BTreeMap<usize, Vec<u8>>;
 pub(crate) fn declaration(name: &str, bytes: &[u8]) -> Result<String, Error> {
     validate(bytes)?;
@@ -11,6 +12,9 @@ pub(crate) fn declaration(name: &str, bytes: &[u8]) -> Result<String, Error> {
     ))
 }
 pub(super) fn validate(bytes: &[u8]) -> Result<(), Error> {
+    if bytes.len() > MAX_BINARY {
+        return Err(error("component dependency exceeds 4 MiB"));
+    }
     if !wasmparser::Parser::is_component(bytes) {
         return Err(error("a component constructor requires Component Wasm"));
     }

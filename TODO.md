@@ -10,11 +10,11 @@ Checkmarks mean implementation and regression checks are complete; design alone 
 ## Component composition
 
 - [x] Separate `@lib`, standard Core modules and Component definitions; select constructors and instantiate explicitly.
-- [x] Infer concrete portable function adapters with `@expose` / `@bind`; preserve type/effect/ownership/proof gates.
+- [x] Infer concrete portable function adapters with `@expose` / `@connect`; preserve type/effect/ownership/proof gates.
 - [x] Generate `world.wit` with `build --wit` and validate existing contracts with `--wit-input`.
 - [x] Inspect memory identities/aliases and make generated ABI-memory accesses explicit; validate Core externref FFI metadata.
 - [x] Node/Chromium checks for values, async bindings, separate instances, normal buffer retirement and native failure isolation.
-- [x] Infer imported resource interfaces and own/borrow identities with instance `@bind`; retain nominal aliases, monomorphized owned exports, canonical drop and scoped exception cleanup. Check Node/Chromium identity, close counts, buffers and host-object reachability. The explicit native WIT backend remains available.
+- [x] Infer imported resource interfaces and own/borrow identities with instance `@connect`; retain nominal aliases, monomorphized owned exports, canonical drop and scoped exception cleanup. Check Node/Chromium identity, close counts, buffers and host-object reachability. The explicit native WIT backend remains available.
 - [x] Add explicit generic source Component constructor arguments, with normalized closed value types, existing constraints and checks, definition sharing, independent instances and concrete WIT. Verify Node/Chromium values, endpoint moves, failures and buffer retirement.
 - [x] Add read-only `@component.type` projections of explicit bindings, preserving ABI scalars, named type ports, shared payload restrictions and resource ownership. Check static modules, constructor phase boundaries, native host-result retirement/rejection and Node/Chromium execution.
 - [x] Add closed visible nominal constructor layouts and staged queries of preceding connections. Preserve opaque/privacy boundaries, phantom identity, ABI annotations, independent instances and resource identity through validated value export ascriptions; check WIT roundtrips, Node and Chromium.
@@ -379,7 +379,7 @@ See [numbers, Result, newtypes, and control flow](docs/core-expressions.md) for 
 
 ## 4. Modules and visibility
 
-- [x] `@use` synchronous shared-value exports from closed, WIT-bearing Component `.wasm` files. Type/effect checks, selection/aliases/re-exports, the same instance, dependency-wide DCE, and static embedding.
+- [x] Binary Component dependencies select constructors with `@use`; explicit `instantiate`/`@connect` determines state and checked native ports. Unused instances retain initialization.
 - [ ] Async/Future/Stream/resource boundaries for Component dependencies. Define cancellation-exception, join, and endpoint-lifetime contracts before acceptance.
 - [ ] Explicit connection of Component dependencies' host capabilities and calls from Core/Core＋JSPI. Currently Component output only.
 

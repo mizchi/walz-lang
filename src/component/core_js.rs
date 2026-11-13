@@ -78,7 +78,6 @@ pub(crate) fn compile_case(
 }
 
 fn validate_module(module: &Module) -> Result<(), Error> {
-    crate::binary::core(module)?;
     if module
         .memories
         .iter()

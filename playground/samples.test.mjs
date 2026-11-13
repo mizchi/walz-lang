@@ -23,7 +23,7 @@ test('the language tour covers the main features with explicit outcomes', () => 
     if (sample.expectation.kind === 'run') assert.equal(typeof sample.expectation.output, 'string', id);
     if (sample.expectation.kind === 'compile') assert.ok(sample.expectation.note && sample.expectation.imports.length, id);
     if (sample.expectation.kind === 'diagnostic') assert.match(sample.expectation.code, /^E_/, id);
-    assert.match(sample.source.trim(), /^\(module\b/, `${id}: standalone module`);
+    assert.match(sample.source.trim(), /^\((module|component)\b/, `${id}: standalone module or Component`);
     for (const feature of sample.features) required.delete(feature);
   }
   assert.deepEqual([...required], [], 'missing language features');

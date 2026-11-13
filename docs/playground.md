@@ -87,7 +87,7 @@ The resource example shows that declaring a host import alone does not establish
 Already-delivered Future/Stream examples read locally constructed values without starting language-side producers or an event loop.
 Close examples likewise abandon already-delivered endpoints, distinct from cancelling pending host tasks.
 The single-file page does not resolve file @use/include. The module example shows two files and CLI usage, expecting `E_SOURCE_REQUIRED` on the page.
-The WIT-bearing `.wasm` example is also for the CLI; uploading or executing Components through the page is unsupported. [Wasm @use](wasm-use.md) describes output-target, synchronous-value, and cancellation restrictions.
+The WIT-bearing `.wasm` example is also for the CLI; uploading or executing Components through the page is unsupported. [Binary constructors](wasm-use.md) describes explicit instantiation, native async ports, and instance/store lifetime.
 
 Editing input clears the sample's expected result and switches to `Custom source`.
 Selecting another sample restores its description, expected result, and source together.

@@ -84,7 +84,7 @@ fn constructor_queries_resolve_from_earlier_native_connections_without_a_runtime
       {ECHO}
       (instance $a (instantiate $Echo<$Input>))
       (instance $b (instantiate $Echo<(@component.type "host" (result "echo"))>))
-      (@bind "host" (instance $host))
+      (@connect "host" (instance $host))
       (export "a" (instance $a)) (export "b" (instance $b)))"#
     );
     let built = compile(&source);
@@ -106,7 +106,7 @@ fn queries_can_depend_on_preceding_specializations_but_cannot_run_initializers()
       {ECHO}
       (instance $first (instantiate $Echo<i64>))
       (alias export $first "echo" (func $first-echo))
-      (@bind "first" "call" $first-echo)
+      (@connect "first" "call" $first-echo)
       (instance $second (instantiate $Echo<(@component.type "first" (result "call"))>))
       (export "second" (instance $second)))"#
     );
@@ -207,7 +207,7 @@ fn constructor_queries_recheck_actual_bounds_and_allow_unrelated_later_aliases()
       {ECHO}
       (instance $a (instantiate $Echo<$Number>))
       (alias export $a "echo" (func $later))
-      (@bind "later" "echo" $later) (@bind "host" (instance $host))
+      (@connect "later" "echo" $later) (@connect "host" (instance $host))
       (export "a" (instance $a)))"#
     );
     compile(&source);

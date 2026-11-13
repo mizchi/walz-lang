@@ -23,7 +23,7 @@ fn infers_bound_resource_interfaces_and_native_own_borrow_exports() {
         .push_str("world.wit", &built.wit)
         .expect("generated WIT must parse independently");
     assert!(!built.wat.contains("walz:runtime/"));
-    assert_eq!(built.manifest["bindings"][0]["kind"], "instance");
+    assert_eq!(built.manifest["connections"][0]["kind"], "instance");
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("world.wit");
     std::fs::write(&path, &built.wit).unwrap();
@@ -57,11 +57,11 @@ fn instance_ports_cannot_be_rebound_or_override_fixed_host_contracts() {
     for source in [
         SOURCE.replace(
             "(@expose \"make\"",
-            "(@bind \"test:resources/host\" (instance $files)) (@expose \"make\"",
+            "(@connect \"test:resources/host\" (instance $files)) (@expose \"make\"",
         ),
         SOURCE.replace(
             "(@expose \"make\"",
-            "(@bind \"test:resources/host\" \"read\" $read) (@expose \"make\"",
+            "(@connect \"test:resources/host\" \"read\" $read) (@expose \"make\"",
         ),
         SOURCE.replace("test:resources/host", "walz:host/event-loop@0.1.0"),
     ] {
@@ -85,8 +85,8 @@ fn projected_source(source: &str) -> String {
         )
         .replace("[resource-drop]file", "[resource-drop]item")
         .replace(
-            "(@bind \"test:resources/host\" (instance $files))",
-            "(@bind \"selected\" (instance $selected))",
+            "(@connect \"test:resources/host\" (instance $files))",
+            "(@connect \"selected\" (instance $selected))",
         )
 }
 

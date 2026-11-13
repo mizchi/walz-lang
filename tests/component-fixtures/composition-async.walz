@@ -12,5 +12,5 @@
     (import "service" "consume" (func $consume (param $value $future<i32>) (result i32)))
     (func $run (param $value $future<i32>) (result i32)
       (@effect host suspends) (call $consume (@move $value))))
-  (@bind "service" "consume" $consume)
+  (@connect "service" "consume" $consume)
   (@expose "run" $run))

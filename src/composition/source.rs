@@ -1,7 +1,7 @@
 //! Compile-time syntax only. Native definitions and their instance order are
 //! retained; library calls share one checked implementation, never a new instance
 //! per use. Component-to-component calls retain canonical value conversion.
-use super::bindings::{Bind, InstanceBind};
+use super::connections::{FunctionConnection, InstanceConnection};
 use super::*;
 
 struct Text {
@@ -47,8 +47,8 @@ pub(super) fn compile(
     let mut core_fields = vec![];
     let mut raw = vec![];
     let mut exposes = vec![];
-    let mut binds = vec![];
-    let mut instances: Vec<InstanceBind> = vec![];
+    let mut connections = vec![];
+    let mut instances: Vec<InstanceConnection> = vec![];
     let mut names = None;
     let mut exports = BTreeSet::new();
     let mut rewritten = false;
@@ -61,6 +61,15 @@ pub(super) fn compile(
         .filter(|n| !n.atom().is_some_and(|s| s.starts_with('$')))
     {
         let p = n.list().unwrap_or(&[]);
+        if n.head() == Some("@use")
+            && p.get(1)
+                .and_then(Sexp::text)
+                .is_some_and(|path| path.starts_with("./") || path.starts_with("../"))
+        {
+            return Err(Error::at(source, n.span, "file uses require source::load")
+                .with_code("E_SOURCE_REQUIRED")
+                .help("load the entry file to resolve its relative @use paths"));
+        }
         match n.head() {
             Some("@world") => {
                 let [_, package, world] = p else {
@@ -118,8 +127,16 @@ pub(super) fn compile(
                 exposes.push(name.to_owned());
             }
             Some("@bind") => {
+                return Err(Error::at(
+                    source,
+                    n.span,
+                    "Component connections use @connect; @bind has been removed",
+                )
+                .with_code("E_WALZ_EXTENSION"));
+            }
+            Some("@connect") => {
                 rewritten = true;
-                super::bindings::declaration(n, &mut binds, &mut instances)?;
+                super::connections::declaration(n, &mut connections, &mut instances)?;
             }
             Some("@component.constructor") => {
                 let [_, name, payload] = p else {
@@ -185,9 +202,12 @@ pub(super) fn compile(
             _ => raw.push(source[n.span.start..n.span.end].to_owned()),
         }
     }
-    let mut contracts = if !binds.is_empty() || !instances.is_empty() {
-        Some(super::bindings::resolve(
-            &raw, &embedded, &mut binds, &instances,
+    let mut contracts = if !connections.is_empty() || !instances.is_empty() {
+        Some(super::connections::resolve(
+            &raw,
+            &embedded,
+            &mut connections,
+            &instances,
         )?)
     } else {
         None
@@ -225,7 +245,7 @@ pub(super) fn compile(
         &core.source,
         policy,
         |_, _| (),
-        |m| super::bindings::apply(m, &binds, &instances, contracts.as_ref()),
+        |m| super::connections::apply(m, &connections, &instances, contracts.as_ref()),
     )
     .map_err(|e| core.diagnostic(source, e))?
     .0;
@@ -246,8 +266,8 @@ pub(super) fn compile(
             _ => {}
         }
     }
-    let mut groups = BTreeMap::<String, Vec<&Bind>>::new();
-    for b in &binds {
+    let mut groups = BTreeMap::<String, Vec<&FunctionConnection>>::new();
+    for b in &connections {
         groups.entry(b.module.clone()).or_default().push(b);
     }
     for (module, items) in groups {
@@ -330,8 +350,8 @@ pub(super) fn compile(
         depth == 0 || names.is_some(),
         &embedded,
     )?;
-    output.manifest["bindings"] = serde_json::to_value(
-        binds
+    output.manifest["connections"] = serde_json::to_value(
+        connections
             .iter()
             .map(|b| serde_json::json!({"module":b.module,"name":b.member,"target":b.target,"kind":"func"}))
             .chain(instances.iter().map(|b|serde_json::json!({"module":b.module,"target":b.target,"kind":"instance"}))).collect::<Vec<_>>(),

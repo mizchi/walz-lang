@@ -32,6 +32,6 @@
     (import "test:resources/host" "[resource-drop]file" (func $drop (param $f i32)))
     (func $run (result i32) (@effect host reads writes allocates)
       (@using $f (call $new) (call $read $f))))
-  (@bind "test:resources/host" (instance $files))
+  (@connect "test:resources/host" (instance $files))
   (@expose "run" $run)
   (export "closed-count" (func $count)))

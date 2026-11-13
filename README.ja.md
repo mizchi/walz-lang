@@ -59,7 +59,7 @@ checkoutからは`cargo install --path . --locked --bin walz`でインストー�
 
 [公開プレイグラウンド](https://mizchi.github.io/walz-lang/) で言語機能を試せます。手元では `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) は、WasmにビルドしたRustコンパイラでローカルにコンパイルします。
 
-静的な `@lib` と、genericなソースコンストラクター・`@expose` / `@bind` による明示的なComponentの構成にも対応します。`walz build --wit` は公開インターフェースから `world.wit` を生成します。[Component構成ガイド](docs/component-composition.md)と[サンプル](examples/components/main.walz)を参照してください。
+静的な `@lib` と、genericなソースコンストラクター・`@expose` / `@connect` による明示的なComponentの構成にも対応します。`walz build --wit` は公開インターフェースから `world.wit` を生成します。[Component構成ガイド](docs/component-composition.md)と[サンプル](examples/components/main.walz)を参照してください。
 
 ## ドキュメント
 

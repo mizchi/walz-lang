@@ -303,135 +303,7 @@ pub fn generate(path: &Path, world: Option<&str>, grants: &str) -> Result<Genera
 
 /// Decode exactly the same value shapes as generated host bindings. Foreign
 /// component bodies remain opaque; WIT does not assert an effect contract.
-pub(crate) fn component_exports(
-    resolve: &Resolve,
-    world: wit_parser::WorldId,
-) -> Result<crate::binary::Interface, Error> {
-    let mut schema = Schema::new(resolve);
-    let mut exports = Vec::new();
-    let mut unavailable = Vec::new();
-    let mut names = std::collections::BTreeSet::new();
-    for (key, item) in &resolve.worlds[world].exports {
-        let outer = resolve.name_world_key(key);
-        let functions = match item {
-            WorldItem::Function(f) => vec![(format!("${}", f.name), vec![outer], f)],
-            WorldItem::Interface { id, .. } => resolve.interfaces[*id]
-                .functions
-                .values()
-                .map(|f| {
-                    (
-                        format!(
-                            "${}.{}",
-                            resolve.interfaces[*id].name.as_deref().unwrap_or(&outer),
-                            f.name
-                        ),
-                        vec![outer.clone(), f.name.clone()],
-                        f,
-                    )
-                })
-                .collect(),
-            WorldItem::Type { .. } => continue,
-        };
-        for (selector, path, function) in functions {
-            if !names.insert(selector.clone()) {
-                return Err(Error::message(format!(
-                    "ambiguous component export {selector}"
-                )));
-            }
-            if !component_value_limits(resolve, function) {
-                unavailable.push(crate::binary::Unavailable {
-                    selector,
-                    reason: "WIT value graph exceeds expanded shape/depth limits".into(),
-                });
-                continue;
-            }
-            let owned = function
-                .params
-                .iter()
-                .any(|p| contains_owned(resolve, p.ty, 0))
-                || function
-                    .result
-                    .is_some_and(|t| contains_owned(resolve, t, 0));
-            if function.kind.is_async() || owned {
-                unavailable.push(crate::binary::Unavailable { selector, reason:
-                    "Component @use currently accepts synchronous shared-value exports; async functions, future, stream and resource need a cross-component cancellation/lifetime contract".into() });
-                continue;
-            }
-            let params = function
-                .params
-                .iter()
-                .map(|p| schema.shape(p.ty, 0, ""))
-                .collect::<Result<Vec<_>, _>>()?;
-            let result = function
-                .result
-                .map(|t| schema.shape(t, 0, ""))
-                .transpose()?
-                .unwrap_or("unit".into());
-            let mut declaration = String::new();
-            for (i, p) in function.params.iter().enumerate() {
-                declaration.push_str(&format!(" (param $p{i} {})", schema.shape(p.ty, 0, "$")?));
-            }
-            if let Some(result) = function.result {
-                declaration.push_str(&format!(" (result {})", schema.shape(result, 0, "$")?));
-            }
-            exports.push(crate::binary::Export {
-                selector,
-                path,
-                declaration,
-                binding: Binding {
-                    params,
-                    result,
-                    suspends: function.kind.is_async(),
-                    capability: "component".into(),
-                    param_names: function.params.iter().map(|p| p.name.clone()).collect(),
-                    resource: None,
-                },
-            });
-        }
-    }
-    if !schema.drops.is_empty() {
-        return Err(Error::message(
-            "component @use does not yet transfer resource handles".into(),
-        ));
-    }
-    let core = schema
-        .standard
-        .iter()
-        .map(|n| format!(" (type {n})"))
-        .collect::<String>();
-    let types = schema
-        .names
-        .iter()
-        .map(|n| format!(" (type {n})"))
-        .collect::<String>();
-    Ok(crate::binary::Interface {
-        source: format!(
-            "{}{}{}",
-            if core.is_empty() {
-                String::new()
-            } else {
-                format!("(@use \"walz:core\"{core})\n")
-            },
-            schema.declarations.join(""),
-            if types.is_empty() {
-                String::new()
-            } else {
-                format!("(@export{types})\n")
-            },
-        ),
-        exports,
-        unavailable,
-    })
-}
-
-// Count expanded paths, not distinct type IDs: a compact DAG can have an
-// exponentially large shape. Stop before contains_owned or shape expands it.
-fn component_value_limits(resolve: &Resolve, function: &wit_parser::Function) -> bool {
-    component_types_limits(
-        resolve,
-        function.params.iter().map(|p| p.ty).chain(function.result),
-    )
-}
+// Count expanded paths, not distinct IDs: a compact DAG may expand exponentially.
 fn component_types_limits(resolve: &Resolve, types: impl IntoIterator<Item = Type>) -> bool {
     fn charge(budget: &mut usize, amount: usize) -> bool {
         if let Some(left) = budget.checked_sub(amount) {
@@ -1111,4 +983,32 @@ fn contains_owned(r: &Resolve, ty: Type, depth: usize) -> bool {
 
 pub(crate) fn contract_shape(resolve: &Resolve, ty: Type) -> Result<String, Error> {
     Schema::new(resolve).shape(ty, 0, "")
+}
+
+#[cfg(test)]
+mod projection_limits {
+    #[test]
+    fn expanded_wit_graphs_are_bounded_before_building_shape_strings() {
+        let mut wit =
+            String::from("package test:limits; interface api { record t0 { value: s32 } ");
+        for i in 1..=12 {
+            wit += &format!("record t{i} {{ a: t{}, b: t{} }} ", i - 1, i - 1);
+        }
+        wit += "heavy: func(value: t12); small: func() -> s32; } world guest { export api; }";
+        let mut resolve = wit_parser::Resolve::default();
+        resolve.push_str("api.wit", &wit).unwrap();
+        let api = resolve
+            .interfaces
+            .iter()
+            .find(|(_, i)| i.name.as_deref() == Some("api"))
+            .unwrap()
+            .1;
+        let mut projection =
+            super::TypeProjection::new(&resolve, "$query".into(), Default::default());
+        assert!(projection.ty(api.functions["small"].result).is_ok());
+        let error = projection
+            .ty(Some(api.functions["heavy"].params[0].ty))
+            .unwrap_err();
+        assert!(error.to_string().contains("limit"));
+    }
 }

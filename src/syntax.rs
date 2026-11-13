@@ -90,6 +90,7 @@ fn extension(name: &str) -> bool {
                 | "world"
                 | "expose"
                 | "bind"
+                | "connect"
                 | "inst"
                 | "export"
                 | "loop"
@@ -495,6 +496,14 @@ impl<'a> Plan<'a> {
         let mut head = node.head().unwrap_or("").to_owned();
         if crate::syntax::annotation(&head) {
             return Ok(());
+        }
+        if head == "@bind" {
+            return Err(Error::at(
+                self.source,
+                node.span,
+                "Component connections use @connect; @bind has been removed",
+            )
+            .with_code("E_WALZ_EXTENSION"));
         }
         if matches!(head.as_str(), "native.loop" | "native.try" | "struct.named") {
             return Err(Error::at(

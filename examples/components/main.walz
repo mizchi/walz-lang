@@ -16,7 +16,7 @@
       (@effect allocates) (@future.ready $string $value))
     (func $prepend (param $tail $stream<i32>) (result $stream<i32>)
       (@effect allocates) (@stream.cons i32 7 (@move $tail))))
-  (@bind "counter" "next" $next)
+  (@connect "counter" "next" $next)
   (@expose "add" $add)
   (@expose "identity" $identity<i64>)
   (@expose "run" $run)

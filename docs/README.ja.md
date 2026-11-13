@@ -69,4 +69,4 @@ WALZを使うための現行ガイド。まず[導入](getting-started.md)、[�
 [evals](../evals/README.md)、grammar-eval、readability、日付付きの計測資料は当時の入力・結果を保存した記録。
 現行の構文やAPIは、この索引からたどるガイド・仕様・生成APIを参照する。
 
-Componentソースの `@lib`・`@world`・`@expose`・`@bind` とWIT生成は[Component構成](component-composition.md)を参照してください。
+Componentソースの `@lib`・`@world`・`@expose`・`@connect` とWIT生成は[Component構成](component-composition.md)を参照してください。

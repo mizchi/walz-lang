@@ -26,7 +26,7 @@ pub(crate) fn reject_unresolved(source: &str, root: &Sexp) -> Result<(), Error> 
             return Err(Error::at(
                 source,
                 n.span,
-                "@component.type needs an explicit @bind in a Component implementation",
+                "@component.type needs an explicit @connect in a Component implementation",
             )
             .with_code("E_COMPONENT_TYPE_CONTEXT"));
         }
@@ -100,7 +100,7 @@ fn scope(
         fail(
             source,
             first,
-            "Component type queries require an explicit @bind connection",
+            "Component type queries require an explicit @connect connection",
         )
     })?;
     let mut prefix = format!("$walz-component-query-{}", first.span.start);
@@ -308,7 +308,11 @@ fn select(source: &str, query: &Sexp, bound: &BoundImports) -> Result<Option<T>,
         Some("result") if parts.len() == 2 => function()?.result,
         Some("type") if parts.len() == 2 => {
             let id = bound.interfaces.get(namespace).ok_or_else(|| {
-                fail(source, root, "named type queries require an instance @bind")
+                fail(
+                    source,
+                    root,
+                    "named type queries require an instance @connect",
+                )
             })?;
             Some(T::Id(
                 *bound.resolve.interfaces[*id]

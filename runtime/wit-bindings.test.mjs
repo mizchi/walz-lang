@@ -21,7 +21,7 @@ for (const backend of ['core', 'component']) test(`${backend}: generated WIT bin
     } world guest { import service; }`);
     const namespace = 'example:host/service@1.0.0';
     await writeFile(grants,JSON.stringify({imports:['echo','later','wait','many'].map(name=>({module:namespace,name,suspends:name==='wait',capability:'test'}))}));
-    await execFile('cargo',['run','--quiet','--','bind',wit,grants,generated]);
+    await execFile('cargo',['run','--quiet','--','wit-bindgen',wit,grants,generated]);
     const ty = "(@result (@tuple i64 (@option @string)) (@tuple f32 @bytes))";
     const source = join(dir,'main.walz');
     await writeFile(source, `(module (@include "gen/bindings.walz")

@@ -195,7 +195,6 @@ pub(crate) fn check_observed_with<T>(
             interface::validate(source, &mut module)?;
             policy.apply(&mut module);
             bind(&mut module)?;
-            binary::apply(&mut module)?;
             bindings::validate(source, &module)?;
             frontend::validate_alias_targets(source, &module, &aliases.targets)?;
             syntax.validate(source, &module, &generics.origins)?;
@@ -377,7 +376,6 @@ fn emit_module(ir: ir::Module, optimize: bool) -> Result<Compilation, Error> {
                 .with_code("E_TASK_BACKEND"),
         );
     }
-    binary::core(&linked)?;
     let wat = emit::emit(&newtypes::lower(&linked));
     let wasm =
         wat::parse_str(&wat).map_err(|error| Error::message(format!("generated WAT: {error}")))?;

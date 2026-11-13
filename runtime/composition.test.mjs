@@ -48,7 +48,7 @@ test('composed components use native values, separate instances and acknowledged
   } finally {await rm(dir,{recursive:true,force:true});}
 });
 
-test('async @bind forwards owned futures across component instances',{timeout:60000},async()=>{
+test('async @connect forwards owned futures across component instances',{timeout:60000},async()=>{
   const dir=await mkdtemp(join(tmpdir(),'walz-async-bind-'));
   try {
     await build('tests/component-fixtures/composition-async.walz',dir);

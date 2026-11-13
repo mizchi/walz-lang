@@ -2,6 +2,7 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {build} from '../build.mjs';
+import {buildWasmUse} from '../testing/wasm-use.mjs';
 const root=resolve('target/composition-browser');
 await build('examples/components/main.walz',root);
 await build('examples/components/resources.walz',resolve(root,'resources'));
@@ -10,6 +11,7 @@ await build('examples/components/type-queries.walz',resolve(root,'queries'));
 await build('examples/components/typed-constructors.walz',resolve(root,'typed-constructors'));
 await build('tests/component-fixtures/composition-nominal-resources.walz',resolve(root,'nominal-resources'));
 await build('tests/component-fixtures/composition-private-resources.walz',resolve(root,'private-resources'));
+await buildWasmUse(resolve(root,'component/wasm-use'));
 createServer(async(request,response)=>{
   try {
     const path=resolve(root,'.'+new URL(request.url,'http://localhost').pathname);

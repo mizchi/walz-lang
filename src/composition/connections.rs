@@ -2,22 +2,22 @@
 //! type/effect/ownership gate. No host code runs during inference.
 use super::*;
 use crate::{component::bound_imports::BoundImports, ir::*};
-pub(super) struct Bind {
+pub(super) struct FunctionConnection {
     pub module: String,
     pub member: String,
     pub target: String,
     pub async_: bool,
     pub params: Vec<String>,
 }
-pub(super) struct InstanceBind {
+pub(super) struct InstanceConnection {
     pub module: String,
     pub target: String,
 }
 pub(super) fn resolve(
     raw: &[String],
     embedded: &embedded::Registry,
-    binds: &mut [Bind],
-    instances: &[InstanceBind],
+    connections: &mut [FunctionConnection],
+    instances: &[InstanceConnection],
 ) -> Result<BoundImports, Error> {
     let mut probe = String::from("(component ");
     for n in raw {
@@ -28,9 +28,9 @@ pub(super) fn resolve(
         }
         probe.push_str(n);
     }
-    for (i, b) in binds.iter().enumerate() {
+    for (i, b) in connections.iter().enumerate() {
         probe.push_str(&format!(
-            "(export \"walz-binding-{i}\" (func {}))",
+            "(export \"walz-connection-{i}\" (func {}))",
             b.target
         ));
     }
@@ -58,7 +58,7 @@ pub(super) fn resolve(
             .component_item_for_export(&format!("{prefix}{i}"))
             .ok_or_else(|| error("missing bound instance"))?;
         let wasmparser::component_types::ComponentEntityType::Instance(id) = item.ty else {
-            return Err(error("binding target is not an instance"));
+            return Err(error("connection target is not an instance"));
         };
         let mut exports = String::new();
         let mut imported_aliases = vec![];
@@ -138,10 +138,10 @@ pub(super) fn resolve(
         .iter()
         .map(|(k, v)| (resolve.name_world_key(k), v))
         .collect::<BTreeMap<_, _>>();
-    for (i, b) in binds.iter_mut().enumerate() {
-        let Some(wit_parser::WorldItem::Function(f)) = exports.get(&format!("walz-binding-{i}"))
+    for (i, b) in connections.iter_mut().enumerate() {
+        let Some(wit_parser::WorldItem::Function(f)) = exports.get(&format!("walz-connection-{i}"))
         else {
-            return Err(error("binding target is not a Component function"));
+            return Err(error("connection target is not a Component function"));
         };
         b.async_ = f.kind.is_async();
         b.params = f.params.iter().map(|p| p.name.clone()).collect();
@@ -160,8 +160,8 @@ pub(super) fn resolve(
 
 pub(super) fn apply(
     module: &mut Module,
-    binds: &[Bind],
-    instances: &[InstanceBind],
+    connections: &[FunctionConnection],
+    instances: &[InstanceConnection],
     contracts: Option<&BoundImports>,
 ) -> Result<(), Error> {
     let mut pending = vec![];
@@ -171,7 +171,10 @@ pub(super) fn apply(
             continue;
         };
         let mut contract = None;
-        if let Some(b) = binds.iter().find(|b| &b.module == ns && &b.member == name) {
+        if let Some(b) = connections
+            .iter()
+            .find(|b| &b.module == ns && &b.member == name)
+        {
             contract = Some(crate::bindings::Binding {
                 params: f
                     .params
@@ -326,66 +329,68 @@ fn imported_types(
 // Shared by staged type inference and the final implementation wiring.
 pub(super) fn declaration(
     n: &Sexp,
-    binds: &mut Vec<Bind>,
-    instances: &mut Vec<InstanceBind>,
+    connections: &mut Vec<FunctionConnection>,
+    instances: &mut Vec<InstanceConnection>,
 ) -> Result<(), Error> {
     let p = n.list().unwrap_or(&[]);
     if let [_, module, target] = p {
         let module = module
             .text()
-            .ok_or_else(|| error("binding module must be a string"))?
+            .ok_or_else(|| error("connection module must be a string"))?
             .to_owned();
         let t = target
             .list()
             .filter(|p| p.len() == 2 && p[0].atom() == Some("instance"))
             .and_then(|p| p[1].atom())
             .filter(|n| crate::sexpr::identifier(n))
-            .ok_or_else(|| error("expected (@bind \"module\" (instance $target))"))?
+            .ok_or_else(|| error("expected (@connect \"module\" (instance $target))"))?
             .to_owned();
         if instances.iter().any(|b| b.module == module)
-            || binds.iter().any(|b: &Bind| b.module == module)
+            || connections
+                .iter()
+                .any(|b: &FunctionConnection| b.module == module)
         {
-            return Err(error("duplicate @bind namespace"));
+            return Err(error("duplicate @connect namespace"));
         }
         fixed(&module)?;
-        instances.push(InstanceBind { module, target: t });
+        instances.push(InstanceConnection { module, target: t });
         return Ok(());
     }
     let [_, module, member, target] = p else {
         return Err(error(
-            "expected (@bind \"module\" \"member\" $component-function)",
+            "expected (@connect \"module\" \"member\" $component-function)",
         ));
     };
     let module = module
         .text()
-        .ok_or_else(|| error("binding module must be a string"))?
+        .ok_or_else(|| error("connection module must be a string"))?
         .to_owned();
     let member = member
         .text()
-        .ok_or_else(|| error("binding member must be a string"))?
+        .ok_or_else(|| error("connection member must be a string"))?
         .to_owned();
     let target = target
         .atom()
         .filter(|n| n.starts_with('$'))
-        .ok_or_else(|| error("binding target must name a Component function"))?
+        .ok_or_else(|| error("connection target must name a Component function"))?
         .to_owned();
     if instances.iter().any(|b| b.module == module) {
-        return Err(error("duplicate @bind namespace"));
+        return Err(error("duplicate @connect namespace"));
     }
-    if binds
+    if connections
         .iter()
-        .any(|b: &Bind| b.module == module && b.member == member)
+        .any(|b: &FunctionConnection| b.module == module && b.member == member)
     {
-        return Err(error("duplicate @bind port"));
+        return Err(error("duplicate @connect port"));
     }
     let (async_, params) = (false, vec![]);
     if matches!(
         module.as_str(),
         crate::bindings::EVENT_LOOP | crate::bindings::TEXT_IO | crate::bindings::CLI
     ) {
-        return Err(error("@bind cannot override fixed host contracts"));
+        return Err(error("@connect cannot override fixed host contracts"));
     }
-    binds.push(Bind {
+    connections.push(FunctionConnection {
         module,
         member,
         target,
@@ -400,7 +405,7 @@ fn fixed(module: &str) -> Result<(), Error> {
         module,
         crate::bindings::EVENT_LOOP | crate::bindings::TEXT_IO | crate::bindings::CLI
     ) {
-        return Err(error("@bind cannot override fixed host contracts"));
+        return Err(error("@connect cannot override fixed host contracts"));
     }
     Ok(())
 }

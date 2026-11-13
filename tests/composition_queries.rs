@@ -25,7 +25,7 @@ const SOURCE: &str = r#"(component
       (result i32) (@effect pure) $v)
     (func $field (param $v (@component.type "host" (type "item") (field "value")))
       (result i32) (@effect pure) $v))
-  (@bind "host" (instance $host))
+  (@connect "host" (instance $host))
   (@expose "echo" $echo) (@expose "number" $number) (@expose "read" $read)
   (@expose "element" $element) (@expose "field" $field))"#;
 
@@ -75,7 +75,7 @@ fn query_errors_are_local_and_do_not_add_ports_or_change_effects() {
         ))
         .is_err()
     );
-    let unrelated = SOURCE.replace("(@bind \"host\" (instance $host))", "");
+    let unrelated = SOURCE.replace("(@connect \"host\" (instance $host))", "");
     assert!(
         walz::compile(&unrelated).is_err(),
         "queries need explicit connections"
@@ -92,7 +92,7 @@ fn single_function_bindings_can_project_signatures_without_granting_an_interface
           (result (@component.type "echo" (result "call")))))
         (func $run (param $value (@component.type "echo" (param "call" "value")))
           (result (@component.type "echo" (result "call"))) (@effect host) (call $echo $value)))
-      (@bind "echo" "call" $echo) (@expose "run" $run))"#;
+      (@connect "echo" "call" $echo) (@expose "run" $run))"#;
     let built = walz::composition::compile(source, &Default::default()).unwrap();
     assert!(
         built.wit.contains("run: func(value: string) -> string"),
@@ -158,7 +158,7 @@ fn named_types_without_live_host_calls_retain_only_the_required_type_port() {
       (@lib
         (func $echo (param $v (@component.type "host" (type "item")))
           (result (@component.type "host" (type "item"))) (@effect pure) $v))
-      (@bind "host" (instance $host)) (@expose "echo" $echo))"#;
+      (@connect "host" (instance $host)) (@expose "echo" $echo))"#;
     let built = walz::composition::compile(source, &Default::default()).unwrap();
     valid(&built.wasm);
     assert!(built.wit.contains("record item"), "{}", built.wit);
@@ -215,7 +215,7 @@ fn static_library_queries_keep_their_type_helpers_private_and_local() {
         dir.path().join("main.walz"),
         r#"(component
       (import "echo" (func $echo (param "value" string) (result string)))
-      (@use "./impl.walz" (func $run)) (@bind "host" "echo" $echo) (@expose "run" $run))"#,
+      (@use "./impl.walz" (func $run)) (@connect "host" "echo" $echo) (@expose "run" $run))"#,
     )
     .unwrap();
     let loaded = walz::source::load(dir.path().join("main.walz")).unwrap();
@@ -240,7 +240,7 @@ fn nested_result_variant_tuple_and_future_projections_keep_unit_and_unsigned_typ
           (result (@component.type "host" (type "triple") (item 1))) (@effect pure) $v)
         (func $unit (result $result<i32, (@component.type "host" (type "choice") (case "empty"))>)
           (@effect allocates) (@result.ok 42)))
-      (@bind "host" (instance $host)) (@expose "index" $index) (@expose "text" $text) (@expose "unit" $unit))"#;
+      (@connect "host" (instance $host)) (@expose "index" $index) (@expose "text" $text) (@expose "unit" $unit))"#;
     let built = walz::composition::compile(source, &Default::default()).unwrap();
     valid(&built.wasm);
     assert!(
@@ -266,7 +266,7 @@ fn type_only_ports_do_not_shift_unrelated_bound_function_groups() {
         (func $run (param $v i32) (result i32) (@effect host) (call $plus $v))
         (func $echo (param $v (@component.type "aaa" (type "item")))
           (result (@component.type "aaa" (type "item"))) (@effect pure) $v))
-      (@bind "aaa" (instance $types)) (@bind "zzz" "plus" $plus)
+      (@connect "aaa" (instance $types)) (@connect "zzz" "plus" $plus)
       (@expose "run" $run) (@expose "echo" $echo))"#;
     valid(&walz::compile(source).unwrap().wasm);
 }
@@ -282,7 +282,7 @@ fn queried_flags_and_enums_need_no_live_host_functions() {
           (result (@component.type "host" (type "flags"))) (@effect pure) $v)
         (func $choice (param $v (@component.type "host" (type "choice")))
           (result (@component.type "host" (type "choice"))) (@effect pure) $v))
-      (@bind "host" (instance $host)) (@expose "flags" $flags) (@expose "choice" $choice))"#;
+      (@connect "host" (instance $host)) (@expose "flags" $flags) (@expose "choice" $choice))"#;
     let built = walz::composition::compile(source, &Default::default()).unwrap();
     valid(&built.wasm);
     assert!(built.wit.contains("flags %flags"), "{}", built.wit);
