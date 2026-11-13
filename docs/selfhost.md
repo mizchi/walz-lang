@@ -341,6 +341,11 @@ cooperative cancellation point.
 | 216 | Invalid macro binding scope or delegated interface |
 | 217 | Macro expansion budget |
 | 218 | Invalid type query/projection or missing expected type |
+| 219 | Retired `@bind`; use `@connect` for Component connections |
+| 220 | Binary function/type selection or retired implicit Component descriptor |
+| 221 | Component composition/constructor requires the main compiler |
+| 222 | Static `@lib` has no executable entry |
+| 223 | Core ABI export or initialization in a static `@lib` |
 
 ## Verification and next steps
 

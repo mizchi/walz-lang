@@ -1,4 +1,4 @@
-// Bootstrap frontend v1 correctness corpus; historical scalar captures are immutable.
+// Bootstrap frontend v2 correctness corpus; historical scalar captures are immutable.
 export const programs = [
   [
     "reads-bound",
@@ -421,3 +421,8 @@ programs.push(...macros.programs);
 invalid.push(...macros.invalid);
 projects.push(...macros.projects);
 badProjects.push(...macros.badProjects);
+
+import {connectionErrors, libraryProjects, libraryErrors} from "./connections.mjs";
+invalid.push(...connectionErrors.map(([name, source, code]) => [name, source, code]));
+projects.push(...libraryProjects);
+badProjects.push(...libraryErrors);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -13,6 +13,7 @@ import {
   projects,
   badProjects,
 } from "./selfhost-front/corpus.mjs";
+import { connectionErrors } from "./selfhost-front/connections.mjs";
 import { renderBootstrapCore } from "../tools/selfhost/embed-core.mjs";
 test("bootstrap core resource matches its maintained source", async () => {
   assert.equal(
@@ -106,6 +107,24 @@ for (const backend of ["core", "component"])
           }
           clean();
         }
+        // All entry points agree on phase errors and original UTF-8 ranges.
+        for (const [name, source, code, focus] of connectionErrors) {
+          const input = bytes(source);
+          const outcomes = [api.check(input), api.compile(input),
+            api.checkProject([{path:"main.walz",source:input}]),
+            api.compileProject([{path:"main.walz",source:input}])];
+          if (code !== 222) outcomes.push(api.imports(input));
+          for (const result of outcomes) {
+            assert.equal(result.tag,"err",name);
+            assert.equal(result.val.code,code,name);
+            assert.equal(new TextDecoder().decode(input.slice(result.val.start,result.val.end)),focus,name);
+            clean();
+          }
+        }
+        const binaryEntry=join(dir,"binary-entry.walz");
+        await writeFile(binaryEntry,connectionErrors.find(([name])=>name==='implicit-binary-function')[1]);
+        await assert.rejects(exec("node",["runtime/selfhost.mjs","--check",binaryEntry,dir]),
+          error=>error.stderr.includes("bootstrap compiler error 220") && !error.stderr.includes("ENOENT"));
         const queryOnly =
           '(module (@macro $m (rule (?x:expr) (infer (?T ?x)) (i32.const 42))) (func (export "f") (result i32) (@$m (i32.const 1))))';
         assert.deepEqual(

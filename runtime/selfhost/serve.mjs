@@ -3,7 +3,7 @@ import { readFile, copyFile } from "node:fs/promises";
 import { join, resolve, extname } from "node:path";
 import { build as core } from "../build-core.mjs";
 import { build as component } from "../build.mjs";
-const root = resolve("target/selfhost-browser");
+const root = resolve(process.env.WALZ_SELFHOST_TEST_ROOT ?? "target/selfhost-browser");
 for (const [name, build] of [
   ["core", core],
   ["component", component],
@@ -27,6 +27,10 @@ await copyFile(
 await copyFile(
   new URL("../selfhost-front/macros.mjs", import.meta.url),
   join(root, "macros.mjs"),
+);
+await copyFile(
+  new URL("../selfhost-front/connections.mjs", import.meta.url),
+  join(root, "connections.mjs"),
 );
 createServer(async (request, response) => {
   try {
@@ -57,4 +61,4 @@ createServer(async (request, response) => {
   } catch {
     response.writeHead(404).end();
   }
-}).listen(41741, "127.0.0.1");
+}).listen(Number(process.env.WALZ_SELFHOST_TEST_PORT ?? 41741), "127.0.0.1");

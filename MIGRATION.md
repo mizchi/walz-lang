@@ -131,3 +131,9 @@ instantiates them explicitly, using native Component async/lifetime semantics.
 Its Chromium case runs with the composition server. It no longer measures the
 retired implicit per-path instance or SDK queued-cancellation behavior. Recorded
 evaluation inputs and benchmark captures remain unchanged.
+
+The maintained bootstrap frontend correctness corpus is now v2. It adds
+`@lib` source libraries and rejects retired Component spellings/implicit binary
+selection before host dependency I/O. Component code generation remains outside
+the bootstrap subset; source diagnostics 219–223 describe this boundary. Frozen
+compiler captures and benchmark corpora are unchanged.

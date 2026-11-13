@@ -1,0 +1,123 @@
+(module
+  (@use "walz:core" (type $result))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.head)
+    (func $tree.error)
+    (func $tree.form)
+    (func $tree.slice))
+  (@export (func $source.prepare))
+  ;; This frontend emits Core Wasm. Source selection must never synthesize a
+  ;; Component instance or ask the host to parse binary files as source text.
+  (func $source.prepare
+    (param $root (ref $tree))
+    (param $entry i32)
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<(ref $tree), (ref $project-error)>)
+      (if
+        (call $tree.head $root "component")
+        (then (return (@result.err (call $tree.error $root 221))))
+        (else (nop)))
+      (@let $library (call $tree.head $root "@lib")
+        (block
+          (result $result<(ref $tree), (ref $project-error)>)
+          (if
+            (&& $library $entry)
+            (then (return (@result.err (call $tree.error $root 222))))
+            (else (nop)))
+          (@for $i
+            (bind $i i32 1)
+            (while (< $i (call $tree.len $root)))
+            (step (+ $i 1))
+            (@let $n (call $tree.at $root $i)
+              (block
+                (if
+                  (call $tree.head $n "@bind")
+                  (then (return (@result.err (call $tree.error $n 219))))
+                  (else (nop)))
+                (if
+                  (call $tree.head $n "@component.binary")
+                  (then (return (@result.err (call $tree.error $n 220))))
+                  (else (nop)))
+                (if
+                  (||
+                    (call $tree.head $n "@connect")
+                    (||
+                      (call $tree.head $n "@expose")
+                      (||
+                        (call $tree.head $n "@world")
+                        (||
+                          (call $tree.head $n "@component.constructor")
+                          (call $tree.head $n "@component.type"))))
+                  )
+                  (then (return (@result.err (call $tree.error $n 221))))
+                  (else (nop)))
+                (if
+                  (call $tree.head $n "@use")
+                  (then
+                    (block
+                      (@for $j
+                        (bind $j i32 2)
+                        (while (< $j (call $tree.len $n)))
+                        (step (+ $j 1))
+                        (if
+                          (call $tree.head (call $tree.at $n $j) "component")
+                          (then (return (@result.err (call $tree.error $n 221))))
+                          (else (nop))))
+                      (@let $path (struct.get $tree $value (call $tree.at $n 1))
+                        (if
+                          (&&
+                            (>= (@bytes.len $path) 5)
+                            (call $bytes.equal
+                              (@bytes.slice $path (- (@bytes.len $path) 5) 5)
+                              (@string.bytes ".wasm")))
+                          (then (return (@result.err (call $tree.error $n 220))))
+                          (else (nop))))
+                    ))
+                  (else (nop)))
+                (if $library
+                  (then
+                    (block
+                      (if
+                        (||
+                          (call $tree.head $n "export")
+                          (||
+                            (call $tree.head $n "start")
+                            (||
+                              (call $tree.head $n "data")
+                              (call $tree.head $n "global"))))
+                        (then (return (@result.err (call $tree.error $n 223))))
+                        (else (nop)))
+                      (if
+                        (||
+                          (call $tree.head $n "func")
+                          (||
+                            (call $tree.head $n "memory")
+                            (call $tree.head $n "table")))
+                        (then
+                          (@for $j
+                            (bind $j i32 1)
+                            (while (< $j (call $tree.len $n)))
+                            (step (+ $j 1))
+                            (if
+                              (call $tree.head (call $tree.at $n $j) "export")
+                              (then (return (@result.err (call $tree.error $n 223))))
+                              (else (nop))))
+                        )
+                        (else (nop))))
+                  )
+                  (else (nop))))
+            ))
+          (@result.ok
+            (if
+              (result (ref $tree))
+              $library
+              (then (call $tree.form $root "module" (call $tree.slice $root 1)))
+              (else $root))))
+      ))))

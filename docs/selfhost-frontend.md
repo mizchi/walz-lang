@@ -82,6 +82,36 @@ high-level lowering.
 
 ## 1. Static modules
 
+A source library can use `(@lib ...)` with selected `@export` declarations. It
+has no executable entry. The shared source preflight runs before dependency
+I/O and before static linking. It rejects native exports (including inline
+function/memory/table exports), `start`, `global`, and `data` declarations in a
+library even when a declaration would be unused. A module entry selects its
+source API with `@use`; no instance is created by that selection. Existing
+`(module ...)` source libraries remain supported.
+
+```wat
+;; answer.walz
+(@lib
+  (@export (func $answer))
+  (func $answer (result i32) (i32.const 42)))
+```
+
+The entry selects it with `(@use "./answer.walz" (func $answer))`.
+Native `import` remains an external instantiation requirement; the bootstrap
+Core emitter does not yet implement those requirements.
+
+Component names follow the main compiler: `@connect` supplies a connection and
+`@bind` is retired. Component composition and constructor selection require the
+main compiler. The bootstrap implementation reports these unsupported features
+before dependency discovery rather than loading a `.wasm` file as source or
+creating an implicit instance. Direct function/type selection from `.wasm` and
+the retired `@component.binary` descriptor are rejected. The CLI therefore
+reports a guest source diagnostic even if that binary file does not exist.
+`walz wit-bindgen` belongs to the main CLI; the bootstrap CLI remains a
+Core-only compile/check driver.
+
+
 ```wat
 ;; lib.walz
 (module
@@ -345,11 +375,15 @@ just test-selfhost-e2e
 just test-selfhost-bench
 ```
 
+The maintained frontend correctness corpus is v2; it adds static-library and
+Component phase-contract cases without changing recorded benchmark inputs.
 Tests cover both JS adapters and Chromium, the native project example, malformed
 forms, lazy branches, source identity/ranges, opacity after specialization,
 explicit recursive groups, generic caching/growth limits, effect unions,
 snapshots, macro hygiene/repetition/delegation, type-query errors and ABI cleanup
-after success/errors and forced GC. Emitted modules
+after success/errors and forced GC. The phase-contract tests also check all
+five entry points, original UTF-8 ranges, dependency discovery before host I/O,
+and rejected library initializers. Emitted modules
 also pass independent Wasm validation. ABI counters do not prove reclamation of
 every guest GC allocation.
 

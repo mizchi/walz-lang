@@ -41,6 +41,7 @@
   (@use "../parser/number.walz" (func $number.i32))
   (@use "./tree.walz" (func $work.snapshot))
   (@use "./normalize.walz" (func $normalize.run))
+  (@use "./source-contracts.walz" (func $source.prepare))
   (@use "./core-source.walz" (func $core.source))
   (@use "./path.walz" (func $path.normalize) (func $path.resolve))
   (@use "./tree.walz" (func $tree.occurs))
@@ -735,34 +736,40 @@
               (($f (@list.get (ref $source-file) $files $i)))
               (@match (call $read (struct.get $source-file $source $f) $i)
                 (@case err ($e) (return (@result.err $e)))
-                (@case ok ($n)
-                  (if
-                    (call $tree.head $n "module")
-                    (then
-                      (@match
-                        (call $path.normalize (@string.bytes (struct.get $source-file $path $f)) $n)
-                        (@case err ($e) (return (@result.err $e)))
-                        (@case ok ($path)
-                          (block
-                            (if
-                              (call $bytes.equal
-                                (@string.bytes $path)
-                                (@string.bytes "walz:core"))
-                              (then (return (@result.err (call $tree.error $n 200))))
-                              (else (nop)))
-                            (@for-each $prior (call $work.snapshot< (ref $Mod) > $mods)
-                              (if
-                                (call $bytes.equal
-                                  (@string.bytes $path)
-                                  (@string.bytes (struct.get $Mod $path $prior)))
-                                (then (return (@result.err (call $tree.error $n 201))))
-                                (else (nop))))
-                            (call $list-builder.push< (ref $Mod) > $mods
-                              (struct.new $Mod $n $path 0))))
-                      ))
-                    (else (return (@result.err (call $tree.error $n 100))))
-                  ))))
-          )
+                (@case ok ($raw)
+                  (@match (call $source.prepare $raw (= $i 0))
+                    (@case err ($e) (return (@result.err $e)))
+                    (@case ok ($n)
+                      (if
+                        (call $tree.head $n "module")
+                        (then
+                          (@match
+                            (call $path.normalize (@string.bytes (struct.get $source-file $path $f)) $n)
+                            (@case err ($e) (return (@result.err $e)))
+                            (@case ok ($path)
+                              (block
+                                (if
+                                  (call $bytes.equal
+                                    (@string.bytes $path)
+                                    (@string.bytes "walz:core"))
+                                  (then
+                                    (return (@result.err (call $tree.error $n 200))))
+                                  (else (nop)))
+                                (@for-each $prior
+                                  (call $work.snapshot< (ref $Mod) > $mods)
+                                  (if
+                                    (call $bytes.equal
+                                      (@string.bytes $path)
+                                      (@string.bytes (struct.get $Mod $path $prior)))
+                                    (then
+                                      (return (@result.err (call $tree.error $n 201))))
+                                    (else (nop))))
+                                (call $list-builder.push< (ref $Mod) > $mods
+                                  (struct.new $Mod $n $path 0))))
+                          ))
+                        (else (return (@result.err (call $tree.error $n 100))))
+                      ))))
+              )))
           (@match (call $read (call $core.source) -1)
             (@case err ($e) (return (@result.err $e)))
             (@case ok ($n)
@@ -846,29 +853,34 @@
     (@effect reads writes allocates)
     (@match (call $tree.read $source 0)
       (@case err ($e) (@result.err $e))
-      (@case ok ($root)
-        (@let $b (call $list-builder.new< (ref $source-file) >)
-          (block
-            (result $result<$list< (ref $source-file) >, (ref $project-error) >)
-            (@for $uses
-              (bind $i i32 1)
-              (while (< $i (call $tree.len $root)))
-              (step (+ $i 1))
-              (@let $n (call $tree.at $root $i)
-                (if
-                  (call $tree.head $n "@use")
-                  (then
-                    (@match
-                      (@string.from-bytes (struct.get $tree $value (call $tree.at $n 1)))
-                      (@case none () (return (@result.err (call $tree.error $n 200))))
-                      (@case some ($p)
-                        (call $list-builder.push< (ref $source-file) > $b
-                          (struct.new $source-file $p (@bytes.new))))
-                    ))
-                  (else (nop))))
-            )
-            (@result.ok (call $list-builder.finish< (ref $source-file) > $b))))
-      )))
+      (@case ok ($raw)
+        (@match (call $source.prepare $raw 0)
+          (@case err ($e) (@result.err $e))
+          (@case ok ($root)
+            (@let $b (call $list-builder.new< (ref $source-file) >)
+              (block
+                (result $result<$list< (ref $source-file) >, (ref $project-error) >)
+                (@for $uses
+                  (bind $i i32 1)
+                  (while (< $i (call $tree.len $root)))
+                  (step (+ $i 1))
+                  (@let $n (call $tree.at $root $i)
+                    (if
+                      (call $tree.head $n "@use")
+                      (then
+                        (@match
+                          (@string.from-bytes (struct.get $tree $value (call $tree.at $n 1)))
+                          (@case none ()
+                            (return (@result.err (call $tree.error $n 200))))
+                          (@case some ($p)
+                            (call $list-builder.push< (ref $source-file) > $b
+                              (struct.new $source-file $p (@bytes.new))))
+                        ))
+                      (else (nop))))
+                )
+                (@result.ok (call $list-builder.finish< (ref $source-file) > $b))))
+          ))))
+  )
 
   (func $read
     (param $bytes $bytes)

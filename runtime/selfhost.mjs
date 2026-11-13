@@ -121,6 +121,11 @@ if (result.tag === "err") {
     216: "invalid macro binding scope or delegated interface",
     217: "macro expansion limit",
     218: "invalid macro type projection or missing expected type",
+    219: "@bind has been removed; use @connect for Component connections",
+    220: "binary @use requires (component $Constructor) and explicit instantiate; use the main compiler for Component output",
+    221: "Component composition requires the main compiler; the bootstrap backend emits Core Wasm",
+    222: "@lib has no executable entry; select its API from a module entry",
+    223: "@lib cannot declare Core exports, start, global or data initialization; publish source names with @export",
   };
   console.error(
     `${result.val.file === -1 ? "walz:core" : (sourceFiles?.[result.val.file]?.path ?? input)}:${start}..${end}: bootstrap compiler error ${code}${messages[code] ? `: ${messages[code]}` : ""}`,
