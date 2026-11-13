@@ -22,6 +22,7 @@ WALZを使うための現行ガイド。まず[導入](getting-started.md)、[�
 | 不変なSIMD bitmapとi32列 | [SIMDコレクション](simd-collections.md)・[ライブラリ](../walz/simd/README.ja.md) |
 | 文字列の辞書符号化列 | [辞書列](dictionary-column.md) |
 | Arquero風のテーブル処理とJS・TS向けAPI | [テーブル処理](table.md) |
+| Walzで書いたソースparser・型／スタックchecker・Wasm backend | [セルフホストの部品](selfhost.md)・[モジュールfrontend](selfhost-frontend.md)・[ベンチと出力一致](selfhost-benchmark.md)・[ブラウザ配信サイズ](playground-size.md) |
 | FlatBuffersを読み書きする | [FlatBuffersライブラリ](../walz/flatbuffers/README.ja.md) |
 | バイト列から整数・浮動小数点を読み書きする | [固定幅・endian 指定アクセス](byte-access.md) |
 | サイズ・offset・整列の計算を検査する | [検査付き整数演算](checked-integers.md) |
@@ -67,3 +68,5 @@ WALZを使うための現行ガイド。まず[導入](getting-started.md)、[�
 [TODO](../TODO.md)に残る実装課題、[MIGRATION](../MIGRATION.md)に旧名gcwatとWasmtimeからの独立を記録する。
 [evals](../evals/README.md)、grammar-eval、readability、日付付きの計測資料は当時の入力・結果を保存した記録。
 現行の構文やAPIは、この索引からたどるガイド・仕様・生成APIを参照する。
+
+Componentソースの `@lib`・`@world`・`@expose`・`@bind` とWIT生成は[Component構成](component-composition.md)を参照してください。

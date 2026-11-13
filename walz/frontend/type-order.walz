@@ -1,0 +1,447 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $tuple)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $source-file)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.read)
+    (func $tree.slice)
+    (func $tree.eq)
+    (func $work.snapshot)
+    (func $t0)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4)
+    (func $t5)
+    (func $t6))
+  (@use "./tree.walz" (func $tree.occurs))
+  (@export (func $type-order.run))
+  (type $Bits (array (mut i32)))
+  (type $Order
+    (struct
+      (field $types $list<(ref $tree)>)
+      (field $edges (ref $Bits))
+      (field $done (ref $Bits))
+      (field $out (ref $list-builder<(ref $tree)>))
+      (field $error (mut (ref null $project-error))))
+  )
+  (func $same-tree
+    (param $a (ref $tree))
+    (param $b (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (||
+          (&&
+            (!= (struct.get $tree $kind $a) (struct.get $tree $kind $b))
+            (i32.eqz
+              (&&
+                (|| (= (struct.get $tree $kind $a) 2) (= (struct.get $tree $kind $a) 8))
+                (|| (= (struct.get $tree $kind $b) 2) (= (struct.get $tree $kind $b) 8))))
+          )
+          (||
+            (i32.eqz (call $tree.eq $a $b))
+            (!= (call $tree.len $a) (call $tree.len $b))))
+        (then (return 0))
+        (else (nop)))
+      (@for $i
+        (bind $i i32 0)
+        (while (< $i (call $tree.len $a)))
+        (step (+ $i 1))
+        (if
+          (i32.eqz (call $same-tree (call $tree.at $a $i) (call $tree.at $b $i)))
+          (then (return 0))
+          (else (nop))))
+      1))
+
+  (func $group
+    (param $a (ref $tree))
+    (param $b (ref $tree))
+    (result i32)
+    (@effect pure)
+    (&&
+      (&&
+        (= (struct.get $tree $kind (call $tree.at $a 2)) 7)
+        (= (struct.get $tree $kind (call $tree.at $b 2)) 7))
+      (call $same-tree
+        (call $tree.at (call $tree.at $a 2) 0)
+        (call $tree.at (call $tree.at $b 2) 0))))
+
+  (func $clean
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($b (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result (ref $tree))
+        (@for-each $x (struct.get $tree $items $n)
+          (if
+            (!= (struct.get $tree $kind $x) 7)
+            (then (call $list-builder.push<(ref $tree)> $b $x))
+            (else (nop))))
+        (call $tree.copy $n 2 (@bytes.new) (call $list-builder.finish<(ref $tree)> $b))))
+  )
+
+  (func $same
+    (param $s (ref $Order))
+    (param $i i32)
+    (param $j i32)
+    (result i32)
+    (@effect reads)
+    (&&
+      (array.get $Bits
+        (struct.get $Order $edges $s)
+        (+ (* $i (@list.len (ref $tree) (struct.get $Order $types $s))) $j))
+      (array.get $Bits
+        (struct.get $Order $edges $s)
+        (+ (* $j (@list.len (ref $tree) (struct.get $Order $types $s))) $i))))
+
+  (func $fail
+    (param $s (ref $Order))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $Order $error $s))
+      (then (struct.set $Order $error $s (call $tree.error $n 118)))
+      (else (nop))))
+
+  (func $parent-ready
+    (param $s (ref $Order))
+    (param $i i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (@let
+      (($d (@list.get (ref $tree) (struct.get $Order $types $s) $i))
+       ($sub (call $tree.at $d (- (call $tree.len $d) 1)))
+       ($parent
+         (call $tree.at $sub
+           (if
+             (result i32)
+             (call $tree.is (call $tree.at $sub 1) "final")
+             (then 2)
+             (else 1))))
+      )
+      (block
+        (result i32)
+        (if
+          (&& (call $tree.head $sub "sub") (= (struct.get $tree $kind $parent) 0))
+          (then
+            (@for $j
+              (bind $j i32 0)
+              (while (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+              (step (+ $j 1))
+              (if
+                (&&
+                  (= (array.get $Bits (struct.get $Order $done $s) $j) 1)
+                  (call $tree.eq $parent
+                    (call $tree.at
+                      (@list.get (ref $tree) (struct.get $Order $types $s) $j)
+                      1)))
+                (then (return 0))
+                (else (nop))))
+          )
+          (else (nop)))
+        1)))
+
+  (func $pending
+    (param $s (ref $Order))
+    (param $i i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (@for $j
+        (bind $j i32 0)
+        (while (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+        (step (+ $j 1))
+        (if
+          (&&
+            (call $same $s $i $j)
+            (= (array.get $Bits (struct.get $Order $done $s) $j) 1))
+          (then (return 1))
+          (else (nop))))
+      0))
+
+  (func $emit
+    (param $s (ref $Order))
+    (param $i i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (array.get $Bits (struct.get $Order $done $s) $i)
+        (then (return))
+        (else (nop)))
+      (@for $j
+        (bind $j i32 0)
+        (while (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+        (step (+ $j 1))
+        (if
+          (call $same $s $i $j)
+          (then
+            (block
+              (if
+                (&&
+                  (=
+                    (struct.get $tree $kind
+                      (call $tree.at
+                        (@list.get (ref $tree) (struct.get $Order $types $s) $i)
+                        2))
+                    7)
+                  (i32.eqz
+                    (call $group
+                      (@list.get (ref $tree) (struct.get $Order $types $s) $i)
+                      (@list.get (ref $tree) (struct.get $Order $types $s) $j))))
+                (then
+                  (call $fail $s
+                    (@list.get (ref $tree) (struct.get $Order $types $s) $i)))
+                (else (nop)))
+              (if
+                (&&
+                  (=
+                    (struct.get $tree $kind
+                      (call $tree.at
+                        (@list.get (ref $tree) (struct.get $Order $types $s) $j)
+                        2))
+                    7)
+                  (i32.eqz
+                    (call $group
+                      (@list.get (ref $tree) (struct.get $Order $types $s) $i)
+                      (@list.get (ref $tree) (struct.get $Order $types $s) $j))))
+                (then
+                  (call $fail $s
+                    (@list.get (ref $tree) (struct.get $Order $types $s) $j)))
+                (else (nop)))
+              (array.set $Bits (struct.get $Order $done $s) $j 1)))
+          (else (nop))))
+      (@for $j
+        (bind $j i32 0)
+        (while (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+        (step (+ $j 1))
+        (if
+          (&&
+            (array.get $Bits
+              (struct.get $Order $edges $s)
+              (+ (* $i (@list.len (ref $tree) (struct.get $Order $types $s))) $j))
+            (i32.eqz (call $same $s $i $j)))
+          (then (call $emit $s $j))
+          (else (nop))))
+      (@let
+        (($members (call $list-builder.new<(ref $tree)>)))
+        (block
+          (@loop $rounds
+            (bind $round i32 0)
+            (if
+              (&&
+                (< $round (@list.len (ref $tree) (struct.get $Order $types $s)))
+                (call $pending $s $i))
+              (then
+                (block
+                  (@for $rank
+                    (bind $rank i32 0)
+                    (while
+                      (< $rank (@list.len (ref $tree) (struct.get $Order $types $s))))
+                    (step (+ $rank 1))
+                    (@for $j
+                      (bind $j i32 0)
+                      (while
+                        (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+                      (step (+ $j 1))
+                      (if
+                        (&&
+                          (= (array.get $Bits (struct.get $Order $done $s) $j) 1)
+                          (&&
+                            (call $same $s $i $j)
+                            (&&
+                              (if
+                                (result i32)
+                                (=
+                                  (struct.get $tree $kind
+                                    (call $tree.at
+                                      (@list.get
+                                        (ref $tree)
+                                        (struct.get $Order $types $s)
+                                        $j)
+                                      2))
+                                  7)
+                                (then
+                                  (call $tree.eq
+                                    (call $tree.at
+                                      (call $tree.at
+                                        (@list.get
+                                          (ref $tree)
+                                          (struct.get $Order $types $s)
+                                          $j)
+                                        2)
+                                      1)
+                                    (call $tree.name
+                                      (@list.get
+                                        (ref $tree)
+                                        (struct.get $Order $types $s)
+                                        $j)
+                                      ""
+                                      $rank)))
+                                (else (= $j $rank)))
+                              (call $parent-ready $s $j))))
+                        (then
+                          (block
+                            (call $list-builder.push<(ref $tree)> $members
+                              (call $clean
+                                (@list.get (ref $tree) (struct.get $Order $types $s) $j)))
+                            (array.set $Bits (struct.get $Order $done $s) $j 2)))
+                        (else (nop))))
+                  )
+                  (@recur $rounds (+ $round 1))))
+              (else (nop))))
+          (@for $j
+            (bind $j i32 0)
+            (while (< $j (@list.len (ref $tree) (struct.get $Order $types $s))))
+            (step (+ $j 1))
+            (if
+              (&&
+                (call $same $s $i $j)
+                (= (array.get $Bits (struct.get $Order $done $s) $j) 1))
+              (then
+                (call $fail $s (@list.get (ref $tree) (struct.get $Order $types $s) $j)))
+              (else (nop))))
+          (@let
+            (($items (call $list-builder.finish<(ref $tree)> $members)))
+            (if
+              (&&
+                (= (@list.len (ref $tree) $items) 1)
+                (i32.eqz
+                  (=
+                    (struct.get $tree $kind
+                      (call $tree.at
+                        (@list.get (ref $tree) (struct.get $Order $types $s) $i)
+                        2))
+                    7)))
+              (then
+                (call $list-builder.push<(ref $tree)>
+                  (struct.get $Order $out $s)
+                  (@list.get (ref $tree) $items 0)))
+              (else
+                (if
+                  (> (@list.len (ref $tree) $items) 0)
+                  (then
+                    (call $list-builder.push<(ref $tree)>
+                      (struct.get $Order $out $s)
+                      (call $tree.form
+                        (@list.get (ref $tree) (struct.get $Order $types $s) $i)
+                        "rec"
+                        $items)))
+                  (else (nop))))
+            ))))
+    ))
+
+  (func $type-order.run
+    (param $types $list<(ref $tree)>)
+    (result $result<$list<(ref $tree)>, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<$list<(ref $tree)>, (ref $project-error)>)
+      (if
+        (> (@list.len (ref $tree) $types) 128)
+        (then (return (@result.err (struct.new $project-error 0 150 0 0))))
+        (else (nop)))
+      (@let
+        (($s
+           (struct.new $Order
+             $types
+             (array.new $Bits 0
+               (* (@list.len (ref $tree) $types) (@list.len (ref $tree) $types)))
+             (array.new $Bits 0 (@list.len (ref $tree) $types))
+             (call $list-builder.new<(ref $tree)>)
+             (ref.null $project-error))))
+        (block
+          (result $result<$list<(ref $tree)>, (ref $project-error)>)
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i (@list.len (ref $tree) $types)))
+            (step (+ $i 1))
+            (@for $j
+              (bind $j i32 0)
+              (while (< $j (@list.len (ref $tree) $types)))
+              (step (+ $j 1))
+              (array.set $Bits
+                (struct.get $Order $edges $s)
+                (+ (* $i (@list.len (ref $tree) $types)) $j)
+                (||
+                  (call $tree.occurs
+                    (call $clean (@list.get (ref $tree) $types $i))
+                    (call $tree.at (@list.get (ref $tree) $types $j) 1))
+                  (call $group
+                    (@list.get (ref $tree) $types $i)
+                    (@list.get (ref $tree) $types $j))))
+            ))
+          (@for $k
+            (bind $k i32 0)
+            (while (< $k (@list.len (ref $tree) $types)))
+            (step (+ $k 1))
+            (@for $i
+              (bind $i i32 0)
+              (while (< $i (@list.len (ref $tree) $types)))
+              (step (+ $i 1))
+              (if
+                (array.get $Bits
+                  (struct.get $Order $edges $s)
+                  (+ (* $i (@list.len (ref $tree) (struct.get $Order $types $s))) $k))
+                (then
+                  (@for $j
+                    (bind $j i32 0)
+                    (while (< $j (@list.len (ref $tree) $types)))
+                    (step (+ $j 1))
+                    (if
+                      (array.get $Bits
+                        (struct.get $Order $edges $s)
+                        (+
+                          (* $k (@list.len (ref $tree) (struct.get $Order $types $s)))
+                          $j))
+                      (then
+                        (array.set $Bits
+                          (struct.get $Order $edges $s)
+                          (+ (* $i (@list.len (ref $tree) $types)) $j)
+                          1))
+                      (else (nop))))
+                )
+                (else (nop))))
+          )
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i (@list.len (ref $tree) $types)))
+            (step (+ $i 1))
+            (call $emit $s $i))
+          (if
+            (result $result<$list<(ref $tree)>, (ref $project-error)>)
+            (ref.is_null (struct.get $Order $error $s))
+            (then
+              (@result.ok
+                (call $list-builder.finish<(ref $tree)> (struct.get $Order $out $s))))
+            (else (@result.err (ref.as_non_null (struct.get $Order $error $s))))
+          ))))
+  ))

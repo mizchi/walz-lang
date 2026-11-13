@@ -13,7 +13,7 @@ fn imports<'a>(node: &'a Sexp, out: &mut Vec<&'a Sexp>) {
         out.push(node);
     } else if matches!(
         node.head(),
-        Some("module" | "@namespace" | "@file.namespace" | "@legacy.namespace")
+        Some("module" | "@lib" | "@namespace" | "@file.namespace" | "@legacy.namespace")
     ) {
         for child in node.list().unwrap().iter().skip(1) {
             imports(child, out);

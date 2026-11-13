@@ -1064,3 +1064,93 @@ In expression positions whose expected type is determined to be the semantic str
 Watz match clauses use `case`/`default`; canonical Walz keeps `@case`/`@default`.
 
 Walz S-expressions are the default source and output of `walz print`. The optional `--format watz` view preserves the same source forms using `func`, `@export("name")`, and direct `match`/`if` expressions; saved `.watz` views can also be read back. The module wrapper is optional and immutable bindings use `let`. It lowers before ordinary module resolution and checking; it adds no types or runtime semantics. The canonical language remains WAT S-expressions. See [the complete mapping](docs/review-syntax.md) for syntax, escapes, limits, comments, and tooling boundaries.
+
+## Component composition source
+
+A root `(component ...)` builds a Component, while `(module ...)` retains Core
+semantics. `(@lib declarations...)` is a static library with no executable ABI,
+start, global/data initialization, or Core exports; it can be checked and selected
+with ordinary static `@use`/`@export`. A standalone library is not a build entry.
+
+Inside a Component, `(@expose "public-name" $function<concrete-types...>)`
+monomorphizes and checks the implementation, then infers a portable Canonical ABI
+export. `(@bind "module" "member" $component-function)` supplies a Walz import
+with the selected Component function. Actual parameter names and async status
+come from that function; final Component validation checks type compatibility.
+It retains a host effect/capability. Standard Component definitions and explicit
+instantiation order are preserved. Selecting `(@use "./unit.wasm" (component
+$Constructor))`, also supported for Component `.walz` sources, loads a definition
+without allocating runtime state. Instance identity is chosen by explicit
+`instantiate`, not by the filesystem path.
+
+Source constructors accept `(@type.params $T...)` after their name and optional
+`@where` constraints. `(instantiate $Constructor<i32>)` and
+`(instantiate (@inst $Constructor i32))` explicitly specialize them. Arguments
+resolve in the caller's static type scope to closed value types or visible nominal
+type definitions;
+standard types still require explicit imports. Aliases normalize before caching.
+The same specialization shares a definition, while each instantiate creates fresh
+state and defined resource identities. Type-only `@lib`/`@use` declarations need
+no exposed function and emit no runtime implementation. Type substitution keeps
+term binders and nested type binders separate. Concrete bodies retain all normal
+type, bound, effect, ownership, proof and Wasm checks. Binaries are concrete and
+do not accept type arguments. Generic scopes require named Component references
+and named Component outer aliases so generated definitions cannot redirect numeric
+indices; ordinary native WAT and Core instruction indices retain their semantics.
+Nominal snapshots preserve recursive layouts, mutability, packing, nullability
+and ABI annotations. Source declarations and phantom generic applications retain
+distinct cache identities. Opaque layouts, closures and resource/borrow identities
+cannot be copied. Public named values require native type ports; exported instance
+ascriptions freshen value naming aliases and pass Component subtyping without
+changing resource identity or adding runtime conversions. Internal constructors
+may lack a standalone WIT projection; the final `--wit` entry must have one.
+
+`(@world "namespace:package@version" "world")` names the interface decoded from
+the validated binary. `build --wit` writes `world.wit` beside the output;
+`--wit-input FILE [--world NAME]` consumes a separately declared contract. The
+latter builds native worlds from modules or validates the exact public ports and
+types of a Component. Core-module exports can have no WIT representation and are
+still valid standard Component outputs unless WIT is requested.
+
+`(@component.type "binding" (param "function" index-or-name))`, `(result "function")`
+and `(type "member")` project value types from explicit connections. Nested
+carrier/field/case/tuple projections keep WIT ABI annotations and actual resource
+identity. Implementation queries run before checked elaboration. Constructor
+arguments can query preceding validated native connections, including earlier
+specializations; binding declarations themselves may appear later. Only reachable
+queries participate in a stage, and constraints see the real projected types.
+No initializer or host function runs during inference. Forward/cyclic dependencies
+report `E_COMPONENT_TYPE_PHASE`; discovery witnesses never enter implementation IR.
+No host import, destructor or capability is inferred from a query. Named values
+keep externally named type ports; resources require explicit source declarations.
+Unknown selectors and wrong contexts are errors, while opaque annotations stay data.
+See [connected type queries](docs/component-composition.md#connected-type-queries).
+
+Generated adapter loads/stores name their ABI memory. Source memories retain
+their own references; canonical operations select a particular memory context.
+Memory identities are per Core instance, with imported aliases sharing identity
+and fresh defined memories per instantiation. Inspection reports unresolved host
+or alias cases; it is not an optimizer or race-freedom certificate. Endpoint
+buffers live until completion/acknowledgement, not just cancellation request.
+Native traps/cancellation follow instance/store lifetime; SDK cleanup guarantees
+do not apply to arbitrary native hosts.
+
+Portable value inference includes supported shared data and Future/Stream
+endpoints. `(@bind "namespace" (instance $target))` additionally infers imported
+resource contracts for `@expose`: source declarations retain explicit own/borrow,
+moves and destructor imports, which map to canonical drop. Imported type aliases
+are resolved by validator identity; unrelated resource definitions never unify by
+representation or spelling. Only explicitly declared imports can be called.
+Instance and function bindings cannot overlap one namespace. Supported owned
+Option/Result/pair carriers and monomorphized owned functions preserve the same
+checks. Raw GC references, v128, externref and open generics are excluded; owned
+list/record/endpoint payloads remain unsupported. Constructor type arguments
+copy type definitions rather than heap objects between GC agents; opaque layouts
+and resource/borrow identities remain outside type arguments. Vectors, boxes and task types can specialize private implementation code;
+public signatures still require portable WIT types. Explicit native WIT module adapters retain resource own/borrow support. `walz:ffi-v1` custom metadata is allowed only inside
+Core modules, with strict version-1 JSON function descriptions that match actual
+exported binary signatures, including externref. It grants no capability or
+ownership assumption and does not make externref portable. `walz:world-v1` is
+reserved for checked world metadata; unrelated custom sections remain opaque.
+See [Component composition](docs/component-composition.md) for exact metadata,
+examples, runtime boundaries and validation tasks.

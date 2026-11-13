@@ -1,0 +1,262 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $tuple)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $source-file)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.read)
+    (func $tree.slice)
+    (func $tree.eq)
+    (func $t0)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4)
+    (func $t5)
+    (func $t6))
+  (@export (func $normalize.run))
+  (type $Scan
+    (struct
+      (field $tokens $list<(ref $tree)>)
+      (field $at (mut i32))
+      (field $error (mut (ref null $project-error))))
+  )
+  (func $tokens
+    (param $n (ref $tree))
+    (result $list<(ref $tree)>)
+    (@effect reads writes allocates)
+    (@let
+      (($out (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result $list<(ref $tree)>)
+        (@loop $items
+          (bind $i i32 0)
+          (bind $open i32 0)
+          (if
+            (< $i (call $tree.len $n))
+            (then
+              (@let
+                (($x (call $tree.at $n $i))
+                 ($bytes (struct.get $tree $value $x)))
+                (if
+                  (&&
+                    (= (struct.get $tree $kind $x) 0)
+                    (||
+                      (> $open 0)
+                      (&& (> (@bytes.len $bytes) 0) (= (@bytes.get $bytes 0) 36))))
+                  (then
+                    (@let
+                      (($next
+                         (@loop $chars
+                           (bind $j i32 0)
+                           (bind $start i32 0)
+                           (bind $depth i32 $open)
+                           (result i32)
+                           (if
+                             (result i32)
+                             (= $j (@bytes.len $bytes))
+                             (then
+                               (block
+                                 (result i32)
+                                 (if
+                                   (< $start $j)
+                                   (then
+                                     (call $list-builder.push<(ref $tree)> $out
+                                       (call $tree.copy $x 0
+                                         (@bytes.slice $bytes $start (- $j $start))
+                                         (@list.new (ref $tree))))
+                                   )
+                                   (else (nop)))
+                                 $depth))
+                             (else
+                               (@let
+                                 (($ch (@bytes.get $bytes $j)))
+                                 (if
+                                   (result i32)
+                                   (||
+                                     (= $ch 60)
+                                     (&& (> $depth 0) (|| (= $ch 62) (= $ch 44))))
+                                   (then
+                                     (block
+                                       (result i32)
+                                       (if
+                                         (< $start $j)
+                                         (then
+                                           (call $list-builder.push<(ref $tree)> $out
+                                             (call $tree.copy $x 0
+                                               (@bytes.slice $bytes $start
+                                                 (- $j $start))
+                                               (@list.new (ref $tree))))
+                                         )
+                                         (else (nop)))
+                                       (if
+                                         (!= $ch 44)
+                                         (then
+                                           (call $list-builder.push<(ref $tree)> $out
+                                             (call $tree.copy $x
+                                               (if
+                                                 (result i32)
+                                                 (= $ch 60)
+                                                 (then 4)
+                                                 (else 5))
+                                               (@bytes.new)
+                                               (@list.new (ref $tree))))
+                                         )
+                                         (else (nop)))
+                                       (@recur $chars
+                                         (+ $j 1)
+                                         (+ $j 1)
+                                         (+ $depth
+                                           (if
+                                             (result i32)
+                                             (= $ch 60)
+                                             (then 1)
+                                             (else
+                                               (if
+                                                 (result i32)
+                                                 (= $ch 62)
+                                                 (then -1)
+                                                 (else 0))))
+                                         ))))
+                                   (else (@recur $chars (+ $j 1) $start $depth))))
+                             ))))
+                      )
+                      (@recur $items (+ $i 1) $next)))
+                  (else
+                    (block
+                      (call $list-builder.push<(ref $tree)> $out $x)
+                      (@recur $items (+ $i 1) $open))))
+              ))
+            (else (nop))))
+        (call $list-builder.finish<(ref $tree)> $out))))
+
+  (func $parse-items
+    (param $s (ref $Scan))
+    (param $origin (ref $tree))
+    (param $inside i32)
+    (param $depth i32)
+    (result $list<(ref $tree)>)
+    (@effect reads writes allocates)
+    (@let
+      (($out (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result $list<(ref $tree)>)
+        (if
+          (> $depth 64)
+          (then
+            (block
+              (struct.set $Scan $error $s (call $tree.error $origin 150))
+              (return (@list.new (ref $tree))))
+          )
+          (else (nop)))
+        (@loop $next
+          (if
+            (<
+              (struct.get $Scan $at $s)
+              (@list.len (ref $tree) (struct.get $Scan $tokens $s)))
+            (then
+              (@let
+                (($x
+                   (@list.get
+                     (ref $tree)
+                     (struct.get $Scan $tokens $s)
+                     (struct.get $Scan $at $s))))
+                (block
+                  (struct.set $Scan $at $s (+ (struct.get $Scan $at $s) 1))
+                  (if
+                    (= (struct.get $tree $kind $x) 5)
+                    (then
+                      (block
+                        (if
+                          (i32.eqz $inside)
+                          (then (struct.set $Scan $error $s (call $tree.error $x 210)))
+                          (else (nop)))
+                        (return (call $list-builder.finish<(ref $tree)> $out))))
+                    (else (nop)))
+                  (if
+                    (&&
+                      (<
+                        (struct.get $Scan $at $s)
+                        (@list.len (ref $tree) (struct.get $Scan $tokens $s)))
+                      (=
+                        (struct.get $tree $kind
+                          (@list.get
+                            (ref $tree)
+                            (struct.get $Scan $tokens $s)
+                            (struct.get $Scan $at $s)))
+                        4))
+                    (then
+                      (block
+                        (struct.set $Scan $at $s (+ (struct.get $Scan $at $s) 1))
+                        (@let
+                          (($args (call $parse-items $s $x 1 (+ $depth 1)))
+                           ($app (call $list-builder.new<(ref $tree)>)))
+                          (block
+                            (call $list-builder.push<(ref $tree)> $app $x)
+                            (call $list-builder.extend<(ref $tree)> $app $args)
+                            (call $list-builder.push<(ref $tree)> $out
+                              (call $tree.form $x "@inst"
+                                (call $list-builder.finish<(ref $tree)> $app))))
+                        )))
+                    (else (call $list-builder.push<(ref $tree)> $out $x)))
+                  (@recur $next))))
+            (else (nop))))
+        (if $inside
+          (then (struct.set $Scan $error $s (call $tree.error $origin 210)))
+          (else (nop)))
+        (call $list-builder.finish<(ref $tree)> $out))))
+
+  (func $normalize.run
+    (param $n (ref $tree))
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (if
+      (result $result<(ref $tree), (ref $project-error)>)
+      (!= (struct.get $tree $kind $n) 2)
+      (then (@result.ok $n))
+      (else
+        (@let
+          (($out (call $list-builder.new<(ref $tree)>))
+           ($tokens (call $tokens $n)))
+          (block
+            (result $result<(ref $tree), (ref $project-error)>)
+            (@for-each $x $tokens
+              (@match (call $normalize.run $x)
+                (@case err ($e) (return (@result.err $e)))
+                (@case ok ($y) (call $list-builder.push<(ref $tree)> $out $y))))
+            (@let
+              (($s
+                 (struct.new $Scan
+                   (call $list-builder.finish<(ref $tree)> $out)
+                   0
+                   (ref.null $project-error)))
+               ($items (call $parse-items $s $n 0 0)))
+              (if
+                (result $result<(ref $tree), (ref $project-error)>)
+                (ref.is_null (struct.get $Scan $error $s))
+                (then (@result.ok (call $tree.copy $n 2 (@bytes.new) $items)))
+                (else (@result.err (ref.as_non_null (struct.get $Scan $error $s))))
+              ))))
+      ))))

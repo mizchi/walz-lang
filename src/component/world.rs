@@ -4,7 +4,10 @@ use crate::{Error, ir::*};
 use std::{collections::BTreeMap, path::Path};
 use wit_parser::{Resolve, Type as WType, TypeDefKind as WKind, WorldItem};
 
+mod inferred;
+pub(crate) mod projection;
 mod resources;
+mod value_imports;
 
 fn fail(message: impl Into<String>) -> Error {
     Error::message(message.into()).with_code("E_WIT_WORLD")
@@ -57,8 +60,72 @@ pub(super) struct World {
     names: BTreeMap<String, Vec<String>>,
     asyncs: std::collections::BTreeSet<String>,
     resources: BTreeMap<TypeId, resources::Resource>,
+    imported_functions: BTreeMap<String, BTreeMap<String, wit_parser::Function>>,
+    inferred_api: Option<wit_parser::InterfaceId>,
+    value_imports: BTreeMap<wit_parser::TypeId, (String, String)>,
 }
 impl World {
+    pub(super) fn inferred(
+        module: &Module,
+        imports: Option<&super::bound_imports::BoundImports>,
+    ) -> Result<Self, Error> {
+        let (resolve, api) = inferred::prepare(module, imports)?;
+        let mut this = Self {
+            resolve,
+            exports: vec![],
+            types: Default::default(),
+            names: Default::default(),
+            asyncs: Default::default(),
+            resources: Default::default(),
+            imported_functions: imports.map(|b| b.functions.clone()).unwrap_or_default(),
+            inferred_api: Some(api),
+            value_imports: Default::default(),
+        };
+        if let Some(imports) = imports {
+            this.discover_bound_resources(module, &imports.interfaces)?;
+            this.bind_inferred_resources(api)?;
+            this.check_inferred_imports(module)?;
+            this.bind_queried_types(module, &imports.types)?;
+            this.discover_value_imports(&imports.interfaces);
+        }
+        for f in &module.functions {
+            for name in &f.exports {
+                let expected = this.resolve.interfaces[api]
+                    .functions
+                    .get(name)
+                    .cloned()
+                    .ok_or_else(|| fail("missing inferred function"))?;
+                this.function(module, name, &expected)?;
+                this.names.insert(
+                    name.clone(),
+                    f.params
+                        .iter()
+                        .enumerate()
+                        .map(|(i, id)| {
+                            let name = f.locals[id.0].name.trim_start_matches('$');
+                            if !name.is_empty()
+                                && name.split('-').all(|p| {
+                                    p.as_bytes().first().is_some_and(u8::is_ascii_lowercase)
+                                        && p.bytes()
+                                            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+                                })
+                            {
+                                name.to_owned()
+                            } else {
+                                format!("p{i}")
+                            }
+                        })
+                        .collect(),
+                );
+                this.exports.push(Export::Function {
+                    external: name.clone(),
+                    implementation: name.clone(),
+                });
+            }
+        }
+        this.alias_inferred_values(api);
+        Ok(this)
+    }
     pub(super) fn load(path: &Path, name: Option<&str>, module: &Module) -> Result<Self, Error> {
         let mut resolve = Resolve::default();
         let (package, _) = resolve.push_path(path).map_err(|e| fail(e.to_string()))?;
@@ -72,8 +139,23 @@ impl World {
             names: BTreeMap::new(),
             asyncs: Default::default(),
             resources: Default::default(),
+            imported_functions: Default::default(),
+            inferred_api: None,
+            value_imports: Default::default(),
         };
         let world = this.resolve.worlds[id].clone();
+        for (key, item) in &world.imports {
+            if let WorldItem::Interface { id, .. } = item {
+                this.imported_functions.insert(
+                    this.resolve.name_world_key(key),
+                    this.resolve.interfaces[*id]
+                        .functions
+                        .iter()
+                        .map(|(k, f)| (k.clone(), f.clone()))
+                        .collect(),
+                );
+            }
+        }
         this.discover_resources(module, &world)?;
         for (key, item) in world.exports {
             let external = this.resolve.name_world_key(&key);
@@ -318,11 +400,14 @@ impl World {
         functions: &BTreeMap<String, String>,
     ) -> Result<(String, String), Error> {
         let mut types = TypeWriter {
+            projection: None,
+            anchors: Default::default(),
             world: self,
             defined: BTreeMap::new(),
             declarations: String::new(),
             import_namespace: None,
             prefix: "world_".into(),
+            public: false,
         };
         let mut body = String::new();
         let mut outer = String::new();
@@ -365,6 +450,9 @@ impl World {
     }
 }
 struct TypeWriter<'a> {
+    projection: Option<BTreeMap<wit_parser::TypeId, String>>,
+    anchors: BTreeMap<wit_parser::TypeId, String>,
+    public: bool,
     world: &'a World,
     defined: BTreeMap<wit_parser::TypeId, String>,
     declarations: String,
@@ -396,14 +484,47 @@ impl TypeWriter<'_> {
         if depth > 64 {
             return Err(fail("recursive or excessively nested WIT type"));
         }
+        if let WKind::Type(WType::Id(other)) = self.world.resolve.types[id].kind {
+            return self.named(other, depth + 1);
+        }
+        if let Some(name) = self.defined.get(&id) {
+            return Ok(name.clone());
+        }
+        if self.projection.is_some() {
+            let exported = self.projection.as_ref().and_then(|p| p.get(&id));
+            if let Some(anchor) = self.anchors.get(&id) {
+                let Some(member) = exported else {
+                    return Ok(anchor.clone());
+                };
+                let name = format!("${}t{}", self.prefix, id.index());
+                self.declarations += &if self.public {
+                    format!("(export {name} {member:?} (type {anchor}))\n")
+                } else {
+                    format!("(export {member:?} (type {name} (eq {anchor})))\n")
+                };
+                self.defined.insert(id, name.clone());
+                return Ok(name);
+            }
+        }
+        if self.import_namespace.is_none() && self.world.value_imports.contains_key(&id) {
+            return Ok(format!("$native_value{}", id.index()));
+        }
         if self.import_namespace.is_none()
             && let Some(Type::Resource(r)) = self.world.types.get(&id)
             && matches!(self.world.resolve.types[id].kind, WKind::Resource)
         {
-            return Ok(format!("$t{}", r.0));
+            return Ok(if self.world.inferred_api.is_some() {
+                format!("$native_resource{}", r.0)
+            } else {
+                format!("$t{}", r.0)
+            });
         }
         if self.import_namespace.is_none()
+            && !self.public
             && let Some(t) = self.world.types.get(&id)
+            && !(self.world.inferred_api.is_some()
+                && (inferred::uses_resource(&self.world.resolve, WType::Id(id), 0)
+                    || self.world.uses_bound_value(WType::Id(id), 0)))
         {
             let t = component_type(t);
             if t.starts_with('$') {
@@ -414,6 +535,17 @@ impl TypeWriter<'_> {
             return Ok(name.clone());
         }
         let name = format!("${}t{}", self.prefix, id.index());
+        if let Some(ns) = &self.import_namespace
+            && let Some((owner, _)) = self.world.value_imports.get(&id)
+            && owner != ns
+        {
+            self.declarations += &format!(
+                "(alias outer 1 $native_value{} (type {name}))\n",
+                id.index()
+            );
+            self.defined.insert(id, name.clone());
+            return Ok(name);
+        }
         if matches!(self.world.resolve.types[id].kind, WKind::Resource) {
             if let Some(ns) = &self.import_namespace {
                 if let Some((source, r)) = self.world.resources.iter().find(|(_, r)| r.wit == id)
@@ -531,8 +663,36 @@ impl TypeWriter<'_> {
             }
         };
         let name = format!("${}t{}", self.prefix, id.index());
-        self.declarations
-            .push_str(&format!("(type {name} {def})\n"));
+        if let Some(member) = self.projection.as_ref().and_then(|p| p.get(&id)) {
+            self.declarations += &format!("(type {name}_def {def})\n");
+            self.declarations += &if self.public {
+                format!("(export {name} {member:?} (type {name}_def))\n")
+            } else {
+                format!("(export {member:?} (type {name} (eq {name}_def)))\n")
+            };
+        } else if self.public
+            && matches!(
+                self.world.resolve.types[id].kind,
+                WKind::Record(_) | WKind::Variant(_) | WKind::Enum(_) | WKind::Flags(_)
+            )
+        {
+            let member = self.world.resolve.types[id]
+                .name
+                .as_deref()
+                .ok_or_else(|| fail("public named value requires a WIT name"))?;
+            self.declarations.push_str(&format!(
+                "(type {name}_def {def})\n(export {name} {member:?} (type {name}_def))\n"
+            ));
+        } else if self.import_namespace.is_some()
+            && let Some((_, member)) = self.world.value_imports.get(&id)
+        {
+            self.declarations.push_str(&format!(
+                "(type {name}_def {def})\n(export {member:?} (type {name} (eq {name}_def)))\n"
+            ));
+        } else {
+            self.declarations
+                .push_str(&format!("(type {name} {def})\n"));
+        }
         self.defined.insert(id, name.clone());
         Ok(name)
     }

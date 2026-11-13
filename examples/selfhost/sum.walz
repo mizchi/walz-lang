@@ -1,0 +1,17 @@
+(module
+  ;; Kept as folded WAT: accepted by both bootstrap and Rust/WAT compilers.
+  (func $sum
+    (param $n i64)
+    (result i64)
+    (local $acc i64)
+    (block
+      (result i64)
+      (block $done
+        (loop $again
+          (br_if $done (i64.eqz (local.get $n)))
+          (local.set $acc (i64.add (local.get $acc) (local.get $n)))
+          (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+          (br $again)))
+      (local.get $acc)))
+
+  (func $main (export "main") (result i64) (call $sum (i64.const 100))))

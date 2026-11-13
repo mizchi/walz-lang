@@ -132,6 +132,30 @@ impl Parser<'_> {
         }
         self.space()?;
         let start = self.at;
+        // Compile-time type expressions such as @component.type carry WAT
+        // strings as selector data. The enclosing type checker still rejects
+        // strings as bare type arguments.
+        if self.peek() == Some(b'"') {
+            let token = wast::lexer::Lexer::new(self.text)
+                .parse(&mut self.at)
+                .map_err(|_| self.error("invalid string in type expression"))?
+                .ok_or_else(|| self.error("expected string in type expression"))?;
+            if token.kind != wast::lexer::TokenKind::String {
+                return Err(self.error("expected a separate string literal in type expression"));
+            }
+            let bytes = token.string(self.text).into_owned();
+            return Ok(Sexp {
+                kind: match String::from_utf8(bytes) {
+                    Ok(s) => Kind::Text(s),
+                    Err(e) => Kind::Bytes(e.into_bytes()),
+                },
+                span: Span {
+                    start: self.base + start,
+                    end: self.base + self.at,
+                },
+                context: SyntaxContext::default(),
+            });
+        }
         if self.peek() == Some(b'(') {
             self.at += 1;
             let mut items = Vec::new();

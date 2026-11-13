@@ -4,6 +4,8 @@
 
 Write `@bench` in `*_bench.walz` and run it with `walz bench`. Requires Node.js 24 or later.
 For Rust-side type-checking and compilation time, see [measuring the frontend with Criterion](frontend-performance.md).
+For the Walz-written compiler, see [selfhost benchmarks and output parity](selfhost-benchmark.md).
+For browser payloads, see [playground compiler deployment size](playground-size.md).
 For library comparisons, see the [FlatBuffers harness](../walz/flatbuffers/README.md#compare-performance),
 which separates resident Wasm GC calls from Core/Component value ABI costs and compares with official JavaScript.
 `just bench-flatbuffers-pipeline capture output` measures checked queries, fused

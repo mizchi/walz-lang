@@ -500,9 +500,26 @@ impl<'a> Parser<'a> {
     }
     fn module(&mut self) -> Result<Sexp, Error> {
         let start = self.span();
-        let wrapped = self.peek() == "module";
+        let head = if self.peek() == "component" {
+            "component"
+        } else if self.peek() == "@"
+            && self
+                .tokens
+                .get(self.at + 1)
+                .is_some_and(|t| t.text == "lib")
+        {
+            "@lib"
+        } else {
+            "module"
+        };
+        let wrapped = self.peek() == "module" || head != "module";
         if wrapped {
-            self.expect("module")?;
+            if head == "@lib" {
+                self.expect("@")?;
+                self.expect("lib")?;
+            } else {
+                self.expect(head)?;
+            }
             self.expect("{")?;
         }
         let mut fields = Vec::new();
@@ -588,7 +605,7 @@ impl<'a> Parser<'a> {
         if self.at != self.tokens.len() {
             return Err(fail(self.source, self.span(), "expected one module"));
         }
-        Ok(list("module", fields, start))
+        Ok(list(head, fields, start))
     }
 }
 

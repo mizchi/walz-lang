@@ -1,0 +1,21 @@
+(module
+  (@export (type $Box) (func $box.new) (func $box.value))
+  (type $Box
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (struct (field $value $T)))
+  (func $box.new
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (param $value $T)
+    (result (ref $Box<$T>))
+    (@effect allocates)
+    (struct.new $Box<$T> $value))
+
+  (func $box.value
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (param $box (ref $Box<$T>))
+    (result $T)
+    (@effect pure)
+    (struct.get $Box<$T> $value $box)))

@@ -1,0 +1,220 @@
+(module
+  (@use "walz:core" (type $bytes) (type $result) (type $tuple))
+  (@use "./diagnostic.walz" (type $diagnostic))
+  (@use "walz:core"
+    (type $bytes-builder)
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.finish))
+  (@export (func $string.read))
+  (@type.alias $Read $result<$tuple<$bytes, i32>, (ref $diagnostic)>)
+  (func $hex
+    (param $c i32)
+    (result i32)
+    (@effect pure)
+    (if
+      (result i32)
+      (&& (>= $c 48) (<= $c 57))
+      (then (- $c 48))
+      (else
+        (if
+          (result i32)
+          (&& (>= (| $c 32) 97) (<= (| $c 32) 102))
+          (then (- (| $c 32) 87))
+          (else -1))))
+  )
+
+  (func $peek
+    (param $b $bytes)
+    (param $i i32)
+    (result i32)
+    (@effect pure)
+    (if (result i32) (i32.lt_u $i (@bytes.len $b)) (then (@bytes.get $b $i)) (else -1)))
+
+  (func $error
+    (param $b $bytes)
+    (param $i i32)
+    (result (ref $diagnostic))
+    (@effect allocates)
+    (struct.new $diagnostic
+      5
+      $i
+      (if (result i32) (< $i (@bytes.len $b)) (then (+ $i 1)) (else $i))))
+
+  (func $unicode
+    (param $out (ref $bytes-builder))
+    (param $n i32)
+    (@effect reads writes allocates)
+    (if
+      (< $n 128)
+      (then (call $bytes-builder.byte $out $n))
+      (else
+        (block
+          (if
+            (< $n 2048)
+            (then (call $bytes-builder.byte $out (| 192 (>>> $n 6))))
+            (else
+              (block
+                (if
+                  (< $n 65536)
+                  (then (call $bytes-builder.byte $out (| 224 (>>> $n 12))))
+                  (else
+                    (block
+                      (call $bytes-builder.byte $out (| 240 (>>> $n 18)))
+                      (call $bytes-builder.byte $out (| 128 (& (>>> $n 12) 63))))
+                  ))
+                (call $bytes-builder.byte $out (| 128 (& (>>> $n 6) 63))))
+            ))
+          (call $bytes-builder.byte $out (| 128 (& $n 63))))
+      )))
+  (@type.alias $Offset $result<i32, (ref $diagnostic)>)
+  (func $escape
+    (param $b $bytes)
+    (param $i i32)
+    (param $out (ref $bytes-builder))
+    (result $Offset)
+    (@effect reads writes allocates)
+    (@let
+      (($e (call $peek $b (+ $i 1)))
+       ($h (call $hex $e)))
+      (if
+        (result $Offset)
+        (>= $h 0)
+        (then
+          (@let $low (call $hex (call $peek $b (+ $i 2)))
+            (if
+              (result $Offset)
+              (< $low 0)
+              (then (@result.err (call $error $b (+ $i 2))))
+              (else
+                (block
+                  (result $Offset)
+                  (call $bytes-builder.byte $out (+ (* $h 16) $low))
+                  (@result.ok (+ $i 3))))
+            )))
+        (else
+          (if
+            (result $Offset)
+            (= $e 117)
+            (then
+              (block
+                (result $Offset)
+                (if
+                  (!= (call $peek $b (+ $i 2)) 123)
+                  (then
+                    (return (@result.err (call $error $b (+ $i 2))))
+                  )
+                  (else (nop)))
+                (@let $pair
+                  (@loop $digits
+                    (bind $p i32 (+ $i 3))
+                    (bind $n i32 0)
+                    (bind $count i32 0)
+                    (result $tuple<i32, i32>)
+                    (@let
+                      (($v (call $peek $b $p))
+                       ($d (call $hex $v)))
+                      (if
+                        (result $tuple<i32, i32>)
+                        (&& (>= $d 0) (<= $n 69631))
+                        (then (@recur $digits (+ $p 1) (+ (* $n 16) $d) (+ $count 1)))
+                        (else
+                          (if
+                            (result $tuple<i32, i32>)
+                            (&&
+                              (= $v 95)
+                              (&&
+                                (> $count 0)
+                                (>= (call $hex (call $peek $b (+ $p 1))) 0)))
+                            (then (@recur $digits (+ $p 1) $n $count))
+                            (else
+                              (@tuple.new
+                                (if
+                                  (result i32)
+                                  (&& (= $v 125) (> $count 0))
+                                  (then $n)
+                                  (else -1))
+                                $p))))
+                      )))
+                  (@let ($n $end) $pair
+                    (if
+                      (result $Offset)
+                      (|| (i32.gt_u $n 1114111) (&& (>= $n 55296) (<= $n 57343)))
+                      (then (@result.err (call $error $b $end)))
+                      (else
+                        (block
+                          (result $Offset)
+                          (call $unicode $out $n)
+                          (@result.ok (+ $end 1))))
+                    ))))
+            )
+            (else
+              (@let $value
+                (if
+                  (result i32)
+                  (= $e 110)
+                  (then 10)
+                  (else
+                    (if
+                      (result i32)
+                      (= $e 114)
+                      (then 13)
+                      (else
+                        (if
+                          (result i32)
+                          (= $e 116)
+                          (then 9)
+                          (else
+                            (if
+                              (result i32)
+                              (|| (= $e 34) (|| (= $e 39) (= $e 92)))
+                              (then $e)
+                              (else -1))))
+                      ))))
+                (if
+                  (result $Offset)
+                  (< $value 0)
+                  (then (@result.err (call $error $b (+ $i 1))))
+                  (else
+                    (block
+                      (result $Offset)
+                      (call $bytes-builder.byte $out $value)
+                      (@result.ok (+ $i 2))))
+                ))))
+        ))))
+  ;; start points to the opening quote. Hex escapes may represent arbitrary bytes.
+  (func $string.read
+    (param $b $bytes)
+    (param $start i32)
+    (result $Read)
+    (@effect reads writes allocates)
+    (@let $out (call $bytes-builder.new (@bytes.len $b))
+      (@loop $scan
+        (bind $i i32 (+ $start 1))
+        (result $Read)
+        (@let $c (call $peek $b $i)
+          (if
+            (result $Read)
+            (= $c 34)
+            (then (@result.ok (@tuple.new (call $bytes-builder.finish $out) (+ $i 1))))
+            (else
+              (if
+                (result $Read)
+                (|| (< $c 32) (= $c 127))
+                (then (@result.err (call $error $b $i)))
+                (else
+                  (if
+                    (result $Read)
+                    (= $c 92)
+                    (then
+                      (@match (call $escape $b $i $out)
+                        (@case err ($e) (@result.err $e))
+                        (@case ok ($end) (@recur $scan $end))))
+                    (else
+                      (block
+                        (result $Read)
+                        (call $bytes-builder.byte $out $c)
+                        (@recur $scan (+ $i 1))))
+                  ))))
+          ))))
+  ))

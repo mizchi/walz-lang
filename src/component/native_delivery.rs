@@ -110,8 +110,9 @@ pub(super) fn body(a: &Adapter<'_>) -> Result<String, Error> {
             );
         }
     }
+    let functions = super::memory::qualify(&format!("{releases} {functions}"));
     let text=format!("(core module $native_mem {})\n(core instance $native_mem (instantiate $native_mem))\n{canonical}
-      (core module $native_producers (import \"\" \"memory\" (memory 1 256)) (import \"\" \"alloc\" (func $__alloc (param i32) (result i32))) (import \"\" \"free\" (func $__free (param i32))) {imports} {releases} {functions})
+      (core module $native_producers (import \"\" \"memory\" (memory $__abi_memory 1 256)) (import \"\" \"alloc\" (func $__alloc (param i32) (result i32))) (import \"\" \"free\" (func $__free (param i32))) {imports} {functions})
       (core instance $native_producers (instantiate $native_producers (with \"\" (instance (export \"memory\" (memory $native_mem \"memory\")) (export \"alloc\" (func $native_mem \"alloc\")) (export \"free\" (func $native_mem \"free\")) {exports}))))\n{lifted}",include_str!("../component-memory.wat"));
     Ok(text)
 }

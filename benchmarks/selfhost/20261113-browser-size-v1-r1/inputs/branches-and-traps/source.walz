@@ -1,0 +1,6 @@
+(module
+  (func $safe (export "safe") (param $x i32) (result i32)
+    (if (result i32) (i32.eqz (local.get $x))
+      (then (i32.const 42)) (else (i32.div_s (i32.const 120) (local.get $x)))))
+  (func $divide (export "divide") (param $a i32) (param $b i32) (result i32)
+    (i32.div_s (local.get $a) (local.get $b))))

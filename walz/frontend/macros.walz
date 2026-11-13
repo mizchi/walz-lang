@@ -1,0 +1,1215 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.slice)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.copy)
+    (func $tree.form)
+    (func $tree.eq)
+    (func $tree.is-name)
+    (func $work.snapshot)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4))
+  (@use "./macro-patterns.walz"
+    (type $macro-variable)
+    (type $macro-rule)
+    (type $macro-match)
+    (type $macro-capture)
+    (func $macro.variable)
+    (func $macro.capture)
+    (func $macro.one)
+    (func $macro.match))
+  (@use "./macro-context.walz"
+    (type $macro-context)
+    (func $macro.error)
+    (func $macro.fail)
+    (func $macro.charge)
+    (func $macro.fresh)
+    (func $macro.global)
+    (func $macro.called)
+    (func $macro.rules))
+  (@export (func $macro.expand))
+  (type $Scope
+    (struct
+      (field $key (ref $tree))
+      (field $source (ref $tree))
+      (field $target (ref $tree))
+      (field $kind i32)
+      (field $parent (ref null $Scope))))
+  (type $Walk
+    (struct
+      (field $context (ref $macro-context))
+      (field $match (ref $macro-match))
+      (field $introduced (ref $list-builder< (ref $Scope) >))
+      (field $depth (mut i32))))
+  (type $Carry
+    (struct (field $env (mut (ref null $Scope))))
+  )
+  (func $fail
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (call $macro.fail (struct.get $Walk $context $s) $n $code))
+
+  (func $substitute
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $index i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $tree))
+      (call $macro.charge (struct.get $Walk $context $s) $n)
+      (if
+        (i32.eqz (ref.is_null (call $macro.error (struct.get $Walk $context $s))))
+        (then (return $n))
+        (else (nop)))
+      (if
+        (call $macro.variable $n)
+        (then
+          (@let $c (call $macro.capture (struct.get $Walk $match $s) $n)
+            (block
+              (if
+                (ref.is_null $c)
+                (then (block (call $fail $s $n 214) (return $n)))
+                (else (nop)))
+              (@let
+                (($c (ref.as_non_null $c))
+                 ($xs
+                   (call $work.snapshot< (ref $tree) >
+                     (struct.get $macro-capture $values $c)))
+                 ($many
+                   (struct.get $macro-variable $repeated
+                     (struct.get $macro-capture $variable $c)))
+                 ($at (if (result i32) $many (then $index) (else 0))))
+                (if
+                  (i32.ge_u $at (@list.len (ref $tree) $xs))
+                  (then (block (call $fail $s $n 214) (return $n)))
+                  (else
+                    (return
+                      (call $tree.copy $n 9
+                        (struct.get $tree $value $n)
+                        (@list.new (ref $tree) (@list.get (ref $tree) $xs $at))))
+                  ))))
+          ))
+        (else (nop)))
+      (if (!= (struct.get $tree $kind $n) 2) (then (return $n)) (else (nop)))
+      (@let
+        (($len (call $tree.len $n))
+         ($rest (&& (> $len 0) (call $tree.is (call $tree.at $n (- $len 1)) "...")))
+         ($fixed (- $len (* 2 $rest)))
+         ($b (call $list-builder.new< (ref $tree) >)))
+        (block
+          (result (ref $tree))
+          (if
+            (&& $rest (|| (< $len 2) (>= $index 0)))
+            (then (block (call $fail $s $n 214) (return $n)))
+            (else (nop)))
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i $fixed))
+            (step (+ $i 1))
+            (block
+              (if
+                (call $tree.is (call $tree.at $n $i) "...")
+                (then (call $fail $s (call $tree.at $n $i) 214))
+                (else (nop)))
+              (call $list-builder.push< (ref $tree) > $b
+                (call $substitute $s (call $tree.at $n $i) $index))))
+          (if $rest
+            (then
+              (@let $count (call $repeat-count $s (call $tree.at $n $fixed))
+                (if
+                  (< $count 0)
+                  (then (call $fail $s (call $tree.at $n (- $len 1)) 214))
+                  (else
+                    (@for $i
+                      (bind $i i32 0)
+                      (while (< $i $count))
+                      (step (+ $i 1))
+                      (call $list-builder.push< (ref $tree) > $b
+                        (call $substitute $s (call $tree.at $n $fixed) $i))))
+                )))
+            (else (nop)))
+          (call $tree.copy $n 2
+            (@bytes.new)
+            (call $list-builder.finish< (ref $tree) > $b))))
+    ))
+
+  (func $repeat-count
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (call $macro.variable $n)
+        (then
+          (@let $c (call $macro.capture (struct.get $Walk $match $s) $n)
+            (if
+              (&&
+                (i32.eqz (ref.is_null $c))
+                (struct.get $macro-variable $repeated
+                  (struct.get $macro-capture $variable (ref.as_non_null $c))))
+              (then
+                (return
+                  (@list.len
+                    (ref $tree)
+                    (call $work.snapshot< (ref $tree) >
+                      (struct.get $macro-capture $values (ref.as_non_null $c))))
+                ))
+              (else (nop))))
+        )
+        (else (nop)))
+      (@loop $scan
+        (bind $i i32 0)
+        (bind $count i32 -1)
+        (result i32)
+        (if
+          (result i32)
+          (= $i (call $tree.len $n))
+          (then $count)
+          (else
+            (@let $next (call $repeat-count $s (call $tree.at $n $i))
+              (if
+                (result i32)
+                (|| (= $next -2) (&& (>= $count 0) (&& (>= $next 0) (!= $count $next))))
+                (then -2)
+                (else
+                  (@recur $scan
+                    (+ $i 1)
+                    (if (result i32) (>= $next 0) (then $next) (else $count))))
+              ))))
+      )))
+
+  (func $binding-for
+    (param $s (ref $Walk))
+    (param $key (ref $tree))
+    (param $body (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (@for-each $b
+        (struct.get $macro-rule $bindings (struct.get $macro-match $rule (struct.get $Walk $match $s)))
+        (if
+          (&&
+            (call $tree.eq (call $tree.at $b 1) $key)
+            (call $tree.eq (call $tree.at $b 2) $body))
+          (then (return 1))
+          (else (nop))))
+      0))
+
+  (func $is-binder
+    (param $s (ref $Walk))
+    (param $key (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (@for-each $b
+        (struct.get $macro-rule $bindings (struct.get $macro-match $rule (struct.get $Walk $match $s)))
+        (if (call $tree.eq (call $tree.at $b 1) $key) (then (return 1)) (else (nop))))
+      0))
+
+  (func $new-binding
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $caller i32)
+    (param $label i32)
+    (result (ref $Scope))
+    (@effect reads writes allocates)
+    (@let
+      (($hole (= (struct.get $tree $kind $n) 9))
+       ($source (if (result (ref $tree)) $hole (then (call $tree.at $n 0)) (else $n)))
+       ($key
+         (if
+           (result (ref $tree))
+           $hole
+           (then
+             (call $tree.copy $n 0 (struct.get $tree $value $n) (@list.new (ref $tree))))
+           (else $n)))
+       ($new
+         (struct.new $Scope
+           $key
+           $source
+           (call $macro.fresh (struct.get $Walk $context $s) $source)
+           (if (result i32) $label (then 2) (else $hole))
+           $env)))
+      (block
+        (result (ref $Scope))
+        (if
+          (i32.eqz (call $tree.is-name $source))
+          (then (call $fail $s $n 216))
+          (else (nop)))
+        (if
+          (&& $hole (i32.eqz $caller))
+          (then
+            (block
+              (if
+                (|| $label (i32.eqz (call $is-binder $s $key)))
+                (then (call $fail $s $n 216))
+                (else (nop)))
+              (@for-each $old
+                (call $work.snapshot< (ref $Scope) > (struct.get $Walk $introduced $s))
+                (if
+                  (&&
+                    (call $tree.eq $key (struct.get $Scope $key $old))
+                    (call $tree.eq $source (struct.get $Scope $source $old)))
+                  (then (call $fail $s $n 216))
+                  (else (nop))))
+              (call $list-builder.push< (ref $Scope) >
+                (struct.get $Walk $introduced $s)
+                $new)))
+          (else (nop)))
+        $new)))
+
+  (func $lookup
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $caller i32)
+    (param $label i32)
+    (result (ref null $Scope))
+    (@effect pure)
+    (@loop $find
+      (bind $p (ref null $Scope) $env)
+      (result (ref null $Scope))
+      (if
+        (result (ref null $Scope))
+        (ref.is_null $p)
+        (then (ref.null $Scope))
+        (else
+          (@let $e (ref.as_non_null $p)
+            (if
+              (result (ref null $Scope))
+              (&&
+                (= (= (struct.get $Scope $kind $e) 2) $label)
+                (call $tree.eq $n
+                  (if
+                    (result (ref $tree))
+                    $caller
+                    (then (struct.get $Scope $source $e))
+                    (else (struct.get $Scope $key $e))))
+              )
+              (then $e)
+              (else (@recur $find (struct.get $Scope $parent $e))))
+          ))))
+  )
+
+  (func $select
+    (param $s (ref $Walk))
+    (param $body (ref $tree))
+    (param $env (ref null $Scope))
+    (result (ref null $Scope))
+    (@effect allocates)
+    (if
+      (result (ref null $Scope))
+      (ref.is_null $env)
+      (then (ref.null $Scope))
+      (else
+        (@let
+          (($e (ref.as_non_null $env))
+           ($rest (call $select $s $body (struct.get $Scope $parent $e))))
+          (if
+            (result (ref null $Scope))
+            (&&
+              (= (struct.get $Scope $kind $e) 1)
+              (call $binding-for $s (struct.get $Scope $key $e) $body))
+            (then
+              (struct.new $Scope
+                (struct.get $Scope $source $e)
+                (struct.get $Scope $source $e)
+                (struct.get $Scope $target $e)
+                0
+                $rest))
+            (else $rest))))
+    ))
+
+  (func $hole
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $mode i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($key
+         (call $tree.copy $n 0 (struct.get $tree $value $n) (@list.new (ref $tree))))
+       ($m (struct.get $Walk $match $s))
+       ($c (ref.as_non_null (call $macro.capture $m $key)))
+       ($v (struct.get $macro-capture $variable $c)))
+      (block
+        (result (ref $tree))
+        (if
+          (= (struct.get $macro-variable $category $v) 0)
+          (then
+            (block
+              (@for-each $b
+                (struct.get $macro-rule $bindings (struct.get $macro-match $rule $m))
+                (if
+                  (call $tree.eq (call $tree.at $b 2) $key)
+                  (then
+                    (@let
+                      (($ids
+                         (ref.as_non_null (call $macro.capture $m (call $tree.at $b 1))))
+                      )
+                      (@for-each $id
+                        (call $work.snapshot< (ref $tree) > (struct.get $macro-capture $values $ids))
+                        (if
+                          (ref.is_null
+                            (call $lookup $id (call $select $s $key $env) 1 0))
+                          (then (call $fail $s $n 216))
+                          (else (nop))))
+                    ))
+                  (else (nop))))
+              (return
+                (call $walk $s (call $tree.at $n 0) (call $select $s $key $env) $mode 1))))
+          (else (nop)))
+        (if
+          (= (struct.get $macro-variable $category $v) 1)
+          (then
+            (@let
+              (($scope (call $hole-scope $key (call $tree.at $n 0) $env)))
+              (if
+                (i32.eqz (ref.is_null $scope))
+                (then (return (struct.get $Scope $target (ref.as_non_null $scope))))
+                (else (nop))))
+          )
+          (else (nop)))
+        (call $tree.at $n 0))))
+
+  (func $let
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($many (= (struct.get $tree $kind (call $tree.at $n 1)) 2))
+       ($carry (struct.new $Carry $env))
+       ($out (call $list-builder.new< (ref $tree) >))
+       ($bindings
+         (if
+           (result $list< (ref $tree) >)
+           $many
+           (then (struct.get $tree $items (call $tree.at $n 1)))
+           (else
+             (@list.new
+               (ref $tree)
+               (call $tree.copy $n 2 (@bytes.new) (call $tree.slice $n 1))))
+         )))
+      (block
+        (result (ref $tree))
+        (@for-each $binding $bindings
+          (@let
+            (($binding $binding)
+             ($typed
+               (if
+                 (result i32)
+                 $many
+                 (then (= (call $tree.len $binding) 3))
+                 (else (= (call $tree.len $n) 5))))
+             ($name (call $tree.at $binding 0))
+             ($bound
+               (call $new-binding $s $name (struct.get $Carry $env $carry) $caller 0))
+             ($items (call $list-builder.new< (ref $tree) >)))
+            (block
+              (if
+                (i32.eqz $many)
+                (then
+                  (if
+                    (|| (< (call $tree.len $n) 4) (> (call $tree.len $n) 5))
+                    (then (call $fail $s $n 214))
+                    (else (nop))))
+                (else (nop)))
+              (if $many
+                (then
+                  (if
+                    (|| (< (call $tree.len $binding) 2) (> (call $tree.len $binding) 3))
+                    (then (call $fail $s $binding 214))
+                    (else (nop))))
+                (else (nop)))
+              (call $list-builder.push< (ref $tree) > $items
+                (struct.get $Scope $target $bound))
+              (if $typed
+                (then
+                  (call $list-builder.push< (ref $tree) > $items
+                    (call $walk $s
+                      (call $tree.at $binding 1)
+                      (struct.get $Carry $env $carry)
+                      1
+                      $caller)))
+                (else (nop)))
+              (call $list-builder.push< (ref $tree) > $items
+                (call $walk $s
+                  (call $tree.at $binding (+ 1 $typed))
+                  (struct.get $Carry $env $carry)
+                  0
+                  $caller))
+              (call $list-builder.push< (ref $tree) > $out
+                (call $tree.copy $binding 2
+                  (@bytes.new)
+                  (call $list-builder.finish< (ref $tree) > $items)))
+              (struct.set $Carry $env $carry $bound))))
+        (@let
+          (($body
+             (call $walk $s
+               (call $tree.at $n (- (call $tree.len $n) 1))
+               (struct.get $Carry $env $carry)
+               0
+               $caller))
+           ($items (call $list-builder.finish< (ref $tree) > $out)))
+          (if
+            (result (ref $tree))
+            (= (@list.len (ref $tree) $items) 0)
+            (then $body)
+            (else
+              (call $tree.form $n "@let"
+                (@list.new
+                  (ref $tree)
+                  (call $tree.copy (call $tree.at $n 1) 2 (@bytes.new) $items)
+                  $body))))
+        ))))
+
+  (func $loop
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($carry (struct.new $Carry $env))
+       ($b (call $list-builder.new< (ref $tree) >)))
+      (block
+        (result (ref $tree))
+        (call $list-builder.push< (ref $tree) > $b (call $tree.at $n 0))
+        (if
+          (call $tree.is-name (call $tree.at $n 1))
+          (then
+            (@let
+              (($label
+                 (call $new-binding $s
+                   (call $tree.at $n 1)
+                   (struct.get $Carry $env $carry)
+                   $caller
+                   1)))
+              (block
+                (call $list-builder.push< (ref $tree) > $b
+                  (struct.get $Scope $target $label))
+                (struct.set $Carry $env $carry $label))))
+          (else (call $list-builder.push< (ref $tree) > $b (call $tree.at $n 1))))
+        (@for $i
+          (bind $i i32 2)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (@let
+            (($part (call $tree.at $n $i)))
+            (if
+              (call $tree.head $part "bind")
+              (then
+                (@let
+                  (($bound
+                     (call $new-binding $s
+                       (call $tree.at $part 1)
+                       (struct.get $Carry $env $carry)
+                       $caller
+                       0)))
+                  (block
+                    (call $list-builder.push< (ref $tree) > $b
+                      (call $t3 $part "bind"
+                        (struct.get $Scope $target $bound)
+                        (call $walk $s (call $tree.at $part 2) $env 1 $caller)
+                        (call $walk $s (call $tree.at $part 3) $env 0 $caller)))
+                    (struct.set $Carry $env $carry $bound))))
+              (else
+                (call $list-builder.push< (ref $tree) > $b
+                  (call $walk $s $part (struct.get $Carry $env $carry) 0 $caller))))
+          ))
+        (call $tree.copy $n 2
+          (@bytes.new)
+          (call $list-builder.finish< (ref $tree) > $b))))
+  )
+
+  (func $pattern
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $carry (ref $Carry))
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($xs
+         (if
+           (result $list< (ref $tree) >)
+           (= (struct.get $tree $kind $n) 2)
+           (then (struct.get $tree $items $n))
+           (else (@list.new (ref $tree) $n))))
+       ($b (call $list-builder.new< (ref $tree) >)))
+      (block
+        (result (ref $tree))
+        (@for-each $id $xs
+          (@let
+            (($new (call $new-binding $s $id (struct.get $Carry $env $carry) $caller 0)))
+            (block
+              (struct.set $Carry $env $carry $new)
+              (call $list-builder.push< (ref $tree) > $b
+                (struct.get $Scope $target $new))))
+        )
+        (@let
+          (($xs (call $list-builder.finish< (ref $tree) > $b)))
+          (if
+            (result (ref $tree))
+            (= (struct.get $tree $kind $n) 2)
+            (then (call $tree.copy $n 2 (@bytes.new) $xs))
+            (else (@list.get (ref $tree) $xs 0))))
+      )))
+
+  (func $role
+    (param $n (ref $tree))
+    (param $i i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (||
+          (||
+            (|| (call $tree.head $n "type") (call $tree.head $n "ref"))
+            (||
+              (call $tree.head $n "mut")
+              (|| (call $tree.head $n "result") (call $tree.head $n "@inst"))))
+          (||
+            (&&
+              (= $i 1)
+              (||
+                (||
+                  (||
+                    (||
+                      (call $tree.head $n "struct.new")
+                      (||
+                        (call $tree.head $n "struct.new_default")
+                        (call $tree.head $n "struct.get")))
+                    (||
+                      (call $tree.head $n "struct.get_s")
+                      (||
+                        (call $tree.head $n "struct.get_u")
+                        (call $tree.head $n "struct.set"))))
+                  (||
+                    (||
+                      (call $tree.head $n "array.new")
+                      (||
+                        (call $tree.head $n "array.new_default")
+                        (call $tree.head $n "array.new_fixed")))
+                    (||
+                      (call $tree.head $n "array.get")
+                      (||
+                        (call $tree.head $n "array.get_s")
+                        (call $tree.head $n "array.get_u"))))
+                )
+                (||
+                  (||
+                    (||
+                      (call $tree.head $n "array.set")
+                      (||
+                        (call $tree.head $n "array.fill")
+                        (call $tree.head $n "array.copy")))
+                    (||
+                      (call $tree.head $n "ref.null")
+                      (||
+                        (call $tree.head $n "ref.cast")
+                        (call $tree.head $n "ref.test"))))
+                  (||
+                    (||
+                      (call $tree.head $n "@list.new")
+                      (||
+                        (call $tree.head $n "@list.len")
+                        (call $tree.head $n "@list.get")))
+                    (||
+                      (call $tree.head $n "@list.from-array")
+                      (||
+                        (call $tree.head $n "@bytes.from-array")
+                        (call $tree.head $n "@bytes.copy-to-array"))))
+                )))
+            (&&
+              (= $i 2)
+              (||
+                (call $tree.head $n "array.copy")
+                (call $tree.head $n "@list.from-array"))))
+        )
+        (then (return 1))
+        (else (nop)))
+      (if (&& (= $i 1) (call $tree.head $n "call")) (then (return 3)) (else (nop)))
+      (if
+        (&&
+          (= $i 1)
+          (||
+            (call $tree.head $n "br")
+            (|| (call $tree.head $n "br_if") (call $tree.head $n "@recur"))))
+        (then (return 4))
+        (else (nop)))
+      (if
+        (&&
+          (= $i 2)
+          (||
+            (|| (call $tree.head $n "struct.get") (call $tree.head $n "struct.get_s"))
+            (|| (call $tree.head $n "struct.get_u") (call $tree.head $n "struct.set"))))
+        (then (return 1))
+        (else (nop)))
+      0))
+
+  (func $walk-body
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $mode i32)
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $tree))
+      (if
+        (= (struct.get $tree $kind $n) 10)
+        (then (return (call $tree.at $n 0)))
+        (else (nop)))
+      (if
+        (i32.eqz (ref.is_null (call $macro.error (struct.get $Walk $context $s))))
+        (then (return $n))
+        (else (nop)))
+      (if
+        (= (struct.get $tree $kind $n) 9)
+        (then (return (call $hole $s $n $env $mode)))
+        (else (nop)))
+      (if
+        (!= (struct.get $tree $kind $n) 2)
+        (then
+          (block
+            (if
+              (&& (call $tree.is-name $n) (|| (= $mode 0) (= $mode 4)))
+              (then
+                (@let
+                  (($found (call $lookup $n $env $caller (= $mode 4))))
+                  (block
+                    (if
+                      (i32.eqz (ref.is_null $found))
+                      (then
+                        (return (struct.get $Scope $target (ref.as_non_null $found))))
+                      (else (nop)))
+                    (if (i32.eqz $caller) (then (call $fail $s $n 215)) (else (nop))))
+                ))
+              (else (nop)))
+            (if
+              (&& (i32.eqz $caller) (= $mode 3))
+              (then
+                (if
+                  (i32.eqz (call $macro.global (struct.get $Walk $context $s) $n 1))
+                  (then (call $fail $s $n 215))
+                  (else (nop))))
+              (else (nop)))
+            (return $n)))
+        (else (nop)))
+      (if (= $mode 1) (then (return (call $map $s $n $env 1 $caller))) (else (nop)))
+      (if
+        (call $tree.head $n "@let")
+        (then (return (call $let $s $n $env $caller)))
+        (else (nop)))
+      (if
+        (|| (call $tree.head $n "@loop") (call $tree.head $n "@for"))
+        (then (return (call $loop $s $n $env $caller)))
+        (else (nop)))
+      (if
+        (call $tree.head $n "@for-each")
+        (then
+          (return
+            (@let
+              (($carry (struct.new $Carry $env))
+               ($ids (call $pattern $s (call $tree.at $n 1) $carry $caller)))
+              (call $t3 $n "@for-each" $ids
+                (call $walk $s (call $tree.at $n 2) $env 0 $caller)
+                (call $walk $s
+                  (call $tree.at $n 3)
+                  (struct.get $Carry $env $carry)
+                  0
+                  $caller))))
+        )
+        (else (nop)))
+      (if
+        (&& (call $tree.head $n "@case") (= (call $tree.len $n) 4))
+        (then
+          (return
+            (@let
+              (($carry (struct.new $Carry $env))
+               ($ids (call $pattern $s (call $tree.at $n 2) $carry $caller)))
+              (call $t3 $n "@case"
+                (call $tree.at $n 1)
+                $ids
+                (call $walk $s
+                  (call $tree.at $n 3)
+                  (struct.get $Carry $env $carry)
+                  0
+                  $caller))))
+        )
+        (else (nop)))
+      (if
+        (&&
+          (||
+            (call $tree.head $n "block")
+            (|| (call $tree.head $n "loop") (call $tree.head $n "if")))
+          (call $tree.is-name (call $tree.at $n 1)))
+        (then
+          (return
+            (@let
+              (($label (call $new-binding $s (call $tree.at $n 1) $env $caller 1))
+               ($b (call $list-builder.new< (ref $tree) >)))
+              (block
+                (result (ref $tree))
+                (call $list-builder.push< (ref $tree) > $b (call $tree.at $n 0))
+                (call $list-builder.push< (ref $tree) > $b
+                  (struct.get $Scope $target $label))
+                (@for $i
+                  (bind $i i32 2)
+                  (while (< $i (call $tree.len $n)))
+                  (step (+ $i 1))
+                  (call $list-builder.push< (ref $tree) > $b
+                    (call $walk $s
+                      (call $tree.at $n $i)
+                      $label
+                      (call $role $n $i)
+                      $caller)))
+                (call $tree.copy $n 2
+                  (@bytes.new)
+                  (call $list-builder.finish< (ref $tree) > $b))))
+          ))
+        (else (nop)))
+      (if
+        (&&
+          (i32.eqz $caller)
+          (||
+            (||
+              (call $tree.head $n "func")
+              (|| (call $tree.head $n "type") (call $tree.head $n "@use")))
+            (||
+              (|| (call $tree.head $n "@macro") (call $tree.head $n "@export"))
+              (|| (call $tree.head $n "import") (call $tree.head $n "export"))))
+        )
+        (then (block (call $fail $s $n 214) (return $n)))
+        (else (nop)))
+      (if
+        (&& (i32.eqz $caller) (call $macro.called $n))
+        (then (return (call $delegate $s $n $env)))
+        (else (nop)))
+      (call $map $s $n $env $mode $caller)))
+
+  (func $map
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $mode i32)
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($b (call $list-builder.new< (ref $tree) >)))
+      (block
+        (result (ref $tree))
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (call $list-builder.push< (ref $tree) > $b
+            (if
+              (result (ref $tree))
+              (&& (= $i 0) (= (struct.get $tree $kind (call $tree.at $n 0)) 0))
+              (then (call $tree.at $n 0))
+              (else
+                (call $walk $s
+                  (call $tree.at $n $i)
+                  $env
+                  (if (result i32) (= $mode 1) (then 1) (else (call $role $n $i)))
+                  $caller))))
+        )
+        (call $tree.copy $n 2
+          (@bytes.new)
+          (call $list-builder.finish< (ref $tree) > $b))))
+  )
+
+  (func $walk
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $mode i32)
+    (param $caller i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $tree))
+      (call $macro.charge (struct.get $Walk $context $s) $n)
+      (if
+        (>= (struct.get $Walk $depth $s) 128)
+        (then (block (call $fail $s $n 217) (return $n)))
+        (else (nop)))
+      (struct.set $Walk $depth $s (+ (struct.get $Walk $depth $s) 1))
+      (@let
+        (($out (call $walk-body $s $n $env $mode $caller)))
+        (block
+          (result (ref $tree))
+          (struct.set $Walk $depth $s (- (struct.get $Walk $depth $s) 1))
+          $out))))
+
+  (func $macro.expand
+    (param $context (ref $macro-context))
+    (param $m (ref $macro-match))
+    (result $result< (ref $tree) , (ref $project-error) >)
+    (@effect reads writes allocates)
+    (@let
+      (($s (struct.new $Walk $context $m (call $list-builder.new< (ref $Scope) >) 0))
+       ($n
+         (call $substitute $s
+           (struct.get $macro-rule $template (struct.get $macro-match $rule $m))
+           -1))
+       ($out (call $walk $s $n (ref.null $Scope) 0 0)))
+      (block
+        (result $result< (ref $tree) , (ref $project-error) >)
+        (@for-each $b
+          (struct.get $macro-rule $bindings (struct.get $macro-match $rule $m))
+          (@let
+            (($c (ref.as_non_null (call $macro.capture $m (call $tree.at $b 1))))
+            )
+            (@for-each $id
+              (call $work.snapshot< (ref $tree) > (struct.get $macro-capture $values $c))
+              (@let
+                (($found (call $introduced $s (call $tree.at $b 1) $id)))
+                (if (i32.eqz $found) (then (call $fail $s $b 216)) (else (nop))))
+            )))
+        (@let
+          (($error (call $macro.error $context)))
+          (if
+            (result $result< (ref $tree) , (ref $project-error) >)
+            (ref.is_null $error)
+            (then (@result.ok $out))
+            (else (@result.err (ref.as_non_null $error))))
+        ))))
+
+  (func $introduced
+    (param $s (ref $Walk))
+    (param $key (ref $tree))
+    (param $id (ref $tree))
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (@for-each $old
+        (call $work.snapshot< (ref $Scope) > (struct.get $Walk $introduced $s))
+        (if
+          (&&
+            (call $tree.eq $key (struct.get $Scope $key $old))
+            (call $tree.eq $id (struct.get $Scope $source $old)))
+          (then (return 1))
+          (else (nop))))
+      0))
+
+  (func $hole-scope
+    (param $key (ref $tree))
+    (param $id (ref $tree))
+    (param $env (ref null $Scope))
+    (result (ref null $Scope))
+    (@effect reads writes allocates)
+    (@loop $scan
+      (bind $p (ref null $Scope) $env)
+      (result (ref null $Scope))
+      (if
+        (result (ref null $Scope))
+        (ref.is_null $p)
+        (then (ref.null $Scope))
+        (else
+          (@let
+            (($e (ref.as_non_null $p)))
+            (if
+              (result (ref null $Scope))
+              (&&
+                (= (struct.get $Scope $kind $e) 1)
+                (&&
+                  (call $tree.eq $key (struct.get $Scope $key $e))
+                  (call $tree.eq $id (struct.get $Scope $source $e))))
+              (then $e)
+              (else (@recur $scan (struct.get $Scope $parent $e))))
+          ))))
+  )
+  (type $Binding (struct (field $binder (ref $tree)) (field $body (ref $tree))))
+  (type $Forward
+    (struct
+      (field $binder (ref $tree))
+      (field $body (ref $tree))
+      (field $target (ref $tree))
+      (field $private i32)))
+  (type $Delegation
+    (struct (field $found (mut i32)) (field $bindings (mut $list< (ref $Binding) >))))
+  (func $interface
+    (param $m (ref $macro-match))
+    (result $list< (ref $Binding) >)
+    (@effect reads writes allocates)
+    (@let
+      (($out (call $list-builder.new< (ref $Binding) >)))
+      (block
+        (result $list< (ref $Binding) >)
+        (@for-each $b
+          (struct.get $macro-rule $bindings (struct.get $macro-match $rule $m))
+          (@let
+            (($binder (ref.as_non_null (call $macro.capture $m (call $tree.at $b 1))))
+             ($body (call $macro.one $m (call $tree.at $b 2))))
+            (@for-each $id
+              (call $work.snapshot< (ref $tree) > (struct.get $macro-capture $values $binder))
+              (call $list-builder.push< (ref $Binding) > $out
+                (struct.new $Binding $id $body))))
+        )
+        (call $list-builder.finish< (ref $Binding) > $out))))
+
+  (func $interface-has
+    (param $xs $list< (ref $Binding) >)
+    (param $item (ref $Binding))
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (@for-each $x $xs
+        (if
+          (&&
+            (ref.eq
+              (struct.get $Binding $binder $x)
+              (struct.get $Binding $binder $item))
+            (ref.eq (struct.get $Binding $body $x) (struct.get $Binding $body $item)))
+          (then (return 1))
+          (else (nop))))
+      0))
+
+  (func $interface-same
+    (param $a $list< (ref $Binding) >)
+    (param $b $list< (ref $Binding) >)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (!= (@list.len (ref $Binding) $a) (@list.len (ref $Binding) $b))
+        (then (return 0))
+        (else (nop)))
+      (@for-each $x $a
+        (if (i32.eqz (call $interface-has $b $x)) (then (return 0)) (else (nop))))
+      1))
+
+  (func $forward-target
+    (param $xs $list< (ref $Forward) >)
+    (param $id (ref $tree))
+    (result (ref null $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref null $tree))
+      (@for-each $x $xs
+        (if
+          (ref.eq $id (struct.get $Forward $binder $x))
+          (then (return (struct.get $Forward $target $x)))
+          (else (nop))))
+      (ref.null $tree)))
+
+  (func $forward-env
+    (param $xs $list< (ref $Forward) >)
+    (param $body (ref $tree))
+    (param $env (ref null $Scope))
+    (result (ref null $Scope))
+    (@effect reads writes allocates)
+    (@loop $scan
+      (bind $i i32 0)
+      (bind $out (ref null $Scope) $env)
+      (result (ref null $Scope))
+      (if
+        (result (ref null $Scope))
+        (= $i (@list.len (ref $Forward) $xs))
+        (then $out)
+        (else
+          (@let
+            (($x (@list.get (ref $Forward) $xs $i)))
+            (@recur $scan
+              (+ $i 1)
+              (if
+                (result (ref null $Scope))
+                (&&
+                  (struct.get $Forward $private $x)
+                  (ref.eq $body (struct.get $Forward $body $x)))
+                (then
+                  (struct.new $Scope
+                    (struct.get $Forward $binder $x)
+                    (struct.get $Forward $binder $x)
+                    (struct.get $Forward $target $x)
+                    0
+                    $out))
+                (else $out))))
+        ))))
+
+  (func $forward-materialize
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (param $xs $list< (ref $Forward) >)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $tree))
+      (@for-each $x $xs
+        (block
+          (if
+            (ref.eq $n (struct.get $Forward $binder $x))
+            (then
+              (return
+                (call $tree.copy $n 10
+                  (@bytes.new)
+                  (@list.new (ref $tree) (struct.get $Forward $target $x))))
+            )
+            (else (nop)))
+          (if
+            (ref.eq $n (struct.get $Forward $body $x))
+            (then
+              (return
+                (call $tree.copy $n 10
+                  (@bytes.new)
+                  (@list.new
+                    (ref $tree)
+                    (if
+                      (result (ref $tree))
+                      (= (struct.get $tree $kind $n) 9)
+                      (then (call $tree.at $n 0))
+                      (else (call $walk $s $n (call $forward-env $xs $n $env) 0 0))))
+                )))
+            (else (nop))))
+      )
+      (if (!= (struct.get $tree $kind $n) 2) (then (return $n)) (else (nop)))
+      (@let
+        (($b (call $list-builder.new< (ref $tree) >)))
+        (block
+          (result (ref $tree))
+          (@for-each $child (struct.get $tree $items $n)
+            (call $list-builder.push< (ref $tree) > $b
+              (call $forward-materialize $s $child $env $xs)))
+          (call $tree.copy $n 2
+            (@bytes.new)
+            (call $list-builder.finish< (ref $tree) > $b))))
+    ))
+
+  (func $delegate
+    (param $s (ref $Walk))
+    (param $n (ref $tree))
+    (param $env (ref null $Scope))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($rules (call $macro.rules (struct.get $Walk $context $s) (call $tree.at $n 0)))
+       ($state (struct.new $Delegation 0 (@list.new (ref $Binding))))
+       ($args (call $tree.copy $n 2 (@bytes.new) (call $tree.slice $n 1)))
+       ($out (call $list-builder.new< (ref $Forward) >)))
+      (block
+        (result (ref $tree))
+        (@for-each $rule $rules
+          (@match (call $macro.match $rule $args)
+            (@case none () (nop))
+            (@case some ($candidate)
+              (@let
+                (($interface (call $interface $candidate)))
+                (block
+                  (if
+                    (&&
+                      (struct.get $Delegation $found $state)
+                      (i32.eqz
+                        (call $interface-same
+                          (struct.get $Delegation $bindings $state)
+                          $interface)))
+                    (then (call $fail $s $n 216))
+                    (else (nop)))
+                  (struct.set $Delegation $found $state 1)
+                  (struct.set $Delegation $bindings $state $interface))))
+          ))
+        (if
+          (i32.eqz (struct.get $Delegation $found $state))
+          (then
+            (block
+              (call $fail $s $n
+                (if
+                  (result i32)
+                  (= (@list.len (ref $macro-rule) $rules) 0)
+                  (then 212)
+                  (else 213)))
+              (return $n)))
+          (else (nop)))
+        (@for-each $binding (struct.get $Delegation $bindings $state)
+          (@let
+            (($id (struct.get $Binding $binder $binding))
+             ($body (struct.get $Binding $body $binding))
+             ($prior
+               (call $forward-target (call $work.snapshot< (ref $Forward) > $out) $id))
+             ($private (!= (struct.get $tree $kind $id) 9))
+             ($target
+               (if
+                 (result (ref $tree))
+                 (ref.is_null $prior)
+                 (then
+                   (if
+                     (result (ref $tree))
+                     $private
+                     (then (call $macro.fresh (struct.get $Walk $context $s) $id))
+                     (else (call $tree.at $id 0))))
+                 (else (ref.as_non_null $prior))))
+            )
+            (block
+              (if
+                (i32.eqz $private)
+                (then
+                  (block
+                    (if
+                      (||
+                        (!= (struct.get $tree $kind $body) 9)
+                        (i32.eqz
+                          (call $binding-for $s
+                            (call $tree.copy $id 0
+                              (struct.get $tree $value $id)
+                              (@list.new (ref $tree)))
+                            (call $tree.copy $body 0
+                              (struct.get $tree $value $body)
+                              (@list.new (ref $tree))))
+                        ))
+                      (then (call $fail $s $body 216))
+                      (else (nop)))
+                    (if
+                      (ref.is_null $prior)
+                      (then (drop (call $new-binding $s $id $env 0 0)))
+                      (else (nop))))
+                )
+                (else (nop)))
+              (call $list-builder.push< (ref $Forward) > $out
+                (struct.new $Forward $id $body $target $private))))
+        )
+        (call $map $s
+          (call $forward-materialize $s $n $env
+            (call $list-builder.finish< (ref $Forward) > $out))
+          $env
+          0
+          0))))
+)

@@ -1,0 +1,982 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $tuple)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $source-file)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.read)
+    (func $tree.slice)
+    (func $tree.eq)
+    (func $work.snapshot)
+    (func $t0)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4)
+    (func $t5)
+    (func $t6))
+  (@use "./tree.walz" (func $tree.occurs))
+  (@use "../parser/number.walz" (func $number.i32))
+  (@export (func $lower.run))
+  (type $Var
+    (struct
+      (field $name (ref $tree))
+      (field $type (ref $tree))
+      (field $value (ref $tree))
+      (field $parent (ref null $Var))))
+  (type $Loop
+    (struct
+      (field $name (ref $tree))
+      (field $target (ref $tree))
+      (field $names $list<(ref $tree)>)
+      (field $types $list<(ref $tree)>)
+      (field $result (ref $tree))))
+  (type $State
+    (struct
+      (field $root (ref $tree))
+      (field $next (mut i32))
+      (field $locals (mut (ref $list-builder<(ref $tree)>)))
+      (field $error (mut (ref null $project-error)))
+      (field $base (mut i32))
+      (field $depth (mut i32))))
+  (func $fail
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $State $error $s))
+      (then (struct.set $State $error $s (call $tree.error $n $code)))
+      (else (nop))))
+
+  (func $fresh
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@loop $fresh
+      (result (ref $tree))
+      (@let
+        (($x (call $tree.name $n "$__lower." (struct.get $State $next $s))))
+        (block
+          (result (ref $tree))
+          (struct.set $State $next $s (+ (struct.get $State $next $s) 1))
+          (if
+            (result (ref $tree))
+            (call $tree.occurs (struct.get $State $root $s) $x)
+            (then (@recur $fresh))
+            (else $x))))
+    ))
+
+  (func $lookup
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (result (ref $tree))
+    (@effect pure)
+    (@loop $lookup
+      (bind $p (ref null $Var) $env)
+      (result (ref $tree))
+      (if
+        (result (ref $tree))
+        (ref.is_null $p)
+        (then $n)
+        (else
+          (@let
+            (($v (ref.as_non_null $p)))
+            (if
+              (result (ref $tree))
+              (call $tree.eq $n (struct.get $Var $name $v))
+              (then (struct.get $Var $value $v))
+              (else (@recur $lookup (struct.get $Var $parent $v))))
+          ))))
+  )
+
+  (func $slot
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $type (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($x (call $fresh $s $n))
+       ($physical
+         (if
+           (result (ref $tree))
+           (&& (call $tree.head $type "ref") (= (call $tree.len $type) 2))
+           (then
+             (call $t2 $n "ref" (call $tree.atom $n "null") (call $tree.at $type 1)))
+           (else $type))))
+      (block
+        (result (ref $tree))
+        (call $list-builder.push<(ref $tree)>
+          (struct.get $State $locals $s)
+          (call $t2 $n "local" $x $physical))
+        $x)))
+
+  (func $recur
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (param $loop (ref null $Loop))
+    (param $tail i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (if
+      (result (ref $tree))
+      (ref.is_null $loop)
+      (then (block (result (ref $tree)) (call $fail $s $n 205) $n))
+      (else
+        (@let
+          (($l (ref.as_non_null $loop))
+           ($names (struct.get $Loop $names $l))
+           ($types (struct.get $Loop $types $l))
+           ($temps (call $list-builder.new<(ref $tree)>))
+           ($sets (call $list-builder.new<(ref $tree)>)))
+          (block
+            (result (ref $tree))
+            (call $list-builder.push<(ref $tree)> $sets (struct.get $Loop $result $l))
+            (if
+              (||
+                (i32.eqz $tail)
+                (||
+                  (i32.eqz
+                    (call $tree.eq (call $tree.at $n 1) (struct.get $Loop $name $l)))
+                  (!= (- (call $tree.len $n) 2) (@list.len (ref $tree) $names))))
+              (then (block (call $fail $s $n 205) (return $n)))
+              (else (nop)))
+            (@for $i
+              (bind $i i32 0)
+              (while (< $i (@list.len (ref $tree) $names)))
+              (step (+ $i 1))
+              (@let
+                (($temp (call $fresh $s $n)))
+                (block
+                  (call $list-builder.push<(ref $tree)> $temps $temp)
+                  (call $list-builder.push<(ref $tree)> $sets
+                    (call $t2 $n "local.set" (@list.get (ref $tree) $names $i) $temp))))
+            )
+            (call $list-builder.push<(ref $tree)> $sets
+              (call $t1 $n "br" (struct.get $Loop $target $l)))
+            (@let
+              (($body
+                 (call $tree.form $n "block"
+                   (call $list-builder.finish<(ref $tree)> $sets)))
+               ($temp-list (call $list-builder.finish<(ref $tree)> $temps)))
+              (@loop $wrap
+                (bind $i i32 (@list.len (ref $tree) $names))
+                (bind $body (ref $tree) $body)
+                (result (ref $tree))
+                (if
+                  (result (ref $tree))
+                  (= $i 0)
+                  (then $body)
+                  (else
+                    (@let
+                      (($j (- $i 1)))
+                      (@recur $wrap $j
+                        (call $t4 $n "@let"
+                          (@list.get (ref $tree) $temp-list $j)
+                          (call $t1 $n "type" (@list.get (ref $tree) $types $j))
+                          (call $expr $s (call $tree.at $n (+ $j 2)) $env $loop 0)
+                          $body))))
+                ))))
+        ))))
+
+  (func $loop
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($names (call $list-builder.new<(ref $tree)>))
+       ($types (call $list-builder.new<(ref $tree)>))
+       ($init (call $list-builder.new<(ref $tree)>)))
+      (@loop $binds
+        (bind $i i32 2)
+        (bind $scope (ref null $Var) $env)
+        (result (ref $tree))
+        (if
+          (result (ref $tree))
+          (&& (< $i (call $tree.len $n)) (call $tree.head (call $tree.at $n $i) "bind"))
+          (then
+            (@let
+              (($b (call $tree.at $n $i))
+               ($type (call $tree.at $b 2))
+               ($slot (call $slot $s $n $type))
+               ($get (call $t1 $n "local.get" $slot))
+               ($value
+                 (if
+                   (result (ref $tree))
+                   (&& (call $tree.head $type "ref") (= (call $tree.len $type) 2))
+                   (then (call $t1 $n "ref.as_non_null" $get))
+                   (else $get))))
+              (block
+                (result (ref $tree))
+                (if
+                  (!= (call $tree.len $b) 4)
+                  (then (call $fail $s $b 205))
+                  (else (nop)))
+                (call $list-builder.push<(ref $tree)> $names $slot)
+                (call $list-builder.push<(ref $tree)> $types $type)
+                (call $list-builder.push<(ref $tree)> $init
+                  (call $t2 $n "local.set" $slot
+                    (call $expr $s (call $tree.at $b 3) $env (ref.null $Loop) 0)))
+                (@recur $binds
+                  (+ $i 1)
+                  (struct.new $Var (call $tree.at $b 1) $type $value $scope))))
+          )
+          (else
+            (@let
+              (($target (call $fresh $s $n))
+               ($l
+                 (struct.new $Loop
+                   (call $tree.at $n 1)
+                   $target
+                   (call $list-builder.finish<(ref $tree)> $names)
+                   (call $list-builder.finish<(ref $tree)> $types)
+                   (if
+                     (result (ref $tree))
+                     (call $tree.head (call $tree.at $n $i) "result")
+                     (then (call $tree.at $n $i))
+                     (else (call $t0 $n "result"))))
+               )
+               ($parts (call $list-builder.new<(ref $tree)>))
+               ($body-at (+ $i (call $tree.head (call $tree.at $n $i) "result"))))
+              (block
+                (result (ref $tree))
+                (call $list-builder.push<(ref $tree)> $parts $target)
+                (if
+                  (call $tree.head (call $tree.at $n $i) "result")
+                  (then
+                    (call $list-builder.push<(ref $tree)> $parts (call $tree.at $n $i)))
+                  (else (nop)))
+                (if
+                  (!= (+ $body-at 1) (call $tree.len $n))
+                  (then (call $fail $s $n 205))
+                  (else (nop)))
+                (call $list-builder.push<(ref $tree)> $parts
+                  (call $expr $s (call $tree.at $n $body-at) $scope $l 1))
+                (@let
+                  (($outer (call $list-builder.new<(ref $tree)>)))
+                  (block
+                    (result (ref $tree))
+                    (if
+                      (call $tree.head (call $tree.at $n $i) "result")
+                      (then
+                        (call $list-builder.push<(ref $tree)> $outer
+                          (call $tree.at $n $i)))
+                      (else (nop)))
+                    (call $list-builder.extend<(ref $tree)> $outer
+                      (call $list-builder.finish<(ref $tree)> $init))
+                    (call $list-builder.push<(ref $tree)> $outer
+                      (call $tree.form $n "loop"
+                        (call $list-builder.finish<(ref $tree)> $parts)))
+                    (call $tree.form $n "block"
+                      (call $list-builder.finish<(ref $tree)> $outer))))
+              ))))
+      )))
+
+  (func $for
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($parts (call $list-builder.new<(ref $tree)>))
+       ($steps (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result (ref $tree))
+        (call $list-builder.push<(ref $tree)> $parts (call $tree.at $n 1))
+        (call $list-builder.push<(ref $tree)> $steps (call $tree.at $n 1))
+        (@loop $binds
+          (bind $i i32 2)
+          (result (ref $tree))
+          (if
+            (result (ref $tree))
+            (call $tree.head (call $tree.at $n $i) "bind")
+            (then
+              (block
+                (result (ref $tree))
+                (call $list-builder.push<(ref $tree)> $parts (call $tree.at $n $i))
+                (@recur $binds (+ $i 1))))
+            (else
+              (@let
+                (($while (call $tree.at $n $i))
+                 ($step (call $tree.at $n (+ $i 1)))
+                 ($body (call $tree.at $n (+ $i 2))))
+                (block
+                  (result (ref $tree))
+                  (if
+                    (||
+                      (i32.eqz (call $tree.head $while "while"))
+                      (||
+                        (i32.eqz (call $tree.head $step "step"))
+                        (||
+                          (!= (call $tree.len $n) (+ $i 3))
+                          (!= (call $tree.len $step) (- $i 1))))
+                    )
+                    (then (call $fail $s $n 205))
+                    (else (nop)))
+                  (@for $j
+                    (bind $j i32 1)
+                    (while (< $j (call $tree.len $step)))
+                    (step (+ $j 1))
+                    (call $list-builder.push<(ref $tree)> $steps
+                      (call $tree.at $step $j)))
+                  (call $list-builder.push<(ref $tree)> $parts
+                    (call $t3 $n "if"
+                      (call $tree.at $while 1)
+                      (call $t1 $n "then"
+                        (call $t2 $n "block" $body
+                          (call $tree.form $n "@recur"
+                            (call $list-builder.finish<(ref $tree)> $steps))))
+                      (call $t1 $n "else" (call $t0 $n "nop"))))
+                  (call $loop $s
+                    (call $tree.form $n "@loop"
+                      (call $list-builder.finish<(ref $tree)> $parts))
+                    $env))))
+          ))))
+  )
+
+  (func $expr-body
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (param $loop (ref null $Loop))
+    (param $tail i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (if
+      (result (ref $tree))
+      (&& (!= (struct.get $tree $kind $n) 2) (!= (struct.get $tree $kind $n) 8))
+      (then (call $lookup $n $env))
+      (else
+        (block
+          (result (ref $tree))
+          (if
+            (i32.eqz (ref.is_null (struct.get $State $error $s)))
+            (then (return $n))
+            (else (nop)))
+          (if
+            (||
+              (call $tree.head $n "local.get")
+              (|| (call $tree.head $n "local.set") (call $tree.head $n "local.tee")))
+            (then
+              (block
+                (@match
+                  (call $number.i32 (struct.get $tree $value (call $tree.at $n 1)))
+                  (@case none () (nop))
+                  (@case some ($index)
+                    (if
+                      (i32.ge_u $index (struct.get $State $base $s))
+                      (then (call $fail $s $n 109))
+                      (else (nop))))
+                )
+                (if
+                  (&&
+                    (i32.eqz (call $tree.head $n "local.get"))
+                    (i32.eqz
+                      (call $tree.eq
+                        (call $lookup (call $tree.at $n 1) $env)
+                        (call $tree.at $n 1))))
+                  (then (call $fail $s $n 113))
+                  (else (nop))))
+            )
+            (else (nop)))
+          (if
+            (result (ref $tree))
+            (call $tree.head $n "@let")
+            (then
+              (@let
+                (($name (call $tree.at $n 1)))
+                (if
+                  (result (ref $tree))
+                  (= (struct.get $tree $kind $name) 2)
+                  (then
+                    (@loop $many
+                      (bind $i i32 (call $tree.len $name))
+                      (bind $body (ref $tree) (call $tree.at $n 2))
+                      (result (ref $tree))
+                      (if
+                        (result (ref $tree))
+                        (= $i 0)
+                        (then (call $expr $s $body $env $loop $tail))
+                        (else
+                          (@let
+                            (($b (call $tree.at $name (- $i 1)))
+                             ($parts (call $list-builder.new<(ref $tree)>)))
+                            (block
+                              (result (ref $tree))
+                              (@for $j
+                                (bind $j i32 0)
+                                (while (< $j (call $tree.len $b)))
+                                (step (+ $j 1))
+                                (call $list-builder.push<(ref $tree)> $parts
+                                  (call $tree.at $b $j)))
+                              (call $list-builder.push<(ref $tree)> $parts $body)
+                              (@recur $many
+                                (- $i 1)
+                                (call $tree.form $n "@let"
+                                  (call $list-builder.finish<(ref $tree)> $parts))))
+                          ))))
+                  )
+                  (else
+                    (@let
+                      (($b (call $list-builder.new<(ref $tree)>))
+                       ($scope
+                         (struct.new $Var $name (call $tree.atom $n "i32") $name $env)))
+                      (block
+                        (result (ref $tree))
+                        (@for $i
+                          (bind $i i32 1)
+                          (while (< $i (call $tree.len $n)))
+                          (step (+ $i 1))
+                          (call $list-builder.push<(ref $tree)> $b
+                            (if
+                              (result (ref $tree))
+                              (= $i 1)
+                              (then (call $tree.at $n 1))
+                              (else
+                                (if
+                                  (result (ref $tree))
+                                  (= $i (- (call $tree.len $n) 1))
+                                  (then
+                                    (call $expr $s
+                                      (call $tree.at $n $i)
+                                      $scope
+                                      $loop
+                                      $tail))
+                                  (else
+                                    (if
+                                      (result (ref $tree))
+                                      (&&
+                                        (= $i 2)
+                                        (call $tree.head (call $tree.at $n $i) "type"))
+                                      (then (call $tree.at $n $i))
+                                      (else
+                                        (call $expr $s
+                                          (call $tree.at $n $i)
+                                          $env
+                                          $loop
+                                          0))))
+                                ))))
+                        )
+                        (call $tree.form $n "@let"
+                          (call $list-builder.finish<(ref $tree)> $b))))
+                  ))))
+            (else
+              (if
+                (result (ref $tree))
+                (call $tree.head $n "@loop")
+                (then (call $loop $s $n $env))
+                (else
+                  (if
+                    (result (ref $tree))
+                    (call $tree.head $n "@for")
+                    (then (call $for $s $n $env))
+                    (else
+                      (if
+                        (result (ref $tree))
+                        (call $tree.head $n "@recur")
+                        (then (call $recur $s $n $env $loop $tail))
+                        (else
+                          (if
+                            (result (ref $tree))
+                            (&&
+                              (call $tree.head $n "local.get")
+                              (= (call $tree.len $n) 2))
+                            (then
+                              (@let
+                                (($x (call $lookup (call $tree.at $n 1) $env)))
+                                (if
+                                  (result (ref $tree))
+                                  (call $tree.eq $x (call $tree.at $n 1))
+                                  (then
+                                    (@let
+                                      (($b (call $list-builder.new<(ref $tree)>))
+                                       ($h (call $tree.at $n 0)))
+                                      (block
+                                        (result (ref $tree))
+                                        (@for $i
+                                          (bind $i i32 0)
+                                          (while (< $i (call $tree.len $n)))
+                                          (step (+ $i 1))
+                                          (call $list-builder.push<(ref $tree)> $b
+                                            (if
+                                              (result (ref $tree))
+                                              (||
+                                                (||
+                                                  (||
+                                                    (= $i 0)
+                                                    (&&
+                                                      (= $i 1)
+                                                      (||
+                                                        (||
+                                                          (||
+                                                            (||
+                                                              (||
+                                                                (||
+                                                                  (||
+                                                                    (||
+                                                                      (||
+                                                                        (||
+                                                                          (||
+                                                                            (||
+                                                                              (||
+                                                                                (||
+                                                                                  (||
+                                                                                    (||
+                                                                                      (||
+                                                                                        (||
+                                                                                          (||
+                                                                                            (||
+                                                                                              (||
+                                                                                                (||
+                                                                                                  (||
+                                                                                                    (call
+                                                                                                      $tree.is
+                                                                                                      $h
+                                                                                                      "call")
+                                                                                                    (call
+                                                                                                      $tree.is
+                                                                                                      $h
+                                                                                                      "local.get"))
+                                                                                                  (call
+                                                                                                    $tree.is
+                                                                                                    $h
+                                                                                                    "local.set"))
+                                                                                                (call
+                                                                                                  $tree.is
+                                                                                                  $h
+                                                                                                  "local.tee"))
+                                                                                              (call
+                                                                                                $tree.is
+                                                                                                $h
+                                                                                                "br"))
+                                                                                            (call
+                                                                                              $tree.is
+                                                                                              $h
+                                                                                              "br_if"))
+                                                                                          (call
+                                                                                            $tree.is
+                                                                                            $h
+                                                                                            "ref.null"))
+                                                                                        (call
+                                                                                          $tree.is
+                                                                                          $h
+                                                                                          "ref.cast"))
+                                                                                      (call
+                                                                                        $tree.is
+                                                                                        $h
+                                                                                        "ref.test"))
+                                                                                    (call
+                                                                                      $tree.is
+                                                                                      $h
+                                                                                      "struct.new"))
+                                                                                  (call
+                                                                                    $tree.is
+                                                                                    $h
+                                                                                    "struct.new_default"))
+                                                                                (call
+                                                                                  $tree.is
+                                                                                  $h
+                                                                                  "struct.get"))
+                                                                              (call
+                                                                                $tree.is
+                                                                                $h
+                                                                                "struct.get_s"))
+                                                                            (call
+                                                                              $tree.is
+                                                                              $h
+                                                                              "struct.get_u"))
+                                                                          (call $tree.is
+                                                                            $h
+                                                                            "struct.set"))
+                                                                        (call $tree.is
+                                                                          $h "array.new"))
+                                                                      (call $tree.is $h
+                                                                        "array.new_default"))
+                                                                    (call $tree.is $h
+                                                                      "array.new_fixed"))
+                                                                  (call $tree.is $h
+                                                                    "array.get"))
+                                                                (call $tree.is $h
+                                                                  "array.get_s"))
+                                                              (call $tree.is $h
+                                                                "array.get_u"))
+                                                            (call $tree.is $h
+                                                              "array.set"))
+                                                          (call $tree.is $h "array.fill"))
+                                                        (call $tree.is $h "array.copy"))))
+                                                  (&&
+                                                    (= $i 2)
+                                                    (||
+                                                      (||
+                                                        (||
+                                                          (||
+                                                            (call $tree.is $h
+                                                              "struct.get")
+                                                            (call $tree.is $h
+                                                              "struct.get_s"))
+                                                          (call $tree.is $h
+                                                            "struct.get_u"))
+                                                        (call $tree.is $h "struct.set"))
+                                                      (call $tree.is $h "array.copy"))))
+                                                (||
+                                                  (&&
+                                                    (= $i 1)
+                                                    (&&
+                                                      (=
+                                                        (struct.get $tree $kind
+                                                          (call $tree.at $n $i))
+                                                        0)
+                                                      (||
+                                                        (call $tree.is $h "block")
+                                                        (||
+                                                          (call $tree.is $h "loop")
+                                                          (call $tree.is $h "if"))))
+                                                  )
+                                                  (call $tree.head
+                                                    (call $tree.at $n $i)
+                                                    "result")))
+                                              (then (call $tree.at $n $i))
+                                              (else
+                                                (call $expr $s
+                                                  (call $tree.at $n $i)
+                                                  $env
+                                                  $loop
+                                                  (&& $tail
+                                                    (||
+                                                      (&&
+                                                        (= $i (- (call $tree.len $n) 1))
+                                                        (||
+                                                          (call $tree.is $h "block")
+                                                          (||
+                                                            (call $tree.is $h "then")
+                                                            (call $tree.is $h "else"))))
+                                                      (&&
+                                                        (call $tree.is $h "if")
+                                                        (||
+                                                          (call $tree.head
+                                                            (call $tree.at $n $i)
+                                                            "then")
+                                                          (call $tree.head
+                                                            (call $tree.at $n $i)
+                                                            "else"))))
+                                                  ))))
+                                          ))
+                                        (call $tree.copy $n 2
+                                          (@bytes.new)
+                                          (call $list-builder.finish<(ref $tree)> $b))))
+                                  )
+                                  (else $x))))
+                            (else
+                              (@let
+                                (($b (call $list-builder.new<(ref $tree)>))
+                                 ($h (call $tree.at $n 0)))
+                                (block
+                                  (result (ref $tree))
+                                  (@for $i
+                                    (bind $i i32 0)
+                                    (while (< $i (call $tree.len $n)))
+                                    (step (+ $i 1))
+                                    (call $list-builder.push<(ref $tree)> $b
+                                      (if
+                                        (result (ref $tree))
+                                        (||
+                                          (||
+                                            (||
+                                              (= $i 0)
+                                              (&&
+                                                (= $i 1)
+                                                (||
+                                                  (||
+                                                    (||
+                                                      (||
+                                                        (||
+                                                          (||
+                                                            (||
+                                                              (||
+                                                                (||
+                                                                  (||
+                                                                    (||
+                                                                      (||
+                                                                        (||
+                                                                          (||
+                                                                            (||
+                                                                              (||
+                                                                                (||
+                                                                                  (||
+                                                                                    (||
+                                                                                      (||
+                                                                                        (||
+                                                                                          (||
+                                                                                            (||
+                                                                                              (call
+                                                                                                $tree.is
+                                                                                                $h
+                                                                                                "call")
+                                                                                              (call
+                                                                                                $tree.is
+                                                                                                $h
+                                                                                                "local.get"))
+                                                                                            (call
+                                                                                              $tree.is
+                                                                                              $h
+                                                                                              "local.set"))
+                                                                                          (call
+                                                                                            $tree.is
+                                                                                            $h
+                                                                                            "local.tee"))
+                                                                                        (call
+                                                                                          $tree.is
+                                                                                          $h
+                                                                                          "br"))
+                                                                                      (call
+                                                                                        $tree.is
+                                                                                        $h
+                                                                                        "br_if"))
+                                                                                    (call
+                                                                                      $tree.is
+                                                                                      $h
+                                                                                      "ref.null"))
+                                                                                  (call
+                                                                                    $tree.is
+                                                                                    $h
+                                                                                    "ref.cast"))
+                                                                                (call
+                                                                                  $tree.is
+                                                                                  $h
+                                                                                  "ref.test"))
+                                                                              (call
+                                                                                $tree.is
+                                                                                $h
+                                                                                "struct.new"))
+                                                                            (call
+                                                                              $tree.is
+                                                                              $h
+                                                                              "struct.new_default"))
+                                                                          (call $tree.is
+                                                                            $h
+                                                                            "struct.get"))
+                                                                        (call $tree.is
+                                                                          $h
+                                                                          "struct.get_s"))
+                                                                      (call $tree.is $h
+                                                                        "struct.get_u"))
+                                                                    (call $tree.is $h
+                                                                      "struct.set"))
+                                                                  (call $tree.is $h
+                                                                    "array.new"))
+                                                                (call $tree.is $h
+                                                                  "array.new_default"))
+                                                              (call $tree.is $h
+                                                                "array.new_fixed"))
+                                                            (call $tree.is $h
+                                                              "array.get"))
+                                                          (call $tree.is $h
+                                                            "array.get_s"))
+                                                        (call $tree.is $h "array.get_u"))
+                                                      (call $tree.is $h "array.set"))
+                                                    (call $tree.is $h "array.fill"))
+                                                  (call $tree.is $h "array.copy"))))
+                                            (&&
+                                              (= $i 2)
+                                              (||
+                                                (||
+                                                  (||
+                                                    (||
+                                                      (call $tree.is $h "struct.get")
+                                                      (call $tree.is $h "struct.get_s"))
+                                                    (call $tree.is $h "struct.get_u"))
+                                                  (call $tree.is $h "struct.set"))
+                                                (call $tree.is $h "array.copy"))))
+                                          (||
+                                            (&&
+                                              (= $i 1)
+                                              (&&
+                                                (=
+                                                  (struct.get $tree $kind
+                                                    (call $tree.at $n $i))
+                                                  0)
+                                                (||
+                                                  (call $tree.is $h "block")
+                                                  (||
+                                                    (call $tree.is $h "loop")
+                                                    (call $tree.is $h "if"))))
+                                            )
+                                            (call $tree.head
+                                              (call $tree.at $n $i)
+                                              "result")))
+                                        (then (call $tree.at $n $i))
+                                        (else
+                                          (call $expr $s
+                                            (call $tree.at $n $i)
+                                            $env
+                                            $loop
+                                            (&& $tail
+                                              (||
+                                                (&&
+                                                  (= $i (- (call $tree.len $n) 1))
+                                                  (||
+                                                    (call $tree.is $h "block")
+                                                    (||
+                                                      (call $tree.is $h "then")
+                                                      (call $tree.is $h "else"))))
+                                                (&&
+                                                  (call $tree.is $h "if")
+                                                  (||
+                                                    (call $tree.head
+                                                      (call $tree.at $n $i)
+                                                      "then")
+                                                    (call $tree.head
+                                                      (call $tree.at $n $i)
+                                                      "else"))))
+                                            ))))
+                                    ))
+                                  (call $tree.copy $n 2
+                                    (@bytes.new)
+                                    (call $list-builder.finish<(ref $tree)> $b))))
+                            ))))
+                    ))))
+            ))))
+    ))
+
+  (func $function
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($prefix (call $list-builder.new<(ref $tree)>))
+       ($body (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result (ref $tree))
+        (struct.set $State $locals $s (call $list-builder.new<(ref $tree)>))
+        (struct.set $State $base $s 0)
+        (@for $decl
+          (bind $decl i32 0)
+          (while (< $decl (call $tree.len $n)))
+          (step (+ $decl 1))
+          (if
+            (||
+              (call $tree.head (call $tree.at $n $decl) "param")
+              (call $tree.head (call $tree.at $n $decl) "local"))
+            (then (struct.set $State $base $s (+ (struct.get $State $base $s) 1)))
+            (else (nop))))
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (@let
+            (($x (call $tree.at $n $i)))
+            (if
+              (||
+                (||
+                  (||
+                    (||
+                      (|| (< $i 2) (call $tree.head $x "param"))
+                      (call $tree.head $x "result"))
+                    (call $tree.head $x "local"))
+                  (call $tree.head $x "export"))
+                (call $tree.head $x "@effect"))
+              (then (call $list-builder.push<(ref $tree)> $prefix $x))
+              (else
+                (call $list-builder.push<(ref $tree)> $body
+                  (call $expr $s $x (ref.null $Var) (ref.null $Loop) 0))))
+          ))
+        (call $list-builder.extend<(ref $tree)> $prefix
+          (call $list-builder.finish<(ref $tree)> (struct.get $State $locals $s)))
+        (call $list-builder.extend<(ref $tree)> $prefix
+          (call $list-builder.finish<(ref $tree)> $body))
+        (call $tree.copy $n 2
+          (@bytes.new)
+          (call $list-builder.finish<(ref $tree)> $prefix))))
+  )
+
+  (func $lower.run
+    (param $n (ref $tree))
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let
+      (($s
+         (struct.new $State
+           $n
+           0
+           (call $list-builder.new<(ref $tree)>)
+           (ref.null $project-error)
+           0
+           0))
+       ($out (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result $result<(ref $tree), (ref $project-error)>)
+        (@for $i
+          (bind $i i32 1)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (@let
+            (($x (call $tree.at $n $i)))
+            (call $list-builder.push<(ref $tree)> $out
+              (if
+                (result (ref $tree))
+                (call $tree.head $x "func")
+                (then (call $function $s $x))
+                (else $x))))
+        )
+        (if
+          (result $result<(ref $tree), (ref $project-error)>)
+          (ref.is_null (struct.get $State $error $s))
+          (then
+            (@result.ok
+              (call $tree.form $n "module"
+                (call $list-builder.finish<(ref $tree)> $out))))
+          (else (@result.err (ref.as_non_null (struct.get $State $error $s))))
+        ))))
+
+  (func $expr
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Var))
+    (param $loop (ref null $Loop))
+    (param $tail i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (if
+      (result (ref $tree))
+      (>= (struct.get $State $depth $s) 128)
+      (then (block (result (ref $tree)) (call $fail $s $n 150) $n))
+      (else
+        (block
+          (result (ref $tree))
+          (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
+          (@let
+            (($value (call $expr-body $s $n $env $loop $tail)))
+            (block
+              (result (ref $tree))
+              (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
+              $value))))
+    )))

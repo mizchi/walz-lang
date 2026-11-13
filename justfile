@@ -17,6 +17,13 @@ test-runtime-cli:
     cargo test --locked --test cli_run --test cli_async --test cli_deadlines --test cli_targets --test interface_types --test wit_values --test wit_world --test stream_batch --test wasm_bridge --test scoped_tasks --test resources --test local_cancellation --test native_async --test native_resources --test abi_limits
     node --expose-gc --test runtime/interface-types.test.mjs runtime/wit-values.test.mjs runtime/wit-world.test.mjs runtime/stream-batch.test.mjs runtime/deadlines.test.mjs runtime/wasi-filesystem.test.mjs runtime/channels.test.mjs runtime/scoped-tasks.test.mjs runtime/wasm-bridge.test.mjs runtime/local-cancellation.test.mjs runtime/native-async.test.mjs runtime/native-resources.test.mjs
 
+test-composition:
+    cargo test --locked --test composition --test composition_resources --test composition_generics --test composition_queries --test composition_arguments --test wit_world --test native_async --test native_resources
+    node --expose-gc --test runtime/composition.test.mjs runtime/composition-resources.test.mjs runtime/composition-generics.test.mjs runtime/composition-queries.test.mjs runtime/composition-arguments.test.mjs runtime/jco-native-results.test.mjs runtime/native-async.test.mjs runtime/wit-world.test.mjs
+
+test-composition-e2e:
+    pnpm exec playwright test --config playwright.composition.config.mjs
+
 test-install:
     node tools/test-installed-cli.mjs
 
@@ -119,6 +126,57 @@ profile-table snapshot output filter="":
 
 test-table-profile:
     node --test runtime/table-profile.test.mjs
+
+build-selfhost output="target/selfhost":
+    node runtime/build-core.mjs examples/selfhost/portable.walz {{quote(output)}}
+
+selfhost-compile input output compiler="target/selfhost":
+    node runtime/selfhost.mjs {{quote(input)}} {{quote(output)}} {{quote(compiler)}}
+
+selfhost-check input compiler="target/selfhost":
+    node runtime/selfhost.mjs --check {{quote(input)}} {{quote(compiler)}}
+
+test-selfhost:
+    cargo test --locked --test selfhost --test selfhost_gc_parity
+    node --expose-gc --test runtime/selfhost.test.mjs runtime/selfhost-checker.test.mjs runtime/selfhost-gc.test.mjs runtime/selfhost-front.test.mjs
+
+selfhost-core-source:
+    node tools/selfhost/embed-core.mjs
+
+test-selfhost-front:
+    node tools/selfhost/embed-core.mjs --check
+    node --expose-gc --test runtime/selfhost-front.test.mjs
+
+test-selfhost-gc:
+    cargo test --locked --test selfhost --test selfhost_gc_parity
+    node --expose-gc --test runtime/selfhost-gc.test.mjs
+
+test-selfhost-e2e:
+    pnpm exec playwright test --config playwright.selfhost.config.mjs
+
+capture-selfhost output:
+    node runtime/selfhost-bench/capture.mjs {{quote(output)}}
+
+verify-selfhost capture:
+    node runtime/selfhost-bench.mjs verify {{quote(capture)}}
+
+bench-selfhost capture output samples="9":
+    node --expose-gc runtime/selfhost-bench.mjs {{quote(capture)}} {{quote(output)}} {{quote(samples)}}
+
+test-selfhost-bench:
+    cargo test --locked --test selfhost_parity
+    node --test runtime/selfhost-bench.test.mjs
+
+build-playground-size output:
+    node tools/playground-size.mjs build {{quote(output)}}
+
+size-playground capture output:
+    node tools/playground-size.mjs measure {{quote(capture)}} {{quote(output)}}
+
+test-playground-size:
+    cargo test --locked --manifest-path tools/wat-web/Cargo.toml
+    cargo fmt --manifest-path tools/wat-web/Cargo.toml -- --check
+    node --test runtime/playground-size.test.mjs
 
 probe-table-wasm-opt snapshot output optimizer="target/wasm-opt-research/binaryen-version_133/bin/wasm-opt":
     node --expose-gc runtime/table-opt-probe.mjs {{quote(snapshot)}} {{quote(output)}} {{quote(optimizer)}}

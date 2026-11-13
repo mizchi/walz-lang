@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [compiler, runtime]
+        suite: [compiler, runtime, browser]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,7 +43,9 @@ jobs:
             ~/.cargo/git
             target/debug
           key: rust-${{ runner.os }}-1.99-${{ matrix.suite }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: rust-${{ runner.os }}-1.99-${{ matrix.suite }}-
+          restore-keys: |
+            rust-${{ runner.os }}-1.99-${{ matrix.suite }}-
+            rust-${{ runner.os }}-1.99-runtime-
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -70,7 +72,7 @@ jobs:
             WALZ_FUZZ_SEED="$seed" cargo test --locked --test differential
           done
       - name: Dependencies
-        if: matrix.suite == 'runtime'
+        if: matrix.suite != 'compiler'
         run: pnpm install --frozen-lockfile
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: matrix.suite == 'runtime'
@@ -85,10 +87,13 @@ jobs:
           just test-content-mapper
           just test-content-mapper-tsgo
       - name: Browser
-        if: matrix.suite == 'runtime'
+        if: matrix.suite == 'browser'
         run: |
           pnpm exec playwright install --with-deps chromium
+          cargo build --locked --bin walz
           just test-e2e
+          just test-selfhost-e2e
+          just test-composition-e2e
           just test-vite
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()

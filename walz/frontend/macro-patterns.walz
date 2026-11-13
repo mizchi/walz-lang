@@ -1,0 +1,647 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $option)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../parser/number.walz" (func $number.i64))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.copy)
+    (func $tree.eq)
+    (func $tree.atom)
+    (func $tree.error)
+    (func $tree.is-name)
+    (func $work.snapshot))
+  (@export
+    (type $macro-variable)
+    (type $macro-rule)
+    (type $macro-capture)
+    (type $macro-match)
+    (func $macro.variable)
+    (func $macro.capture)
+    (func $macro.one)
+    (func $macro.same)
+    (func $macro.rule)
+    (func $macro.match)
+    (func $macro.class)
+    (func $macro.selector))
+  (type $macro-variable
+    (struct (field $name (ref $tree)) (field $category i32) (field $repeated i32)))
+  (type $macro-rule
+    (struct
+      (field $syntax (ref $tree))
+      (field $variables $list< (ref $macro-variable) >)
+      (field $bindings $list< (ref $tree) >)
+      (field $queries $list< (ref $tree) >)
+      (field $guards $list< (ref $tree) >)
+      (field $template (ref $tree))))
+  (type $macro-capture
+    (struct
+      (field $variable (ref $macro-variable))
+      (field $values (ref $list-builder< (ref $tree) >))))
+  (type $macro-match
+    (struct
+      (field $rule (ref $macro-rule))
+      (field $captures $list< (ref $macro-capture) >)))
+  (type $Parse
+    (struct
+      (field $variables (ref $list-builder< (ref $macro-variable) >))
+      (field $error (mut (ref null $project-error))))
+  )
+  (func $bad
+    (param $s (ref $Parse))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $Parse $error $s))
+      (then (struct.set $Parse $error $s (call $tree.error $n 211)))
+      (else (nop))))
+
+  (func $macro.variable
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (&&
+      (= (struct.get $tree $kind $n) 0)
+      (&&
+        (> (@bytes.len (struct.get $tree $value $n)) 1)
+        (= (@bytes.get (struct.get $tree $value $n) 0) 63))))
+
+  (func $lookup
+    (param $vs $list< (ref $macro-variable) >)
+    (param $n (ref $tree))
+    (result (ref null $macro-variable))
+    (@effect reads writes allocates)
+    (block
+      (result (ref null $macro-variable))
+      (@for-each $v $vs
+        (if
+          (call $tree.eq (struct.get $macro-variable $name $v) $n)
+          (then (return $v))
+          (else (nop))))
+      (ref.null $macro-variable)))
+
+  (func $name
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect allocates)
+    (@let $b (struct.get $tree $value $n)
+      (@loop $scan
+        (bind $i i32 1)
+        (result (ref $tree))
+        (if
+          (result (ref $tree))
+          (|| (= $i (@bytes.len $b)) (= (@bytes.get $b $i) 58))
+          (then (call $tree.copy $n 0 (@bytes.slice $b 0 $i) (@list.new (ref $tree))))
+          (else (@recur $scan (+ $i 1))))
+      )))
+
+  (func $valid-name
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@let $b (struct.get $tree $value $n)
+      (block
+        (result i32)
+        (if (i32.eqz (call $macro.variable $n)) (then (return 0)) (else (nop)))
+        (@for $i
+          (bind $i i32 1)
+          (while (< $i (@bytes.len $b)))
+          (step (+ $i 1))
+          (@let $c (@bytes.get $b $i)
+            (if
+              (i32.eqz
+                (||
+                  (= $c 95)
+                  (||
+                    (&& (>= $c 48) (<= $c 57))
+                    (|| (&& (>= $c 65) (<= $c 90)) (&& (>= $c 97) (<= $c 122))))
+                ))
+              (then (return 0))
+              (else (nop))))
+        )
+        1)))
+
+  (func $pattern-vars
+    (param $s (ref $Parse))
+    (param $n (ref $tree))
+    (param $repeated i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (i32.eqz (ref.is_null (struct.get $Parse $error $s)))
+        (then (return))
+        (else (nop)))
+      (if
+        (call $macro.variable $n)
+        (then
+          (@let
+            (($name (call $name $n))
+             ($b (struct.get $tree $value $n))
+             ($at (+ (@bytes.len (struct.get $tree $value $name)) 1)))
+            (block
+              (if
+                (|| (i32.eqz (call $valid-name $name)) (> $at (@bytes.len $b)))
+                (then (block (call $bad $s $n) (return)))
+                (else (nop)))
+              (@let
+                (($cat
+                   (call $tree.copy $n 0
+                     (@bytes.slice $b $at (- (@bytes.len $b) $at))
+                     (@list.new (ref $tree))))
+                 ($kind
+                   (if
+                     (result i32)
+                     (call $tree.is $cat "expr")
+                     (then 0)
+                     (else
+                       (if
+                         (result i32)
+                         (call $tree.is $cat "ident")
+                         (then 1)
+                         (else
+                           (if
+                             (result i32)
+                             (call $tree.is $cat "type")
+                             (then 2)
+                             (else
+                               (if
+                                 (result i32)
+                                 (call $tree.is $cat "literal")
+                                 (then 3)
+                                 (else -1))))
+                         ))))
+                 ))
+                (if
+                  (||
+                    (< $kind 0)
+                    (i32.eqz
+                      (ref.is_null
+                        (call $lookup
+                          (call $work.snapshot< (ref $macro-variable) >
+                            (struct.get $Parse $variables $s))
+                          $name))))
+                  (then (call $bad $s $n))
+                  (else
+                    (call $list-builder.push< (ref $macro-variable) >
+                      (struct.get $Parse $variables $s)
+                      (struct.new $macro-variable $name $kind $repeated))))
+              )
+              (return))))
+        (else (nop)))
+      (if
+        (= (struct.get $tree $kind $n) 2)
+        (then
+          (@let
+            (($len (call $tree.len $n))
+             ($rest (&& (> $len 0) (call $tree.is (call $tree.at $n (- $len 1)) "..."))))
+            (block
+              (if
+                (&& $rest (|| $repeated (< $len 2)))
+                (then (block (call $bad $s $n) (return)))
+                (else (nop)))
+              (@for $i
+                (bind $i i32 0)
+                (while (< $i (- $len $rest)))
+                (step (+ $i 1))
+                (if
+                  (call $tree.is (call $tree.at $n $i) "...")
+                  (then (call $bad $s (call $tree.at $n $i)))
+                  (else
+                    (call $pattern-vars $s
+                      (call $tree.at $n $i)
+                      (|| $repeated (&& $rest (= $i (- $len 2))))
+                    ))))
+            )))
+        (else (nop))))
+  )
+
+  (func $macro.class
+    (param $n (ref $tree))
+    (result i32)
+    (@effect allocates)
+    (||
+      (||
+        (|| (call $tree.is $n "Add") (call $tree.is $n "Sub"))
+        (|| (call $tree.is $n "Mul") (call $tree.is $n "Div")))
+      (||
+        (|| (call $tree.is $n "Eq") (call $tree.is $n "Ord"))
+        (||
+          (call $tree.is $n "Logical")
+          (|| (call $tree.is $n "Bitwise") (call $tree.is $n "Shift"))))
+    ))
+
+  (func $macro.selector
+    (param $n (ref $tree))
+    (result i32)
+    (@effect allocates)
+    (||
+      (||
+        (|| (call $tree.is $n "option.element") (call $tree.is $n "list.element"))
+        (|| (call $tree.is $n "result.ok") (call $tree.is $n "result.err")))
+      (||
+        (|| (call $tree.is $n "tuple.first") (call $tree.is $n "tuple.second"))
+        (||
+          (|| (call $tree.is $n "ref.heap") (call $tree.is $n "array.element"))
+          (||
+            (|| (call $tree.is $n "box.element") (call $tree.is $n "future.element"))
+            (|| (call $tree.is $n "stream.element") (call $tree.is $n "task.element"))))
+      )))
+
+  (func $template-vars
+    (param $s (ref $Parse))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (if
+        (&&
+          (call $macro.variable $n)
+          (ref.is_null
+            (call $lookup
+              (call $work.snapshot< (ref $macro-variable) >
+                (struct.get $Parse $variables $s))
+              $n)))
+        (then (call $bad $s $n))
+        (else (nop)))
+      (@for-each $child (struct.get $tree $items $n)
+        (call $template-vars $s $child))))
+
+  (func $input
+    (param $s (ref $Parse))
+    (param $n (ref $tree))
+    (param $category i32)
+    (param $many i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (@let $v
+      (call $lookup (call $work.snapshot< (ref $macro-variable) > (struct.get $Parse $variables $s)) $n)
+      (&&
+        (i32.eqz (ref.is_null $v))
+        (&&
+          (= (struct.get $macro-variable $category (ref.as_non_null $v)) $category)
+          (|| $many
+            (i32.eqz (struct.get $macro-variable $repeated (ref.as_non_null $v))))
+        ))))
+
+  (func $macro.rule
+    (param $n (ref $tree))
+    (result $result< (ref $macro-rule) , (ref $project-error) >)
+    (@effect reads writes allocates)
+    (block
+      (result $result< (ref $macro-rule) , (ref $project-error) >)
+      (if
+        (||
+          (i32.eqz (call $tree.head $n "rule"))
+          (||
+            (< (call $tree.len $n) 3)
+            (!= (struct.get $tree $kind (call $tree.at $n 1)) 2)))
+        (then (return (@result.err (call $tree.error $n 211))))
+        (else (nop)))
+      (@let
+        (($s
+           (struct.new $Parse
+             (call $list-builder.new< (ref $macro-variable) >)
+             (ref.null $project-error)))
+         ($bs (call $list-builder.new< (ref $tree) >))
+         ($qs (call $list-builder.new< (ref $tree) >))
+         ($gs (call $list-builder.new< (ref $tree) >)))
+        (block
+          (result $result< (ref $macro-rule) , (ref $project-error) >)
+          (call $pattern-vars $s (call $tree.at $n 1) 0)
+          (@for $i
+            (bind $i i32 2)
+            (while (< $i (- (call $tree.len $n) 1)))
+            (step (+ $i 1))
+            (@let $c (call $tree.at $n $i)
+              (if
+                (call $tree.head $c "bind")
+                (then
+                  (if
+                    (||
+                      (!= (call $tree.len $c) 3)
+                      (||
+                        (i32.eqz (call $input $s (call $tree.at $c 1) 1 1))
+                        (i32.eqz (call $input $s (call $tree.at $c 2) 0 0))))
+                    (then (call $bad $s $c))
+                    (else
+                      (block
+                        (@for-each $old (call $work.snapshot< (ref $tree) > $bs)
+                          (if
+                            (&&
+                              (call $tree.eq
+                                (call $tree.at $old 1)
+                                (call $tree.at $c 1))
+                              (call $tree.eq
+                                (call $tree.at $old 2)
+                                (call $tree.at $c 2)))
+                            (then (call $bad $s $c))
+                            (else (nop))))
+                        (call $list-builder.push< (ref $tree) > $bs $c))))
+                )
+                (else
+                  (if
+                    (|| (call $tree.head $c "infer") (call $tree.head $c "when"))
+                    (then
+                      (block
+                        (if
+                          (< (call $tree.len $c) 2)
+                          (then (call $bad $s $c))
+                          (else (nop)))
+                        (@for $j
+                          (bind $j i32 1)
+                          (while (< $j (call $tree.len $c)))
+                          (step (+ $j 1))
+                          (@let $q (call $tree.at $c $j)
+                            (if
+                              (call $tree.head $c "infer")
+                              (then
+                                (@let
+                                  (($target (call $tree.at $q 1))
+                                   ($direct (= (struct.get $tree $kind $target) 0))
+                                   ($v
+                                     (if
+                                       (result (ref $tree))
+                                       $direct
+                                       (then $target)
+                                       (else (call $tree.at $target 1))))
+                                  )
+                                  (if
+                                    (||
+                                      (||
+                                        (< (call $tree.len $q) 2)
+                                        (> (call $tree.len $q) 3))
+                                      (||
+                                        (i32.eqz
+                                          (call $valid-name (call $tree.at $q 0)))
+                                        (||
+                                          (i32.eqz
+                                            (ref.is_null
+                                              (call $lookup
+                                                (call
+                                                  $work.snapshot< (ref $macro-variable) >
+                                                  (struct.get $Parse $variables $s))
+                                                (call $tree.at $q 0))))
+                                          (||
+                                            (&&
+                                              (= (call $tree.len $q) 3)
+                                              (i32.eqz
+                                                (call $tree.is
+                                                  (call $tree.at $q 2)
+                                                  "expected")))
+                                            (||
+                                              (i32.eqz
+                                                (||
+                                                  (call $tree.is $v "expected")
+                                                  (call $input $s $v 0 0)))
+                                              (&&
+                                                (i32.eqz $direct)
+                                                (||
+                                                  (!= (call $tree.len $target) 2)
+                                                  (i32.eqz
+                                                    (call $macro.selector
+                                                      (call $tree.at $target 0))))
+                                              ))))
+                                      ))
+                                    (then (call $bad $s $q))
+                                    (else
+                                      (block
+                                        (call
+                                          $list-builder.push< (ref $macro-variable) >
+                                          (struct.get $Parse $variables $s)
+                                          (struct.new $macro-variable
+                                            (call $tree.at $q 0)
+                                            2
+                                            0))
+                                        (call $list-builder.push< (ref $tree) > $qs $q))))
+                                ))
+                              (else
+                                (if
+                                  (||
+                                    (i32.eqz (call $input $s (call $tree.at $q 1) 0 0))
+                                    (i32.eqz
+                                      (||
+                                        (&&
+                                          (call $tree.head $q "type")
+                                          (= (call $tree.len $q) 3))
+                                        (&&
+                                          (call $macro.class (call $tree.at $q 0))
+                                          (= (call $tree.len $q) 2))))
+                                  )
+                                  (then (call $bad $s $q))
+                                  (else (call $list-builder.push< (ref $tree) > $gs $q))))
+                            ))))
+                    )
+                    (else (call $bad $s $c))))
+              )))
+          (call $template-vars $s (call $tree.at $n (- (call $tree.len $n) 1)))
+          (if
+            (result $result< (ref $macro-rule) , (ref $project-error) >)
+            (ref.is_null (struct.get $Parse $error $s))
+            (then
+              (@result.ok
+                (struct.new $macro-rule
+                  $n
+                  (call $list-builder.finish< (ref $macro-variable) >
+                    (struct.get $Parse $variables $s))
+                  (call $list-builder.finish< (ref $tree) > $bs)
+                  (call $list-builder.finish< (ref $tree) > $qs)
+                  (call $list-builder.finish< (ref $tree) > $gs)
+                  (call $tree.at $n (- (call $tree.len $n) 1))))
+            )
+            (else (@result.err (ref.as_non_null (struct.get $Parse $error $s))))
+          ))))
+  )
+
+  (func $macro.capture
+    (param $m (ref $macro-match))
+    (param $name (ref $tree))
+    (result (ref null $macro-capture))
+    (@effect pure)
+    (block
+      (result (ref null $macro-capture))
+      (@for-each $c (struct.get $macro-match $captures $m)
+        (if
+          (call $tree.eq
+            (struct.get $macro-variable $name (struct.get $macro-capture $variable $c))
+            $name)
+          (then (return $c))
+          (else (nop))))
+      (ref.null $macro-capture)))
+
+  (func $macro.one
+    (param $m (ref $macro-match))
+    (param $name (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let $c (call $macro.capture $m $name)
+      (if
+        (result (ref $tree))
+        (ref.is_null $c)
+        (then (call $tree.atom $name "?"))
+        (else
+          (@let $xs
+            (call $work.snapshot< (ref $tree) > (struct.get $macro-capture $values (ref.as_non_null $c)))
+            (if
+              (result (ref $tree))
+              (= (@list.len (ref $tree) $xs) 1)
+              (then (@list.get (ref $tree) $xs 0))
+              (else (call $tree.atom $name "?"))))
+        ))))
+
+  (func $macro.same
+    (param $a (ref $tree))
+    (param $b (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (||
+          (!= (struct.get $tree $kind $a) (struct.get $tree $kind $b))
+          (||
+            (i32.eqz (call $tree.eq $a $b))
+            (!= (call $tree.len $a) (call $tree.len $b))))
+        (then (return 0))
+        (else (nop)))
+      (@for $i
+        (bind $i i32 0)
+        (while (< $i (call $tree.len $a)))
+        (step (+ $i 1))
+        (if
+          (i32.eqz (call $macro.same (call $tree.at $a $i) (call $tree.at $b $i)))
+          (then (return 0))
+          (else (nop))))
+      1))
+
+  (func $matches
+    (param $p (ref $tree))
+    (param $n (ref $tree))
+    (param $m (ref $macro-match))
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (call $macro.variable $p)
+        (then
+          (@let
+            (($actual
+               (if
+                 (result (ref $tree))
+                 (= (struct.get $tree $kind $n) 9)
+                 (then (call $tree.at $n 0))
+                 (else $n)))
+             ($c (ref.as_non_null (call $macro.capture $m (call $name $p))))
+             ($cat
+               (struct.get $macro-variable $category
+                 (struct.get $macro-capture $variable $c))))
+            (block
+              (if
+                (i32.eqz
+                  (||
+                    (= $cat 0)
+                    (||
+                      (&& (= $cat 1) (call $tree.is-name $actual))
+                      (||
+                        (&&
+                          (= $cat 2)
+                          (||
+                            (= (struct.get $tree $kind $actual) 0)
+                            (= (struct.get $tree $kind $actual) 2)))
+                        (&&
+                          (= $cat 3)
+                          (||
+                            (= (struct.get $tree $kind $actual) 1)
+                            (@match (call $number.i64 (struct.get $tree $value $actual))
+                              (@case none () 0)
+                              (@case some ($value) 1))))
+                      ))))
+                (then (return 0))
+                (else (nop)))
+              (call $list-builder.push< (ref $tree) >
+                (struct.get $macro-capture $values $c)
+                $n)
+              (return 1))))
+        (else (nop)))
+      (if
+        (= (struct.get $tree $kind $p) 2)
+        (then
+          (block
+            (if (!= (struct.get $tree $kind $n) 2) (then (return 0)) (else (nop)))
+            (@let
+              (($len (call $tree.len $p))
+               ($rest
+                 (&& (> $len 0) (call $tree.is (call $tree.at $p (- $len 1)) "...")))
+               ($fixed (- $len (* 2 $rest))))
+              (block
+                (if
+                  (||
+                    (&& (i32.eqz $rest) (!= $len (call $tree.len $n)))
+                    (< (call $tree.len $n) $fixed))
+                  (then (return 0))
+                  (else (nop)))
+                (@for $i
+                  (bind $i i32 0)
+                  (while (< $i $fixed))
+                  (step (+ $i 1))
+                  (if
+                    (i32.eqz
+                      (call $matches (call $tree.at $p $i) (call $tree.at $n $i) $m))
+                    (then (return 0))
+                    (else (nop))))
+                (if $rest
+                  (then
+                    (@for $i
+                      (bind $i i32 $fixed)
+                      (while (< $i (call $tree.len $n)))
+                      (step (+ $i 1))
+                      (if
+                        (i32.eqz
+                          (call $matches
+                            (call $tree.at $p $fixed)
+                            (call $tree.at $n $i)
+                            $m))
+                        (then (return 0))
+                        (else (nop))))
+                  )
+                  (else (nop)))
+                (return 1))))
+        )
+        (else (nop)))
+      (call $macro.same $p $n)))
+
+  (func $macro.match
+    (param $rule (ref $macro-rule))
+    (param $args (ref $tree))
+    (result $option< (ref $macro-match) >)
+    (@effect reads writes allocates)
+    (@let $cs (call $list-builder.new< (ref $macro-capture) >)
+      (block
+        (result $option< (ref $macro-match) >)
+        (@for-each $v (struct.get $macro-rule $variables $rule)
+          (call $list-builder.push< (ref $macro-capture) > $cs
+            (struct.new $macro-capture $v (call $list-builder.new< (ref $tree) >))))
+        (@let $m
+          (struct.new $macro-match $rule (call $list-builder.finish< (ref $macro-capture) > $cs))
+          (if
+            (result $option< (ref $macro-match) >)
+            (call $matches
+              (call $tree.at (struct.get $macro-rule $syntax $rule) 1)
+              $args
+              $m)
+            (then (@option.some $m))
+            (else (@option.none))))
+      ))))

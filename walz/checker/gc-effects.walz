@@ -1,0 +1,185 @@
+(module
+  (@use "walz:core" (type $list) (type $result))
+  (@use "../parser/diagnostic.walz" (type $diagnostic))
+  (@use "./ir.walz"
+    (type $gc-type-ir)
+    (type $field-ir)
+    (type $function-ir)
+    (type $instruction-ir))
+  (@export (func $gc-effects.validate))
+  (type $Flags (array (mut i32)))
+  ;; A complete bit set is required now that annotations bound individual effects.
+  (func $one
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $n (ref $instruction-ir))
+    (result i32)
+    (@effect pure)
+    (@let
+      (($op (struct.get $instruction-ir $op $n))
+       ($imm (struct.get $instruction-ir $immediate $n)))
+      (block
+        (result i32)
+        (if
+          (|| (|| (= $op 261) (= $op 270)) (|| (= $op 272) (= $op 273)))
+          (then (return 2))
+          (else (nop)))
+        (if
+          (||
+            (&& (>= $op 256) (<= $op 260))
+            (|| (&& (>= $op 262) (<= $op 264)) (&& (>= $op 267) (<= $op 269))))
+          (then
+            (@let $fields
+              (struct.get $gc-type-ir $fields (@list.get (ref $gc-type-ir) $defs (i32.wrap_i64 $imm)))
+              (if
+                (<= $op 257)
+                (then
+                  (@for-each $field $fields
+                    (if
+                      (struct.get $field-ir $mutable $field)
+                      (then (return 4))
+                      (else (nop))))
+                )
+                (else
+                  (@let $field
+                    (@list.get (ref $field-ir) $fields (if (result i32) (<= $op 260) (then (i32.wrap_i64 (i64.shr_u $imm (i64.const 32)))) (else 0)))
+                    (if
+                      (struct.get $field-ir $mutable $field)
+                      (then
+                        (return
+                          (if
+                            (result i32)
+                            (&& (>= $op 262) (<= $op 264))
+                            (then 4)
+                            (else 1))))
+                      (else (nop))))
+                ))))
+          (else (nop)))
+        0)))
+
+  (func $direct
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $f (ref $function-ir))
+    (result i32)
+    (@effect pure)
+    (@let $body (struct.get $function-ir $body $f)
+      (@loop $scan
+        (bind $i i32 0)
+        (bind $bits i32 0)
+        (result i32)
+        (if
+          (result i32)
+          (= $i (@list.len (ref $instruction-ir) $body))
+          (then $bits)
+          (else
+            (@recur $scan
+              (+ $i 1)
+              (| $bits (call $one $defs (@list.get (ref $instruction-ir) $body $i))))
+          ))))
+  )
+
+  (func $called
+    (param $flags (ref $Flags))
+    (param $body $list<(ref $instruction-ir)>)
+    (param $initial i32)
+    (result i32)
+    (@effect reads)
+    (@loop $calls
+      (bind $j i32 0)
+      (bind $bits i32 $initial)
+      (result i32)
+      (if
+        (result i32)
+        (= $j (@list.len (ref $instruction-ir) $body))
+        (then $bits)
+        (else
+          (@let $n (@list.get (ref $instruction-ir) $body $j)
+            (@recur $calls
+              (+ $j 1)
+              (if
+                (result i32)
+                (= (struct.get $instruction-ir $op $n) 16)
+                (then
+                  (| $bits
+                    (array.get $Flags $flags
+                      (i32.wrap_i64 (struct.get $instruction-ir $immediate $n))))
+                )
+                (else $bits))))
+        ))))
+
+  (func $propagate
+    (param $flags (ref $Flags))
+    (param $functions $list<(ref $function-ir)>)
+    (result i32)
+    (@effect reads writes)
+    (@loop $functions
+      (bind $i i32 0)
+      (bind $changed i32 0)
+      (result i32)
+      (if
+        (result i32)
+        (= $i (@list.len (ref $function-ir) $functions))
+        (then $changed)
+        (else
+          (@let
+            (($old (array.get $Flags $flags $i))
+             ($bits
+               (call $called $flags
+                 (struct.get $function-ir $body
+                   (@list.get (ref $function-ir) $functions $i))
+                 $old)))
+            (block
+              (result i32)
+              (array.set $Flags $flags $i $bits)
+              (@recur $functions (+ $i 1) (|| $changed (!= $old $bits))))
+          ))))
+  )
+
+  (func $gc-effects.validate
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $functions $list<(ref $function-ir)>)
+    (param $claims $list<i32>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<i32, (ref $diagnostic)>)
+      (if (= (@list.len i32 $claims) 0) (then (return (@result.ok 0))) (else (nop)))
+      (@let $flags (array.new $Flags 0 (@list.len (ref $function-ir) $functions))
+        (block
+          (result $result<i32, (ref $diagnostic)>)
+          (@for $initial
+            (bind $i i32 0)
+            (while (< $i (@list.len (ref $function-ir) $functions)))
+            (step (+ $i 1))
+            (array.set $Flags $flags $i
+              (call $direct $defs (@list.get (ref $function-ir) $functions $i))))
+          (@loop $fixed
+            (bind $round i32 0)
+            (if
+              (&&
+                (call $propagate $flags $functions)
+                (< $round (@list.len (ref $function-ir) $functions)))
+              (then (@recur $fixed (+ $round 1)))
+              (else (nop))))
+          (@for $claims
+            (bind $i i32 0)
+            (while (< $i (@list.len i32 $claims)))
+            (step (+ $i 1))
+            (@let
+              (($allowed (@list.get i32 $claims $i))
+               ($f (@list.get (ref $function-ir) $functions $i)))
+              (if
+                (&&
+                  (>= $allowed 0)
+                  (!= (& (array.get $Flags $flags $i) (i32.xor $allowed -1)) 0))
+                (then
+                  (return
+                    (@result.err
+                      (struct.new $diagnostic
+                        123
+                        (struct.get $function-ir $start $f)
+                        (struct.get $function-ir $end $f))))
+                )
+                (else (nop))))
+          )
+          (@result.ok 0))))
+  ))

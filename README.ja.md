@@ -12,6 +12,8 @@ WATのS式構文とWasmの意味論を維持し、Wasm GCを前提にジェネ�
 
 `walz:core` は組み込みのデータ型とポータブルなデータ操作を提供します。OSの機能やI/O capabilityは、明示的なホストimportを通じて受け取ります。
 
+実験的な[Walz製コンパイラの部品](docs/selfhost.md)として、parser・独立した型／スタック／effect検査・整数とGCのbackendを実装しています。[範囲を限定したfrontend](docs/selfhost-frontend.md)は、静的モジュール・固定の高水準構文・最小core・単相化・衛生的な式マクロに対応します。完全なセルフホストは今後の課題で、主実装はRustコンパイラです。[サブセットの保存済みベンチ](docs/selfhost-benchmark.md)はRust版との正規化後の出力一致を必須とし、GCとモジュールfrontendの対応前に測定しています。
+
 - `@` で区別する拡張構文。不変の束縛、ループ、enum/match、名前付きstruct構築、明示的なクロージャ捕捉。
 - 制約付きジェネリクスの単相化。一意に決まる関数の型引数は省略可能。
 - 束縛スコープを明示し、通常の型検査器へ型を問い合わせられる衛生的な式マクロ。
@@ -56,6 +58,8 @@ walz bench --samples 10
 checkoutからは`cargo install --path . --locked --bin walz`でインストールします。`walz new`はオフラインでソース・テスト・ベンチ・英日資料と[Walz skill](docs/agent-skills.md)を生成します。テストには Wasm GC 対応の Wasmtime、ベンチには Node.js 24以降、law・race-free契約・検証付き実行にはLeanが必要です。既定値とオプションは[CLIガイド](docs/cli.md)、最初のプロジェクトの作り方は[導入手順](docs/getting-started.md)にまとめています。
 
 [公開プレイグラウンド](https://mizchi.github.io/walz-lang/) で言語機能を試せます。手元では `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) は、WasmにビルドしたRustコンパイラでローカルにコンパイルします。
+
+静的な `@lib` と、genericなソースコンストラクター・`@expose` / `@bind` による明示的なComponentの構成にも対応します。`walz build --wit` は公開インターフェースから `world.wit` を生成します。[Component構成ガイド](docs/component-composition.md)と[サンプル](examples/components/main.walz)を参照してください。
 
 ## ドキュメント
 

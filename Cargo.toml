@@ -30,6 +30,14 @@ path = "tools/json-bench.rs"
 name = "bench-capture"
 path = "tools/bench-capture.rs"
 
+[[example]]
+name = "selfhost-reference"
+path = "tools/selfhost-reference.rs"
+
+[[example]]
+name = "selfhost-bench"
+path = "tools/selfhost-bench.rs"
+
 [dependencies]
 wat = "=1.262.0"
 wast = "=262.0.0"
@@ -38,6 +46,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tempfile = "3"
 wit-parser = "=0.262.0"
+wit-component = { version = "=0.262.0", default-features = false }
 same-file = "1.0.6"
 wasmprinter = "=0.262.0"
 wasm-encoder = "=0.262.0"

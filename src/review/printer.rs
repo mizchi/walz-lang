@@ -315,8 +315,12 @@ pub(super) fn render(source: &str) -> Result<String, Error> {
         ));
     }
     let root = crate::sexpr::parse(source)?;
-    if root.head() != Some("module") {
-        return Err(fail(source, root.span, "expected a Walz module"));
+    if !matches!(root.head(), Some("module" | "component" | "@lib")) {
+        return Err(fail(
+            source,
+            root.span,
+            "expected a Walz module, component, or @lib",
+        ));
     }
     let mut out =
         String::from("// Walz review syntax: structural notation, not JavaScript execution.\n");
@@ -341,12 +345,20 @@ pub(super) fn render(source: &str) -> Result<String, Error> {
         }
         line += token_text.bytes().filter(|b| *b == b'\n').count();
     }
+    let wrapped = root.head() != Some("module");
+    if wrapped {
+        out.push_str(&format!("{} {{\n", root.head().unwrap()));
+    }
     for n in &root.list().unwrap()[1..] {
-        if let Some(text) = declaration(n) {
-            out.push_str(&text);
+        let text = declaration(n).unwrap_or_else(|| format!("{};\n", expression(n)));
+        if wrapped {
+            out.push_str(&format!("  {}\n", indent_tail(text.trim_end(), 2)));
         } else {
-            out.push_str(&format!("{};\n", expression(n)));
+            out.push_str(&text);
         }
+    }
+    if wrapped {
+        out.push_str("}\n");
     }
     Ok(out)
 }

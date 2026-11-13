@@ -1,0 +1,12 @@
+;; A definition is shared for each concrete type; instantiate still creates state.
+(component (@type.params $T) (@where (shared $T) (nonunit $T))
+  (core module $Counter
+    (global $n (mut i32) (i32.const 0))
+    (func (export "next") (result i32)
+      (global.set $n (i32.add (global.get $n) (i32.const 1)))
+      (global.get $n)))
+  (core instance $counter (instantiate $Counter))
+  (func (export "next") (result s32) (canon lift (core func $counter "next")))
+  (@lib
+    (func $echo (param $value $T) (result $T) (@effect pure) $value))
+  (@expose "echo" $echo))

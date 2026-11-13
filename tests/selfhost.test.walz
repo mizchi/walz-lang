@@ -1,0 +1,101 @@
+(module
+  (@use "walz:core" (type $bytes) (type $result) (type $list))
+  (@use "../walz/parser/parser.walz"
+    (type $diagnostic)
+    (func $parser.parse)
+    (func $syntax.roots))
+  (@use "../walz/codegen/compiler.walz" (func $compiler.compile))
+  (@use "../walz/codegen/encoding.walz"
+    (func $encoding.s32)
+    (func $encoding.u32)
+    (func $encoding.write-u32))
+  (@use "walz:core"
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.finish))
+  (@use "../walz/core/bytes.walz" (func $bytes.equal))
+  (@test "parse nested comments and immutable syntax roots"
+    (@match (call $parser.parse (@string.bytes "(; a (; b ;) ;) (module)"))
+      (@case err ($e) 0)
+      (@case ok ($s) (= (@list.len i32 (call $syntax.roots $s)) 1))))
+  (@test "malformed source returns its original byte range"
+    (@match (call $parser.parse (@string.bytes ")"))
+      (@case ok ($s) 0)
+      (@case err ($e)
+        (&&
+          (= (struct.get $diagnostic $start $e) 0)
+          (= (struct.get $diagnostic $end $e) 1))))
+  )
+  (@test "binary codegen emits a complete canonical constant module"
+    (@match
+      (call $compiler.compile (@string.bytes "(module (func (export \"main\") (result i32) 42))"))
+      (@case err ($e) 0)
+      (@case ok ($b)
+        (call $bytes.equal $b
+          (@bytes.new 0 97 115 109 1 0 0 0 1 5 1 96 0 1 127 3 2 1 0 7 8 1 4 109 97 105
+            110 0 0 10 6 1 4 0 65 42 11))))
+  )
+  (@test "name resolution rejects an unknown local before codegen"
+    (@match
+      (call $compiler.compile (@string.bytes "(module (func (result i32) $missing))"))
+      (@case ok ($b) 0)
+      (@case err ($e) (= (struct.get $diagnostic $code $e) 109))))
+  (@test "bytes builder snapshots survive append and buffer growth"
+    (@let $b (call $bytes-builder.new 1024)
+      (block
+        (result i32)
+        (call $encoding.write-u32 $b 42)
+        (@let $first (call $bytes-builder.finish $b)
+          (block
+            (result i32)
+            (@for $grow
+              (bind $i i32 1)
+              (while (< $i 1024))
+              (step (+ $i 1))
+              (call $bytes-builder.byte $b 255))
+            (&&
+              (call $bytes.equal $first (@bytes.new 42))
+              (= (@bytes.len (call $bytes-builder.finish $b)) 1024))))
+      )))
+  (@test "signed and unsigned LEB preserve high i32 bit patterns"
+    (&&
+      (call $bytes.equal (call $encoding.u32 -1) (@bytes.new 255 255 255 255 15))
+      (call $bytes.equal
+        (call $encoding.s32 -2147483648)
+        (@bytes.new 128 128 128 128 120))))
+  (@use "../walz/checker/checker.walz" (func $checker.validate))
+  (@use "../walz/checker/ir.walz"
+    (type $function-ir)
+    (type $instruction-ir)
+    (type $export-ir))
+  (@use "../walz/codegen/compiler.walz" (func $compiler.check))
+  (@use "../walz/codegen/encoding.walz" (func $encoding.s64))
+  (@test "checker rejects a known i32 value after unreachable in an i64 function"
+    (@match
+      (call $checker.validate (@list.new (ref $function-ir) (struct.new $function-ir (@list.new i32) (@list.new i32) 126 (@list.new (ref $instruction-ir) (struct.new $instruction-ir 0 (i64.const 0) 0 0) (struct.new $instruction-ir 65 (i64.const 1) 0 0)) 0 0)) (@list.new (ref $export-ir)))
+      (@case ok ($m) 0)
+      (@case err ($e) (= (struct.get $diagnostic $code $e) 110))))
+  (@test "checker accepts stack-polymorphic drop at an unreachable height"
+    (@match
+      (call $checker.validate (@list.new (ref $function-ir) (struct.new $function-ir (@list.new i32) (@list.new i32) 126 (@list.new (ref $instruction-ir) (struct.new $instruction-ir 0 (i64.const 0) 0 0) (struct.new $instruction-ir 26 (i64.const 0) 0 0)) 0 0)) (@list.new (ref $export-ir)))
+      (@case ok ($m) 1)
+      (@case err ($e) 0)))
+  (@test "signed i64 LEB preserves the minimum value"
+    (call $bytes.equal
+      (call $encoding.s64 (i64.const -9223372036854775808))
+      (@bytes.new 128 128 128 128 128 128 128 128 128 127)))
+  (@test "GC type declarations compile without a host validator"
+    (@match
+      (call $compiler.check (@string.bytes "(module (type $S (struct (field i32))) (func (result i32) (struct.get $S 0 (struct.new $S (i32.const 42)))))"))
+      (@case err ($e) 0)
+      (@case ok ($n) (= $n 1))))
+  (@test "any cannot satisfy eq reference operands"
+    (@match
+      (call $compiler.check (@string.bytes "(module (func (param $x (ref null any)) (result (ref null eq)) (local.get $x)))"))
+      (@case err ($e) (= (struct.get $diagnostic $code $e) 110))
+      (@case ok ($n) 0)))
+  (@test "GC mutation cannot be hidden by a pure call contract"
+    (@match
+      (call $compiler.check (@string.bytes "(module (type $S (struct (field (mut i32)))) (func $read (param $s (ref $S)) (result i32) (@effect pure) (struct.get $S 0 (local.get $s))))"))
+      (@case err ($e) (= (struct.get $diagnostic $code $e) 123))
+      (@case ok ($n) 0))))

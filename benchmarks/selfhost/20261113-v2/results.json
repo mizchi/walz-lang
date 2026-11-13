@@ -1,0 +1,1347 @@
+{
+  "schema": "walz-selfhost-benchmark-v2",
+  "suite": "walz-selfhost-parity-v2",
+  "created": "2026-11-13T10:49:49.302Z",
+  "environment": {
+    "node": "v24.22.2",
+    "v8": "13.6.233.17-node.63",
+    "platform": "darwin",
+    "osRelease": "25.6.0",
+    "arch": "arm64",
+    "cpu": "Apple M5",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)"
+  },
+  "capture": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/selfhost-bench/capture-v2",
+  "captureHash": "7b5bc3873c6cf3b9286a63efb1355578d0c0090228ca4087ce863e61a4e58b21",
+  "method": {
+    "samples": 9,
+    "warmupMs": 300,
+    "minimumWarmupCalls": 16,
+    "targetBatchMs": 10,
+    "variants": [
+      "rust-native-release",
+      "rust-wat-validate",
+      "core",
+      "component"
+    ],
+    "order": "rotate variants within each case/operation each round; no concurrent benchmarks/builds/tests",
+    "timing": "resident, synchronous, in-memory compiler API call; two clock reads per call; mean of calls per sample, median of sample means",
+    "selfhost": "Core/Component value ABI includes UTF-8 input copying, guest parsing/checking/encoding, GC and output lifting",
+    "native": "persistent optimized Rust process; walz::validate / walz::compile; borrowed UTF-8 input; native WAT validation fallback is recorded per case",
+    "watReference": "compile only: pinned wat::parse_str plus wasmparser::Validator; validates binary types/control without Walz analyses; raw output must equal full Rust compiler output",
+    "exclusions": "builds, process startup, module loading/instantiation, file/JSON I/O, equality/execution checks, warmup, calibration and output destruction",
+    "correctness": "full Wasm validation + exact canonical module bytes before timing; every measured compile output must equal its captured raw output; check results must equal function count",
+    "canonical": "closed unit/i32/i64 functions only; strip debug names, expand type interning, one local group per local, canonical LEB; preserve every instruction, function/local/export order and signature; fail closed on other sections/opcodes",
+    "gc": "one explicit Node GC outside each sampled batch; normal allocation-triggered GC remains included; microtasks drained between batches",
+    "limitation": "finite versioned corpus, no proof that either compiler is correct on all sources; Rust check/compile do more analysis than the current scalar selfhost"
+  },
+  "cases": [
+    {
+      "id": "integer-mix",
+      "operation": "check",
+      "inputBytes": 273,
+      "nativeBytes": 86,
+      "structuredCheck": true,
+      "coreBytes": 64,
+      "componentBytes": 64,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 64
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 64
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 25.29824,
+        "core": 4.42810828876667,
+        "component": 8.785432470254557
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          24734.612307692307,
+          25982.44,
+          24957.82153846154,
+          25298.24,
+          26400.14153846154,
+          24613.978461538463,
+          25338.84,
+          25178.96923076923,
+          25303.72
+        ],
+        "core": [
+          4428.10828876667,
+          4465.732620323043,
+          4838.014260247847,
+          4916.588235295395,
+          4309.737076648193,
+          4430.6844919784835,
+          4167.038324423929,
+          4190.8930481290245,
+          4221.096702318682
+        ],
+        "component": [
+          9077.188943316085,
+          8534.785864242593,
+          8596.495451362709,
+          8872.55493352363,
+          8515.76627011819,
+          9232.869139254923,
+          8712.986703988601,
+          8785.432470254556,
+          9067.783065079348
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 325,
+        "core": 2244,
+        "component": 1429
+      },
+      "warmupCalls": {
+        "rust-native-release": 7173,
+        "core": 14017,
+        "component": 11208
+      }
+    },
+    {
+      "id": "integer-mix",
+      "operation": "compile",
+      "inputBytes": 273,
+      "nativeBytes": 86,
+      "structuredCheck": true,
+      "coreBytes": 64,
+      "componentBytes": 64,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 64
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 64
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 35.759849593495936,
+        "rust-wat-validate": 6.774617933723197,
+        "core": 5.100928952053036,
+        "component": 9.26826194144989
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          36181.20325203252,
+          36300.12601626016,
+          35087.26829268293,
+          34471.0243902439,
+          36814.36178861788,
+          35300.670731707316,
+          35759.849593495936,
+          34255.62195121951,
+          36787.43089430894
+        ],
+        "rust-wat-validate": [
+          6774.617933723197,
+          6801.473684210527,
+          6662.194931773879,
+          6796.658869395712,
+          6736.792397660819,
+          6882.954191033138,
+          6874.637426900585,
+          6655.2602339181285,
+          6741.823586744639
+        ],
+        "core": [
+          5205.991118998853,
+          5291.223801070618,
+          5029.888099467093,
+          5100.9289520530365,
+          4978.1119005258115,
+          4939.6074600437105,
+          5181.17406750651,
+          4973.834813498832,
+          5138.770870336948
+        ],
+        "component": [
+          9725.27966102276,
+          9241.697996915116,
+          9236.183359015273,
+          9265.798151006613,
+          9268.26194144989,
+          9223.71263482685,
+          9690.030816649672,
+          9457.295069340518,
+          9515.283513092063
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 246,
+        "rust-wat-validate": 1026,
+        "core": 563,
+        "component": 1298
+      },
+      "warmupCalls": {
+        "rust-native-release": 5523,
+        "rust-wat-validate": 16909,
+        "core": 15048,
+        "component": 8543
+      }
+    },
+    {
+      "id": "i64-loop",
+      "operation": "check",
+      "inputBytes": 361,
+      "nativeBytes": 115,
+      "structuredCheck": false,
+      "coreBytes": 69,
+      "componentBytes": 69,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 69
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 69
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 55.18351063829787,
+        "core": 5.514740205218466,
+        "component": 11.890418197726142
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          47300.755319148935,
+          59826.925531914894,
+          53068.04255319149,
+          61145.1914893617,
+          61013.52659574468,
+          55183.51063829787,
+          53344.39893617021,
+          56274.984042553195,
+          52937.02659574468
+        ],
+        "core": [
+          5514.740205218466,
+          5389.726679106783,
+          6428.726212687084,
+          5719.056436567157,
+          5803.577425373693,
+          5304.9874067229375,
+          5528.746268660448,
+          5378.9944029834005,
+          5314.295242530543
+        ],
+        "component": [
+          13175.848643920379,
+          10374.833770784306,
+          11890.418197726141,
+          13784.104111972543,
+          14364.75590550233,
+          11341.381452323862,
+          14592.971128600739,
+          10700.910761151064,
+          11118.18460191062
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 188,
+        "core": 2144,
+        "component": 1143
+      },
+      "warmupCalls": {
+        "rust-native-release": 4481,
+        "core": 14962,
+        "component": 13304
+      }
+    },
+    {
+      "id": "i64-loop",
+      "operation": "compile",
+      "inputBytes": 361,
+      "nativeBytes": 115,
+      "structuredCheck": false,
+      "coreBytes": 69,
+      "componentBytes": 69,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 69
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 69
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 28.89094097222222,
+        "rust-wat-validate": 8.952891304347826,
+        "core": 6.228326219479082,
+        "component": 10.534527415128817
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          30629.149305555555,
+          30621.947916666668,
+          28479.57986111111,
+          28989.777777777777,
+          28289.618055555555,
+          27362.45486111111,
+          29555.67361111111,
+          28678.239583333332,
+          28890.940972222223
+        ],
+        "rust-wat-validate": [
+          8952.891304347826,
+          9471.708439897699,
+          9425.329923273657,
+          8501.066496163683,
+          9105.538363171356,
+          8233.902813299233,
+          9003.740409207161,
+          8519.55115089514,
+          8610.143222506395
+        ],
+        "core": [
+          6805.176829263985,
+          5723.310975618113,
+          7132.4085365215815,
+          6122.722560950553,
+          7025.52743904086,
+          5514.173780478278,
+          5933.948170705638,
+          10471.515243879607,
+          6228.326219479082
+        ],
+        "component": [
+          10987.305483014377,
+          10885.429068765607,
+          10144.404699730645,
+          10783.246301142293,
+          10222.433420369727,
+          9631.107919941465,
+          9425.993907740118,
+          11185.71714532925,
+          10534.527415128818
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 288,
+        "rust-wat-validate": 782,
+        "core": 328,
+        "component": 1149
+      },
+      "warmupCalls": {
+        "rust-native-release": 6114,
+        "rust-wat-validate": 12468,
+        "core": 13603,
+        "component": 11429
+      }
+    },
+    {
+      "id": "recursive-call",
+      "operation": "check",
+      "inputBytes": 244,
+      "nativeBytes": 79,
+      "structuredCheck": true,
+      "coreBytes": 56,
+      "componentBytes": 56,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 56
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 56
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 26.278739811912228,
+        "core": 3.053005998805113,
+        "component": 6.931643774430951
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          26576.38871473354,
+          26200.87460815047,
+          26045.846394984324,
+          25112.84326018809,
+          28012.94357366771,
+          27372.131661442007,
+          27196.07210031348,
+          26278.739811912226,
+          25886.48275862069
+        ],
+        "core": [
+          3029.2813437276054,
+          3053.005998805113,
+          3117.7993401303456,
+          3117.8203359339213,
+          2985.72615476383,
+          3094.962507494579,
+          3035.0593881254113,
+          3048.2471505742824,
+          3097.9562087568293
+        ],
+        "component": [
+          6923.357342292375,
+          6931.6437744309505,
+          6991.130653279811,
+          6980.49916247907,
+          7676.853713001387,
+          6911.782244559979,
+          6928.710217747205,
+          6872.022333877762,
+          6960.188721384202
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 319,
+        "core": 3334,
+        "component": 1791
+      },
+      "warmupCalls": {
+        "rust-native-release": 6941,
+        "core": 16821,
+        "component": 14368
+      }
+    },
+    {
+      "id": "recursive-call",
+      "operation": "compile",
+      "inputBytes": 244,
+      "nativeBytes": 79,
+      "structuredCheck": true,
+      "coreBytes": 56,
+      "componentBytes": 56,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 56
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 56
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 36.52260792951542,
+        "rust-wat-validate": 6.894267346938776,
+        "core": 3.536131681432763,
+        "component": 8.282288175442746
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          37271.154185022024,
+          36522.60792951542,
+          36394.444933920706,
+          36369.08810572687,
+          36508.46255506608,
+          36917.56828193833,
+          36876.83259911894,
+          36911.356828193835,
+          35644.651982378855
+        ],
+        "rust-wat-validate": [
+          6853.152040816327,
+          7084.110204081632,
+          6912.258163265306,
+          6925.275510204082,
+          6713.880612244898,
+          6894.2673469387755,
+          6844.864285714286,
+          6802.297959183674,
+          6943.215306122449
+        ],
+        "core": [
+          3554.2431858381556,
+          3503.0375221270147,
+          3540.3253097306515,
+          3560.8435398267407,
+          3536.131681432763,
+          3549.3189380508747,
+          3534.694159283245,
+          3454.1157522059134,
+          3462.456991148835
+        ],
+        "component": [
+          8120.418950654296,
+          8265.952231825639,
+          8323.433046206217,
+          8144.103367257032,
+          8320.215348447582,
+          8282.288175442745,
+          9260.70321067882,
+          8522.83555206789,
+          8071.34064213335
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 227,
+        "rust-wat-validate": 980,
+        "core": 2825,
+        "component": 1277
+      },
+      "warmupCalls": {
+        "rust-native-release": 5389,
+        "rust-wat-validate": 16734,
+        "core": 16397,
+        "component": 13691
+      }
+    },
+    {
+      "id": "branches-and-traps",
+      "operation": "check",
+      "inputBytes": 317,
+      "nativeBytes": 115,
+      "structuredCheck": true,
+      "coreBytes": 75,
+      "componentBytes": 75,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 75
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 75
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 28.427806338028166,
+        "core": 3.6420738657690617,
+        "component": 7.512189562049404
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          30694.26056338028,
+          26993.415492957745,
+          28427.806338028167,
+          26992.225352112677,
+          29274.63732394366,
+          28768.49647887324,
+          27437.549295774646,
+          27129.411971830985,
+          29473.591549295776
+        ],
+        "core": [
+          3694.3903261970736,
+          3599.850018747709,
+          3642.0738657690617,
+          3622.0288713779796,
+          3949.6677915239425,
+          3680.5556805400824,
+          3635.208473946646,
+          3608.7049119025974,
+          3648.0592425907557
+        ],
+        "component": [
+          7395.559688054553,
+          7563.923215358358,
+          7468.73125376031,
+          7512.189562049403,
+          7956.559088190085,
+          7719.377324532646,
+          7452.530293909384,
+          7473.322735417618,
+          7800.022795458278
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 284,
+        "core": 2667,
+        "component": 1667
+      },
+      "warmupCalls": {
+        "rust-native-release": 6526,
+        "core": 13461,
+        "component": 14259
+      }
+    },
+    {
+      "id": "branches-and-traps",
+      "operation": "compile",
+      "inputBytes": 317,
+      "nativeBytes": 115,
+      "structuredCheck": true,
+      "coreBytes": 75,
+      "componentBytes": 75,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 75
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 75
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 40.765283653846154,
+        "rust-wat-validate": 9.115533498759305,
+        "core": 4.314411666675863,
+        "component": 8.891944099392603
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          41395.01442307692,
+          40895.644230769234,
+          41931.11538461538,
+          39801.245192307695,
+          40249.394230769234,
+          40669.331730769234,
+          39977.966346153844,
+          40765.283653846156,
+          41273.01442307692
+        ],
+        "rust-wat-validate": [
+          9415.991315136476,
+          9310.022332506203,
+          9072.895781637717,
+          9115.533498759305,
+          9097.563275434242,
+          9138.25558312655,
+          9095.227047146402,
+          9086.915632754342,
+          9212.935483870968
+        ],
+        "core": [
+          4776.154999982922,
+          4344.504999993086,
+          4314.411666675863,
+          4273.593333344592,
+          4326.082499997052,
+          4210.835416658958,
+          4286.894583337951,
+          4525.7337499849355,
+          4310.607916679628
+        ],
+        "component": [
+          8891.944099392604,
+          9066.14374444069,
+          8884.661047033762,
+          8923.52795030921,
+          8854.024844735042,
+          10094.607808329554,
+          8740.15794146107,
+          9318.992901492662,
+          8794.654835817108
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 208,
+        "rust-wat-validate": 806,
+        "core": 2400,
+        "component": 1127
+      },
+      "warmupCalls": {
+        "rust-native-release": 5068,
+        "rust-wat-validate": 11963,
+        "core": 15542,
+        "component": 12059
+      }
+    },
+    {
+      "id": "i64-bits",
+      "operation": "check",
+      "inputBytes": 346,
+      "nativeBytes": 133,
+      "structuredCheck": true,
+      "coreBytes": 86,
+      "componentBytes": 86,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 86
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 86
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 31.579525547445257,
+        "core": 5.106315319803436,
+        "component": 9.619588512238868
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          30341.266423357665,
+          31579.525547445257,
+          32734.496350364963,
+          31454.87591240876,
+          30029.032846715327,
+          33064.28102189781,
+          33164.38321167883,
+          29344.74087591241,
+          33203.93065693431
+        ],
+        "core": [
+          5106.315319803436,
+          5042.392662344734,
+          5132.8096182274,
+          5202.207734260412,
+          5423.718393675797,
+          5053.202280619226,
+          5064.745166044072,
+          5054.870599886612,
+          5124.042141804107
+        ],
+        "component": [
+          9439.904896439139,
+          13130.718455743601,
+          10021.567796646674,
+          9612.408662890974,
+          9783.11770250032,
+          9619.588512238868,
+          9544.079096072985,
+          10751.033898351237,
+          9465.554613957847
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 274,
+        "core": 2017,
+        "component": 1062
+      },
+      "warmupCalls": {
+        "rust-native-release": 6279,
+        "core": 15208,
+        "component": 13175
+      }
+    },
+    {
+      "id": "i64-bits",
+      "operation": "compile",
+      "inputBytes": 346,
+      "nativeBytes": 133,
+      "structuredCheck": true,
+      "coreBytes": 86,
+      "componentBytes": 86,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 86
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 86
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 45.13232978723404,
+        "rust-wat-validate": 10.878693548387096,
+        "core": 5.974830320706938,
+        "component": 11.775048335117365
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          44818.255319148935,
+          46356.164893617024,
+          45132.32978723404,
+          45827.59042553192,
+          47999.35638297872,
+          43972.55319148936,
+          51691.28723404255,
+          44197.255319148935,
+          44418.85106382979
+        ],
+        "rust-wat-validate": [
+          10796.001344086022,
+          18199.53360215054,
+          10878.693548387097,
+          10880.04435483871,
+          11061.227150537634,
+          11507.84677419355,
+          10850.415322580646,
+          10485.932795698925,
+          10506.962365591398
+        ],
+        "core": [
+          5935.589504398469,
+          7845.660641405143,
+          5974.830320706938,
+          5991.9626822137925,
+          6397.928279901534,
+          5942.370845480337,
+          7546.061807568251,
+          5837.352186600859,
+          5793.298542268874
+        ],
+        "component": [
+          13006.77873254779,
+          14396.682062279115,
+          11418.152524148816,
+          11775.048335117364,
+          11570.211600442775,
+          12724.560687431142,
+          17349.9183673647,
+          10972.747583224222,
+          10481.555316830283
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 188,
+        "rust-wat-validate": 744,
+        "core": 1715,
+        "component": 931
+      },
+      "warmupCalls": {
+        "rust-native-release": 4753,
+        "rust-wat-validate": 11587,
+        "core": 14389,
+        "component": 11943
+      }
+    },
+    {
+      "id": "wide-indices",
+      "operation": "check",
+      "inputBytes": 9630,
+      "nativeBytes": 3222,
+      "structuredCheck": true,
+      "coreBytes": 2244,
+      "componentBytes": 2244,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 2244
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 2244
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 949.3786666666666,
+        "core": 193.32853333338184,
+        "component": 225.47417241373202
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          903278.0833333334,
+          1006899.5,
+          962336.8333333334,
+          986093.5,
+          959642.4166666666,
+          949378.6666666666,
+          917972.4166666666,
+          911812.5,
+          923826.3333333334
+        ],
+        "core": [
+          183029.20000005548,
+          193328.53333338184,
+          221465.96666686187,
+          191853.51666671215,
+          199838.90000012252,
+          189802.05000001055,
+          193588.1666667835,
+          196543.00000011068,
+          187611.25000013033
+        ],
+        "component": [
+          199906.6206896934,
+          231852.6551724627,
+          225474.172413732,
+          237042.98275870003,
+          217510.72413788838,
+          203752.17241373067,
+          204127.7586206669,
+          253268.75862095936,
+          225730.56896554
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 12,
+        "core": 60,
+        "component": 58
+      },
+      "warmupCalls": {
+        "rust-native-release": 341,
+        "core": 1595,
+        "component": 1532
+      }
+    },
+    {
+      "id": "wide-indices",
+      "operation": "compile",
+      "inputBytes": 9630,
+      "nativeBytes": 3222,
+      "structuredCheck": true,
+      "coreBytes": 2244,
+      "componentBytes": 2244,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 2244
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 2244
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 1738.232142857143,
+        "rust-wat-validate": 318.9694117647059,
+        "core": 201.11605357124066,
+        "component": 224.48247368390042
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          2925208.285714286,
+          3651881.1428571427,
+          1876744.142857143,
+          2091261.857142857,
+          1738232.142857143,
+          1694630.7142857143,
+          1643250,
+          1667196.4285714286,
+          1605297.5714285714
+        ],
+        "rust-wat-validate": [
+          410089.4705882353,
+          675499.9117647059,
+          318969.4117647059,
+          324537.9117647059,
+          326345.4411764706,
+          308938.82352941175,
+          296490.14705882355,
+          300973,
+          290204.6176470588
+        ],
+        "core": [
+          372982.0892859345,
+          942744.0357143102,
+          208991.8214285587,
+          214003.73214328286,
+          201116.05357124066,
+          191581.8928572923,
+          193646.66071442116,
+          182020.74999979747,
+          185096.0535717344
+        ],
+        "component": [
+          490306.94736824156,
+          1723449.4736840134,
+          224482.47368390043,
+          249789.57894716976,
+          195592.05263163004,
+          292195.21052666666,
+          197337.68421084326,
+          206355.26315738005,
+          195535.1578948658
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 7,
+        "rust-wat-validate": 34,
+        "core": 56,
+        "component": 19
+      },
+      "warmupCalls": {
+        "rust-native-release": 181,
+        "rust-wat-validate": 919,
+        "core": 1390,
+        "component": 1042
+      }
+    },
+    {
+      "id": "expressions-32",
+      "operation": "check",
+      "inputBytes": 9104,
+      "nativeBytes": 1952,
+      "structuredCheck": true,
+      "coreBytes": 1782,
+      "componentBytes": 1782,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 1782
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 1782
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 1090.5125,
+        "core": 130.50984523808788,
+        "component": 143.58954054040547
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          1087516.5,
+          1090512.5,
+          1103716.7,
+          1034595.9,
+          1120683.3,
+          1118158.5,
+          1154262.3,
+          1032221,
+          1058233.5
+        ],
+        "core": [
+          123874.50000009956,
+          128167.65476175833,
+          127788.22619050823,
+          122284.6904763303,
+          469913.6904762436,
+          141960.23809502844,
+          136941.5476191577,
+          131018.84523794499,
+          130509.84523808787
+        ],
+        "component": [
+          139641.85135124795,
+          140331.6486486949,
+          139143.51351347766,
+          178188.05405423098,
+          210686.33783771304,
+          191499.49999980984,
+          146578.905405575,
+          143589.54054040546,
+          140964.5270269794
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 10,
+        "core": 84,
+        "component": 74
+      },
+      "warmupCalls": {
+        "rust-native-release": 272,
+        "core": 2066,
+        "component": 2029
+      }
+    },
+    {
+      "id": "expressions-32",
+      "operation": "compile",
+      "inputBytes": 9104,
+      "nativeBytes": 1952,
+      "structuredCheck": true,
+      "coreBytes": 1782,
+      "componentBytes": 1782,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 1782
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 1782
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 1359.447875,
+        "rust-wat-validate": 132.64886301369864,
+        "core": 143.06019753101643,
+        "component": 157.7186103897073
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          1265182.375,
+          1307088.5,
+          1676630,
+          2706187.5,
+          1433374.875,
+          1347291.625,
+          1397995,
+          1337390.375,
+          1359447.875
+        ],
+        "rust-wat-validate": [
+          128460.05479452055,
+          131656.3698630137,
+          147384.19178082192,
+          459635.2465753425,
+          130947.54794520549,
+          134223.19178082192,
+          152430.86301369863,
+          132648.86301369863,
+          130492.04109589041
+        ],
+        "core": [
+          130819.88888882694,
+          130866.25925935543,
+          144658.34567889952,
+          204569.96296293873,
+          137432.56790132116,
+          146199.0617283812,
+          143060.19753101643,
+          148798.9012347509,
+          134160.40740740293
+        ],
+        "component": [
+          141926.883116902,
+          139478.84415595926,
+          197716.41558440638,
+          167475.6233767223,
+          152437.16883149365,
+          163907.50649352642,
+          153391.76623371252,
+          195516.27272732445,
+          157718.6103897073
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 8,
+        "rust-wat-validate": 73,
+        "core": 81,
+        "component": 77
+      },
+      "warmupCalls": {
+        "rust-native-release": 233,
+        "rust-wat-validate": 1998,
+        "core": 2049,
+        "component": 1963
+      }
+    },
+    {
+      "id": "expressions-128",
+      "operation": "check",
+      "inputBytes": 36081,
+      "nativeBytes": 7616,
+      "structuredCheck": true,
+      "coreBytes": 6937,
+      "componentBytes": 6937,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 6937
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 6937
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 4220.666333333333,
+        "core": 581.4055333333574,
+        "component": 622.8283529415102
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          6803097.666666667,
+          4363736.333333333,
+          4172222.3333333335,
+          4260805.666666667,
+          4120194.3333333335,
+          4341499.666666667,
+          4053528,
+          4002541.6666666665,
+          4220666.333333333
+        ],
+        "core": [
+          848211.1333333402,
+          578625.000000223,
+          599308.2000003292,
+          675163.7999999125,
+          618911.2666662064,
+          560855.4666670292,
+          581405.5333333574,
+          564516.8000000316,
+          579469.4666665844
+        ],
+        "component": [
+          606306.3529415076,
+          766127.5294117599,
+          644477.8823529572,
+          751877.5882353486,
+          605781.8823526973,
+          758198.4705881469,
+          616367.7058828077,
+          622828.3529415102,
+          587769.5294115898
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 3,
+        "core": 15,
+        "component": 17
+      },
+      "warmupCalls": {
+        "rust-native-release": 74,
+        "core": 508,
+        "component": 386
+      }
+    },
+    {
+      "id": "expressions-128",
+      "operation": "compile",
+      "inputBytes": 36081,
+      "nativeBytes": 7616,
+      "structuredCheck": true,
+      "coreBytes": 6937,
+      "componentBytes": 6937,
+      "gate": {
+        "core": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 6937
+        },
+        "component": {
+          "canonicalEqual": true,
+          "rawEqual": false,
+          "bytes": 6937
+        }
+      },
+      "mediansUs": {
+        "rust-native-release": 4970.458666666667,
+        "rust-wat-validate": 502.71875,
+        "core": 605.7915789478054,
+        "component": 625.2407222220629
+      },
+      "samplesNs": {
+        "rust-native-release": [
+          4934194.666666667,
+          4778333.333333333,
+          5003069.666666667,
+          4970458.666666667,
+          4925486.333333333,
+          5177805.666666667,
+          5130305.666666667,
+          4885347.333333333,
+          4979555.333333333
+        ],
+        "rust-wat-validate": [
+          500943.75,
+          500885.4,
+          501014.6,
+          507468.8,
+          501877.1,
+          509300.05,
+          502718.75,
+          503191.6,
+          505245.8
+        ],
+        "core": [
+          593758.947368195,
+          617679.6315799278,
+          603151.3684205204,
+          610241.3157896079,
+          600774.0526317656,
+          619453.7368424598,
+          592848.7368429685,
+          605791.5789478055,
+          608063.5789474301
+        ],
+        "component": [
+          610745.3888891744,
+          661909.6111110896,
+          613898.2222227141,
+          653796.277777979,
+          625240.7222220629,
+          644536.9999999255,
+          597037.0555551199,
+          656071.7777780764,
+          603303.1666669962
+        ]
+      },
+      "iterations": {
+        "rust-native-release": 3,
+        "rust-wat-validate": 20,
+        "core": 19,
+        "component": 18
+      },
+      "warmupCalls": {
+        "rust-native-release": 63,
+        "rust-wat-validate": 586,
+        "core": 495,
+        "component": 504
+      }
+    }
+  ],
+  "recordHashes": {
+    "capture.json": "7b5bc3873c6cf3b9286a63efb1355578d0c0090228ca4087ce863e61a4e58b21",
+    "cases/branches-and-traps/canonical.wasm": "bfddd041ed7bdda283cc3ca6a390657180cdf568bcc96ff0033ca41eb6e1dbc2",
+    "cases/branches-and-traps/component.wasm": "bfddd041ed7bdda283cc3ca6a390657180cdf568bcc96ff0033ca41eb6e1dbc2",
+    "cases/branches-and-traps/core.wasm": "bfddd041ed7bdda283cc3ca6a390657180cdf568bcc96ff0033ca41eb6e1dbc2",
+    "cases/branches-and-traps/native.wasm": "7082e2fb80bba3105b98ef5a2e4aec5c6d33a92a528e1f430f9a029def023123",
+    "cases/branches-and-traps/probes.json": "d1e60bbd40f1f485bbba96cb166aa60acfc1442d99bb85c85182a93595d48d79",
+    "cases/branches-and-traps/source.walz": "529443a5078196e8954d37b59789eaa28221dd9aa701c1ea9fbaa762cf166d0d",
+    "cases/expressions-128/canonical.wasm": "1def15465d2548e5a29c32d6656d8ea4e19163d19b516f385e9722a09754f742",
+    "cases/expressions-128/component.wasm": "1def15465d2548e5a29c32d6656d8ea4e19163d19b516f385e9722a09754f742",
+    "cases/expressions-128/core.wasm": "1def15465d2548e5a29c32d6656d8ea4e19163d19b516f385e9722a09754f742",
+    "cases/expressions-128/native.wasm": "9f0136669c5949252814101a20db25255ee568dd65d9db4fea186cec034cc007",
+    "cases/expressions-128/probes.json": "6ba25e1cc29a4f4d251dd1d8992662da29802b3b326dfc91d83067d0b5d354df",
+    "cases/expressions-128/source.walz": "401414772b4538bd834956522e5d26d462c9316a8974f77dd5e27b6cc258c6e2",
+    "cases/expressions-32/canonical.wasm": "e6efc4310b75634758b56a89e14d2c849dc78755150d3add936cf59b8f179cb2",
+    "cases/expressions-32/component.wasm": "e6efc4310b75634758b56a89e14d2c849dc78755150d3add936cf59b8f179cb2",
+    "cases/expressions-32/core.wasm": "e6efc4310b75634758b56a89e14d2c849dc78755150d3add936cf59b8f179cb2",
+    "cases/expressions-32/native.wasm": "3e0a1a67613de5bcd89d8f5ccdbce1f70e70113b6db99d53da341991d2c87c0c",
+    "cases/expressions-32/probes.json": "4c21a94047b2c315be1eb42bd7c1d8d1ed9e7dfdf06ef37d861e11739aa83f76",
+    "cases/expressions-32/source.walz": "ca165723063b8394de03c758eca8097546573ce20efcf2e80631fe50a896b631",
+    "cases/i64-bits/canonical.wasm": "ad910d390abce36dbe5d997a052db4d68a50ac24f084c6643b9362da9848afa4",
+    "cases/i64-bits/component.wasm": "ad910d390abce36dbe5d997a052db4d68a50ac24f084c6643b9362da9848afa4",
+    "cases/i64-bits/core.wasm": "ad910d390abce36dbe5d997a052db4d68a50ac24f084c6643b9362da9848afa4",
+    "cases/i64-bits/native.wasm": "720fc3196b3e6f9a020970eccf789251fa77e6e5d0cf78b4cd3a1d081cb6fed1",
+    "cases/i64-bits/probes.json": "fa5c84e9c855d0518ccefc609134a82b3fd4bb777a43934206644408d2128be6",
+    "cases/i64-bits/source.walz": "60df5dce40438fc6e388f5a8fc10e11fdb9936ef4718ab9f1af43f5a634b9be2",
+    "cases/i64-loop/canonical.wasm": "4d004907f583171c82b61eec2bbccf46d5c91ec2b4eee4a8f36a9c7844a2e34c",
+    "cases/i64-loop/component.wasm": "4d004907f583171c82b61eec2bbccf46d5c91ec2b4eee4a8f36a9c7844a2e34c",
+    "cases/i64-loop/core.wasm": "4d004907f583171c82b61eec2bbccf46d5c91ec2b4eee4a8f36a9c7844a2e34c",
+    "cases/i64-loop/native.wasm": "f526968d9fe5fb98819db3bb7177403c96068957548f35440a87748cc591d511",
+    "cases/i64-loop/probes.json": "d1a4020e28406845fe249807075e2f17a9aa47a925d2f83a59c64d288ec5c544",
+    "cases/i64-loop/source.walz": "0bb0580bbbdd577d984c9a0ed8fefbd479e9230834ee8da5d8e6b19281b29d0f",
+    "cases/integer-mix/canonical.wasm": "0f538d92a154a8b6ae3740b5fcaf92f60cfd111843d4f744f51bc6bd52255fd8",
+    "cases/integer-mix/component.wasm": "0f538d92a154a8b6ae3740b5fcaf92f60cfd111843d4f744f51bc6bd52255fd8",
+    "cases/integer-mix/core.wasm": "0f538d92a154a8b6ae3740b5fcaf92f60cfd111843d4f744f51bc6bd52255fd8",
+    "cases/integer-mix/native.wasm": "0c74c191387353edb2233ca90f605ff50dbc76e4c135efb4e85f978e6a59e6bb",
+    "cases/integer-mix/probes.json": "77b0f628ad23c29bf73593e6c22ef0d9f67120f214e66a9f7fd4bf429aa77d50",
+    "cases/integer-mix/source.walz": "9f5e9b95da44b83c482c133d13f2340a7e04a09bf2ddcce32ebfed655e559132",
+    "cases/recursive-call/canonical.wasm": "2af06bc97cd5e746cccfc3aac3f0bb5b7642c4e4417dd975223ea0e199bc8d5e",
+    "cases/recursive-call/component.wasm": "2af06bc97cd5e746cccfc3aac3f0bb5b7642c4e4417dd975223ea0e199bc8d5e",
+    "cases/recursive-call/core.wasm": "2af06bc97cd5e746cccfc3aac3f0bb5b7642c4e4417dd975223ea0e199bc8d5e",
+    "cases/recursive-call/native.wasm": "cea58232b571349d8187fa710b691c08604c305ba9630b80808ae0808d4fb725",
+    "cases/recursive-call/probes.json": "502a3225d3ebfcec85bb5f3ccbe6c0c38fc2c4f7310d5179007ab7bd1f425ba4",
+    "cases/recursive-call/source.walz": "c6caa4c995a21b153619c1d5d192cd67f1c8e5727403d34518ce5ce2aa0b114d",
+    "cases/wide-indices/canonical.wasm": "6507d55d07d1205f1dfb1c4df03b14424506f02d82b622fba7a3c730bccff033",
+    "cases/wide-indices/component.wasm": "6507d55d07d1205f1dfb1c4df03b14424506f02d82b622fba7a3c730bccff033",
+    "cases/wide-indices/core.wasm": "6507d55d07d1205f1dfb1c4df03b14424506f02d82b622fba7a3c730bccff033",
+    "cases/wide-indices/native.wasm": "ede2c90a2327dc33f9d9bcb974cbb363039c615f29474361cc7deb6880810de7",
+    "cases/wide-indices/probes.json": "0fdadc09e911c4b2224f572dba7db20c418fb9021d5c2f3d208de600b46e0296",
+    "cases/wide-indices/source.walz": "8e43c432005256ca9e80394713bc4d102b96eea2c945be7d63436a48ce6cacdf",
+    "harness/artifacts.mjs": "baf4557fbed2eb2ce5321e384c86cdfce796bf39510aa9db7893b93338e57e30",
+    "harness/capture.mjs": "8e7a200f947aaeeedcd191f275a37f0af3a95ef991b883ad950b60171ba33b4e",
+    "harness/corpus.mjs": "10b99c8e951459d7202fbe9f25cbe65836c2261b02e0c5d20d380bb2ffb9e431",
+    "harness/peer.mjs": "b9005173637c933a73bd459eb5e787034d9492d7fc39f5fbacdeacbf48d5fb7a",
+    "harness/runner.mjs": "2944a57ce928d6d0c9ff6380f66f77637ac364bd65a6603d1795f7d2a270f21b",
+    "native-source/selfhost-bench.rs": "9cf2ae955dc17111c5478e29fc5ae1b6fa6afc268fc4b7d669a1c82fff9b8e8d",
+    "native-source/selfhost/contract.rs": "bdd81d195a7ba8c2576c65150dc06dff8ec460821a9253f99c5a366b2ab70709",
+    "selfhost-bench.mjs": "5fa51acc107dedad51247ba23ae1f11f31e6323b9932ac8877ec99fffc78fdde"
+  }
+}

@@ -75,6 +75,7 @@ for (const [backend, compile] of [
     ["simd-collections", "examples/simd-collections/portable.walz"],
     ["dictionary-column", "examples/dictionary-column/portable.walz"],
     ["table", "examples/table/portable.walz"],
+    ["selfhost", "tests/component-fixtures/selfhost.walz"],
     ["resources", "examples/resources/main.walz"],
     ["wit-bindings", "examples/wit/main.walz"],
     ["text-io", "examples/io/text-filter.walz"],

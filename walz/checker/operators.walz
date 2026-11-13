@@ -1,0 +1,691 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@export
+    (func $operator.code)
+    (func $operator.alias)
+    (func $operator.comparison)
+    (func $operator.input)
+    (func $operator.result)
+    (func $operator.arity))
+  (func $operator.code
+    (param $name $bytes)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.eqz"))
+        (then (return 69))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.eq"))
+        (then (return 70))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.ne"))
+        (then (return 71))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.lt_s"))
+        (then (return 72))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.lt_u"))
+        (then (return 73))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.gt_s"))
+        (then (return 74))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.gt_u"))
+        (then (return 75))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.le_s"))
+        (then (return 76))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.le_u"))
+        (then (return 77))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.ge_s"))
+        (then (return 78))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.ge_u"))
+        (then (return 79))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.add"))
+        (then (return 106))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.sub"))
+        (then (return 107))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.mul"))
+        (then (return 108))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.div_s"))
+        (then (return 109))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.div_u"))
+        (then (return 110))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.rem_s"))
+        (then (return 111))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.rem_u"))
+        (then (return 112))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.and"))
+        (then (return 113))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.or"))
+        (then (return 114))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.xor"))
+        (then (return 115))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.shl"))
+        (then (return 116))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.shr_s"))
+        (then (return 117))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.shr_u"))
+        (then (return 118))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.eqz"))
+        (then (return 80))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.eq"))
+        (then (return 81))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.ne"))
+        (then (return 82))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.lt_s"))
+        (then (return 83))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.lt_u"))
+        (then (return 84))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.gt_s"))
+        (then (return 85))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.gt_u"))
+        (then (return 86))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.le_s"))
+        (then (return 87))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.le_u"))
+        (then (return 88))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.ge_s"))
+        (then (return 89))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.ge_u"))
+        (then (return 90))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.add"))
+        (then (return 124))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.sub"))
+        (then (return 125))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.mul"))
+        (then (return 126))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.div_s"))
+        (then (return 127))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.div_u"))
+        (then (return 128))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.rem_s"))
+        (then (return 129))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.rem_u"))
+        (then (return 130))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.and"))
+        (then (return 131))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.or"))
+        (then (return 132))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.xor"))
+        (then (return 133))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.shl"))
+        (then (return 134))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.shr_s"))
+        (then (return 135))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.shr_u"))
+        (then (return 136))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i32.wrap_i64"))
+        (then (return 167))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.extend_i32_s"))
+        (then (return 172))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "i64.extend_i32_u"))
+        (then (return 173))
+        (else (nop)))
+      0))
+
+  (func $operator.alias
+    (param $name $bytes)
+    (param $type i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (call $bytes.equal $name (@string.bytes "="))
+        (then (return (if (result i32) (= $type 126) (then 81) (else 70))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "!="))
+        (then (return (if (result i32) (= $type 126) (then 82) (else 71))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "<"))
+        (then (return (if (result i32) (= $type 126) (then 83) (else 72))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes ">"))
+        (then (return (if (result i32) (= $type 126) (then 85) (else 74))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "<="))
+        (then (return (if (result i32) (= $type 126) (then 87) (else 76))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes ">="))
+        (then (return (if (result i32) (= $type 126) (then 89) (else 78))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "+"))
+        (then (return (if (result i32) (= $type 126) (then 124) (else 106))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "-"))
+        (then (return (if (result i32) (= $type 126) (then 125) (else 107))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "*"))
+        (then (return (if (result i32) (= $type 126) (then 126) (else 108))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "/"))
+        (then (return (if (result i32) (= $type 126) (then 127) (else 109))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "&"))
+        (then (return (if (result i32) (= $type 126) (then 131) (else 113))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "|"))
+        (then (return (if (result i32) (= $type 126) (then 132) (else 114))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "^"))
+        (then (return (if (result i32) (= $type 126) (then 133) (else 115))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes "<<"))
+        (then (return (if (result i32) (= $type 126) (then 134) (else 116))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes ">>"))
+        (then (return (if (result i32) (= $type 126) (then 135) (else 117))))
+        (else (nop)))
+      (if
+        (call $bytes.equal $name (@string.bytes ">>>"))
+        (then (return (if (result i32) (= $type 126) (then 136) (else 118))))
+        (else (nop)))
+      0))
+
+  (func $operator.comparison
+    (param $name $bytes)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if (call $bytes.equal $name (@string.bytes "=")) (then (return 1)) (else (nop)))
+      (if (call $bytes.equal $name (@string.bytes "!=")) (then (return 1)) (else (nop)))
+      (if (call $bytes.equal $name (@string.bytes "<")) (then (return 1)) (else (nop)))
+      (if (call $bytes.equal $name (@string.bytes "<=")) (then (return 1)) (else (nop)))
+      (if (call $bytes.equal $name (@string.bytes ">")) (then (return 1)) (else (nop)))
+      (if (call $bytes.equal $name (@string.bytes ">=")) (then (return 1)) (else (nop)))
+      0))
+
+  (func $operator.input
+    (param $op i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (||
+          (= $op 80)
+          (||
+            (= $op 81)
+            (||
+              (= $op 82)
+              (||
+                (= $op 83)
+                (||
+                  (= $op 84)
+                  (||
+                    (= $op 85)
+                    (||
+                      (= $op 86)
+                      (||
+                        (= $op 87)
+                        (||
+                          (= $op 88)
+                          (||
+                            (= $op 89)
+                            (||
+                              (= $op 90)
+                              (||
+                                (= $op 124)
+                                (||
+                                  (= $op 125)
+                                  (||
+                                    (= $op 126)
+                                    (||
+                                      (= $op 127)
+                                      (||
+                                        (= $op 128)
+                                        (||
+                                          (= $op 129)
+                                          (||
+                                            (= $op 130)
+                                            (||
+                                              (= $op 131)
+                                              (||
+                                                (= $op 132)
+                                                (||
+                                                  (= $op 133)
+                                                  (||
+                                                    (= $op 134)
+                                                    (||
+                                                      (= $op 135)
+                                                      (|| (= $op 136) (= $op 167))))
+                                                ))))
+                                        ))))
+                                ))))
+                        ))))
+                ))))
+        )
+        (then (return 126))
+        (else (nop)))
+      (if
+        (||
+          (= $op 69)
+          (||
+            (= $op 70)
+            (||
+              (= $op 71)
+              (||
+                (= $op 72)
+                (||
+                  (= $op 73)
+                  (||
+                    (= $op 74)
+                    (||
+                      (= $op 75)
+                      (||
+                        (= $op 76)
+                        (||
+                          (= $op 77)
+                          (||
+                            (= $op 78)
+                            (||
+                              (= $op 79)
+                              (||
+                                (= $op 106)
+                                (||
+                                  (= $op 107)
+                                  (||
+                                    (= $op 108)
+                                    (||
+                                      (= $op 109)
+                                      (||
+                                        (= $op 110)
+                                        (||
+                                          (= $op 111)
+                                          (||
+                                            (= $op 112)
+                                            (||
+                                              (= $op 113)
+                                              (||
+                                                (= $op 114)
+                                                (||
+                                                  (= $op 115)
+                                                  (||
+                                                    (= $op 116)
+                                                    (||
+                                                      (= $op 117)
+                                                      (||
+                                                        (= $op 118)
+                                                        (|| (= $op 172) (= $op 173))))
+                                                  ))))
+                                          ))))
+                                  ))))
+                          ))))
+                  ))))
+          ))
+        (then (return 127))
+        (else (nop)))
+      0))
+
+  (func $operator.result
+    (param $op i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (||
+          (= $op 124)
+          (||
+            (= $op 125)
+            (||
+              (= $op 126)
+              (||
+                (= $op 127)
+                (||
+                  (= $op 128)
+                  (||
+                    (= $op 129)
+                    (||
+                      (= $op 130)
+                      (||
+                        (= $op 131)
+                        (||
+                          (= $op 132)
+                          (||
+                            (= $op 133)
+                            (||
+                              (= $op 134)
+                              (||
+                                (= $op 135)
+                                (|| (= $op 136) (|| (= $op 172) (= $op 173))))
+                            ))))
+                    ))))
+            )))
+        (then (return 126))
+        (else (nop)))
+      (if
+        (||
+          (= $op 69)
+          (||
+            (= $op 70)
+            (||
+              (= $op 71)
+              (||
+                (= $op 72)
+                (||
+                  (= $op 73)
+                  (||
+                    (= $op 74)
+                    (||
+                      (= $op 75)
+                      (||
+                        (= $op 76)
+                        (||
+                          (= $op 77)
+                          (||
+                            (= $op 78)
+                            (||
+                              (= $op 79)
+                              (||
+                                (= $op 106)
+                                (||
+                                  (= $op 107)
+                                  (||
+                                    (= $op 108)
+                                    (||
+                                      (= $op 109)
+                                      (||
+                                        (= $op 110)
+                                        (||
+                                          (= $op 111)
+                                          (||
+                                            (= $op 112)
+                                            (||
+                                              (= $op 113)
+                                              (||
+                                                (= $op 114)
+                                                (||
+                                                  (= $op 115)
+                                                  (||
+                                                    (= $op 116)
+                                                    (||
+                                                      (= $op 117)
+                                                      (||
+                                                        (= $op 118)
+                                                        (||
+                                                          (= $op 80)
+                                                          (||
+                                                            (= $op 81)
+                                                            (||
+                                                              (= $op 82)
+                                                              (||
+                                                                (= $op 83)
+                                                                (||
+                                                                  (= $op 84)
+                                                                  (||
+                                                                    (= $op 85)
+                                                                    (||
+                                                                      (= $op 86)
+                                                                      (||
+                                                                        (= $op 87)
+                                                                        (||
+                                                                          (= $op 88)
+                                                                          (||
+                                                                            (= $op 89)
+                                                                            (||
+                                                                              (= $op 90)
+                                                                              (= $op 167))))
+                                                                      ))))
+                                                              ))))
+                                                      ))))
+                                              ))))
+                                      ))))
+                              ))))
+                      ))))
+              ))))
+        (then (return 127))
+        (else (nop)))
+      0))
+
+  (func $operator.arity
+    (param $op i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (||
+          (= $op 69)
+          (|| (= $op 80) (|| (= $op 167) (|| (= $op 172) (= $op 173))))
+        )
+        (then (return 1))
+        (else (nop)))
+      (if
+        (||
+          (= $op 70)
+          (||
+            (= $op 71)
+            (||
+              (= $op 72)
+              (||
+                (= $op 73)
+                (||
+                  (= $op 74)
+                  (||
+                    (= $op 75)
+                    (||
+                      (= $op 76)
+                      (||
+                        (= $op 77)
+                        (||
+                          (= $op 78)
+                          (||
+                            (= $op 79)
+                            (||
+                              (= $op 106)
+                              (||
+                                (= $op 107)
+                                (||
+                                  (= $op 108)
+                                  (||
+                                    (= $op 109)
+                                    (||
+                                      (= $op 110)
+                                      (||
+                                        (= $op 111)
+                                        (||
+                                          (= $op 112)
+                                          (||
+                                            (= $op 113)
+                                            (||
+                                              (= $op 114)
+                                              (||
+                                                (= $op 115)
+                                                (||
+                                                  (= $op 116)
+                                                  (||
+                                                    (= $op 117)
+                                                    (||
+                                                      (= $op 118)
+                                                      (||
+                                                        (= $op 81)
+                                                        (||
+                                                          (= $op 82)
+                                                          (||
+                                                            (= $op 83)
+                                                            (||
+                                                              (= $op 84)
+                                                              (||
+                                                                (= $op 85)
+                                                                (||
+                                                                  (= $op 86)
+                                                                  (||
+                                                                    (= $op 87)
+                                                                    (||
+                                                                      (= $op 88)
+                                                                      (||
+                                                                        (= $op 89)
+                                                                        (||
+                                                                          (= $op 90)
+                                                                          (||
+                                                                            (= $op 124)
+                                                                            (||
+                                                                              (= $op 125)
+                                                                              (||
+                                                                                (= $op
+                                                                                  126)
+                                                                                (||
+                                                                                  (= $op
+                                                                                    127)
+                                                                                  (||
+                                                                                    (=
+                                                                                      $op
+                                                                                      128)
+                                                                                    (||
+                                                                                      (=
+                                                                                        $op
+                                                                                        129)
+                                                                                      (||
+                                                                                        (=
+                                                                                          $op
+                                                                                          130)
+                                                                                        (||
+                                                                                          (=
+                                                                                            $op
+                                                                                            131)
+                                                                                          (||
+                                                                                            (=
+                                                                                              $op
+                                                                                              132)
+                                                                                            (||
+                                                                                              (=
+                                                                                                $op
+                                                                                                133)
+                                                                                              (||
+                                                                                                (=
+                                                                                                  $op
+                                                                                                  134)
+                                                                                                (||
+                                                                                                  (=
+                                                                                                    $op
+                                                                                                    135)
+                                                                                                  (=
+                                                                                                    $op
+                                                                                                    136))))
+                                                                                          ))))
+                                                                                  ))))
+                                                                          ))))
+                                                                  ))))
+                                                          ))))
+                                                  ))))
+                                          ))))
+                                  ))))
+                          ))))
+                  ))))
+          ))
+        (then (return 2))
+        (else (nop)))
+      0)))

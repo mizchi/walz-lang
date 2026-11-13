@@ -1,0 +1,116 @@
+(module
+  (@use "walz:core" (type $list) (type $bytes-builder) (func $bytes-builder.byte))
+  (@use "../checker/ir.walz"
+    (type $gc-type-ir)
+    (type $field-ir)
+    (func $ir.is-ref)
+    (func $ir.heap)
+    (func $ir.nullable))
+  (@use "./encoding.walz" (func $encoding.write-u32) (func $encoding.write-s64))
+  (@export
+    (func $encoding.value-type)
+    (func $encoding.gc-types)
+    (func $encoding.group-count))
+  (func $encoding.value-type
+    (param $b (ref $bytes-builder))
+    (param $t i32)
+    (@effect reads writes allocates)
+    (if
+      (call $ir.is-ref $t)
+      (then
+        (@let $heap (call $ir.heap $t)
+          (if
+            (&& (< $heap 0) (call $ir.nullable $t))
+            (then (call $bytes-builder.byte $b (+ $heap 128)))
+            (else
+              (block
+                (call $bytes-builder.byte $b
+                  (if (result i32) (call $ir.nullable $t) (then 99) (else 100)))
+                (call $encoding.write-s64 $b (i64.extend_i32_s $heap))))
+          )))
+      (else (call $bytes-builder.byte $b $t))))
+
+  (func $encoding.group-count
+    (param $defs $list<(ref $gc-type-ir)>)
+    (result i32)
+    (@effect pure)
+    (@loop $groups
+      (bind $i i32 0)
+      (bind $count i32 0)
+      (result i32)
+      (if
+        (result i32)
+        (= $i (@list.len (ref $gc-type-ir) $defs))
+        (then $count)
+        (else
+          (@recur $groups
+            (struct.get $gc-type-ir $end (@list.get (ref $gc-type-ir) $defs $i))
+            (+ $count 1))))
+    ))
+
+  (func $definition
+    (param $b (ref $bytes-builder))
+    (param $d (ref $gc-type-ir))
+    (@effect reads writes allocates)
+    (block
+      (if
+        (||
+          (i32.eqz (struct.get $gc-type-ir $finality $d))
+          (>= (struct.get $gc-type-ir $parent $d) 0))
+        (then
+          (block
+            (call $bytes-builder.byte $b
+              (if
+                (result i32)
+                (struct.get $gc-type-ir $finality $d)
+                (then 79)
+                (else 80)))
+            (call $encoding.write-u32 $b (>= (struct.get $gc-type-ir $parent $d) 0))
+            (if
+              (>= (struct.get $gc-type-ir $parent $d) 0)
+              (then (call $encoding.write-u32 $b (struct.get $gc-type-ir $parent $d)))
+              (else (nop))))
+        )
+        (else (nop)))
+      (call $bytes-builder.byte $b
+        (if (result i32) (= (struct.get $gc-type-ir $kind $d) 0) (then 95) (else 94)))
+      (if
+        (= (struct.get $gc-type-ir $kind $d) 0)
+        (then
+          (call $encoding.write-u32 $b
+            (@list.len (ref $field-ir) (struct.get $gc-type-ir $fields $d))))
+        (else (nop)))
+      (@for-each $f (struct.get $gc-type-ir $fields $d)
+        (block
+          (call $encoding.value-type $b (struct.get $field-ir $storage $f))
+          (call $bytes-builder.byte $b (struct.get $field-ir $mutable $f))))
+    ))
+
+  (func $encoding.gc-types
+    (param $b (ref $bytes-builder))
+    (param $defs $list<(ref $gc-type-ir)>)
+    (@effect reads writes allocates)
+    (@loop $groups
+      (bind $i i32 0)
+      (if
+        (= $i (@list.len (ref $gc-type-ir) $defs))
+        (then (nop))
+        (else
+          (@let
+            (($d (@list.get (ref $gc-type-ir) $defs $i))
+             ($end (struct.get $gc-type-ir $end $d)))
+            (block
+              (if
+                (struct.get $gc-type-ir $explicit $d)
+                (then
+                  (block
+                    (call $bytes-builder.byte $b 78)
+                    (call $encoding.write-u32 $b (- $end $i))))
+                (else (nop)))
+              (@for $items
+                (bind $j i32 $i)
+                (while (< $j $end))
+                (step (+ $j 1))
+                (call $definition $b (@list.get (ref $gc-type-ir) $defs $j)))
+              (@recur $groups $end))))
+      ))))

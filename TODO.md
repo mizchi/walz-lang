@@ -7,6 +7,66 @@
 Preserve a small language specification, inclusion of WAT, Wasm GC, and ease of static analysis.
 Checkmarks mean implementation and regression checks are complete; design alone does not qualify.
 
+## Component composition
+
+- [x] Separate `@lib`, standard Core modules and Component definitions; select constructors and instantiate explicitly.
+- [x] Infer concrete portable function adapters with `@expose` / `@bind`; preserve type/effect/ownership/proof gates.
+- [x] Generate `world.wit` with `build --wit` and validate existing contracts with `--wit-input`.
+- [x] Inspect memory identities/aliases and make generated ABI-memory accesses explicit; validate Core externref FFI metadata.
+- [x] Node/Chromium checks for values, async bindings, separate instances, normal buffer retirement and native failure isolation.
+- [x] Infer imported resource interfaces and own/borrow identities with instance `@bind`; retain nominal aliases, monomorphized owned exports, canonical drop and scoped exception cleanup. Check Node/Chromium identity, close counts, buffers and host-object reachability. The explicit native WIT backend remains available.
+- [x] Add explicit generic source Component constructor arguments, with normalized closed value types, existing constraints and checks, definition sharing, independent instances and concrete WIT. Verify Node/Chromium values, endpoint moves, failures and buffer retirement.
+- [x] Add read-only `@component.type` projections of explicit bindings, preserving ABI scalars, named type ports, shared payload restrictions and resource ownership. Check static modules, constructor phase boundaries, native host-result retirement/rejection and Node/Chromium execution.
+- [x] Add closed visible nominal constructor layouts and staged queries of preceding connections. Preserve opaque/privacy boundaries, phantom identity, ABI annotations, independent instances and resource identity through validated value export ascriptions; check WIT roundtrips, Node and Chromium.
+- [ ] Define host-native disposal/cancellation APIs for supported hosts without freeing in-flight copies prematurely.
+
+See [Component composition](docs/component-composition.md) for contracts and current limits.
+
+## Self-hosting compiler parts
+
+- [x] Source-backed S-expression parser in `walz/parser/`: immutable postorder
+  syntax, UTF-8 ranges, comments, WAT string decoding and explicit resource limits.
+- [x] Independent scalar checker in `walz/checker/`: names, inference, immutable
+  raw IR, operand/control stacks, signatures, labels and opaque checked modules.
+- [x] Unit/i32/i64 binary backend: mutable locals, block/loop, br/br_if, return,
+  if/select, single-binding lexical let, calls, exports and canonical LEB128.
+- [x] Core byte builder with copied snapshots; bootstrap file helper; native,
+  Core/Component, Chromium, trap cleanup and differential compiler checks.
+- [x] Check-only file command and differential raw-IR checks against wasmparser.
+- [x] Frozen scalar compiler benchmark: Core/Component, optimized Rust API and
+  Rust WAT/validator references; canonical output parity gates and raw samples.
+- [ ] Add floats, SIMD, block parameters and multiple results.
+- [x] GC type IR/checking/codegen: structs/arrays, packed fields, recursive groups,
+  declared subtypes, nullable references, casts and bulk array fill/copy. Check
+  source and raw IR against independent validators on Core/Component/Chromium.
+  Matching follows declared type indices/parents; full recursive type equivalence
+  remains future work and some valid Wasm programs are conservatively rejected.
+- [x] Conservative pure checks for mutable GC allocation/access, including
+  transitive direct calls. Immutable GC construction and reads remain pure.
+- [ ] Add memories, imports, function/external references and full recursive
+  type equivalence; support non-defaultable declared locals with initialization checks.
+- [x] 1. Static modules: relative `@use`, selected type/function exports, opaque
+  access boundaries, file identity/ranges and a reserved embedded `walz:core`.
+- [x] 2. Fixed-form lowering: sequential multi-let, typed loop/tail recur with
+  simultaneous updates, for and list/tuple for-each; preserve lazy evaluation.
+- [x] 3. GC effect bounds: pure/reads/writes/allocates, full instruction unions
+  and transitive direct-call checks, including unreachable instructions.
+- [x] 4. Minimal bootstrap core: sealed bytes/string/list/tuple/Option/Result,
+  checked UTF-8 and snapshots, exhaustive match and list/bytes builders.
+- [x] 5. Bounded type/function monomorphization: aliases, explicit/inferred
+  applications, shared/nonunit constraints, caching and recursive groups.
+  Check all five stages on Core/Component/Chromium and a native project example.
+- [x] Declarative expression macros: typed fragments, repetition, recursive calls,
+  definition/caller hygiene, explicit/repeated/delegated binders, infer/selectors,
+  scalar guards and selected imports/aliases/reexports. Independently validate
+  query expressions without executing or emitting them; enforce expansion budgets.
+- [ ] Port remaining core and ownership/proof/ABI validation. Keep unsupported high-level contracts rejected until checks exist.
+- [ ] Compile the compiler with stage 1; compare stage 1/2 outputs and validation
+  against the Rust bootstrap before describing the implementation as self-hosted.
+
+See [the compiler parts guide](docs/selfhost.md) and [frontend scope/limits](docs/selfhost-frontend.md). The current backend intentionally
+rejects the features it needs to compile itself; it does not replace the Rust CLI.
+
 ## SIMD library roadmap
 
 Keep these as ordinary libraries with opaque storage and explicit effects.

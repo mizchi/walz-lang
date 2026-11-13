@@ -43,9 +43,9 @@ pub fn check(
         } else if policy.imports.is_empty() {
             walz::validate(loaded.text()).map_err(|e| loaded.diagnostic(e))?;
         } else {
-            // Compile with the policy so laws and all existing contracts are
-            // checked as well; no host code is executed.
-            walz::compile_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
+            // Validate with the policy, including laws, without treating a
+            // static library as an executable entry or running host code.
+            walz::validate_with_policy(loaded.text(), policy).map_err(|e| loaded.diagnostic(e))?;
         }
         Ok(None)
     })();

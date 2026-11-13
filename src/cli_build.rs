@@ -3,7 +3,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-pub const USAGE: &str = "Usage: walz build [file.walz|directory] [-o output] [--target core|core-js|component]\n                [--bindings policy.json] [--wit world.wit [--world name]]\n       walz build <file.walz> <output.wasm>\n\nDefaults: main.walz, src/main.walz, main.watz, src/main.watz. Output is target/<name>.wasm (core),\ntarget/<name>-js/ (core-js), or target/<name>.component.wasm (component).\nDirectories use their own target/ directory. -- ends option parsing.";
+pub const USAGE: &str = "Usage: walz build [file.walz|directory] [-o output] [--target core|core-js|component]\n                [--bindings policy.json] [--wit] [--wit-input world.wit [--world name]]\n       walz build <file.walz> <output.wasm>\n\nDefaults: main.walz, src/main.walz, main.watz, src/main.watz. Output is target/<name>.wasm (core),\ntarget/<name>-js/ (core-js), or target/<name>.component.wasm (component).\nDirectories use their own target/ directory. -- ends option parsing.";
 
 #[derive(Default)]
 struct Arguments {
@@ -13,6 +13,7 @@ struct Arguments {
     legacy: bool,
     target: Option<String>,
     wit: Option<PathBuf>,
+    emit_wit: bool,
     world: Option<String>,
 }
 
@@ -47,9 +48,15 @@ fn arguments(args: &[OsString]) -> Result<Arguments, String> {
                         .into(),
                 );
             }
+            Some("--wit" | "--emit-wit") => {
+                if parsed.emit_wit {
+                    return Err("duplicate option --wit".into());
+                }
+                parsed.emit_wit = true;
+            }
             Some("--legacy-syntax") => parsed.legacy = true,
-            Some("-o" | "--output" | "--bindings" | "--wit") => {
-                let slot = if arg == "--wit" {
+            Some("-o" | "--output" | "--bindings" | "--wit-input") => {
+                let slot = if arg == "--wit-input" {
                     &mut parsed.wit
                 } else if arg == "--bindings" {
                     &mut parsed.bindings
@@ -82,11 +89,9 @@ fn arguments(args: &[OsString]) -> Result<Arguments, String> {
     parsed.input = positional.next();
     parsed.output = parsed.output.or_else(|| positional.next());
     if parsed.world.is_some() && parsed.wit.is_none() {
-        return Err("--world requires --wit".into());
+        return Err("--world requires --wit-input".into());
     }
-    if parsed.wit.is_some() && parsed.target.as_deref() != Some("component") {
-        return Err("--wit requires --target component".into());
-    }
+
     Ok(parsed)
 }
 
@@ -117,12 +122,32 @@ pub fn command(args: &[OsString], legacy: bool) -> ExitCode {
     };
     let result = (|| -> Result<(), Box<dyn std::error::Error>> {
         let input = parsed.input.unwrap_or_else(|| PathBuf::from("."));
-        let target = parsed.target.as_deref().unwrap_or("core");
+
         let (source, root) = if input.is_dir() {
             (entry(&input)?, input)
         } else {
             (input, PathBuf::from("."))
         };
+        let loaded = if legacy || parsed.legacy {
+            walz::source::load_legacy(&source)?
+        } else {
+            walz::source::load(&source)?
+        };
+        let is_component = walz::composition::is_component(loaded.text());
+        let target =
+            parsed
+                .target
+                .as_deref()
+                .unwrap_or(if is_component { "component" } else { "core" });
+        if is_component && target != "component" {
+            return Err("a component entry requires the component target".into());
+        }
+        if parsed.wit.is_some() && target != "component" {
+            return Err("--wit-input requires a component target".into());
+        }
+        if parsed.emit_wit && target != "component" {
+            return Err("--wit requires a component target".into());
+        }
         let output = if let Some(output) = parsed.output {
             output
         } else {
@@ -142,51 +167,66 @@ pub fn command(args: &[OsString], legacy: bool) -> ExitCode {
         } else {
             walz::bindings::BindingPolicy::default()
         };
-        if let Some(wit) = &parsed.wit {
-            let loaded = if legacy || parsed.legacy {
-                walz::source::load_legacy(&source)?
-            } else {
-                walz::source::load(&source)?
-            };
-            let mut metadata = output.as_os_str().to_os_string();
-            metadata.push(".json");
-            let metadata = PathBuf::from(metadata);
-            for out in [&output, &metadata].into_iter().filter(|p| p.exists()) {
-                for input in loaded
-                    .paths()
-                    .chain(Some(wit.as_path()))
-                    .chain(parsed.bindings.as_deref())
-                    .filter(|p| p.exists())
-                {
-                    if same_file::is_same_file(input, out)? {
-                        return Err(
-                            "output must differ from source, WIT, policy and linked files".into(),
-                        );
-                    }
+        let mut destinations = vec![output.clone()];
+        let mut metadata = output.as_os_str().to_os_string();
+        metadata.push(".json");
+        let metadata = PathBuf::from(metadata);
+        if target == "component" {
+            destinations.push(metadata.clone());
+        }
+        let wit_output = output.parent().unwrap_or(Path::new(".")).join("world.wit");
+        if parsed.emit_wit {
+            destinations.push(wit_output.clone());
+        }
+        for out in &destinations {
+            for input in loaded
+                .paths()
+                .chain(parsed.wit.as_deref())
+                .chain(parsed.bindings.as_deref())
+                .filter(|p| p.exists())
+            {
+                if out.exists() && same_file::is_same_file(input, out)? {
+                    return Err(
+                        "output must differ from source, WIT, policy and linked files".into(),
+                    );
                 }
             }
-            if output.exists() && metadata.exists() && same_file::is_same_file(&output, &metadata)?
-            {
-                return Err("component and metadata outputs must differ".into());
+        }
+        for (i, a) in destinations.iter().enumerate() {
+            for b in &destinations[..i] {
+                if a == b || a.exists() && b.exists() && same_file::is_same_file(a, b)? {
+                    return Err("build output paths must differ".into());
+                }
             }
-            let built = walz::component::compile_with_world(
-                loaded.text(),
-                &policy,
-                wit,
-                parsed.world.as_deref(),
-            )
+        }
+        if target == "component" {
+            let built = if let Some(wit) = &parsed.wit {
+                walz::component::compile_with_world(
+                    loaded.text(),
+                    &policy,
+                    wit,
+                    parsed.world.as_deref(),
+                )
+            } else {
+                walz::component::compile_with_policy(loaded.text(), &policy)
+            }
             .map_err(|e| loaded.diagnostic(e))?;
+            // Validate every requested artifact before publishing any of them.
+            let wit = if parsed.emit_wit {
+                Some(walz::composition::inspect(&built.wasm)?.interface.wit)
+            } else {
+                None
+            };
+            let manifest = serde_json::to_vec_pretty(&built.manifest)?;
             if let Some(parent) = output.parent().filter(|p| !p.as_os_str().is_empty()) {
                 std::fs::create_dir_all(parent)?;
             }
             std::fs::write(&output, built.wasm)?;
-            std::fs::write(metadata, serde_json::to_vec_pretty(&built.manifest)?)?;
+            std::fs::write(metadata, manifest)?;
+            if let Some(wit) = wit {
+                std::fs::write(&wit_output, wit)?;
+            }
         } else if target == "core-js" {
-            let loaded = if legacy || parsed.legacy {
-                walz::source::load_legacy(&source)?
-            } else {
-                walz::source::load(&source)?
-            };
             let mut built = walz::component::core_js::compile_with_policy(loaded.text(), &policy)
                 .map_err(|e| loaded.diagnostic(e))?;
             let inputs = loaded
@@ -216,7 +256,7 @@ pub fn command(args: &[OsString], legacy: bool) -> ExitCode {
             }
             super::cli_js::write(&output, &built)?;
         } else {
-            super::execute(
+            super::execute_source(
                 if target == "component" {
                     "component"
                 } else {
@@ -224,9 +264,13 @@ pub fn command(args: &[OsString], legacy: bool) -> ExitCode {
                 },
                 &source,
                 Some(&output),
+                loaded.text(),
                 &policy,
-                legacy || parsed.legacy,
-            )?;
+            )
+            .map_err(|e| match e.downcast::<walz::Error>() {
+                Ok(e) => Box::<dyn std::error::Error>::from(loaded.diagnostic(*e)),
+                Err(e) => e,
+            })?;
         }
         println!("Built {}", output.display());
         Ok(())

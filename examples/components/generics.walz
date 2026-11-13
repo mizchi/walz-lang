@@ -1,0 +1,32 @@
+(component
+  (@world "example:generic-components@0.1.0" "app")
+  (@use "./generic-echo.walz" (component $Echo))
+  (@lib
+    (@use "walz:core" (type $string) (type $option) (type $list) (type $future)))
+  (instance $narrow (instantiate $Echo<i32>))
+  (instance $again (instantiate (@inst $Echo i32)))
+  (instance $wide (instantiate $Echo<i64>))
+  (instance $text (instantiate $Echo<$string>))
+  (instance $values (instantiate $Echo<$option<$list<i32>>>))
+  (export "narrow" (instance $narrow))
+  (export "again" (instance $again))
+  (export "wide" (instance $wide))
+  (export "text" (instance $text))
+  (export "values" (instance $values))
+
+  ;; Owned endpoints use an explicit move rather than the shared Echo contract.
+  (component $Transfer (@type.params $T)
+    (@lib
+      (func $transfer (param $value $T) (result $T) (@effect pure) (@move $value)))
+    (@expose "transfer" $transfer))
+  (instance $pending (instantiate $Transfer<$future<i32>>))
+  (export "pending" (instance $pending))
+
+  (component $Await (@type.params $T) (@where (shared $T) (nonunit $T))
+    (@lib
+      (@use "walz:core" (type $future))
+      (func $consume (param $value $future<$T>) (result $T)
+        (@effect suspends) (@future.await $T (@move $value))))
+    (@expose "consume" $consume))
+  (instance $wait (instantiate $Await<i32>))
+  (export "wait" (instance $wait)))

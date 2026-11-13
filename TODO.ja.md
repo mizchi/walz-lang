@@ -5,6 +5,63 @@
 小さい言語仕様、WAT の包含、Wasm GC、静的解析のしやすさを維持する。
 チェックは実装と回帰検査の完了を意味し、設計だけでは付けない。
 
+## Componentの構成
+
+- [x] 静的な `@lib` とCore Module・Componentを分離。外部Componentは定義として選択し、明示的にinstantiateする。
+- [x] `@expose` / `@bind` の具体的な値アダプターを推論し、型・effect・所有権・証明の検査を保つ。
+- [x] `build --wit` でworld.witを生成し、`--wit-input` で既存契約を検証する。
+- [x] メモリの同一性とaliasを記録し、生成ABIコードのメモリ参照を明示。Core externrefのFFIメタデータを検証する。
+- [x] Node/Chromiumで値・非同期接続・インスタンスの分離・正常終了時のバッファ解放・native失敗の分離を確認する。
+- [x] instance形式の `@bind` からresource interfaceとown/borrowを推論する。型alias・所有関数の単相化・canonical drop・例外時のスコープ解放を保ち、Node/Chromiumで同一性・close回数・バッファ・ホストオブジェクトの到達性を確認する。明示的なnative WIT backendも引き続き利用可能。
+- [x] ソースComponentコンストラクターの明示的な型引数を追加。閉じた値型の正規化、既存の制約・検査、定義の共有、独立したinstance、具体的なWITを保ち、Node/Chromiumで値・endpointのmove・失敗・バッファ解放を検査する。
+- [x] 明示したbindから読み取る `@component.type` を追加。ABIのscalar型、名前付き型のport、共有payload制限、resourceの所有権を保ち、静的モジュール・コンストラクターとのフェーズ境界・nativeホスト戻り値の解放とreject・Node/Chromiumを検査する。
+- [x] 可視で閉じたnominal型の内部配置と、先行する接続先への段階的な型照会を追加。opaqueの境界、phantom型の同一性、ABI注釈、独立したinstance、resourceの同一性を保つexport ascriptionを検証し、WIT再検証・Node・Chromiumで確認する。
+- [ ] 転送中のコピーを先に解放せず、対応ホストのnative破棄・キャンセルAPIを定める。
+
+契約と現行の制限は[Component構成](docs/component-composition.md)を参照。
+
+## セルフホスト用コンパイラの部品
+
+- [x] `walz/parser/` のS式parser。不変のpostorder構文木、UTF-8バイト範囲、
+  コメント、WAT文字列のデコード、明示的な資源上限を持つ。
+- [x] `walz/checker/` の独立したスカラーchecker。名前解決・推論・不変の未検証IR・
+  operand/control stack・シグネチャ・ラベル・opaqueな検査済みmoduleを扱う。
+- [x] unit/i32/i64のバイナリ生成。可変local、block/loop、br/br_if、return、
+  if/select、単一束縛の字句スコープlet、呼び出し、export、正規形LEB128に対応。
+- [x] 不変snapshotを作るcore bytes-builder、bootstrapファイル処理、
+  native・Core/Component・Chromium・trap後の解放・既存コンパイラとの比較検証。
+- [x] 検査だけのファイルコマンドと、wasmparserを使った未検証IRの差分検証。
+- [x] 固定入力のスカラーコンパイラベンチ。Core/Component・最適化したRust API・
+  Rust WAT/validatorと比較し、正規化後の出力一致を必須にして生の測定値を保存する。
+- [ ] 浮動小数点・SIMD・block引数・多値の結果を追加する。
+- [x] GC型のIR・検査・生成。struct/array、packed field、再帰グループ、宣言された
+  subtype、nullable参照、cast、array fill/copyに対応。Core/Component/Chromiumで
+  ソースと未検証IRを独立したvalidatorと比較する。型の照合は宣言indexと親の関係を
+  使い、再帰型の完全な同値判定は未実装なので、有効なWasmも保守的に拒否する場合がある。
+- [x] 可変GC値の構築・アクセスに対する保守的なpure検査。直接呼出しを推移的に追い、
+  不変GC値の構築・読取りはpureとして扱う。
+- [ ] memory、import、関数／外部参照、再帰型の完全な同値判定を追加する。
+  non-defaultableな明示localには初期化の検査を追加する。
+- [x] 1. 静的モジュール。相対パスの`@use`、型／関数の選択export、opaque境界、
+  ファイルidentityと位置、予約された組み込み`walz:core`。
+- [x] 2. 固定構文のlowering。逐次multi-let、型付きloopと末尾recurの同時更新、
+  for、list／tupleのfor-each。遅延評価を維持する。
+- [x] 3. GC effectの上限。pure／reads／writes／allocates、全命令の和集合、
+  到達不能命令も含む直接呼出しの推移的検査。
+- [x] 4. 最小bootstrap core。封印したbytes／string／list／tuple／Option／Result、
+  UTF-8とsnapshotの検査、網羅的match、list／bytes builder。
+- [x] 5. 上限付きの型／関数の単相化。alias、明示／推論による適用、shared／nonunit制約、
+  キャッシュ、再帰グループ。1〜5をCore／Component／Chromiumとnativeのproject例で検査する。
+- [x] 宣言的な式マクロ。型付きfragment、繰り返し、再帰呼出し、定義／呼出し側のhygiene、
+  明示／反復／委譲の束縛、infer／selector、scalar guard、選択import／alias／再export。
+  型照会用の式も独立して検査し、実行／出力せず、展開上限を適用する。
+- [ ] 残りのcore、所有権／proof／ABIの検査を移植する。
+  検査を実装するまでは未対応の高水準契約を拒否する。
+- [ ] stage 1でコンパイラ自身をコンパイルし、stage 1/2の出力と検証をRust版と比較する。
+
+[コンパイラの部品](docs/selfhost.md)と[frontendの範囲・上限](docs/selfhost-frontend.md)を参照。現時点では自身の実装に必要な構文を
+まだ拒否するため、セルフホスト済みではなく、Rust CLIも置き換えない。
+
 ## SIMDライブラリの計画
 
 opaqueな格納表現と明示的なeffectを持つ通常のライブラリとして実装する。

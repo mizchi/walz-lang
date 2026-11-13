@@ -11,6 +11,6 @@ export async function buildWasmUse(output){
   const source=join(output,'source');await mkdir(source,{recursive:true});
   for(const name of ['main.walz','facade.walz','library.walz','library.wit'])
     await copyFile(join(root,'tests/component-fixtures/wasm-use',name),join(source,name));
-  await execFile('cargo',['run','--locked','--quiet','--','build',join(source,'library.walz'),'--target','component','--wit',join(source,'library.wit'),'--world','library','-o',join(source,'library.wasm')],{cwd:root,maxBuffer:4*1024*1024});
+  await execFile('cargo',['run','--locked','--quiet','--','build',join(source,'library.walz'),'--target','component','--wit-input',join(source,'library.wit'),'--world','library','-o',join(source,'library.wasm')],{cwd:root,maxBuffer:4*1024*1024});
   await build(join(source,'main.walz'),output);
 }

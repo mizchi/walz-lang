@@ -189,6 +189,10 @@ other names are preserved with structural forms, without automatic renaming.
 
 ## Round trips and locations
 
+Component and static-library roots retain explicit `component { ... }` and
+`@lib { ... }` wrappers. Their native declarations and inferred adapters use the
+same structural-call fallback when no dedicated review sugar is defined.
+
 Round trips preserve the exact atom/text/byte/list tree before macro expansion.
 Formatting and comment placement are not byte-preserved; an optional module wrapper is normalized away. Original comments are
 copied into the generated view's preamble with source line numbers; review

@@ -1,0 +1,79 @@
+(module
+  (@use "walz:core" (type $list) (type $string))
+  (@use "../parser/parser.walz"
+    (type $node)
+    (func $node.children)
+    (func $node.kind)
+    (func $node.value)
+    (func $node.is))
+  (@export (func $sx.len) (func $sx.child) (func $sx.head) (func $sx.name))
+  (func $sx.len
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (@list.len i32 (call $node.children $n)))
+
+  (func $sx.child
+    (param $nodes $list<(ref $node)>)
+    (param $n (ref $node))
+    (param $i i32)
+    (result (ref $node))
+    (@effect pure)
+    (@list.get (ref $node) $nodes (@list.get i32 (call $node.children $n) $i)))
+
+  (func $sx.head
+    (param $nodes $list<(ref $node)>)
+    (param $n (ref $node))
+    (param $s $string)
+    (result i32)
+    (@effect pure)
+    (&&
+      (= (call $node.kind $n) 2)
+      (&& (> (call $sx.len $n) 0) (call $node.is (call $sx.child $nodes $n 0) $s))))
+
+  (func $sx.name
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (@let $b (call $node.value $n)
+      (block
+        (result i32)
+        (if
+          (i32.eqz
+            (&&
+              (= (call $node.kind $n) 0)
+              (&& (> (@bytes.len $b) 1) (= (@bytes.get $b 0) 36))))
+          (then (return 0))
+          (else (nop)))
+        (@loop $identifier
+          (bind $i i32 1)
+          (result i32)
+          (if
+            (result i32)
+            (= $i (@bytes.len $b))
+            (then 1)
+            (else
+              (@let $c (@bytes.get $b $i)
+                (if
+                  (result i32)
+                  (||
+                    (< $c 33)
+                    (||
+                      (> $c 126)
+                      (||
+                        (= $c 34)
+                        (||
+                          (= $c 40)
+                          (||
+                            (= $c 41)
+                            (||
+                              (= $c 44)
+                              (||
+                                (= $c 59)
+                                (|| (= $c 91) (|| (= $c 93) (|| (= $c 123) (= $c 125))))
+                              ))))
+                      )))
+                  (then 0)
+                  (else (@recur $identifier (+ $i 1))))
+              ))))
+      ))))

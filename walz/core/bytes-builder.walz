@@ -1,0 +1,111 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@export
+    (opaque $bytes-builder)
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.append)
+    (func $bytes-builder.len)
+    (func $bytes-builder.finish))
+  (type $Storage (array (mut i8)))
+  (type $bytes-builder
+    (struct
+      (field $data (mut (ref $Storage)))
+      (field $length (mut i32))
+      (field $limit i32)))
+  ;; A private GC buffer; finish publishes a copied immutable snapshot.
+  (func $bytes-builder.new
+    (param $limit i32)
+    (result (ref $bytes-builder))
+    (@effect allocates)
+    (block
+      (result (ref $bytes-builder))
+      (if (i32.gt_u $limit 16777216) (then (unreachable)) (else (nop)))
+      (struct.new $bytes-builder
+        (array.new $Storage 0 (if (result i32) (< $limit 64) (then $limit) (else 64)))
+        0
+        $limit)))
+
+  (func $bytes-builder.len
+    (param $b (ref $bytes-builder))
+    (result i32)
+    (@effect reads)
+    (struct.get $bytes-builder $length $b))
+
+  (func $reserve
+    (param $b (ref $bytes-builder))
+    (param $extra i32)
+    (@effect reads writes allocates)
+    (@let
+      (($length (call $bytes-builder.len $b))
+       ($limit (struct.get $bytes-builder $limit $b)))
+      (block
+        (if (i32.gt_u $extra (- $limit $length)) (then (unreachable)) (else (nop)))
+        (@let
+          (($need (+ $length $extra))
+           ($old (struct.get $bytes-builder $data $b)))
+          (if
+            (> $need (array.len $old))
+            (then
+              (@let $cap
+                (@loop $grow
+                  (bind $cap i32 (array.len $old))
+                  (result i32)
+                  (if
+                    (result i32)
+                    (>= $cap $need)
+                    (then $cap)
+                    (else
+                      (@recur $grow
+                        (if
+                          (result i32)
+                          (>= $cap (i32.shr_u $limit 1))
+                          (then $limit)
+                          (else (* $cap 2))))
+                    )))
+                (@let $next (array.new $Storage 0 $cap)
+                  (block
+                    (array.copy $Storage $Storage $next 0 $old 0 $length)
+                    (struct.set $bytes-builder $data $b $next))))
+            )
+            (else (nop))))
+      )))
+
+  (func $bytes-builder.byte
+    (param $b (ref $bytes-builder))
+    (param $value i32)
+    (@effect reads writes allocates)
+    (block
+      (if (i32.gt_u $value 255) (then (unreachable)) (else (nop)))
+      (call $reserve $b 1)
+      (@let $n (call $bytes-builder.len $b)
+        (block
+          (array.set $Storage (struct.get $bytes-builder $data $b) $n $value)
+          (struct.set $bytes-builder $length $b (+ $n 1))))
+    ))
+
+  (func $bytes-builder.append
+    (param $b (ref $bytes-builder))
+    (param $value $bytes)
+    (@effect reads writes allocates)
+    (block
+      (call $reserve $b (@bytes.len $value))
+      (@let $n (call $bytes-builder.len $b)
+        (block
+          (@bytes.copy-to-array $Storage
+            (struct.get $bytes-builder $data $b)
+            $n
+            $value
+            0
+            (@bytes.len $value))
+          (struct.set $bytes-builder $length $b (+ $n (@bytes.len $value))))
+      )))
+
+  (func $bytes-builder.finish
+    (param $b (ref $bytes-builder))
+    (result $bytes)
+    (@effect reads allocates)
+    (@bytes.from-array $Storage
+      (struct.get $bytes-builder $data $b)
+      0
+      (call $bytes-builder.len $b))))

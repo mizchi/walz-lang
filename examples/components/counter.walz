@@ -1,0 +1,10 @@
+;; Standard Component WAT. Each explicit instantiation owns fresh state.
+(component
+  (core module $Counter
+    (global $count (mut i32) (i32.const 0))
+    (func (export "next") (result i32)
+      (global.set $count (i32.add (global.get $count) (i32.const 1)))
+      (global.get $count)))
+  (core instance $counter (instantiate $Counter))
+  (func (export "next") (result s32)
+    (canon lift (core func $counter "next"))))

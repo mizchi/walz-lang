@@ -1,0 +1,111 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@export (func $gc-op.code))
+  (func $gc-op.code
+    (param $s $bytes)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.new"))
+        (then (return 256))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.new_default"))
+        (then (return 257))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.get"))
+        (then (return 258))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.get_s"))
+        (then (return 259))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.get_u"))
+        (then (return 260))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "struct.set"))
+        (then (return 261))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.new"))
+        (then (return 262))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.new_default"))
+        (then (return 263))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.new_fixed"))
+        (then (return 264))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.get"))
+        (then (return 267))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.get_s"))
+        (then (return 268))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.get_u"))
+        (then (return 269))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.set"))
+        (then (return 270))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.len"))
+        (then (return 271))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.null"))
+        (then (return 208))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.is_null"))
+        (then (return 209))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.eq"))
+        (then (return 211))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.as_non_null"))
+        (then (return 212))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.test"))
+        (then (return 276))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.cast"))
+        (then (return 278))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "ref.i31"))
+        (then (return 284))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "i31.get_s"))
+        (then (return 285))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "i31.get_u"))
+        (then (return 286))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.fill"))
+        (then (return 272))
+        (else (nop)))
+      (if
+        (call $bytes.equal $s (@string.bytes "array.copy"))
+        (then (return 273))
+        (else (nop)))
+      0)))

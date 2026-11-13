@@ -1,0 +1,416 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $tuple))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/list-builder.walz"
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "./diagnostic.walz" (type $diagnostic))
+  (@use "./string.walz" (func $string.read))
+  (@export
+    (type $diagnostic)
+    (opaque $syntax)
+    (opaque $node)
+    (func $parser.parse)
+    (func $syntax.nodes)
+    (func $syntax.roots)
+    (func $syntax.source)
+    (func $node.kind)
+    (func $node.start)
+    (func $node.end)
+    (func $node.value)
+    (func $node.children)
+    (func $node.is))
+  ;; Postorder arena: children precede parents. Values are raw atom bytes or
+  ;; decoded string bytes; ranges always retain original source positions.
+  (type $node
+    (struct
+      (field $kind i32)
+      (field $start i32)
+      (field $end i32)
+      (field $value $bytes)
+      (field $children $list<i32>)))
+  (type $syntax
+    (struct
+      (field $source $bytes)
+      (field $nodes $list<(ref $node)>)
+      (field $roots $list<i32>)))
+  (type $State
+    (struct
+      (field $source $bytes)
+      (field $position (mut i32))
+      (field $nodes (ref $list-builder<(ref $node)>))
+      (field $error (mut (ref null $diagnostic))))
+  )
+  (func $syntax.nodes
+    (param $s (ref $syntax))
+    (result $list<(ref $node)>)
+    (@effect pure)
+    (struct.get $syntax $nodes $s))
+
+  (func $syntax.roots
+    (param $s (ref $syntax))
+    (result $list<i32>)
+    (@effect pure)
+    (struct.get $syntax $roots $s))
+
+  (func $syntax.source
+    (param $s (ref $syntax))
+    (result $bytes)
+    (@effect pure)
+    (struct.get $syntax $source $s))
+
+  (func $node.kind
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (struct.get $node $kind $n))
+
+  (func $node.start
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (struct.get $node $start $n))
+
+  (func $node.end
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (struct.get $node $end $n))
+
+  (func $node.value
+    (param $n (ref $node))
+    (result $bytes)
+    (@effect pure)
+    (struct.get $node $value $n))
+
+  (func $node.children
+    (param $n (ref $node))
+    (result $list<i32>)
+    (@effect pure)
+    (struct.get $node $children $n))
+
+  (func $node.is
+    (param $n (ref $node))
+    (param $word $string)
+    (result i32)
+    (@effect pure)
+    (&&
+      (= (call $node.kind $n) 0)
+      (call $bytes.equal (call $node.value $n) (@string.bytes $word))))
+
+  (func $pos
+    (param $s (ref $State))
+    (result i32)
+    (@effect reads)
+    (struct.get $State $position $s))
+
+  (func $peek
+    (param $s (ref $State))
+    (param $at i32)
+    (result i32)
+    (@effect pure)
+    (@let $b (struct.get $State $source $s)
+      (if
+        (result i32)
+        (i32.lt_u $at (@bytes.len $b))
+        (then (@bytes.get $b $at))
+        (else -1))))
+
+  (func $fail
+    (param $s (ref $State))
+    (param $code i32)
+    (param $at i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $State $error $s))
+      (then
+        (struct.set $State $error $s
+          (struct.new $diagnostic
+            $code
+            $at
+            (if
+              (result i32)
+              (< $at (@bytes.len (struct.get $State $source $s)))
+              (then (+ $at 1))
+              (else $at))))
+      )
+      (else (nop))))
+
+  (func $space
+    (param $s (ref $State))
+    (@effect reads writes allocates)
+    (@loop $skip
+      (bind $p i32 (call $pos $s))
+      (@let
+        (($c (call $peek $s $p))
+         ($next (call $peek $s (+ $p 1))))
+        (if
+          (|| (= $c 32) (|| (= $c 9) (|| (= $c 10) (= $c 13))))
+          (then (@recur $skip (+ $p 1)))
+          (else
+            (if
+              (&& (= $c 59) (= $next 59))
+              (then
+                (@let $end
+                  (@loop $line
+                    (bind $i i32 (+ $p 2))
+                    (result i32)
+                    (if
+                      (result i32)
+                      (|| (< (call $peek $s $i) 0) (= (call $peek $s $i) 10))
+                      (then $i)
+                      (else (@recur $line (+ $i 1))))
+                  )
+                  (@recur $skip $end)))
+              (else
+                (if
+                  (&& (= $c 40) (= $next 59))
+                  (then
+                    (@let $end
+                      (@loop $comment
+                        (bind $i i32 (+ $p 2))
+                        (bind $depth i32 1)
+                        (result i32)
+                        (@let
+                          (($a (call $peek $s $i))
+                           ($b (call $peek $s (+ $i 1))))
+                          (if
+                            (result i32)
+                            (< $a 0)
+                            (then -1)
+                            (else
+                              (if
+                                (result i32)
+                                (&& (= $a 40) (= $b 59))
+                                (then (@recur $comment (+ $i 2) (+ $depth 1)))
+                                (else
+                                  (if
+                                    (result i32)
+                                    (&& (= $a 59) (= $b 41))
+                                    (then
+                                      (if
+                                        (result i32)
+                                        (= $depth 1)
+                                        (then (+ $i 2))
+                                        (else (@recur $comment (+ $i 2) (- $depth 1))))
+                                    )
+                                    (else (@recur $comment (+ $i 1) $depth))))
+                              ))))
+                      )
+                      (if
+                        (< $end 0)
+                        (then (call $fail $s 4 $p))
+                        (else (@recur $skip $end))))
+                  )
+                  (else (struct.set $State $position $s $p))))
+            ))))
+    ))
+
+  (func $add
+    (param $s (ref $State))
+    (param $kind i32)
+    (param $start i32)
+    (param $value $bytes)
+    (param $children $list<i32>)
+    (result i32)
+    (@effect reads writes allocates)
+    (@let
+      (($out (struct.get $State $nodes $s))
+       ($id (call $list-builder.len<(ref $node)> $out)))
+      (if
+        (result i32)
+        (>= $id 65536)
+        (then (block (result i32) (call $fail $s 8 $start) -1))
+        (else
+          (block
+            (result i32)
+            (call $list-builder.push<(ref $node)> $out
+              (struct.new $node $kind $start (call $pos $s) $value $children))
+            $id))))
+  )
+
+  (func $read
+    (param $s (ref $State))
+    (param $depth i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (call $space $s)
+      (if
+        (i32.eqz (ref.is_null (struct.get $State $error $s)))
+        (then (return -1))
+        (else (nop)))
+      (@let
+        (($start (call $pos $s))
+         ($c (call $peek $s $start)))
+        (block
+          (result i32)
+          (if
+            (|| (< $c 0) (= $c 41))
+            (then (block (call $fail $s 3 $start) (return -1)))
+            (else (nop)))
+          (if
+            (= $c 40)
+            (then
+              (block
+                (result i32)
+                (if
+                  (>= $depth 128)
+                  (then (block (call $fail $s 9 $start) (return -1)))
+                  (else (nop)))
+                (struct.set $State $position $s (+ $start 1))
+                (@let $children (call $list-builder.new<i32>)
+                  (block
+                    (result i32)
+                    (@loop $items
+                      (block
+                        (call $space $s)
+                        (if
+                          (i32.eqz (ref.is_null (struct.get $State $error $s)))
+                          (then (return -1))
+                          (else (nop)))
+                        (if
+                          (= (call $peek $s (call $pos $s)) 41)
+                          (then (nop))
+                          (else
+                            (block
+                              (if
+                                (< (call $peek $s (call $pos $s)) 0)
+                                (then (block (call $fail $s 3 $start) (return -1)))
+                                (else (nop)))
+                              (@let $id (call $read $s (+ $depth 1))
+                                (block
+                                  (if (< $id 0) (then (return -1)) (else (nop)))
+                                  (call $list-builder.push<i32> $children $id)
+                                  (@recur $items))))
+                          ))))
+                    (struct.set $State $position $s (+ (call $pos $s) 1))
+                    (return
+                      (call $add $s 2 $start
+                        (@bytes.new)
+                        (call $list-builder.finish<i32> $children))))
+                )))
+            (else (nop)))
+          (@let $quoted (&& (= $c 36) (= (call $peek $s (+ $start 1)) 34))
+            (if
+              (result i32)
+              (|| (= $c 34) $quoted)
+              (then
+                (@match
+                  (call $string.read (struct.get $State $source $s) (+ $start $quoted))
+                  (@case err ($e)
+                    (block (result i32) (struct.set $State $error $s $e) -1))
+                  (@case ok ($pair)
+                    (@let ($value $end) $pair
+                      (block
+                        (result i32)
+                        (struct.set $State $position $s $end)
+                        (call $add $s
+                          (if (result i32) $quoted (then 3) (else 1))
+                          $start
+                          $value
+                          (@list.new i32))))
+                  )))
+              (else
+                (@let $end
+                  (@loop $atom
+                    (bind $i i32 $start)
+                    (result i32)
+                    (@let $v (call $peek $s $i)
+                      (if
+                        (result i32)
+                        (||
+                          (< $v 33)
+                          (||
+                            (= $v 127)
+                            (|| (= $v 40) (|| (= $v 41) (|| (= $v 34) (= $v 59))))
+                          ))
+                        (then $i)
+                        (else (@recur $atom (+ $i 1))))
+                    ))
+                  (if
+                    (result i32)
+                    (= $start $end)
+                    (then (block (result i32) (call $fail $s 2 $start) -1))
+                    (else
+                      (block
+                        (result i32)
+                        (struct.set $State $position $s $end)
+                        (call $add $s 0 $start
+                          (@bytes.slice
+                            (struct.get $State $source $s)
+                            $start
+                            (- $end $start))
+                          (@list.new i32))))
+                  ))))
+          ))))
+  )
+
+  (func $parser.parse
+    (param $source $bytes)
+    (result $result<(ref $syntax), (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<(ref $syntax), (ref $diagnostic)>)
+      (if
+        (i32.gt_u (@bytes.len $source) 1048576)
+        (then
+          (return (@result.err (struct.new $diagnostic 7 0 (@bytes.len $source))))
+        )
+        (else (nop)))
+      (if
+        (i32.eqz (@bytes.is-utf8 $source))
+        (then
+          (return (@result.err (struct.new $diagnostic 1 0 (@bytes.len $source))))
+        )
+        (else (nop)))
+      (@let
+        (($s
+           (struct.new $State
+             $source
+             0
+             (call $list-builder.new<(ref $node)>)
+             (ref.null $diagnostic)))
+         ($roots (call $list-builder.new<i32>)))
+        (block
+          (result $result<(ref $syntax), (ref $diagnostic)>)
+          (@loop $roots-loop
+            (block
+              (call $space $s)
+              (if
+                (&&
+                  (ref.is_null (struct.get $State $error $s))
+                  (< (call $pos $s) (@bytes.len $source)))
+                (then
+                  (@let $id (call $read $s 0)
+                    (if
+                      (>= $id 0)
+                      (then
+                        (block
+                          (call $list-builder.push<i32> $roots $id)
+                          (@recur $roots-loop)))
+                      (else (nop))))
+                )
+                (else (nop))))
+          )
+          (if
+            (result $result<(ref $syntax), (ref $diagnostic)>)
+            (ref.is_null (struct.get $State $error $s))
+            (then
+              (@result.ok
+                (struct.new $syntax
+                  $source
+                  (call $list-builder.finish<(ref $node)> (struct.get $State $nodes $s))
+                  (call $list-builder.finish<i32> $roots))))
+            (else (@result.err (ref.as_non_null (struct.get $State $error $s))))
+          ))))
+  ))

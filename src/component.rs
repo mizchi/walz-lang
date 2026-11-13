@@ -8,6 +8,7 @@ const MEMORY_LIMIT: u32 = 16 * 1024 * 1024;
 
 mod abi;
 mod binary;
+pub(crate) mod bound_imports;
 pub mod core_js;
 mod endpoints;
 mod functions;
@@ -16,12 +17,14 @@ mod interface;
 mod interface_variant;
 pub mod js_native;
 mod lists;
+pub(crate) mod memory;
 mod native_delivery;
 pub mod profiling;
 mod resource_values;
 pub(crate) mod stream_batch;
 mod values;
 mod world;
+pub(crate) use world::projection::render as project_interface;
 
 use abi::component_type;
 
@@ -48,6 +51,14 @@ pub fn compile_with_policy(
     source: &str,
     policy: &crate::bindings::BindingPolicy,
 ) -> Result<Component, Error> {
+    if crate::composition::is_component(source) {
+        let c = crate::composition::compile(source, policy)?;
+        return Ok(Component {
+            wasm: c.wasm,
+            wat: c.wat,
+            manifest: c.manifest,
+        });
+    }
     let module = checked_module_with_policy(source, policy)?;
     let adapter = Adapter::new(&module);
     adapter.validate_boundary()?;
@@ -64,6 +75,15 @@ pub fn compile_with_world(
     path: &std::path::Path,
     name: Option<&str>,
 ) -> Result<Component, Error> {
+    if crate::composition::is_component(source) {
+        let c = crate::composition::compile(source, policy)?;
+        c.interface.validate_world(path, name)?;
+        return Ok(Component {
+            wasm: c.wasm,
+            wat: c.wat,
+            manifest: c.manifest,
+        });
+    }
     let mut checked = crate::check_with_policy(source, policy)?;
     let roots = world::selected_exports(path, name)?;
     crate::harness::select_application(&mut checked);
@@ -85,6 +105,30 @@ pub fn compile_with_world(
     let mut built = assemble(&module, &adapter, core, effects, Some(&world))?;
     built.manifest["nativeWorld"] = true.into();
     Ok(built)
+}
+
+/// A composed Walz implementation uses a native value boundary with direct
+/// exports. Binding contracts have already passed the ordinary checker gate.
+pub(crate) fn compile_composed(
+    source: &str,
+    module: Module,
+    imports: Option<&bound_imports::BoundImports>,
+) -> Result<Component, Error> {
+    let module = prepare_checked_module(source, module, crate::verified::verify_component, true)?;
+    if crate::task_children::enabled(&module) {
+        return Err(Error::message(
+            "native component composition does not provide the SDK child scheduler".into(),
+        )
+        .with_code("E_COMPONENT_SOURCE"));
+    }
+    let effects = crate::effects::boundary(&module);
+    let adapter = Adapter::new_native(&module);
+    adapter
+        .validate_boundary()
+        .map_err(|e| e.with_code("E_ABI_TYPE"))?;
+    let world = world::World::inferred(&module, imports)?;
+    let core = crate::emit::emit_component(&module, &adapter);
+    assemble(&module, &adapter, core, effects, Some(&world))
 }
 
 fn checked_module(source: &str) -> Result<Module, Error> {
@@ -113,6 +157,7 @@ fn prepare_module(
     check_contracts: fn(&str, &Module) -> Result<(), Error>,
     optimize: bool,
 ) -> Result<Module, Error> {
+    crate::composition::reject_library_entry(source)?;
     let mut module = crate::check_with_policy(source, policy)?;
     crate::harness::select_application(&mut module);
     prepare_checked_module(source, module, check_contracts, optimize)
@@ -131,7 +176,7 @@ fn prepare_checked_module(
             ));
         }
     }
-    crate::wit::emit_functions(&module)?;
+    crate::wit::emit_functions(&module).map_err(|e| e.with_code("E_ABI_TYPE"))?;
     check_contracts(source, &module)?;
     module.abi_suspends = module
         .functions
@@ -166,11 +211,14 @@ fn assemble(
         }
     }
     for (group, (namespace, functions)) in groups.iter().enumerate() {
+        let group = world
+            .filter(|w| w.has_native_imports())
+            .map_or(group, |w| w.import_group_index(namespace, module));
         if let Some(linked) = binary::render(module, namespace, group, functions) {
             text.push_str(&linked);
             continue;
         }
-        if let Some(world) = world.filter(|w| w.has_resources()) {
+        if let Some(world) = world.filter(|w| w.native_imports_for(namespace)) {
             for (i, f) in functions {
                 if let Some(id) = world.close_resource(module, f) {
                     text += &format!(
@@ -353,6 +401,11 @@ fn assemble(
     let mut api_arguments = String::new();
     let mut exports = String::new();
     let mut export_functions = BTreeMap::new();
+    let (public_types, public_signatures) = world
+        .map(|w| w.public_signatures())
+        .transpose()?
+        .unwrap_or_default();
+    text.push_str(&public_types);
     for (i, f) in
         module.functions.iter().enumerate().filter(|(i, f)| {
             !f.exports.is_empty() && !module.tests.iter().any(|t| t.function.0 == *i)
@@ -367,7 +420,7 @@ fn assemble(
             } else {
                 String::new()
             };
-            text.push_str(&format!("(func $e{i}_{alias} {} (canon lift (core func $guest \"__export_{i}\") (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\")){post}))\n",abi::component_signature_named(f,async_,"$",world.and_then(|w|w.names(name)))));
+            text.push_str(&format!("(func $e{i}_{alias} {} (canon lift (core func $guest \"__export_{i}\") (memory (core memory $mem \"memory\")) (realloc (core func $mem \"realloc\")){post}))\n",public_signatures.get(name).cloned().unwrap_or_else(||abi::component_signature_named(f,async_,"$",world.and_then(|w|w.names(name))))));
             let api_signature = abi::component_signature_named(
                 f,
                 async_,
@@ -432,7 +485,7 @@ fn assemble(
         )
     };
     let prefix = world
-        .filter(|w| w.has_resources())
+        .filter(|w| w.has_native_imports())
         .map(|w| w.import_prefix(module))
         .transpose()?
         .unwrap_or_default();

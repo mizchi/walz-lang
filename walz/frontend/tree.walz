@@ -1,0 +1,508 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish)
+    (func $list-builder.extend)
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.append)
+    (func $bytes-builder.len)
+    (func $bytes-builder.finish)
+    (type $bytes-builder))
+  (@use "../parser/parser.walz"
+    (type $node)
+    (type $syntax)
+    (func $parser.parse)
+    (func $syntax.nodes)
+    (func $syntax.roots)
+    (func $node.kind)
+    (func $node.start)
+    (func $node.end)
+    (func $node.value)
+    (func $node.children))
+  (@use "../parser/diagnostic.walz" (type $diagnostic))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@export
+    (type $tree)
+    (type $project-error)
+    (type $source-file)
+    (type $span)
+    (type $rendered)
+    (func $tree.read)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.render)
+    (func $tree.locate)
+    (func $tree.slice)
+    (func $tree.eq)
+    (func $t0)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4)
+    (func $t5)
+    (func $t6)
+    (func $tree.occurs)
+    (func $work.snapshot)
+    (func $tree.is-name))
+  (type $source-file (struct (field $path $string) (field $source $bytes)))
+  (@abi.type $source-file (record "path" "source"))
+  (type $project-error
+    (struct (field $file i32) (field $code i32) (field $start i32) (field $end i32)))
+  (@abi.type $project-error (record "file" "code" "start" "end"))
+  (type $tree
+    (struct
+      (field $kind i32)
+      (field $value $bytes)
+      (field $items $list<(ref $tree)>)
+      (field $file i32)
+      (field $start i32)
+      (field $end i32)))
+  (type $span (struct (field $start i32) (field $end i32) (field $origin (ref $tree))))
+  (type $rendered (struct (field $bytes $bytes) (field $spans $list<(ref $span)>)))
+  (func $tree.len
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@list.len (ref $tree) (struct.get $tree $items $n)))
+
+  (func $tree.at
+    (param $n (ref $tree))
+    (param $i i32)
+    (result (ref $tree))
+    (@effect allocates)
+    (if
+      (result (ref $tree))
+      (i32.lt_u $i (call $tree.len $n))
+      (then (@list.get (ref $tree) (struct.get $tree $items $n) $i))
+      (else $n)))
+
+  (func $tree.is
+    (param $n (ref $tree))
+    (param $s $string)
+    (result i32)
+    (@effect allocates)
+    (&&
+      (= (struct.get $tree $kind $n) 0)
+      (call $bytes.equal (struct.get $tree $value $n) (@string.bytes $s))))
+
+  (func $tree.eq
+    (param $a (ref $tree))
+    (param $b (ref $tree))
+    (result i32)
+    (@effect allocates)
+    (call $bytes.equal (struct.get $tree $value $a) (struct.get $tree $value $b)))
+
+  (func $tree.head
+    (param $n (ref $tree))
+    (param $s $string)
+    (result i32)
+    (@effect allocates)
+    (&&
+      (|| (= (struct.get $tree $kind $n) 2) (= (struct.get $tree $kind $n) 8))
+      (call $tree.is (call $tree.at $n 0) $s)))
+
+  (func $tree.copy
+    (param $n (ref $tree))
+    (param $kind i32)
+    (param $value $bytes)
+    (param $items $list<(ref $tree)>)
+    (result (ref $tree))
+    (@effect allocates)
+    (struct.new $tree
+      $kind
+      $value
+      $items
+      (struct.get $tree $file $n)
+      (struct.get $tree $start $n)
+      (struct.get $tree $end $n)))
+
+  (func $tree.atom
+    (param $n (ref $tree))
+    (param $s $string)
+    (result (ref $tree))
+    (@effect allocates)
+    (call $tree.copy $n 0 (@string.bytes $s) (@list.new (ref $tree))))
+
+  (func $tree.form
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $items $list<(ref $tree)>)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let $b (call $list-builder.new<(ref $tree)>)
+      (block
+        (result (ref $tree))
+        (call $list-builder.push<(ref $tree)> $b (call $tree.atom $n $s))
+        (call $list-builder.extend<(ref $tree)> $b $items)
+        (call $tree.copy $n 2 (@bytes.new) (call $list-builder.finish<(ref $tree)> $b))))
+  )
+
+  (func $tree.slice
+    (param $n (ref $tree))
+    (param $start i32)
+    (result $list<(ref $tree)>)
+    (@effect reads writes allocates)
+    (@let $b (call $list-builder.new<(ref $tree)>)
+      (block
+        (result $list<(ref $tree)>)
+        (@for $i
+          (bind $i i32 $start)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (call $list-builder.push<(ref $tree)> $b (call $tree.at $n $i)))
+        (call $list-builder.finish<(ref $tree)> $b))))
+
+  (func $tree.name
+    (param $n (ref $tree))
+    (param $prefix $string)
+    (param $id i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.atom $n
+      (call $string.concat $prefix (call $string.u64 (i64.extend_i32_u $id))))
+  )
+
+  (func $tree.error
+    (param $n (ref $tree))
+    (param $code i32)
+    (result (ref $project-error))
+    (@effect allocates)
+    (struct.new $project-error
+      (struct.get $tree $file $n)
+      $code
+      (struct.get $tree $start $n)
+      (struct.get $tree $end $n)))
+
+  (func $copy-node
+    (param $nodes $list<(ref $node)>)
+    (param $i i32)
+    (param $file i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($n (@list.get (ref $node) $nodes $i))
+       ($b (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result (ref $tree))
+        (@for-each $j (call $node.children $n)
+          (call $list-builder.push<(ref $tree)> $b (call $copy-node $nodes $j $file)))
+        (struct.new $tree
+          (call $node.kind $n)
+          (call $node.value $n)
+          (call $list-builder.finish<(ref $tree)> $b)
+          $file
+          (call $node.start $n)
+          (call $node.end $n))))
+  )
+
+  (func $tree.read
+    (param $bytes $bytes)
+    (param $file i32)
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $parser.parse $bytes)
+      (@case err ($d)
+        (@result.err
+          (struct.new $project-error
+            $file
+            (struct.get $diagnostic $code $d)
+            (struct.get $diagnostic $start $d)
+            (struct.get $diagnostic $end $d))))
+      (@case ok ($s)
+        (if
+          (result $result<(ref $tree), (ref $project-error)>)
+          (= (@list.len i32 (call $syntax.roots $s)) 1)
+          (then
+            (@result.ok
+              (call $copy-node
+                (call $syntax.nodes $s)
+                (@list.get i32 (call $syntax.roots $s) 0)
+                $file)))
+          (else (@result.err (struct.new $project-error $file 100 0 0))))
+      )))
+  (type $Writer
+    (struct
+      (field $out (ref $bytes-builder))
+      (field $spans (ref $list-builder<(ref $span)>))
+      (field $bad (mut i32))))
+  (func $put
+    (param $s (ref $Writer))
+    (param $b i32)
+    (@effect reads writes allocates)
+    (if
+      (< (call $bytes-builder.len (struct.get $Writer $out $s)) 1048576)
+      (then (call $bytes-builder.byte (struct.get $Writer $out $s) $b))
+      (else (struct.set $Writer $bad $s 1))))
+
+  (func $write
+    (param $s (ref $Writer))
+    (param $n (ref $tree))
+    (param $depth i32)
+    (@effect reads writes allocates)
+    (if
+      (> $depth 128)
+      (then (struct.set $Writer $bad $s 1))
+      (else
+        (@let $start (call $bytes-builder.len (struct.get $Writer $out $s))
+          (block
+            (if
+              (|| (= (struct.get $tree $kind $n) 2) (= (struct.get $tree $kind $n) 8))
+              (then
+                (block
+                  (call $put $s 40)
+                  (@for-each $x (struct.get $tree $items $n)
+                    (block (call $write $s $x (+ $depth 1)) (call $put $s 32)))
+                  (call $put $s 41)))
+              (else
+                (block
+                  (if
+                    (= (struct.get $tree $kind $n) 1)
+                    (then (call $put $s 34))
+                    (else (nop)))
+                  (@for $bytes
+                    (bind $i i32 0)
+                    (while (< $i (@bytes.len (struct.get $tree $value $n))))
+                    (step (+ $i 1))
+                    (@let $v (@bytes.get (struct.get $tree $value $n) $i)
+                      (if
+                        (= (struct.get $tree $kind $n) 1)
+                        (then
+                          (block
+                            (call $put $s 92)
+                            (call $put $s
+                              (@bytes.get
+                                (@string.bytes "0123456789abcdef")
+                                (i32.shr_u $v 4)))
+                            (call $put $s
+                              (@bytes.get (@string.bytes "0123456789abcdef") (& $v 15))))
+                        )
+                        (else (call $put $s $v))))
+                  )
+                  (if
+                    (= (struct.get $tree $kind $n) 1)
+                    (then (call $put $s 34))
+                    (else (nop))))
+              ))
+            (call $list-builder.push<(ref $span)>
+              (struct.get $Writer $spans $s)
+              (struct.new $span
+                $start
+                (call $bytes-builder.len (struct.get $Writer $out $s))
+                $n))))
+      )))
+
+  (func $tree.render
+    (param $n (ref $tree))
+    (result $result<(ref $rendered), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let $s
+      (struct.new $Writer (call $bytes-builder.new 1048576) (call $list-builder.new<(ref $span)>) 0)
+      (block
+        (result $result<(ref $rendered), (ref $project-error)>)
+        (call $write $s $n 0)
+        (if
+          (result $result<(ref $rendered), (ref $project-error)>)
+          (struct.get $Writer $bad $s)
+          (then (@result.err (call $tree.error $n 150)))
+          (else
+            (@result.ok
+              (struct.new $rendered
+                (call $bytes-builder.finish (struct.get $Writer $out $s))
+                (call $list-builder.finish<(ref $span)> (struct.get $Writer $spans $s))))
+          ))))
+  )
+
+  (func $tree.locate
+    (param $r (ref $rendered))
+    (param $d (ref $diagnostic))
+    (result (ref $project-error))
+    (@effect allocates)
+    (@loop $find
+      (bind $i i32 0)
+      (result (ref $project-error))
+      (if
+        (result (ref $project-error))
+        (= $i (@list.len (ref $span) (struct.get $rendered $spans $r)))
+        (then
+          (struct.new $project-error
+            0
+            (struct.get $diagnostic $code $d)
+            (struct.get $diagnostic $start $d)
+            (struct.get $diagnostic $end $d)))
+        (else
+          (@let $s (@list.get (ref $span) (struct.get $rendered $spans $r) $i)
+            (if
+              (result (ref $project-error))
+              (&&
+                (<= (struct.get $span $start $s) (struct.get $diagnostic $start $d))
+                (< (struct.get $diagnostic $start $d) (struct.get $span $end $s)))
+              (then
+                (call $tree.error
+                  (struct.get $span $origin $s)
+                  (struct.get $diagnostic $code $d)))
+              (else (@recur $find (+ $i 1))))
+          ))))
+  )
+
+  (func $t0
+    (param $n (ref $tree))
+    (param $s $string)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree))))
+
+  (func $t1
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0)))
+
+  (func $t2
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (param $a1 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0 $a1)))
+
+  (func $t3
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (param $a1 (ref $tree))
+    (param $a2 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0 $a1 $a2)))
+
+  (func $t4
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (param $a1 (ref $tree))
+    (param $a2 (ref $tree))
+    (param $a3 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0 $a1 $a2 $a3)))
+
+  (func $t5
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (param $a1 (ref $tree))
+    (param $a2 (ref $tree))
+    (param $a3 (ref $tree))
+    (param $a4 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0 $a1 $a2 $a3 $a4)))
+
+  (func $t6
+    (param $n (ref $tree))
+    (param $s $string)
+    (param $a0 (ref $tree))
+    (param $a1 (ref $tree))
+    (param $a2 (ref $tree))
+    (param $a3 (ref $tree))
+    (param $a4 (ref $tree))
+    (param $a5 (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (call $tree.form $n $s (@list.new (ref $tree) $a0 $a1 $a2 $a3 $a4 $a5)))
+
+  (func $tree.occurs
+    (param $root (ref $tree))
+    (param $name (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (&&
+          (&&
+            (!= (struct.get $tree $kind $root) 2)
+            (!= (struct.get $tree $kind $root) 8))
+          (call $tree.eq $root $name))
+        (then (return 1))
+        (else (nop)))
+      (@for-each $x (struct.get $tree $items $root)
+        (if (call $tree.occurs $x $name) (then (return 1)) (else (nop))))
+      0))
+
+  (func $work.snapshot
+    (@type.params $T)
+    (@where (shared $T) (nonunit $T))
+    (param $b (ref (@inst $list-builder $T)))
+    (result (@inst $list $T))
+    (@effect reads writes allocates)
+    (@let $xs (call (@inst $list-builder.finish $T) $b)
+      (block
+        (result (@inst $list $T))
+        (call (@inst $list-builder.extend $T) $b $xs)
+        $xs)))
+
+  (func $tree.is-name
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@let $b (struct.get $tree $value $n)
+      (block
+        (result i32)
+        (if
+          (i32.eqz
+            (&&
+              (= (struct.get $tree $kind $n) 0)
+              (&& (> (@bytes.len $b) 1) (= (@bytes.get $b 0) 36))))
+          (then (return 0))
+          (else (nop)))
+        (@loop $identifier
+          (bind $i i32 1)
+          (result i32)
+          (if
+            (result i32)
+            (= $i (@bytes.len $b))
+            (then 1)
+            (else
+              (@let $c (@bytes.get $b $i)
+                (if
+                  (result i32)
+                  (||
+                    (< $c 33)
+                    (||
+                      (> $c 126)
+                      (||
+                        (= $c 34)
+                        (||
+                          (= $c 40)
+                          (||
+                            (= $c 41)
+                            (||
+                              (= $c 44)
+                              (||
+                                (= $c 59)
+                                (|| (= $c 91) (|| (= $c 93) (|| (= $c 123) (= $c 125))))
+                              ))))
+                      )))
+                  (then 0)
+                  (else (@recur $identifier (+ $i 1))))
+              ))))
+      ))))

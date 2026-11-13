@@ -1,0 +1,251 @@
+(module
+  (@use "walz:core" (type $list) (type $result))
+  (@use "../parser/diagnostic.walz" (type $diagnostic))
+  (@use "./ir.walz"
+    (type $gc-type-ir)
+    (type $field-ir)
+    (func $ir.is-ref)
+    (func $ir.heap)
+    (func $ir.nullable))
+  (@export
+    (func $gc.heap-valid)
+    (func $gc.value-valid)
+    (func $gc.subtype)
+    (func $gc.validate))
+  (func $gc.heap-valid
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $h i32)
+    (param $limit i32)
+    (result i32)
+    (@effect pure)
+    (||
+      (&& (>= $h -23) (<= $h -18))
+      (&& (>= $h 0) (&& (< $h $limit) (< $h (@list.len (ref $gc-type-ir) $defs))))
+    ))
+
+  (func $gc.value-valid
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $t i32)
+    (param $limit i32)
+    (result i32)
+    (@effect pure)
+    (||
+      (|| (= $t 127) (= $t 126))
+      (&& (call $ir.is-ref $t) (call $gc.heap-valid $defs (call $ir.heap $t) $limit))))
+
+  (func $gc.subtype
+    (param $defs $list<(ref $gc-type-ir)>)
+    (param $a i32)
+    (param $b i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if (= $a $b) (then (return 1)) (else (nop)))
+      (if
+        (i32.eqz (&& (call $ir.is-ref $a) (call $ir.is-ref $b)))
+        (then (return 0))
+        (else (nop)))
+      (if
+        (&& (call $ir.nullable $a) (i32.eqz (call $ir.nullable $b)))
+        (then (return 0))
+        (else (nop)))
+      (@let
+        (($x (call $ir.heap $a))
+         ($y (call $ir.heap $b)))
+        (block
+          (result i32)
+          (if (|| (= $x $y) (|| (= $x -23) (= $y -18))) (then (return 1)) (else (nop)))
+          (if (= $y -19) (then (return (!= $x -18))) (else (nop)))
+          (if (< $x 0) (then (return 0)) (else (nop)))
+          (if
+            (i32.ge_u $x (@list.len (ref $gc-type-ir) $defs))
+            (then (return 0))
+            (else (nop)))
+          (@let $kind
+            (struct.get $gc-type-ir $kind (@list.get (ref $gc-type-ir) $defs $x))
+            (if
+              (|| (&& (= $y -21) (= $kind 0)) (&& (= $y -22) (= $kind 1)))
+              (then (return 1))
+              (else (nop))))
+          (@loop $parents
+            (bind $i i32 $x)
+            (bind $steps i32 0)
+            (result i32)
+            (if
+              (result i32)
+              (|| (< $i 0) (>= $steps (@list.len (ref $gc-type-ir) $defs)))
+              (then 0)
+              (else
+                (if
+                  (result i32)
+                  (= $i $y)
+                  (then 1)
+                  (else
+                    (if
+                      (result i32)
+                      (i32.ge_u $i (@list.len (ref $gc-type-ir) $defs))
+                      (then 0)
+                      (else
+                        (@recur $parents
+                          (struct.get $gc-type-ir $parent
+                            (@list.get (ref $gc-type-ir) $defs $i))
+                          (+ $steps 1))))
+                  ))))
+          ))))
+  )
+
+  (func $gc.validate
+    (param $defs $list<(ref $gc-type-ir)>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect allocates)
+    (block
+      (result $result<i32, (ref $diagnostic)>)
+      (if
+        (> (@list.len (ref $gc-type-ir) $defs) 1024)
+        (then (return (@result.err (struct.new $diagnostic 150 0 0))))
+        (else (nop)))
+      (@loop $validate
+        (bind $i i32 0)
+        (bind $total i32 0)
+        (if
+          (= $i (@list.len (ref $gc-type-ir) $defs))
+          (then (nop))
+          (else
+            (@let
+              (($d (@list.get (ref $gc-type-ir) $defs $i))
+               ($start (struct.get $gc-type-ir $start $d))
+               ($end (struct.get $gc-type-ir $end $d))
+               ($explicit (struct.get $gc-type-ir $explicit $d))
+               ($parent (struct.get $gc-type-ir $parent $d))
+               ($fields (struct.get $gc-type-ir $fields $d)))
+              (block
+                (if
+                  (||
+                    (< $start 0)
+                    (||
+                      (> $start $i)
+                      (||
+                        (<= $end $i)
+                        (||
+                          (> $end (@list.len (ref $gc-type-ir) $defs))
+                          (||
+                            (i32.gt_u $explicit 1)
+                            (||
+                              (&&
+                                (= $explicit 0)
+                                (|| (!= $start $i) (!= $end (+ $i 1))))
+                              (||
+                                (i32.gt_u (struct.get $gc-type-ir $kind $d) 1)
+                                (||
+                                  (i32.gt_u (struct.get $gc-type-ir $finality $d) 1)
+                                  (|| (< $parent -1) (>= $parent $i))))
+                            ))))
+                    ))
+                  (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                  (else (nop)))
+                (if
+                  (= $i 0)
+                  (then
+                    (if
+                      (!= $start 0)
+                      (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                      (else (nop))))
+                  (else
+                    (@let $p (@list.get (ref $gc-type-ir) $defs (- $i 1))
+                      (if
+                        (if
+                          (result i32)
+                          (> (struct.get $gc-type-ir $end $p) $i)
+                          (then
+                            (||
+                              (!= $start (struct.get $gc-type-ir $start $p))
+                              (||
+                                (!= $end (struct.get $gc-type-ir $end $p))
+                                (!= $explicit (struct.get $gc-type-ir $explicit $p))))
+                          )
+                          (else (!= $start $i)))
+                        (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                        (else (nop))))
+                  ))
+                (if
+                  (||
+                    (> (@list.len (ref $field-ir) $fields) 256)
+                    (> (+ $total (@list.len (ref $field-ir) $fields)) 8192))
+                  (then (return (@result.err (struct.new $diagnostic 150 0 0))))
+                  (else (nop)))
+                (if
+                  (&&
+                    (= (struct.get $gc-type-ir $kind $d) 1)
+                    (!= (@list.len (ref $field-ir) $fields) 1))
+                  (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                  (else (nop)))
+                (@for-each $f $fields
+                  (if
+                    (||
+                      (i32.gt_u (struct.get $field-ir $mutable $f) 1)
+                      (i32.eqz
+                        (||
+                          (||
+                            (= (struct.get $field-ir $storage $f) 119)
+                            (= (struct.get $field-ir $storage $f) 120))
+                          (call $gc.value-valid $defs
+                            (struct.get $field-ir $storage $f)
+                            $end))))
+                    (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                    (else (nop))))
+                (if
+                  (>= $parent 0)
+                  (then
+                    (@let
+                      (($p (@list.get (ref $gc-type-ir) $defs $parent))
+                       ($pf (struct.get $gc-type-ir $fields $p)))
+                      (block
+                        (if
+                          (||
+                            (struct.get $gc-type-ir $finality $p)
+                            (||
+                              (!=
+                                (struct.get $gc-type-ir $kind $p)
+                                (struct.get $gc-type-ir $kind $d))
+                              (<
+                                (@list.len (ref $field-ir) $fields)
+                                (@list.len (ref $field-ir) $pf))))
+                          (then (return (@result.err (struct.new $diagnostic 118 0 0))))
+                          (else (nop)))
+                        (@for $variance
+                          (bind $k i32 0)
+                          (while (< $k (@list.len (ref $field-ir) $pf)))
+                          (step (+ $k 1))
+                          (@let
+                            (($a (@list.get (ref $field-ir) $fields $k))
+                             ($b (@list.get (ref $field-ir) $pf $k)))
+                            (if
+                              (||
+                                (!=
+                                  (struct.get $field-ir $mutable $a)
+                                  (struct.get $field-ir $mutable $b))
+                                (if
+                                  (result i32)
+                                  (struct.get $field-ir $mutable $a)
+                                  (then
+                                    (!=
+                                      (struct.get $field-ir $storage $a)
+                                      (struct.get $field-ir $storage $b)))
+                                  (else
+                                    (i32.eqz
+                                      (call $gc.subtype $defs
+                                        (struct.get $field-ir $storage $a)
+                                        (struct.get $field-ir $storage $b))))
+                                ))
+                              (then
+                                (return (@result.err (struct.new $diagnostic 118 0 0))))
+                              (else (nop))))
+                        ))))
+                  (else (nop)))
+                (@recur $validate
+                  (+ $i 1)
+                  (+ $total (@list.len (ref $field-ir) $fields))))
+            ))))
+      (@result.ok (@list.len (ref $gc-type-ir) $defs))))
+)

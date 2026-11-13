@@ -268,7 +268,13 @@ fn includes<'a>(
     node: &'a Sexp,
     output: &mut Vec<&'a Sexp>,
     legacy: bool,
+    in_component: bool,
 ) -> Result<(), Error> {
+    // Component imports have one external name and a typed descriptor. They
+    // are instantiation ports, never legacy source-file imports.
+    if in_component && node.head() == Some("import") {
+        return Ok(());
+    }
     if !legacy
         && matches!(
             node.head(),
@@ -320,11 +326,36 @@ fn includes<'a>(
     {
         return Ok(());
     }
+    if file_import(node)
+        && node
+            .list()
+            .unwrap()
+            .iter()
+            .skip(2)
+            .any(|n| n.head() == Some("component"))
+        && !in_component
+    {
+        return Err(Error::at(
+            source,
+            node.span,
+            "a Component constructor must be selected in a component entry",
+        )
+        .with_code("E_COMPONENT_SOURCE"));
+    }
     if matches!(node.head(), Some("include" | "@include")) || file_import(node) {
         output.push(node);
-    } else if matches!(node.head(), Some("module" | "namespace" | "@namespace")) {
+    } else if matches!(
+        node.head(),
+        Some("module" | "component" | "@lib" | "namespace" | "@namespace")
+    ) {
         for child in node.list().unwrap() {
-            includes(source, child, output, legacy)?;
+            includes(
+                source,
+                child,
+                output,
+                legacy,
+                node.head() == Some("component"),
+            )?;
         }
     }
     Ok(())
@@ -382,7 +413,11 @@ fn expand(
         Err(error) if body => return Err(error.with_path(&canonical)),
         Err(_) => return output.append(&original, 0, &canonical, &original), // Native WAT has its own reader.
     };
-    if body && syntax.head() != Some("module") {
+    if syntax.head() == Some("@lib") {
+        crate::composition::validate_library(&original, &syntax)
+            .map_err(|e| e.with_path(&canonical))?;
+    }
+    if body && !matches!(syntax.head(), Some("module" | "@lib")) {
         return Err(Error::message(format!(
             "{}: included file must contain (module ...)",
             canonical.display()
@@ -400,7 +435,7 @@ fn expand(
         }
     };
     let mut nodes = Vec::new();
-    includes(&original, &syntax, &mut nodes, legacy).map_err(|e| e.with_path(&canonical))?;
+    includes(&original, &syntax, &mut nodes, legacy, false).map_err(|e| e.with_path(&canonical))?;
     let mut cursor = range.start;
     stack.push(canonical.clone());
     for node in nodes {
@@ -448,6 +483,89 @@ fn expand(
         // Whitespace prevents tokens/comments on either side from merging.
         output.append("\n", node.span.start, &canonical, &original)?;
         let target = canonical.parent().unwrap().join(relative);
+        if import && parts.len() == 3 && parts[2].head() == Some("component") {
+            let binding = parts[2].list().unwrap();
+            let name = binding
+                .get(1)
+                .and_then(Sexp::atom)
+                .filter(|_| binding.len() == 2)
+                .filter(|n| crate::sexpr::identifier(n))
+                .ok_or_else(|| {
+                    Error::at(&original, node.span, "expected (component $Constructor)")
+                        .with_code("E_COMPONENT_SOURCE")
+                })?;
+            let target = normalize_path(&target).map_err(|e| Error::message(e.to_string()))?;
+            if target.extension().is_some_and(|e| e == "wasm") {
+                let length = std::fs::metadata(&target)
+                    .map_err(|e| Error::message(e.to_string()))?
+                    .len();
+                if length > crate::binary::MAX_BINARY as u64 {
+                    return Err(Error::at(
+                        &original,
+                        node.span,
+                        "component dependency exceeds 4 MiB",
+                    )
+                    .with_code("E_COMPONENT_SOURCE"));
+                }
+                let bytes = std::fs::read(&target).map_err(|e| Error::message(e.to_string()))?;
+                let text = crate::composition::embedded::declaration(name, &bytes)?;
+                output.append(&text, node.span.start, &canonical, &original)?;
+                output.chunks.last_mut().unwrap().generated = true;
+                output.chunks.push(Chunk {
+                    start: output.text.len(),
+                    end: output.text.len(),
+                    offset: 0,
+                    path: target,
+                    original: Arc::from("(component)"),
+                    generated: true,
+                });
+            } else {
+                let mut unit = Source {
+                    text: String::new(),
+                    path: target.clone(),
+                    chunks: vec![],
+                    migration: None,
+                    reviews: BTreeMap::new(),
+                };
+                let mut dependencies = Modules::default();
+                expand(
+                    &target,
+                    false,
+                    stack,
+                    &mut unit,
+                    &mut dependencies,
+                    legacy,
+                    overlays,
+                )?;
+                let unit = finish(unit, dependencies)?;
+                let syntax = crate::sexpr::parse(&unit.text)?;
+                if syntax.head() != Some("component") {
+                    return Err(Error::at(
+                        &original,
+                        node.span,
+                        "component selection requires a component entry",
+                    )
+                    .with_code("E_COMPONENT_SOURCE"));
+                }
+                let fields = syntax.list().unwrap();
+                let start = fields
+                    .get(1)
+                    .filter(|n| n.atom().is_some_and(|s| s.starts_with('$')))
+                    .map(|n| n.span.end)
+                    .unwrap_or(fields[0].span.end);
+                output.append(
+                    &format!("(component {name} "),
+                    node.span.start,
+                    &canonical,
+                    &original,
+                )?;
+                output.chunks.last_mut().unwrap().generated = true;
+                append_range(output, &unit, start..syntax.span.end)?;
+            }
+            output.append("\n", node.span.end, &canonical, &original)?;
+            cursor = node.span.end;
+            continue;
+        }
         if import {
             let target = normalize_path(&target).map_err(|e| {
                 Error::at(&original, node.span, format!("{}: {e}", target.display()))
@@ -680,6 +798,9 @@ fn load_mode(
         }
         error
     })?;
+    finish(source, modules)
+}
+fn finish(mut source: Source, mut modules: Modules) -> Result<Source, Error> {
     if modules.units.is_empty() {
         source.reviews = modules.reviews;
         return Ok(source);

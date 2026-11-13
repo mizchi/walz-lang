@@ -15,6 +15,16 @@ walz macro-expand --text examples/user-macros/main.walz
 
 `walz macro-expand` emits JSON with the `walz-macro-expansion-v1` schema; `--text` prints a readable expansion history. `walz expand` continues to emit final standard WAT. `macro-expand` and `expand` check the program without running the guest.
 
+## Bootstrap compiler
+
+The compiler written in Walz also supports declarative macros within its
+integer/GC compilation subset: patterns, trailing repetitions, lexical hygiene,
+explicit/delegated/repeated binders, contextual type queries, scalar guards and
+static macro imports/aliases/reexports. Expanded syntax and discarded query
+expressions pass its independent validator. See the [bootstrap contracts and
+limits](selfhost-frontend.md#declarative-user-macros). It does not yet compile the
+full language, and its API does not emit the Rust CLI's expansion reports.
+
 ## Patterns and templates
 
 ```wat

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "fac",
+    "args": [
+      0
+    ],
+    "expected": 1
+  },
+  {
+    "name": "fac",
+    "args": [
+      1
+    ],
+    "expected": 1
+  },
+  {
+    "name": "fac",
+    "args": [
+      2
+    ],
+    "expected": 2
+  },
+  {
+    "name": "fac",
+    "args": [
+      6
+    ],
+    "expected": 720
+  },
+  {
+    "name": "fac",
+    "args": [
+      10
+    ],
+    "expected": 3628800
+  },
+  {
+    "name": "fac",
+    "args": [
+      13
+    ],
+    "expected": 1932053504
+  }
+]

@@ -1,14 +1,16 @@
 # Native WIT worlds
 
-`walz build main.walz --target component --wit api.wit --world guest -o dist/app.component.wasm` builds a Component with the original WIT interface names and type identities. With generated imports, also pass `--bindings generated/bindings.json`. `walz bind api.wit policy.json generated --world guest` generates typed imports, types, and export stubs; implement the stubs before building. Interface exports map to source exports named `interface-function`.
+`walz build main.walz --target component --wit-input api.wit --world guest -o dist/app.component.wasm` builds a Component with the original WIT interface names and type identities. With generated imports, also pass `--bindings generated/bindings.json`. `walz bind api.wit policy.json generated --world guest` generates typed imports, types, and export stubs; implement the stubs before building. Interface exports map to source exports named `interface-function`.
 
 This boundary uses the standard Canonical ABI. The resulting Component does not import Walz's private delivery runtime. The executable inputs are [async](../tests/component-fixtures/native-async.walz), [async WIT](../tests/component-fixtures/native-async.wit), [resources](../tests/component-fixtures/native-resources.walz), and [resource WIT](../tests/component-fixtures/native-resources.wit).
+
+For source-defined composition, use `(component ...)`, `@expose`, `@bind`, and `@world`. `build --wit` emits the checked public WIT; `--wit-input` consumes an existing contract. See [Component composition](component-composition.md).
 
 ## Async values
 
 Async WIT functions and shared-value `future<T>` / `stream<T>` payloads use the existing Walz types and operations. An internal producer Component uses canonical future/stream creation, write, drop, and task return. It copies input values into its memory, publishes the readable end, and retains the write buffer until the receiver acknowledges the write. A prepended stream forwards the tail with partial-write handling. GC references are copied as values at the boundary; their identity is not portable.
 
-The raw pinned jco transpiler in JSPI mode runs the generated Component without the Walz SDK or its glue patches. Numeric streams are delivered as typed-array chunks by that transpiler. The tests consume those chunks rather than treating them as scalar items. Walz's private child scheduler, SDK cancellation/deadline API, and writer-host capabilities are not native world operations; a world requiring those imports is rejected.
+The pinned jco transpiler in JSPI mode runs the generated Component without the Walz SDK or its scheduler/lifetime patches. The native build corrects duplicated async host-result allocations and propagates rejected host calls through JSPI. It retires only the unused serialized copy, using the original guarded allocator; it does not free pending copies. Numeric streams are delivered as typed-array chunks by that transpiler. The tests consume those chunks rather than treating them as scalar items. Walz's private child scheduler, SDK cancellation/deadline API, and writer-host capabilities are not native world operations; a world requiring those imports is rejected.
 
 ## Resource ownership
 

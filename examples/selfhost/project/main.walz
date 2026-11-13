@@ -1,0 +1,24 @@
+(module
+  (@use "./syntax.walz" (macro $twice))
+  (@use "./box.walz" (type $Box) (func $box.new) (func $box.value))
+  (@use "walz:core" (type $list) (type $result))
+  (type $Total (struct (field $value (mut i32))))
+  (func $main
+    (export "main")
+    (result i32)
+    (@effect reads writes allocates)
+    (@let
+      (($total (struct.new $Total 0))
+       ($box (call $box.new<i32> 21))
+       ($values (@list.new i32 (@$twice (call $box.value<i32> $box))))
+      )
+      (block
+        (result i32)
+        (@for-each $value $values
+          (struct.set $Total $value $total (+ (struct.get $Total $value $total) $value)))
+        (@let $answer (type $result<i32, i32>)
+          (@result.ok (struct.get $Total $value $total))
+          (@match $answer
+            (@case ok ($value) $value)
+            (@case err ($code) $code))))
+    )))

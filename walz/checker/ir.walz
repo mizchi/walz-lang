@@ -1,0 +1,93 @@
+(module
+  (@use "walz:core" (type $bytes) (type $list))
+  (@export
+    (type $function-ir)
+    (type $instruction-ir)
+    (type $export-ir)
+    (type $gc-type-ir)
+    (type $field-ir)
+    (func $ir.ref)
+    (func $ir.heap)
+    (func $ir.is-ref)
+    (func $ir.nullable)
+    (func $ir.unpack)
+    (func $ir.defaultable)
+    (func $ir.value-type)
+    (func $ir.result-type))
+  ;; References: 512 + 2*heap + nullable. Heap is a GC type index or
+  ;; an abstract internal heap code (-18 any through -23 none).
+  (type $field-ir (struct (field $storage i32) (field $mutable i32)))
+  (type $gc-type-ir
+    (struct
+      (field $kind i32)
+      (field $fields $list<(ref $field-ir)>)
+      (field $parent i32)
+      (field $finality i32)
+      (field $start i32)
+      (field $end i32)
+      (field $explicit i32)))
+  (@abi.type $field-ir (record "storage" "mutable"))
+  (@abi.type $gc-type-ir
+    (record "kind" "fields" "parent" "finality" "start" "end" "explicit"))
+  (func $ir.ref
+    (param $heap i32)
+    (param $null i32)
+    (result i32)
+    (@effect pure)
+    (+ 512 (+ (* $heap 2) $null)))
+
+  (func $ir.heap
+    (param $type i32)
+    (result i32)
+    (@effect pure)
+    (i32.shr_s (- $type 512) 1))
+
+  (func $ir.is-ref
+    (param $type i32)
+    (result i32)
+    (@effect pure)
+    (&& (>= $type 466) (<= $type 2559)))
+
+  (func $ir.nullable (param $type i32) (result i32) (@effect pure) (& $type 1))
+
+  (func $ir.unpack
+    (param $type i32)
+    (result i32)
+    (@effect pure)
+    (if (result i32) (|| (= $type 119) (= $type 120)) (then 127) (else $type)))
+
+  (func $ir.defaultable
+    (param $type i32)
+    (result i32)
+    (@effect pure)
+    (||
+      (|| (= $type 127) (= $type 126))
+      (||
+        (|| (= $type 119) (= $type 120))
+        (&& (call $ir.is-ref $type) (call $ir.nullable $type))))
+  )
+  ;; Untrusted, immutable input records. Their existence is not a validation
+  ;; certificate. Only checker.walz constructs the opaque checked module.
+  (type $instruction-ir
+    (struct (field $op i32) (field $immediate i64) (field $start i32) (field $end i32)))
+  (@abi.type $instruction-ir (record "op" "immediate" "start" "end"))
+  (type $function-ir
+    (struct
+      (field $params $list<i32>)
+      (field $locals $list<i32>)
+      (field $result i32)
+      (field $body $list<(ref $instruction-ir)>)
+      (field $start i32)
+      (field $end i32)))
+  (type $export-ir (struct (field $name $bytes) (field $index i32)))
+  (func $ir.value-type
+    (param $t i32)
+    (result i32)
+    (@effect pure)
+    (|| (|| (= $t 127) (= $t 126)) (call $ir.is-ref $t)))
+
+  (func $ir.result-type
+    (param $t i32)
+    (result i32)
+    (@effect pure)
+    (|| (= $t 64) (call $ir.value-type $t))))

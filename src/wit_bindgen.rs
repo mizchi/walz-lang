@@ -427,6 +427,12 @@ pub(crate) fn component_exports(
 // Count expanded paths, not distinct type IDs: a compact DAG can have an
 // exponentially large shape. Stop before contains_owned or shape expands it.
 fn component_value_limits(resolve: &Resolve, function: &wit_parser::Function) -> bool {
+    component_types_limits(
+        resolve,
+        function.params.iter().map(|p| p.ty).chain(function.result),
+    )
+}
+fn component_types_limits(resolve: &Resolve, types: impl IntoIterator<Item = Type>) -> bool {
     fn charge(budget: &mut usize, amount: usize) -> bool {
         if let Some(left) = budget.checked_sub(amount) {
             *budget = left;
@@ -445,6 +451,9 @@ fn component_value_limits(resolve: &Resolve, function: &wit_parser::Function) ->
         match &r.types[id].kind {
             TypeDefKind::Type(t) | TypeDefKind::List(t) | TypeDefKind::Option(t) => {
                 visit(r, *t, depth + 1, budget)
+            }
+            TypeDefKind::Future(t) | TypeDefKind::Stream(t) => {
+                t.is_none_or(|t| visit(r, t, depth + 1, budget))
             }
             TypeDefKind::Tuple(t) => t.types.iter().all(|t| visit(r, *t, depth + 1, budget)),
             TypeDefKind::Record(t) => t
@@ -465,12 +474,7 @@ fn component_value_limits(resolve: &Resolve, function: &wit_parser::Function) ->
         }
     }
     let mut budget = 64 * 1024;
-    function
-        .params
-        .iter()
-        .map(|p| p.ty)
-        .chain(function.result)
-        .all(|t| visit(resolve, t, 0, &mut budget))
+    types.into_iter().all(|t| visit(resolve, t, 0, &mut budget))
 }
 
 struct Schema<'a> {
@@ -480,6 +484,9 @@ struct Schema<'a> {
     standard: std::collections::BTreeSet<String>,
     drops: Vec<(String, String, String)>,
     resource_anchors: std::collections::BTreeMap<wit_parser::TypeId, (String, String)>,
+    local_prefix: Option<String>,
+    resource_types: std::collections::BTreeMap<wit_parser::TypeId, String>,
+    projected_types: std::collections::BTreeMap<String, Type>,
 }
 impl<'a> Schema<'a> {
     fn new(r: &'a Resolve) -> Self {
@@ -490,6 +497,9 @@ impl<'a> Schema<'a> {
             standard: Default::default(),
             drops: vec![],
             resource_anchors: Default::default(),
+            local_prefix: None,
+            resource_types: Default::default(),
+            projected_types: Default::default(),
         }
     }
     fn ensure_resource(&mut self, mut id: wit_parser::TypeId) -> Result<String, Error> {
@@ -499,6 +509,11 @@ impl<'a> Schema<'a> {
             } else {
                 break;
             }
+        }
+        if self.local_prefix.is_some() {
+            return self.resource_types.get(&id).cloned().ok_or_else(|| Error::message(
+                "resource queries require an explicit, unambiguous source @resource declaration for the bound resource".into(),
+            ));
         }
         let name = self.type_name(id);
         if self.names.insert(name.clone()) {
@@ -525,7 +540,21 @@ impl<'a> Schema<'a> {
         Ok(name)
     }
     fn unsigned(&mut self, bits: u32) -> String {
-        let name = format!("$wit-u{bits}");
+        let name = self
+            .local_prefix
+            .as_ref()
+            .map_or_else(|| format!("$wit-u{bits}"), |p| format!("{p}.u{bits}"));
+        if self.local_prefix.is_some() {
+            self.projected_types.insert(
+                name.clone(),
+                match bits {
+                    8 => Type::U8,
+                    16 => Type::U16,
+                    32 => Type::U32,
+                    _ => Type::U64,
+                },
+            );
+        }
         if self.names.insert(name.clone()) {
             self.declarations.push(format!(
                 "  (type {name} (@newtype i{}))\n  (@abi.type {name} (u{bits}))\n",
@@ -535,7 +564,21 @@ impl<'a> Schema<'a> {
         name
     }
     fn primitive(&mut self, name: &str) -> String {
-        let local = format!("$wit-{name}");
+        let local = self
+            .local_prefix
+            .as_ref()
+            .map_or_else(|| format!("$wit-{name}"), |p| format!("{p}.{name}"));
+        if self.local_prefix.is_some() {
+            self.projected_types.insert(
+                local.clone(),
+                match name {
+                    "bool" => Type::Bool,
+                    "char" => Type::Char,
+                    "s8" => Type::S8,
+                    _ => Type::S16,
+                },
+            );
+        }
         if self.names.insert(local.clone()) {
             self.declarations.push(format!(
                 "  (type {local} (@newtype i32))\n  (@abi.type {local} ({name}))\n"
@@ -544,6 +587,9 @@ impl<'a> Schema<'a> {
         local
     }
     fn type_name(&self, id: wit_parser::TypeId) -> String {
+        if let Some(prefix) = &self.local_prefix {
+            return format!("{prefix}.t{}", id.index());
+        }
         let ty = &self.r.types[id];
         let interface = match ty.owner {
             wit_parser::TypeOwner::Interface(i) => {
@@ -560,6 +606,9 @@ impl<'a> Schema<'a> {
     }
     fn ensure(&mut self, id: wit_parser::TypeId) -> Result<String, Error> {
         let name = self.type_name(id);
+        if self.local_prefix.is_some() {
+            self.projected_types.insert(name.clone(), Type::Id(id));
+        }
         if !self.names.insert(name.clone()) {
             return Ok(name);
         }
@@ -678,7 +727,11 @@ impl<'a> Schema<'a> {
             if prefix == "$" {
                 self.standard.insert("$unit".into());
             }
-            Ok(format!("{prefix}unit"))
+            Ok(if prefix == "$" {
+                self.standard_name("unit")
+            } else {
+                format!("{prefix}unit")
+            })
         }
     }
     fn shape(&mut self, ty: Type, depth: usize, prefix: &str) -> Result<String, Error> {
@@ -686,11 +739,17 @@ impl<'a> Schema<'a> {
             return Err(Error::message("WIT type nesting exceeds 64".into()));
         }
         let r = self.r;
+        let local_prefix = self.local_prefix.clone();
+        let standard_name = |name: &str| {
+            local_prefix
+                .as_ref()
+                .map_or_else(|| format!("${name}"), |p| format!("{p}.core.{name}"))
+        };
         let constructor = |name: &str| {
             if prefix.is_empty() {
                 name.to_owned()
             } else {
-                format!("@inst ${name}")
+                format!("@inst {}", standard_name(name))
             }
         };
         Ok(match ty {
@@ -727,7 +786,7 @@ impl<'a> Schema<'a> {
             Type::String => {
                 if prefix == "$" {
                     self.standard.insert("$string".into());
-                    "$string".into()
+                    standard_name("string")
                 } else {
                     "text".into()
                 }
@@ -784,7 +843,11 @@ impl<'a> Schema<'a> {
                     if prefix == "$" {
                         self.standard.insert("$bytes".into());
                     }
-                    format!("{prefix}bytes")
+                    if prefix == "$" {
+                        standard_name("bytes")
+                    } else {
+                        format!("{prefix}bytes")
+                    }
                 }
                 TypeDefKind::List(t) => {
                     if contains_owned(r, t, 0) {
@@ -929,6 +992,60 @@ impl<'a> Schema<'a> {
             },
             t => return Err(Error::message(format!("unsupported WIT primitive: {t:?}"))),
         })
+    }
+    fn standard_name(&self, name: &str) -> String {
+        self.local_prefix
+            .as_ref()
+            .map_or_else(|| format!("${name}"), |p| format!("{p}.core.{name}"))
+    }
+}
+
+/// Type projection shares the binding generator's ABI contracts but cannot
+/// create resource imports or capability grants. IDs belong to one Resolve.
+pub(crate) struct TypeProjection<'a>(Schema<'a>);
+impl<'a> TypeProjection<'a> {
+    pub fn new(
+        resolve: &'a Resolve,
+        prefix: String,
+        resources: std::collections::BTreeMap<wit_parser::TypeId, String>,
+    ) -> Self {
+        let mut schema = Schema::new(resolve);
+        schema.local_prefix = Some(prefix);
+        schema.resource_types = resources;
+        Self(schema)
+    }
+    pub fn ty(&mut self, ty: Option<Type>) -> Result<String, Error> {
+        if !component_types_limits(self.0.r, ty) {
+            return Err(Error::message(
+                "Component query type exceeds expanded shape/depth limits".into(),
+            ));
+        }
+        self.0.optional(ty, 0, "$")
+    }
+    pub fn declarations(&self) -> String {
+        let imports = self
+            .0
+            .standard
+            .iter()
+            .map(|name| {
+                format!(
+                    " (type {name} {})",
+                    self.0.standard_name(name.trim_start_matches('$'))
+                )
+            })
+            .collect::<String>();
+        format!(
+            "{}{}",
+            if imports.is_empty() {
+                String::new()
+            } else {
+                format!("(@use \"walz:core\"{imports})\n")
+            },
+            self.0.declarations.join("")
+        )
+    }
+    pub fn types(&self) -> &std::collections::BTreeMap<String, Type> {
+        &self.0.projected_types
     }
 }
 

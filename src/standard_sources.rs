@@ -29,6 +29,10 @@ pub(crate) const LIBRARIES: &[(&str, &str)] = &[
         include_str!("../walz/core/list-builder.walz"),
     ),
     ("builder.walz", include_str!("../walz/core/builder.walz")),
+    (
+        "bytes-builder.walz",
+        include_str!("../walz/core/bytes-builder.walz"),
+    ),
     ("json.walz", include_str!("../walz/core/json.walz")),
     (
         "json-value.walz",

@@ -18,6 +18,8 @@ fn entry(name: &str) -> bool {
             | "readonly.region"
             | "readonly.load"
             | "component.binary"
+            | "component.constructor"
+            | "component.type"
             | "let"
             | "newtype"
             | "for"
@@ -84,7 +86,11 @@ fn extension(name: &str) -> bool {
         || entry(&crate::naming::core(name))
         || matches!(
             name,
-            "inst"
+            "lib"
+                | "world"
+                | "expose"
+                | "bind"
+                | "inst"
                 | "export"
                 | "loop"
                 | "try"
@@ -278,6 +284,12 @@ pub(crate) fn convert_legacy(source: &str) -> Result<Migration, Error> {
 
 pub(crate) fn normalize(source: &str, root: &Sexp) -> Result<Sexp, Error> {
     let mut root = root.clone();
+    if root.head() == Some("@lib") {
+        crate::composition::validate_library(source, &root)?;
+        if let Kind::List(parts) = &mut root.kind {
+            parts[0].kind = Kind::Atom("module".into());
+        }
+    }
     let mut plan = Plan::new(source, false);
     plan.walk(&mut root, false, 0)?;
     plan.types(&mut root)?;

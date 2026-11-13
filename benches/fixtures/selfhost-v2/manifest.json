@@ -1,0 +1,56 @@
+{
+  "suite": "walz-selfhost-parity-v2",
+  "seed": "0x5e1f2026",
+  "reference": "Rust full compiler + wat 1.262.0 / wasmparser 0.262.0",
+  "history": "v2 adds the WAT+validator timing reference; all v1 source and probe bytes are unchanged",
+  "cases": [
+    {
+      "id": "integer-mix",
+      "inputBytes": 273,
+      "sourceSha256": "9f5e9b95da44b83c482c133d13f2340a7e04a09bf2ddcce32ebfed655e559132",
+      "probesSha256": "77b0f628ad23c29bf73593e6c22ef0d9f67120f214e66a9f7fd4bf429aa77d50"
+    },
+    {
+      "id": "i64-loop",
+      "inputBytes": 361,
+      "sourceSha256": "0bb0580bbbdd577d984c9a0ed8fefbd479e9230834ee8da5d8e6b19281b29d0f",
+      "probesSha256": "d1a4020e28406845fe249807075e2f17a9aa47a925d2f83a59c64d288ec5c544"
+    },
+    {
+      "id": "recursive-call",
+      "inputBytes": 244,
+      "sourceSha256": "c6caa4c995a21b153619c1d5d192cd67f1c8e5727403d34518ce5ce2aa0b114d",
+      "probesSha256": "502a3225d3ebfcec85bb5f3ccbe6c0c38fc2c4f7310d5179007ab7bd1f425ba4"
+    },
+    {
+      "id": "branches-and-traps",
+      "inputBytes": 317,
+      "sourceSha256": "529443a5078196e8954d37b59789eaa28221dd9aa701c1ea9fbaa762cf166d0d",
+      "probesSha256": "d1e60bbd40f1f485bbba96cb166aa60acfc1442d99bb85c85182a93595d48d79"
+    },
+    {
+      "id": "i64-bits",
+      "inputBytes": 346,
+      "sourceSha256": "60df5dce40438fc6e388f5a8fc10e11fdb9936ef4718ab9f1af43f5a634b9be2",
+      "probesSha256": "fa5c84e9c855d0518ccefc609134a82b3fd4bb777a43934206644408d2128be6"
+    },
+    {
+      "id": "wide-indices",
+      "inputBytes": 9630,
+      "sourceSha256": "8e43c432005256ca9e80394713bc4d102b96eea2c945be7d63436a48ce6cacdf",
+      "probesSha256": "0fdadc09e911c4b2224f572dba7db20c418fb9021d5c2f3d208de600b46e0296"
+    },
+    {
+      "id": "expressions-32",
+      "inputBytes": 9104,
+      "sourceSha256": "ca165723063b8394de03c758eca8097546573ce20efcf2e80631fe50a896b631",
+      "probesSha256": "4c21a94047b2c315be1eb42bd7c1d8d1ed9e7dfdf06ef37d861e11739aa83f76"
+    },
+    {
+      "id": "expressions-128",
+      "inputBytes": 36081,
+      "sourceSha256": "401414772b4538bd834956522e5d26d462c9316a8974f77dd5e27b6cc258c6e2",
+      "probesSha256": "6ba25e1cc29a4f4d251dd1d8992662da29802b3b326dfc91d83067d0b5d354df"
+    }
+  ]
+}

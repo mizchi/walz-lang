@@ -498,6 +498,26 @@
       "path": "examples/table/main.walz",
       "pattern": "native table expressions filter and aggregate immutable scalar columns",
       "expected": "42"
+    },
+    {
+      "path": "examples/selfhost/answer.walz",
+      "pattern": "i32 function input for the Walz-written bootstrap compiler, also executable by the Rust compiler",
+      "expected": "42"
+    },
+    {
+      "path": "examples/selfhost/gc.walz",
+      "pattern": "recursive immutable GC list compiled by both the Walz-written and Rust compilers",
+      "expected": "42"
+    },
+    {
+      "path": "examples/selfhost/sum.walz",
+      "pattern": "checked i64 locals and labelled loops in folded WAT shared by the Walz and Rust bootstrap compilers",
+      "expected": "5050"
+    },
+    {
+      "path": "examples/selfhost/project/main.walz",
+      "pattern": "static modules, generic GC types, core lists and Result matching compiled by the Walz-written frontend and Rust",
+      "expected": "42"
     }
   ],
   "probes": [

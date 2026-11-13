@@ -970,3 +970,73 @@ WIT の world を指定する Component 出力は、共有 payload の async end
 Watzのmatch分岐は `case`・`default` を使い、基本形式のWalzでは `@case`・`@default` を維持します。
 
 ソースと `walz print` の基本形式はWalzのS式です。任意の `--format watz` 表示では `func`・`@export("name")`・直接書ける `match`／`if` 式を使い、同じ構文木を保ちます。保存した `.watz` 表示も読み戻せます。`module { ... }` は省略可能で、束縛には不変の `let` を使います。通常のモジュール解決・検査の前にS式へ変換し、型や実行時の意味論を追加しません。正規の言語形式はWATのS式のままです。構文・エスケープ・制限・コメント・ツール対応は[対応表](docs/review-syntax.md)に記載します。
+
+## Component構成ソース
+
+ルートの `(component ...)` はComponentを生成し、`(module ...)` はCoreの意味を保つ。
+`(@lib 宣言...)` は実行ABI・start・global/data初期化・Core exportを持たない静的ライブラリ。
+通常の `@use` / `@export` で選択し、単独でcheckできるがbuildのエントリーにはしない。
+
+Component内の `(@expose "public-name" $function<具体型...>)` は、実装を単相化・検査して
+portableなCanonical ABI公開関数を推論する。`(@bind "module" "member" $component-function)`
+は選択したComponent関数でWalzのimportを供給する。引数名とasync性を実際の関数から取り、
+最終的なComponent validatorで型の互換性を検証する。host effect/capabilityは保つ。
+標準Component定義と明示的なinstantiate順序は維持する。
+`(@use "./unit.wasm" (component $Constructor))` は定義を読み込み、状態は生成しない。
+Componentの `.walz` ソースも同様に選択できる。インスタンスの同一性はファイルパスでなく
+明示的な `instantiate` で決まる。
+
+ソースコンストラクターは名前の直後に `(@type.params $T...)` と、任意の `@where` 制約を取る。
+`(instantiate $Constructor<i32>)` と `(instantiate (@inst $Constructor i32))` は
+明示的に単相化する。型引数は呼び出し側の静的な型スコープで閉じた値型や可視なnominal型定義に解決し、
+標準型のimportは引き続き明示する。aliasを正規化してから特殊化をキャッシュする。
+同じ特殊化は定義を共有するが、instantiateごとの状態と定義resourceの同一性は独立する。
+型だけの `@lib` / `@use` は公開関数を要求せず、実行用コードを生成しない。
+型の置換では値の束縛名と内側の型引数を区別し、具体化した本体にも通常の型・制約・effect・
+所有権・証明・Wasm検査を適用する。バイナリは具体化済みなので型引数を取らない。
+genericなスコープではComponent参照とComponentのouter aliasを名前で指定し、生成定義による
+数値インデックスの参照先の変化を防ぐ。通常のnative WATとCore命令のインデックスの意味は保つ。
+nominal型のコピーでは再帰的な配置・mutability・packed型・nullability・ABI注釈を保つ。
+異なるソース宣言やphantom型引数は、同じ配置でも別の特殊化として扱う。
+opaqueな内部表現、closure、resource/borrowの同一性はコピーできない。
+公開する名前付き値型にはnativeな型portを設け、instanceのexport ascriptionで値型の名前を
+付け直してComponent subtypingを検査する。resourceの同一性や実行時変換は変更しない。
+内部コンストラクター単体ではWITで表せない場合があるが、最終的な `--wit` のentryにはWIT表現を要求する。
+
+`(@world "namespace:package@version" "world")` は検証済みバイナリから取り出すWITを命名する。
+`build --wit` は出力の隣に `world.wit` を生成する。`--wit-input FILE [--world NAME]` は
+既存の契約を読み、Moduleではnative worldを生成し、Componentでは公開ポートと型を検証する。
+WITで表せないCore Module exportも標準Componentとして有効で、WITを要求した場合に限りエラーにする。
+
+`(@component.type "binding" (param "function" index-or-name))`、`(result "function")`、
+`(type "member")` で、明示的な接続から値型を取り出す。carrier・field・case・tupleの型を辿り、
+WITのABI注釈と実際のresourceの同一性を保つ。実装内の照会は通常の検査前に解決する。
+コンストラクターの型引数では、その適用より前にある検証済みの接続先を照会できる。
+先行する特殊化済みinstanceも対象にでき、bind宣言自体は後置できる。
+各段階では引数から到達する照会だけを解決し、実際の型で制約を検査する。
+型推論中にinitializerやhost関数は実行しない。前方・循環依存は `E_COMPONENT_TYPE_PHASE` にし、
+探索用の仮の型は実装IRに渡さない。
+照会だけでhost import・destructor・権限を追加しない。名前付き値は公開型のportを保持し、
+resourceには明示的なソース宣言を要求する。未知のselectorや不適切な文脈はエラーにし、
+opaqueな注釈はデータとして保つ。[接続した型の照会](docs/component-composition.md#connected-type-queries)を参照。
+
+生成アダプターのload/storeはABIメモリを名前で参照し、ソースのメモリ参照は保つ。
+canonical操作は特定のメモリを選ぶ。メモリの同一性はCoreインスタンス単位で、import aliasは
+同一性を共有し、新規instantiateの定義メモリは別物になる。解析できないホスト・aliasは
+未解決として報告し、最適化やrace-freeの証明にはしない。endpointのバッファは完了・ackまで
+保持し、キャンセル要求だけでは解放しない。nativeのtrap/cancellationはinstance/storeの寿命に
+従い、任意のnativeホストにSDKのcleanup保証は適用しない。
+
+値の推論は共有データ・Future/Streamに対応する。さらに `(@bind "namespace" (instance $target))`
+からimported resourceの契約を推論し、`@expose` に適用する。ソース側のown/borrow・move・
+destructor importは明示したままcanonical dropに接続する。import型aliasはvalidatorの同一性で
+解決し、表現や名前が似た別resourceを同一視しない。呼び出せるのは宣言したimportだけで、
+同じnamespaceにinstance形式と関数形式のbindを重ねない。Option/Result/pairの所有値と、所有関数の
+単相化も同じ検査を通す。raw GC参照・v128・externref・未確定の型引数・所有するlist/record/endpoint
+payloadは未対応。コンストラクターの型引数では型定義をコピーし、GC agent間でheapオブジェクトは
+コピーしない。opaqueな配置とresource/borrowの同一性は型引数の対象外とする。v128・box・task型は内部実装の特殊化に使えるが、公開シグネチャには
+portableなWIT型を要求する。明示的なnative WIT Moduleアダプターの
+own/borrow対応も保つ。Core内だけで使える `walz:ffi-v1` はversion 1の厳密なJSONで
+実際の公開関数シグネチャを記述し、externrefも検証する。権限や所有権の仮定は与えず、
+externrefをportableにするものでもない。`walz:world-v1` は検査対象のworldメタデータとして予約し、
+その他のcustom sectionはopaqueとして保つ。詳細は[Component構成](docs/component-composition.md)を参照。

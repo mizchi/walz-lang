@@ -32,7 +32,7 @@ world library { export math; }
 ```
 
 ```sh
-walz build math.walz --target component --wit math.wit --world library -o math.wasm
+walz build math.walz --target component --wit-input math.wit --world library -o math.wasm
 walz check main.walz
 walz build main.walz --target component -o main.component.wasm
 # Node／ブラウザ用の生成JSと一緒に配布する場合
@@ -41,7 +41,7 @@ node runtime/build.mjs main.walz target/main
 
 In JS, await calls as in `const {api} = await instantiate(); const value = await api.main();`. Even for a WIT synchronous function, the JSPI adapter handling calls between Components may return a Promise. The host awaits the actual asynchronous function and does not start the next job before completion.
 
-Use `--wit` to create a Component matching the original world. Ordinary Walz Component output contains internal delivery imports, so reusable libraries use this form. Core Wasm with only WIT metadata and WIT packages containing only type definitions are not executable Components. Convert Core Wasm to a Component with Canonical ABI wrappers first.
+Use `--wit-input` to create a Component matching the original world. Ordinary Walz Component output contains internal delivery imports, so reusable libraries use this form. Core Wasm with only WIT metadata and WIT packages containing only type definitions are not executable Components. Convert Core Wasm to a Component with Canonical ABI wrappers first.
 
 ## Types, Effects, and Ownership
 

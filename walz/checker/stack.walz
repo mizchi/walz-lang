@@ -1,0 +1,948 @@
+(module
+  (@use "walz:core" (type $bytes) (type $list) (type $result))
+  (@use "../parser/diagnostic.walz" (type $diagnostic))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "./ir.walz"
+    (type $function-ir)
+    (type $instruction-ir)
+    (type $export-ir)
+    (func $ir.value-type)
+    (func $ir.result-type))
+  (@use "./operators.walz"
+    (func $operator.input)
+    (func $operator.result)
+    (func $operator.arity))
+  (@export (func $stack.validate) (func $stack.validate-gc))
+  (@use "./ir.walz"
+    (type $gc-type-ir)
+    (type $field-ir)
+    (func $ir.ref)
+    (func $ir.heap)
+    (func $ir.is-ref)
+    (func $ir.nullable)
+    (func $ir.unpack)
+    (func $ir.defaultable))
+  (@use "./gc-types.walz"
+    (func $gc.validate)
+    (func $gc.heap-valid)
+    (func $gc.value-valid)
+    (func $gc.subtype))
+  (type $Values (array (mut i32)))
+  (type $Frame
+    (struct
+      (field $kind i32)
+      (field $type i32)
+      (field $height i32)
+      (field $unreachable (mut i32))
+      (field $else (mut i32))
+      (field $parent (ref null $Frame))))
+  (type $State
+    (struct
+      (field $types $list<(ref $gc-type-ir)>)
+      (field $functions $list<(ref $function-ir)>)
+      (field $function (ref $function-ir))
+      (field $values (ref $Values))
+      (field $length (mut i32))
+      (field $frame (mut (ref $Frame)))
+      (field $depth (mut i32))
+      (field $error (mut (ref null $diagnostic))))
+  )
+  (func $range
+    (param $start i32)
+    (param $end i32)
+    (result i32)
+    (@effect pure)
+    (&& (>= $start 0) (&& (>= $end $start) (<= $end 1048576))))
+
+  (func $error
+    (param $code i32)
+    (param $start i32)
+    (param $end i32)
+    (result (ref $diagnostic))
+    (@effect allocates)
+    (struct.new $diagnostic
+      $code
+      (if (result i32) (call $range $start $end) (then $start) (else 0))
+      (if (result i32) (call $range $start $end) (then $end) (else 0))))
+
+  (func $ok
+    (param $s (ref $State))
+    (result i32)
+    (@effect reads)
+    (ref.is_null (struct.get $State $error $s)))
+
+  (func $fail
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (if
+      (call $ok $s)
+      (then
+        (struct.set $State $error $s
+          (call $error $code
+            (struct.get $instruction-ir $start $n)
+            (struct.get $instruction-ir $end $n))))
+      (else (nop))))
+
+  (func $pop
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $expected i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (@let
+      (($f (struct.get $State $frame $s))
+       ($length (struct.get $State $length $s))
+       ($height (struct.get $Frame $height $f)))
+      (block
+        (result i32)
+        (if (i32.eqz (call $ok $s)) (then (return 0)) (else (nop)))
+        (if
+          (= $length $height)
+          (then
+            (block
+              (result i32)
+              (if
+                (i32.eqz (struct.get $Frame $unreachable $f))
+                (then (call $fail $s $n 111))
+                (else (nop)))
+              (return 0)))
+          (else (nop)))
+        (if
+          (< $length $height)
+          (then (block (call $fail $s $n 111) (return 0)))
+          (else (nop)))
+        (@let $actual (array.get $Values (struct.get $State $values $s) (- $length 1))
+          (block
+            (result i32)
+            (struct.set $State $length $s (- $length 1))
+            (if
+              (&&
+                (!= $actual 0)
+                (&&
+                  (!= $expected 0)
+                  (i32.eqz
+                    (call $gc.subtype (struct.get $State $types $s) $actual $expected))))
+              (then (call $fail $s $n 110))
+              (else (nop)))
+            $actual))))
+  )
+
+  (func $push
+    (param $s (ref $State))
+    (param $type i32)
+    (@effect reads writes)
+    (@let $n (struct.get $State $length $s)
+      (block
+        (array.set $Values (struct.get $State $values $s) $n $type)
+        (struct.set $State $length $s (+ $n 1))))
+  )
+
+  (func $unreachable
+    (param $s (ref $State))
+    (@effect reads writes)
+    (@let $f (struct.get $State $frame $s)
+      (block
+        (struct.set $State $length $s (struct.get $Frame $height $f))
+        (struct.set $Frame $unreachable $f 1))))
+
+  (func $finish
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (@effect reads writes allocates)
+    (@let $f (struct.get $State $frame $s)
+      (block
+        (if
+          (!= (struct.get $Frame $type $f) 64)
+          (then (drop (call $pop $s $n (struct.get $Frame $type $f))))
+          (else (nop)))
+        (if
+          (!= (struct.get $State $length $s) (struct.get $Frame $height $f))
+          (then (call $fail $s $n 110))
+          (else (nop))))
+    ))
+
+  (func $target
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $depth i32)
+    (result (ref $Frame))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $Frame))
+      (if
+        (i32.ge_u $depth (struct.get $State $depth $s))
+        (then (block (call $fail $s $n 112) (return (struct.get $State $frame $s))))
+        (else (nop)))
+      (@loop $walk
+        (bind $f (ref $Frame) (struct.get $State $frame $s))
+        (bind $i i32 0)
+        (result (ref $Frame))
+        (if
+          (result (ref $Frame))
+          (= $i $depth)
+          (then $f)
+          (else
+            (@recur $walk (ref.as_non_null (struct.get $Frame $parent $f)) (+ $i 1))))
+      )))
+
+  (func $visit
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (@effect reads writes allocates)
+    (@let
+      (($op (struct.get $instruction-ir $op $n))
+       ($imm (struct.get $instruction-ir $immediate $n))
+       ($i (i32.wrap_i64 $imm))
+       ($frame (struct.get $State $frame $s))
+       ($function (struct.get $State $function $s)))
+      (block
+        (if
+          (i32.eqz
+            (call $range
+              (struct.get $instruction-ir $start $n)
+              (struct.get $instruction-ir $end $n)))
+          (then (block (call $fail $s $n 117) (return)))
+          (else (nop)))
+        (if (call $gc-visit $s $n) (then (return)) (else (nop)))
+        (if
+          (|| (= $op 2) (|| (= $op 3) (= $op 4)))
+          (then
+            (block
+              (if
+                (||
+                  (i64.ne $imm (i64.extend_i32_s $i))
+                  (i32.eqz
+                    (||
+                      (= $i 64)
+                      (call $gc.value-valid
+                        (struct.get $State $types $s)
+                        $i
+                        (@list.len (ref $gc-type-ir) (struct.get $State $types $s))))
+                  ))
+                (then (block (call $fail $s $n 104) (return)))
+                (else (nop)))
+              (if
+                (>= (struct.get $State $depth $s) 129)
+                (then (block (call $fail $s $n 150) (return)))
+                (else (nop)))
+              (if (= $op 4) (then (drop (call $pop $s $n 127))) (else (nop)))
+              (struct.set $State $frame $s
+                (struct.new $Frame $op $i (struct.get $State $length $s) 0 0 $frame))
+              (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
+              (return)))
+          (else (nop)))
+        (if
+          (||
+            (= $op 12)
+            (||
+              (= $op 13)
+              (|| (= $op 16) (|| (= $op 32) (|| (= $op 33) (= $op 34))))
+            ))
+          (then
+            (if
+              (|| (< $imm (i64.const 0)) (i64.gt_u $imm (i64.const 4294967295)))
+              (then (block (call $fail $s $n 114) (return)))
+              (else (nop))))
+          (else
+            (if
+              (&& (!= $op 65) (&& (!= $op 66) (i64.ne $imm (i64.const 0))))
+              (then (block (call $fail $s $n 114) (return)))
+              (else (nop))))
+        )
+        (if (= $op 0) (then (block (call $unreachable $s) (return))) (else (nop)))
+        (if (= $op 1) (then (return)) (else (nop)))
+        (if
+          (= $op 5)
+          (then
+            (block
+              (if
+                (||
+                  (!= (struct.get $Frame $kind $frame) 4)
+                  (struct.get $Frame $else $frame))
+                (then (block (call $fail $s $n 115) (return)))
+                (else (nop)))
+              (call $finish $s $n)
+              (struct.set $Frame $else $frame 1)
+              (struct.set $Frame $unreachable $frame 0)
+              (return)))
+          (else (nop)))
+        (if
+          (= $op 11)
+          (then
+            (block
+              (if
+                (ref.is_null (struct.get $Frame $parent $frame))
+                (then (block (call $fail $s $n 115) (return)))
+                (else (nop)))
+              (if
+                (&&
+                  (= (struct.get $Frame $kind $frame) 4)
+                  (&&
+                    (= (struct.get $Frame $else $frame) 0)
+                    (!= (struct.get $Frame $type $frame) 64)))
+                (then (block (call $fail $s $n 115) (return)))
+                (else (nop)))
+              (call $finish $s $n)
+              (struct.set $State $frame $s
+                (ref.as_non_null (struct.get $Frame $parent $frame)))
+              (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
+              (if
+                (!= (struct.get $Frame $type $frame) 64)
+                (then (call $push $s (struct.get $Frame $type $frame)))
+                (else (nop)))
+              (return)))
+          (else (nop)))
+        (if
+          (|| (= $op 12) (= $op 13))
+          (then
+            (block
+              (if (= $op 13) (then (drop (call $pop $s $n 127))) (else (nop)))
+              (@let
+                (($label (call $target $s $n $i))
+                 ($type
+                   (if
+                     (result i32)
+                     (= (struct.get $Frame $kind $label) 3)
+                     (then 64)
+                     (else (struct.get $Frame $type $label))))
+                )
+                (block
+                  (if
+                    (!= $type 64)
+                    (then
+                      (block
+                        (drop (call $pop $s $n $type))
+                        (if (= $op 13) (then (call $push $s $type)) (else (nop))))
+                    )
+                    (else (nop)))
+                  (if (= $op 12) (then (call $unreachable $s)) (else (nop))))
+              )
+              (return)))
+          (else (nop)))
+        (if
+          (= $op 15)
+          (then
+            (block
+              (if
+                (!= (struct.get $function-ir $result $function) 64)
+                (then
+                  (drop (call $pop $s $n (struct.get $function-ir $result $function))))
+                (else (nop)))
+              (call $unreachable $s)
+              (return)))
+          (else (nop)))
+        (if
+          (= $op 16)
+          (then
+            (block
+              (if
+                (i32.ge_u $i
+                  (@list.len (ref $function-ir) (struct.get $State $functions $s)))
+                (then (block (call $fail $s $n 103) (return)))
+                (else (nop)))
+              (@let
+                (($callee
+                   (@list.get (ref $function-ir) (struct.get $State $functions $s) $i))
+                 ($params (struct.get $function-ir $params $callee)))
+                (block
+                  (@for $args
+                    (bind $p i32 (@list.len i32 $params))
+                    (while (> $p 0))
+                    (step (- $p 1))
+                    (drop (call $pop $s $n (@list.get i32 $params (- $p 1))))
+                  )
+                  (if
+                    (!= (struct.get $function-ir $result $callee) 64)
+                    (then (call $push $s (struct.get $function-ir $result $callee)))
+                    (else (nop))))
+              )
+              (return)))
+          (else (nop)))
+        (if
+          (|| (= $op 32) (|| (= $op 33) (= $op 34)))
+          (then
+            (@let
+              (($params (struct.get $function-ir $params $function))
+               ($locals (struct.get $function-ir $locals $function))
+               ($count (@list.len i32 $params)))
+              (block
+                (if
+                  (i32.ge_u $i (+ $count (@list.len i32 $locals)))
+                  (then (block (call $fail $s $n 109) (return)))
+                  (else (nop)))
+                (@let $type
+                  (if (result i32) (< $i $count) (then (@list.get i32 $params $i)) (else (@list.get i32 $locals (- $i $count))))
+                  (block
+                    (if (!= $op 32) (then (drop (call $pop $s $n $type))) (else (nop)))
+                    (if (!= $op 33) (then (call $push $s $type)) (else (nop))))
+                )
+                (return))))
+          (else (nop)))
+        (if
+          (|| (= $op 65) (= $op 66))
+          (then
+            (block
+              (if
+                (&&
+                  (= $op 65)
+                  (|| (< $imm (i64.const -2147483648)) (> $imm (i64.const 2147483647))))
+                (then (call $fail $s $n 105))
+                (else (nop)))
+              (call $push $s (if (result i32) (= $op 65) (then 127) (else 126)))
+              (return)))
+          (else (nop)))
+        (if (= $op 26) (then (block (drop (call $pop $s $n 0)) (return))) (else (nop)))
+        (if
+          (= $op 27)
+          (then
+            (block
+              (drop (call $pop $s $n 127))
+              (@let
+                (($b (call $pop $s $n 0))
+                 ($a (call $pop $s $n $b)))
+                (block
+                  (if
+                    (|| (call $ir.is-ref $a) (call $ir.is-ref $b))
+                    (then (call $fail $s $n 110))
+                    (else (nop)))
+                  (call $push $s (if (result i32) (= $a 0) (then $b) (else $a))))
+              )
+              (return)))
+          (else (nop)))
+        (@let $arity (call $operator.arity $op)
+          (if
+            (= $arity 0)
+            (then (call $fail $s $n 114))
+            (else
+              (block
+                (@for $pop
+                  (bind $i i32 0)
+                  (while (< $i $arity))
+                  (step (+ $i 1))
+                  (drop (call $pop $s $n (call $operator.input $op))))
+                (call $push $s (call $operator.result $op))))
+          ))))
+  )
+
+  (func $stack.validate-gc
+    (param $types $list<(ref $gc-type-ir)>)
+    (param $functions $list<(ref $function-ir)>)
+    (param $exports $list<(ref $export-ir)>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<i32, (ref $diagnostic)>)
+      (@match (call $gc.validate $types)
+        (@case err ($e) (return (@result.err $e)))
+        (@case ok ($n) (nop)))
+      (if
+        (||
+          (i32.gt_u (@list.len (ref $function-ir) $functions) 1024)
+          (i32.gt_u (@list.len (ref $export-ir) $exports) 1024))
+        (then (return (@result.err (call $error 150 0 0))))
+        (else (nop)))
+      (@loop $signatures
+        (bind $i i32 0)
+        (bind $total i32 0)
+        (if
+          (= $i (@list.len (ref $function-ir) $functions))
+          (then (nop))
+          (else
+            (@let
+              (($f (@list.get (ref $function-ir) $functions $i))
+               ($start (struct.get $function-ir $start $f))
+               ($end (struct.get $function-ir $end $f)))
+              (block
+                (if
+                  (i32.eqz (call $range $start $end))
+                  (then (return (@result.err (call $error 117 0 0))))
+                  (else (nop)))
+                (if
+                  (||
+                    (i32.gt_u (@list.len i32 (struct.get $function-ir $params $f)) 256)
+                    (||
+                      (i32.gt_u
+                        (@list.len i32 (struct.get $function-ir $locals $f))
+                        1024)
+                      (i32.gt_u
+                        (@list.len
+                          (ref $instruction-ir)
+                          (struct.get $function-ir $body $f))
+                        (- 262144 $total))))
+                  (then (return (@result.err (call $error 150 $start $end))))
+                  (else (nop)))
+                (if
+                  (i32.eqz
+                    (||
+                      (= (struct.get $function-ir $result $f) 64)
+                      (call $gc.value-valid $types
+                        (struct.get $function-ir $result $f)
+                        (@list.len (ref $gc-type-ir) $types))))
+                  (then (return (@result.err (call $error 104 $start $end))))
+                  (else (nop)))
+                (@for-each $t (struct.get $function-ir $params $f)
+                  (if
+                    (i32.eqz
+                      (call $gc.value-valid $types $t
+                        (@list.len (ref $gc-type-ir) $types)))
+                    (then (return (@result.err (call $error 104 $start $end))))
+                    (else (nop))))
+                (@for-each $t (struct.get $function-ir $locals $f)
+                  (if
+                    (i32.eqz
+                      (&&
+                        (call $gc.value-valid $types $t
+                          (@list.len (ref $gc-type-ir) $types))
+                        (call $ir.defaultable $t)))
+                    (then (return (@result.err (call $error 104 $start $end))))
+                    (else (nop))))
+                (@recur $signatures
+                  (+ $i 1)
+                  (+ $total
+                    (@list.len (ref $instruction-ir) (struct.get $function-ir $body $f))))
+              ))))
+      )
+      (@loop $exports
+        (bind $i i32 0)
+        (bind $total i32 0)
+        (if
+          (= $i (@list.len (ref $export-ir) $exports))
+          (then (nop))
+          (else
+            (@let
+              (($e (@list.get (ref $export-ir) $exports $i))
+               ($name (struct.get $export-ir $name $e)))
+              (block
+                (if
+                  (i32.gt_u (@bytes.len $name) (- 1048576 $total))
+                  (then (return (@result.err (call $error 150 0 0))))
+                  (else (nop)))
+                (if
+                  (i32.ge_u
+                    (struct.get $export-ir $index $e)
+                    (@list.len (ref $function-ir) $functions))
+                  (then (return (@result.err (call $error 103 0 0))))
+                  (else (nop)))
+                (if
+                  (i32.eqz (@bytes.is-utf8 $name))
+                  (then (return (@result.err (call $error 108 0 0))))
+                  (else (nop)))
+                (@for $duplicate
+                  (bind $j i32 0)
+                  (while (< $j $i))
+                  (step (+ $j 1))
+                  (if
+                    (call $bytes.equal $name
+                      (struct.get $export-ir $name
+                        (@list.get (ref $export-ir) $exports $j)))
+                    (then (return (@result.err (call $error 107 0 0))))
+                    (else (nop))))
+                (@recur $exports (+ $i 1) (+ $total (@bytes.len $name))))
+            ))))
+      (@for-each $f $functions
+        (@let
+          (($body (struct.get $function-ir $body $f))
+           ($root
+             (struct.new $Frame
+               -1
+               (struct.get $function-ir $result $f)
+               0
+               0
+               0
+               (ref.null $Frame)))
+           ($s
+             (struct.new $State
+               $types
+               $functions
+               $f
+               (array.new $Values 0 (+ (@list.len (ref $instruction-ir) $body) 1))
+               0
+               $root
+               1
+               (ref.null $diagnostic)))
+           ($end
+             (struct.new $instruction-ir
+               11
+               (i64.const 0)
+               (struct.get $function-ir $start $f)
+               (struct.get $function-ir $end $f))))
+          (block
+            (@for $ops
+              (bind $i i32 0)
+              (while (&& (< $i (@list.len (ref $instruction-ir) $body)) (call $ok $s)))
+              (step (+ $i 1))
+              (call $visit $s (@list.get (ref $instruction-ir) $body $i)))
+            (if
+              (!= (struct.get $State $depth $s) 1)
+              (then (call $fail $s $end 115))
+              (else (call $finish $s $end)))
+            (if
+              (i32.eqz (call $ok $s))
+              (then
+                (return (@result.err (ref.as_non_null (struct.get $State $error $s))))
+              )
+              (else (nop))))
+        ))
+      (@result.ok (@list.len (ref $function-ir) $functions))))
+
+  (func $pop-many
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $type i32)
+    (param $count i32)
+    (@effect reads writes allocates)
+    (@for $items
+      (bind $j i32 0)
+      (while (&& (< $j $count) (call $ok $s)))
+      (step (+ $j 1))
+      (drop (call $pop $s $n $type))))
+
+  (func $gc-field
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $index i32)
+    (param $kind i32)
+    (param $field i32)
+    (result (ref null $field-ir))
+    (@effect reads writes allocates)
+    (block
+      (result (ref null $field-ir))
+      (if
+        (i32.ge_u $index (@list.len (ref $gc-type-ir) (struct.get $State $types $s)))
+        (then (block (call $fail $s $n 119) (return (ref.null $field-ir))))
+        (else (nop)))
+      (@let
+        (($d (@list.get (ref $gc-type-ir) (struct.get $State $types $s) $index))
+         ($fields (struct.get $gc-type-ir $fields $d)))
+        (if
+          (result (ref null $field-ir))
+          (||
+            (!= (struct.get $gc-type-ir $kind $d) $kind)
+            (i32.ge_u $field (@list.len (ref $field-ir) $fields)))
+          (then
+            (block
+              (result (ref null $field-ir))
+              (call $fail $s $n 119)
+              (ref.null $field-ir)))
+          (else (@list.get (ref $field-ir) $fields $field))))
+    ))
+
+  (func $gc-visit
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (result i32)
+    (@effect reads writes allocates)
+    (@let
+      (($op (struct.get $instruction-ir $op $n))
+       ($imm (struct.get $instruction-ir $immediate $n))
+       ($first (i32.wrap_i64 $imm))
+       ($second (i32.wrap_i64 (i64.shr_u $imm (i64.const 32))))
+       ($defs (struct.get $State $types $s)))
+      (block
+        (result i32)
+        (if
+          (|| (= $op 208) (&& (>= $op 276) (<= $op 279)))
+          (then
+            (block
+              (if
+                (||
+                  (i64.ne $imm (i64.extend_i32_s $first))
+                  (i32.eqz
+                    (call $gc.heap-valid $defs $first
+                      (@list.len (ref $gc-type-ir) $defs))))
+                (then (block (call $fail $s $n 118) (return 1)))
+                (else (nop)))
+              (if
+                (!= $op 208)
+                (then (drop (call $pop $s $n (call $ir.ref -18 1))))
+                (else (nop)))
+              (call $push $s
+                (if
+                  (result i32)
+                  (|| (= $op 276) (= $op 277))
+                  (then 127)
+                  (else (call $ir.ref $first (|| (= $op 208) (= $op 279))))
+                ))
+              (return 1)))
+          (else (nop)))
+        (if
+          (= $op 28)
+          (then
+            (block
+              (if
+                (||
+                  (i64.ne $imm (i64.extend_i32_s $first))
+                  (i32.eqz
+                    (call $gc.value-valid $defs $first
+                      (@list.len (ref $gc-type-ir) $defs))))
+                (then (block (call $fail $s $n 104) (return 1)))
+                (else (nop)))
+              (drop (call $pop $s $n 127))
+              (drop (call $pop $s $n $first))
+              (drop (call $pop $s $n $first))
+              (call $push $s $first)
+              (return 1)))
+          (else (nop)))
+        (if
+          (||
+            (|| (= $op 209) (= $op 211))
+            (|| (= $op 212) (|| (= $op 271) (&& (>= $op 284) (<= $op 286))))
+          )
+          (then
+            (block
+              (if
+                (i64.ne $imm (i64.const 0))
+                (then (block (call $fail $s $n 114) (return 1)))
+                (else (nop)))
+              (if
+                (= $op 284)
+                (then
+                  (block
+                    (drop (call $pop $s $n 127))
+                    (call $push $s (call $ir.ref -20 0))))
+                (else
+                  (@let $a
+                    (call $pop $s $n (call $ir.ref (if (result i32) (= $op 211) (then -19) (else (if (result i32) (= $op 271) (then -22) (else (if (result i32) (>= $op 285) (then -20) (else -18)))))) 1))
+                    (block
+                      (if
+                        (= $op 211)
+                        (then (drop (call $pop $s $n (call $ir.ref -19 1))))
+                        (else (nop)))
+                      (call $push $s
+                        (if
+                          (result i32)
+                          (= $op 212)
+                          (then
+                            (call $ir.ref
+                              (if
+                                (result i32)
+                                (= $a 0)
+                                (then -23)
+                                (else (call $ir.heap $a)))
+                              0))
+                          (else 127))))
+                  )))
+              (return 1)))
+          (else (nop)))
+        (if
+          (&& (>= $op 256) (<= $op 261))
+          (then
+            (block
+              (if
+                (i32.ge_u $first (@list.len (ref $gc-type-ir) $defs))
+                (then (block (call $fail $s $n 119) (return 1)))
+                (else (nop)))
+              (@let
+                (($d (@list.get (ref $gc-type-ir) $defs $first))
+                 ($fields (struct.get $gc-type-ir $fields $d)))
+                (block
+                  (if
+                    (!= (struct.get $gc-type-ir $kind $d) 0)
+                    (then (block (call $fail $s $n 119) (return 1)))
+                    (else (nop)))
+                  (if
+                    (<= $op 257)
+                    (then
+                      (block
+                        (if
+                          (!= $second 0)
+                          (then (block (call $fail $s $n 114) (return 1)))
+                          (else (nop)))
+                        (@for $fields
+                          (bind $j i32 (@list.len (ref $field-ir) $fields))
+                          (while (> $j 0))
+                          (step (- $j 1))
+                          (@let $t
+                            (struct.get $field-ir $storage (@list.get (ref $field-ir) $fields (- $j 1)))
+                            (if
+                              (= $op 256)
+                              (then (drop (call $pop $s $n (call $ir.unpack $t))))
+                              (else
+                                (if
+                                  (i32.eqz (call $ir.defaultable $t))
+                                  (then (call $fail $s $n 121))
+                                  (else (nop))))
+                            )))
+                        (call $push $s (call $ir.ref $first 0))))
+                    (else
+                      (@let $maybe (call $gc-field $s $n $first 0 $second)
+                        (if
+                          (ref.is_null $maybe)
+                          (then (nop))
+                          (else
+                            (@let
+                              (($f (ref.as_non_null $maybe))
+                               ($t (struct.get $field-ir $storage $f)))
+                              (block
+                                (if
+                                  (= $op 261)
+                                  (then
+                                    (block
+                                      (if
+                                        (i32.eqz (struct.get $field-ir $mutable $f))
+                                        (then (call $fail $s $n 120))
+                                        (else (nop)))
+                                      (drop (call $pop $s $n (call $ir.unpack $t))))
+                                  )
+                                  (else
+                                    (if
+                                      (!= (= $op 258) (= $t (call $ir.unpack $t)))
+                                      (then (call $fail $s $n 122))
+                                      (else (nop))))
+                                )
+                                (drop (call $pop $s $n (call $ir.ref $first 1)))
+                                (if
+                                  (!= $op 261)
+                                  (then (call $push $s (call $ir.unpack $t)))
+                                  (else (nop))))
+                            ))))
+                    ))))
+              (return 1)))
+          (else (nop)))
+        (if
+          (|| (= $op 272) (= $op 273))
+          (then (block (call $visit-bulk $s $n $op $first $second) (return 1)))
+          (else (nop)))
+        (if
+          (|| (&& (>= $op 262) (<= $op 264)) (&& (>= $op 267) (<= $op 270)))
+          (then
+            (block
+              (@let $f (call $gc-field $s $n $first 1 0)
+                (if
+                  (ref.is_null $f)
+                  (then (nop))
+                  (else
+                    (call $visit-array $s $n $op $first $second
+                      (struct.get $field-ir $storage (ref.as_non_null $f))
+                      (struct.get $field-ir $mutable (ref.as_non_null $f))))
+                ))
+              (return 1)))
+          (else (nop)))
+        0)))
+
+  (func $visit-array
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $op i32)
+    (param $index i32)
+    (param $count i32)
+    (param $type i32)
+    (param $mutable i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (&& (!= $op 264) (!= $count 0))
+        (then (block (call $fail $s $n 114) (return)))
+        (else (nop)))
+      (if
+        (<= $op 264)
+        (then
+          (block
+            (if
+              (= $op 264)
+              (then
+                (block
+                  (if
+                    (i32.gt_u $count 65536)
+                    (then (block (call $fail $s $n 150) (return)))
+                    (else (nop)))
+                  (call $pop-many $s $n (call $ir.unpack $type) $count)))
+              (else
+                (block
+                  (drop (call $pop $s $n 127))
+                  (if
+                    (= $op 262)
+                    (then (drop (call $pop $s $n (call $ir.unpack $type))))
+                    (else
+                      (if
+                        (i32.eqz (call $ir.defaultable $type))
+                        (then (call $fail $s $n 121))
+                        (else (nop))))
+                  ))))
+            (call $push $s (call $ir.ref $index 0))
+            (return)))
+        (else (nop)))
+      (if
+        (= $op 270)
+        (then
+          (block
+            (if (i32.eqz $mutable) (then (call $fail $s $n 120)) (else (nop)))
+            (drop (call $pop $s $n (call $ir.unpack $type))))
+        )
+        (else
+          (if
+            (!= (= $op 267) (= $type (call $ir.unpack $type)))
+            (then (call $fail $s $n 122))
+            (else (nop))))
+      )
+      (drop (call $pop $s $n 127))
+      (drop (call $pop $s $n (call $ir.ref $index 1)))
+      (if (!= $op 270) (then (call $push $s (call $ir.unpack $type))) (else (nop))))
+  )
+
+  (func $stack.validate
+    (param $functions $list<(ref $function-ir)>)
+    (param $exports $list<(ref $export-ir)>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (call $stack.validate-gc (@list.new (ref $gc-type-ir)) $functions $exports))
+
+  (func $visit-bulk
+    (param $s (ref $State))
+    (param $n (ref $instruction-ir))
+    (param $op i32)
+    (param $first i32)
+    (param $second i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (&& (= $op 272) (!= $second 0))
+        (then (block (call $fail $s $n 114) (return)))
+        (else (nop)))
+      (@let
+        (($dst (call $gc-field $s $n $first 1 0)))
+        (block
+          (if (ref.is_null $dst) (then (block (return))) (else (nop)))
+          (if
+            (i32.eqz (struct.get $field-ir $mutable (ref.as_non_null $dst)))
+            (then (block (call $fail $s $n 120)))
+            (else (nop)))
+          (if
+            (= $op 272)
+            (then
+              (block
+                (drop (call $pop $s $n 127))
+                (drop
+                  (call $pop $s $n
+                    (call $ir.unpack
+                      (struct.get $field-ir $storage (ref.as_non_null $dst))))
+                )
+                (drop (call $pop $s $n 127))
+                (drop (call $pop $s $n (call $ir.ref $first 1))))
+            )
+            (else
+              (@let
+                (($src (call $gc-field $s $n $second 1 0)))
+                (block
+                  (if (ref.is_null $src) (then (block (return))) (else (nop)))
+                  (@let
+                    (($a (struct.get $field-ir $storage (ref.as_non_null $src)))
+                     ($b (struct.get $field-ir $storage (ref.as_non_null $dst))))
+                    (if
+                      (i32.eqz
+                        (if
+                          (result i32)
+                          (|| (!= $a (call $ir.unpack $a)) (!= $b (call $ir.unpack $b)))
+                          (then (= $a $b))
+                          (else (call $gc.subtype (struct.get $State $types $s) $a $b))))
+                      (then (block (call $fail $s $n 110)))
+                      (else (nop))))
+                  (drop (call $pop $s $n 127))
+                  (drop (call $pop $s $n 127))
+                  (drop (call $pop $s $n (call $ir.ref $second 1)))
+                  (drop (call $pop $s $n 127))
+                  (drop (call $pop $s $n (call $ir.ref $first 1))))
+              ))))
+      ))))

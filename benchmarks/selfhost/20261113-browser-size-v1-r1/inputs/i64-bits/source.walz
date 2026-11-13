@@ -1,0 +1,5 @@
+(module
+  (func $mix (export "mix") (param $x i64) (result i64)
+    (i64.xor (i64.shl (local.get $x) (i64.const 7)) (i64.shr_u (local.get $x) (i64.const 9))))
+  (func $extend (export "extend") (param $x i32) (result i64) (i64.extend_i32_s (local.get $x)))
+  (func $wrap (export "wrap") (param $x i64) (result i32) (i32.wrap_i64 (local.get $x))))

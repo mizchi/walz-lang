@@ -72,7 +72,7 @@ type Scopes = BTreeMap<String, Scope>;
 fn atom(node: &Sexp) -> String {
     node.atom().unwrap_or("").to_owned()
 }
-fn qualified(scope: &str, name: &str) -> String {
+pub(crate) fn qualified(scope: &str, name: &str) -> String {
     if scope.is_empty() {
         name.into()
     } else {
@@ -681,6 +681,9 @@ struct Opaque {
     declaration: crate::ir::Span,
 }
 impl Expanded {
+    pub(crate) fn opaque_names(&self) -> BTreeSet<String> {
+        self.opaque.keys().cloned().collect()
+    }
     pub fn validate_representation(
         &self,
         source: &str,

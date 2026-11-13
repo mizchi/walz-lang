@@ -1,0 +1,176 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $list)
+    (type $bytes-builder)
+    (func $bytes-builder.new)
+    (func $bytes-builder.len)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.append)
+    (func $bytes-builder.finish))
+  (@use "./encoding.walz"
+    (func $encoding.write-u32)
+    (func $encoding.write-s32)
+    (func $encoding.write-s64))
+  (@use "../checker/checker.walz"
+    (type $module-ir)
+    (func $module-ir.functions)
+    (func $module-ir.exports)
+    (func $module-ir.types))
+  (@use "../checker/ir.walz"
+    (type $function-ir)
+    (type $instruction-ir)
+    (type $export-ir))
+  (@use "./types.walz"
+    (func $encoding.value-type)
+    (func $encoding.gc-types)
+    (func $encoding.group-count))
+  (@use "../checker/ir.walz" (type $gc-type-ir))
+  (@export (func $codegen.emit))
+  (func $section
+    (param $out (ref $bytes-builder))
+    (param $id i32)
+    (param $payload (ref $bytes-builder))
+    (@effect reads writes allocates)
+    (block
+      (call $bytes-builder.byte $out $id)
+      (call $encoding.write-u32 $out (call $bytes-builder.len $payload))
+      (call $bytes-builder.append $out (call $bytes-builder.finish $payload))))
+
+  (func $codegen.emit
+    (param $module (ref $module-ir))
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let
+      (($out (call $bytes-builder.new 16777216))
+       ($types (call $bytes-builder.new 16777216))
+       ($functions (call $bytes-builder.new 16777216))
+       ($exports (call $bytes-builder.new 16777216))
+       ($code (call $bytes-builder.new 16777216))
+       ($gc (call $module-ir.types $module))
+       ($all (call $module-ir.functions $module))
+       ($names (call $module-ir.exports $module))
+       ($n (@list.len (ref $function-ir) $all)))
+      (block
+        (result $bytes)
+        (call $bytes-builder.append $out (@bytes.new 0 97 115 109 1 0 0 0))
+        (call $encoding.write-u32 $types (+ $n (call $encoding.group-count $gc)))
+        (call $encoding.gc-types $types $gc)
+        (call $encoding.write-u32 $functions $n)
+        (call $encoding.write-u32 $code $n)
+        (@for $function
+          (bind $i i32 0)
+          (while (< $i $n))
+          (step (+ $i 1))
+          (@let
+            (($f (@list.get (ref $function-ir) $all $i))
+             ($params (struct.get $function-ir $params $f))
+             ($locals (struct.get $function-ir $locals $f))
+             ($result (struct.get $function-ir $result $f))
+             ($body (call $bytes-builder.new 16777216)))
+            (block
+              (call $bytes-builder.byte $types 96)
+              (call $encoding.write-u32 $types (@list.len i32 $params))
+              (@for-each $t $params
+                (call $encoding.value-type $types $t))
+              (call $bytes-builder.byte $types (!= $result 64))
+              (if
+                (!= $result 64)
+                (then (call $encoding.value-type $types $result))
+                (else (nop)))
+              (call $encoding.write-u32 $functions
+                (+ $i (@list.len (ref $gc-type-ir) $gc)))
+              (call $encoding.write-u32 $body (@list.len i32 $locals))
+              (@for-each $t $locals
+                (block
+                  (call $bytes-builder.byte $body 1)
+                  (call $encoding.value-type $body $t)))
+              (@for-each $instruction (struct.get $function-ir $body $f)
+                (call $write-instruction $body $instruction))
+              (call $bytes-builder.byte $body 11)
+              (call $encoding.write-u32 $code (call $bytes-builder.len $body))
+              (call $bytes-builder.append $code (call $bytes-builder.finish $body))))
+        )
+        (call $encoding.write-u32 $exports (@list.len (ref $export-ir) $names))
+        (@for-each $e $names
+          (block
+            (call $encoding.write-u32 $exports
+              (@bytes.len (struct.get $export-ir $name $e)))
+            (call $bytes-builder.append $exports (struct.get $export-ir $name $e))
+            (call $bytes-builder.byte $exports 0)
+            (call $encoding.write-u32 $exports (struct.get $export-ir $index $e))))
+        (call $section $out 1 $types)
+        (call $section $out 3 $functions)
+        (call $section $out 7 $exports)
+        (call $section $out 10 $code)
+        (call $bytes-builder.finish $out))))
+
+  (func $write-instruction
+    (param $body (ref $bytes-builder))
+    (param $n (ref $instruction-ir))
+    (@effect reads writes allocates)
+    (@let
+      (($op (struct.get $instruction-ir $op $n))
+       ($imm (struct.get $instruction-ir $immediate $n)))
+      (block
+        (if
+          (>= $op 256)
+          (then
+            (block
+              (call $bytes-builder.byte $body 251)
+              (call $encoding.write-u32 $body (- $op 256))
+              (if
+                (&& (>= $op 276) (<= $op 279))
+                (then (call $encoding.write-s64 $body $imm))
+                (else
+                  (if
+                    (|| (< $op 271) (|| (= $op 272) (= $op 273)))
+                    (then
+                      (block
+                        (call $encoding.write-u32 $body (i32.wrap_i64 $imm))
+                        (if
+                          (||
+                            (|| (&& (>= $op 258) (<= $op 261)) (= $op 264))
+                            (= $op 273))
+                          (then
+                            (call $encoding.write-u32 $body
+                              (i32.wrap_i64 (i64.shr_u $imm (i64.const 32))))
+                          )
+                          (else (nop))))
+                    )
+                    (else (nop))))
+              )
+              (return)))
+          (else (nop)))
+        (call $bytes-builder.byte $body $op)
+        (if
+          (= $op 65)
+          (then (call $encoding.write-s32 $body (i32.wrap_i64 $imm)))
+          (else
+            (if
+              (|| (= $op 66) (= $op 208))
+              (then (call $encoding.write-s64 $body $imm))
+              (else
+                (if
+                  (|| (= $op 2) (|| (= $op 3) (= $op 4)))
+                  (then (call $encoding.value-type $body (i32.wrap_i64 $imm)))
+                  (else
+                    (if
+                      (= $op 28)
+                      (then
+                        (block
+                          (call $bytes-builder.byte $body 1)
+                          (call $encoding.value-type $body (i32.wrap_i64 $imm))))
+                      (else
+                        (if
+                          (||
+                            (= $op 12)
+                            (||
+                              (= $op 13)
+                              (|| (= $op 16) (|| (= $op 32) (|| (= $op 33) (= $op 34))))
+                            ))
+                          (then (call $encoding.write-u32 $body (i32.wrap_i64 $imm)))
+                          (else (nop))))
+                    ))))
+            ))))
+    )))

@@ -1,0 +1,3 @@
+(module
+  (func $f0 (export "f0") (param $x i32) (result i32) (i32.xor (i32.xor (i32.mul (i32.const -53724982) (i32.const 376327692)) (i32.xor (local.get $x) (local.get $x))) (i32.shr_u (i32.shl (local.get $x) (local.get $x)) (i32.shr_u (local.get $x) (local.get $x)))))
+)

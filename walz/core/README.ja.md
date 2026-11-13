@@ -8,6 +8,7 @@ Option→Resultとエラー変換は `$option.ok-or` / `$result.map-err` を使�
 完全な型・型制約・effect は [生成した標準 API 一覧](../../docs/stdlib-api.md) を参照してください。`just stdlib-docs` で公開宣言から更新し、`just check-stdlib-docs` でソースとの一致を確認します。
 標準文字列型は `$string` です。`bytes-view.walz` / `string-view.walz` は [ゼロコピービュー](../../docs/views.md) を提供し、部分範囲の共有と明示的なコピーを使い分けます。
 `dict.walz` はtextキーの汎用辞書、`list-builder.walz` は不変listの構築を提供します。型制約・変更とスナップショットの契約は [コレクション](../../docs/collections.md) を参照してください。
+`bytes-builder.walz` は上限付きの可変GCバイト列を構築し、`finish` で不変なコピーを返します。`walz:core` から `$bytes-builder` と関数を明示的に選択します。上限やバイナリ生成での利用は[コンパイラの部品](../../docs/selfhost.md)を参照してください。
 
 ```wat
 (module

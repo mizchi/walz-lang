@@ -354,12 +354,22 @@ fn execute_source(
         return Ok(true);
     }
     if command == "wit" {
+        if walz::composition::is_component(source) {
+            let built = walz::composition::compile(source, policy)?;
+            if let Some(e) = built.interface.unsupported {
+                return Err(e.into());
+            }
+            print!("{}", built.wit);
+            return Ok(true);
+        }
         let module = walz::check_with_policy(source, policy)?;
         print!("{}", walz::wit::emit(&module)?);
         return Ok(true);
     }
     if command == "check" {
-        if policy.imports.is_empty() {
+        if walz::composition::is_component(source) {
+            walz::composition::compile(source, policy)?;
+        } else if policy.imports.is_empty() {
             walz::validate(source)?;
         } else {
             walz::check_with_policy(source, policy)?;
@@ -369,6 +379,12 @@ fn execute_source(
     }
     // Source inspection depends only on the front end, not on Wasm emission.
     if matches!(command, "check" | "types" | "ir" | "analyze") {
+        if walz::composition::is_component(source) {
+            let built = walz::composition::compile(source, policy)?;
+            let view = serde_json::json!({"mode":"component","interface":built.interface,"memoryGraph":built.manifest["memoryGraph"],"wat":built.wat});
+            println!("{}", serde_json::to_string_pretty(&view)?);
+            return Ok(true);
+        }
         let module = match walz::check_with_policy(source, policy) {
             Ok(module) => module,
             Err(_) => {

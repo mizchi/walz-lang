@@ -1,0 +1,52 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $result)
+    (func $list-builder.new)
+    (func $list-builder.extend)
+    (func $list-builder.finish))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $rendered)
+    (func $tree.form)
+    (func $tree.slice)
+    (func $tree.render)
+    (func $tree.locate))
+  (@use "./lower.walz" (func $lower.run))
+  (@use "../parser/parser.walz" (func $parser.parse))
+  (@use "../checker/checker.walz" (func $checker.check))
+  (@export (func $macro.validate-queries))
+  ;; Probes use the ordinary independent validator. They are never emitted or run.
+  (func $macro.validate-queries
+    (param $root (ref $tree))
+    (param $probes $list<(ref $tree)>)
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (if
+      (result $result<(ref $tree), (ref $project-error)>)
+      (= (@list.len (ref $tree) $probes) 0)
+      (then (@result.ok $root))
+      (else
+        (@let $b (call $list-builder.new<(ref $tree)>)
+          (block
+            (result $result<(ref $tree), (ref $project-error)>)
+            (call $list-builder.extend<(ref $tree)> $b (call $tree.slice $root 1))
+            (call $list-builder.extend<(ref $tree)> $b $probes)
+            (@match
+              (call $lower.run (call $tree.form $root "module" (call $list-builder.finish<(ref $tree)> $b)))
+              (@case err ($e) (@result.err $e))
+              (@case ok ($expanded)
+                (@match (call $tree.render $expanded)
+                  (@case err ($e) (@result.err $e))
+                  (@case ok ($rendered)
+                    (@match (call $parser.parse (struct.get $rendered $bytes $rendered))
+                      (@case err ($e) (@result.err (call $tree.locate $rendered $e)))
+                      (@case ok ($syntax)
+                        (@match (call $checker.check $syntax)
+                          (@case err ($e)
+                            (@result.err (call $tree.locate $rendered $e)))
+                          (@case ok ($checked) (@result.ok $root))))
+                    ))))
+            ))))
+    )))

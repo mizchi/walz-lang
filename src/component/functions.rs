@@ -6,7 +6,7 @@ use crate::ir::*;
 impl Adapter<'_> {
     pub(crate) fn imports(&self) -> String {
         let mut out = String::from(
-            "(import \"__component\" \"memory\" (memory 1 256))\n(import \"__component\" \"alloc\" (func $__alloc (param i32) (result i32)))\n(import \"__component\" \"free\" (func $__free (param i32)))\n",
+            "(import \"__component\" \"memory\" (memory $__abi_memory 1 256))\n(import \"__component\" \"alloc\" (func $__alloc (param i32) (result i32)))\n(import \"__component\" \"free\" (func $__free (param i32)))\n",
         );
         out.push_str(&crate::task_children::imports(self.module));
         out.push_str("(import \"__component\" \"cancel-requested\" (global $__cancel_requested (mut i32)))\n(import \"__component\" \"free-all\" (func $__free_all))\n");
@@ -65,7 +65,7 @@ impl Adapter<'_> {
                 out.push_str(&self.export_wrapper(i, f));
             }
         }
-        out
+        super::memory::qualify(&out)
     }
     fn host_wrapper(&self, index: usize, f: &Function) -> String {
         if f.import_contract.is_some() {

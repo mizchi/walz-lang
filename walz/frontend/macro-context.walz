@@ -1,0 +1,230 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.head)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.eq)
+    (func $tree.is-name)
+    (func $tree.occurs))
+  (@use "./macro-patterns.walz" (type $macro-rule) (func $macro.rule))
+  (@export
+    (opaque $macro-context)
+    (func $macro.context)
+    (func $macro.rules)
+    (func $macro.called)
+    (func $macro.global)
+    (func $macro.fresh)
+    (func $macro.fail)
+    (func $macro.error)
+    (func $macro.charge)
+    (func $macro.enter)
+    (func $macro.leave))
+  (type $Definition
+    (struct (field $name (ref $tree)) (field $rules $list<(ref $macro-rule)>)))
+  (type $macro-context
+    (struct
+      (field $root (ref $tree))
+      (field $definitions $list<(ref $Definition)>)
+      (field $next (mut i32))
+      (field $expansions (mut i32))
+      (field $depth (mut i32))
+      (field $work (mut i32))
+      (field $error (mut (ref null $project-error))))
+  )
+  (func $macro.called
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@let $h (call $tree.at $n 0)
+      (&&
+        (= (struct.get $tree $kind $n) 2)
+        (&&
+          (= (struct.get $tree $kind $h) 0)
+          (&&
+            (> (@bytes.len (struct.get $tree $value $h)) 2)
+            (&&
+              (= (@bytes.get (struct.get $tree $value $h) 0) 64)
+              (= (@bytes.get (struct.get $tree $value $h) 1) 36))))
+      )))
+
+  (func $macro.context
+    (param $root (ref $tree))
+    (result $result<(ref $macro-context), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let $defs (call $list-builder.new<(ref $Definition)>)
+      (block
+        (result $result<(ref $macro-context), (ref $project-error)>)
+        (@for-each $n (struct.get $tree $items $root)
+          (if
+            (call $tree.head $n "@macro")
+            (then
+              (block
+                (if
+                  (||
+                    (< (call $tree.len $n) 3)
+                    (i32.eqz (call $tree.is-name (call $tree.at $n 1))))
+                  (then (return (@result.err (call $tree.error $n 211))))
+                  (else (nop)))
+                (if
+                  (> (call $tree.len $n) 66)
+                  (then (return (@result.err (call $tree.error $n 217))))
+                  (else (nop)))
+                (@let $rules (call $list-builder.new<(ref $macro-rule)>)
+                  (block
+                    (@for $i
+                      (bind $i i32 2)
+                      (while (< $i (call $tree.len $n)))
+                      (step (+ $i 1))
+                      (@match (call $macro.rule (call $tree.at $n $i))
+                        (@case err ($e) (return (@result.err $e)))
+                        (@case ok ($r)
+                          (call $list-builder.push<(ref $macro-rule)> $rules $r))))
+                    (call $list-builder.push<(ref $Definition)> $defs
+                      (struct.new $Definition
+                        (call $tree.at $n 1)
+                        (call $list-builder.finish<(ref $macro-rule)> $rules))))
+                )))
+            (else (nop))))
+        (@result.ok
+          (struct.new $macro-context
+            $root
+            (call $list-builder.finish<(ref $Definition)> $defs)
+            0
+            0
+            0
+            0
+            (ref.null $project-error))))
+    ))
+
+  (func $macro.rules
+    (param $s (ref $macro-context))
+    (param $head (ref $tree))
+    (result $list<(ref $macro-rule)>)
+    (@effect allocates)
+    (@let $name
+      (call $tree.copy $head 0 (@bytes.slice (struct.get $tree $value $head) 1 (- (@bytes.len (struct.get $tree $value $head)) 1)) (@list.new (ref $tree)))
+      (block
+        (result $list<(ref $macro-rule)>)
+        (@for-each $d (struct.get $macro-context $definitions $s)
+          (if
+            (call $tree.eq $name (struct.get $Definition $name $d))
+            (then (return (struct.get $Definition $rules $d)))
+            (else (nop))))
+        (@list.new (ref $macro-rule))))
+  )
+
+  (func $macro.fail
+    (param $s (ref $macro-context))
+    (param $n (ref $tree))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $macro-context $error $s))
+      (then (struct.set $macro-context $error $s (call $tree.error $n $code)))
+      (else (nop))))
+
+  (func $macro.error
+    (param $s (ref $macro-context))
+    (result (ref null $project-error))
+    (@effect reads)
+    (struct.get $macro-context $error $s))
+
+  (func $macro.charge
+    (param $s (ref $macro-context))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (struct.set $macro-context $work $s (+ (struct.get $macro-context $work $s) 1))
+      (if
+        (> (struct.get $macro-context $work $s) 100000)
+        (then (call $macro.fail $s $n 217))
+        (else (nop))))
+  )
+
+  (func $macro.enter
+    (param $s (ref $macro-context))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (struct.set $macro-context $depth $s (+ (struct.get $macro-context $depth $s) 1))
+      (struct.set $macro-context $expansions $s
+        (+ (struct.get $macro-context $expansions $s) 1))
+      (if
+        (||
+          (> (struct.get $macro-context $depth $s) 64)
+          (> (struct.get $macro-context $expansions $s) 512))
+        (then (call $macro.fail $s $n 217))
+        (else (nop))))
+  )
+
+  (func $macro.leave
+    (param $s (ref $macro-context))
+    (@effect writes reads)
+    (struct.set $macro-context $depth $s (- (struct.get $macro-context $depth $s) 1)))
+
+  (func $macro.fresh
+    (param $s (ref $macro-context))
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@loop $fresh
+      (result (ref $tree))
+      (@let $name (call $tree.name $n "$__macro." (struct.get $macro-context $next $s))
+        (block
+          (result (ref $tree))
+          (struct.set $macro-context $next $s
+            (+ (struct.get $macro-context $next $s) 1))
+          (if
+            (result (ref $tree))
+            (call $tree.occurs (struct.get $macro-context $root $s) $name)
+            (then (@recur $fresh))
+            (else $name))))
+    ))
+
+  (func $has-global
+    (param $n (ref $tree))
+    (param $name (ref $tree))
+    (param $function i32)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (&&
+          (= (call $tree.head $n "func") $function)
+          (&&
+            (|| $function
+              (|| (call $tree.head $n "type") (call $tree.head $n "@type.alias")))
+            (call $tree.eq (call $tree.at $n 1) $name)))
+        (then (return 1))
+        (else (nop)))
+      (if
+        (|| (call $tree.head $n "module") (call $tree.head $n "rec"))
+        (then
+          (@for-each $c (struct.get $tree $items $n)
+            (if (call $has-global $c $name $function) (then (return 1)) (else (nop))))
+        )
+        (else (nop)))
+      0))
+
+  (func $macro.global
+    (param $s (ref $macro-context))
+    (param $name (ref $tree))
+    (param $function i32)
+    (result i32)
+    (@effect pure)
+    (call $has-global (struct.get $macro-context $root $s) $name $function)))

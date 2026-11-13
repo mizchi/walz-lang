@@ -1,0 +1,54 @@
+[
+  {
+    "name": "safe",
+    "args": [
+      0
+    ],
+    "expected": 42
+  },
+  {
+    "name": "safe",
+    "args": [
+      1
+    ],
+    "expected": 120
+  },
+  {
+    "name": "safe",
+    "args": [
+      -1
+    ],
+    "expected": -120
+  },
+  {
+    "name": "safe",
+    "args": [
+      5
+    ],
+    "expected": 24
+  },
+  {
+    "name": "divide",
+    "args": [
+      42,
+      2
+    ],
+    "expected": 21
+  },
+  {
+    "name": "divide",
+    "args": [
+      1,
+      0
+    ],
+    "trap": true
+  },
+  {
+    "name": "divide",
+    "args": [
+      -2147483648,
+      -1
+    ],
+    "trap": true
+  }
+]

@@ -12,6 +12,7 @@ The standard string type is `$string`. `bytes-view.walz` / `string-view.walz` pr
 `$string-view.from-bytes-view` validates only the visible UTF-8 bytes and returns an optional shared string view. `$bytes-view.to-string` explicitly validates/materializes an owned string; invalid UTF-8 returns none before copying.
 `bytes.walz` and `bytes-view.walz` also expose [fixed-width endian-specific readers](../../docs/byte-access.md). Mutable packed i8 arrays use explicit `@array.write-*` operations; bytes remain immutable.
 `dict.walz` provides generic dictionaries with text keys; `list-builder.walz` constructs immutable lists. See [collections](../../docs/collections.md) for type constraints, mutation, and snapshot contracts.
+`bytes-builder.walz` provides bounded mutable GC byte storage and immutable copied snapshots through `finish`. Select `$bytes-builder` and its functions explicitly from `walz:core`; see the [compiler parts guide](../../docs/selfhost.md) for limits and use in binary generation.
 
 ```wat
 (module

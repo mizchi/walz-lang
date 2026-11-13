@@ -5,6 +5,8 @@ The fixed symbolic operators `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `<=`, `>`, `>=`
 
 Known Walz `@` names are reserved and enter the checked extension path. They are never discarded as WAT annotations, including declarations with invalid arguments. Other annotations, such as `@custom` and application metadata, retain WAT behavior; their complete payloads remain opaque even when they contain extension-looking forms. WIT identifier escaping and URI percent encoding still use `%`.
 
+Component roots add `@lib`, `@world`, `@expose`, and `@bind`; see [Component composition](component-composition.md). The reserved `walz:world-v1` and Core `walz:ffi-v1` custom sections contain validated descriptive metadata, not executable macro syntax. Unrelated custom sections remain opaque.
+
 | Purpose | Syntax |
 | --- | --- |
 | Expressions/control structures | `@let`, `@for`, `@loop`, `@recur`, `@match`, `@case`, `@default`, `@try`, `@result.do` |

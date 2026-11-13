@@ -1156,6 +1156,75 @@ import: `(func $string-builder.u64)`. Effects are the declared upper bound; the 
 ```
 
 
+## `bytes-builder.walz`
+
+Implementation: [walz/core/bytes-builder.walz](../walz/core/bytes-builder.walz).
+
+### `$bytes-builder`
+
+import: `(type $bytes-builder)`. Opaque public type. Its representation is private.
+
+### `$bytes-builder.append`
+
+import: `(func $bytes-builder.append)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-builder.append
+  (param $b (ref $bytes-builder))
+  (param $value $bytes)
+  (@effect reads writes allocates)
+)
+```
+
+### `$bytes-builder.byte`
+
+import: `(func $bytes-builder.byte)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-builder.byte
+  (param $b (ref $bytes-builder))
+  (param $value i32)
+  (@effect reads writes allocates)
+)
+```
+
+### `$bytes-builder.finish`
+
+import: `(func $bytes-builder.finish)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-builder.finish
+  (param $b (ref $bytes-builder))
+  (result $bytes)
+  (@effect reads allocates)
+)
+```
+
+### `$bytes-builder.len`
+
+import: `(func $bytes-builder.len)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-builder.len
+  (param $b (ref $bytes-builder))
+  (result i32)
+  (@effect reads)
+)
+```
+
+### `$bytes-builder.new`
+
+import: `(func $bytes-builder.new)`. Effects are the declared upper bound; the body is checked.
+
+```text
+(func $bytes-builder.new
+  (param $limit i32)
+  (result (ref $bytes-builder))
+  (@effect allocates)
+)
+```
+
+
 ## `json.walz`
 
 Implementation: [walz/core/json.walz](../walz/core/json.walz).

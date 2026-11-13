@@ -1,0 +1,1160 @@
+{
+  "schema": "walz-playground-size-v1",
+  "created": "2026-11-13T11:10:37.482Z",
+  "capture": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/playground-size/capture-v1",
+  "captureHash": "b73c69be8622330e819f2036694839ebb952535513a7fbae4601009b787ba433",
+  "environment": {
+    "node": "v24.22.2",
+    "cpu": "Apple M5",
+    "platform": "darwin",
+    "arch": "arm64",
+    "chromium": "156.0.8078.4",
+    "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+    "wasmPack": "wasm-pack 0.15.0"
+  },
+  "method": {
+    "compression": "sum per-resource gzip level 9 and Brotli quality 11, independently compressed; modelled body bytes, excluding HTTP headers/cache effects",
+    "build": "wasm-pack --target web --release --locked; wasm-opt disabled in both package manifests; existing Core/Component production builders",
+    "selection": "deduplicated successful HTTP requests under each compiler prefix from fresh Chromium module-worker contexts",
+    "exclusions": "shared probe HTML/worker, generated program outputs, type declarations, maps, package metadata, unused legacy files and standalone Component build input",
+    "page": "current Rust playground is separately measured through initial default compile and Run; no full selfhost playground UI or WAT/analysis UI adapter is implemented",
+    "parity": "8 frozen scalar WAT inputs; exact canonical-module equality with native output, 992 execution/trap probes per compiler, ill-typed input rejected; raw bytes also checked for both Rust targets",
+    "compatibility": "selfhost requires engine GC and current Core/Component JSPI runtime support; references and selfhost expose different language/tooling features"
+  },
+  "compilers": {
+    "rust": {
+      "total": {
+        "raw": 6413895,
+        "gzip": 1560752,
+        "brotli": 1021381
+      },
+      "wasm": {
+        "raw": 6405887,
+        "gzip": 1558437,
+        "brotli": 1019363
+      },
+      "js": {
+        "raw": 8008,
+        "gzip": 2315,
+        "brotli": 2018
+      },
+      "other": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "assets": [
+        {
+          "path": "rust/pkg/walz_web.js",
+          "type": "js",
+          "raw": 8008,
+          "gzip": 2315,
+          "brotli": 2018,
+          "sha256": "c9d7d4741f1c2607a112622c904b0593882a5af03f54bc48390fb064604c080c"
+        },
+        {
+          "path": "rust/pkg/walz_web_bg.wasm",
+          "type": "wasm",
+          "raw": 6405887,
+          "gzip": 1558437,
+          "brotli": 1019363,
+          "sha256": "f71fabf5775b1c91615ce1dfd27f7c389eb4a2fbea7f12efac36a60205e80eab"
+        }
+      ],
+      "requests": [
+        "/probe-worker.mjs",
+        "/rust/pkg/walz_web.js",
+        "/rust/pkg/walz_web_bg.wasm"
+      ],
+      "validation": [
+        {
+          "id": "integer-mix",
+          "bytes": 86,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-loop",
+          "bytes": 115,
+          "canonicalEqual": true
+        },
+        {
+          "id": "recursive-call",
+          "bytes": 79,
+          "canonicalEqual": true
+        },
+        {
+          "id": "branches-and-traps",
+          "bytes": 115,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-bits",
+          "bytes": 133,
+          "canonicalEqual": true
+        },
+        {
+          "id": "wide-indices",
+          "bytes": 3222,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-32",
+          "bytes": 1952,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-128",
+          "bytes": 7616,
+          "canonicalEqual": true
+        }
+      ],
+      "probes": 992,
+      "traps": 2,
+      "illTypedRejected": true
+    },
+    "wat": {
+      "total": {
+        "raw": 2720141,
+        "gzip": 578820,
+        "brotli": 397834
+      },
+      "wasm": {
+        "raw": 2712754,
+        "gzip": 576652,
+        "brotli": 395891
+      },
+      "js": {
+        "raw": 7387,
+        "gzip": 2168,
+        "brotli": 1943
+      },
+      "other": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "assets": [
+        {
+          "path": "wat/pkg/wat_web.js",
+          "type": "js",
+          "raw": 7387,
+          "gzip": 2168,
+          "brotli": 1943,
+          "sha256": "49fd01962045d0b5dc57b1f42d5ca33879dde77c8797d12960f74e336f230313"
+        },
+        {
+          "path": "wat/pkg/wat_web_bg.wasm",
+          "type": "wasm",
+          "raw": 2712754,
+          "gzip": 576652,
+          "brotli": 395891,
+          "sha256": "11cc152248706d83a9f597337c6b569a41c9616ddfd7b02b7e068f7bf35b93f0"
+        }
+      ],
+      "requests": [
+        "/probe-worker.mjs",
+        "/wat/pkg/wat_web.js",
+        "/wat/pkg/wat_web_bg.wasm"
+      ],
+      "validation": [
+        {
+          "id": "integer-mix",
+          "bytes": 86,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-loop",
+          "bytes": 115,
+          "canonicalEqual": true
+        },
+        {
+          "id": "recursive-call",
+          "bytes": 79,
+          "canonicalEqual": true
+        },
+        {
+          "id": "branches-and-traps",
+          "bytes": 115,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-bits",
+          "bytes": 133,
+          "canonicalEqual": true
+        },
+        {
+          "id": "wide-indices",
+          "bytes": 3222,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-32",
+          "bytes": 1952,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-128",
+          "bytes": 7616,
+          "canonicalEqual": true
+        }
+      ],
+      "probes": 992,
+      "traps": 2,
+      "illTypedRejected": true
+    },
+    "core": {
+      "total": {
+        "raw": 86753,
+        "gzip": 29476,
+        "brotli": 25074
+      },
+      "wasm": {
+        "raw": 52500,
+        "gzip": 18474,
+        "brotli": 15396
+      },
+      "js": {
+        "raw": 34253,
+        "gzip": 11002,
+        "brotli": 9678
+      },
+      "other": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "assets": [
+        {
+          "path": "core/bindings.mjs",
+          "type": "js",
+          "raw": 2020,
+          "gzip": 730,
+          "brotli": 632,
+          "sha256": "feab446548a83ab4ccf4f89653ad939b9cca18d7407ba3eb6537ed07e158efa9"
+        },
+        {
+          "path": "core/core.mjs",
+          "type": "js",
+          "raw": 8480,
+          "gzip": 2895,
+          "brotli": 2530,
+          "sha256": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1"
+        },
+        {
+          "path": "core/core.wasm",
+          "type": "wasm",
+          "raw": 51312,
+          "gzip": 17737,
+          "brotli": 14726,
+          "sha256": "35fb596ece8d46ac3230e3be63b8733e879240b99eb6400166b1c77402101b2a"
+        },
+        {
+          "path": "core/host.mjs",
+          "type": "js",
+          "raw": 7162,
+          "gzip": 2242,
+          "brotli": 1981,
+          "sha256": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd"
+        },
+        {
+          "path": "core/index.js",
+          "type": "js",
+          "raw": 273,
+          "gzip": 189,
+          "brotli": 165,
+          "sha256": "38a4dfff2a70136286c8754f2cf3eca55a969de22c70ba7a13d817b84b9b9add"
+        },
+        {
+          "path": "core/memory.wasm",
+          "type": "wasm",
+          "raw": 1188,
+          "gzip": 737,
+          "brotli": 670,
+          "sha256": "3bb30e136fcc9dd2c5f99db162ebf54255431fc4b3a4327d00572637f8fc0916"
+        },
+        {
+          "path": "core/resources.mjs",
+          "type": "js",
+          "raw": 2002,
+          "gzip": 791,
+          "brotli": 687,
+          "sha256": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8"
+        },
+        {
+          "path": "core/tasks.mjs",
+          "type": "js",
+          "raw": 14316,
+          "gzip": 4155,
+          "brotli": 3683,
+          "sha256": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+        }
+      ],
+      "requests": [
+        "/core/bindings.mjs",
+        "/core/core.mjs",
+        "/core/core.wasm",
+        "/core/host.mjs",
+        "/core/index.js",
+        "/core/memory.wasm",
+        "/core/resources.mjs",
+        "/core/tasks.mjs",
+        "/probe-worker.mjs"
+      ],
+      "validation": [
+        {
+          "id": "integer-mix",
+          "bytes": 64,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-loop",
+          "bytes": 69,
+          "canonicalEqual": true
+        },
+        {
+          "id": "recursive-call",
+          "bytes": 56,
+          "canonicalEqual": true
+        },
+        {
+          "id": "branches-and-traps",
+          "bytes": 75,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-bits",
+          "bytes": 86,
+          "canonicalEqual": true
+        },
+        {
+          "id": "wide-indices",
+          "bytes": 2244,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-32",
+          "bytes": 1782,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-128",
+          "bytes": 6937,
+          "canonicalEqual": true
+        }
+      ],
+      "probes": 992,
+      "traps": 2,
+      "illTypedRejected": true
+    },
+    "component": {
+      "total": {
+        "raw": 214090,
+        "gzip": 56293,
+        "brotli": 47396
+      },
+      "wasm": {
+        "raw": 55636,
+        "gzip": 19577,
+        "brotli": 16209
+      },
+      "js": {
+        "raw": 158454,
+        "gzip": 36716,
+        "brotli": 31187
+      },
+      "other": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "assets": [
+        {
+          "path": "component/component.core.wasm",
+          "type": "wasm",
+          "raw": 1194,
+          "gzip": 740,
+          "brotli": 673,
+          "sha256": "999495beae4d5b188684f4a3f6bdcb78532ccd64da219a957b95ca582f70d7b5"
+        },
+        {
+          "path": "component/component.core2.wasm",
+          "type": "wasm",
+          "raw": 54442,
+          "gzip": 18837,
+          "brotli": 15536,
+          "sha256": "46f821edc395c48cb90b6278b3246b2b44ed1c420d9cb6104357108e7d769ff2"
+        },
+        {
+          "path": "component/component.js",
+          "type": "js",
+          "raw": 133256,
+          "gzip": 28752,
+          "brotli": 24160,
+          "sha256": "70953535acd0823c012c150c7bc424d0ce45d58bd5987f5cc1cdd2ffc3ee84ce"
+        },
+        {
+          "path": "component/host.mjs",
+          "type": "js",
+          "raw": 7162,
+          "gzip": 2242,
+          "brotli": 1981,
+          "sha256": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd"
+        },
+        {
+          "path": "component/index.js",
+          "type": "js",
+          "raw": 1718,
+          "gzip": 776,
+          "brotli": 676,
+          "sha256": "c669eef36d601ea0e7c9ca8112b5bc89c7e60d6b7c9246392065920e5e5c8892"
+        },
+        {
+          "path": "component/resources.mjs",
+          "type": "js",
+          "raw": 2002,
+          "gzip": 791,
+          "brotli": 687,
+          "sha256": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8"
+        },
+        {
+          "path": "component/tasks.mjs",
+          "type": "js",
+          "raw": 14316,
+          "gzip": 4155,
+          "brotli": 3683,
+          "sha256": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+        }
+      ],
+      "requests": [
+        "/component/component.core.wasm",
+        "/component/component.core2.wasm",
+        "/component/component.js",
+        "/component/host.mjs",
+        "/component/index.js",
+        "/component/resources.mjs",
+        "/component/tasks.mjs",
+        "/probe-worker.mjs"
+      ],
+      "validation": [
+        {
+          "id": "integer-mix",
+          "bytes": 64,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-loop",
+          "bytes": 69,
+          "canonicalEqual": true
+        },
+        {
+          "id": "recursive-call",
+          "bytes": 56,
+          "canonicalEqual": true
+        },
+        {
+          "id": "branches-and-traps",
+          "bytes": 75,
+          "canonicalEqual": true
+        },
+        {
+          "id": "i64-bits",
+          "bytes": 86,
+          "canonicalEqual": true
+        },
+        {
+          "id": "wide-indices",
+          "bytes": 2244,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-32",
+          "bytes": 1782,
+          "canonicalEqual": true
+        },
+        {
+          "id": "expressions-128",
+          "bytes": 6937,
+          "canonicalEqual": true
+        }
+      ],
+      "probes": 992,
+      "traps": 2,
+      "illTypedRejected": true
+    }
+  },
+  "playground": {
+    "initialCompile": {
+      "total": {
+        "raw": 6465796,
+        "gzip": 1578247,
+        "brotli": 1036020
+      },
+      "wasm": {
+        "raw": 6405887,
+        "gzip": 1558437,
+        "brotli": 1019363
+      },
+      "js": {
+        "raw": 52462,
+        "gzip": 17104,
+        "brotli": 14581
+      },
+      "other": {
+        "raw": 7447,
+        "gzip": 2706,
+        "brotli": 2076
+      },
+      "assets": [
+        {
+          "path": "rust/compiler-worker.mjs",
+          "type": "js",
+          "raw": 2308,
+          "gzip": 875,
+          "brotli": 714,
+          "sha256": "73161a7de44c747cd25e3103db50508f02c4b776835f6db63136a920aa7409ed"
+        },
+        {
+          "path": "rust/index.html",
+          "type": "other",
+          "raw": 3765,
+          "gzip": 1397,
+          "brotli": 1034,
+          "sha256": "9b7961c19c3cd11110b5f3f0b6820fb766394c9593671cbf94600853c5f8ec63"
+        },
+        {
+          "path": "rust/main.mjs",
+          "type": "js",
+          "raw": 6677,
+          "gzip": 2253,
+          "brotli": 1923,
+          "sha256": "50e63236d1ec173d98d3bc389ffcdf3a87d773286c295696303fa35abe69f980"
+        },
+        {
+          "path": "rust/pkg/walz_web.js",
+          "type": "js",
+          "raw": 8008,
+          "gzip": 2315,
+          "brotli": 2018,
+          "sha256": "c9d7d4741f1c2607a112622c904b0593882a5af03f54bc48390fb064604c080c"
+        },
+        {
+          "path": "rust/pkg/walz_web_bg.wasm",
+          "type": "wasm",
+          "raw": 6405887,
+          "gzip": 1558437,
+          "brotli": 1019363,
+          "sha256": "f71fabf5775b1c91615ce1dfd27f7c389eb4a2fbea7f12efac36a60205e80eab"
+        },
+        {
+          "path": "rust/samples.mjs",
+          "type": "js",
+          "raw": 611,
+          "gzip": 272,
+          "brotli": 215,
+          "sha256": "f140bdc6c7a7346078341c61d3a9240c0a117e6685d9de95c1bfede69073b5c5"
+        },
+        {
+          "path": "rust/samples/async.mjs",
+          "type": "js",
+          "raw": 3481,
+          "gzip": 1218,
+          "brotli": 1022,
+          "sha256": "bb0c84336d7bd14008909b5293d6150592f03d649a7afd2af727bd243c37f0b0"
+        },
+        {
+          "path": "rust/samples/basics.mjs",
+          "type": "js",
+          "raw": 4789,
+          "gzip": 1503,
+          "brotli": 1280,
+          "sha256": "e133d07e4581a99b9242517722c59cf258df1e55449c278b4eee550e46fc4d12"
+        },
+        {
+          "path": "rust/samples/checks.mjs",
+          "type": "js",
+          "raw": 3201,
+          "gzip": 1179,
+          "brotli": 966,
+          "sha256": "477b157f8612611890e0b2804dc7d6e443806025b24185aae832add9b08446b3"
+        },
+        {
+          "path": "rust/samples/data.mjs",
+          "type": "js",
+          "raw": 6067,
+          "gzip": 1873,
+          "brotli": 1629,
+          "sha256": "75647a607f3a07c318978d1e88385d2d8ff29857e864862a02e3427521912227"
+        },
+        {
+          "path": "rust/samples/functions.mjs",
+          "type": "js",
+          "raw": 5281,
+          "gzip": 1790,
+          "brotli": 1550,
+          "sha256": "25b35db3d384875eb5bac329c9185b8f7ac21151caf2e85f16ed1583fb321628"
+        },
+        {
+          "path": "rust/samples/macros.mjs",
+          "type": "js",
+          "raw": 4740,
+          "gzip": 1451,
+          "brotli": 1227,
+          "sha256": "e92cf60f584b30565826aa3aeaa895a58fc78128e5f2cec3a944d4db118778bc"
+        },
+        {
+          "path": "rust/samples/standard.mjs",
+          "type": "js",
+          "raw": 5527,
+          "gzip": 1668,
+          "brotli": 1433,
+          "sha256": "4558c0ac08256c7801f4adb22d845bbc01302e4e80764923b3f536df564001cd"
+        },
+        {
+          "path": "rust/style.css",
+          "type": "other",
+          "raw": 3682,
+          "gzip": 1309,
+          "brotli": 1042,
+          "sha256": "61a021daa07a58f6c055ff6679a1991913c8328295e17d3987a91d31be13dbc4"
+        },
+        {
+          "path": "rust/worker-client.mjs",
+          "type": "js",
+          "raw": 1772,
+          "gzip": 707,
+          "brotli": 604,
+          "sha256": "fc54108553f90a7b42a2fdddff7f440be132695f3cc10d9e935e062141f93461"
+        }
+      ]
+    },
+    "throughFirstRun": {
+      "total": {
+        "raw": 6500700,
+        "gzip": 1589437,
+        "brotli": 1045851
+      },
+      "wasm": {
+        "raw": 6405887,
+        "gzip": 1558437,
+        "brotli": 1019363
+      },
+      "js": {
+        "raw": 87366,
+        "gzip": 28294,
+        "brotli": 24412
+      },
+      "other": {
+        "raw": 7447,
+        "gzip": 2706,
+        "brotli": 2076
+      },
+      "assets": [
+        {
+          "path": "rust/compiler-worker.mjs",
+          "type": "js",
+          "raw": 2308,
+          "gzip": 875,
+          "brotli": 714,
+          "sha256": "73161a7de44c747cd25e3103db50508f02c4b776835f6db63136a920aa7409ed"
+        },
+        {
+          "path": "rust/index.html",
+          "type": "other",
+          "raw": 3765,
+          "gzip": 1397,
+          "brotli": 1034,
+          "sha256": "9b7961c19c3cd11110b5f3f0b6820fb766394c9593671cbf94600853c5f8ec63"
+        },
+        {
+          "path": "rust/main.mjs",
+          "type": "js",
+          "raw": 6677,
+          "gzip": 2253,
+          "brotli": 1923,
+          "sha256": "50e63236d1ec173d98d3bc389ffcdf3a87d773286c295696303fa35abe69f980"
+        },
+        {
+          "path": "rust/pkg/walz_web.js",
+          "type": "js",
+          "raw": 8008,
+          "gzip": 2315,
+          "brotli": 2018,
+          "sha256": "c9d7d4741f1c2607a112622c904b0593882a5af03f54bc48390fb064604c080c"
+        },
+        {
+          "path": "rust/pkg/walz_web_bg.wasm",
+          "type": "wasm",
+          "raw": 6405887,
+          "gzip": 1558437,
+          "brotli": 1019363,
+          "sha256": "f71fabf5775b1c91615ce1dfd27f7c389eb4a2fbea7f12efac36a60205e80eab"
+        },
+        {
+          "path": "rust/run-worker.mjs",
+          "type": "js",
+          "raw": 2944,
+          "gzip": 1107,
+          "brotli": 950,
+          "sha256": "9f424a8b442f4c84a943fbfb37b429eb547c57d7ad791e52bd397d13d1358e4d"
+        },
+        {
+          "path": "rust/runtime/core.mjs",
+          "type": "js",
+          "raw": 8480,
+          "gzip": 2895,
+          "brotli": 2530,
+          "sha256": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1"
+        },
+        {
+          "path": "rust/runtime/host.mjs",
+          "type": "js",
+          "raw": 7162,
+          "gzip": 2242,
+          "brotli": 1981,
+          "sha256": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd"
+        },
+        {
+          "path": "rust/runtime/resources.mjs",
+          "type": "js",
+          "raw": 2002,
+          "gzip": 791,
+          "brotli": 687,
+          "sha256": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8"
+        },
+        {
+          "path": "rust/runtime/tasks.mjs",
+          "type": "js",
+          "raw": 14316,
+          "gzip": 4155,
+          "brotli": 3683,
+          "sha256": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+        },
+        {
+          "path": "rust/samples.mjs",
+          "type": "js",
+          "raw": 611,
+          "gzip": 272,
+          "brotli": 215,
+          "sha256": "f140bdc6c7a7346078341c61d3a9240c0a117e6685d9de95c1bfede69073b5c5"
+        },
+        {
+          "path": "rust/samples/async.mjs",
+          "type": "js",
+          "raw": 3481,
+          "gzip": 1218,
+          "brotli": 1022,
+          "sha256": "bb0c84336d7bd14008909b5293d6150592f03d649a7afd2af727bd243c37f0b0"
+        },
+        {
+          "path": "rust/samples/basics.mjs",
+          "type": "js",
+          "raw": 4789,
+          "gzip": 1503,
+          "brotli": 1280,
+          "sha256": "e133d07e4581a99b9242517722c59cf258df1e55449c278b4eee550e46fc4d12"
+        },
+        {
+          "path": "rust/samples/checks.mjs",
+          "type": "js",
+          "raw": 3201,
+          "gzip": 1179,
+          "brotli": 966,
+          "sha256": "477b157f8612611890e0b2804dc7d6e443806025b24185aae832add9b08446b3"
+        },
+        {
+          "path": "rust/samples/data.mjs",
+          "type": "js",
+          "raw": 6067,
+          "gzip": 1873,
+          "brotli": 1629,
+          "sha256": "75647a607f3a07c318978d1e88385d2d8ff29857e864862a02e3427521912227"
+        },
+        {
+          "path": "rust/samples/functions.mjs",
+          "type": "js",
+          "raw": 5281,
+          "gzip": 1790,
+          "brotli": 1550,
+          "sha256": "25b35db3d384875eb5bac329c9185b8f7ac21151caf2e85f16ed1583fb321628"
+        },
+        {
+          "path": "rust/samples/macros.mjs",
+          "type": "js",
+          "raw": 4740,
+          "gzip": 1451,
+          "brotli": 1227,
+          "sha256": "e92cf60f584b30565826aa3aeaa895a58fc78128e5f2cec3a944d4db118778bc"
+        },
+        {
+          "path": "rust/samples/standard.mjs",
+          "type": "js",
+          "raw": 5527,
+          "gzip": 1668,
+          "brotli": 1433,
+          "sha256": "4558c0ac08256c7801f4adb22d845bbc01302e4e80764923b3f536df564001cd"
+        },
+        {
+          "path": "rust/style.css",
+          "type": "other",
+          "raw": 3682,
+          "gzip": 1309,
+          "brotli": 1042,
+          "sha256": "61a021daa07a58f6c055ff6679a1991913c8328295e17d3987a91d31be13dbc4"
+        },
+        {
+          "path": "rust/worker-client.mjs",
+          "type": "js",
+          "raw": 1772,
+          "gzip": 707,
+          "brotli": 604,
+          "sha256": "fc54108553f90a7b42a2fdddff7f440be132695f3cc10d9e935e062141f93461"
+        }
+      ]
+    },
+    "shellThroughFirstRun": {
+      "total": {
+        "raw": 86805,
+        "gzip": 28685,
+        "brotli": 24470
+      },
+      "wasm": {
+        "raw": 0,
+        "gzip": 0,
+        "brotli": 0
+      },
+      "js": {
+        "raw": 79358,
+        "gzip": 25979,
+        "brotli": 22394
+      },
+      "other": {
+        "raw": 7447,
+        "gzip": 2706,
+        "brotli": 2076
+      },
+      "assets": [
+        {
+          "path": "rust/compiler-worker.mjs",
+          "type": "js",
+          "raw": 2308,
+          "gzip": 875,
+          "brotli": 714,
+          "sha256": "73161a7de44c747cd25e3103db50508f02c4b776835f6db63136a920aa7409ed"
+        },
+        {
+          "path": "rust/index.html",
+          "type": "other",
+          "raw": 3765,
+          "gzip": 1397,
+          "brotli": 1034,
+          "sha256": "9b7961c19c3cd11110b5f3f0b6820fb766394c9593671cbf94600853c5f8ec63"
+        },
+        {
+          "path": "rust/main.mjs",
+          "type": "js",
+          "raw": 6677,
+          "gzip": 2253,
+          "brotli": 1923,
+          "sha256": "50e63236d1ec173d98d3bc389ffcdf3a87d773286c295696303fa35abe69f980"
+        },
+        {
+          "path": "rust/run-worker.mjs",
+          "type": "js",
+          "raw": 2944,
+          "gzip": 1107,
+          "brotli": 950,
+          "sha256": "9f424a8b442f4c84a943fbfb37b429eb547c57d7ad791e52bd397d13d1358e4d"
+        },
+        {
+          "path": "rust/runtime/core.mjs",
+          "type": "js",
+          "raw": 8480,
+          "gzip": 2895,
+          "brotli": 2530,
+          "sha256": "baa9a4e186cad6cd1cf4812d4ef572dc96c260372861c21bf3d677dab7d6a0b1"
+        },
+        {
+          "path": "rust/runtime/host.mjs",
+          "type": "js",
+          "raw": 7162,
+          "gzip": 2242,
+          "brotli": 1981,
+          "sha256": "d6066fda586270bac76bf711f0eed70b75b8e9dafa8a45d6ad9fcb8fcc055ebd"
+        },
+        {
+          "path": "rust/runtime/resources.mjs",
+          "type": "js",
+          "raw": 2002,
+          "gzip": 791,
+          "brotli": 687,
+          "sha256": "98145e017bc4fd0e8c8b9350fb4bfcc1256a0e56475835cbb16ef38547200ac8"
+        },
+        {
+          "path": "rust/runtime/tasks.mjs",
+          "type": "js",
+          "raw": 14316,
+          "gzip": 4155,
+          "brotli": 3683,
+          "sha256": "9a987cb4e66efa722fae1b617774ea57467dc2c5b67a81519a284a7e81f51f19"
+        },
+        {
+          "path": "rust/samples.mjs",
+          "type": "js",
+          "raw": 611,
+          "gzip": 272,
+          "brotli": 215,
+          "sha256": "f140bdc6c7a7346078341c61d3a9240c0a117e6685d9de95c1bfede69073b5c5"
+        },
+        {
+          "path": "rust/samples/async.mjs",
+          "type": "js",
+          "raw": 3481,
+          "gzip": 1218,
+          "brotli": 1022,
+          "sha256": "bb0c84336d7bd14008909b5293d6150592f03d649a7afd2af727bd243c37f0b0"
+        },
+        {
+          "path": "rust/samples/basics.mjs",
+          "type": "js",
+          "raw": 4789,
+          "gzip": 1503,
+          "brotli": 1280,
+          "sha256": "e133d07e4581a99b9242517722c59cf258df1e55449c278b4eee550e46fc4d12"
+        },
+        {
+          "path": "rust/samples/checks.mjs",
+          "type": "js",
+          "raw": 3201,
+          "gzip": 1179,
+          "brotli": 966,
+          "sha256": "477b157f8612611890e0b2804dc7d6e443806025b24185aae832add9b08446b3"
+        },
+        {
+          "path": "rust/samples/data.mjs",
+          "type": "js",
+          "raw": 6067,
+          "gzip": 1873,
+          "brotli": 1629,
+          "sha256": "75647a607f3a07c318978d1e88385d2d8ff29857e864862a02e3427521912227"
+        },
+        {
+          "path": "rust/samples/functions.mjs",
+          "type": "js",
+          "raw": 5281,
+          "gzip": 1790,
+          "brotli": 1550,
+          "sha256": "25b35db3d384875eb5bac329c9185b8f7ac21151caf2e85f16ed1583fb321628"
+        },
+        {
+          "path": "rust/samples/macros.mjs",
+          "type": "js",
+          "raw": 4740,
+          "gzip": 1451,
+          "brotli": 1227,
+          "sha256": "e92cf60f584b30565826aa3aeaa895a58fc78128e5f2cec3a944d4db118778bc"
+        },
+        {
+          "path": "rust/samples/standard.mjs",
+          "type": "js",
+          "raw": 5527,
+          "gzip": 1668,
+          "brotli": 1433,
+          "sha256": "4558c0ac08256c7801f4adb22d845bbc01302e4e80764923b3f536df564001cd"
+        },
+        {
+          "path": "rust/style.css",
+          "type": "other",
+          "raw": 3682,
+          "gzip": 1309,
+          "brotli": 1042,
+          "sha256": "61a021daa07a58f6c055ff6679a1991913c8328295e17d3987a91d31be13dbc4"
+        },
+        {
+          "path": "rust/worker-client.mjs",
+          "type": "js",
+          "raw": 1772,
+          "gzip": 707,
+          "brotli": 604,
+          "sha256": "fc54108553f90a7b42a2fdddff7f440be132695f3cc10d9e935e062141f93461"
+        }
+      ]
+    },
+    "runOutput": "42"
+  },
+  "buildSourceHashes": {
+    "src/abi_limits.rs": "f4468cf0058015648c88eee7f73594ae6ba28f82183aa1aa8557cb1e7cf596e5",
+    "src/aliases.rs": "0c5bd5aa266ac6d4db24b5e1adc9bd05da0a3d42572636802f842d3b88f08ca7",
+    "src/analysis.rs": "688802397c80326033aea4c1f55afa90831851a7fc0ff01e6cdd5b980cc33bb9",
+    "src/applications.rs": "6777f32183218b258b7a2603cf0b0f9e6e2c2f7e8dcdeeb04ad238683a76d13a",
+    "src/benchmark.rs": "23328b1ff179ba1c9271491e4c70ef39f6c11d5f7e85451a70b08e5df3a2c081",
+    "src/binary.rs": "4b3b6e337976417fe10a47ea0115c3386df0fab7851bd811360022f54fc3220a",
+    "src/bindings.rs": "51af46bd1bde5be2918eb9ce8f403cdcef11f50e7b99c90f8bfe8300c4b880d4",
+    "src/bounds.rs": "792df933e46843a399b029e532cdc3c361c0810342228c6627191a2eeb03cec3",
+    "src/buffers.rs": "7e29582daf888b6c4643277661b7baab9dae54d02a4ecf52b61d866bd86c456f",
+    "src/buffers/utf8.rs": "15a6e42ded9b43e167bbdfde0a15efbe065327cf10dafb2dd89e93fb141b3f44",
+    "src/byte_access.rs": "fc17e21e35d9d6056b34bedcac5a7cad858108868006830dd45cb08606e1dcad",
+    "src/cli_bench.rs": "80ed2eeb74a02508048951c67e4faad0f24a8022e3b6950bf48ddae9083d0532",
+    "src/cli_build.rs": "22abe4b264318aae71fcd898872c5251b9d3ad49f723068af587bf5d246759a1",
+    "src/cli_esm.rs": "bd900bb6f30fec39f1598667645a61d1dfa2ee72b00fc3e407c40e125fd2025b",
+    "src/cli_inspection.rs": "e5a5cdd43732ef63cc6c08d5793edcfdff9c7fbbc8dac773bc277592fab7b5ee",
+    "src/cli_js.rs": "3fe8274c6696be209ab64b279b3dee6e64514340817116877983dba973bea813",
+    "src/cli_new.rs": "58a00f0a48d8cc6be3693bdf94a99e0bf50dce9a95efad53d8097b75671004bd",
+    "src/cli_print.rs": "a80e168d0411a7f2e2d66f0342d0f55328d4bbce09f142ff5791ee22db5b5a39",
+    "src/cli_run.rs": "661d15cd0371e356d373da2c479c5ce3ce21801af42a3d5b89dcab2f76aa64ba",
+    "src/component-memory.wat": "a41d7aa0421e879dd4eb260ca54dbde485a134fa9e638ee4225ab875b3fe812a",
+    "src/component.rs": "d8d6b1f38270e9040701dbcae363bd3c2674e5d40031f1ff0ae56a9dec71d072",
+    "src/component/abi.rs": "e79454795f0c6f32f9d528be63760b212e2979de0c7f8128569bfc5ad473cd8e",
+    "src/component/binary.rs": "bb489dcb0dcf7d352b88194c9ff110339651a537e0258054364a526f6194319a",
+    "src/component/core_js.rs": "c634d3f7b6f3230ddc527eaae465c92953c6e8470504ddf592c0da7e68d62e64",
+    "src/component/core_js/values.rs": "73a96d29c856c6a3564908a4dca20a1e6ac35a6b989986053c371bb02f2e5841",
+    "src/component/endpoints.rs": "bc54642a3c6658363a2fc2e78414f1ac416051246d465f5da1a41aaec998e903",
+    "src/component/functions.rs": "ca7b3e6c37581ac6bac07084e678bdc66d3a8ce8b4fc10cc07a35b00a681f957",
+    "src/component/imports.rs": "94f46ca85c685c98bb830709d64ba87f77d7e9899451218e99413c4a37a592c3",
+    "src/component/interface.rs": "7a3e6fcddb22ced8e63b4475b5122031f7f986781cd01343ad2316a97cac3e2c",
+    "src/component/interface_variant.rs": "ab6ffa0b8d184cd95c63235d65beda6867a2f473e29e2b51d45e68e229729d8d",
+    "src/component/js_native.rs": "dcb1fbdc25b272ba9bdb0f52ebf59741c2fd98f40722a03b6ba0a09fe0281a40",
+    "src/component/js_native/strings.rs": "59c6b2979fc84ef7f09d705725ff0841f18ec4f35f99425a748972b6fed7453c",
+    "src/component/js_native/values.rs": "f5431cbad855df480eef66a70e6c5786ca5d421d6d82b52d0ee141cb6f180bea",
+    "src/component/lists.rs": "408cc0b78c8a3921bd3d29548d9e3d1b8f7b9c3c8328c01208e504347f42b8f5",
+    "src/component/native_delivery.rs": "5e0e8c926779ee00e222a86cc60b1d75340b63a63ebb68e65c95f44c7bae2a85",
+    "src/component/profiling.rs": "ca831ebcb4af1280a89d0b6524bb243d90c90cebe7088f335f87f833162cf7f6",
+    "src/component/resource_values.rs": "bae747f52937f317c80adb5dd45862323bd6ac68eef211d556afb67e04562f86",
+    "src/component/stream_batch.rs": "5ea777800ee96f5fea21c6d3aaa29c5b98c6f2ea81de34912f3f1a880257bc67",
+    "src/component/values.rs": "7f2d4b27dcd758ff418f3868f67a367d4b802139d18732ab8c173b3b23a24360",
+    "src/component/world.rs": "0af2675017c5f1bb1c907f2fc09252b279d6e52896ab2a1ebb21970a7e47228f",
+    "src/component/world/resources.rs": "265bed01aea706859f935f4c502666482a1034e887aec5e394066d2fc399c211",
+    "src/construction.rs": "2528298201066057f5266a439601573691ce8b3e4e0344e72b3fb4b1340ca29b",
+    "src/diagnostic.rs": "845c89f78c0c98b86506f2421b3b6db6a7b1d1e0ad70a2a3b825c7222c61be9c",
+    "src/distribution.rs": "8a3a6045eb677dffab2f688bc0b2a9b4b596cba5f268cc257787e2c765c1d271",
+    "src/effects.rs": "80114fa9ef5fc824447058c0a910319d83496d58014dcf52cd10df3159fee558",
+    "src/emit.rs": "c16ad7a1223d8ceff4912962bd89b5d1fbac2b1f11c807d4200b6ea48a2d4887",
+    "src/execution.rs": "57cb75b4c9d6ffd839f043c0c1a2d753a98fc13541a2978d1d737ef79ec81c47",
+    "src/flow.rs": "415161857c98fc41e65cf14aeda4eb156082529f441245dee5aed70c3f877fd7",
+    "src/format.rs": "333220949368bfd47a9b6273066dd59de53949ed04978a6ddc1b2770c56f0381",
+    "src/frontend.rs": "7f28471d7c1a19fecd2cd723499b254eab702672bf188c8be66f704a50c81b87",
+    "src/frontend/generic_calls.rs": "e5c1d6a5961dd7bd0f87cb0e3aa64dc1d278f08f5583e3fc1fb69986f3fdf065",
+    "src/frontend/high_level.rs": "a6240f3e242abcfff3aeacd806eec37e2c2ce4c0f59e5ecaea89d9f5e89b84aa",
+    "src/frontend/lexical.rs": "e92473aac3f3215b043f20f558bdf732da94fd261bc77628d71cc066a1ce6ab6",
+    "src/frontend/macro_expansion.rs": "29ab021d033e319b50ed542fd2c3287f2776259a83c646b7655b038a6a49eafe",
+    "src/frontend/macro_types.rs": "fc106acc68a9683cf39af7599ac04c78ffe0a8b657b5cc5553d2211976225f09",
+    "src/generics.rs": "53755d50cf46aa05a4a284d461d2bd26f78249544fead54ab8d4fe942cf498fa",
+    "src/generics/inference.rs": "d1b36cca225d9b13b5f92c19cf9ace669bcf1cd9582ac1166be88576cbe00bda",
+    "src/harness.rs": "e53a2e792b3ec66f82e79caa2525de8a20a8aef2509eb699c7a2513de502adad",
+    "src/inspect.rs": "f1685f10ad7a7812bd85d92eda356d9caf7684c4a4faffbdad976d06f40a0ba0",
+    "src/inspect/syntax_index.rs": "c317cff2d06233d12e39b73c6d8fa28cd88c62bc2ede13755c1a59bb8de99478",
+    "src/interface.rs": "7f51ee838002c55c0e4bc69842de2aa00594ad76e642a4aa8fe140c33f389a3d",
+    "src/ir.rs": "1f047fcc9d87a1672345b73bfabbd2ec66de03d8ada7ab1f5d4c6da75d547c2b",
+    "src/lib.rs": "860ab0aee65dc23dadb71fca1212693c2dda846df3920a930ffeb8569c8f1570",
+    "src/link.rs": "8b801b6742b8a70456bdd4c9a78df8dffd6fba9b42e71980784b39dfff15e2de",
+    "src/lists.rs": "1e3cb2f8b8b26a2218ab967cf3cf2cf452ddde04803ad8c4054846bf02eb2f82",
+    "src/lsp.rs": "cd3a1df3ce126e4d6907cbf1280d1a5b7f255b82271acd78c9233f242f1820c2",
+    "src/lsp/protocol.rs": "c210a5c895ca21bcb34aa5ce42de6f946e55f4d3fa6d121bb4a9970d157537b7",
+    "src/macros.rs": "5c70b8d1940b4209c82d0137ef4bced83744b0597864f53c1eead4ca57973a8c",
+    "src/macros/bindings.rs": "b85d9648dcea53781d2f0b4e1f10f50901e4a894b8a0bc85e1dfb6e5fa616ea4",
+    "src/macros/hygiene.rs": "c38f587c3935d43ef918b15a903538b48e15dc8ce4e79a95a5d0ccc09bea7dc6",
+    "src/macros/type_info.rs": "00af4f73cd8069a9cb759ad9b393cf5f17aeb432aca4490a5aecc9f9b38869b8",
+    "src/main.rs": "fd17c3156b1cdf7873a329cff876d1e5e17ff4159ee3e27855d26613dc26d1da",
+    "src/modules.rs": "2cecaace20270b921fb1c46ab4d0a661ebc3cfb73be3dcb9fb33af666889ef13",
+    "src/naming.rs": "e43aa9c316468bf62dd5eb0d0042ade84813a529e005efacb5dfa35c89411629",
+    "src/native.rs": "5561af057e69aff58e2dc740d2f2b7e1670e63df0e86c1a8669b3647fca2a788",
+    "src/native_macros.rs": "d625b17c3c0c9ee7e6e6c4162db032fef50663092a2b2bd75686d92c06dbba08",
+    "src/newtypes.rs": "f0bd0febaeb7bf5b1e1239f513af186b8cec0bb26d7dc02534c8992c881e48e0",
+    "src/optimize.rs": "b0ebe71f41babcfdb75df081bb756f87573c0cca8c0dba5c198042d3f4726ced",
+    "src/optimize/inline.rs": "37fae8c44cdc39ccdb830a59adce489e2d1e97672e766bf2625a62834550bbd3",
+    "src/optimize/range_facts.rs": "7798aa0662ea9a6433f6f71059112b9866ea8e530839a980168143278891dd44",
+    "src/optimize/ranges.rs": "e8edffa84e3a9b49ffcada5eadc6222d9e29953279980effdea2b33ac593e672",
+    "src/optimize/values.rs": "094da5ab2ad2eb0e2f97b8995dfcfd6144e88e5edd5cdb265cf7019eb97833e2",
+    "src/ownership.rs": "46f7e0fa11ac8ae02cc1aacb6b6186151d47d28db2dc3789a294fabf5a908172",
+    "src/ownership_graph.rs": "3dde52c085cc5acd1d27f76beb30b467e1185227b220871988c64e4c61679ae7",
+    "src/performance.rs": "c0b414a6092a46814c41c69a2b223debf1cddff7350d08a85b05daa22692c559",
+    "src/proof.rs": "977c974e61ac56b636cc72ca5437d1002b923b7cb3a0a9862f230178b18aa53d",
+    "src/race.rs": "e3a09446e1c4897f0292f3c5eb3c7de7a803da115c5e06b84a21ae62cae57c51",
+    "src/readonly.rs": "b06c4f6333c6b1e841ac7a2a20ba18229ca965c454cff1435f0d6a90d3e4ce04",
+    "src/regions.rs": "faa66fa03bae21a68f52f653837cf790843eb7397ea224df4db19000bf3a9def",
+    "src/resources.rs": "794d2fa8c511abc67dbdf8d23048da1ba3abfafaf21568a5f5dc5fe71ebd0d87",
+    "src/review.rs": "893da6b6f9fad480e87a88972fb6f843b53e31bf8485ac99b30a53eba8192dbf",
+    "src/review/parser.rs": "1a9c5e5060b0d3073d7891e32a3e47a1925eef3a751d57a3d22d16e67b3e7b4f",
+    "src/review/parser/control.rs": "985da766d0de0c108fba0a3ec7f4b4b0ae0c23d6f4c49d1eb79cd326ae61eb13",
+    "src/review/printer.rs": "f599b892129d27eb48c4f5ec62a5a181c753981f4d1f21814ed1f41e81626d22",
+    "src/review/printer/control.rs": "05d6ed15f804e71319d742059aad0784560538fb8d0286628272f504fdddbe69",
+    "src/review/tests.rs": "9097b10e35f1f5032e58ce7bca016d4b51a765eaf4018fe03430945065c2ba5e",
+    "src/runner.rs": "1de4e0e5af33275c2a1e6c01e656ff24771580899adf25d7a7a4b4c7a13f3f47",
+    "src/scoped.rs": "e06c6902e06ba5bc8cecb315c01916f0d1743510eaaa12e5a42fe54a306683c9",
+    "src/sexpr.rs": "b492cc9582079d69d56e382cab2379b1e45c99f40ce569564c3ff5df19338a9b",
+    "src/sexpr/applications.rs": "ae2f230e200a77d3bfdb3e64ea60cadd83c98e665d1ef3ec00760e59ab8ae06a",
+    "src/simd.rs": "f5013d97821da083f90dde890f3751f2924cdd32c152f64a9f4c2a4dca52d2f3",
+    "src/source.rs": "d998f4d87e1985554d09e99a55357aab1e6f2bc333e50886345267a2f94391d7",
+    "src/standard.rs": "c62c50033be89b3b3b78dbf976b887f7622d6dac445185a2e11bd55d58acdfe2",
+    "src/standard_catalogue.rs": "482097b35b1799436562613ba89bef71f6cf9a1990899deacd8c2346178c2849",
+    "src/standard_sources.rs": "3172206ad73db393fa8e7a5fe7afdb681cc03480c2dfa6393f59c90d15743484",
+    "src/syntax.rs": "a6064d7133d6be3a055cea98c347892f901aa7fc409449ccd9b08424b083c5c7",
+    "src/task_children.rs": "ffd2ca1882c8113028fbadd1be123c091eab8ca6234dbd10ae7928ee2d05918a",
+    "src/threads.rs": "172f50fbe852b1bce795b5a67c3e2bb534f901f465557d46ba191eadf5bbf0d0",
+    "src/type_syntax.rs": "7d81c5aa8ba5710d1ed5776eccd50cc35c3326a11eebd14d461df1e24513b49a",
+    "src/typeclasses.rs": "f072891796653d0e5bfca902499531fc483e88a003b580ca461f849d329ef30b",
+    "src/typing.rs": "7f08a3ed79521ad313b2e1d36dc5272b80f83d20b7ff9eb3185beacb17b3f723",
+    "src/verified.rs": "35ee4010ebe88160d2c019b7d4fd5cb9271d10e58ad916eb91e4f37eba136383",
+    "src/wasm.rs": "04cf5846910ad024fa10ba18fc800a008e3e132403f4a733f6c418abd7c1194a",
+    "src/wit.rs": "bd69f6a306bc4381a8c3da4ad5d0368ebd0378db370e87f2b1f188e17935e78f",
+    "src/wit_bindgen.rs": "98b98d2ed486c4eb99b9a441f26f068c61d8ada7552b3395bed55558f3448389",
+    "crates/walz-web/Cargo.toml": "38f65fca14c8dc7de62506014799c38abdd5f46dfb78ad4597b13366d97b03fd",
+    "crates/walz-web/src/lib.rs": "52b767d4f9231d4ab2d900e010fbe5e8e8bafd67d8f9345de256d82780458595",
+    "crates/walz-web/tests/api.rs": "303499144b1a66cabadcd3993e81db3d116ace0fba2b18e507af2341649c0348",
+    "walz/core/README.ja.md": "52dd3969b617a2d0f48d23a49f755a5e21309b61a0c85477ebfbe23807b43207",
+    "walz/core/README.md": "7ad58fceacab5b2b24c5daca004dfd5e50b9cf3cd2736dfde3761b948ff30218",
+    "walz/core/array-view.walz": "01e4f8ee9650a4a01ac352a1da7e01aa5abb57ffc5b9b56cfc39c26040016320",
+    "walz/core/builder.walz": "3162f0b3a544d28aa956012317665bd14ccdb013dc8ad227b6dd80e16b81b755",
+    "walz/core/bytes-builder.walz": "07f1a5eb1304867514949c959257601fff1fee1d57865df5c300a8742453767c",
+    "walz/core/bytes-view.walz": "65d6a475fe15d973f4fb4bb7e95eab4dbb644d9f326b3354fcc26f931d0b2a7d",
+    "walz/core/bytes.walz": "4e0e33355f98f0ae527b726b16dd5da5f87c42e8ae7b4621af2f1ec82ada3cb5",
+    "walz/core/checked-integer.walz": "e9a8e5d2126060ef877c5b7188d0db9903cfbf80713a3912db42b0332b57675d",
+    "walz/core/dict.walz": "6ff6676425f570c58de72e6397ed3c61e9a5ee5bd11af22eb5569ca01076c476",
+    "walz/core/json-string.walz": "99addd15ff57abec20b4e4eeb98518adb9fd58647ff8d58ef892e2f33068e762",
+    "walz/core/json-value.walz": "182f789e87983a3c531f5155cc2e5c6a6fbd6eb2a3feea3f61a9dae484f17cc3",
+    "walz/core/json.walz": "78e705fdeb7d6526d64a8382549dc5ef1c4b9b329cf5bf9384d7cc678199b18e",
+    "walz/core/list-builder.walz": "211f302b7c91c2624c12ef40785e54213ce013c6929d166a0750daedaf83e888",
+    "walz/core/list.walz": "ed82921807472f4908ecfb97cc99628ff3e6b5a4df181a95ea5a3cd35beca00f",
+    "walz/core/option.walz": "26a0dcb6eeaf5ce15188caa14d94f6a0d7bf8aa435548e0a5e40bd8470eeeee5",
+    "walz/core/result.walz": "8802e9b3ba08654775bb0f374186e5bb4d24fb21ca182fb305c6c7b3158165c2",
+    "walz/core/string-view.walz": "7998665907e3ff13b2fa279621e7d80f654aa22124cea15e3245a82720e9db86",
+    "walz/core/text.walz": "1795a92d0abbd1ea63578f94c83702b4858de2357be0015196e54731d88ad61c",
+    "walz/core/types.walz": "4be46f722107a57230e92f8deed007d67c332b1c039f0c2d81b53efc54c488a3",
+    "walz/parser/README.ja.md": "fb689c9a1f26f4c7a08e60edbba9269f0b4a7a8ec1ac1a3d5695996983177ad0",
+    "walz/parser/README.md": "a1d4732b85bb18ba39e6046e7246cebd2af5d94ebbe3d0a55b25e038482fe5b9",
+    "walz/parser/diagnostic.walz": "48e9ca994a1b3b7358999940353f31595f68d98e168e92a9c453f825b8dcf642",
+    "walz/parser/number.walz": "94e494afb3b93e1a758600fa4d926e020e5983669c4dd195b504c90b4c1ddccb",
+    "walz/parser/parser.walz": "50089355478357f037456cb9e9666a47419e4ab1cef1567faaa379f169c36b35",
+    "walz/parser/string.walz": "2dce8ed5738b9f04fe05fac1e42aa3d07abe6b6690dff14fda12eac158eb5116",
+    "walz/checker/README.ja.md": "b0a03f43eeacfb7d2999ea27baed6d7541b4436f2af0a494f3c7deb0a90b1300",
+    "walz/checker/README.md": "d0467a4c3685595f0c45a6d5cc67ac7d043a3c4ecd3331d59d892abe7337c252",
+    "walz/checker/checker.walz": "75c90f703d84d0fbda0b61fd3447b0b000191e2f2aa645b5482ee86231899a39",
+    "walz/checker/ir.walz": "5bffe013215a7d61d56d3a2917bdee6885cc6ca3e9b695711fbd6c64f8812af2",
+    "walz/checker/operators.walz": "340275d0a19c5d9418706ed5b01761cb1b9600f8b5258c155307bd4b420bef7c",
+    "walz/checker/stack.walz": "e36961e34e8a1cc92e7a89c2d861ce58b8d1cb8822ede2d8373076e4f7578798",
+    "walz/codegen/README.ja.md": "60b78af2253755293cfe1431408c68bd5cabb5645de70be744792555c79f58d5",
+    "walz/codegen/README.md": "b9939f36ac6e79d490717117c35aa432c23498b7a5ed520b7038be7071d065e0",
+    "walz/codegen/compiler.walz": "e9e6772edc247a9fb6c2738cdb9e84ce5783431711cc1334435a0746637bf8cf",
+    "walz/codegen/emit.walz": "7476b36db413e723688961927984f50cdb380b1fe668de349b9051da447798b5",
+    "walz/codegen/encoding.walz": "1de92b1c162a518305cccbefba81f9fc18346d9588a7ac0fdc36f4de8bc74c19",
+    "tools/playground-size/build.mjs": "4cb74b7be6441017343548cca1a4f993a2c34309bdeb5fe78f54e576b2f2ab77",
+    "tools/playground-size/metrics.mjs": "dd6eab50d668266a91f80f598526a1bcb38d253db8980e6d845e0012ab98294a",
+    "tools/playground-size/probe-worker.mjs": "29e1ec6f6e079561ee444baa02c1ed5236604618edf21907f4500f1244859942",
+    "Cargo.toml": "b4aea75e9756e4820dc430a0fec0fcf3c717e7933eac0d511b5f4ec7bfa7b983",
+    "Cargo.lock": "c679ace51080b93c5074c9dfe174de82df6cc0b6e88876146582e4278e2785bd",
+    "build.rs": "223cc2f7330f2976bf8013f958bf15937e7327be68d722d10f6c6896c13f488f",
+    "tools/build-playground.mjs": "f6431ab1b4dadc68bd92defa10015b7b3bec1572094c045446425156db021946",
+    "tools/playground-size.mjs": "168f879b883e874bc76f663c236b0cee52991b3707a0346716c4fbb399cdcfaa",
+    "tools/wat-web/Cargo.toml": "4383915a8e541199132e28238db1a5029f98dc974df3b5f3e2c1d3c6ad06ae8a",
+    "tools/wat-web/Cargo.lock": "4585b577e93a734da1e972977e46ae66ae54f3f0f34f9aaf88bf3f7c37cf1e16",
+    "tools/wat-web/src/lib.rs": "3679ea8eceae59a81501991c1e99486b08d50692ec51bfb722065d2143daa802",
+    "examples/selfhost/portable.walz": "aac5cef3b04e15ace7610bfd9be958e1ad38134b3bd37b9d4be272ab93ec4b08",
+    "runtime/build-core.mjs": "24721df1dcea45887c011a8e1b0a518d0bab7b225db1775f2f6e1c036828ff72",
+    "runtime/build.mjs": "d7352a4e85ade0613b573094bb4a2b9782ead1d6ede933149563411d3c46831b"
+  },
+  "measurementSourceHashes": {
+    "tools/playground-size.mjs": "215700aee76bfd6d21bf9dd9f482ab643ca0082b4bae50ffefd4193900306221",
+    "tools/playground-size/build.mjs": "4cb74b7be6441017343548cca1a4f993a2c34309bdeb5fe78f54e576b2f2ab77",
+    "tools/playground-size/metrics.mjs": "745a6f16144d87de1de02a0db8dc4f2778db935ce123cc3ddcc19be8dce73fb1",
+    "tools/playground-size/probe-worker.mjs": "29e1ec6f6e079561ee444baa02c1ed5236604618edf21907f4500f1244859942"
+  }
+}

@@ -1,0 +1,6 @@
+(@lib
+  (@export (func $add) (func $identity))
+  (func $add (param $a i32) (param $b i32) (result i32)
+    (@effect pure) (+ $a $b))
+  (func $identity (@type.params $T) (param $value $T) (result $T)
+    (@effect pure) $value))

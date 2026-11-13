@@ -21,7 +21,7 @@ test('native world works without Walz JS wrappers or delivery imports',{timeout:
       interface api { record item { n: s32 } type unused = tuple<bool,char,s8>; echo: func(v: item) -> item; }
       world guest { import host; export api; export add: func(n: s32) -> s32; }`);
     const policy=join(dir,'policy.json');await writeFile(policy,JSON.stringify({imports:[{module:'test:adapter/host',name:'increment',params:['i32'],result:'i32',suspends:false,capability:'increment',param_names:['n']}]}));
-    await execFile('cargo',['run','--locked','--quiet','--','build',input,'--target','component','--wit',wit,'--bindings',policy,'-o',binary]);
+    await execFile('cargo',['run','--locked','--quiet','--','build',input,'--target','component','--wit-input',wit,'--bindings',policy,'-o',binary]);
     const generated=await transpileBytes(await readFile(binary),{name:'native',instantiation:'async',wasiShim:false,nodejsCompat:false,base64Cutoff:0,noComponentErrorWrapping:false,bindgenEnableWasmExnref:true,multiMemory:true});
     for(const[name,bytes]of Object.entries(generated.files)){await mkdir(dirname(join(dir,name)),{recursive:true});await writeFile(join(dir,name),bytes);}
     await writeFile(join(dir,'package.json'),'{"type":"module"}');

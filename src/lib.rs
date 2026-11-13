@@ -11,6 +11,7 @@ mod bounds;
 mod buffers;
 mod byte_access;
 pub mod component;
+pub mod composition;
 mod construction;
 #[doc(hidden)]
 pub mod distribution;
@@ -149,7 +150,17 @@ pub(crate) fn check_observed<T>(
     policy: &bindings::BindingPolicy,
     observe: impl FnOnce(&ir::Module, &generics::Expanded) -> T,
 ) -> Result<(ir::Module, T), Error> {
+    check_observed_with(source, policy, observe, |_| Ok(()))
+}
+
+pub(crate) fn check_observed_with<T>(
+    source: &str,
+    policy: &bindings::BindingPolicy,
+    observe: impl FnOnce(&ir::Module, &generics::Expanded) -> T,
+    bind: impl Fn(&mut ir::Module) -> Result<(), Error>,
+) -> Result<(ir::Module, T), Error> {
     let root = sexpr::parse(source)?;
+    composition::queries::reject_unresolved(source, &root)?;
     let standard = standard::prepare(source, &root)?;
     let syntax = standard.syntax(root)?;
     let source = standard.source(source);
@@ -183,6 +194,7 @@ pub(crate) fn check_observed<T>(
             )?;
             interface::validate(source, &mut module)?;
             policy.apply(&mut module);
+            bind(&mut module)?;
             binary::apply(&mut module)?;
             bindings::validate(source, &module)?;
             frontend::validate_alias_targets(source, &module, &aliases.targets)?;
@@ -235,6 +247,10 @@ pub fn compile_with_policy(
     source: &str,
     policy: &bindings::BindingPolicy,
 ) -> Result<Compilation, Error> {
+    composition::reject_library_entry(source)?;
+    if composition::is_component(source) {
+        return composition::compile(source, policy).map(composition::into_compilation);
+    }
     if policy.imports.is_empty() {
         return compile(source);
     }
@@ -242,6 +258,11 @@ pub fn compile_with_policy(
 }
 
 pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Compilation, Error> {
+    if composition::is_component(source) {
+        return composition::compile(source, &Default::default())
+            .map(composition::into_compilation);
+    }
+    composition::reject_library_entry(source)?;
     // Reserved Walz entries must not be discarded as opaque WAT annotations.
     // Otherwise native WAT takes precedence without rewriting its source.
     // The dedicated reader does not decide acceptance here (data strings,
@@ -251,6 +272,7 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
         && wasmparser::Parser::is_core_wasm(&wasm)
         && wasmparser::Validator::new().validate_all(&wasm).is_ok()
     {
+        composition::metadata::validate(&wasm)?;
         let ir = check(source).ok();
         let analysis = ir
             .as_ref()
@@ -308,13 +330,22 @@ pub fn compile_with_options(source: &str, options: CompileOptions) -> Result<Com
 
 /// Validate either native WAT or the typed extension syntax.
 pub fn validate(source: &str) -> Result<(), Error> {
-    if let Ok(module) = check(source) {
+    validate_with_policy(source, &bindings::BindingPolicy::default())
+}
+
+/// Check a source library without giving it an executable ABI. Components and
+/// native fallbacks are validated through their respective compilation gates.
+pub fn validate_with_policy(source: &str, policy: &bindings::BindingPolicy) -> Result<(), Error> {
+    if !syntax::requested(source) && source.contains("@custom") {
+        return compile_with_policy(source, policy).map(|_| ());
+    }
+    if let Ok(module) = check_with_policy(source, policy) {
         if !module.laws.is_empty() || module.race_free {
             verified::verify(source, &module)?;
         }
         return Ok(());
     }
-    compile(source).map(|_| ())
+    compile_with_policy(source, policy).map(|_| ())
 }
 
 /// Expand extensions into standard WAT; native WAT is returned unchanged.

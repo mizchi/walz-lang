@@ -26,6 +26,7 @@ Historical evaluations and dated measurements retain their original language and
 | Immutable SIMD bitmaps and i32 columns | [SIMD collections](simd-collections.md), [library](../walz/simd/README.md) |
 | Dictionary-encoded string columns | [Dictionary columns](dictionary-column.md) |
 | Arquero-style table transformations and JS/TS facade | [Table processing](table.md) |
+| Compiler parts written in Walz: source parser, type/stack checker and Wasm backend | [Self-hosting](selfhost.md), [modular frontend](selfhost-frontend.md), [benchmarks and parity](selfhost-benchmark.md), [browser size](playground-size.md) |
 | Read and write FlatBuffers | [FlatBuffers library](../walz/flatbuffers/README.md) |
 | Endian-specific integers and floating-point bytes | [Fixed-width byte access](byte-access.md) |
 | Checked sizes, offsets, and alignment | [Checked integers](checked-integers.md) |
@@ -45,6 +46,7 @@ Historical evaluations and dated measurements retain their original language and
 | JS ABI, Future/Stream, and cancellation | [Runtime](runtime.md), [batch transfers](stream-batches.md) |
 | Experimental smaller synchronous JS output | [Direct GC / JS string ABI](js-native-experiment.md) |
 | Writers, scoped child tasks, and deadlines | [Child tasks](scoped-tasks.md) |
+| Static libraries, inferred adapters, constructors and generated WIT | [Component composition](component-composition.md) |
 | WIT, Components, and typed Wasm dependencies | [Bindings](wit-bindings.md), [native worlds](native-worlds.md), [Wasm @use](wasm-use.md) |
 | Explicit standard I/O and files | [CLI](cli.md), [WASI value adapter](wasi-files.md) |
 | Shared memory, atomics, and Workers | [Threads](threads.md), [Worker host](worker-host.md) |

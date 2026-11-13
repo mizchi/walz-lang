@@ -1,0 +1,16 @@
+(component
+  (component $Service
+    (@lib
+      (@use "walz:core" (type $future))
+      (func $consume (param $value $future<i32>) (result i32)
+        (@effect suspends) (@future.await i32 (@move $value))))
+    (@expose "consume" $consume))
+  (instance $service (instantiate $Service))
+  (alias export $service "consume" (func $consume))
+  (@lib
+    (@use "walz:core" (type $future))
+    (import "service" "consume" (func $consume (param $value $future<i32>) (result i32)))
+    (func $run (param $value $future<i32>) (result i32)
+      (@effect host suspends) (call $consume (@move $value))))
+  (@bind "service" "consume" $consume)
+  (@expose "run" $run))

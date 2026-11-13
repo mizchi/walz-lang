@@ -1,0 +1,137 @@
+(module
+  (@use "walz:core" (type $bytes) (type $result) (type $list))
+  (@use "../parser/parser.walz" (type $diagnostic) (func $parser.parse))
+  (@use "../checker/checker.walz"
+    (type $module-ir)
+    (func $checker.check)
+    (func $module-ir.functions))
+  (@use "../checker/ir.walz" (type $function-ir))
+  (@use "./emit.walz" (func $codegen.emit))
+  (@use "../frontend/tree.walz" (type $source-file) (type $project-error))
+  (@use "../frontend/frontend.walz" (func $frontend.project))
+  (@use "../frontend/modules.walz" (func $modules.imports))
+  (@export
+    (func $compiler.compile)
+    (func $compiler.check)
+    (func $compiler.compile-project)
+    (func $compiler.check-project)
+    (func $modules.imports))
+  (func $frontend
+    (param $source $bytes)
+    (result $result<(ref $module-ir), (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match (call $parser.parse $source)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($syntax)
+        (if
+          (result $result<(ref $module-ir), (ref $diagnostic)>)
+          (call $required $syntax)
+          (then
+            (@match
+              (call $frontend.project (@list.new (ref $source-file) (struct.new $source-file "main.walz" $source)))
+              (@case err ($e)
+                (@result.err
+                  (struct.new $diagnostic
+                    (struct.get $project-error $code $e)
+                    (struct.get $project-error $start $e)
+                    (struct.get $project-error $end $e))))
+              (@case ok ($m) (@result.ok $m))))
+          (else (call $checker.check $syntax))))
+    ))
+
+  (func $compiler.check
+    (param $source $bytes)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match (call $frontend $source)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m)
+        (@result.ok (@list.len (ref $function-ir) (call $module-ir.functions $m))))
+    ))
+
+  (func $compiler.compile
+    (param $source $bytes)
+    (result $result<$bytes, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match (call $frontend $source)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m) (@result.ok (call $codegen.emit $m))))
+  )
+
+  (func $compiler.compile-project
+    (param $files $list<(ref $source-file)>)
+    (result $result<$bytes, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $frontend.project $files)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m) (@result.ok (call $codegen.emit $m))))
+  )
+
+  (func $compiler.check-project
+    (param $files $list<(ref $source-file)>)
+    (result $result<i32, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $frontend.project $files)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m)
+        (@result.ok (@list.len (ref $function-ir) (call $module-ir.functions $m))))
+    ))
+  (@use "../parser/parser.walz"
+    (type $syntax)
+    (type $node)
+    (func $syntax.nodes)
+    (func $node.value)
+    (func $node.kind)
+    (func $node.is)
+    (func $node.children))
+  (func $required
+    (param $syntax (ref $syntax))
+    (result i32)
+    (@effect pure)
+    (@let $nodes (call $syntax.nodes $syntax)
+      (block
+        (result i32)
+        (@for-each $n $nodes
+          (block
+            (if
+              (= (call $node.kind $n) 0)
+              (then
+                (@let $b (call $node.value $n)
+                  (if
+                    (> (@bytes.len $b) 0)
+                    (then
+                      (block
+                        (if
+                          (&&
+                            (= (@bytes.get $b 0) 64)
+                            (i32.eqz
+                              (||
+                                (call $node.is $n "@effect")
+                                (call $node.is $n "@let"))))
+                          (then (return 1))
+                          (else (nop)))
+                        (if
+                          (|| (call $node.is $n "&&") (call $node.is $n "||"))
+                          (then (return 1))
+                          (else (nop))))
+                    )
+                    (else (nop))))
+              )
+              (else (nop)))
+            (if
+              (&&
+                (= (call $node.kind $n) 2)
+                (= (@list.len i32 (call $node.children $n)) 3))
+              (then
+                (if
+                  (call $node.is
+                    (@list.get
+                      (ref $node)
+                      $nodes
+                      (@list.get i32 (call $node.children $n) 0))
+                    "@let")
+                  (then (return 1))
+                  (else (nop))))
+              (else (nop))))
+        )
+        0))))

@@ -7,7 +7,7 @@ use crate::{
 };
 use std::collections::{BTreeMap, BTreeSet};
 
-fn canonical_view(node: &Sexp) -> Sexp {
+pub(crate) fn canonical_view(node: &Sexp) -> Sexp {
     let mut out = node.clone();
     fn walk(n: &mut Sexp) {
         let raw = n.head().unwrap_or("").to_owned();
@@ -97,9 +97,18 @@ pub(crate) fn expand(source: &str, root: &mut Sexp, recover: bool) -> Result<(),
         recover: bool,
     ) -> Result<(), Error> {
         let parts = n.list().unwrap_or(&[]);
-        let declarations = if matches!(n.head(), Some("module" | "namespace" | "file.namespace")) {
+        let declarations = if matches!(
+            n.head(),
+            Some("module" | "component" | "lib" | "namespace" | "file.namespace")
+        ) {
             parts
-                .get(if n.head() == Some("module") { 1 } else { 2 }..)
+                .get(
+                    if matches!(n.head(), Some("module" | "component" | "lib")) {
+                        1
+                    } else {
+                        2
+                    }..,
+                )
                 .unwrap_or_default()
         } else {
             std::slice::from_ref(n)
@@ -109,8 +118,20 @@ pub(crate) fn expand(source: &str, root: &mut Sexp, recover: bool) -> Result<(),
             collect(decl, &mut names);
         }
         for decl in declarations {
-            if matches!(decl.head(), Some("namespace" | "file.namespace")) {
+            if matches!(
+                decl.head(),
+                Some("component" | "lib" | "namespace" | "file.namespace")
+            ) {
                 scope(source, decl, edits, recover)?;
+                continue;
+            }
+            if decl.head() == Some("core")
+                && let Some(p) = decl.list()
+                && p.get(1).and_then(Sexp::atom) == Some("module")
+            {
+                let mut module = decl.clone();
+                module.kind = Kind::List(p[1..].to_vec());
+                scope(source, &module, edits, recover)?;
                 continue;
             }
             let mut decl = decl.clone();

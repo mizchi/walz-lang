@@ -64,7 +64,8 @@ walz build ./my-project
 walz build main.walz output.wasm
 walz build main.walz --target core-js -o dist/app
 walz build main.walz --target component
-walz build main.walz --target component --wit api.wit --world guest
+walz build main.walz --target component --wit-input api.wit --world guest
+walz build examples/components/main.walz --wit  # root component selects the target
 ```
 
 With no arguments, searches the current directory in order: `main.walz`, `src/main.walz`, `main.watz`, `src/main.watz`. It does not search configuration files or parent directories. If both exist, `main.walz` wins. Explicit inputs also accept ordinary WAT.
@@ -114,7 +115,7 @@ Interrupts cancel the guest through Node AbortSignal and wait for host/I/O clean
 | Core Wasm returning numeric values or unit | `walz run main.walz` | Wasmtime value display |
 | Receive shared values such as string/list/Result in JS | `walz run main.walz --target core-js` | JSON-encoded values; strings include quotes |
 | Write raw text to pipes/files | `walz run main.walz --target core-js --stdio` | Content written by explicit I/O imports, without appended return values |
-| Embed in a host as a WIT interface | `walz build main.walz --target component --wit api.wit` | Generates a Component to execute in a host |
+| Embed in a host as a WIT interface | `walz build main.walz --target component --wit-input api.wit` | Generates a Component to execute in a host |
 
 Core displays GC references as `<anyref>` or similar and does not automatically convert them to string contents. `--stdio` grants the standard-I/O capabilities requested by the program; it does not convert return values to raw text.
 `@test` / `@bench` in the same file are excluded from the public ABI of ordinary JS/Component builds. Their types/effects/ownership are still checked; execution and measurement are selected with `walz test` / `walz bench`.

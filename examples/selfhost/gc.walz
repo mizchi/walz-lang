@@ -1,0 +1,25 @@
+(module
+  ;; An immutable, recursive GC list. Compiler and generated code use engine GC.
+  (type $node (struct (field $value i64) (field $next (ref null $node))))
+  (func $main
+    (export "main")
+    (result i64)
+    (local $list (ref null $node))
+    (local $sum i64)
+    (block
+      (result i64)
+      (local.set $list
+        (struct.new $node
+          (i64.const 10)
+          (struct.new $node
+            (i64.const 20)
+            (struct.new $node (i64.const 12) (ref.null $node))))
+      )
+      (block $done
+        (loop $scan
+          (br_if $done (ref.is_null (local.get $list)))
+          (local.set $sum
+            (i64.add (local.get $sum) (struct.get $node $value (local.get $list))))
+          (local.set $list (struct.get $node $next (local.get $list)))
+          (br $scan)))
+      (local.get $sum))))

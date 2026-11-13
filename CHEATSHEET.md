@@ -38,16 +38,57 @@ Each `wat` code block is a complete compilable module; `text` blocks are syntax 
 | `(@use "walz:core" ...)` | Imports compiler-bundled standard types/functions individually by name |
 | `@closure`, `@capture`, `@effect`, `@type.params`, `@where` | Walz declarations/annotations |
 | `@macro` / `@$name` | Declaration/invocation of hygienic expression macros; standard WAT instructions are not redefined |
+| `@lib` / `@world` / `@expose` / `@bind` | Static implementation / generated WIT naming / inferred Component export / explicit Component function connection |
 
 `@` marks extension entry points. Internal `bind`, `while`, `step`, `do`, `catch`, and constraints `shared` / `nonunit` / `callable` belong to their respective entry points and have no prefix. Identifiers remain `$name`.
 
-Known Walz `@` names are reserved and always checked. Other WAT annotations, including `@custom` and their nested payloads, stay opaque.
+Known Walz `@` names are reserved and always checked. Other WAT annotations, including `@custom` and their nested payloads, stay opaque. Reserved `walz:world-v1` and Core `walz:ffi-v1` custom sections carry checked metadata, not executable syntax.
+
+## Component entry
+
+```text
+(component
+  (@world "example:calc@0.1.0" "app")
+  (@lib (func $answer (result i32) (@effect pure) 42))
+  (@expose "answer" $answer))
+```
+
+`walz build main.walz --wit` emits the Component and `world.wit`. An `@lib` file uses `@export` and selective `@use`; it has no runtime entry. `(@bind "module" "member" $component-function)` supplies a Walz import with checked Component types. `(@use "./worker.wasm" (component $Worker))` loads a constructor; instantiate it explicitly. See the [executable example](examples/components/main.walz) and [contracts and limits](docs/component-composition.md).
 
 Standard WAT alone is validated and compiled unchanged. The typed core below checks types, effects, and ownership.
 Extensions mixed with WAT instructions outside the core are limited to syntax-only expansion such as `@let` / `@loop` / `@for`. That path validates all Wasm and returns `analysis.opaque=true` with conservative effects. Adding `@effect pure` cannot obtain detailed analysis or ownership guarantees, and combinations with extensions requiring checks are rejected.
 The typed core returns zero values (unit) or one value. A pair is also one value. Standard WAT `(result i32 i64)` uses the standard-WAT path and is not converted to typed-core pair decomposition.
 
 <a id="ユーザー定義マクロ"></a>
+
+For a resource interface, write `(@bind "test:resources/host" (instance $files))`.
+Keep the `@resource` kind, `@borrow`, `@move` and destructor import explicit.
+The compiler infers the connection contracts and supplies canonical drop;
+[the resource example](examples/components/resources.walz) needs no WIT-input file or policy JSON.
+
+Component source constructors also accept `@type.params` / `@where`.
+`(instantiate $Echo<i32>)` and `(instantiate (@inst $Echo i32))` share a concrete
+definition while creating independent instances. Arguments are explicit closed
+value types; import core types in the caller's static scope. Resources remain
+runtime instance imports. Use named Component references in generic scopes.
+Visible struct/array/variant/newtype definitions can be passed as closed private
+layouts; keep opaque representations and resources behind explicit interfaces.
+See [generic constructors](examples/components/generics.walz) and
+[typed constructors](examples/components/typed-constructors.walz).
+
+`@component.type` reads a value type from an explicit `@bind`, without adding
+authority. Use it in signatures or aliases:
+
+```text
+(@type.alias $Input (@component.type "host" (param "echo" 0)))
+(@type.alias $Output (@component.type "host" (result "echo")))
+(@type.alias $Field (@component.type "host" (type "item") (field "value")))
+```
+
+Selectors also traverse Option/Result/list/tuple/Future/Stream and variant
+payloads. Resources still need explicit declarations and moves. These queries
+can determine constructor arguments from preceding native connections, including
+already specialized instances. Forward/cyclic dependencies are rejected. [Example and limits](docs/component-composition.md#connected-type-queries).
 
 ## User-Defined Macros
 

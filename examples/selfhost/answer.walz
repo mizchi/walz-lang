@@ -1,0 +1,10 @@
+(module
+  ;; Input accepted by the Walz-written bootstrap compiler.
+  (func $add
+    (param $left i32)
+    (param $right i32)
+    (result i32)
+    (@effect pure)
+    (+ $left $right))
+
+  (func $main (export "main") (result i32) (@effect pure) (call $add 40 2)))

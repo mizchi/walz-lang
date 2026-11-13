@@ -13,19 +13,30 @@ impl World {
         module: &Module,
         world: &wit_parser::World,
     ) -> Result<(), Error> {
+        let interfaces = world
+            .imports
+            .iter()
+            .filter_map(|(key, item)| {
+                if let WorldItem::Interface { id, .. } = item {
+                    Some((self.resolve.name_world_key(key), *id))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        self.discover_bound_resources(module, &interfaces)
+    }
+    pub(in crate::component) fn discover_bound_resources(
+        &mut self,
+        module: &Module,
+        interfaces: &BTreeMap<String, wit_parser::InterfaceId>,
+    ) -> Result<(), Error> {
         for (n, t) in module.types.iter().enumerate() {
             let TypeKind::Resource { kind, .. } = &t.kind else {
                 continue;
             };
             let mut found = None;
-            for item in world.imports.values() {
-                let WorldItem::Interface { id, .. } = item else {
-                    continue;
-                };
-                let ns = self
-                    .resolve
-                    .id_of(*id)
-                    .ok_or_else(|| fail("anonymous resource interface"))?;
+            for (ns, id) in interfaces {
                 for (name, id) in &self.resolve.interfaces[*id].types {
                     if let Ok(resource) = crate::wit_bindgen::canonical_resource(&self.resolve, *id)
                         && *kind == crate::wit_bindgen::resource_kind(&self.resolve, resource)?
@@ -150,6 +161,9 @@ impl World {
                 groups.entry(module.clone()).or_default().push(f);
             }
         }
+        for ns in self.value_namespaces() {
+            groups.entry(ns.into()).or_default();
+        }
         let indices = groups
             .keys()
             .enumerate()
@@ -159,6 +173,9 @@ impl World {
         let mut done = std::collections::BTreeSet::new();
         let mut visiting = std::collections::BTreeSet::new();
         for ns in groups.keys() {
+            if !self.imported_functions.contains_key(ns) {
+                continue;
+            }
             self.import_group(ns, &groups, &indices, &mut done, &mut visiting, &mut out)?;
         }
         Ok(out)
@@ -178,15 +195,15 @@ impl World {
         if !visiting.insert(ns.into()) {
             return Err(fail("cyclic resource interface dependencies"));
         }
-        let interface = self
-            .resolve
-            .interfaces
-            .iter()
-            .find(|(id, _)| self.resolve.id_of(*id).as_deref() == Some(ns))
-            .map(|(_, i)| i)
-            .ok_or_else(|| fail(format!("missing WIT interface {ns}")))?;
+        let functions = self
+            .imported_functions
+            .get(ns)
+            .ok_or_else(|| fail(format!("missing bound interface {ns}")))?;
         let group = indices[ns];
         let mut printer = TypeWriter {
+            projection: None,
+            anchors: Default::default(),
+            public: false,
             world: self,
             defined: BTreeMap::new(),
             declarations: String::new(),
@@ -205,8 +222,7 @@ impl World {
             {
                 continue;
             }
-            let expected = interface
-                .functions
+            let expected = functions
                 .get(name)
                 .ok_or_else(|| fail(format!("missing WIT host function {ns}#{name}")))?;
             let params = expected
@@ -232,6 +248,9 @@ impl World {
         for r in self.resources.values().filter(|r| r.namespace == ns) {
             printer.named(r.wit, 0)?;
         }
+        for id in self.values_in(ns) {
+            printer.named(id, 0)?;
+        }
         for resource in printer
             .defined
             .keys()
@@ -239,6 +258,11 @@ impl World {
         {
             if resource.namespace != ns {
                 self.import_group(&resource.namespace, groups, indices, done, visiting, out)?;
+            }
+        }
+        for dependency in self.value_dependencies(printer.defined.keys().copied()) {
+            if dependency != ns {
+                self.import_group(&dependency, groups, indices, done, visiting, out)?;
             }
         }
         out.push_str(&format!(
@@ -251,6 +275,7 @@ impl World {
                 r.name, id.0
             ));
         }
+        out.push_str(&self.value_aliases(ns, group));
         visiting.remove(ns);
         done.insert(ns.into());
         Ok(())

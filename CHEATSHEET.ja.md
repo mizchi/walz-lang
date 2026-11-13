@@ -31,15 +31,52 @@
 | `(@use "./file.walz" ...)` / `(@export ...)` | Walz ソースの選択的な静的リンク／ソース API の公開 |
 | `(@use "walz:core" ...)` | コンパイラに同梱した標準型・標準関数を名前ごとに取り込む |
 | `@closure`・`@capture`・`@effect`・`@type.params`・`@where` | Walz が追加した宣言・注釈 |
+| `@lib`・`@world`・`@expose`・`@bind` | 静的実装・生成WITの命名・推論したComponent公開関数・明示的なComponent関数の接続 |
 | `@macro` / `@$name` | 衛生的な式マクロの宣言／呼び出し。標準 WAT の命令は再定義しない |
 
 `@` は拡張の入口に付ける。内部の `bind`、`while`、`step`、`do`、`catch`、制約の `shared` / `nonunit` / `callable` は、それぞれの入口に属する構文なので接頭辞を付けない。識別子は従来どおり `$name`。
 
-既知の Walz `@` 名は予約され、必ず検査する。それ以外の WAT 注釈は、`@custom` やその入れ子の内容も含めて opaque として扱う。
+既知の Walz `@` 名は予約され、必ず検査する。それ以外の WAT 注釈は、`@custom` やその入れ子の内容も含めて opaque として扱う。予約された `walz:world-v1` とCoreの `walz:ffi-v1` は、実行されない検査対象のメタデータを持つ。
+
+## Componentエントリー
+
+```text
+(component
+  (@world "example:calc@0.1.0" "app")
+  (@lib (func $answer (result i32) (@effect pure) 42))
+  (@expose "answer" $answer))
+```
+
+`walz build main.walz --wit` でComponentと `world.wit` を生成する。`@lib` ファイルは `@export` と選択的な `@use` を使い、実行エントリーを持たない。`(@bind "module" "member" $component-function)` はComponent型を検査してWalzのimportを供給する。`(@use "./worker.wasm" (component $Worker))` は定義を読み込み、instantiateは明示する。[実行例](examples/components/main.walz)と[契約・制限](docs/component-composition.md)を参照。
 
 標準 WAT 単体はそのまま検証・コンパイルする。以下の型付きコアでは型・effect・所有権を検査する。
 コア外の WAT 命令と混在できる拡張は、構文だけで展開できる `@let` / `@loop` / `@for` などに限る。その経路は Wasm 全体を検証し、`analysis.opaque=true` と保守的な effect を返す。`@effect pure` を付けて詳細な解析や所有権の保証を得ることはできず、検査を必要とする拡張との併用は受理しない。
 型付きコアの戻り値は0個（unit）または1値。pair も1値として返す。標準 WAT の `(result i32 i64)` は標準 WAT 経路で扱い、型付きコアの pair 分解へは変換しない。
+
+resourceを含む接続は `(@bind "test:resources/host" (instance $files))` と書く。
+`@resource` のkind・`@borrow`・`@move`・destructor importは明示したまま、接続契約を推論しcanonical dropを供給する。
+[resourceの例](examples/components/resources.walz)はWIT入力ファイルやpolicy JSONを必要としない。
+
+ソースComponentのコンストラクターも `@type.params` / `@where` を取る。
+`(instantiate $Echo<i32>)` と `(instantiate (@inst $Echo i32))` は具体的な定義を共有し、
+独立したinstanceを生成する。型引数は明示的な閉じた値型とし、core型は呼び出し側の静的な
+スコープにimportする。resourceは実行時のinstance importで渡す。
+genericなスコープではComponentを名前で参照する。可視なstruct/array/variant/newtypeの定義も、
+閉じた内部配置として渡せる。opaqueな表現やresourceは明示的なinterfaceで扱う。
+[genericコンストラクターの例](examples/components/generics.walz)と[型付きコンストラクター](examples/components/typed-constructors.walz)を参照。
+
+`@component.type` は明示的な `@bind` から値型を読み取り、権限は追加しない。
+シグネチャやaliasに使う。
+
+```text
+(@type.alias $Input (@component.type "host" (param "echo" 0)))
+(@type.alias $Output (@component.type "host" (result "echo")))
+(@type.alias $Field (@component.type "host" (type "item") (field "value")))
+```
+
+Option/Result/list/tuple/Future/Streamやvariantのpayloadも辿れる。
+resourceの宣言とmoveは引き続き明示する。先行するnativeな接続先や特殊化済みinstanceから、
+コンストラクターの型引数を解決できる。前方・循環依存は拒否する。[例と制限](docs/component-composition.md#connected-type-queries)を参照。
 
 ## ユーザー定義マクロ
 

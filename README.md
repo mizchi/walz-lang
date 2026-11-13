@@ -12,11 +12,14 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 
 `walz:core` provides built-in data types and portable data operations. OS services and other I/O capabilities are supplied through explicit host imports.
 
+Experimental [compiler parts written in Walz](docs/selfhost.md) include a parser, independent type/stack/effect validation and an integer/GC backend. A [bounded frontend](docs/selfhost-frontend.md) adds static modules, fixed high-level forms, minimal core, monomorphization and hygienic expression macros. Full self-hosting remains future work; the Rust compiler is the main implementation. [Subset benchmark captures](docs/selfhost-benchmark.md) require canonical output parity with Rust and predate GC and the modular frontend.
+
 - `@`-prefixed extensions for immutable bindings, loops, enums and pattern matching, named struct construction, and explicit closure captures.
 - Monomorphized generics with constraints, explicit type arguments, and unambiguous call-site inference.
 - Hygienic expression macros with explicit binding scopes and queries to the ordinary type checker.
 - Type, effect, and ownership checking for the typed extension core.
 - Output to Core Wasm, Core Wasm + JSPI, and WebAssembly components.
+- Static `@lib` libraries and explicit Component composition with generic source constructors, inferred `@expose` / `@bind` adapters and `build --wit` interface generation. See [Component composition](docs/component-composition.md).
 - CLI, browser playground, LSP, Vite ESM imports, and a TS7 Content Mapper.
 
 ```wat

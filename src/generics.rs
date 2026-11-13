@@ -91,6 +91,9 @@ pub(crate) struct Expanded {
     pub syntax: Sexp,
     /// Nominal specializations inherit their template's representation privacy.
     pub origins: BTreeMap<String, String>,
+    /// Checked, normalized source arguments; unlike a `.monoN` ordinal these
+    /// retain nominal application identity across independent checker probes.
+    pub arguments: BTreeMap<String, Vec<Sexp>>,
     pub bounds: Vec<crate::bounds::Site>,
     pub(crate) instances: Vec<(Span, Span, String, String)>,
     pub(crate) macros: crate::macros::Report,
@@ -136,6 +139,7 @@ struct Expander<'a> {
     pending: VecDeque<(Sexp, Vec<usize>, Span)>,
     output: Vec<Sexp>,
     origins: BTreeMap<String, String>,
+    arguments: BTreeMap<String, Vec<Sexp>>,
     instances: Vec<(Span, Span, String, String)>,
     nodes: usize,
     check_work: usize,
@@ -298,6 +302,7 @@ impl Expander<'_> {
             };
             self.cache.insert(cache_key, concrete.clone());
             self.origins.insert(concrete.clone(), name.into());
+            self.arguments.insert(concrete.clone(), args.clone());
             if self.nominal.contains(name) {
                 self.nominal.insert(concrete.clone());
             }
@@ -421,6 +426,7 @@ impl Session<'_> {
             items.append(&mut e.output);
         }
         expanded.origins.clone_from(&e.origins);
+        expanded.arguments.clone_from(&e.arguments);
         expanded.instances.clone_from(&e.instances);
         expanded.bounds.clone_from(&e.bounds);
         Ok(())
@@ -444,6 +450,7 @@ pub(crate) fn start<'a>(source: &'a str, root: &Sexp) -> Result<(Expanded, Sessi
         pending: VecDeque::new(),
         output: vec![],
         origins: BTreeMap::new(),
+        arguments: BTreeMap::new(),
         instances: vec![],
         nodes: 0,
         check_work: 0,
@@ -564,6 +571,7 @@ pub(crate) fn start<'a>(source: &'a str, root: &Sexp) -> Result<(Expanded, Sessi
             span: root.span,
         },
         origins: e.origins.clone(),
+        arguments: e.arguments.clone(),
         instances: e.instances.clone(),
         bounds: e.bounds.clone(),
         macros: Default::default(),

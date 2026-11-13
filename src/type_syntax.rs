@@ -379,7 +379,14 @@ fn walk_types(
         }
         "let" | "using" | "for-each" => {
             let start = if items.len() == 5 && items[1].atom().is_some() {
-                map_type(&mut items[2], f)?;
+                if items[2].head() == Some("type")
+                    && let Kind::List(annotation) = &mut items[2].kind
+                    && annotation.len() == 2
+                {
+                    map_type(&mut annotation[1], f)?;
+                } else {
+                    map_type(&mut items[2], f)?;
+                }
                 3
             } else {
                 2

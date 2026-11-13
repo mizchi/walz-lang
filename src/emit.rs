@@ -375,7 +375,12 @@ fn emit_inner(
     if let Some(adapter) = adapter {
         output.push_str(&adapter.helpers());
     }
-    output.push_str(&crate::component::stream_batch::helpers(module, adapter));
+    let batch = crate::component::stream_batch::helpers(module, adapter);
+    output.push_str(&if adapter.is_some() {
+        crate::component::memory::qualify(&batch)
+    } else {
+        batch
+    });
     output.push_str(")\n");
     output
 }

@@ -1,0 +1,5 @@
+(module
+  (@export (type $diagnostic))
+  ;; Stable numeric code and a half-open byte range in the original UTF-8 input.
+  (type $diagnostic (struct (field $code i32) (field $start i32) (field $end i32)))
+  (@abi.type $diagnostic (record "code" "start" "end")))

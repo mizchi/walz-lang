@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
 import { dirname, resolve, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { adaptJspiGlue } from "./jco-compat.mjs";
+import { nativeHostResults } from "./jco-native-results.mjs";
 import { bindCoreModuleUrls } from "./jco-urls.mjs";
 
 const execFile = promisify(execFileCallback);
@@ -43,10 +44,24 @@ export async function build(source, directory, options = {}) {
       path,
       name.endsWith(".js")
         ? (name === "component.js"
-            ? bindCoreModuleUrls(adaptJspiGlue(new TextDecoder().decode(bytes)), coreModuleNames)
-            : adaptJspiGlue(new TextDecoder().decode(bytes)))
+            ? bindCoreModuleUrls(manifest.composition ? nativeHostResults(new TextDecoder().decode(bytes)) : adaptJspiGlue(new TextDecoder().decode(bytes)), coreModuleNames)
+            : manifest.composition ? nativeHostResults(new TextDecoder().decode(bytes)) : adaptJspiGlue(new TextDecoder().decode(bytes)))
         : bytes,
     );
+  }
+  if (manifest.composition) {
+    await writeFile(join(output,"package.json"),'{"type":"module","private":true}\n');
+    await writeFile(join(output,"index.js"),`import {instantiate as create} from './component.js';
+export async function instantiate(options={}) {
+  let getCoreModule=options.getCoreModule;
+  if (!getCoreModule && typeof process!=='undefined' && process.versions?.node) {
+    getCoreModule=async name=>WebAssembly.compile(await (await import('node:fs/promises')).readFile(new URL(name,import.meta.url)));
+  }
+  const exports=await create(getCoreModule,options.imports??{},options.instantiateCore??WebAssembly.instantiate);
+  return {api:exports,exports};
+}
+`);
+    return output;
   }
   await copyFile(
     new URL("./host.mjs", import.meta.url),

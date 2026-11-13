@@ -1,5 +1,10 @@
 # Type Arguments and Monomorphization
 
+Source Component constructors also accept explicit closed value and visible nominal layout arguments with
+`@type.params` / `@where`; see [Component composition](component-composition.md#generic-component-constructors).
+Their specializations share definitions, while runtime instances and resource
+identity remain explicit. The rules below describe typed-core declarations.
+
 Place `(@type.params $T ...)` immediately after a declaration name. The syntax is shared by `func`, `type`, `@type.alias`,
 and `@closure`; explicit application uses `(@inst $name T...)`. Ordinary function calls
 can omit type arguments uniquely determined by the arguments and expected type. This introduces no user-defined traits, dictionary passing, or runtime type erasure. Ordinary WAT functions and calls remain available unchanged.

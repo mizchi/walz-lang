@@ -40,7 +40,7 @@ An unused imported generic may be absent from `types`; that command reports the 
 walz run --target core-js
 walz build --target core-js -o dist/app
 walz build --target component -o dist/app.component.wasm
-walz build src/main.walz --target component --wit api.wit --world guest
+walz build src/main.walz --target component --wit-input api.wit --world guest
 walz run src/main.walz --target core-js --bindings policy.json --host host.mjs
 walz test tests --target core-js --bindings policy.json --host host.mjs
 ```

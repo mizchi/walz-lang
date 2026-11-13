@@ -1,0 +1,97 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@use "walz:core"
+    (type $bytes-builder)
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.finish))
+  (@export
+    (func $encoding.write-u32)
+    (func $encoding.write-s32)
+    (func $encoding.u32)
+    (func $encoding.s32)
+    (func $encoding.write-s64)
+    (func $encoding.s64))
+  (func $encoding.write-u32
+    (param $out (ref $bytes-builder))
+    (param $value i32)
+    (@effect reads writes allocates)
+    (@loop $write
+      (bind $n i32 $value)
+      (@let $next (>>> $n 7)
+        (block
+          (call $bytes-builder.byte $out
+            (| (& $n 127) (if (result i32) $next (then 128) (else 0))))
+          (if $next (then (@recur $write $next)) (else (nop))))
+      )))
+
+  (func $encoding.write-s32
+    (param $out (ref $bytes-builder))
+    (param $value i32)
+    (@effect reads writes allocates)
+    (@loop $write
+      (bind $n i32 $value)
+      (@let
+        (($byte (& $n 127))
+         ($next (>> $n 7))
+         ($done
+           (||
+             (&& (= $next 0) (= (& $byte 64) 0))
+             (&& (= $next -1) (!= (& $byte 64) 0))))
+        )
+        (block
+          (call $bytes-builder.byte $out
+            (| $byte (if (result i32) $done (then 0) (else 128))))
+          (if $done (then (nop)) (else (@recur $write $next))))
+      )))
+
+  (func $encoding.u32
+    (param $n i32)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let $b (call $bytes-builder.new 5)
+      (block
+        (result $bytes)
+        (call $encoding.write-u32 $b $n)
+        (call $bytes-builder.finish $b))))
+
+  (func $encoding.s32
+    (param $n i32)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let $b (call $bytes-builder.new 5)
+      (block
+        (result $bytes)
+        (call $encoding.write-s32 $b $n)
+        (call $bytes-builder.finish $b))))
+
+  (func $encoding.write-s64
+    (param $out (ref $bytes-builder))
+    (param $value i64)
+    (@effect reads writes allocates)
+    (@loop $write
+      (bind $n i64 $value)
+      (@let
+        (($byte (i32.wrap_i64 (& $n (i64.const 127))))
+         ($next (>> $n (i64.const 7)))
+         ($done
+           (||
+             (&& (= $next (i64.const 0)) (= (& $byte 64) 0))
+             (&& (= $next (i64.const -1)) (!= (& $byte 64) 0))))
+        )
+        (block
+          (call $bytes-builder.byte $out
+            (| $byte (if (result i32) $done (then 0) (else 128))))
+          (if $done (then (nop)) (else (@recur $write $next))))
+      )))
+
+  (func $encoding.s64
+    (param $n i64)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let $b (call $bytes-builder.new 10)
+      (block
+        (result $bytes)
+        (call $encoding.write-s64 $b $n)
+        (call $bytes-builder.finish $b))))
+)

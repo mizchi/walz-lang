@@ -1,0 +1,10 @@
+(module
+  (@export (macro $twice))
+  (@macro $twice
+    (rule
+      (?value:expr)
+      (infer (?T ?value))
+      (when (Add ?value))
+      (@let $saved (type ?T) ?value
+        (+ $saved $saved))))
+)

@@ -1,0 +1,535 @@
+(module
+  (@use "walz:core" (type $list) (type $result) (type $bytes) (type $string))
+  (@use "../parser/parser.walz"
+    (type $syntax)
+    (type $node)
+    (type $diagnostic)
+    (func $syntax.nodes)
+    (func $syntax.roots)
+    (func $node.value)
+    (func $node.is)
+    (func $node.start)
+    (func $node.end)
+    (func $node.kind))
+  (@use "../parser/number.walz" (func $number.i32))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "walz:core"
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.len)
+    (func $list-builder.finish))
+  (@use "./syntax.walz" (func $sx.child) (func $sx.len) (func $sx.head) (func $sx.name))
+  (@use "./ir.walz" (type $gc-type-ir) (type $field-ir) (func $ir.ref))
+  (@use "./gc-types.walz" (func $gc.validate))
+  (@export
+    (opaque $type-env)
+    (func $types.collect)
+    (func $types.defs)
+    (func $types.value)
+    (func $types.heap)
+    (func $types.field))
+  (type $Entry
+    (struct
+      (field $node (ref $node))
+      (field $start i32)
+      (field $end i32)
+      (field $explicit i32)))
+  (type $type-env
+    (struct
+      (field $nodes $list<(ref $node)>)
+      (field $items (mut $list<(ref $Entry)>))
+      (field $defs (mut $list<(ref $gc-type-ir)>))
+      (field $error (mut (ref null $diagnostic))))
+  )
+  (func $types.defs
+    (param $e (ref $type-env))
+    (result $list<(ref $gc-type-ir)>)
+    (@effect reads)
+    (struct.get $type-env $defs $e))
+
+  (func $child
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (param $i i32)
+    (result (ref $node))
+    (@effect pure)
+    (call $sx.child (struct.get $type-env $nodes $e) $n $i))
+
+  (func $head
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (param $s $string)
+    (result i32)
+    (@effect pure)
+    (call $sx.head (struct.get $type-env $nodes $e) $n $s))
+
+  (func $fail
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $type-env $error $e))
+      (then
+        (struct.set $type-env $error $e
+          (struct.new $diagnostic $code (call $node.start $n) (call $node.end $n))))
+      (else (nop))))
+
+  (func $abstract
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (if
+      (result i32)
+      (call $node.is $n "any")
+      (then -18)
+      (else
+        (if
+          (result i32)
+          (call $node.is $n "eq")
+          (then -19)
+          (else
+            (if
+              (result i32)
+              (call $node.is $n "i31")
+              (then -20)
+              (else
+                (if
+                  (result i32)
+                  (call $node.is $n "struct")
+                  (then -21)
+                  (else
+                    (if
+                      (result i32)
+                      (call $node.is $n "array")
+                      (then -22)
+                      (else
+                        (if
+                          (result i32)
+                          (call $node.is $n "none")
+                          (then -23)
+                          (else -1000))))
+                  ))))
+          ))))
+  )
+
+  (func $named
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (result i32)
+    (@effect pure)
+    (&& (> (call $sx.len $n) 1) (call $sx.name (call $child $e $n 1))))
+
+  (func $types.heap
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (result i32)
+    (@effect reads)
+    (block
+      (result i32)
+      (if (!= (call $node.kind $n) 0) (then (return -1000)) (else (nop)))
+      (@let $a (call $abstract $n)
+        (if (!= $a -1000) (then (return $a)) (else (nop))))
+      (if
+        (call $sx.name $n)
+        (then
+          (@for $find
+            (bind $i i32 0)
+            (while (< $i (@list.len (ref $Entry) (struct.get $type-env $items $e))))
+            (step (+ $i 1))
+            (@let $d
+              (struct.get $Entry $node (@list.get (ref $Entry) (struct.get $type-env $items $e) $i))
+              (if
+                (&&
+                  (call $named $e $d)
+                  (call $bytes.equal
+                    (call $node.value $n)
+                    (call $node.value (call $child $e $d 1))))
+                (then (return $i))
+                (else (nop))))
+          ))
+        (else
+          (@match (call $number.i32 (call $node.value $n))
+            (@case none () (nop))
+            (@case some ($i)
+              (if
+                (i32.lt_u $i (@list.len (ref $Entry) (struct.get $type-env $items $e)))
+                (then (return $i))
+                (else (nop))))
+          )))
+      -1000))
+
+  (func $types.value
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (result i32)
+    (@effect reads)
+    (block
+      (result i32)
+      (if (call $node.is $n "i32") (then (return 127)) (else (nop)))
+      (if (call $node.is $n "i64") (then (return 126)) (else (nop)))
+      (if
+        (call $head $e $n "ref")
+        (then
+          (@let $count (call $sx.len $n)
+            (if
+              (||
+                (= $count 2)
+                (&& (= $count 3) (call $node.is (call $child $e $n 1) "null")))
+              (then
+                (@let $heap (call $types.heap $e (call $child $e $n (- $count 1)))
+                  (if
+                    (!= $heap -1000)
+                    (then (return (call $ir.ref $heap (= $count 3))))
+                    (else (nop))))
+              )
+              (else (nop))))
+        )
+        (else (nop)))
+      0))
+
+  (func $composite
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (result (ref $node))
+    (@effect pure)
+    (@let $body (call $child $e $n (+ 1 (call $named $e $n)))
+      (if
+        (result (ref $node))
+        (call $head $e $body "sub")
+        (then (call $child $e $body (- (call $sx.len $body) 1)))
+        (else $body))))
+
+  (func $storage
+    (param $e (ref $type-env))
+    (param $n (ref $node))
+    (result (ref $field-ir))
+    (@effect reads writes allocates)
+    (@let
+      (($mut (call $head $e $n "mut"))
+       ($value
+         (if
+           (result (ref $node))
+           (&& $mut (= (call $sx.len $n) 2))
+           (then (call $child $e $n 1))
+           (else $n))))
+      (@let $t
+        (if
+          (result i32)
+          (call $node.is $value "i8")
+          (then 120)
+          (else
+            (if
+              (result i32)
+              (call $node.is $value "i16")
+              (then 119)
+              (else (call $types.value $e $value))))
+        )
+        (block
+          (result (ref $field-ir))
+          (if (= $t 0) (then (call $fail $e $n 118)) (else (nop)))
+          (struct.new $field-ir $t $mut))))
+  )
+
+  (func $entry
+    (param $e (ref $type-env))
+    (param $out (ref $list-builder<(ref $Entry)>))
+    (param $n (ref $node))
+    (param $start i32)
+    (param $end i32)
+    (param $explicit i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (||
+          (i32.eqz (call $head $e $n "type"))
+          (|| (< (call $sx.len $n) 2) (!= (call $sx.len $n) (+ 2 (call $named $e $n))))
+        )
+        (then (call $fail $e $n 118))
+        (else (nop)))
+      (if
+        (>= (call $list-builder.len<(ref $Entry)> $out) 1024)
+        (then (call $fail $e $n 150))
+        (else
+          (call $list-builder.push<(ref $Entry)> $out
+            (struct.new $Entry $n $start $end $explicit))))
+    ))
+
+  (func $types.field
+    (param $e (ref $type-env))
+    (param $index i32)
+    (param $n (ref $node))
+    (result i32)
+    (@effect reads)
+    (block
+      (result i32)
+      (if
+        (i32.ge_u $index (@list.len (ref $Entry) (struct.get $type-env $items $e)))
+        (then (return -1))
+        (else (nop)))
+      (@let
+        (($entry (@list.get (ref $Entry) (struct.get $type-env $items $e) $index))
+         ($body (call $composite $e (struct.get $Entry $node $entry)))
+         ($count (- (call $sx.len $body) 1)))
+        (block
+          (result i32)
+          (if
+            (call $sx.name $n)
+            (then
+              (@for $fields
+                (bind $i i32 0)
+                (while (< $i $count))
+                (step (+ $i 1))
+                (@let $f (call $child $e $body (+ $i 1))
+                  (if
+                    (&&
+                      (= (call $sx.len $f) 3)
+                      (call $bytes.equal
+                        (call $node.value (call $child $e $f 1))
+                        (call $node.value $n)))
+                    (then (return $i))
+                    (else (nop))))
+              ))
+            (else
+              (if
+                (= (call $node.kind $n) 0)
+                (then
+                  (@match (call $number.i32 (call $node.value $n))
+                    (@case none () (nop))
+                    (@case some ($i)
+                      (if (i32.lt_u $i $count) (then (return $i)) (else (nop))))
+                  ))
+                (else (nop))))
+          )
+          -1))))
+
+  (func $types.collect
+    (param $syntax (ref $syntax))
+    (result $result<(ref $type-env), (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@let
+      (($e
+         (struct.new $type-env
+           (call $syntax.nodes $syntax)
+           (@list.new (ref $Entry))
+           (@list.new (ref $gc-type-ir))
+           (ref.null $diagnostic)))
+       ($out (call $list-builder.new<(ref $Entry)>))
+       ($defs (call $list-builder.new<(ref $gc-type-ir)>)))
+      (block
+        (result $result<(ref $type-env), (ref $diagnostic)>)
+        (if
+          (!= (@list.len i32 (call $syntax.roots $syntax)) 1)
+          (then (return (@result.err (struct.new $diagnostic 100 0 0))))
+          (else (nop)))
+        (@let $root
+          (@list.get (ref $node) (struct.get $type-env $nodes $e) (@list.get i32 (call $syntax.roots $syntax) 0))
+          (@for $items
+            (bind $i i32 1)
+            (while (< $i (call $sx.len $root)))
+            (step (+ $i 1))
+            (@let
+              (($n (call $child $e $root $i))
+               ($start (call $list-builder.len<(ref $Entry)> $out)))
+              (if
+                (call $head $e $n "type")
+                (then (call $entry $e $out $n $start (+ $start 1) 0))
+                (else
+                  (if
+                    (call $head $e $n "rec")
+                    (then
+                      (block
+                        (if
+                          (< (call $sx.len $n) 2)
+                          (then (call $fail $e $n 118))
+                          (else (nop)))
+                        (@for $group
+                          (bind $j i32 1)
+                          (while (< $j (call $sx.len $n)))
+                          (step (+ $j 1))
+                          (call $entry $e $out
+                            (call $child $e $n $j)
+                            $start
+                            (+ $start (- (call $sx.len $n) 1))
+                            1))))
+                    (else (nop))))
+              ))))
+        (struct.set $type-env $items $e (call $list-builder.finish<(ref $Entry)> $out))
+        (if
+          (i32.eqz (ref.is_null (struct.get $type-env $error $e)))
+          (then
+            (return (@result.err (ref.as_non_null (struct.get $type-env $error $e))))
+          )
+          (else (nop)))
+        (call $unique $e)
+        (@for $types
+          (bind $i i32 0)
+          (while (< $i (@list.len (ref $Entry) (struct.get $type-env $items $e))))
+          (step (+ $i 1))
+          (@let
+            (($entry (@list.get (ref $Entry) (struct.get $type-env $items $e) $i))
+             ($n (struct.get $Entry $node $entry))
+             ($body (call $child $e $n (+ 1 (call $named $e $n))))
+             ($sub (call $head $e $body "sub"))
+             ($final
+               (if
+                 (result i32)
+                 $sub
+                 (then
+                   (&&
+                     (> (call $sx.len $body) 1)
+                     (call $node.is (call $child $e $body 1) "final")))
+                 (else 1)))
+             ($at (+ 1 (&& $sub $final)))
+             ($parent
+               (if
+                 (result i32)
+                 (&& $sub (= (call $sx.len $body) (+ $at 2)))
+                 (then (call $types.heap $e (call $child $e $body $at)))
+                 (else -1))))
+            (block
+              (if
+                (&& $sub
+                  (||
+                    (< (call $sx.len $body) (+ $at 1))
+                    (> (call $sx.len $body) (+ $at 2))))
+                (then (call $fail $e $body 118))
+                (else (nop)))
+              (if (< $parent -1) (then (call $fail $e $body 118)) (else (nop)))
+              (@let
+                (($c (call $composite $e $n))
+                 ($array (call $head $e $c "array"))
+                 ($fields (call $list-builder.new<(ref $field-ir)>)))
+                (block
+                  (if
+                    (i32.eqz (|| $array (call $head $e $c "struct")))
+                    (then (call $fail $e $c 118))
+                    (else (nop)))
+                  (if $array
+                    (then
+                      (if
+                        (= (call $sx.len $c) 2)
+                        (then
+                          (call $list-builder.push<(ref $field-ir)> $fields
+                            (call $storage $e (call $child $e $c 1))))
+                        (else (call $fail $e $c 118))))
+                    (else
+                      (@for $fields
+                        (bind $j i32 1)
+                        (while (< $j (call $sx.len $c)))
+                        (step (+ $j 1))
+                        (@let $f (call $child $e $c $j)
+                          (if
+                            (&&
+                              (call $head $e $f "field")
+                              (||
+                                (= (call $sx.len $f) 2)
+                                (&&
+                                  (= (call $sx.len $f) 3)
+                                  (call $sx.name (call $child $e $f 1))))
+                            )
+                            (then
+                              (call $list-builder.push<(ref $field-ir)> $fields
+                                (call $storage $e
+                                  (call $child $e $f (- (call $sx.len $f) 1))))
+                            )
+                            (else (call $fail $e $f 118))))
+                      )))
+                  (call $list-builder.push<(ref $gc-type-ir)> $defs
+                    (struct.new $gc-type-ir
+                      $array
+                      (call $list-builder.finish<(ref $field-ir)> $fields)
+                      $parent
+                      $final
+                      (struct.get $Entry $start $entry)
+                      (struct.get $Entry $end $entry)
+                      (struct.get $Entry $explicit $entry))))
+              ))))
+        (struct.set $type-env $defs $e
+          (call $list-builder.finish<(ref $gc-type-ir)> $defs))
+        (if
+          (i32.eqz (ref.is_null (struct.get $type-env $error $e)))
+          (then
+            (return (@result.err (ref.as_non_null (struct.get $type-env $error $e))))
+          )
+          (else (nop)))
+        (@match (call $gc.validate (call $types.defs $e))
+          (@case err ($d) (@result.err $d))
+          (@case ok ($n) (@result.ok $e))))
+    ))
+
+  (func $unique-fields
+    (param $e (ref $type-env))
+    (param $body (ref $node))
+    (@effect reads writes allocates)
+    (@for $fields
+      (bind $a i32 1)
+      (while (< $a (call $sx.len $body)))
+      (step (+ $a 1))
+      (@let
+        (($field (call $child $e $body $a)))
+        (if
+          (= (call $sx.len $field) 3)
+          (then
+            (block
+              (@for $earlier
+                (bind $b i32 1)
+                (while (< $b $a))
+                (step (+ $b 1))
+                (@let
+                  (($previous (call $child $e $body $b)))
+                  (if
+                    (&&
+                      (= (call $sx.len $previous) 3)
+                      (call $bytes.equal
+                        (call $node.value (call $child $e $field 1))
+                        (call $node.value (call $child $e $previous 1))))
+                    (then (block (call $fail $e $field 119)))
+                    (else (nop))))
+              )))
+          (else (nop))))
+    ))
+
+  (func $unique
+    (param $e (ref $type-env))
+    (@effect reads writes allocates)
+    (@for $types
+      (bind $i i32 0)
+      (while (< $i (@list.len (ref $Entry) (struct.get $type-env $items $e))))
+      (step (+ $i 1))
+      (@let
+        (($n
+           (struct.get $Entry $node
+             (@list.get (ref $Entry) (struct.get $type-env $items $e) $i))))
+        (block
+          (if
+            (call $named $e $n)
+            (then
+              (block
+                (@for $earlier
+                  (bind $j i32 0)
+                  (while (< $j $i))
+                  (step (+ $j 1))
+                  (@let
+                    (($previous
+                       (struct.get $Entry $node
+                         (@list.get (ref $Entry) (struct.get $type-env $items $e) $j))))
+                    (if
+                      (&&
+                        (call $named $e $previous)
+                        (call $bytes.equal
+                          (call $node.value (call $child $e $n 1))
+                          (call $node.value (call $child $e $previous 1))))
+                      (then (block (call $fail $e $n 118)))
+                      (else (nop))))
+                )))
+            (else (nop)))
+          (@let
+            (($body (call $composite $e $n)))
+            (if
+              (call $head $e $body "struct")
+              (then (block (call $unique-fields $e $body)))
+              (else (nop))))
+        ))))
+)

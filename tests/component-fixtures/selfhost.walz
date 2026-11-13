@@ -1,0 +1,164 @@
+(module
+  (@use "walz:core" (type $bytes) (type $list) (type $result))
+  (@use "../../walz/parser/parser.walz"
+    (type $syntax)
+    (type $node)
+    (type $diagnostic)
+    (func $parser.parse)
+    (func $syntax.nodes)
+    (func $syntax.roots)
+    (func $node.kind)
+    (func $node.start)
+    (func $node.end)
+    (func $node.value)
+    (func $node.children))
+  (@use "../../walz/core/list-builder.walz"
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@use "../../walz/codegen/compiler.walz"
+    (func $compiler.compile)
+    (func $compiler.check)
+    (func $compiler.compile-project)
+    (func $compiler.check-project)
+    (func $modules.imports))
+  (@use "../../walz/codegen/encoding.walz" (func $encoding.u32) (func $encoding.s32))
+  (@use "walz:core"
+    (func $bytes-builder.new)
+    (func $bytes-builder.append)
+    (func $bytes-builder.finish))
+  (type $NodeView
+    (struct
+      (field $kind i32)
+      (field $start i32)
+      (field $end i32)
+      (field $value $bytes)
+      (field $children $list<i32>)))
+  (@abi.type $NodeView (record "kind" "start" "end" "value" "children"))
+  (type $TreeView
+    (struct (field $roots $list<i32>) (field $nodes $list<(ref $NodeView)>)))
+  (@abi.type $TreeView (record "roots" "nodes"))
+  (func $compile
+    (export "compile")
+    (param $source $bytes)
+    (result $result<$bytes, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (call $compiler.compile $source))
+
+  (func $build-bytes
+    (export "build-bytes")
+    (param $limit i32)
+    (param $input $bytes)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (@let $b (call $bytes-builder.new $limit)
+      (block
+        (result $bytes)
+        (call $bytes-builder.append $b $input)
+        (call $bytes-builder.finish $b))))
+
+  (func $inspect
+    (export "inspect")
+    (param $source $bytes)
+    (result $result<(ref $TreeView), (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match (call $parser.parse $source)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($s)
+        (@let
+          (($nodes (call $syntax.nodes $s))
+           ($out (call $list-builder.new<(ref $NodeView)>)))
+          (block
+            (result $result<(ref $TreeView), (ref $diagnostic)>)
+            (@for-each $n $nodes
+              (call $list-builder.push<(ref $NodeView)> $out
+                (struct.new $NodeView
+                  (call $node.kind $n)
+                  (call $node.start $n)
+                  (call $node.end $n)
+                  (call $node.value $n)
+                  (call $node.children $n))))
+            (@result.ok
+              (struct.new $TreeView
+                (call $syntax.roots $s)
+                (call $list-builder.finish<(ref $NodeView)> $out))))
+        ))))
+
+  (func $uleb
+    (export "uleb")
+    (param $n i32)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (call $encoding.u32 $n))
+
+  (func $sleb
+    (export "sleb")
+    (param $n i32)
+    (result $bytes)
+    (@effect reads writes allocates)
+    (call $encoding.s32 $n))
+
+  (func $check
+    (export "check")
+    (param $source $bytes)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (call $compiler.check $source))
+  (@use "../../walz/checker/checker.walz"
+    (func $checker.validate)
+    (func $module-ir.functions))
+  (@use "../../walz/checker/ir.walz"
+    (type $function-ir)
+    (type $instruction-ir)
+    (type $export-ir))
+  (func $check-ir
+    (export "check-ir")
+    (param $params $list<i32>)
+    (param $locals $list<i32>)
+    (param $result i32)
+    (param $code $list<(ref $instruction-ir)>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match
+      (call $checker.validate (@list.new (ref $function-ir) (struct.new $function-ir $params $locals $result $code 0 0)) (@list.new (ref $export-ir)))
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m)
+        (@result.ok (@list.len (ref $function-ir) (call $module-ir.functions $m))))
+    ))
+  (@use "../../walz/checker/ir.walz" (type $gc-type-ir) (type $field-ir))
+  (@use "../../walz/checker/checker.walz" (func $checker.validate-gc))
+  (func $check-gc-ir
+    (export "check-gc-ir")
+    (param $types $list<(ref $gc-type-ir)>)
+    (param $params $list<i32>)
+    (param $locals $list<i32>)
+    (param $result i32)
+    (param $code $list<(ref $instruction-ir)>)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@match
+      (call $checker.validate-gc $types (@list.new (ref $function-ir) (struct.new $function-ir $params $locals $result $code 0 0)) (@list.new (ref $export-ir)))
+      (@case err ($e) (@result.err $e))
+      (@case ok ($m) (@result.ok 1))))
+  (@use "../../walz/frontend/tree.walz" (type $source-file) (type $project-error))
+  (func $compile-project
+    (export "compile-project")
+    (param $files $list<(ref $source-file)>)
+    (result $result<$bytes, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (call $compiler.compile-project $files))
+
+  (func $check-project
+    (export "check-project")
+    (param $files $list<(ref $source-file)>)
+    (result $result<i32, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (call $compiler.check-project $files))
+
+  (func $imports
+    (export "imports")
+    (param $source $bytes)
+    (result $result<$list<(ref $source-file)>, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (call $modules.imports $source)))

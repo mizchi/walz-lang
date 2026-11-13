@@ -1,5 +1,6 @@
 // Development adapter: a standard WIT Component, transpiled without a Walz SDK.
 import {transpileBytes} from '@bytecodealliance/jco-transpile';
+import {nativeHostResults} from './jco-native-results.mjs';
 import {execFile as callback} from 'node:child_process';
 import {promisify} from 'node:util';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -8,13 +9,13 @@ import {fileURLToPath} from 'node:url';
 const execFile=promisify(callback),root=fileURLToPath(new URL('..',import.meta.url));
 export async function buildNative(source,wit,directory,{bindings,world}={}){
  const output=resolve(directory);await mkdir(output,{recursive:true});const binary=join(output,'native.wasm');
- const args=['run','--locked','--quiet','--','build',resolve(source),'--target','component','--wit',resolve(wit),'-o',binary];
+ const args=['run','--locked','--quiet','--','build',resolve(source),'--target','component','--wit-input',resolve(wit),'-o',binary];
  if(bindings)args.push('--bindings',resolve(bindings));if(world)args.push('--world',world);
  await execFile('cargo',args,{cwd:root,maxBuffer:4*1024*1024});
  const generated=await transpileBytes(await readFile(binary),{name:'native',instantiation:'async',asyncMode:'jspi',wasiShim:false,nodejsCompat:false,base64Cutoff:0,noComponentErrorWrapping:false,bindgenEnableWasmExnref:true,multiMemory:true});
  for(const[name,bytes]of Object.entries(generated.files)){
   const path=resolve(output,name);if(!path.startsWith(output+'/'))throw new Error('invalid native artifact path');
-  await mkdir(dirname(path),{recursive:true});await writeFile(path,bytes);
+  await mkdir(dirname(path),{recursive:true});await writeFile(path,name.endsWith('.js')?nativeHostResults(new TextDecoder().decode(bytes)):bytes);
  }
  await writeFile(join(output,'package.json'),'{"type":"module"}\n');return output;
 }

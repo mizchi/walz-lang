@@ -1,0 +1,180 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $string)
+    (type $list)
+    (type $result)
+    (type $tuple)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $source-file)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.is)
+    (func $tree.head)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.copy)
+    (func $tree.name)
+    (func $tree.error)
+    (func $tree.read)
+    (func $tree.slice)
+    (func $tree.eq)
+    (func $work.snapshot)
+    (func $t0)
+    (func $t1)
+    (func $t2)
+    (func $t3)
+    (func $t4)
+    (func $t5)
+    (func $t6))
+  (@use "../core/bytes.walz" (func $bytes.concat))
+  (@export (func $path.normalize) (func $path.resolve))
+  (type $Part (struct (field $value $bytes) (field $parent (ref null $Part))))
+  (func $render
+    (param $p (ref null $Part))
+    (result $bytes)
+    (@effect reads writes allocates)
+    (if
+      (result $bytes)
+      (ref.is_null $p)
+      (then (@bytes.new))
+      (else
+        (@let
+          (($p (ref.as_non_null $p))
+           ($before (call $render (struct.get $Part $parent $p))))
+          (if
+            (result $bytes)
+            (= (@bytes.len $before) 0)
+            (then (struct.get $Part $value $p))
+            (else
+              (call $bytes.concat
+                (call $bytes.concat $before (@string.bytes "/"))
+                (struct.get $Part $value $p))))
+        ))))
+
+  (func $path.normalize
+    (param $b $bytes)
+    (param $n (ref $tree))
+    (result $result<$string, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<$string, (ref $project-error)>)
+      (if
+        (> (@bytes.len $b) 4096)
+        (then (return (@result.err (call $tree.error $n 200))))
+        (else (nop)))
+      (@loop $scan
+        (bind $i i32 0)
+        (bind $start i32 0)
+        (bind $p (ref null $Part) (ref.null $Part))
+        (result $result<$string, (ref $project-error)>)
+        (if
+          (result $result<$string, (ref $project-error)>)
+          (> $i (@bytes.len $b))
+          (then
+            (@let
+              (($out (call $render $p))
+               ($out
+                 (if
+                   (result $bytes)
+                   (&& (> (@bytes.len $b) 0) (= (@bytes.get $b 0) 47))
+                   (then (call $bytes.concat (@string.bytes "/") $out))
+                   (else $out))))
+              (@match (@string.from-bytes $out)
+                (@case none () (@result.err (call $tree.error $n 200)))
+                (@case some ($path) (@result.ok $path))))
+          )
+          (else
+            (if
+              (result $result<$string, (ref $project-error)>)
+              (|| (= $i (@bytes.len $b)) (= (@bytes.get $b $i) 47))
+              (then
+                (@let
+                  (($part (@bytes.slice $b $start (- $i $start))))
+                  (if
+                    (result $result<$string, (ref $project-error)>)
+                    (call $bytes.equal $part (@string.bytes ".."))
+                    (then
+                      (if
+                        (result $result<$string, (ref $project-error)>)
+                        (ref.is_null $p)
+                        (then (return (@result.err (call $tree.error $n 200))))
+                        (else
+                          (@recur $scan
+                            (+ $i 1)
+                            (+ $i 1)
+                            (struct.get $Part $parent (ref.as_non_null $p))))
+                      ))
+                    (else
+                      (@recur $scan
+                        (+ $i 1)
+                        (+ $i 1)
+                        (if
+                          (result (ref null $Part))
+                          (||
+                            (= (@bytes.len $part) 0)
+                            (call $bytes.equal $part (@string.bytes ".")))
+                          (then $p)
+                          (else (struct.new $Part $part $p))))
+                    ))))
+              (else (@recur $scan (+ $i 1) $start $p))))
+        ))))
+
+  (func $path.resolve
+    (param $from $string)
+    (param $b $bytes)
+    (param $n (ref $tree))
+    (result $result<$string, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<$string, (ref $project-error)>)
+      (if
+        (call $bytes.equal $b (@string.bytes "walz:core"))
+        (then (return (@result.ok "walz:core")))
+        (else (nop)))
+      (if
+        (i32.eqz
+          (&&
+            (>= (@bytes.len $b) 2)
+            (&&
+              (= (@bytes.get $b 0) 46)
+              (||
+                (= (@bytes.get $b 1) 47)
+                (&&
+                  (>= (@bytes.len $b) 3)
+                  (&& (= (@bytes.get $b 1) 46) (= (@bytes.get $b 2) 47))))
+            )))
+        (then (return (@result.err (call $tree.error $n 200))))
+        (else (nop)))
+      (@let
+        (($from (@string.bytes $from))
+         ($slash
+           (@loop $dir
+             (bind $i i32 0)
+             (bind $last i32 0)
+             (result i32)
+             (if
+               (result i32)
+               (= $i (@bytes.len $from))
+               (then $last)
+               (else
+                 (@recur $dir
+                   (+ $i 1)
+                   (if
+                     (result i32)
+                     (= (@bytes.get $from $i) 47)
+                     (then (+ $i 1))
+                     (else $last))))
+             ))))
+        (call $path.normalize (call $bytes.concat (@bytes.slice $from 0 $slash) $b) $n))))
+)
