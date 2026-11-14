@@ -1,10 +1,11 @@
 # Bootstrap modular frontend
 
 The compiler written in Walz implements static modules, fixed-form lowering,
-GC effect bounds, a minimal core library, monomorphization and declarative user
-macros toward self-hosting. The Rust compiler still builds the compiler and its
-Core/JSPI or Component adapter. Compiling the compiler's own complete
-sources and comparing stage 1/2 artifacts remain future work.
+GC effect bounds, a minimal core library, monomorphization, declarative user
+macros and checked record/tuple ABI views. This bounded compiler compiles its own
+sources into matching Core stages. Rust still builds the seed and its Core/JSPI
+or Component adapter; broader feature parity remains incomplete. See
+[self-compiled stages](selfhost-stages.md).
 
 See [the lower-level compiler contracts](selfhost.md) for parsing, raw IR,
 independent validation, binary encoding and diagnostics. This frontend runs in
@@ -61,18 +62,27 @@ point to the whole function rather than a particular literal.
 ```text
 files → parse / generic spelling normalization
       → static linking and opaque access checks
+      → checked source ABI views and retained layout facts
       → specialization and typed core expansion
       → lexical/control lowering and GC recursion-group ordering
-      → folded source + origin map
-      → reparse → independent type/stack/effect validation
+      → bounded postorder syntax + origin map
+      → independent type/stack/effect validation
       → opaque checked module → binary emitter
 ```
 
 The frontend's public immutable trees and expanded text are untrusted data.
+Generated syntax is assembled directly, without text serialization or reparsing;
+the optional expansion/debug printer retains its separate text limit.
 Only the independent validator creates the opaque module accepted by the emitter.
 Every emitted instruction is checked, including unreachable code. Fixed-form
 expansion is not a substitute for type, effect, ownership or proof checking.
 Unsupported contracts are rejected rather than silently removed.
+
+Supported `@abi.type` record/tuple annotations receive a separate opaque
+certificate before specialization. Only those exact checked nodes may be removed
+from Core syntax; immutable shape/layout facts remain available. This does not
+add WIT or host adapters, or bypass instruction validation. See
+[checked ABI views](selfhost-abi.md) for supported fields, opacity and budgets.
 
 Ordinary folded WAT submitted through `compile`/`check` keeps the original
 lower-level path and its canonical-output contract. Extended source and all
@@ -139,9 +149,10 @@ Core-only compile/check driver.
   allowing a dependency in a parent directory. Identity is lexical, not a
   filesystem realpath or symlink identity.
 - `walz:core` is the only builtin module name. A project cannot replace it.
-  Arbitrary package namespaces, wildcard imports and type/function aliases or
-  source reexports are not implemented. Macros support selected imports, aliases
-  and explicit reexports. Cycles and duplicate file identities are errors.
+  Arbitrary package namespaces and wildcard imports are not implemented.
+  Types/functions/macros support selected imports, aliases and explicit
+  reexports. Aliases preserve definition identity and opaque access. Cycles
+  and duplicate file identities are errors.
 - Numeric function/type indices are resolved in their original file before
   linking. Imported source aliases do not occupy native index slots. Hidden
   generated locals likewise do not change source local indices.
@@ -177,7 +188,11 @@ caller's scope. Tail `@recur` evaluates arguments once, left to right, before
 simultaneously replacing the loop state. It must target the innermost active
 loop with the correct arity. Assigning a loop/let binding with `local.set` is an
 error. Non-null references use nullable physical storage with dominated,
-checked non-null reads.
+checked non-null reads. The independent checker validates each initializer
+against the declared type before storing it. Non-null loop initializers retain
+a typed temporary, and recur arguments already use typed temporaries. A nullable
+value cannot satisfy a non-null annotation unless the source explicitly narrows
+it. Initializer lowering adds no control frame, preserving numeric branch depth.
 
 ```wat
 (@loop $sum
@@ -195,6 +210,27 @@ once. Generated slots and labels cannot be named through source indices.
 
 These built-in forms form a closed set. Declarative user macros can compose them
 without changing the reader or independent validation rules; see below.
+
+## Named struct construction
+
+`@struct.new` supports named field pairs, and `@$Type::{...}` supports curly
+field groups. Generic type applications are supported. Initializers run exactly
+once in written order; the resulting struct uses declaration field order.
+Each field must be named and supplied exactly once. Labels do not bind locals.
+
+```wat
+(type $Pair (struct (field $left i32) (field $right i64)))
+(@struct.new $Pair ($right 22) ($left 20))
+(@$Pair::{:right 22 :left 20})
+```
+
+Field types provide expected types for numeric/string shorthand. The ordinary
+independent validator checks the expanded code, including unreachable code;
+there are no implicit numeric conversions or opaque representation grants.
+Named construction charges the frontend work budget and allows at most 512
+fields before that budget is checked. Standalone/unrecognized curly groups
+remain errors rather than disappearing during rendering. String contents and
+quoted heads cannot request constructor expansion.
 
 ## 3. Effect bounds
 
@@ -228,11 +264,22 @@ no default integer width.
 | `$result<T,E>` | ok/err and exhaustive match/default |
 | Builders | list-builder and bytes-builder, including immutable publication |
 
+`@bytes.from-array $Array value` and its optional `start length` form accept
+i8, i16 and i32 array storage, mutable or immutable. Packed values are read
+unsigned; i16/i32 values in the selected range must be 0..255 or execution traps.
+Values outside that range are not inspected, including an empty range at the
+end. Source, start and length execute once in written order before bounds/value
+checks. Offset/length checks use unsigned arithmetic and subtraction to avoid
+addition overflow. The result is a copied immutable snapshot, unaffected by
+later source writes. Mutable source reads contribute `reads`; reading an
+immutable source is semantically pure. `@bytes.copy-to-array` still requires a
+mutable i8 destination. Opaque layouts and nullable source values remain errors.
+
 Option/Result/Tuple/List payloads are currently shared and nonunit. Unit-valued
 container payloads, owned resources, futures and streams are not ported.
 Match checks variant/payload arities and exhaustiveness; only the selected
-branch executes, and its scrutinee is evaluated once. Arbitrary user enums and
-object/record patterns remain future work.
+branch executes, and its scrutinee is evaluated once. Arbitrary user enums and field destructuring remain future work.
+Named construction is supported as described below.
 
 Bytes contain values in 0..255. Out-of-range values and invalid indexing/ranges
 trap according to the operation's contract. From-array/copy-to-array require
@@ -280,10 +327,11 @@ groups are supported. All members of a generic explicit group must have matching
 arity. Original group membership and order are retained; dependency ordering
 never merges an explicit group with unrelated inferred recursive types.
 
-`shared` and `nonunit` are the supported constraints. `shared` permits unit;
+`shared`, `nonunit` and the built-in scalar classes are supported constraints. `shared` permits unit;
 `nonunit` excludes it. Unknown, open, malformed or wrong-arity arguments are
-errors even when a parameter is unused. Other typeclasses/callable constraints
-are rejected. Generic source API exports are permitted; a native Wasm export
+errors even when a parameter is unused. Add/Sub/Mul/Div/Eq/Ord/Bitwise/Shift accept i32/i64; Logical accepts i32.
+The same scalar rules serve macro guards. Callable constraints and types outside
+this backend remain unsupported. Generic source API exports are permitted; a native Wasm export
 must have a closed signature and cannot export an unspecialized template.
 
 ## Declarative user macros
@@ -356,13 +404,19 @@ expansion-history/TypeInfo reports. Existing Rust editor support is unchanged.
 ## Limits, tests and remaining work
 
 The frontend bounds total user source at 1 MiB, projects at 64 files, generated
-GC types at 128, cached specializations (including aliases) at 256, work at
-262,144 steps, nested type/expression/lowering traversal at 128, generic-angle
-parsing at 64 and rendered folded source at 1 MiB. The independent parser/checker
+GC types at 1,024, sparse type-dependency edges at 65,536, cached definition
+instances (functions, heap types and aliases) at 3,072, elaboration work at
+1,048,576 charged visits, nested
+type/expression/lowering traversal at 128, generic-angle
+parsing at 64. Generated syntax is bounded at 262,144 nodes, 1,048,576 logical
+visits (including shared atom hits) and 8 MiB of logical
+storage (decoded values plus four bytes per child index). Debug rendering remains
+bounded at 1 MiB; ordinary compilation and macro queries do not render.
+The independent parser/checker
 also impose their [existing limits](selfhost.md#resource-limits-and-lifetime).
 Macros additionally have limits of 64 rules per definition, 512 invocations,
 64 nested invocations and 100,000 charged substitution/hygiene visits. Existing
-128-level syntax/traversal and 1 MiB rendering limits still apply. Query probes
+128-level syntax/traversal and generated-syntax limits still apply. Query probes
 also consume the independent validator's function/instruction limits. These
 bounds can reject programs accepted by the Rust compiler.
 Excessive specialization returns a diagnostic instead of unbounded expansion.
@@ -375,8 +429,10 @@ just test-selfhost-e2e
 just test-selfhost-bench
 ```
 
-The maintained frontend correctness corpus is v2; it adds static-library and
-Component phase-contract cases without changing recorded benchmark inputs.
+The maintained frontend correctness corpus is v10; it includes static-library,
+Component phase-contract, named-construction, alias, constraint and expansion-
+budget cases, checked ABI metadata and control/inference regressions, without
+changing recorded benchmark inputs.
 Tests cover both JS adapters and Chromium, the native project example, malformed
 forms, lazy branches, source identity/ranges, opacity after specialization,
 explicit recursive groups, generic caching/growth limits, effect unions,
@@ -391,6 +447,50 @@ Remaining work includes ownership/proof and ABI
 lowering, closures/callable constraints, the rest of core, floating point/SIMD,
 multi-value control, memories and imports, and complete recursive type
 equivalence. WIT/component imports and async runtimes are not output features of
-this backend. Stage 1/2 reproducibility is still required for full self-hosting.
+this backend. The current subset passes stage 1/2 reproducibility; this does not
+make it a replacement for the full Rust compiler.
 Historical benchmark and browser-size captures predate GC, this
 frontend and user macros; preserve them and create a new capture before comparing performance.
+The remaining parity work is tracked in [Rust / bootstrap parity](selfhost-parity.md).
+
+### Bounded expansion regressions
+
+A cache entry identifies a declaration plus normalized type arguments. Calls do
+not each consume an entry: the corpus checks 300 distinct function definitions,
+1,100 uses of a single generic specialization, and rejection past the finite
+the aggregate cache limit. Function and GC type pools retain their independent
+1,024-entry limits; the aggregate cache now permits 3,072 function/heap/alias
+instances. A separate alias-heavy regression checks that finite aggregate limit.
+
+Operandless `(return)` is valid in unit functions and never recursively expands
+itself. Extra operands are rejected; code after return still undergoes independent
+type and stack validation.
+
+Chains of identical `&&` or `||` operators become a flat result block with
+conditional branches. This avoids multiplying source nesting into nested `if`
+expressions. Evaluation remains left to right, each operand runs at most once,
+short-circuited operands are not executed, and results are normalized to 0 or 1.
+Every operand is type checked, including skipped operands. Mixed operators keep
+their original grouping. The regression corpus checks 48-link chains, traps,
+side-effect order, malformed arity and skipped type errors with both adapters.
+
+The maintained production `bytes.concat` source compiles and executes through
+this backend. Cached concrete layouts/field types and sparse iterative GC
+ordering let the complete compiler probe pass expansion and ordering. Direct
+syntax assembly removes intermediate WAT from compilation and macro queries.
+The v9 probe validated source ABI metadata and created 747 function and 398
+heap instances with 658,586 charged elaboration visits. Syntax assembly completes
+with 248,369 nodes. Its next rejection was code 118 in independent GC type
+validation, attributed to a match in `walz/frontend/modules.walz`. The v10
+control/inference fixes remove that boundary and enable self-compilation and
+stage 1/2 equality for this subset. See [self-compiled stages](selfhost-stages.md), [checked ABI views](selfhost-abi.md),
+[frontend profiling](selfhost-profiling.md) and [GC type ordering](selfhost-ordering.md)
+and [direct syntax assembly](selfhost-syntax.md) for contracts, measurements and
+the next boundary.
+
+
+Concrete heap instances now cache their substituted composite shape and resolved
+field/storage types. These immutable values are published only after successful
+resolution. Array-storage and named-constructor queries reuse them too; source
+opaque-access checks still run independently at each operation. Different
+nominal declarations or normalized type arguments retain separate cache entries.

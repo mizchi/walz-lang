@@ -1,0 +1,110 @@
+(module
+  (@use "walz:core"
+    (type $result)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.extend)
+    (func $list-builder.finish))
+  (@use "../core/bytes.walz" (func $bytes.concat))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.head)
+    (func $tree.copy)
+    (func $tree.form)
+    (func $tree.error)
+    (func $tree.slice))
+  (@export (func $surface.named))
+  (func $surface.named
+    (param $n (ref $tree))
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let
+      (($head (call $tree.at $n 0))
+       ($word (struct.get $tree $value $head))
+       ($length (@bytes.len $word))
+       ($qualified
+         (&&
+           (&& (= (struct.get $tree $kind $head) 0) (> $length 4))
+           (&&
+             (= (@bytes.get $word 0) 64)
+             (&&
+               (= (@bytes.get $word 1) 36)
+               (&&
+                 (= (@bytes.get $word (- $length 1)) 58)
+                 (= (@bytes.get $word (- $length 2)) 58))))
+         )))
+      (block
+        (result $result<(ref $tree), (ref $project-error)>)
+        (if
+          (i32.eqz (|| $qualified (call $tree.head $n "@struct.new")))
+          (then (return (@result.ok $n)))
+          (else (nop)))
+        (@let
+          (($group (call $tree.at $n (if (result i32) $qualified (then 1) (else 2))))
+           ($heap
+             (if
+               (result (ref $tree))
+               $qualified
+               (then
+                 (call $tree.copy $head 0
+                   (@bytes.slice $word 1 (- $length 3))
+                   (@list.new (ref $tree))))
+               (else (call $tree.at $n 1))))
+          )
+          (block
+            (result $result<(ref $tree), (ref $project-error)>)
+            (if
+              (!= (struct.get $tree $kind $group) 6)
+              (then
+                (return
+                  (if
+                    (result $result<(ref $tree), (ref $project-error)>)
+                    $qualified
+                    (then (@result.err (call $tree.error $n 224)))
+                    (else (@result.ok $n))))
+              )
+              (else (nop)))
+            (if
+              (||
+                (!= (call $tree.len $n) (if (result i32) $qualified (then 2) (else 3)))
+                (!= (i32.rem_u (call $tree.len $group) 2) 0))
+              (then (return (@result.err (call $tree.error $group 224))))
+              (else (nop)))
+            (@let $args (call $list-builder.new<(ref $tree)>)
+              (block
+                (result $result<(ref $tree), (ref $project-error)>)
+                (call $list-builder.push<(ref $tree)> $args $heap)
+                (@for $i
+                  (bind $i i32 0)
+                  (while (< $i (call $tree.len $group)))
+                  (step (+ $i 2))
+                  (@let
+                    (($label (call $tree.at $group $i))
+                     ($bytes (struct.get $tree $value $label)))
+                    (block
+                      (if
+                        (||
+                          (!= (struct.get $tree $kind $label) 0)
+                          (|| (< (@bytes.len $bytes) 2) (!= (@bytes.get $bytes 0) 58)))
+                        (then (return (@result.err (call $tree.error $label 224))))
+                        (else (nop)))
+                      (call $list-builder.push<(ref $tree)> $args
+                        (call $tree.copy $label 2
+                          (@bytes.new)
+                          (@list.new
+                            (ref $tree)
+                            (call $tree.copy $label 0
+                              (call $bytes.concat
+                                (@string.bytes "$")
+                                (@bytes.slice $bytes 1 (- (@bytes.len $bytes) 1)))
+                              (@list.new (ref $tree)))
+                            (call $tree.at $group (+ $i 1))))
+                      ))))
+                (@result.ok
+                  (call $tree.form $n "@struct.new"
+                    (call $list-builder.finish<(ref $tree)> $args))))
+            ))))
+    )))

@@ -12,7 +12,7 @@ WATのS式構文とWasmの意味論を維持し、Wasm GCを前提にジェネ�
 
 `walz:core` は組み込みのデータ型とポータブルなデータ操作を提供します。OSの機能やI/O capabilityは、明示的なホストimportを通じて受け取ります。
 
-実験的な[Walz製コンパイラの部品](docs/selfhost.md)として、parser・独立した型／スタック／effect検査・整数とGCのbackendを実装しています。[範囲を限定したfrontend](docs/selfhost-frontend.md)は、静的モジュール・`@lib` ライブラリ・固定の高水準構文・最小core・単相化・衛生的な式マクロに対応します。完全なセルフホストは今後の課題で、主実装はRustコンパイラです。[サブセットの保存済みベンチ](docs/selfhost-benchmark.md)はRust版との正規化後の出力一致を必須とし、GCとモジュールfrontendの対応前に測定しています。
+実験的な[Walz製コンパイラの部品](docs/selfhost.md)として、parser・独立した型／スタック／effect検査・整数とGCのbackendを実装しています。[範囲を限定したfrontend](docs/selfhost-frontend.md)は、静的モジュール・`@lib` ライブラリ・固定の高水準構文・最小core・単相化・衛生的な式マクロに対応します。このサブセットは[自身をCore Wasmへコンパイルし、連続するstageの出力一致を検証](docs/selfhost-stages.md)しています。対応機能が広いRustコンパイラを引き続き主実装とします。[サブセットの保存済みベンチ](docs/selfhost-benchmark.md)はRust版との正規化後の出力一致を必須とし、GCとモジュールfrontendの対応前に測定しています。
 
 - `@` で区別する拡張構文。不変の束縛、ループ、enum/match、名前付きstruct構築、明示的なクロージャ捕捉。
 - 制約付きジェネリクスの単相化。一意に決まる関数の型引数は省略可能。

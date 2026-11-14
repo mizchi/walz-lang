@@ -186,13 +186,15 @@ for (const backend of ["core", "component"])
           throw new Error(name + JSON.stringify(checked));
         await run(name, api.compile(bytes(source)), expected);
       }
-      for (const [name, source, code] of invalid) {
+      for (const [name, source, code, focus] of invalid) {
         for (const r of [
           api.check(bytes(source)),
           api.compile(bytes(source)),
         ]) {
           if (r.tag !== "err" || r.val.code !== code)
             throw new Error(name + JSON.stringify(r));
+          if (focus && new TextDecoder().decode(bytes(source).slice(r.val.start, r.val.end)) !== focus)
+            throw new Error(name + " lost original UTF-8 range");
           clean();
         }
       }
@@ -235,4 +237,48 @@ for (const backend of ["core", "component"])
       path: "./lib.walz",
       live: 0,
     });
+  });
+
+for (const backend of ["core", "component"])
+  test(`${backend}: frontend profiling reuses checked signatures in Chromium`, async ({ page }) => {
+    await page.goto(`/${backend}/`);
+    const result = await page.evaluate(async () => {
+      const { instantiate } = await import(new URL("selfhost/index.js", location.href));
+      const { repeated } = await import("/budgets.mjs");
+      const { fields, types, recursive } = await import("/scaling.mjs");
+      let arena;
+      const { api } = await instantiate({ instantiateCore: async (m, imports) => {
+        const instance = await WebAssembly.instantiate(m, imports);
+        if (instance.exports.live) arena = instance.exports;
+        return instance;
+      }});
+      const input = [{path: "main.walz", source: new TextEncoder().encode(repeated(100))}];
+      const first = api.profileProject(input), second = api.profileProject(input);
+      const bad = api.profileProject([{path: "main.walz", source: new TextEncoder().encode('(module (@use "walz:core" (type $unit)) (func $entry (result i32) (i64.const 1)))')}]);
+      const project = (source) => [{path:"main.walz",source:new TextEncoder().encode(source)}];
+      const layout = api.profileProject(project(fields(1000)));
+      const manyTypes = api.profileProject(project(types(300)));
+      const rec = api.profileProject(project(recursive(192)));
+      return {first, second, bad, layout, manyTypes, rec, live: arena.live()};
+    });
+    expect(result.first.result).toEqual({tag: "ok", val: 2});
+    expect(result.first.stats.signatureComputations).toBe(2);
+    expect(result.first.stats.signatureHits).toBeGreaterThan(0);
+    expect(result.first.stats.phase).toBe(7);
+    expect(result.first.stats.renderedBytes).toBe(0);
+    expect(result.first.stats.syntaxNodes).toBeGreaterThan(0);
+    expect(result.first.stats.syntaxStorage).toBeGreaterThan(0);
+    expect(result.second).toEqual(result.first);
+    expect(result.bad.result.tag).toBe("err");
+    expect(result.bad.result.val.code).toBe(110);
+    expect(result.bad.stats.phase).toBe(6);
+    expect(result.layout.result.tag).toBe("ok");
+    expect(result.layout.stats.layoutComputations).toBe(1);
+    expect(result.layout.stats.fieldComputations).toBe(1);
+    expect(result.layout.stats.typeWork).toBeLessThan(4000);
+    expect(result.manyTypes.result.tag).toBe("ok");
+    expect(result.manyTypes.stats.heapInstances).toBe(300);
+    expect(result.rec.result.tag).toBe("ok");
+    expect(result.rec.stats.heapInstances).toBe(192);
+    expect(result.live).toBe(0);
   });

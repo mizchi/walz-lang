@@ -998,12 +998,18 @@ pub(crate) fn check<'b>(
                 }
                 Some("result") if body.is_none() => {
                     let parts = tables.list(item)?;
-                    tables.count(item, parts, 2)?;
+                    if parts.len() != 1 {
+                        tables.count(item, parts, 2)?;
+                    }
                     if result_seen {
                         return Err(tables.error(item, "duplicate result declaration"));
                     }
                     result_seen = true;
-                    function.result = tables.ty(&parts[1])?;
+                    function.result = if parts.len() == 1 {
+                        Type::Unit
+                    } else {
+                        tables.ty(&parts[1])?
+                    };
                 }
                 Some("effect") if body.is_none() => {
                     if matches!(function.kind, FunctionKind::Import { .. }) {
@@ -1205,6 +1211,17 @@ pub(crate) fn check<'b>(
         laws,
         tags,
     };
+    for node in &abi_nodes {
+        if let Some(name) = node
+            .list()
+            .and_then(|items| items.get(1))
+            .and_then(Sexp::atom)
+        {
+            privacy
+                .0
+                .validate_representation(source, name, node.span, privacy.1)?;
+        }
+    }
     crate::interface::apply(source, &mut module, &abi_nodes)?;
     let constraints = crate::bounds::resolve(
         source,
@@ -3270,6 +3287,9 @@ impl Checker<'_, '_> {
     fn result(&self, items: &[Sexp], start: usize) -> Result<(Type, usize), Error> {
         if let Some(node) = items.get(start).filter(|n| n.head() == Some("result")) {
             let parts = self.tables.list(node)?;
+            if parts.len() == 1 {
+                return Ok((Type::Unit, start + 1));
+            }
             self.tables.count(node, parts, 2)?;
             Ok((self.tables.ty(&parts[1])?, start + 1))
         } else {

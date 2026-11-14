@@ -1,0 +1,159 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $result)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.head)
+    (func $tree.is)
+    (func $tree.eq)
+    (func $tree.copy)
+    (func $tree.atom)
+    (func $tree.form)
+    (func $tree.error)
+    (func $t2)
+    (func $t3))
+  (@export (func $struct.named))
+  ;; The caller supplies resolved types and fresh locals. The result still goes
+  ;; through ordinary lexical/type/effect/GC validation before binary emission.
+  (func $struct.named
+    (param $n (ref $tree))
+    (param $heap (ref $tree))
+    (param $shape (ref $tree))
+    (param $types $list<(ref $tree)>)
+    (param $temps $list<(ref $tree)>)
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<(ref $tree), (ref $project-error)>)
+      (if
+        (> (@list.len (ref $tree) $types) 512)
+        (then (return (@result.err (call $tree.error $n 150))))
+        (else (nop)))
+      (if
+        (||
+          (i32.eqz (call $tree.head $shape "struct"))
+          (||
+            (!= (- (call $tree.len $n) 2) (@list.len (ref $tree) $types))
+            (!= (@list.len (ref $tree) $temps) (@list.len (ref $tree) $types))))
+        (then (return (@result.err (call $tree.error $n 224))))
+        (else (nop)))
+      (@let
+        (($bindings (call $list-builder.new<(ref $tree)>))
+         ($args (call $list-builder.new<(ref $tree)>)))
+        (block
+          (result $result<(ref $tree), (ref $project-error)>)
+          (call $list-builder.push<(ref $tree)> $args $heap)
+          (@for $j
+            (bind $j i32 1)
+            (while (< $j (call $tree.len $shape)))
+            (step (+ $j 1))
+            (if
+              (!= (call $tree.len (call $tree.at $shape $j)) 3)
+              (then (return (@result.err (call $tree.error $n 224))))
+              (else (nop))))
+          (@for $i
+            (bind $i i32 2)
+            (while (< $i (call $tree.len $n)))
+            (step (+ $i 1))
+            (@let
+              (($entry (call $tree.at $n $i))
+               ($index
+                 (@loop $find
+                   (bind $j i32 1)
+                   (result i32)
+                   (if
+                     (result i32)
+                     (= $j (call $tree.len $shape))
+                     (then -1)
+                     (else
+                       (if
+                         (result i32)
+                         (call $tree.eq
+                           (call $tree.at $entry 0)
+                           (call $tree.at (call $tree.at $shape $j) 1))
+                         (then (- $j 1))
+                         (else (@recur $find (+ $j 1))))
+                     ))))
+              )
+              (block
+                (if
+                  (|| (!= (call $tree.len $entry) 2) (< $index 0))
+                  (then (return (@result.err (call $tree.error $entry 224))))
+                  (else (nop)))
+                (@for $prior
+                  (bind $prior i32 2)
+                  (while (< $prior $i))
+                  (step (+ $prior 1))
+                  (if
+                    (call $tree.eq
+                      (call $tree.at $entry 0)
+                      (call $tree.at (call $tree.at $n $prior) 0))
+                    (then (return (@result.err (call $tree.error $entry 224))))
+                    (else (nop))))
+                (@let $ty (@list.get (ref $tree) $types $index)
+                  (call $list-builder.push<(ref $tree)> $bindings
+                    (call $tree.copy $entry 2
+                      (@bytes.new)
+                      (@list.new
+                        (ref $tree)
+                        (@list.get (ref $tree) $temps (- $i 2))
+                        (call $tree.form $entry "type"
+                          (@list.new
+                            (ref $tree)
+                            (if
+                              (result (ref $tree))
+                              (|| (call $tree.is $ty "i8") (call $tree.is $ty "i16"))
+                              (then (call $tree.atom $entry "i32"))
+                              (else $ty))))
+                        (call $tree.at $entry 1))))
+                ))))
+          (@for $j
+            (bind $j i32 1)
+            (while (< $j (call $tree.len $shape)))
+            (step (+ $j 1))
+            (call $list-builder.push<(ref $tree)> $args
+              (@loop $select
+                (bind $i i32 2)
+                (result (ref $tree))
+                (if
+                  (result (ref $tree))
+                  (= $i (call $tree.len $n))
+                  (then
+                    (block
+                      (result (ref $tree))
+                      (return (@result.err (call $tree.error $n 224)))
+                      (unreachable)))
+                  (else
+                    (if
+                      (result (ref $tree))
+                      (call $tree.eq
+                        (call $tree.at (call $tree.at $n $i) 0)
+                        (call $tree.at (call $tree.at $shape $j) 1))
+                      (then (@list.get (ref $tree) $temps (- $i 2)))
+                      (else (@recur $select (+ $i 1))))
+                  ))))
+          )
+          (@let $body
+            (call $tree.form $n "struct.new" (call $list-builder.finish<(ref $tree)> $args))
+            (@result.ok
+              (if
+                (result (ref $tree))
+                (= (@list.len (ref $tree) $types) 0)
+                (then $body)
+                (else
+                  (call $tree.form $n "@let"
+                    (@list.new
+                      (ref $tree)
+                      (call $tree.copy $n 2
+                        (@bytes.new)
+                        (call $list-builder.finish<(ref $tree)> $bindings))
+                      $body))))
+            ))))
+    )))

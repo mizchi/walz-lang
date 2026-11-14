@@ -138,10 +138,57 @@ selfhost-check input compiler="target/selfhost":
 
 test-selfhost:
     cargo test --locked --test selfhost --test selfhost_gc_parity
-    node --expose-gc --test runtime/selfhost.test.mjs runtime/selfhost-checker.test.mjs runtime/selfhost-gc.test.mjs runtime/selfhost-front.test.mjs
+    node --expose-gc --test runtime/selfhost.test.mjs runtime/selfhost-checker.test.mjs runtime/selfhost-gc.test.mjs runtime/selfhost-front.test.mjs runtime/selfhost-parity.test.mjs runtime/selfhost-profile.test.mjs runtime/selfhost-order.test.mjs runtime/selfhost-syntax.test.mjs runtime/selfhost-tuning.test.mjs runtime/selfhost-abi.test.mjs runtime/selfhost-control.test.mjs runtime/selfhost-operators.test.mjs
+
+build-selfhost-profile output="target/selfhost-profile/compiler":
+    node runtime/build-core.mjs examples/selfhost/profile.walz {{quote(output)}}
+
+selfhost-profile input output compiler="target/selfhost-profile/compiler":
+    node runtime/selfhost-profile.mjs {{quote(input)}} {{quote(output)}} {{quote(compiler)}}
+
+compare-selfhost-profile before after input output samples="9":
+    node runtime/selfhost-profile-compare.mjs {{quote(before)}} {{quote(after)}} {{quote(input)}} {{quote(output)}} {{quote(samples)}}
+
+test-selfhost-order:
+    node --expose-gc --test runtime/selfhost-order.test.mjs
+
+test-selfhost-syntax:
+    node --expose-gc --test runtime/selfhost-syntax.test.mjs
+
+selfhost-tuning-prepare compiler inputs:
+    node runtime/selfhost-tuning.mjs prepare {{quote(compiler)}} {{quote(inputs)}}
+
+bench-selfhost-tuning before after inputs output samples="9":
+    node runtime/selfhost-tuning.mjs compare {{quote(before)}} {{quote(after)}} {{quote(inputs)}} {{quote(output)}} {{quote(samples)}}
+
+test-selfhost-tuning:
+    node --test runtime/selfhost-tuning.test.mjs
+
+test-selfhost-abi:
+    node --expose-gc --test runtime/selfhost-abi.test.mjs
+
+test-selfhost-control:
+    node --expose-gc --test runtime/selfhost-control.test.mjs
+
+test-selfhost-operators:
+    node --expose-gc --test runtime/selfhost-operators.test.mjs
+
+# Fixed-point gate kept separate from the shorter frontend regression suite.
+test-selfhost-stage:
+    node --expose-gc --test runtime/selfhost-stage.test.mjs
+
+verify-selfhost-stages output seed="target/selfhost-profile/compiler":
+    node runtime/selfhost-stage.mjs {{quote(seed)}} {{quote(output)}}
+
+test-selfhost-profile:
+    node --expose-gc --test runtime/selfhost-profile.test.mjs
 
 selfhost-core-source:
     node tools/selfhost/embed-core.mjs
+
+test-selfhost-parity:
+    cargo build --locked --bin walz
+    node --expose-gc --test runtime/selfhost-parity.test.mjs
 
 test-selfhost-front:
     node tools/selfhost/embed-core.mjs --check

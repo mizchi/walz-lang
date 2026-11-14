@@ -1,0 +1,15 @@
+(module
+  (@export
+    (func $limits.instances)
+    (func $limits.work)
+    (func $limits.types)
+    (func $limits.edges))
+  ;; Cache entries include function, heap and alias instances, not call sites.
+  ;; The independent validator still bounds the emitted function/type pools.
+  (func $limits.instances (result i32) (@effect pure) (i32.const 3072))
+  ;; Function/type pools are each bounded at 1024; aliases share the cache.
+  (func $limits.types (result i32) (@effect pure) (i32.const 1024))
+
+  (func $limits.edges (result i32) (@effect pure) (i32.const 65536))
+
+  (func $limits.work (result i32) (@effect pure) (i32.const 1048576)))

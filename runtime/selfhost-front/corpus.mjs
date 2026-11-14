@@ -1,4 +1,4 @@
-// Bootstrap frontend v2 correctness corpus; historical scalar captures are immutable.
+// Bootstrap frontend v10 correctness corpus; historical scalar captures are immutable.
 export const programs = [
   [
     "reads-bound",
@@ -284,7 +284,7 @@ export const invalid = [
   ],
   [
     "unsupported-constraint",
-    "(module (func $f (@type.params $T) (@where (Add $T)) (param $x $T) (result $T) $x) (func (result i32) (call $f<i32> 42)))",
+    "(module (func $f (@type.params $T) (@where (Unknown $T)) (param $x $T) (result $T) $x) (func (result i32) (call $f<i32> 42)))",
     207,
   ],
   [
@@ -426,3 +426,39 @@ import {connectionErrors, libraryProjects, libraryErrors} from "./connections.mj
 invalid.push(...connectionErrors.map(([name, source, code]) => [name, source, code]));
 projects.push(...libraryProjects);
 badProjects.push(...libraryErrors);
+
+import * as parity from "./parity.mjs";
+programs.push(...parity.programs);
+invalid.push(...parity.invalid, ...parity.boundedInvalid);
+projects.push(...parity.projects, ...parity.nativeIndexProjects);
+badProjects.push(...parity.badProjects);
+
+import * as budgets from "./budgets.mjs";
+programs.push(...budgets.programs);
+invalid.push(...budgets.invalid, ...budgets.boundedInvalid);
+
+import * as bytes from "./bytes.mjs";
+programs.push(...bytes.programs, ...bytes.nativeBranchPrograms);
+invalid.push(...bytes.invalid);
+badProjects.push(...bytes.badProjects);
+
+import * as scaling from "./scaling.mjs";
+programs.push(...scaling.programs, ...scaling.nativePrograms);
+invalid.push(...scaling.invalid, ...scaling.boundedInvalid);
+
+import * as serialization from "./serialization.mjs";
+programs.push(...serialization.programs);
+invalid.push(...serialization.invalid);
+
+import * as tuning from "./tuning.mjs";
+programs.push(...tuning.programs);
+
+import * as abi from "./abi.mjs";
+programs.push(...abi.programs);
+invalid.push(...abi.invalid,...abi.unsupported);
+projects.push(...abi.projects);
+badProjects.push(...abi.badProjects);
+
+import * as control from "./control.mjs";
+programs.push(...control.programs,...control.nativePrograms);
+invalid.push(...control.invalid,...control.unsupported);

@@ -24,6 +24,38 @@ See [Component composition](docs/component-composition.md) for contracts and cur
 
 ## Self-hosting compiler parts
 
+- [x] Cache concrete layouts/fields and replace transitive closure with sparse
+  iterative SCC ordering, retaining group/parent constraints and finite budgets.
+- [x] Remove intermediate text from compilation and macro query validation;
+  independently assemble bounded syntax and preserve original source ranges.
+- [x] Reduce generated syntax through same-origin atom sharing, bound logical
+  visits, and reuse independently validated indexed arenas. Keep a reproducible
+  benchmark loop and preserve output/diagnostics.
+- [x] Check closed record/tuple `@abi.type` views and retain immutable layout facts;
+  preserve opaque ownership, original ranges and independent instruction checks.
+  See [the ABI subset](docs/selfhost-abi.md).
+- [x] Resolve the full-source validation failures: result-vector/context handling,
+  variable conditions, literal/local-index separation and scalar/string inference.
+  Keep the independent validator and align statement blocks with Wasm typing.
+- [x] Verify byte-identical self-compiled Core stages and portable outputs;
+  compare the maintained corpus against the seed and both stages. See
+  [the fixed-point gate](docs/selfhost-stages.md).
+- [ ] Reduce short-project overhead from syntax interning; the local tuning
+  controls still show about 0.2 ms overhead. See [measurements](docs/selfhost-tuning.md).
+
+- [x] Measure expansion by phase/file and cache hit rates; reuse resolved function
+  signatures and return types per concrete instance. Preserve diagnostics and
+  selected comparison binaries; see [profiling](docs/selfhost-profiling.md).
+
+Track the remaining gaps and their validation gates in [Rust / bootstrap parity](docs/selfhost-parity.md).
+
+- [x] Function/type aliases and reexports, current scalar-class constraints and
+  named/curly/generic struct construction; differential execution/rejection gate.
+- [x] Bounded larger specialization caches, operandless unit returns and flat
+  short-circuit chains; preserve independent validation and source-order effects.
+- [x] Checked i16/i32 array-to-bytes snapshots and non-null initializer validation;
+  preserve ranges, evaluation order, subtype acceptance and loop branch depth.
+
 - [x] Source-backed S-expression parser in `walz/parser/`: immutable postorder
   syntax, UTF-8 ranges, comments, WAT string decoding and explicit resource limits.
 - [x] Independent scalar checker in `walz/checker/`: names, inference, immutable
@@ -61,11 +93,12 @@ See [Component composition](docs/component-composition.md) for contracts and cur
   scalar guards and selected imports/aliases/reexports. Independently validate
   query expressions without executing or emitting them; enforce expansion budgets.
 - [ ] Port remaining core and ownership/proof/ABI validation. Keep unsupported high-level contracts rejected until checks exist.
-- [ ] Compile the compiler with stage 1; compare stage 1/2 outputs and validation
-  against the Rust bootstrap before describing the implementation as self-hosted.
+- [x] Compile the current subset with stage 1; require stage 1/2 output equality
+  and independent validation. Full Rust feature parity and generated host
+  adapters remain separate work.
 
-See [the compiler parts guide](docs/selfhost.md) and [frontend scope/limits](docs/selfhost-frontend.md). The current backend intentionally
-rejects the features it needs to compile itself; it does not replace the Rust CLI.
+See [the compiler parts guide](docs/selfhost.md) and [frontend scope/limits](docs/selfhost-frontend.md). The current backend
+self-compiles within its supported subset; it does not replace the full Rust CLI.
 
 ## SIMD library roadmap
 

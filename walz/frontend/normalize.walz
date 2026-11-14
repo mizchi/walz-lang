@@ -36,6 +36,7 @@
     (func $t4)
     (func $t5)
     (func $t6))
+  (@use "./surface.walz" (func $surface.named))
   (@export (func $normalize.run))
   (type $Scan
     (struct
@@ -229,6 +230,20 @@
         (call $list-builder.finish<(ref $tree)> $out))))
 
   (func $normalize.run
+    (param $n (ref $tree))
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (if
+      (result $result<(ref $tree), (ref $project-error)>)
+      (= (struct.get $tree $kind $n) 6)
+      (then (@result.err (call $tree.error $n 224)))
+      (else
+        (@match (call $surface.named $n)
+          (@case err ($e) (@result.err $e))
+          (@case ok ($expanded) (call $normalize.forms $expanded))))
+    ))
+
+  (func $normalize.forms
     (param $n (ref $tree))
     (result $result<(ref $tree), (ref $project-error)>)
     (@effect reads writes allocates)

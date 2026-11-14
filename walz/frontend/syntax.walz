@@ -1,0 +1,231 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.len)
+    (func $list-builder.finish))
+  (@use "./tree.walz" (type $tree) (type $project-error) (func $tree.error))
+  (@use "./syntax-atoms.walz"
+    (type $atom-table)
+    (func $atom-table.new)
+    (func $atom-table.find)
+    (func $atom-table.insert))
+  (@use "./limits.walz" (func $limits.work))
+  (@use "../parser/parser.walz"
+    (type $node)
+    (type $syntax)
+    (func $node.indexed)
+    (func $syntax.assemble)
+    (func $syntax.node-limit)
+    (func $syntax.storage-limit))
+  (@use "../parser/diagnostic.walz" (type $diagnostic))
+  (@use "./profile.walz"
+    (type $profile-state)
+    (func $profile.syntax)
+    (func $profile.limit))
+  (@export
+    (opaque $mapped-syntax)
+    (func $syntax-tree.build)
+    (func $syntax-tree.syntax)
+    (func $syntax-tree.locate))
+  (type $mapped-syntax
+    (struct (field $syntax (ref $syntax)) (field $origins $list<(ref $tree)>)))
+  (type $State
+    (struct
+      (field $nodes (ref $list-builder<(ref $node)>))
+      (field $origins (ref $list-builder<(ref $tree)>))
+      (field $storage (mut i32))
+      (field $error (mut (ref null $project-error)))
+      (field $profile (ref null $profile-state))
+      (field $atoms (ref $atom-table))
+      (field $visits (mut i32))
+      (field $hits (mut i32))))
+  (func $fail
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $code i32)
+    (param $limit i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $State $error $s))
+      (then
+        (block
+          (struct.set $State $error $s (call $tree.error $n $code))
+          (call $profile.limit (struct.get $State $profile $s) $limit)))
+      (else (nop))))
+
+  (func $copy
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $depth i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (i32.eqz (ref.is_null (struct.get $State $error $s)))
+        (then (return -1))
+        (else (nop)))
+      (if
+        (> $depth 128)
+        (then (block (call $fail $s $n 150 3) (return -1)))
+        (else (nop)))
+      (struct.set $State $visits $s (+ (struct.get $State $visits $s) 1))
+      (if
+        (> (struct.get $State $visits $s) (call $limits.work))
+        (then (block (call $fail $s $n 150 10) (return -1)))
+        (else (nop)))
+      (if
+        (&&
+          (= (struct.get $tree $kind $n) 0)
+          (<= (@bytes.len (struct.get $tree $value $n)) 64))
+        (then
+          (@let $found (call $atom-table.find (struct.get $State $atoms $s) $n)
+            (if
+              (>= $found 0)
+              (then
+                (block
+                  (struct.set $State $hits $s (+ (struct.get $State $hits $s) 1))
+                  (return $found)))
+              (else (nop))))
+        )
+        (else (nop)))
+      (if
+        (>=
+          (call $list-builder.len<(ref $node)> (struct.get $State $nodes $s))
+          (call $syntax.node-limit))
+        (then (block (call $fail $s $n 150 8) (return -1)))
+        (else (nop)))
+      (@let
+        (($kind (struct.get $tree $kind $n))
+         ($kind (if (result i32) (= $kind 8) (then 2) (else $kind)))
+         ($items (struct.get $tree $items $n))
+         ($value (struct.get $tree $value $n))
+         ($children
+           (type $list<i32>)
+           (if
+             (result $list<i32>)
+             (= $kind 2)
+             (then
+               (@let $builder (call $list-builder.new<i32>)
+                 (block
+                   (result $list<i32>)
+                   (@for-each $child $items
+                     (call $list-builder.push<i32> $builder
+                       (call $copy $s $child (+ $depth 1))))
+                   (call $list-builder.finish<i32> $builder))))
+             (else (@list.new i32))))
+        )
+        (block
+          (result i32)
+          (if
+            (i32.eqz (ref.is_null (struct.get $State $error $s)))
+            (then (return -1))
+            (else (nop)))
+          (if
+            (>=
+              (call $list-builder.len<(ref $node)> (struct.get $State $nodes $s))
+              (call $syntax.node-limit))
+            (then (block (call $fail $s $n 150 8) (return -1)))
+            (else (nop)))
+          (if
+            (i32.gt_u
+              (@bytes.len $value)
+              (- (call $syntax.storage-limit) (struct.get $State $storage $s)))
+            (then (block (call $fail $s $n 150 9) (return -1)))
+            (else (nop)))
+          (struct.set $State $storage $s
+            (+ (struct.get $State $storage $s) (@bytes.len $value)))
+          (if
+            (i32.gt_u
+              (@list.len i32 $children)
+              (i32.div_u
+                (- (call $syntax.storage-limit) (struct.get $State $storage $s))
+                4))
+            (then (block (call $fail $s $n 150 9) (return -1)))
+            (else (nop)))
+          (struct.set $State $storage $s
+            (+ (struct.get $State $storage $s) (* 4 (@list.len i32 $children))))
+          (@let $id (call $list-builder.len<(ref $node)> (struct.get $State $nodes $s))
+            (block
+              (result i32)
+              (call $list-builder.push<(ref $node)>
+                (struct.get $State $nodes $s)
+                (call $node.indexed $kind $value $children $id))
+              (call $list-builder.push<(ref $tree)> (struct.get $State $origins $s) $n)
+              (if
+                (&& (= $kind 0) (<= (@bytes.len $value) 64))
+                (then
+                  (if
+                    (i32.eqz
+                      (call $atom-table.insert (struct.get $State $atoms $s) $n $id))
+                    (then (block (call $fail $s $n 150 8) (return -1)))
+                    (else (nop))))
+                (else (nop)))
+              $id))))
+    ))
+
+  (func $syntax-tree.syntax
+    (param $s (ref $mapped-syntax))
+    (result (ref $syntax))
+    (@effect pure)
+    (struct.get $mapped-syntax $syntax $s))
+
+  (func $syntax-tree.locate
+    (param $s (ref $mapped-syntax))
+    (param $d (ref $diagnostic))
+    (result (ref $project-error))
+    (@effect allocates)
+    (@let
+      (($origins (struct.get $mapped-syntax $origins $s))
+       ($i (struct.get $diagnostic $start $d)))
+      (call $tree.error
+        (@list.get
+          (ref $tree)
+          $origins
+          (if
+            (result i32)
+            (i32.lt_u $i (@list.len (ref $tree) $origins))
+            (then $i)
+            (else (- (@list.len (ref $tree) $origins) 1))))
+        (struct.get $diagnostic $code $d))))
+
+  (func $syntax-tree.build
+    (param $root (ref $tree))
+    (param $profile (ref null $profile-state))
+    (result $result<(ref $mapped-syntax), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let $s
+      (struct.new $State (call $list-builder.new<(ref $node)>) (call $list-builder.new<(ref $tree)>) 0 (ref.null $project-error) $profile (call $atom-table.new) 0 0)
+      (block
+        (result $result<(ref $mapped-syntax), (ref $project-error)>)
+        (drop (call $copy $s $root 0))
+        (call $profile.syntax $profile
+          (call $list-builder.len<(ref $node)> (struct.get $State $nodes $s))
+          (struct.get $State $storage $s)
+          (struct.get $State $visits $s)
+          (struct.get $State $hits $s))
+        (if
+          (i32.eqz (ref.is_null (struct.get $State $error $s)))
+          (then
+            (return (@result.err (ref.as_non_null (struct.get $State $error $s))))
+          )
+          (else (nop)))
+        (@let
+          (($nodes
+             (call $list-builder.finish<(ref $node)> (struct.get $State $nodes $s)))
+           ($origins
+             (call $list-builder.finish<(ref $tree)> (struct.get $State $origins $s))))
+          (@match (call $syntax.assemble $nodes)
+            (@case err ($d)
+              (@result.err
+                (call $tree.error
+                  (@list.get (ref $tree) $origins (struct.get $diagnostic $start $d))
+                  (struct.get $diagnostic $code $d))))
+            (@case ok ($syntax)
+              (@result.ok (struct.new $mapped-syntax $syntax $origins))))
+        ))))
+)

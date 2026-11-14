@@ -219,93 +219,78 @@
         (then (return 173))
         (else (nop)))
       0))
-
+  ;; Short scalar aliases are exact ASCII spellings. Native instruction names
+  ;; are longer and can be rejected without allocating/comparing string values.
   (func $operator.alias
     (param $name $bytes)
     (param $type i32)
     (result i32)
     (@effect pure)
-    (block
-      (result i32)
-      (if
-        (call $bytes.equal $name (@string.bytes "="))
-        (then (return (if (result i32) (= $type 126) (then 81) (else 70))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "!="))
-        (then (return (if (result i32) (= $type 126) (then 82) (else 71))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "<"))
-        (then (return (if (result i32) (= $type 126) (then 83) (else 72))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes ">"))
-        (then (return (if (result i32) (= $type 126) (then 85) (else 74))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "<="))
-        (then (return (if (result i32) (= $type 126) (then 87) (else 76))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes ">="))
-        (then (return (if (result i32) (= $type 126) (then 89) (else 78))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "+"))
-        (then (return (if (result i32) (= $type 126) (then 124) (else 106))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "-"))
-        (then (return (if (result i32) (= $type 126) (then 125) (else 107))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "*"))
-        (then (return (if (result i32) (= $type 126) (then 126) (else 108))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "/"))
-        (then (return (if (result i32) (= $type 126) (then 127) (else 109))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "&"))
-        (then (return (if (result i32) (= $type 126) (then 131) (else 113))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "|"))
-        (then (return (if (result i32) (= $type 126) (then 132) (else 114))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "^"))
-        (then (return (if (result i32) (= $type 126) (then 133) (else 115))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes "<<"))
-        (then (return (if (result i32) (= $type 126) (then 134) (else 116))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes ">>"))
-        (then (return (if (result i32) (= $type 126) (then 135) (else 117))))
-        (else (nop)))
-      (if
-        (call $bytes.equal $name (@string.bytes ">>>"))
-        (then (return (if (result i32) (= $type 126) (then 136) (else 118))))
-        (else (nop)))
-      0))
+    (@let
+      (($length (@bytes.len $name))
+       ($arithmetic (if (result i32) (= $type 126) (then 18) (else 0)))
+       ($comparison (if (result i32) (= $type 126) (then 11) (else 0))))
+      (block
+        (result i32)
+        (if (|| (= $length 0) (> $length 3)) (then (return 0)) (else (nop)))
+        (@let $first (@bytes.get $name 0)
+          (block
+            (if
+              (= $length 1)
+              (then
+                (block
+                  (if (= $first 61) (then (return (+ 70 $comparison))) (else (nop)))
+                  (if (= $first 60) (then (return (+ 72 $comparison))) (else (nop)))
+                  (if (= $first 62) (then (return (+ 74 $comparison))) (else (nop)))
+                  (if (= $first 43) (then (return (+ 106 $arithmetic))) (else (nop)))
+                  (if (= $first 45) (then (return (+ 107 $arithmetic))) (else (nop)))
+                  (if (= $first 42) (then (return (+ 108 $arithmetic))) (else (nop)))
+                  (if (= $first 47) (then (return (+ 109 $arithmetic))) (else (nop)))
+                  (if (= $first 38) (then (return (+ 113 $arithmetic))) (else (nop)))
+                  (if (= $first 124) (then (return (+ 114 $arithmetic))) (else (nop)))
+                  (if (= $first 94) (then (return (+ 115 $arithmetic))) (else (nop)))
+                  (return 0)))
+              (else (nop)))
+            (@let $second (@bytes.get $name 1)
+              (if
+                (= $length 2)
+                (then
+                  (block
+                    (if
+                      (&& (= $first 33) (= $second 61))
+                      (then (return (+ 71 $comparison)))
+                      (else (nop)))
+                    (if
+                      (&& (= $first 60) (= $second 61))
+                      (then (return (+ 76 $comparison)))
+                      (else (nop)))
+                    (if
+                      (&& (= $first 62) (= $second 61))
+                      (then (return (+ 78 $comparison)))
+                      (else (nop)))
+                    (if
+                      (&& (= $first 60) (= $second 60))
+                      (then (return (+ 116 $arithmetic)))
+                      (else (nop)))
+                    (if
+                      (&& (= $first 62) (= $second 62))
+                      (then (return (+ 117 $arithmetic)))
+                      (else (nop)))
+                    (return 0)))
+                (else
+                  (if
+                    (&& (= $first 62) (&& (= $second 62) (= (@bytes.get $name 2) 62)))
+                    (then (return (+ 118 $arithmetic)))
+                    (else (nop))))
+              ))))
+        0)))
 
   (func $operator.comparison
     (param $name $bytes)
     (result i32)
     (@effect pure)
-    (block
-      (result i32)
-      (if (call $bytes.equal $name (@string.bytes "=")) (then (return 1)) (else (nop)))
-      (if (call $bytes.equal $name (@string.bytes "!=")) (then (return 1)) (else (nop)))
-      (if (call $bytes.equal $name (@string.bytes "<")) (then (return 1)) (else (nop)))
-      (if (call $bytes.equal $name (@string.bytes "<=")) (then (return 1)) (else (nop)))
-      (if (call $bytes.equal $name (@string.bytes ">")) (then (return 1)) (else (nop)))
-      (if (call $bytes.equal $name (@string.bytes ">=")) (then (return 1)) (else (nop)))
-      0))
+    (@let $code (call $operator.alias $name 127)
+      (&& (>= $code 70) (<= $code 78))))
 
   (func $operator.input
     (param $op i32)

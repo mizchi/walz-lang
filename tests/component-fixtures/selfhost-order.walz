@@ -1,0 +1,75 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $result)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@use "../../walz/frontend/graph.walz"
+    (func $graph.new)
+    (func $graph.add)
+    (func $graph.scc)
+    (func $components.get))
+  (func $scc
+    (export "scc")
+    (param $n i32)
+    (param $from $list<i32>)
+    (param $to $list<i32>)
+    (result $result<$list<i32>, i32>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<$list<i32>, i32>)
+      (if
+        (|| (i32.gt_u $n 1024) (!= (@list.len i32 $from) (@list.len i32 $to)))
+        (then (return (@result.err 150)))
+        (else (nop)))
+      (@let $g (call $graph.new $n 65536)
+        (block
+          (result $result<$list<i32>, i32>)
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i (@list.len i32 $from)))
+            (step (+ $i 1))
+            (if
+              (i32.eqz
+                (call $graph.add $g (@list.get i32 $from $i) (@list.get i32 $to $i)))
+              (then (return (@result.err 150)))
+              (else (nop))))
+          (@let
+            (($c (call $graph.scc $g))
+             ($out (call $list-builder.new<i32>)))
+            (block
+              (result $result<$list<i32>, i32>)
+              (@for $i
+                (bind $i i32 0)
+                (while (< $i $n))
+                (step (+ $i 1))
+                (call $list-builder.push<i32> $out (call $components.get $c $i)))
+              (@result.ok (call $list-builder.finish<i32> $out))))
+        ))))
+  (@use "walz:core" (type $bytes))
+  (@use "../../walz/frontend/tree.walz"
+    (type $project-error)
+    (type $rendered)
+    (func $tree.read)
+    (func $tree.slice)
+    (func $tree.render)
+    (func $tree.form))
+  (@use "../../walz/frontend/type-order.walz" (func $type-order.run))
+  (func $order
+    (export "order")
+    (param $source $bytes)
+    (result $result<$bytes, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $tree.read $source 0)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($root)
+        (@match (call $type-order.run (call $tree.slice $root 1))
+          (@case err ($e) (@result.err $e))
+          (@case ok ($types)
+            (@match (call $tree.render (call $tree.form $root "module" $types))
+              (@case err ($e) (@result.err $e))
+              (@case ok ($out) (@result.ok (struct.get $rendered $bytes $out))))
+          ))))
+  ))

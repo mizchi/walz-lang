@@ -19,6 +19,11 @@
     (opaque $syntax)
     (opaque $node)
     (func $parser.parse)
+    (func $syntax.assemble)
+    (func $syntax.node-limit)
+    (func $syntax.storage-limit)
+    (func $node.new)
+    (func $node.indexed)
     (func $syntax.nodes)
     (func $syntax.roots)
     (func $syntax.source)
@@ -29,7 +34,7 @@
     (func $node.children)
     (func $node.is))
   ;; Postorder arena: children precede parents. Values are raw atom bytes or
-  ;; decoded string bytes; ranges always retain original source positions.
+  ;; decoded string bytes. parse retains UTF-8 ranges; assemble uses virtual IDs.
   (type $node
     (struct
       (field $kind i32)
@@ -49,6 +54,203 @@
       (field $nodes (ref $list-builder<(ref $node)>))
       (field $error (mut (ref null $diagnostic))))
   )
+  ;; Untrusted immutable node descriptions are not a syntax/type certificate.
+  ;; assemble validates them and assigns virtual postorder positions.
+  (func $node.new
+    (param $kind i32)
+    (param $value $bytes)
+    (param $children $list<i32>)
+    (result (ref $node))
+    (@effect allocates)
+    (struct.new $node $kind 0 0 $value $children))
+
+  (func $syntax.node-limit (result i32) (@effect pure) (i32.const 262144))
+  ;; An index is only a hint. assemble checks all structure and verifies every
+  ;; position before sharing the immutable arena, otherwise it normalizes IDs.
+  (func $node.indexed
+    (param $kind i32)
+    (param $value $bytes)
+    (param $children $list<i32>)
+    (param $index i32)
+    (result (ref $node))
+    (@effect allocates)
+    (struct.new $node $kind $index (+ $index 1) $value $children))
+
+  (func $syntax.storage-limit (result i32) (@effect pure) (i32.const 8388608))
+  (type $Depths (array (mut i32)))
+  (type $Assembly (struct (field $storage (mut i32)) (field $indexed (mut i32))))
+  (func $index-nodes
+    (param $nodes $list<(ref $node)>)
+    (result $list<(ref $node)>)
+    (@effect reads writes allocates)
+    (@let $out (call $list-builder.new<(ref $node)>)
+      (block
+        (result $list<(ref $node)>)
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i (@list.len (ref $node) $nodes)))
+          (step (+ $i 1))
+          (@let $n (@list.get (ref $node) $nodes $i)
+            (call $list-builder.push<(ref $node)> $out
+              (call $node.indexed
+                (call $node.kind $n)
+                (call $node.value $n)
+                (call $node.children $n)
+                $i))))
+        (call $list-builder.finish<(ref $node)> $out))))
+
+  (func $atom-valid
+    (param $value $bytes)
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (if
+        (|| (= (@bytes.len $value) 0) (i32.eqz (@bytes.is-utf8 $value)))
+        (then (return 0))
+        (else (nop)))
+      (@for $i
+        (bind $i i32 0)
+        (while (< $i (@bytes.len $value)))
+        (step (+ $i 1))
+        (@let $c (@bytes.get $value $i)
+          (if
+            (||
+              (< $c 33)
+              (||
+                (= $c 127)
+                (||
+                  (= $c 34)
+                  (||
+                    (= $c 40)
+                    (|| (= $c 41) (|| (= $c 59) (|| (= $c 123) (= $c 125))))
+                  ))))
+            (then (return 0))
+            (else (nop))))
+      )
+      1))
+
+  (func $syntax.assemble
+    (param $nodes $list<(ref $node)>)
+    (result $result<(ref $syntax), (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (block
+      (result $result<(ref $syntax), (ref $diagnostic)>)
+      (if
+        (= (@list.len (ref $node) $nodes) 0)
+        (then (return (@result.err (struct.new $diagnostic 100 0 0))))
+        (else (nop)))
+      (if
+        (> (@list.len (ref $node) $nodes) (call $syntax.node-limit))
+        (then
+          (return
+            (@result.err
+              (struct.new $diagnostic
+                8
+                (call $syntax.node-limit)
+                (+ (call $syntax.node-limit) 1))))
+        )
+        (else (nop)))
+      (@let
+        (($depths (array.new $Depths 0 (@list.len (ref $node) $nodes)))
+         ($budget (struct.new $Assembly 0 1)))
+        (block
+          (result $result<(ref $syntax), (ref $diagnostic)>)
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i (@list.len (ref $node) $nodes)))
+            (step (+ $i 1))
+            (@let
+              (($n (@list.get (ref $node) $nodes $i))
+               ($kind (call $node.kind $n))
+               ($value (call $node.value $n))
+               ($children (call $node.children $n)))
+              (block
+                (if
+                  (||
+                    (i32.gt_u $kind 2)
+                    (||
+                      (&& (!= $kind 2) (!= (@list.len i32 $children) 0))
+                      (&& (= $kind 2) (!= (@bytes.len $value) 0))))
+                  (then
+                    (return (@result.err (struct.new $diagnostic 3 $i (+ $i 1))))
+                  )
+                  (else (nop)))
+                ;; Subtraction/division before addition prevents budget wraparound.
+                (if
+                  (i32.gt_u
+                    (@bytes.len $value)
+                    (-
+                      (call $syntax.storage-limit)
+                      (struct.get $Assembly $storage $budget)))
+                  (then
+                    (return (@result.err (struct.new $diagnostic 7 $i (+ $i 1))))
+                  )
+                  (else (nop)))
+                (struct.set $Assembly $storage $budget
+                  (+ (struct.get $Assembly $storage $budget) (@bytes.len $value)))
+                (if
+                  (i32.gt_u
+                    (@list.len i32 $children)
+                    (i32.div_u
+                      (-
+                        (call $syntax.storage-limit)
+                        (struct.get $Assembly $storage $budget))
+                      4))
+                  (then
+                    (return (@result.err (struct.new $diagnostic 7 $i (+ $i 1))))
+                  )
+                  (else (nop)))
+                (struct.set $Assembly $storage $budget
+                  (+
+                    (struct.get $Assembly $storage $budget)
+                    (* 4 (@list.len i32 $children))))
+                (if
+                  (&& (= $kind 0) (i32.eqz (call $atom-valid $value)))
+                  (then
+                    (return (@result.err (struct.new $diagnostic 3 $i (+ $i 1))))
+                  )
+                  (else (nop)))
+                (if (= $kind 2) (then (array.set $Depths $depths $i 1)) (else (nop)))
+                (@for-each $child $children
+                  (block
+                    (if
+                      (i32.ge_u $child $i)
+                      (then
+                        (return (@result.err (struct.new $diagnostic 3 $i (+ $i 1))))
+                      )
+                      (else (nop)))
+                    (if
+                      (>
+                        (+ (array.get $Depths $depths $child) 1)
+                        (array.get $Depths $depths $i))
+                      (then
+                        (array.set $Depths $depths $i
+                          (+ (array.get $Depths $depths $child) 1)))
+                      (else (nop))))
+                )
+                (if
+                  (> (array.get $Depths $depths $i) 128)
+                  (then
+                    (return (@result.err (struct.new $diagnostic 9 $i (+ $i 1))))
+                  )
+                  (else (nop)))
+                (if
+                  (|| (!= (call $node.start $n) $i) (!= (call $node.end $n) (+ $i 1)))
+                  (then (struct.set $Assembly $indexed $budget 0))
+                  (else (nop))))
+            ))
+          (@result.ok
+            (struct.new $syntax
+              (@bytes.new)
+              (if
+                (result $list<(ref $node)>)
+                (struct.get $Assembly $indexed $budget)
+                (then $nodes)
+                (else (call $index-nodes $nodes)))
+              (@list.new i32 (- (@list.len (ref $node) $nodes) 1))))
+        ))))
+
   (func $syntax.nodes
     (param $s (ref $syntax))
     (result $list<(ref $node)>)
@@ -255,14 +457,15 @@
         (block
           (result i32)
           (if
-            (|| (< $c 0) (= $c 41))
+            (|| (< $c 0) (|| (= $c 41) (= $c 125)))
             (then (block (call $fail $s 3 $start) (return -1)))
             (else (nop)))
           (if
-            (= $c 40)
+            (|| (= $c 40) (= $c 123))
             (then
               (block
-                (result i32)
+                ;; This statement branch exits through return. Its blocks
+                ;; produce no value for the enclosing unit if.
                 (if
                   (>= $depth 128)
                   (then (block (call $fail $s 9 $start) (return -1)))
@@ -270,7 +473,6 @@
                 (struct.set $State $position $s (+ $start 1))
                 (@let $children (call $list-builder.new<i32>)
                   (block
-                    (result i32)
                     (@loop $items
                       (block
                         (call $space $s)
@@ -279,7 +481,9 @@
                           (then (return -1))
                           (else (nop)))
                         (if
-                          (= (call $peek $s (call $pos $s)) 41)
+                          (=
+                            (call $peek $s (call $pos $s))
+                            (if (result i32) (= $c 123) (then 125) (else 41)))
                           (then (nop))
                           (else
                             (block
@@ -295,7 +499,9 @@
                           ))))
                     (struct.set $State $position $s (+ (call $pos $s) 1))
                     (return
-                      (call $add $s 2 $start
+                      (call $add $s
+                        (if (result i32) (= $c 123) (then 6) (else 2))
+                        $start
                         (@bytes.new)
                         (call $list-builder.finish<i32> $children))))
                 )))
@@ -332,8 +538,12 @@
                           (< $v 33)
                           (||
                             (= $v 127)
-                            (|| (= $v 40) (|| (= $v 41) (|| (= $v 34) (= $v 59))))
-                          ))
+                            (||
+                              (= $v 123)
+                              (||
+                                (= $v 125)
+                                (|| (= $v 40) (|| (= $v 41) (|| (= $v 34) (= $v 59))))
+                              ))))
                         (then $i)
                         (else (@recur $atom (+ $i 1))))
                     ))

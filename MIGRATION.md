@@ -137,3 +137,146 @@ The maintained bootstrap frontend correctness corpus is now v2. It adds
 selection before host dependency I/O. Component code generation remains outside
 the bootstrap subset; source diagnostics 219–223 describe this boundary. Frozen
 compiler captures and benchmark corpora are unchanged.
+
+## Bootstrap frontend parity corpus v3
+
+The maintained correctness corpus adds function/type aliases and reexports,
+scalar-class bounds and named/curly struct construction. The old unsupported
+Add-constraint case now uses an unknown class, since Add is implemented. The
+structural parser uses kind 6 for curly field groups; strings stay opaque data.
+`just test-selfhost-parity` compares shared-syntax execution and rejection with
+Rust. Native-index bootstrap regressions remain a separate gate. Frozen
+benchmarks and their source/probe hashes are unchanged.
+
+
+## Bootstrap frontend expansion corpus v4
+
+The maintained correctness corpus adds bounded large-definition caches, unit
+returns and long logical chains. It checks 300 distinct functions, 1,100 calls
+reusing a specialization, rejection past 1,024 cached instances, valid empty
+return, invalid return operands, and type checking after return. Logical-chain
+cases verify short-circuit traps, source-order side effects and skipped type
+errors. Shared-syntax cases also run against Rust; finite-resource failures stay
+outside Rust acceptance parity. Cache and charged-work limits are now 1,024 and
+1,048,576; structural parser, traversal and independent IR limits remain bounded.
+Frozen benchmark captures, source inputs and reference hashes are unchanged.
+
+
+## Bootstrap frontend profiling v1
+
+The separate profiler entry adds request-local counters and immutable ABI
+snapshots without changing the five production portable operations. Normal
+entry points allocate no counter arrays. Concrete function instances cache
+resolved signatures and return types; rejected computations are not published.
+The new profile/comparison schemas record input, compiler/adapter and recorder
+hashes. Timing comparisons require successful identical Wasm; failed outcomes
+are recorded without timing ratios. The v4 correctness inputs and frozen scalar
+benchmark captures are unchanged. See [profiling](docs/selfhost-profiling.md).
+
+
+## Bootstrap frontend byte/nullability corpus v5
+
+The maintained correctness corpus adds integer-array byte snapshots and typed
+initializer regressions. i16/i32 sources are checked as unsigned octets only
+within the selected range; existing i8 lowering remains in use. Invalid ranges
+and values trap; source values, ranges, mutable-read effects and opaque boundaries
+remain checked. Nullable values cannot be implicitly assigned to non-null let,
+loop or recur bindings. Loop initialization keeps a typed temporary without
+adding control frames. Rust's typed path requires named branches, so the native
+numeric-depth regression is separate from identical-input parity. Shared cases
+cover 56 successful inputs (including traps) and 27 rejected inputs. Node also
+compiles the maintained `walz/core/bytes.walz` concat implementation. The embedded
+bootstrap resource is regenerated from its source. Frozen measurements and their
+input hashes are unchanged; v1 profiling measurements retain their pre-v5 inputs.
+
+
+## Bootstrap layout/ordering corpus v6 and profiling v2
+
+The correctness corpus adds repeated inferred field access, >128 GC types,
+large explicit recursion groups, parent-cycle/group-boundary rejection and
+numeric type-index preservation. Independent SCC tests compare reachability
+partitions and dependency order, including 1,024-node chains/rings and edge
+budget rejection. The new pass uses sparse edges and iterative Tarjan instead
+of an all-pairs transitive closure. It admits 1,024 types and 65,536 edges.
+Concrete layouts/field types are cached without bypassing access checks. The
+aggregate cache permits 3,072 function/heap/alias instances, while each emitted
+function/type pool remains bounded at 1,024. The previous 1,100-function case
+now exercises the emitted pool; a new alias-heavy input tests the aggregate cap.
+Profiler v2 adds layout/field counters, partial rendered-byte counts and distinct
+edge/render limits. Retained v1/v5 input and measurement captures are unchanged.
+A fresh full-compiler probe passes expansion/ordering and stops at the unchanged
+1 MiB intermediate-WAT rendering cap. Shared Rust/bootstrap parity now covers
+62 successful and 30 rejected inputs; native index/branch and resource-only
+regressions remain separate. See [ordering](docs/selfhost-ordering.md).
+
+## Bootstrap direct-syntax corpus v7 and profiling v3
+
+Compilation and macro-query validation now assemble bounded postorder syntax
+directly, retaining decoded strings and a separate original-source origin map.
+The same independent checker still produces checked modules. Raw parsing and
+debug rendering keep their existing text limits. The generated arena has
+separate bounds of 262,144 nodes, depth 128 and 8 MiB of logical storage.
+
+The v7 correctness corpus adds large decoded export strings, the same case with
+macro query validation, and a rejected return mismatch. Shared Rust/bootstrap
+checks now cover 64 successful and 31 rejected inputs. A separate unchanged-input
+comparison retains binaries/diagnostics for 241 v6 frontend cases. Frozen scalar
+benchmark inputs, source hashes and old recordings have not been rewritten.
+Profiler v3 adds syntax counters and phase meanings; readers distinguish retained
+v1/v2 artifacts. A fresh full-source probe reaches the generated-node budget
+after expansion, ordering and lowering. It is not yet full self-hosting.
+See [syntax assembly](docs/selfhost-syntax.md).
+
+## Bootstrap tuning corpus v8 and profiling v4
+
+The correctness corpus adds nominal list specialization stress; Rust/bootstrap
+checks cover 65 positive and 31 negative inputs. Source-aware short-atom sharing
+retains exact file/range/spelling identity, with bounded logical visits. Indexed
+arenas are reused only after independent structure and position validation.
+Wrong hints are normalized and unsupported contracts still fail the checker.
+
+Profiler v4 adds logical syntax visits and atom hits, retaining reader support
+for old schemas. The separate tuning-input schema v1 captures fixed subjects;
+new output directories preserve each round's hashes, raw samples and counters.
+The frozen compiler subject now reaches unsupported ABI metadata validation
+rather than the syntax-node cap. Failed probes still have no timing ratio.
+Earlier inputs and recordings remain unchanged. See [the tuning loop](docs/selfhost-tuning.md).
+
+## Bootstrap checked-ABI corpus v9
+
+The maintained frontend corpus adds checked closed record/tuple `@abi.type`
+views. It validates portable fields and trusted core identities, memoizes bounded
+shape/layout facts, preserves opaque ownership and source ranges, and removes
+only certified metadata before independent instruction checking. Unsupported
+views remain errors (225); ABI limits use 226. The Rust frontend also rejects
+foreign annotations on opaque representations before inspecting the view.
+
+Shared Rust/bootstrap checks now cover 76 successful and 64 rejected inputs.
+The full-source probe passes ABI metadata and reaches independent GC type
+validation (118) in `frontend/modules.walz`; it is not yet self-compiling.
+Profiler v4 and frozen benchmark inputs remain unchanged. This does not add
+WIT generation or host adapters. See [the ABI subset](docs/selfhost-abi.md).
+
+## Bootstrap self-compilation corpus v10
+
+The bounded frontend fixes empty result vectors, statement/condition contexts,
+bare variable conditions, numeric literals distinct from explicit local indices,
+and bitwise/shift/string-constructor inference. Bare string literals still need
+an expected string type. Unsupported result vectors remain errors.
+Statement blocks in the parser/checker/stack are aligned with Wasm typing rather
+than relaxing independent validation. The Rust typed frontend accepts empty
+function/control result vectors too.
+
+The current compiler self-compiles into Core Wasm. Two successive self-compiled
+stages and their portable outputs must be byte-identical. The maintained corpus
+has 184 positive and 148 negative stage cases; shared Rust/bootstrap checks cover
+107 positive and 68 negative cases. WAT numeric-local, labelled-if and branch
+sequence cases are validated separately from Rust's typed `@use` path.
+The Core GC bridge is for verification and
+does not add WIT or general Component/JSPI adapter generation. The Rust compiler
+remains the main implementation with broader coverage.
+
+The new `walz-selfhost-stages-v1` capture retains source bytes/labels, probes,
+artifact hashes and diagnostics. Profiler v4 and earlier benchmark/evaluation
+captures remain unchanged; successful full-compiler timings use a fresh input
+snapshot. See [stage verification](docs/selfhost-stages.md).

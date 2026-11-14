@@ -1,0 +1,199 @@
+(module
+  (@use "walz:core"
+    (type $bytes)
+    (type $list)
+    (type $result)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.len)
+    (func $list-builder.finish))
+  (@use "../../walz/parser/parser.walz"
+    (type $node)
+    (type $syntax)
+    (func $node.new)
+    (func $node.indexed)
+    (func $syntax.assemble)
+    (func $syntax.nodes))
+  (@use "../../walz/parser/diagnostic.walz" (type $diagnostic))
+  (@use "../../walz/checker/checker.walz"
+    (func $checker.check)
+    (func $module-ir.functions))
+  (@use "../../walz/checker/ir.walz" (type $function-ir))
+  (@use "../../walz/frontend/tree.walz"
+    (type $tree)
+    (type $project-error)
+    (type $rendered)
+    (func $tree.read)
+    (func $tree.render))
+  (@use "../../walz/frontend/syntax.walz"
+    (func $syntax-tree.build)
+    (func $syntax-tree.syntax)
+    (func $syntax-tree.locate))
+  (@use "../../walz/frontend/profile.walz" (type $profile-state))
+  (@use "../../walz/parser/parser.walz" (func $syntax.roots) (func $node.children))
+  (type $atom-spec
+    (struct (field $value $bytes) (field $file i32) (field $start i32) (field $end i32)))
+  (@abi.type $atom-spec (record "value" "file" "start" "end"))
+  (type $sharing-report
+    (struct
+      (field $nodes i32)
+      (field $ids $list<i32>)
+      (field $origins $list<(ref $project-error)>)))
+  (@abi.type $sharing-report (record "nodes" "ids" "origins"))
+  (func $share-atoms
+    (export "share-atoms")
+    (param $specs $list<(ref $atom-spec)>)
+    (result $result<(ref $sharing-report), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let $items (call $list-builder.new<(ref $tree)>)
+      (block
+        (result $result<(ref $sharing-report), (ref $project-error)>)
+        (@for-each $s $specs
+          (call $list-builder.push<(ref $tree)> $items
+            (struct.new $tree
+              0
+              (struct.get $atom-spec $value $s)
+              (@list.new (ref $tree))
+              (struct.get $atom-spec $file $s)
+              (struct.get $atom-spec $start $s)
+              (struct.get $atom-spec $end $s))))
+        (@match
+          (call $syntax-tree.build (struct.new $tree 2 (@bytes.new) (call $list-builder.finish<(ref $tree)> $items) 0 0 0) (ref.null $profile-state))
+          (@case err ($e) (@result.err $e))
+          (@case ok ($mapped)
+            (@let
+              (($syntax (call $syntax-tree.syntax $mapped))
+               ($nodes (call $syntax.nodes $syntax))
+               ($ids
+                 (call $node.children
+                   (@list.get
+                     (ref $node)
+                     $nodes
+                     (@list.get i32 (call $syntax.roots $syntax) 0))))
+               ($origins (call $list-builder.new<(ref $project-error)>)))
+              (block
+                (result $result<(ref $sharing-report), (ref $project-error)>)
+                (@for-each $id $ids
+                  (call $list-builder.push<(ref $project-error)> $origins
+                    (call $syntax-tree.locate $mapped
+                      (struct.new $diagnostic 110 $id (+ $id 1))))
+                )
+                (@result.ok
+                  (struct.new $sharing-report
+                    (@list.len (ref $node) $nodes)
+                    $ids
+                    (call $list-builder.finish<(ref $project-error)> $origins))))
+            ))))
+    ))
+
+  (func $sharing-limit
+    (export "sharing-limit")
+    (param $count i32)
+    (result $result<i32, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let
+      (($items (call $list-builder.new<(ref $tree)>))
+       ($leaf
+         (struct.new $tree 0 (@string.bytes "i32") (@list.new (ref $tree)) 7 10 13)))
+      (block
+        (result $result<i32, (ref $project-error)>)
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i $count))
+          (step (+ $i 1))
+          (call $list-builder.push<(ref $tree)> $items $leaf))
+        (@match
+          (call $syntax-tree.build (struct.new $tree 2 (@bytes.new) (call $list-builder.finish<(ref $tree)> $items) 0 0 0) (ref.null $profile-state))
+          (@case err ($e) (@result.err $e))
+          (@case ok ($mapped)
+            (@result.ok
+              (@list.len
+                (ref $node)
+                (call $syntax.nodes (call $syntax-tree.syntax $mapped))))
+          ))))
+  )
+
+  (func $render
+    (export "render")
+    (param $source $bytes)
+    (result $result<i32, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $tree.read $source 0)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($tree)
+        (@match (call $tree.render $tree)
+          (@case err ($e) (@result.err $e))
+          (@case ok ($r) (@result.ok (@bytes.len (struct.get $rendered $bytes $r))))
+        ))))
+  (type $node-spec
+    (struct (field $kind i32) (field $value $bytes) (field $children $list<i32>)))
+  (@abi.type $node-spec (record "kind" "value" "children"))
+  (func $assemble
+    (export "assemble")
+    (param $specs $list<(ref $node-spec)>)
+    (param $check i32)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@let $nodes (call $list-builder.new<(ref $node)>)
+      (block
+        (result $result<i32, (ref $diagnostic)>)
+        (@for-each $n $specs
+          (call $list-builder.push<(ref $node)> $nodes
+            (if
+              (result (ref $node))
+              (>= $check 2)
+              (then
+                (call $node.indexed
+                  (struct.get $node-spec $kind $n)
+                  (struct.get $node-spec $value $n)
+                  (struct.get $node-spec $children $n)
+                  (if
+                    (result i32)
+                    (>= $check 4)
+                    (then 2147483647)
+                    (else (call $list-builder.len<(ref $node)> $nodes))))
+              )
+              (else
+                (call $node.new
+                  (struct.get $node-spec $kind $n)
+                  (struct.get $node-spec $value $n)
+                  (struct.get $node-spec $children $n))))
+          ))
+        (@match (call $syntax.assemble (call $list-builder.finish<(ref $node)> $nodes))
+          (@case err ($e) (@result.err $e))
+          (@case ok ($syntax)
+            (if
+              (result $result<i32, (ref $diagnostic)>)
+              (& $check 1)
+              (then
+                (@match (call $checker.check $syntax)
+                  (@case err ($e) (@result.err $e))
+                  (@case ok ($ir)
+                    (@result.ok
+                      (@list.len (ref $function-ir) (call $module-ir.functions $ir))))
+                ))
+              (else (@result.ok (@list.len (ref $node) (call $syntax.nodes $syntax))))
+            ))))
+    ))
+
+  (func $node-limit
+    (export "node-limit")
+    (param $count i32)
+    (result $result<i32, (ref $diagnostic)>)
+    (@effect reads writes allocates)
+    (@let
+      (($nodes (call $list-builder.new<(ref $node)>))
+       ($leaf (call $node.new 0 (@string.bytes "x") (@list.new i32))))
+      (block
+        (result $result<i32, (ref $diagnostic)>)
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i $count))
+          (step (+ $i 1))
+          (call $list-builder.push<(ref $node)> $nodes $leaf))
+        (@match (call $syntax.assemble (call $list-builder.finish<(ref $node)> $nodes))
+          (@case err ($e) (@result.err $e))
+          (@case ok ($syntax)
+            (@result.ok (@list.len (ref $node) (call $syntax.nodes $syntax))))
+        ))))
+)

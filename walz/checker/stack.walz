@@ -102,7 +102,6 @@
           (= $length $height)
           (then
             (block
-              (result i32)
               (if
                 (i32.eqz (struct.get $Frame $unreachable $f))
                 (then (call $fail $s $n 111))

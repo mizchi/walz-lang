@@ -1,0 +1,7 @@
+(module
+  (@use "walz:core" (type $bytes))
+  (@use "../../walz/checker/operators.walz" (func $operator.alias) (func $operator.comparison))
+  (func $alias (export "alias") (param $name $bytes) (param $type i32)
+    (result i32) (@effect pure) (call $operator.alias $name $type))
+  (func $comparison (export "comparison") (param $name $bytes)
+    (result i32) (@effect pure) (call $operator.comparison $name)))

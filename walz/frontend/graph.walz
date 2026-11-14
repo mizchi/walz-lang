@@ -1,0 +1,254 @@
+(module
+  (@export
+    (opaque $graph)
+    (opaque $components)
+    (func $graph.new)
+    (func $graph.add)
+    (func $graph.scc)
+    (func $components.count)
+    (func $components.get))
+  (type $Ints (array (mut i32)))
+  (type $graph
+    (struct
+      (field $heads (ref $Ints))
+      (field $to (mut (ref $Ints)))
+      (field $next (mut (ref $Ints)))
+      (field $length (mut i32))
+      (field $limit i32)))
+  (type $components (struct (field $labels (ref $Ints)) (field $count i32)))
+  (type $Search
+    (struct
+      (field $graph (ref $graph))
+      (field $index (ref $Ints))
+      (field $low (ref $Ints))
+      (field $active (ref $Ints))
+      (field $stack (ref $Ints))
+      (field $vertices (ref $Ints))
+      (field $cursors (ref $Ints))
+      (field $labels (ref $Ints))
+      (field $serial (mut i32))
+      (field $top (mut i32))
+      (field $depth (mut i32))
+      (field $groups (mut i32))))
+  ;; Vertices and total edges are bounded by the caller. Grow only the sparse
+  ;; edge storage; no matrix or transitive closure is constructed.
+  (func $graph.new
+    (param $vertices i32)
+    (param $limit i32)
+    (result (ref $graph))
+    (@effect allocates)
+    (struct.new $graph
+      (array.new $Ints -1 $vertices)
+      (array.new $Ints -1 0)
+      (array.new $Ints -1 0)
+      0
+      $limit))
+
+  (func $graph.add
+    (param $g (ref $graph))
+    (param $from i32)
+    (param $to i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (||
+          (||
+            (i32.ge_u $from (array.len (struct.get $graph $heads $g)))
+            (i32.ge_u $to (array.len (struct.get $graph $heads $g))))
+          (>= (struct.get $graph $length $g) (struct.get $graph $limit $g)))
+        (then (return 0))
+        (else (nop)))
+      (@let $i (struct.get $graph $length $g)
+        (block
+          (result i32)
+          (if
+            (= $i (array.len (struct.get $graph $to $g)))
+            (then
+              (@let
+                (($cap (if (result i32) (= $i 0) (then 4) (else (* $i 2))))
+                 ($cap
+                   (if
+                     (result i32)
+                     (> $cap (struct.get $graph $limit $g))
+                     (then (struct.get $graph $limit $g))
+                     (else $cap)))
+                 ($to (array.new $Ints -1 $cap))
+                 ($next (array.new $Ints -1 $cap)))
+                (block
+                  (array.copy $Ints $Ints $to 0 (struct.get $graph $to $g) 0 $i)
+                  (array.copy $Ints $Ints $next 0 (struct.get $graph $next $g) 0 $i)
+                  (struct.set $graph $to $g $to)
+                  (struct.set $graph $next $g $next))))
+            (else (nop)))
+          (array.set $Ints (struct.get $graph $to $g) $i $to)
+          (array.set $Ints
+            (struct.get $graph $next $g)
+            $i
+            (array.get $Ints (struct.get $graph $heads $g) $from))
+          (array.set $Ints (struct.get $graph $heads $g) $from $i)
+          (struct.set $graph $length $g (+ $i 1))
+          1))))
+
+  (func $discover
+    (param $s (ref $Search))
+    (param $v i32)
+    (@effect reads writes)
+    (block
+      (array.set $Ints
+        (struct.get $Search $index $s)
+        $v
+        (struct.get $Search $serial $s))
+      (array.set $Ints (struct.get $Search $low $s) $v (struct.get $Search $serial $s))
+      (struct.set $Search $serial $s (+ (struct.get $Search $serial $s) 1))
+      (array.set $Ints (struct.get $Search $active $s) $v 1)
+      (array.set $Ints (struct.get $Search $stack $s) (struct.get $Search $top $s) $v)
+      (struct.set $Search $top $s (+ (struct.get $Search $top $s) 1))
+      (array.set $Ints
+        (struct.get $Search $vertices $s)
+        (struct.get $Search $depth $s)
+        $v)
+      (array.set $Ints
+        (struct.get $Search $cursors $s)
+        (struct.get $Search $depth $s)
+        (array.get $Ints (struct.get $graph $heads (struct.get $Search $graph $s)) $v))
+      (struct.set $Search $depth $s (+ (struct.get $Search $depth $s) 1))))
+
+  (func $lower
+    (param $s (ref $Search))
+    (param $v i32)
+    (param $value i32)
+    (@effect reads writes)
+    (if
+      (< $value (array.get $Ints (struct.get $Search $low $s) $v))
+      (then (array.set $Ints (struct.get $Search $low $s) $v $value))
+      (else (nop))))
+
+  (func $search
+    (param $s (ref $Search))
+    (param $root i32)
+    (@effect reads writes)
+    (block
+      (call $discover $s $root)
+      (@loop $frames
+        (if
+          (> (struct.get $Search $depth $s) 0)
+          (then
+            (@let
+              (($frame (- (struct.get $Search $depth $s) 1))
+               ($v (array.get $Ints (struct.get $Search $vertices $s) $frame))
+               ($edge (array.get $Ints (struct.get $Search $cursors $s) $frame))
+               ($g (struct.get $Search $graph $s)))
+              (block
+                (if
+                  (>= $edge 0)
+                  (then
+                    (block
+                      (array.set $Ints
+                        (struct.get $Search $cursors $s)
+                        $frame
+                        (array.get $Ints (struct.get $graph $next $g) $edge))
+                      (@let $w (array.get $Ints (struct.get $graph $to $g) $edge)
+                        (if
+                          (< (array.get $Ints (struct.get $Search $index $s) $w) 0)
+                          (then (call $discover $s $w))
+                          (else
+                            (if
+                              (array.get $Ints (struct.get $Search $active $s) $w)
+                              (then
+                                (call $lower $s $v
+                                  (array.get $Ints (struct.get $Search $index $s) $w)))
+                              (else (nop))))
+                        ))))
+                  (else
+                    (block
+                      (if
+                        (=
+                          (array.get $Ints (struct.get $Search $low $s) $v)
+                          (array.get $Ints (struct.get $Search $index $s) $v))
+                        (then
+                          (block
+                            (@loop $pop
+                              (block
+                                (struct.set $Search $top $s
+                                  (- (struct.get $Search $top $s) 1))
+                                (@let $w
+                                  (array.get $Ints (struct.get $Search $stack $s) (struct.get $Search $top $s))
+                                  (block
+                                    (array.set $Ints
+                                      (struct.get $Search $active $s)
+                                      $w
+                                      0)
+                                    (array.set $Ints
+                                      (struct.get $Search $labels $s)
+                                      $w
+                                      (struct.get $Search $groups $s))
+                                    (if (!= $w $v) (then (@recur $pop)) (else (nop))))
+                                )))
+                            (struct.set $Search $groups $s
+                              (+ (struct.get $Search $groups $s) 1))))
+                        (else (nop)))
+                      (struct.set $Search $depth $s $frame)
+                      (if
+                        (> $frame 0)
+                        (then
+                          (call $lower $s
+                            (array.get $Ints
+                              (struct.get $Search $vertices $s)
+                              (- $frame 1))
+                            (array.get $Ints (struct.get $Search $low $s) $v)))
+                        (else (nop))))
+                  ))
+                (@recur $frames))))
+          (else (nop))))
+    ))
+  ;; Iterative Tarjan: each vertex/edge is visited once. Labels increase in
+  ;; dependency-first component order for edges from users to dependencies.
+  (func $graph.scc
+    (param $g (ref $graph))
+    (result (ref $components))
+    (@effect reads writes allocates)
+    (@let
+      (($n (array.len (struct.get $graph $heads $g)))
+       ($s
+         (struct.new $Search
+           $g
+           (array.new $Ints -1 $n)
+           (array.new $Ints -1 $n)
+           (array.new $Ints 0 $n)
+           (array.new $Ints 0 $n)
+           (array.new $Ints 0 $n)
+           (array.new $Ints -1 $n)
+           (array.new $Ints -1 $n)
+           0
+           0
+           0
+           0)))
+      (block
+        (result (ref $components))
+        (@for $v
+          (bind $v i32 0)
+          (while (< $v $n))
+          (step (+ $v 1))
+          (if
+            (< (array.get $Ints (struct.get $Search $index $s) $v) 0)
+            (then (call $search $s $v))
+            (else (nop))))
+        (struct.new $components
+          (struct.get $Search $labels $s)
+          (struct.get $Search $groups $s))))
+  )
+
+  (func $components.count
+    (param $c (ref $components))
+    (result i32)
+    (@effect pure)
+    (struct.get $components $count $c))
+
+  (func $components.get
+    (param $c (ref $components))
+    (param $v i32)
+    (result i32)
+    (@effect reads)
+    (array.get $Ints (struct.get $components $labels $c) $v)))

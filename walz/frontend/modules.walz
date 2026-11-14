@@ -44,7 +44,7 @@
   (@use "./source-contracts.walz" (func $source.prepare))
   (@use "./core-source.walz" (func $core.source))
   (@use "./path.walz" (func $path.normalize) (func $path.resolve))
-  (@use "./tree.walz" (func $tree.occurs))
+  (@use "./tree.walz" (func $tree.occurs) (func $tree.is-name))
   (@export
     (opaque $linked)
     (func $modules.link)
@@ -197,7 +197,17 @@
                       (if
                         (&&
                           (= (struct.get $Symbol $module $d) $m)
-                          (= (struct.get $Symbol $kind $d) $kind))
+                          (&&
+                            (= (struct.get $Symbol $kind $d) $kind)
+                            (=
+                              (struct.get $tree $file (struct.get $Symbol $decl $d))
+                              (struct.get $tree $file
+                                (struct.get $Mod $root
+                                  (@list.get
+                                    (ref $Mod)
+                                    (struct.get $Loader $mods $s)
+                                    $m))))
+                          ))
                         (then
                           (if
                             (= $found $index)
@@ -236,8 +246,10 @@
             (i32.eqz (ref.is_null $d))
             (&&
               (struct.get $Symbol $opaque (ref.as_non_null $d))
-              (!= $m (struct.get $Symbol $module (ref.as_non_null $d))))
-          )
+              (!=
+                (struct.get $tree $file $n)
+                (struct.get $tree $file (struct.get $Symbol $decl (ref.as_non_null $d))))
+            ))
           (then (call $fail $s $n 202))
           (else (nop))))
     ))
@@ -251,6 +263,22 @@
     (@effect reads writes allocates)
     (block
       (result (ref $tree))
+      ;; The view payload is metadata. Only the nominal target is resolved.
+      (if
+        (call $tree.head $n "@abi.type")
+        (then
+          (return
+            (if
+              (result (ref $tree))
+              (&& (= (call $tree.len $n) 3) (call $tree.is-name (call $tree.at $n 1)))
+              (then
+                (call $tree.form $n "@abi.type"
+                  (@list.new
+                    (ref $tree)
+                    (call $resolve $s $m 0 (call $tree.at $n 1))
+                    (call $tree.at $n 2))))
+              (else $n))))
+        (else (nop)))
       (if
         (call $tree.head $n "@macro")
         (then (return (call $rename-macro-definition $s $m $n)))
@@ -369,7 +397,9 @@
                                    (||
                                      (call $tree.is $head "ref.null")
                                      (||
-                                       (call $tree.is $head "struct.new")
+                                       (||
+                                         (call $tree.is $head "struct.new")
+                                         (call $tree.is $head "@struct.new"))
                                        (||
                                          (call $tree.is $head "struct.new_default")
                                          (||
@@ -425,7 +455,9 @@
                         (||
                           (call $tree.is $head "sub")
                           (||
-                            (call $tree.is $head "struct.new")
+                            (||
+                              (call $tree.is $head "struct.new")
+                              (call $tree.is $head "@struct.new"))
                             (||
                               (call $tree.is $head "struct.new_default")
                               (||
@@ -524,6 +556,10 @@
                  (else $global))))
             (block
               (if
+                (&& $has-name (i32.eqz (call $tree.is-name $name)))
+                (then (call $fail $s $name 104))
+                (else (nop)))
+              (if
                 (&&
                   (i32.eqz $has-name)
                   (call $tree.head (call $tree.at $n 1) "@type.params"))
@@ -589,11 +625,7 @@
                 (else (nop)))
               (if
                 (ref.is_null $d)
-                (then
-                  (if
-                    (|| $ready (!= $kind 2))
-                    (then (call $fail $s $item 201))
-                    (else (nop))))
+                (then (if $ready (then (call $fail $s $item 201)) (else (nop))))
                 (else
                   (block
                     (if
@@ -1178,10 +1210,12 @@
               (i32.eqz (struct.get $Symbol $public (ref.as_non_null $d)))
               (||
                 (i32.eqz (|| $kind (call $tree.head $item "type")))
-                (i32.eqz
+                (||
+                  (i32.eqz
+                    (|| (= (call $tree.len $item) 2) (= (call $tree.len $item) 3)))
                   (||
-                    (= (call $tree.len $item) 2)
-                    (&& (= $kind 2) (= (call $tree.len $item) 3))))
+                    (i32.eqz (call $tree.is-name $name))
+                    (i32.eqz (call $tree.is-name $alias))))
               )))
           (then (block (call $fail $s $item 201) (return)))
           (else (nop)))
@@ -1189,24 +1223,18 @@
           (i32.eqz (ref.is_null (call $find $s $m $kind $alias 1)))
           (then (block (call $fail $s $item 201) (return)))
           (else (nop)))
-        (if
-          (= $kind 2)
-          (then
-            (call $list-builder.push< (ref $Symbol) >
-              (struct.get $Loader $symbols $s)
-              (struct.new $Symbol
-                $m
-                $kind
-                $alias
-                (struct.get $Symbol $global (ref.as_non_null $d))
-                (struct.get $Symbol $decl (ref.as_non_null $d))
-                0
-                0)))
-          (else
-            (call $list-builder.push< (ref $Import) >
-              (struct.get $Loader $imports $s)
-              (struct.new $Import $m $kind $alias (ref.as_non_null $d))))
-        ))))
+        ;; Each public name has its own visibility, preserving declaration identity.
+        (call $list-builder.push< (ref $Symbol) >
+          (struct.get $Loader $symbols $s)
+          (struct.new $Symbol
+            $m
+            $kind
+            $alias
+            (struct.get $Symbol $global (ref.as_non_null $d))
+            (struct.get $Symbol $decl (ref.as_non_null $d))
+            (struct.get $Symbol $opaque (ref.as_non_null $d))
+            0))))
+  )
 
   (func $linked.resolve
     (param $linked (ref $linked))

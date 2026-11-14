@@ -55,7 +55,7 @@
     (func $types.value)
     (func $types.heap)
     (func $types.field))
-  (@use "./gc-types.walz" (func $gc.value-valid))
+  (@use "./gc-types.walz" (func $gc.value-valid) (func $gc.subtype))
   (@use "./gc-operators.walz" (func $gc-op.code))
   (@use "./stack.walz" (func $stack.validate-gc))
   (@use "./gc-effects.walz" (func $gc-effects.validate))
@@ -810,7 +810,6 @@
                 (!= (call $operator.alias (call $node.value $head) 127) 0))
               (then
                 (block
-                  (result i32)
                   (if
                     (call $operator.comparison (call $node.value $head))
                     (then (return 127))
@@ -1204,7 +1203,20 @@
                             (i32.eqz (call $ir.value-type $t))
                             (then (block (call $bad $s $n 116) (return 0)))
                             (else (nop)))
-                          (drop (call $expr $c (call $child $s $n $at) $t $labels $env))
+                          ;; Nullable physical locals must not weaken the source binding.
+                          (@let $actual
+                            (call $expr $c (call $child $s $n $at) $t $labels $env)
+                            (if
+                              (&&
+                                (!= $actual -1)
+                                (i32.eqz
+                                  (call $gc.subtype
+                                    (call $types.defs
+                                      (ref.as_non_null (struct.get $State $gc $s)))
+                                    $actual
+                                    $t)))
+                              (then (call $bad $s (call $child $s $n $at) 110))
+                              (else (nop))))
                           (@let
                             (($extra (struct.get $Context $extra $c))
                              ($index

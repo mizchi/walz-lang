@@ -6,8 +6,9 @@ recursive structs/arrays and references. These are bootstrap components. The
 Rust compiler remains the main implementation. A [modular frontend](selfhost-frontend.md)
 adds static modules, fixed forms, effect bounds, minimal core, monomorphization
 and declarative expression macros.
-Full ownership/proof/ABI lowering is still needed to compile
-the compiler itself.
+This subset compiles its own sources into Core Wasm and passes a
+[two-stage fixed-point gate](selfhost-stages.md). Full ownership/proof/ABI
+lowering remains part of the broader Rust feature-parity work.
 
 ```text
 Rust compiler ──build──> compiler.wasm
@@ -138,8 +139,18 @@ if and function labels use their declared result.
 ## Source parser
 
 `$parser.parse(bytes)` returns Result of an opaque syntax snapshot or a diagnostic.
-It accepts zero or more S-expressions; requiring one `module` is the checker's job.
-It checks source UTF-8, retains the original immutable bytes, skips `;;` line
+
+For generated code, `$node.new` creates untrusted immutable node descriptions;
+`$syntax.assemble` validates postorder references, token shape, depth and finite
+storage budgets before creating opaque syntax with virtual node positions.
+`$node.indexed` is an untrusted position hint: a fully validated indexed arena
+may be reused, and other descriptions are normalized. No structural check is
+skipped by that fast path.
+It does not create checked IR. The frontend retains a separate origin map and
+runs the same independent checker. See [direct syntax assembly](selfhost-syntax.md).
+
+`$parser.parse` accepts zero or more S-expressions; requiring one `module` is the
+checker's job. It checks source UTF-8, retains the original immutable bytes, skips `;;` line
 comments and nested `(; ... ;)` comments, and decodes WAT strings:
 `\hh`, `\n`, `\r`, `\t`, `\'`, `\"`, `\\`, and `\u{...}`.
 Byte escapes may produce non-UTF-8 bytes; export names are checked separately.
@@ -147,7 +158,7 @@ Raw controls and invalid Unicode scalars are rejected.
 
 `$syntax.nodes` returns a postorder list; `$syntax.roots` returns its root indices.
 Children precede their parent. `$node.kind` is atom=0, string=1, list=2,
-quoted identifier=3. Start/end include delimiters and count **UTF-8 bytes**, not JS
+quoted identifier=3, Walz curly field group=6. Parsed start/end ranges include delimiters and count **UTF-8 bytes**, not JS
 UTF-16 units. Atom values retain their spelling; string/quoted-ID values contain
 decoded bytes. `$node.children` is an immutable list of indices. Comments remain
 in `$syntax.source`, not as AST nodes.
@@ -155,7 +166,8 @@ in `$syntax.source`, not as AST nodes.
 This is a structural S-expression reader, not the full Rust Walz reader. Unknown
 atom spellings are preserved. The separate frontend normalizes generic application
 sugar and resolves multiple source files; the parser itself does not elaborate
-them. Object literals remain unsupported. Declarative expansion/hygiene runs in the
+them. Typed named construction uses curly field groups in the frontend; untyped
+object literals remain unsupported. Declarative expansion/hygiene runs in the
 separate frontend. Quoted
 identifiers are parsed but currently rejected by the checker.
 
@@ -317,7 +329,7 @@ cooperative cancellation point.
 | 115 | Invalid control structure |
 | 116 | Ambiguous scalar type; add an annotation |
 | 117 | Invalid IR source range |
-| 118 | Invalid GC declaration, recursive group or subtype |
+| 118 | Invalid or unsupported value/GC type, recursive group or subtype |
 | 119 | Unknown/incompatible GC type, field or index |
 | 120 | Write to immutable GC storage |
 | 121 | Non-defaultable GC constructor field |
@@ -346,6 +358,9 @@ cooperative cancellation point.
 | 221 | Component composition/constructor requires the main compiler |
 | 222 | Static `@lib` has no executable entry |
 | 223 | Core ABI export or initialization in a static `@lib` |
+| 224 | Malformed named construction or unsupported curly field group |
+| 225 | Malformed, unsupported, recursive or nonportable source ABI view |
+| 226 | Source ABI view exceeds layout, flat-slot, shape, depth or work limits |
 
 ## Verification and next steps
 
@@ -394,5 +409,11 @@ fresh capture before claiming current performance or deployment size.
 Next are full ownership/proof and ABI lowering,
 remaining core features, floats/SIMD/multiple results, full recursive type
 equivalence and memories/imports. Those constructs remain rejected until their
-checks exist. Complete self-hosting also requires stage-1/stage-2 reproducibility
-checks. See the [frontend scope](selfhost-frontend.md) and [TODO](../TODO.md).
+checks exist. The current subset's stage-1/stage-2 reproducibility gate is
+implemented; it does not establish full Rust feature parity. See the
+[stage contract](selfhost-stages.md), [frontend scope](selfhost-frontend.md) and [TODO](../TODO.md).
+
+
+For request-local expansion counters, cache contracts and before/after artifact
+comparisons, see [bootstrap frontend profiling](selfhost-profiling.md). This is a
+separate diagnostic entry; the five production portable operations are unchanged.

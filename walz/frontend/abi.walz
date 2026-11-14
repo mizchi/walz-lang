@@ -1,0 +1,981 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $result)
+    (type $string)
+    (type $bytes)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish)
+    (func $list-builder.len))
+  (@use "./tree.walz"
+    (type $tree)
+    (type $project-error)
+    (func $tree.at)
+    (func $tree.len)
+    (func $tree.head)
+    (func $tree.is)
+    (func $tree.is-name)
+    (func $tree.eq)
+    (func $tree.copy)
+    (func $tree.form)
+    (func $tree.slice)
+    (func $tree.error)
+    (func $work.snapshot))
+  (@use "./modules.walz"
+    (type $linked)
+    (func $linked.tree)
+    (func $linked.core)
+    (func $linked.access))
+  (@use "./type-map.walz"
+    (type $type-map)
+    (func $type-map.new)
+    (func $type-map.find)
+    (func $type-map.insert))
+  (@use "../core/text.walz" (func $string.concat))
+  (@use "./limits.walz" (func $limits.work) (func $limits.instances))
+  (@export
+    (opaque $abi-checked)
+    (type $abi-view)
+    (func $abi.validate)
+    (func $abi.contains)
+    (func $abi.views))
+  ;; Source ABI facts are not a Core type certificate or an ABI adapter.
+  ;; Only this validator can construct the token authorizing metadata removal.
+  (type $abi-view
+    (struct
+      (field $target $bytes)
+      (field $kind i32)
+      (field $shape $string)
+      (field $size i32)
+      (field $align i32)
+      (field $flat i32)))
+  (@abi.type $abi-view (record "target" "kind" "shape" "size" "align" "flat"))
+  (type $abi-checked
+    (struct
+      (field $annotations $list<(ref $tree)>)
+      (field $views $list<(ref $abi-view)>)))
+  (type $Facts
+    (struct
+      (field $size i32)
+      (field $align i32)
+      (field $flat i32)
+      (field $shape $string)
+      (field $depth i32)))
+  (type $Memo
+    (struct (field $state (mut i32)) (field $facts (mut (ref null $Facts))))
+  )
+  (type $Memos (array (mut (ref null $Memo))))
+  (type $State
+    (struct
+      (field $linked (ref $linked))
+      (field $cores $list<(ref null $tree)>)
+      (field $decls $list<(ref $tree)>)
+      (field $annotations $list<(ref $tree)>)
+      (field $decl-map (ref $type-map))
+      (field $view-map (ref $type-map))
+      (field $memo-map (ref $type-map))
+      (field $memos (ref $Memos))
+      (field $count (mut i32))
+      (field $total (mut i32))
+      (field $work (mut i32))
+      (field $origin (mut (ref $tree)))
+      (field $error (mut (ref null $project-error))))
+  )
+  (type $Sequence
+    (struct
+      (field $size (mut i32))
+      (field $align (mut i32))
+      (field $flat (mut i32))
+      (field $shape (mut $string))
+      (field $depth (mut i32))))
+  (func $abi.views
+    (param $c (ref $abi-checked))
+    (result $list<(ref $abi-view)>)
+    (@effect pure)
+    (struct.get $abi-checked $views $c))
+
+  (func $abi.contains
+    (param $c (ref $abi-checked))
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (block
+      (result i32)
+      (@for-each $a (struct.get $abi-checked $annotations $c)
+        (if (ref.eq $a $n) (then (return 1)) (else (nop))))
+      0))
+
+  (func $fail
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (if
+      (ref.is_null (struct.get $State $error $s))
+      (then (struct.set $State $error $s (call $tree.error $n $code)))
+      (else (nop))))
+
+  (func $bad
+    (param $s (ref $State))
+    (param $code i32)
+    (@effect reads writes allocates)
+    (call $fail $s (struct.get $State $origin $s) $code))
+
+  (func $empty
+    (result (ref $Facts))
+    (@effect allocates)
+    (struct.new $Facts 1 1 1 "unit" 0))
+
+  (func $text
+    (param $b $bytes)
+    (result $string)
+    (@effect pure)
+    (@match (@string.from-bytes $b)
+      (@case none () (unreachable))
+      (@case some ($s) $s)))
+
+  (func $cat
+    (param $s (ref $State))
+    (param $a $string)
+    (param $b $string)
+    (result $string)
+    (@effect reads writes allocates)
+    (if
+      (result $string)
+      (||
+        (i32.eqz (ref.is_null (struct.get $State $error $s)))
+        (> (+ (@bytes.len (@string.bytes $a)) (@bytes.len (@string.bytes $b))) 65536))
+      (then (block (result $string) (call $bad $s 226) $a))
+      (else (call $string.concat $a $b))))
+
+  (func $aligned
+    (param $n i32)
+    (param $a i32)
+    (result i32)
+    (@effect pure)
+    (& (+ $n (- $a 1)) (- 0 $a)))
+
+  (func $guard
+    (param $s (ref $State))
+    (param $f (ref $Facts))
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $Facts))
+      (if
+        (||
+          (> (struct.get $Facts $size $f) 16777216)
+          (||
+            (> (struct.get $Facts $flat $f) 1024)
+            (||
+              (>= (struct.get $Facts $depth $f) 64)
+              (> (@bytes.len (@string.bytes (struct.get $Facts $shape $f))) 65536))))
+        (then (call $bad $s 226))
+        (else (nop)))
+      $f))
+
+  (func $sequence.add
+    (param $s (ref $State))
+    (param $a (ref $Sequence))
+    (param $f (ref $Facts))
+    (@effect reads writes allocates)
+    (@let $size
+      (call $aligned (struct.get $Sequence $size $a) (struct.get $Facts $align $f))
+      (block
+        (if
+          (||
+            (> $size (- 16777216 (struct.get $Facts $size $f)))
+            (> (struct.get $Sequence $flat $a) (- 1024 (struct.get $Facts $flat $f))))
+          (then (block (call $bad $s 226) (return)))
+          (else (nop)))
+        (struct.set $Sequence $size $a (+ $size (struct.get $Facts $size $f)))
+        (struct.set $Sequence $flat $a
+          (+ (struct.get $Sequence $flat $a) (struct.get $Facts $flat $f)))
+        (if
+          (> (struct.get $Facts $align $f) (struct.get $Sequence $align $a))
+          (then (struct.set $Sequence $align $a (struct.get $Facts $align $f)))
+          (else (nop)))
+        (if
+          (> (+ 1 (struct.get $Facts $depth $f)) (struct.get $Sequence $depth $a))
+          (then (struct.set $Sequence $depth $a (+ 1 (struct.get $Facts $depth $f))))
+          (else (nop))))
+    ))
+
+  (func $sequence.finish
+    (param $s (ref $State))
+    (param $a (ref $Sequence))
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (call $guard $s
+      (struct.new $Facts
+        (call $aligned (struct.get $Sequence $size $a) (struct.get $Sequence $align $a))
+        (struct.get $Sequence $align $a)
+        (struct.get $Sequence $flat $a)
+        (call $cat $s (struct.get $Sequence $shape $a) ")")
+        (struct.get $Sequence $depth $a))))
+
+  (func $decl
+    (param $s (ref $State))
+    (param $name (ref $tree))
+    (result (ref null $tree))
+    (@effect reads allocates)
+    (@let $i (call $type-map.find (struct.get $State $decl-map $s) $name)
+      (if
+        (result (ref null $tree))
+        (< $i 0)
+        (then (ref.null $tree))
+        (else (@list.get (ref $tree) (struct.get $State $decls $s) $i))))
+  )
+
+  (func $identifier
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@let $b (struct.get $tree $value $n)
+      (block
+        (result i32)
+        (if
+          (|| (!= (struct.get $tree $kind $n) 1) (= (@bytes.len $b) 0))
+          (then (return 0))
+          (else (nop)))
+        (@loop $name
+          (bind $i i32 0)
+          (bind $first i32 1)
+          (result i32)
+          (if
+            (result i32)
+            (= $i (@bytes.len $b))
+            (then (i32.eqz $first))
+            (else
+              (@let $c (@bytes.get $b $i)
+                (if
+                  (result i32)
+                  (= $c 45)
+                  (then
+                    (if (result i32) $first (then 0) (else (@recur $name (+ $i 1) 1))))
+                  (else
+                    (if
+                      (result i32)
+                      (||
+                        (&& (>= $c 97) (<= $c 122))
+                        (&& (i32.eqz $first) (&& (>= $c 48) (<= $c 57))))
+                      (then (@recur $name (+ $i 1) 0))
+                      (else 0))))
+              ))))
+      )))
+
+  (func $field-name
+    (param $n (ref $tree))
+    (result $bytes)
+    (@effect allocates)
+    (@let
+      (($b (struct.get $tree $value $n))
+       ($start
+         (@loop $dollars
+           (bind $i i32 0)
+           (result i32)
+           (if
+             (result i32)
+             (&& (< $i (@bytes.len $b)) (= (@bytes.get $b $i) 36))
+             (then (@recur $dollars (+ $i 1)))
+             (else $i))))
+      )
+      (@bytes.slice $b $start (- (@bytes.len $b) $start))))
+
+  (func $validate-view
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (if
+        (||
+          (!= (call $tree.len $n) 3)
+          (i32.eqz (call $tree.is-name (call $tree.at $n 1))))
+        (then (block (call $fail $s $n 225) (return)))
+        (else (nop)))
+      (@let
+        (($name (call $tree.at $n 1))
+         ($d (call $decl $s $name))
+         ($view (call $tree.at $n 2)))
+        (block
+          (if
+            (ref.is_null $d)
+            (then (block (call $fail $s $n 225) (return)))
+            (else (nop)))
+          (if
+            (i32.eqz (call $linked.access (struct.get $State $linked $s) $n $name))
+            (then (block (call $fail $s $n 202) (return)))
+            (else (nop)))
+          (if
+            (||
+              (i32.eqz (call $tree.head (ref.as_non_null $d) "type"))
+              (||
+                (!= (call $tree.len (ref.as_non_null $d)) 3)
+                (i32.eqz
+                  (call $tree.head (call $tree.at (ref.as_non_null $d) 2) "struct"))))
+            (then (block (call $fail $s $n 225) (return)))
+            (else (nop)))
+          (@let
+            (($body (call $tree.at (ref.as_non_null $d) 2))
+             ($record (call $tree.head $view "record"))
+             ($tuple (call $tree.head $view "tuple")))
+            (block
+              ;; Every supported field has at least one flat slot. Bound this
+              ;; before allocating the label map or traversing field metadata.
+              (if
+                (> (call $tree.len $body) 1025)
+                (then (block (call $fail $s $n 226) (return)))
+                (else (nop)))
+              (if
+                (||
+                  (<= (call $tree.len $body) 1)
+                  (||
+                    (i32.eqz (|| $record $tuple))
+                    (||
+                      (&& $record (!= (call $tree.len $body) (call $tree.len $view)))
+                      (&& $tuple (!= (call $tree.len $view) 1))))
+                )
+                (then (block (call $fail $s $n 225) (return)))
+                (else (nop)))
+              (@let $labels (call $type-map.new (- (call $tree.len $body) 1))
+                (@for $i
+                  (bind $i i32 1)
+                  (while (< $i (call $tree.len $body)))
+                  (step (+ $i 1))
+                  (@let
+                    (($field (call $tree.at $body $i))
+                     ($last (call $tree.at $field (- (call $tree.len $field) 1))))
+                    (block
+                      (if
+                        (||
+                          (i32.eqz (call $tree.head $field "field"))
+                          (||
+                            (i32.eqz
+                              (||
+                                (= (call $tree.len $field) 2)
+                                (&&
+                                  (= (call $tree.len $field) 3)
+                                  (call $tree.is-name (call $tree.at $field 1))))
+                            )
+                            (call $tree.head $last "mut")))
+                        (then (block (call $fail $s $n 225) (return)))
+                        (else (nop)))
+                      (if $record
+                        (then
+                          (@let
+                            (($label (call $tree.at $view $i))
+                             ($binder (call $tree.at $field 1)))
+                            (block
+                              (if
+                                (||
+                                  (!= (call $tree.len $field) 3)
+                                  (i32.eqz (call $identifier $label)))
+                                (then (block (call $fail $s $n 225) (return)))
+                                (else (nop)))
+                              (if
+                                (i32.eqz
+                                  (call $bytes.equal
+                                    (call $field-name $binder)
+                                    (struct.get $tree $value $label)))
+                                (then (block (call $fail $s $n 225) (return)))
+                                (else (nop)))
+                              (if
+                                (>= (call $type-map.find $labels $label) 0)
+                                (then (block (call $fail $s $n 225) (return)))
+                                (else (drop (call $type-map.insert $labels $label $i))))
+                            )))
+                        (else (nop))))
+                  ))))
+          ))))
+  )
+  (@use "../core/bytes.walz" (func $bytes.equal))
+  (func $core-kind
+    (param $s (ref $State))
+    (param $name (ref $tree))
+    (result i32)
+    (@effect reads allocates)
+    (block
+      (result i32)
+      (@for $i
+        (bind $i i32 0)
+        (while (< $i (@list.len (ref null $tree) (struct.get $State $cores $s))))
+        (step (+ $i 1))
+        (@let $target (@list.get (ref null $tree) (struct.get $State $cores $s) $i)
+          (if
+            (&&
+              (i32.eqz (ref.is_null $target))
+              (call $tree.eq $name (ref.as_non_null $target)))
+            (then (return (+ $i 1)))
+            (else (nop))))
+      )
+      0))
+
+  (func $core-types
+    (param $linked (ref $linked))
+    (result $list<(ref null $tree)>)
+    (@effect reads writes allocates)
+    (@let $out (call $list-builder.new<(ref null $tree)>)
+      (block
+        (result $list<(ref null $tree)>)
+        (@for-each $name
+          (@list.new $string "$bytes" "$string" "$unit" "$list" "$option" "$result" "$tuple")
+          (call $list-builder.push<(ref null $tree)> $out
+            (call $linked.core $linked $name)))
+        (call $list-builder.finish<(ref null $tree)> $out))))
+
+  (func $subst
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $params (ref $tree))
+    (param $args $list<(ref $tree)>)
+    (param $depth i32)
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $tree))
+      (if (> $depth 128) (then (block (call $bad $s 226) (return $n))) (else (nop)))
+      (struct.set $State $work $s (+ (struct.get $State $work $s) 1))
+      (if
+        (> (struct.get $State $work $s) (call $limits.work))
+        (then (block (call $bad $s 226) (return $n)))
+        (else (nop)))
+      (if
+        (= (struct.get $tree $kind $n) 0)
+        (then
+          (@for $i
+            (bind $i i32 1)
+            (while (< $i (call $tree.len $params)))
+            (step (+ $i 1))
+            (if
+              (call $tree.eq $n (call $tree.at $params $i))
+              (then (return (@list.get (ref $tree) $args (- $i 1))))
+              (else (nop))))
+        )
+        (else (nop)))
+      (@let $out (call $list-builder.new<(ref $tree)>)
+        (block
+          (result (ref $tree))
+          (@for $i
+            (bind $i i32 0)
+            (while (< $i (call $tree.len $n)))
+            (step (+ $i 1))
+            (call $list-builder.push<(ref $tree)> $out
+              (call $subst $s (call $tree.at $n $i) $params $args (+ $depth 1))))
+          (call $tree.copy $n
+            (struct.get $tree $kind $n)
+            (struct.get $tree $value $n)
+            (call $list-builder.finish<(ref $tree)> $out))))
+    ))
+
+  (func $record
+    (param $s (ref $State))
+    (param $name (ref $tree))
+    (param $level i32)
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (@let $index (call $type-map.find (struct.get $State $view-map $s) $name)
+      (block
+        (result (ref $Facts))
+        (if
+          (< $index 0)
+          (then (block (call $bad $s 225) (return (call $empty))))
+          (else (nop)))
+        (@let
+          (($a (@list.get (ref $tree) (struct.get $State $annotations $s) $index))
+           ($view (call $tree.at $a 2))
+           ($record (call $tree.head $view "record"))
+           ($decl (ref.as_non_null (call $decl $s $name)))
+           ($body (call $tree.at $decl 2))
+           ($seq
+             (struct.new $Sequence
+               0
+               1
+               0
+               (if (result $string) $record (then "(record") (else "(tuple"))
+               1)))
+          (block
+            (result (ref $Facts))
+            (@for $i
+              (bind $i i32 1)
+              (while (< $i (call $tree.len $body)))
+              (step (+ $i 1))
+              (@let
+                (($field (call $tree.at $body $i))
+                 ($f
+                   (call $facts $s
+                     (call $tree.at $field (- (call $tree.len $field) 1))
+                     (+ $level 1))))
+                (block
+                  (call $sequence.add $s $seq $f)
+                  (struct.set $Sequence $shape $seq
+                    (call $cat $s
+                      (struct.get $Sequence $shape $seq)
+                      (if
+                        (result $string)
+                        $record
+                        (then
+                          (call $cat $s
+                            (call $cat $s " ("
+                              (call $text
+                                (struct.get $tree $value (call $tree.at $view $i))))
+                            " "))
+                        (else " "))))
+                  (struct.set $Sequence $shape $seq
+                    (call $cat $s
+                      (struct.get $Sequence $shape $seq)
+                      (struct.get $Facts $shape $f)))
+                  (if $record
+                    (then
+                      (struct.set $Sequence $shape $seq
+                        (call $cat $s (struct.get $Sequence $shape $seq) ")")))
+                    (else (nop))))
+              ))
+            (call $sequence.finish $s $seq))))
+    ))
+
+  (func $container
+    (param $s (ref $State))
+    (param $kind i32)
+    (param $args $list<(ref $tree)>)
+    (param $level i32)
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $Facts))
+      (if
+        (!=
+          (@list.len (ref $tree) $args)
+          (if (result i32) (>= $kind 6) (then 2) (else 1)))
+        (then (block (call $bad $s 225) (return (call $empty))))
+        (else (nop)))
+      (@let
+        (($a (call $facts $s (@list.get (ref $tree) $args 0) (+ $level 1)))
+         ($b
+           (if
+             (result (ref $Facts))
+             (>= $kind 6)
+             (then (call $facts $s (@list.get (ref $tree) $args 1) (+ $level 1)))
+             (else (call $empty))))
+         ($shape
+           (call $cat $s
+             (if
+               (result $string)
+               (= $kind 4)
+               (then "(list ")
+               (else
+                 (if
+                   (result $string)
+                   (= $kind 5)
+                   (then "(option ")
+                   (else
+                     (if (result $string) (= $kind 6) (then "(result ") (else "(pair "))))
+               ))
+             (struct.get $Facts $shape $a)))
+         ($shape
+           (if
+             (result $string)
+             (>= $kind 6)
+             (then
+               (call $cat $s (call $cat $s $shape " ") (struct.get $Facts $shape $b)))
+             (else $shape)))
+         ($shape (call $cat $s $shape ")")))
+        (block
+          (result (ref $Facts))
+          (if
+            (||
+              (call $bytes.equal
+                (@string.bytes (struct.get $Facts $shape $a))
+                (@string.bytes "unit"))
+              (&&
+                (>= $kind 6)
+                (call $bytes.equal
+                  (@string.bytes (struct.get $Facts $shape $b))
+                  (@string.bytes "unit"))))
+            (then (block (call $bad $s 225) (return (call $empty))))
+            (else (nop)))
+          (if
+            (= $kind 4)
+            (then
+              (return
+                (call $guard $s
+                  (struct.new $Facts 8 4 2 $shape (+ 1 (struct.get $Facts $depth $a))))
+              ))
+            (else (nop)))
+          (if
+            (= $kind 7)
+            (then
+              (@let $seq (struct.new $Sequence 0 1 0 "" 1)
+                (block
+                  (call $sequence.add $s $seq $a)
+                  (call $sequence.add $s $seq $b)
+                  (return
+                    (call $guard $s
+                      (struct.new $Facts
+                        (call $aligned
+                          (struct.get $Sequence $size $seq)
+                          (struct.get $Sequence $align $seq))
+                        (struct.get $Sequence $align $seq)
+                        (struct.get $Sequence $flat $seq)
+                        $shape
+                        (struct.get $Sequence $depth $seq))))
+                )))
+            (else (nop)))
+          (@let
+            (($align
+               (if
+                 (result i32)
+                 (> (struct.get $Facts $align $a) (struct.get $Facts $align $b))
+                 (then (struct.get $Facts $align $a))
+                 (else (struct.get $Facts $align $b))))
+             ($size
+               (if
+                 (result i32)
+                 (> (struct.get $Facts $size $a) (struct.get $Facts $size $b))
+                 (then (struct.get $Facts $size $a))
+                 (else (struct.get $Facts $size $b))))
+             ($flat
+               (if
+                 (result i32)
+                 (> (struct.get $Facts $flat $a) (struct.get $Facts $flat $b))
+                 (then (struct.get $Facts $flat $a))
+                 (else (struct.get $Facts $flat $b))))
+             ($depth
+               (if
+                 (result i32)
+                 (> (struct.get $Facts $depth $a) (struct.get $Facts $depth $b))
+                 (then (struct.get $Facts $depth $a))
+                 (else (struct.get $Facts $depth $b))))
+            )
+            (call $guard $s
+              (struct.new $Facts
+                (call $aligned (+ (call $aligned 1 $align) $size) $align)
+                $align
+                (+ 1 $flat)
+                $shape
+                (+ 1 $depth))))
+        ))))
+
+  (func $compute
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $level i32)
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $Facts))
+      (if
+        (&& (call $tree.head $n "ref") (= (call $tree.len $n) 2))
+        (then (return (call $record $s (call $tree.at $n 1) $level)))
+        (else (nop)))
+      (if
+        (i32.eqz (|| (= (struct.get $tree $kind $n) 0) (call $tree.head $n "@inst")))
+        (then (block (call $bad $s 225) (return (call $empty))))
+        (else (nop)))
+      (@let
+        (($application (call $tree.head $n "@inst"))
+         ($name
+           (if (result (ref $tree)) $application (then (call $tree.at $n 1)) (else $n)))
+         ($args
+           (if
+             (result $list<(ref $tree)>)
+             $application
+             (then (call $tree.slice $n 2))
+             (else (@list.new (ref $tree))))
+         )
+         ($code (call $core-kind $s $name)))
+        (block
+          (result (ref $Facts))
+          (if
+            (&& (> $code 0) (<= $code 3))
+            (then
+              (block
+                (if
+                  (!= (@list.len (ref $tree) $args) 0)
+                  (then (block (call $bad $s 225) (return (call $empty))))
+                  (else (nop)))
+                (return
+                  (if
+                    (result (ref $Facts))
+                    (= $code 3)
+                    (then (call $empty))
+                    (else
+                      (struct.new $Facts
+                        8
+                        4
+                        2
+                        (if (result $string) (= $code 1) (then "bytes") (else "text"))
+                        0))))
+              ))
+            (else (nop)))
+          (if
+            (> $code 3)
+            (then (return (call $container $s $code $args $level)))
+            (else (nop)))
+          (@let $decl (call $decl $s $name)
+            (block
+              (result (ref $Facts))
+              (if
+                (ref.is_null $decl)
+                (then (block (call $bad $s 225) (return (call $empty))))
+                (else (nop)))
+              (@let
+                (($d (ref.as_non_null $decl))
+                 ($params (call $tree.at $d 2))
+                 ($generic (call $tree.head $params "@type.params")))
+                (block
+                  (result (ref $Facts))
+                  (if
+                    (||
+                      (i32.eqz (call $tree.head $d "@type.alias"))
+                      (||
+                        (!=
+                          (@list.len (ref $tree) $args)
+                          (if
+                            (result i32)
+                            $generic
+                            (then (- (call $tree.len $params) 1))
+                            (else 0)))
+                        (!=
+                          (call $tree.len $d)
+                          (if (result i32) $generic (then 4) (else 3))))
+                    )
+                    (then (block (call $bad $s 225) (return (call $empty))))
+                    (else (nop)))
+                  (@for-each $arg $args
+                    (drop (call $facts $s $arg (+ $level 1))))
+                  (call $facts $s
+                    (if
+                      (result (ref $tree))
+                      $generic
+                      (then (call $subst $s (call $tree.at $d 3) $params $args 0))
+                      (else (call $tree.at $d 2)))
+                    (+ $level 1))))
+            ))))
+    ))
+
+  (func $facts
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $level i32)
+    (result (ref $Facts))
+    (@effect reads writes allocates)
+    (block
+      (result (ref $Facts))
+      (if
+        (i32.eqz (ref.is_null (struct.get $State $error $s)))
+        (then (return (call $empty)))
+        (else (nop)))
+      (struct.set $State $work $s (+ (struct.get $State $work $s) 1))
+      (if
+        (|| (> $level 128) (> (struct.get $State $work $s) (call $limits.work)))
+        (then (block (call $bad $s 226) (return (call $empty))))
+        (else (nop)))
+      (if
+        (|| (call $tree.is $n "i32") (call $tree.is $n "f32"))
+        (then
+          (return (struct.new $Facts 4 4 1 (call $text (struct.get $tree $value $n)) 0)))
+        (else (nop)))
+      (if
+        (|| (call $tree.is $n "i64") (call $tree.is $n "f64"))
+        (then
+          (return (struct.new $Facts 8 8 1 (call $text (struct.get $tree $value $n)) 0)))
+        (else (nop)))
+      (if (call $tree.is $n "@unit") (then (return (call $empty))) (else (nop)))
+      (@let $index (call $type-map.find (struct.get $State $memo-map $s) $n)
+        (if
+          (>= $index 0)
+          (then
+            (@let $m
+              (ref.as_non_null (array.get $Memos (struct.get $State $memos $s) $index))
+              (if
+                (= (struct.get $Memo $state $m) 1)
+                (then (block (call $bad $s 225) (return (call $empty))))
+                (else (return (ref.as_non_null (struct.get $Memo $facts $m))))
+              )))
+          (else (nop))))
+      (if
+        (>= (struct.get $State $count $s) (call $limits.instances))
+        (then (block (call $bad $s 226) (return (call $empty))))
+        (else (nop)))
+      (@let
+        (($i (struct.get $State $count $s))
+         ($m (struct.new $Memo 1 (ref.null $Facts))))
+        (block
+          (result (ref $Facts))
+          (struct.set $State $count $s (+ $i 1))
+          (array.set $Memos (struct.get $State $memos $s) $i $m)
+          (drop (call $type-map.insert (struct.get $State $memo-map $s) $n $i))
+          (@let $f (call $guard $s (call $compute $s $n $level))
+            (block
+              (result (ref $Facts))
+              (if
+                (i32.eqz (ref.is_null (struct.get $State $error $s)))
+                (then (return (call $empty)))
+                (else (nop)))
+              (if
+                (>
+                  (@bytes.len (@string.bytes (struct.get $Facts $shape $f)))
+                  (- 8388608 (struct.get $State $total $s)))
+                (then (block (call $bad $s 226) (return (call $empty))))
+                (else (nop)))
+              (struct.set $State $total $s
+                (+
+                  (struct.get $State $total $s)
+                  (@bytes.len (@string.bytes (struct.get $Facts $shape $f))))
+              )
+              (struct.set $Memo $facts $m $f)
+              (struct.set $Memo $state $m 2)
+              $f))))
+    ))
+
+  (func $collect-decls
+    (param $n (ref $tree))
+    (param $out (ref (@inst $list-builder (ref $tree))))
+    (@effect reads writes allocates)
+    (if
+      (call $tree.head $n "rec")
+      (then
+        (@for $i
+          (bind $i i32 1)
+          (while (< $i (call $tree.len $n)))
+          (step (+ $i 1))
+          (call $collect-decls (call $tree.at $n $i) $out)))
+      (else
+        (if
+          (|| (call $tree.head $n "type") (call $tree.head $n "@type.alias"))
+          (then (call $list-builder.push<(ref $tree)> $out $n))
+          (else (nop))))
+    ))
+  (@use "walz:core" (type $list-builder))
+  (func $abi.validate
+    (param $linked (ref $linked))
+    (result $result<(ref $abi-checked), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@let
+      (($root (call $linked.tree $linked))
+       ($annotations (call $list-builder.new<(ref $tree)>)))
+      (block
+        (result $result<(ref $abi-checked), (ref $project-error)>)
+        (@for $i
+          (bind $i i32 1)
+          (while (< $i (call $tree.len $root)))
+          (step (+ $i 1))
+          (@let $n (call $tree.at $root $i)
+            (if
+              (call $tree.head $n "@abi.type")
+              (then (call $list-builder.push<(ref $tree)> $annotations $n))
+              (else (nop))))
+        )
+        (@let $annotations (call $list-builder.finish<(ref $tree)> $annotations)
+          (block
+            (result $result<(ref $abi-checked), (ref $project-error)>)
+            (if
+              (= (@list.len (ref $tree) $annotations) 0)
+              (then
+                (return
+                  (@result.ok
+                    (struct.new $abi-checked $annotations (@list.new (ref $abi-view))))
+                ))
+              (else (nop)))
+            (if
+              (> (@list.len (ref $tree) $annotations) 1024)
+              (then
+                (return
+                  (@result.err
+                    (call $tree.error (@list.get (ref $tree) $annotations 1024) 226))))
+              (else (nop)))
+            (@let $decls (call $list-builder.new<(ref $tree)>)
+              (block
+                (result $result<(ref $abi-checked), (ref $project-error)>)
+                (@for $i
+                  (bind $i i32 1)
+                  (while (< $i (call $tree.len $root)))
+                  (step (+ $i 1))
+                  (call $collect-decls (call $tree.at $root $i) $decls))
+                (@let
+                  (($decls (call $list-builder.finish<(ref $tree)> $decls))
+                   ($s
+                     (struct.new $State
+                       $linked
+                       (call $core-types $linked)
+                       $decls
+                       $annotations
+                       (call $type-map.new (@list.len (ref $tree) $decls))
+                       (call $type-map.new (@list.len (ref $tree) $annotations))
+                       (call $type-map.new (call $limits.instances))
+                       (array.new $Memos (ref.null $Memo) (call $limits.instances))
+                       0
+                       0
+                       0
+                       $root
+                       (ref.null $project-error)))
+                   ($views (call $list-builder.new<(ref $abi-view)>)))
+                  (block
+                    (result $result<(ref $abi-checked), (ref $project-error)>)
+                    (@for $i
+                      (bind $i i32 0)
+                      (while (< $i (@list.len (ref $tree) $decls)))
+                      (step (+ $i 1))
+                      (drop
+                        (call $type-map.insert
+                          (struct.get $State $decl-map $s)
+                          (call $tree.at (@list.get (ref $tree) $decls $i) 1)
+                          $i)))
+                    (@for $i
+                      (bind $i i32 0)
+                      (while (< $i (@list.len (ref $tree) $annotations)))
+                      (step (+ $i 1))
+                      (@let
+                        (($n (@list.get (ref $tree) $annotations $i))
+                         ($target (call $tree.at $n 1)))
+                        (block
+                          (call $validate-view $s $n)
+                          (if
+                            (>=
+                              (call $type-map.find
+                                (struct.get $State $view-map $s)
+                                $target)
+                              0)
+                            (then (call $fail $s $n 225))
+                            (else
+                              (drop
+                                (call $type-map.insert
+                                  (struct.get $State $view-map $s)
+                                  $target
+                                  $i))))
+                        )))
+                    (if
+                      (i32.eqz (ref.is_null (struct.get $State $error $s)))
+                      (then
+                        (return
+                          (@result.err (ref.as_non_null (struct.get $State $error $s))))
+                      )
+                      (else (nop)))
+                    (@for-each $n $annotations
+                      (block
+                        (struct.set $State $origin $s $n)
+                        (@let $f
+                          (call $facts $s (call $tree.form $n "ref" (@list.new (ref $tree) (call $tree.at $n 1))) 0)
+                          (call $list-builder.push<(ref $abi-view)> $views
+                            (struct.new $abi-view
+                              (struct.get $tree $value (call $tree.at $n 1))
+                              (call $tree.head (call $tree.at $n 2) "tuple")
+                              (struct.get $Facts $shape $f)
+                              (struct.get $Facts $size $f)
+                              (struct.get $Facts $align $f)
+                              (struct.get $Facts $flat $f))))
+                      ))
+                    (if
+                      (result $result<(ref $abi-checked), (ref $project-error)>)
+                      (ref.is_null (struct.get $State $error $s))
+                      (then
+                        (@result.ok
+                          (struct.new $abi-checked
+                            $annotations
+                            (call $list-builder.finish<(ref $abi-view)> $views))))
+                      (else
+                        (@result.err (ref.as_non_null (struct.get $State $error $s))))
+                    ))))
+            ))))
+    )))

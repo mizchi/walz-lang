@@ -81,3 +81,23 @@ fn named_loop_branches_and_owned_block_results_are_checked() {
     let error = walz::check(bad).unwrap_err().to_string();
     assert!(error.contains("unconsumed"), "{error}");
 }
+#[test]
+fn typed_source_accepts_empty_result_vectors_without_erasing_validation() {
+    for body in [
+        "(block (result) (nop))",
+        "(loop $again (result) (nop))",
+        "(if (result) (i32.const 1) (then (nop)) (else (nop)))",
+    ] {
+        let source = format!(
+            r#"(module (@use "walz:core" (type $unit))
+              (func $step (result) {body})
+              (func $entry (export "f") (result i32)
+                (block (result i32) (call $step) (i32.const 42))))"#
+        );
+        let compiled = walz::compile(&source).unwrap();
+        wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
+            .validate_all(&compiled.wasm)
+            .unwrap();
+        assert!(walz::check(&source.replace("(nop)", "(i64.const 1)")).is_err());
+    }
+}

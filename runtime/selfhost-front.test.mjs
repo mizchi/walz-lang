@@ -72,13 +72,14 @@ for (const backend of ["core", "component"])
             assert.throws(() => instance.exports.f(), WebAssembly.RuntimeError);
           else assert.equal(instance.exports.f(), expected, name);
         }
-        for (const [name, source, code] of invalid)
+        for (const [name, source, code, focus] of invalid)
           for (const r of [
             safe(name, api.check, bytes(source)),
             safe(name, api.compile, bytes(source)),
           ]) {
             assert.equal(r.tag, "err", name + " " + JSON.stringify(r));
             assert.equal(r.val.code, code, name);
+            if (focus) assert.equal(new TextDecoder().decode(bytes(source).slice(r.val.start, r.val.end)), focus, name);
             clean();
           }
         for (const [name, p, expected] of projects) {
@@ -107,6 +108,15 @@ for (const backend of ["core", "component"])
           }
           clean();
         }
+        const coreBytes = [
+          ["main.walz", '(module (@use "walz:core" (type $bytes)) (@use "./bytes.walz" (func $bytes.concat)) (func $entry (export "f") (result i32) (@effect reads writes allocates) (@bytes.get (call $bytes.concat (@bytes.new 7) (@bytes.new 42)) 1)))'],
+          ["bytes.walz", await readFile("walz/core/bytes.walz", "utf8")],
+        ];
+        const concatenated = api.compileProject(files(coreBytes));
+        assert.equal(concatenated.tag, "ok", JSON.stringify(concatenated));
+        assert.ok(WebAssembly.validate(concatenated.val));
+        assert.equal((await WebAssembly.instantiate(concatenated.val)).instance.exports.f(), 42);
+        clean();
         // All entry points agree on phase errors and original UTF-8 ranges.
         for (const [name, source, code, focus] of connectionErrors) {
           const input = bytes(source);
@@ -158,6 +168,13 @@ for (const backend of ["core", "component"])
           (await WebAssembly.instantiate(wasm)).instance.exports.main(),
           42,
         );
+        const singleInput = join(dir, "single.walz"), singleOutput = join(dir, "single.wasm");
+        await writeFile(singleInput, '(module (@use "walz:core" (type $unit)) (func $entry (export "f") (result i32) 42))');
+        await exec("node", ["runtime/selfhost.mjs", "--check", singleInput, dir]);
+        await exec("node", ["runtime/selfhost.mjs", singleInput, singleOutput, dir]);
+        const single = await readFile(singleOutput);
+        assert.ok(WebAssembly.validate(single));
+        assert.equal((await WebAssembly.instantiate(single)).instance.exports.f(), 42);
         const native = await exec("wasmtime", [
           "run",
           "-W",
@@ -170,7 +187,8 @@ for (const backend of ["core", "component"])
         if (backend === "core")
           assert.equal(
             (
-              await exec("target/debug/walz", [
+              await exec("cargo", [
+                "run", "--locked", "--quiet", "--",
                 "run",
                 "examples/selfhost/project/main.walz",
               ])

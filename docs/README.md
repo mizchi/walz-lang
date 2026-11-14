@@ -26,7 +26,7 @@ Historical evaluations and dated measurements retain their original language and
 | Immutable SIMD bitmaps and i32 columns | [SIMD collections](simd-collections.md), [library](../walz/simd/README.md) |
 | Dictionary-encoded string columns | [Dictionary columns](dictionary-column.md) |
 | Arquero-style table transformations and JS/TS facade | [Table processing](table.md) |
-| Compiler parts written in Walz: source parser, type/stack checker and Wasm backend | [Self-hosting](selfhost.md), [modular frontend](selfhost-frontend.md), [benchmarks and parity](selfhost-benchmark.md), [browser size](playground-size.md) |
+| Compiler parts written in Walz: source parser, type/stack checker and Wasm backend | [Self-hosting](selfhost.md), [self-compiled stages](selfhost-stages.md), [modular frontend](selfhost-frontend.md), [checked ABI views](selfhost-abi.md), [benchmarks and parity](selfhost-benchmark.md), [browser size](playground-size.md) |
 | Read and write FlatBuffers | [FlatBuffers library](../walz/flatbuffers/README.md) |
 | Endian-specific integers and floating-point bytes | [Fixed-width byte access](byte-access.md) |
 | Checked sizes, offsets, and alignment | [Checked integers](checked-integers.md) |

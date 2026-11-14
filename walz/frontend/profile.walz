@@ -1,0 +1,302 @@
+(module
+  (@use "walz:core"
+    (type $list)
+    (type $list-builder)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@export
+    (opaque $profile-state)
+    (type $profile-stats)
+    (type $profile-file)
+    (func $profile.new)
+    (func $profile.snapshot)
+    (func $profile.event)
+    (func $profile.visit)
+    (func $profile.charge)
+    (func $profile.phase)
+    (func $profile.limit)
+    (func $profile.instance)
+    (func $profile.rendered)
+    (func $profile.syntax))
+  ;; Optional request-local instrumentation. Neither counters nor caches escape
+  ;; into another compile request; only immutable snapshots cross the ABI.
+  (type $Counters (array (mut i32)))
+  (type $profile-state
+    (struct (field $counts (ref $Counters)) (field $files (ref $Counters))))
+  (type $profile-file
+    (struct
+      (field $file i32)
+      (field $type-work i32)
+      (field $expression-work i32)
+      (field $logical-work i32)
+      (field $named-field-work i32)))
+  (@abi.type $profile-file
+    (record "file" "type-work" "expression-work" "logical-work" "named-field-work"))
+  (type $profile-stats
+    (struct
+      (field $signature-requests i32)
+      (field $signature-hits i32)
+      (field $signature-computations i32)
+      (field $return-requests i32)
+      (field $return-hits i32)
+      (field $return-computations i32)
+      (field $instance-requests i32)
+      (field $instance-hits i32)
+      (field $instance-computations i32)
+      (field $alias-requests i32)
+      (field $alias-hits i32)
+      (field $alias-computations i32)
+      (field $type-visits i32)
+      (field $type-work i32)
+      (field $expression-work i32)
+      (field $logical-work i32)
+      (field $named-field-work i32)
+      (field $phase i32)
+      (field $limit i32)
+      (field $max-depth i32)
+      (field $heap-instances i32)
+      (field $function-instances i32)
+      (field $alias-instances i32)
+      (field $rendered-bytes i32)
+      (field $layout-requests i32)
+      (field $layout-hits i32)
+      (field $layout-computations i32)
+      (field $field-requests i32)
+      (field $field-hits i32)
+      (field $field-computations i32)
+      (field $syntax-nodes i32)
+      (field $syntax-storage i32)
+      (field $syntax-visits i32)
+      (field $syntax-atom-hits i32)
+      (field $files $list<(ref $profile-file)>)))
+  (@abi.type $profile-stats
+    (record "signature-requests" "signature-hits" "signature-computations"
+      "return-requests" "return-hits" "return-computations" "instance-requests"
+      "instance-hits" "instance-computations" "alias-requests" "alias-hits"
+      "alias-computations" "type-visits" "type-work" "expression-work" "logical-work"
+      "named-field-work" "phase" "limit" "max-depth" "heap-instances"
+      "function-instances" "alias-instances" "rendered-bytes" "layout-requests"
+      "layout-hits" "layout-computations" "field-requests" "field-hits"
+      "field-computations" "syntax-nodes" "syntax-storage" "syntax-visits"
+      "syntax-atom-hits" "files"))
+  (func $profile.new
+    (result (ref $profile-state))
+    (@effect allocates)
+    (struct.new $profile-state (array.new $Counters 0 34) (array.new $Counters 0 260)))
+
+  (func $add
+    (param $p (ref $profile-state))
+    (param $index i32)
+    (param $amount i32)
+    (@effect reads writes)
+    (array.set $Counters
+      (struct.get $profile-state $counts $p)
+      $index
+      (+ (array.get $Counters (struct.get $profile-state $counts $p) $index) $amount)))
+  ;; Event kinds: 0 signature, 1 return type, 2 instance lookup, 3 alias,
+  ;; 4 concrete layout, 5 resolved fields. Extra groups start at slot 24.
+  ;; A miss counts an attempted computation, including rejected computations.
+  (func $profile.event
+    (param $p (ref null $profile-state))
+    (param $kind i32)
+    (param $hit i32)
+    (@effect reads writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (@let
+          (($p (ref.as_non_null $p))
+           ($base (+ (* 3 $kind) (if (result i32) (>= $kind 4) (then 12) (else 0))))
+          )
+          (block
+            (call $add $p $base 1)
+            (call $add $p (+ $base (if (result i32) $hit (then 1) (else 2))) 1))))
+    ))
+
+  (func $profile.visit
+    (param $p (ref null $profile-state))
+    (param $depth i32)
+    (param $type i32)
+    (@effect reads writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (@let $p (ref.as_non_null $p)
+          (block
+            (if $type (then (call $add $p 12 1)) (else (nop)))
+            (if
+              (> $depth (array.get $Counters (struct.get $profile-state $counts $p) 19))
+              (then
+                (array.set $Counters (struct.get $profile-state $counts $p) 19 $depth))
+              (else (nop))))
+        ))))
+  ;; Work kinds: 0 types, 1 expressions, 2 logical flattening, 3 named fields.
+  ;; File -1 is embedded core, 0..63 are supplied project files.
+  (func $profile.charge
+    (param $p (ref null $profile-state))
+    (param $file i32)
+    (param $kind i32)
+    (param $amount i32)
+    (@effect reads writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (@let $p (ref.as_non_null $p)
+          (block
+            (call $add $p (+ 13 $kind) $amount)
+            (if
+              (&& (>= $file -1) (< $file 64))
+              (then
+                (@let
+                  (($a (struct.get $profile-state $files $p))
+                   ($i (+ (* (+ $file 1) 4) $kind)))
+                  (array.set $Counters $a $i (+ (array.get $Counters $a $i) $amount))))
+              (else (nop))))
+        ))))
+  ;; Phases: 1 link, 2 generics, 3 GC ordering, 4 control lowering,
+  ;; 5 checked syntax assembly, 6 independent validation, 7 complete.
+  (func $profile.phase
+    (param $p (ref null $profile-state))
+    (param $phase i32)
+    (@effect writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (array.set $Counters
+          (struct.get $profile-state $counts (ref.as_non_null $p))
+          17
+          $phase))))
+  ;; Limits: 1 instances, 2 work, 3 depth, 4 types, 5 fields, 6 edges,
+  ;; 7 debug rendering, 8 generated nodes, 9 generated syntax storage.
+  ;; Zero means no classified limit (other stages keep their normal diagnostic).
+  (func $profile.limit
+    (param $p (ref null $profile-state))
+    (param $limit i32)
+    (@effect reads writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (@let $p (ref.as_non_null $p)
+          (if
+            (= (array.get $Counters (struct.get $profile-state $counts $p) 18) 0)
+            (then
+              (array.set $Counters (struct.get $profile-state $counts $p) 18 $limit))
+            (else (nop))))
+      )))
+
+  (func $profile.instance
+    (param $p (ref null $profile-state))
+    (param $kind i32)
+    (@effect reads writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else (call $add (ref.as_non_null $p) (+ 20 $kind) 1))))
+
+  (func $profile.rendered
+    (param $p (ref null $profile-state))
+    (param $bytes i32)
+    (@effect writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (array.set $Counters
+          (struct.get $profile-state $counts (ref.as_non_null $p))
+          23
+          $bytes))))
+
+  (func $profile.syntax
+    (param $p (ref null $profile-state))
+    (param $nodes i32)
+    (param $storage i32)
+    (param $visits i32)
+    (param $hits i32)
+    (@effect writes)
+    (if
+      (ref.is_null $p)
+      (then (nop))
+      (else
+        (@let $counts (struct.get $profile-state $counts (ref.as_non_null $p))
+          (block
+            (array.set $Counters $counts 30 $nodes)
+            (array.set $Counters $counts 31 $storage)
+            (array.set $Counters $counts 32 $visits)
+            (array.set $Counters $counts 33 $hits))))
+    ))
+
+  (func $profile.snapshot
+    (param $p (ref $profile-state))
+    (result (ref $profile-stats))
+    (@effect reads writes allocates)
+    (@let
+      (($a (struct.get $profile-state $counts $p))
+       ($f (struct.get $profile-state $files $p))
+       ($out (call $list-builder.new<(ref $profile-file)>)))
+      (block
+        (result (ref $profile-stats))
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i 65))
+          (step (+ $i 1))
+          (@let $at (* $i 4)
+            (if
+              (||
+                (|| (array.get $Counters $f $at) (array.get $Counters $f (+ $at 1)))
+                (||
+                  (array.get $Counters $f (+ $at 2))
+                  (array.get $Counters $f (+ $at 3))))
+              (then
+                (call $list-builder.push<(ref $profile-file)> $out
+                  (struct.new $profile-file
+                    (- $i 1)
+                    (array.get $Counters $f $at)
+                    (array.get $Counters $f (+ $at 1))
+                    (array.get $Counters $f (+ $at 2))
+                    (array.get $Counters $f (+ $at 3))))
+              )
+              (else (nop))))
+        )
+        (struct.new $profile-stats
+          (array.get $Counters $a 0)
+          (array.get $Counters $a 1)
+          (array.get $Counters $a 2)
+          (array.get $Counters $a 3)
+          (array.get $Counters $a 4)
+          (array.get $Counters $a 5)
+          (array.get $Counters $a 6)
+          (array.get $Counters $a 7)
+          (array.get $Counters $a 8)
+          (array.get $Counters $a 9)
+          (array.get $Counters $a 10)
+          (array.get $Counters $a 11)
+          (array.get $Counters $a 12)
+          (array.get $Counters $a 13)
+          (array.get $Counters $a 14)
+          (array.get $Counters $a 15)
+          (array.get $Counters $a 16)
+          (array.get $Counters $a 17)
+          (array.get $Counters $a 18)
+          (array.get $Counters $a 19)
+          (array.get $Counters $a 20)
+          (array.get $Counters $a 21)
+          (array.get $Counters $a 22)
+          (array.get $Counters $a 23)
+          (array.get $Counters $a 24)
+          (array.get $Counters $a 25)
+          (array.get $Counters $a 26)
+          (array.get $Counters $a 27)
+          (array.get $Counters $a 28)
+          (array.get $Counters $a 29)
+          (array.get $Counters $a 30)
+          (array.get $Counters $a 31)
+          (array.get $Counters $a 32)
+          (array.get $Counters $a 33)
+          (call $list-builder.finish<(ref $profile-file)> $out))))
+  ))

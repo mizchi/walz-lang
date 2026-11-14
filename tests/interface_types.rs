@@ -41,3 +41,49 @@ fn flags_share_the_pinned_component_limit_of_32_names() {
     let error = walz::check(&source).unwrap_err();
     assert_eq!(error.diagnostic().code, "E_ABI_TYPE");
 }
+
+#[test]
+fn abi_views_respect_the_owner_of_an_opaque_representation() {
+    let directory = tempfile::tempdir().unwrap();
+    let library = directory.path().join("lib.walz");
+    let main = directory.path().join("main.walz");
+    std::fs::write(
+        &library,
+        r#"(@lib (@export (opaque $Secret))
+          (type $Secret (struct (field $value i32))))"#,
+    )
+    .unwrap();
+    for view in [r#"(record "value")"#, r#"(record "wrong")"#, "(tuple)"] {
+        std::fs::write(
+            &main,
+            format!(
+                r#"(module (@use "./lib.walz" (type $Secret))
+                  (@abi.type $Secret {view}))"#
+            ),
+        )
+        .unwrap();
+        let source = walz::source::load(&main).unwrap();
+        let result = walz::check(source.text());
+        assert!(result.is_err(), "foreign metadata exposed an opaque layout");
+        assert_eq!(
+            result.unwrap_err().diagnostic().code,
+            "E_OPAQUE_REPRESENTATION"
+        );
+    }
+    std::fs::write(
+        &library,
+        r#"(@lib (@export (opaque $Secret) (func $make))
+          (type $Secret (struct (field $value i32)))
+          (@abi.type $Secret (record "value"))
+          (func $make (result (ref $Secret)) (struct.new $Secret 42)))"#,
+    )
+    .unwrap();
+    std::fs::write(
+        &main,
+        r#"(module (@use "./lib.walz" (func $make))
+          (func $entry (export "f") (result i32)
+            (block (result i32) (drop (call $make)) 42)))"#,
+    )
+    .unwrap();
+    walz::check(walz::source::load(&main).unwrap().text()).unwrap();
+}

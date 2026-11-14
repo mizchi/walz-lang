@@ -1,5 +1,6 @@
 (module
   (@use "./modules.walz" (func $linked.resolve))
+  (@use "./abi.walz" (type $abi-checked) (func $abi.validate) (func $abi.contains))
   (@use "./macro-validation.walz" (func $macro.validate-queries))
   (@use "./macros.walz" (func $macro.expand))
   (@use "./macro-context.walz"
@@ -18,7 +19,8 @@
     (func $macro.match)
     (func $macro.capture)
     (func $macro.one)
-    (func $macro.variable))
+    (func $macro.variable)
+    (func $macro.class))
   (@use "walz:core"
     (type $bytes)
     (type $string)
@@ -64,9 +66,21 @@
     (func $linked.core)
     (func $linked.access))
   (@use "./tree.walz" (func $tree.occurs))
-  (@use "./type-order.walz" (func $type-order.run))
-  (@use "../checker/operators.walz" (func $operator.code) (func $operator.result))
-  (@export (func $generics.run))
+  (@use "./limits.walz" (func $limits.instances) (func $limits.work))
+  (@use "./structs.walz" (func $struct.named))
+  (@use "./type-order.walz" (func $type-order.run-profile))
+  (@use "../checker/operators.walz"
+    (func $operator.code) (func $operator.result)
+    (func $operator.alias) (func $operator.comparison))
+  (@use "./profile.walz"
+    (type $profile-state)
+    (func $profile.event)
+    (func $profile.visit)
+    (func $profile.charge)
+    (func $profile.phase)
+    (func $profile.limit)
+    (func $profile.instance))
+  (@export (func $generics.run) (func $generics.run-profile))
   (type $Env
     (struct
       (field $name (ref $tree))
@@ -74,6 +88,15 @@
       (field $parent (ref null $Env))
       (field $mutable i32)
       (field $index i32)))
+  ;; Resolved parameter/result types belong to a concrete declaration instance.
+  ;; Publishing the immutable value only after successful normalization keeps
+  ;; recursive calls, nominal types and opaque access on the checked path.
+  (type $Signature
+    (struct (field $params $list< (ref $tree) >) (field $result (ref $tree))))
+  (type $FieldTypes (struct (field $values $list< (ref $tree) >)))
+  (type $Layout
+    (struct (field $shape (ref $tree)) (field $fields (mut (ref null $FieldTypes))))
+  )
   (type $Instance
     (struct
       (field $decl (ref $tree))
@@ -81,10 +104,15 @@
       (field $name (ref $tree))
       (field $kind i32)
       (field $state (mut i32))
-      (field $value (mut (ref null $tree))))
+      (field $value (mut (ref null $tree)))
+      (field $signature (mut (ref null $Signature)))
+      (field $return-type (mut (ref null $tree)))
+      (field $layout (mut (ref null $Layout))))
   )
   (type $State
     (struct
+      (field $profile (ref null $profile-state))
+      (field $abi (ref $abi-checked))
       (field $linked (ref $linked))
       (field $decls (ref $list-builder< (ref $tree) >))
       (field $instances (ref $list-builder< (ref $Instance) >))
@@ -599,13 +627,18 @@
                                                                                                                                           (||
                                                                                                                                             (||
                                                                                                                                               (||
-                                                                                                                                                (call
-                                                                                                                                                  $tree.is
+                                                                                                                                                (||
                                                                                                                                                   (call
-                                                                                                                                                    $tree.at
+                                                                                                                                                    $tree.is
+                                                                                                                                                    (call
+                                                                                                                                                      $tree.at
+                                                                                                                                                      $n
+                                                                                                                                                      0)
+                                                                                                                                                    "struct.new")
+                                                                                                                                                  (call
+                                                                                                                                                    $tree.head
                                                                                                                                                     $n
-                                                                                                                                                    0)
-                                                                                                                                                  "struct.new")
+                                                                                                                                                    "@struct.new"))
                                                                                                                                                 (call
                                                                                                                                                   $tree.is
                                                                                                                                                   (call
@@ -870,55 +903,63 @@
     (param $args $list< (ref $tree) >)
     (param $site (ref $tree))
     (@effect reads writes allocates)
-    (@let
-      (($ps (call $params $decl)))
-      (@for $i
-        (bind $i i32 2)
-        (while (< $i (call $tree.len $decl)))
-        (step (+ $i 1))
-        (@let
-          (($w (call $tree.at $decl $i)))
-          (if
-            (call $tree.head $w "@where")
-            (then
-              (@for $j
-                (bind $j i32 1)
-                (while (< $j (call $tree.len $w)))
-                (step (+ $j 1))
-                (@let
-                  (($c (call $tree.at $w $j)))
-                  (block
-                    (if
+    (@for $i
+      (bind $i i32 2)
+      (while (< $i (call $tree.len $decl)))
+      (step (+ $i 1))
+      (@let $w (call $tree.at $decl $i)
+        (if
+          (call $tree.head $w "@where")
+          (then
+            (@for $j
+              (bind $j i32 1)
+              (while (< $j (call $tree.len $w)))
+              (step (+ $j 1))
+              (@let
+                (($c (call $tree.at $w $j))
+                 ($class (call $tree.at $c 0)))
+                (block
+                  (if
+                    (||
+                      (< (call $tree.len $c) 2)
                       (i32.eqz
                         (||
-                          (call $tree.head $c "shared")
-                          (call $tree.head $c "nonunit")))
-                      (then (call $fail $s $site 207))
-                      (else (nop)))
-                    (@for $k
-                      (bind $k i32 1)
-                      (while (< $k (call $tree.len $c)))
-                      (step (+ $k 1))
-                      (@let
-                        (($t
-                           (call $type $s
-                             (call $subst $s (call $tree.at $c $k) $decl $args))))
-                        (if
-                          (i32.eqz
-                            (||
-                              (&&
-                                (call $tree.head $c "shared")
-                                (call $tree.is $t "unit"))
+                          (call $macro.class $class)
+                          (||
+                            (call $tree.head $c "shared")
+                            (call $tree.head $c "nonunit"))))
+                    )
+                    (then (block (call $fail $s $site 207) (return)))
+                    (else (nop)))
+                  (@for $k
+                    (bind $k i32 1)
+                    (while (< $k (call $tree.len $c)))
+                    (step (+ $k 1))
+                    (@let $t
+                      (call $type $s (call $subst $s (call $tree.at $c $k) $decl $args))
+                      (if
+                        (i32.eqz
+                          (if
+                            (result i32)
+                            (call $macro.class $class)
+                            (then (call $macro-supports $class $t))
+                            (else
                               (||
-                                (call $tree.is $t "i32")
-                                (|| (call $tree.is $t "i64") (call $tree.head $t "ref"))))
-                          )
-                          (then (call $fail $s $site 207))
-                          (else (nop))))
-                    ))))
-            )
-            (else (nop))))
-      )))
+                                (&&
+                                  (call $tree.head $c "shared")
+                                  (call $tree.is $t "unit"))
+                                (||
+                                  (call $tree.is $t "i32")
+                                  (||
+                                    (call $tree.is $t "i64")
+                                    (call $tree.head $t "ref"))))
+                            )))
+                        (then (call $fail $s $site 207))
+                        (else (nop))))
+                  ))))
+          )
+          (else (nop))))
+    ))
 
   (func $same-args
     (param $a $list< (ref $tree) >)
@@ -957,6 +998,7 @@
           (!= (@list.len (ref $tree) $ps) (@list.len (ref $tree) $args))
           (then
             (block
+              (call $profile.event (struct.get $State $profile $s) 2 0)
               (call $fail $s $n 206)
               (return
                 (struct.new $Instance
@@ -965,7 +1007,10 @@
                   $n
                   0
                   2
-                  (ref.null $tree))))
+                  (ref.null $tree)
+                  (ref.null $Signature)
+                  (ref.null $tree)
+                  (ref.null $Layout))))
           )
           (else (nop)))
         (@for-each $x
@@ -974,15 +1019,20 @@
             (&&
               (ref.eq (struct.get $Instance $decl $x) $decl)
               (call $same-args (struct.get $Instance $args $x) $args))
-            (then (return $x))
+            (then
+              (block
+                (call $profile.event (struct.get $State $profile $s) 2 1)
+                (return $x)))
             (else (nop))))
+        (call $profile.event (struct.get $State $profile $s) 2 0)
         (if
           (>=
             (call $list-builder.len< (ref $Instance) >
               (struct.get $State $instances $s))
-            256)
+            (call $limits.instances))
           (then
             (block
+              (call $profile.limit (struct.get $State $profile $s) 1)
               (call $fail $s $n 150)
               (return
                 (struct.new $Instance
@@ -991,7 +1041,10 @@
                   $n
                   0
                   2
-                  (ref.null $tree))))
+                  (ref.null $tree)
+                  (ref.null $Signature)
+                  (ref.null $tree)
+                  (ref.null $Layout))))
           )
           (else (nop)))
         (@for-each $arg $args
@@ -1019,9 +1072,20 @@
                (= (@list.len (ref $tree) $ps) 0)
                (then (call $tree.at $decl 1))
                (else (call $fresh $s $n))))
-           ($x (struct.new $Instance $decl $args $name $kind 0 (ref.null $tree))))
+           ($x
+             (struct.new $Instance
+               $decl
+               $args
+               $name
+               $kind
+               0
+               (ref.null $tree)
+               (ref.null $Signature)
+               (ref.null $tree)
+               (ref.null $Layout))))
           (block
             (result (ref $Instance))
+            (call $profile.instance (struct.get $State $profile $s) $kind)
             (call $list-builder.push< (ref $Instance) >
               (struct.get $State $instances $s)
               $x)
@@ -1071,10 +1135,19 @@
         (call $tree.is $n "@unit")
         (then (return (call $tree.atom $n "unit")))
         (else (nop)))
+      (call $profile.charge
+        (struct.get $State $profile $s)
+        (struct.get $tree $file $n)
+        0
+        1)
       (struct.set $State $work $s (+ (struct.get $State $work $s) 1))
       (if
-        (> (struct.get $State $work $s) 262144)
-        (then (block (call $fail $s $n 150) (return $n)))
+        (> (struct.get $State $work $s) (call $limits.work))
+        (then
+          (block
+            (call $profile.limit (struct.get $State $profile $s) 2)
+            (call $fail $s $n 150)
+            (return $n)))
         (else (nop)))
       (if
         (result (ref $tree))
@@ -1119,6 +1192,10 @@
                         (then
                           (block
                             (result (ref $tree))
+                            (call $profile.event
+                              (struct.get $State $profile $s)
+                              3
+                              (= (struct.get $Instance $state $x) 2))
                             (if
                               (= (struct.get $Instance $state $x) 1)
                               (then (block (call $fail $s $n 206) (return $n)))
@@ -1293,7 +1370,10 @@
                       $n
                       1
                       2
-                      (ref.null $tree))))
+                      (ref.null $tree)
+                      (ref.null $Signature)
+                      (ref.null $tree)
+                      (ref.null $Layout))))
               )
               (else (nop)))
             (if
@@ -1315,40 +1395,84 @@
   (func $signature
     (param $s (ref $State))
     (param $x (ref $Instance))
-    (result $list< (ref $tree) >)
+    (result (ref $Signature))
     (@effect reads writes allocates)
-    (@let
-      (($d (struct.get $Instance $decl $x))
-       ($b (call $list-builder.new< (ref $tree) >)))
+    (@let $cached (struct.get $Instance $signature $x)
       (block
-        (result $list< (ref $tree) >)
-        (@for $i
-          (bind $i i32 2)
-          (while (< $i (call $tree.len $d)))
-          (step (+ $i 1))
-          (@let
-            (($f (call $tree.at $d $i)))
-            (if
-              (|| (call $tree.head $f "param") (call $tree.head $f "result"))
-              (then
-                (call $list-builder.push< (ref $tree) > $b
-                  (call $type $s
-                    (call $subst $s
-                      (call $tree.at $f (- (call $tree.len $f) 1))
-                      $d
-                      (struct.get $Instance $args $x))))
-              )
-              (else (nop))))
-        )
-        (call $list-builder.finish< (ref $tree) > $b))))
+        (result (ref $Signature))
+        (call $profile.event
+          (struct.get $State $profile $s)
+          0
+          (i32.eqz (ref.is_null $cached)))
+        (if
+          (ref.is_null $cached)
+          (then (nop))
+          (else (return (ref.as_non_null $cached))))
+        (@let
+          (($d (struct.get $Instance $decl $x))
+           ($b (call $list-builder.new< (ref $tree) >)))
+          (block
+            (result (ref $Signature))
+            (@for $i
+              (bind $i i32 2)
+              (while (< $i (call $tree.len $d)))
+              (step (+ $i 1))
+              (@let $f (call $tree.at $d $i)
+                (if
+                  (call $tree.head $f "param")
+                  (then
+                    (call $list-builder.push< (ref $tree) > $b
+                      (call $type $s
+                        (call $subst $s
+                          (call $tree.at $f (- (call $tree.len $f) 1))
+                          $d
+                          (struct.get $Instance $args $x))))
+                  )
+                  (else (nop))))
+            )
+            (@let $value
+              (struct.new $Signature (call $list-builder.finish< (ref $tree) > $b) (call $return-type $s $x))
+              (block
+                (result (ref $Signature))
+                (if
+                  (ref.is_null (struct.get $State $error $s))
+                  (then (struct.set $Instance $signature $x $value))
+                  (else (nop)))
+                $value))))
+      )))
 
   (func $return-type
     (param $s (ref $State))
     (param $x (ref $Instance))
     (result (ref $tree))
     (@effect reads writes allocates)
-    (@let
-      (($d (struct.get $Instance $decl $x)))
+    (@let $cached (struct.get $Instance $return-type $x)
+      (block
+        (result (ref $tree))
+        (call $profile.event
+          (struct.get $State $profile $s)
+          1
+          (i32.eqz (ref.is_null $cached)))
+        (if
+          (ref.is_null $cached)
+          (then (nop))
+          (else (return (ref.as_non_null $cached))))
+        (@let $value (call $resolve-result $s $x)
+          (block
+            (result (ref $tree))
+            (if
+              (ref.is_null (struct.get $State $error $s))
+              (then (struct.set $Instance $return-type $x $value))
+              (else (nop)))
+            $value))))
+  )
+
+  (func $resolve-result
+    (param $s (ref $State))
+    (param $x (ref $Instance))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let $d (struct.get $Instance $decl $x)
       (block
         (result (ref $tree))
         (@for $i
@@ -1358,12 +1482,17 @@
           (if
             (call $tree.head (call $tree.at $d $i) "result")
             (then
-              (return
-                (call $type $s
-                  (call $subst $s
-                    (call $tree.at (call $tree.at $d $i) 1)
-                    $d
-                    (struct.get $Instance $args $x))))
+              (@let $result (call $tree.at $d $i)
+                (block
+                  (if (= (call $tree.len $result) 1)
+                    (then (return (call $tree.atom $result "unit"))) (else (nop)))
+                  (if (!= (call $tree.len $result) 2)
+                    (then (block (call $fail $s $result 104) (return $result))) (else (nop)))
+                  ;; Substitution cannot change the result-vector arity. Copy
+                  ;; the payload alone instead of rebuilding its result wrapper.
+                  (return (call $type $s
+                    (call $subst $s (call $tree.at $result 1) $d
+                      (struct.get $Instance $args $x))))))
             )
             (else (nop))))
         (call $tree.atom $d "unit"))))
@@ -1478,7 +1607,11 @@
         (else (nop)))
       (if
         (= (struct.get $tree $kind $n) 0)
-        (then (return (call $env-type $n $env)))
+        (then
+          (return
+            (if (result (ref $tree)) (call $tree.is-name $n)
+              (then (call $env-type $n $env))
+              (else (call $tree.atom $n "?")))))
         (else (nop)))
       (if
         (call $tree.head $n "local.get")
@@ -1494,7 +1627,8 @@
       (if
         (||
           (call $tree.head $n "block")
-          (|| (call $tree.head $n "if") (call $tree.head $n "@loop")))
+          (|| (call $tree.head $n "loop")
+            (|| (call $tree.head $n "if") (call $tree.head $n "@loop"))))
         (then
           (block
             (@for $i
@@ -1503,7 +1637,7 @@
               (step (+ $i 1))
               (if
                 (call $tree.head (call $tree.at $n $i) "result")
-                (then (return (call $type $s (call $tree.at (call $tree.at $n $i) 1))))
+                (then (return (call $result-type $s (call $tree.at $n $i))))
                 (else (nop))))
             (return (call $tree.atom $n "unit"))))
         (else (nop)))
@@ -1563,27 +1697,7 @@
             )))
         (else (nop)))
       (if
-        (call $tree.head $n "=")
-        (then (return (call $tree.atom $n "i32")))
-        (else (nop)))
-      (if
-        (call $tree.head $n "!=")
-        (then (return (call $tree.atom $n "i32")))
-        (else (nop)))
-      (if
-        (call $tree.head $n "<")
-        (then (return (call $tree.atom $n "i32")))
-        (else (nop)))
-      (if
-        (call $tree.head $n "<=")
-        (then (return (call $tree.atom $n "i32")))
-        (else (nop)))
-      (if
-        (call $tree.head $n ">")
-        (then (return (call $tree.atom $n "i32")))
-        (else (nop)))
-      (if
-        (call $tree.head $n ">=")
+        (call $operator.comparison (struct.get $tree $value (call $tree.at $n 0)))
         (then (return (call $tree.atom $n "i32")))
         (else (nop)))
       (if
@@ -1644,7 +1758,9 @@
           (||
             (||
               (||
-                (call $tree.head $n "struct.new")
+                (||
+                  (call $tree.head $n "struct.new")
+                  (call $tree.head $n "@struct.new"))
                 (call $tree.head $n "struct.new_default"))
               (call $tree.head $n "array.new"))
             (call $tree.head $n "array.new_default"))
@@ -1698,7 +1814,7 @@
           (call $tree.head $n "@bytes.new")
           (||
             (call $tree.head $n "@bytes.from-array")
-            (call $tree.head $n "@bytes.slice")))
+            (|| (call $tree.head $n "@bytes.slice") (call $tree.head $n "@string.bytes"))))
         (then (return (call $type $s (call $core-name $s $n "$bytes"))))
         (else (nop)))
       (if
@@ -1733,11 +1849,7 @@
         (then (return (call $tree.atom $n "i32")))
         (else (nop)))
       (if
-        (||
-          (||
-            (|| (call $tree.head $n "+") (call $tree.head $n "-"))
-            (call $tree.head $n "*"))
-          (call $tree.head $n "/"))
+        (> (call $operator.alias (struct.get $tree $value (call $tree.at $n 0)) 127) 0)
         (then
           (return
             (@let
@@ -1760,7 +1872,7 @@
     (@effect reads writes allocates)
     (@let
       (($x (call $callee-infer $s $n $expected $env))
-       ($sig (call $signature $s $x))
+       ($sig (struct.get $Signature $params (call $signature $s $x)))
        ($b (call $list-builder.new< (ref $tree) >)))
       (block
         (result (ref $tree))
@@ -1959,9 +2071,11 @@
                                               (||
                                                 (||
                                                   (||
-                                                    (call $tree.is
-                                                      (call $tree.at $n 0)
-                                                      "struct.new")
+                                                    (||
+                                                      (call $tree.is
+                                                        (call $tree.at $n 0)
+                                                        "struct.new")
+                                                      (call $tree.head $n "@struct.new"))
                                                     (call $tree.is
                                                       (call $tree.at $n 0)
                                                       "struct.new_default"))
@@ -2026,9 +2140,12 @@
                                                     (||
                                                       (||
                                                         (||
-                                                          (call $tree.is
-                                                            (call $tree.at $n 0)
-                                                            "struct.new")
+                                                          (||
+                                                            (call $tree.is
+                                                              (call $tree.at $n 0)
+                                                              "struct.new")
+                                                            (call $tree.head $n
+                                                              "@struct.new"))
                                                           (call $tree.is
                                                             (call $tree.at $n 0)
                                                             "struct.new_default"))
@@ -2120,6 +2237,22 @@
         (else (nop))))
   )
 
+  ;; A control signature is a vector, including the valid empty vector.
+  ;; This backend supports at most one value; never truncate a larger vector.
+  (func $result-type
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (if (result (ref $tree))
+      (= (call $tree.len $n) 1)
+      (then (call $tree.atom $n "unit"))
+      (else
+        (if (result (ref $tree))
+          (= (call $tree.len $n) 2)
+          (then (call $type $s (call $tree.at $n 1)))
+          (else (block (result (ref $tree)) (call $fail $s $n 104) $n))))))
+
   (func $result-form
     (param $n (ref $tree))
     (param $ty (ref $tree))
@@ -2130,8 +2263,91 @@
       (|| (call $tree.is $ty "unit") (call $tree.is $ty "@unit"))
       (then (call $t0 $n "result"))
       (else (call $t1 $n "result" $ty))))
-
+  ;; Layout caches have the same declaration/normalized-argument identity as
+  ;; the owning heap instance. Access checks remain at every source operation.
   (func $composite
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let $x (call $type-instance $s $n)
+      (block
+        (result (ref $tree))
+        (if
+          (ref.is_null $x)
+          (then (nop))
+          (else
+            (@let $cached (struct.get $Instance $layout (ref.as_non_null $x))
+              (if
+                (ref.is_null $cached)
+                (then (nop))
+                (else
+                  (block
+                    (call $profile.event (struct.get $State $profile $s) 4 1)
+                    (return (struct.get $Layout $shape (ref.as_non_null $cached))))
+                ))))
+        )
+        (call $profile.event (struct.get $State $profile $s) 4 0)
+        (@let $value (call $compute-composite $s $n)
+          (block
+            (result (ref $tree))
+            (if
+              (&&
+                (i32.eqz (ref.is_null $x))
+                (ref.is_null (struct.get $State $error $s)))
+              (then
+                (struct.set $Instance $layout
+                  (ref.as_non_null $x)
+                  (struct.new $Layout $value (ref.null $FieldTypes))))
+              (else (nop)))
+            $value))))
+  )
+
+  (func $fields
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (result $list< (ref $tree) >)
+    (@effect reads writes allocates)
+    (block
+      (result $list< (ref $tree) >)
+      (drop (call $composite $s $n))
+      (@let $x (call $type-instance $s $n)
+        (@let $layout
+          (if (result (ref null $Layout)) (ref.is_null $x) (then (ref.null $Layout)) (else (struct.get $Instance $layout (ref.as_non_null $x))))
+          (block
+            (result $list< (ref $tree) >)
+            (if
+              (ref.is_null $layout)
+              (then (nop))
+              (else
+                (@let $cached (struct.get $Layout $fields (ref.as_non_null $layout))
+                  (if
+                    (ref.is_null $cached)
+                    (then (nop))
+                    (else
+                      (block
+                        (call $profile.event (struct.get $State $profile $s) 5 1)
+                        (return
+                          (struct.get $FieldTypes $values (ref.as_non_null $cached))))
+                    ))))
+            )
+            (call $profile.event (struct.get $State $profile $s) 5 0)
+            (@let $value (call $compute-fields $s $n)
+              (block
+                (result $list< (ref $tree) >)
+                (if
+                  (&&
+                    (i32.eqz (ref.is_null $layout))
+                    (ref.is_null (struct.get $State $error $s)))
+                  (then
+                    (struct.set $Layout $fields
+                      (ref.as_non_null $layout)
+                      (struct.new $FieldTypes $value)))
+                  (else (nop)))
+                $value))))
+      )))
+
+  (func $compute-composite
     (param $s (ref $State))
     (param $n (ref $tree))
     (result (ref $tree))
@@ -2158,7 +2374,7 @@
               (else $body))))
       )))
 
-  (func $fields
+  (func $compute-fields
     (param $s (ref $State))
     (param $n (ref $tree))
     (result $list< (ref $tree) >)
@@ -2299,7 +2515,11 @@
     (block
       (if
         (> $depth 64)
-        (then (block (call $fail $s $pattern 150) (return)))
+        (then
+          (block
+            (call $profile.limit (struct.get $State $profile $s) 3)
+            (call $fail $s $pattern 150)
+            (return)))
         (else (nop)))
       (if (call $tree.is $actual "?") (then (return)) (else (nop)))
       (@for $i
@@ -2580,52 +2800,21 @@
     (param $n (ref $tree))
     (result (ref $tree))
     (@effect reads writes allocates)
-    (@let
-      (($x (call $type-instance $s $n)))
-      (block
-        (result (ref $tree))
-        (if
-          (ref.is_null $x)
-          (then (block (call $fail $s $n 119) (return $n)))
-          (else (nop)))
-        (@let
-          (($d (struct.get $Instance $decl (ref.as_non_null $x)))
-           ($c
-             (call $subst $s
-               (call $tree.at $d (- (call $tree.len $d) 1))
-               $d
-               (struct.get $Instance $args (ref.as_non_null $x))))
-          )
-          (block
-            (result (ref $tree))
-            (if
-              (call $tree.head $c "sub")
-              (then
-                (return
-                  (call $storage-comp $s (call $tree.at $c (- (call $tree.len $c) 1))))
-              )
-              (else (nop)))
-            (call $storage-comp $s $c))))
-    ))
-
-  (func $storage-comp
-    (param $s (ref $State))
-    (param $n (ref $tree))
-    (result (ref $tree))
-    (@effect reads writes allocates)
     (block
       (result (ref $tree))
       (if
-        (i32.eqz (call $tree.head $n "array"))
-        (then (call $fail $s $n 119))
+        (ref.is_null (call $type-instance $s $n))
+        (then (block (call $fail $s $n 119) (return $n)))
         (else (nop)))
-      (call $type $s
-        (if
+      (@let $shape (call $composite $s $n)
+        (block
           (result (ref $tree))
-          (call $tree.head (call $tree.at $n 1) "mut")
-          (then (call $tree.at (call $tree.at $n 1) 1))
-          (else (call $tree.at $n 1))))
-    ))
+          (if
+            (i32.eqz (call $tree.head $shape "array"))
+            (then (block (call $fail $s $shape 119) (return $n)))
+            (else (nop)))
+          (@list.get (ref $tree) (call $fields $s $n) 0))))
+  )
 
   (func $list-values
     (param $s (ref $State))
@@ -3041,6 +3230,13 @@
        ($heap
          (call $type $s (call $tree.at $n (if (result i32) $bytes (then 1) (else 2))))
        )
+       ($storage
+         (if
+           (result (ref $tree))
+           $bytes
+           (then (call $storage $s $heap))
+           (else (call $tree.atom $n "?"))))
+       ($checked (&& $bytes (i32.eqz (call $tree.is $storage "i8"))))
        ($src (call $tree.at $n (if (result i32) $bytes (then 2) (else 3))))
        ($tmp (call $fresh $s $n))
        ($offset (call $fresh $s $n))
@@ -3049,7 +3245,12 @@
         (result (ref $tree))
         (call $check-access $s $n $heap)
         (if
-          (&& $bytes (i32.eqz (call $tree.is (call $storage $s $heap) "i8")))
+          (&& $bytes
+            (i32.eqz
+              (||
+                (call $tree.is $storage "i8")
+                (|| (call $tree.is $storage "i16") (call $tree.is $storage "i32"))))
+          )
           (then (call $fail $s $n 110))
           (else (nop)))
         (call $expr $s
@@ -3119,8 +3320,17 @@
                                       (call $tree.form $n "call"
                                         (@list.new
                                           (ref $tree)
-                                          (call $core-inst $s $n "$List.from-array"
-                                            (@list.new (ref $tree) $t $heap))
+                                          (call $core-inst $s $n
+                                            (if
+                                              (result $string)
+                                              $checked
+                                              (then "$ByteList.from-array")
+                                              (else "$List.from-array"))
+                                            (if
+                                              (result $list< (ref $tree) >)
+                                              $checked
+                                              (then (@list.new (ref $tree) $heap))
+                                              (else (@list.new (ref $tree) $t $heap))))
                                           $tmp
                                           $offset
                                           $length))))
@@ -3316,6 +3526,104 @@
                       (call $tree.at $c 3))))
               ))))
       )))
+  ;; Flatten only identical operators, preserving left-to-right short circuiting.
+  ;; Each br_if retains its branch value on fallthrough, so discard that value.
+  (func $logical-parts
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $and i32)
+    (param $env (ref null $Env))
+    (param $out (ref $list-builder< (ref $tree) >))
+    (param $target (ref $tree))
+    (param $depth i32)
+    (@effect reads writes allocates)
+    (block
+      (if
+        (i32.eqz (ref.is_null (struct.get $State $error $s)))
+        (then (return))
+        (else (nop)))
+      (call $profile.charge
+        (struct.get $State $profile $s)
+        (struct.get $tree $file $n)
+        2
+        1)
+      (struct.set $State $work $s (+ (struct.get $State $work $s) 1))
+      (if
+        (|| (>= $depth 128) (> (struct.get $State $work $s) (call $limits.work)))
+        (then
+          (block
+            (call $profile.limit
+              (struct.get $State $profile $s)
+              (if (result i32) (>= $depth 128) (then 3) (else 2)))
+            (call $fail $s $n 150)
+            (return)))
+        (else (nop)))
+      (if
+        (call $tree.head $n (if (result $string) $and (then "&&") (else "||")))
+        (then
+          (block
+            (if
+              (!= (call $tree.len $n) 3)
+              (then (block (call $fail $s $n 106) (return)))
+              (else (nop)))
+            (call $logical-parts $s
+              (call $tree.at $n 1)
+              $and
+              $env
+              $out
+              $target
+              (+ $depth 1))
+            (call $logical-parts $s
+              (call $tree.at $n 2)
+              $and
+              $env
+              $out
+              $target
+              (+ $depth 1))))
+        (else
+          (@let $value (call $expr $s $n (call $tree.atom $n "i32") $env)
+            (call $list-builder.push< (ref $tree) > $out
+              (call $trusted
+                (call $t1 $n "drop"
+                  (call $trusted
+                    (call $t3 $n "br_if" $target
+                      (call $trusted
+                        (call $t1 $n "i32.const"
+                          (call $tree.atom $n
+                            (if (result $string) $and (then "0") (else "1"))))
+                      )
+                      (if
+                        (result (ref $tree))
+                        $and
+                        (then (call $trusted (call $t1 $n "i32.eqz" $value)))
+                        (else $value))))
+                ))))
+        ))))
+
+  (func $logical
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $env (ref null $Env))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($out (call $list-builder.new< (ref $tree) >))
+       ($target (call $fresh $s $n))
+       ($and (call $tree.head $n "&&")))
+      (block
+        (result (ref $tree))
+        (call $list-builder.push< (ref $tree) > $out $target)
+        (call $list-builder.push< (ref $tree) > $out
+          (call $trusted (call $t1 $n "result" (call $tree.atom $n "i32"))))
+        (call $logical-parts $s $n $and $env $out $target 0)
+        (call $list-builder.push< (ref $tree) > $out
+          (call $trusted
+            (call $t1 $n "i32.const"
+              (call $tree.atom $n (if (result $string) $and (then "1") (else "0"))))
+          ))
+        (call $trusted
+          (call $tree.form $n "block" (call $list-builder.finish< (ref $tree) > $out))))
+    ))
 
   (func $core
     (param $s (ref $State))
@@ -3414,40 +3722,7 @@
         (else (nop)))
       (if
         (|| (call $tree.head $n "&&") (call $tree.head $n "||"))
-        (then
-          (return
-            (call $expr $s
-              (call $trusted
-                (call $t4 $n "if"
-                  (call $trusted (call $t1 $n "result" (call $tree.atom $n "i32")))
-                  (call $tree.at $n 1)
-                  (call $trusted
-                    (call $t1 $n "then"
-                      (if
-                        (result (ref $tree))
-                        (call $tree.head $n "&&")
-                        (then
-                          (call $trusted
-                            (call $t2 $n "i32.ne"
-                              (call $tree.at $n 2)
-                              (call $tree.atom $n "0"))))
-                        (else (call $tree.atom $n "1"))))
-                  )
-                  (call $trusted
-                    (call $t1 $n "else"
-                      (if
-                        (result (ref $tree))
-                        (call $tree.head $n "&&")
-                        (then (call $tree.atom $n "0"))
-                        (else
-                          (call $trusted
-                            (call $t2 $n "i32.ne"
-                              (call $tree.at $n 2)
-                              (call $tree.atom $n "0"))))
-                      ))))
-              )
-              (call $tree.atom $n "i32")
-              $env)))
+        (then (return (call $logical $s $n $env)))
         (else (nop)))
       (if
         (call $tree.head $n "@list.new")
@@ -3692,6 +3967,62 @@
         (else (nop)))
       (call $general $s $n $env $expected)))
 
+  (func $named-struct
+    (param $s (ref $State))
+    (param $n (ref $tree))
+    (param $expected (ref $tree))
+    (param $env (ref null $Env))
+    (result (ref $tree))
+    (@effect reads writes allocates)
+    (@let
+      (($heap (call $type $s (call $tree.at $n 1)))
+       ($count (- (call $tree.len $n) 2))
+       ($temps (call $list-builder.new< (ref $tree) >)))
+      (block
+        (result (ref $tree))
+        (call $check-access $s $n $heap)
+        (if (< $count 0) (then (block (call $fail $s $n 224) (return $n))) (else (nop)))
+        (if
+          (> $count 512)
+          (then
+            (block
+              (call $profile.limit (struct.get $State $profile $s) 5)
+              (call $fail $s $n 150)
+              (return $n)))
+          (else (nop)))
+        (call $profile.charge
+          (struct.get $State $profile $s)
+          (struct.get $tree $file $n)
+          3
+          (* 3 (* $count $count)))
+        (struct.set $State $work $s
+          (+ (struct.get $State $work $s) (* 3 (* $count $count))))
+        (if
+          (> (struct.get $State $work $s) (call $limits.work))
+          (then
+            (block
+              (call $profile.limit (struct.get $State $profile $s) 2)
+              (call $fail $s $n 150)
+              (return $n)))
+          (else (nop)))
+        (@for $i
+          (bind $i i32 0)
+          (while (< $i $count))
+          (step (+ $i 1))
+          (call $list-builder.push< (ref $tree) > $temps (call $fresh $s $n)))
+        (@match
+          (call $struct.named $n $heap (call $composite $s $heap) (call $fields $s $heap) (call $list-builder.finish< (ref $tree) > $temps))
+          (@case err ($e)
+            (block
+              (result (ref $tree))
+              (if
+                (ref.is_null (struct.get $State $error $s))
+                (then (struct.set $State $error $s $e))
+                (else (nop)))
+              $n))
+          (@case ok ($expanded) (call $expr $s $expanded $expected $env))))
+    ))
+
   (func $expr-body
     (param $s (ref $State))
     (param $n (ref $tree))
@@ -3706,13 +4037,40 @@
         (then (return $n))
         (else (nop)))
       (if
+        (call $tree.head $n "return")
+        (then
+          (block
+            (if
+              (= (call $tree.len $n) 1)
+              (then (return (call $trusted (call $t0 $n "return"))))
+              (else (nop)))
+            (if
+              (!= (call $tree.len $n) 2)
+              (then (block (call $fail $s $n 106) (return $n)))
+              (else (nop))))
+        )
+        (else (nop)))
+      (if
         (call $macro.called $n)
         (then (return (call $macro-expr $s $n $expected $env)))
         (else (nop)))
+      (call $profile.charge
+        (struct.get $State $profile $s)
+        (struct.get $tree $file $n)
+        1
+        1)
       (struct.set $State $work $s (+ (struct.get $State $work $s) 1))
       (if
-        (> (struct.get $State $work $s) 262144)
-        (then (block (call $fail $s $n 150) (return $n)))
+        (> (struct.get $State $work $s) (call $limits.work))
+        (then
+          (block
+            (call $profile.limit (struct.get $State $profile $s) 2)
+            (call $fail $s $n 150)
+            (return $n)))
+        (else (nop)))
+      (if
+        (call $tree.head $n "@struct.new")
+        (then (return (call $named-struct $s $n $expected $env)))
         (else (nop)))
       (if
         (result (ref $tree))
@@ -3748,7 +4106,8 @@
                     (else
                       (if
                         (result (ref $tree))
-                        (|| (call $tree.head $n "block") (call $tree.head $n "if"))
+                        (|| (call $tree.head $n "block")
+                          (|| (call $tree.head $n "loop") (call $tree.head $n "if")))
                         (then
                           (@let
                             (($ty (call $infer $s $n $env))
@@ -3770,12 +4129,25 @@
                                         (call $tree.head (call $tree.at $n $i) "result")
                                         (then
                                           (call $trusted
-                                            (call $t1 $n "result"
-                                              (call $type $s
-                                                (call $tree.at (call $tree.at $n $i) 1))))
+                                            (call $result-form (call $tree.at $n $i)
+                                              (call $result-type $s (call $tree.at $n $i))))
                                         )
                                         (else
-                                          (call $expr $s (call $tree.at $n $i) $ty $env))))
+                                          (call $expr $s (call $tree.at $n $i)
+                                            (if (result (ref $tree))
+                                              (call $tree.head $n "if")
+                                              (then
+                                                (if (result (ref $tree))
+                                                  (|| (call $tree.head (call $tree.at $n $i) "then")
+                                                      (call $tree.head (call $tree.at $n $i) "else"))
+                                                  (then $ty)
+                                                  (else (call $tree.atom $n "i32"))))
+                                              (else
+                                                (if (result (ref $tree))
+                                                  (= $i (- (call $tree.len $n) 1))
+                                                  (then $ty)
+                                                  (else (call $tree.atom $n "unit")))))
+                                            $env))))
                                   )))
                               (call $tree.copy $n 2
                                 (@bytes.new)
@@ -3802,7 +4174,10 @@
                                         (else
                                           (call $expr $s
                                             (call $tree.at $n $i)
-                                            $expected
+                                            (if (result (ref $tree))
+                                              (= $i (- (call $tree.len $n) 1))
+                                              (then $expected)
+                                              (else (call $tree.atom $n "unit")))
                                             $env))))
                                   )
                                   (call $tree.copy $n 2
@@ -3837,6 +4212,7 @@
       (block
         (struct.set $Instance $state $x 1)
         (struct.set $State $result $s (call $return-type $s $x))
+        (drop (call $signature $s $x))
         (call $list-builder.push< (ref $tree) >
           (struct.get $Scope $parts $scope)
           (call $tree.atom $d "func"))
@@ -3855,8 +4231,18 @@
                 (|| (call $tree.head $f "param") (call $tree.head $f "local"))
                 (then
                   (@let
-                    (($ty (call $type $s (call $tree.at $f (- (call $tree.len $f) 1))))
-                    )
+                    (($ty
+                       (if
+                         (result (ref $tree))
+                         (call $tree.head $f "param")
+                         (then
+                           (@list.get
+                             (ref $tree)
+                             (struct.get $Signature $params (call $signature $s $x))
+                             (call $parameter-index $d $i)))
+                         (else
+                           (call $type $s (call $tree.at $f (- (call $tree.len $f) 1))))
+                       )))
                     (block
                       (call $list-builder.push< (ref $tree) >
                         (struct.get $Scope $parts $scope)
@@ -3910,12 +4296,12 @@
                     (struct.get $Scope $parts $scope)
                     (if
                       (result (ref $tree))
-                      (call $tree.is (call $type $s (call $tree.at $f 1)) "unit")
+                      (call $tree.is (struct.get $State $result $s) "unit")
                       (then (call $trusted (call $t0 $f "result")))
                       (else
                         (call $trusted
-                          (call $t1 $f "result" (call $type $s (call $tree.at $f 1))))
-                      ))))
+                          (call $t1 $f "result" (struct.get $State $result $s))))
+                    )))
                 (else (nop)))
               (if
                 (||
@@ -4066,7 +4452,12 @@
                   (||
                     (< (call $tree.len $c) 2)
                     (i32.eqz
-                      (|| (call $tree.head $c "shared") (call $tree.head $c "nonunit"))))
+                      (||
+                        (call $macro.class (call $tree.at $c 0))
+                        (||
+                          (call $tree.head $c "shared")
+                          (call $tree.head $c "nonunit"))))
+                  )
                   (then (call $fail $s $c 207))
                   (else (nop))))
             ))
@@ -4078,6 +4469,16 @@
     (param $n (ref $tree))
     (@effect reads writes allocates)
     (block
+      (if
+        (call $tree.head $n "@abi.type")
+        (then
+          (block
+            (if
+              (i32.eqz (call $abi.contains (struct.get $State $abi $s) $n))
+              (then (call $fail $s $n 225))
+              (else (nop)))
+            (return)))
+        (else (nop)))
       (if (call $tree.head $n "@macro") (then (return)) (else (nop)))
       (if
         (call $tree.head $n "rec")
@@ -4128,10 +4529,22 @@
 
   (func $generics.run
     (param $linked (ref $linked))
+    (result $result<(ref $tree), (ref $project-error)>)
+    (@effect reads writes allocates)
+    (call $generics.run-profile $linked (ref.null $profile-state)))
+
+  (func $generics.run-profile
+    (param $linked (ref $linked))
+    (param $profile (ref null $profile-state))
     (result $result< (ref $tree) , (ref $project-error) >)
     (@effect reads writes allocates)
     (@let
       (($root (call $linked.tree $linked))
+       ($abi
+         (type (ref $abi-checked))
+         (@match (call $abi.validate $linked)
+           (@case err ($e) (return (@result.err $e)))
+           (@case ok ($c) $c)))
        ($macros
          (type (ref $macro-context))
          (@match (call $macro.context $root)
@@ -4139,6 +4552,8 @@
            (@case ok ($c) $c)))
        ($s
          (struct.new $State
+           $profile
+           $abi
            $linked
            (call $list-builder.new< (ref $tree) >)
            (call $list-builder.new< (ref $Instance) >)
@@ -4220,8 +4635,9 @@
             (return (@result.err (ref.as_non_null (struct.get $State $error $s))))
           )
           (else (nop)))
+        (call $profile.phase (struct.get $State $profile $s) 3)
         (@match
-          (call $type-order.run (call $list-builder.finish< (ref $tree) > (struct.get $State $types $s)))
+          (call $type-order.run-profile (call $list-builder.finish< (ref $tree) > (struct.get $State $types $s)) (struct.get $State $profile $s))
           (@case err ($e) (@result.err $e))
           (@case ok ($types)
             (@let
@@ -4248,21 +4664,32 @@
     (param $n (ref $tree))
     (result (ref $tree))
     (@effect reads writes allocates)
-    (if
+    (block
       (result (ref $tree))
-      (>= (struct.get $State $depth $s) 128)
-      (then (block (result (ref $tree)) (call $fail $s $n 150) $n))
-      (else
-        (block
-          (result (ref $tree))
-          (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
-          (@let
-            (($value (call $type-body $s $n)))
-            (block
-              (result (ref $tree))
-              (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
-              $value))))
-    ))
+      (call $profile.visit
+        (struct.get $State $profile $s)
+        (struct.get $State $depth $s)
+        1)
+      (if
+        (result (ref $tree))
+        (>= (struct.get $State $depth $s) 128)
+        (then
+          (block
+            (result (ref $tree))
+            (call $profile.limit (struct.get $State $profile $s) 3)
+            (call $fail $s $n 150)
+            $n))
+        (else
+          (block
+            (result (ref $tree))
+            (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
+            (@let
+              (($value (call $type-body $s $n)))
+              (block
+                (result (ref $tree))
+                (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
+                $value))))
+      )))
 
   (func $expr
     (param $s (ref $State))
@@ -4271,21 +4698,51 @@
     (param $env (ref null $Env))
     (result (ref $tree))
     (@effect reads writes allocates)
-    (if
+    (block
       (result (ref $tree))
-      (>= (struct.get $State $depth $s) 128)
-      (then (block (result (ref $tree)) (call $fail $s $n 150) $n))
-      (else
-        (block
-          (result (ref $tree))
-          (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
-          (@let
-            (($value (call $expr-body $s $n $expected $env)))
-            (block
-              (result (ref $tree))
-              (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
-              $value))))
-    ))
+      (call $profile.visit
+        (struct.get $State $profile $s)
+        (struct.get $State $depth $s)
+        0)
+      (if
+        (result (ref $tree))
+        (>= (struct.get $State $depth $s) 128)
+        (then
+          (block
+            (result (ref $tree))
+            (call $profile.limit (struct.get $State $profile $s) 3)
+            (call $fail $s $n 150)
+            $n))
+        (else
+          (block
+            (result (ref $tree))
+            (struct.set $State $depth $s (+ (struct.get $State $depth $s) 1))
+            (@let
+              (($value (call $expr-body $s $n $expected $env)))
+              (block
+                (result (ref $tree))
+                (struct.set $State $depth $s (- (struct.get $State $depth $s) 1))
+                $value))))
+      )))
+
+  (func $parameter-index
+    (param $d (ref $tree))
+    (param $end i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (@loop $count
+      (bind $i i32 2)
+      (bind $count i32 0)
+      (result i32)
+      (if
+        (result i32)
+        (= $i $end)
+        (then $count)
+        (else
+          (@recur $count
+            (+ $i 1)
+            (+ $count (call $tree.head (call $tree.at $d $i) "param"))))
+      )))
 
   (func $source-local-index
     (param $d (ref $tree))

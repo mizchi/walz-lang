@@ -29,6 +29,10 @@
   (@use "../parser/diagnostic.walz" (type $diagnostic))
   (@use "../core/bytes.walz" (func $bytes.equal))
   (@use "../core/text.walz" (func $string.concat) (func $string.u64))
+  (@use "./profile.walz"
+    (type $profile-state)
+    (func $profile.limit)
+    (func $profile.rendered))
   (@export
     (type $tree)
     (type $project-error)
@@ -46,6 +50,7 @@
     (func $tree.name)
     (func $tree.error)
     (func $tree.render)
+    (func $tree.render-profile)
     (func $tree.locate)
     (func $tree.slice)
     (func $tree.eq)
@@ -239,15 +244,22 @@
     (struct
       (field $out (ref $bytes-builder))
       (field $spans (ref $list-builder<(ref $span)>))
-      (field $bad (mut i32))))
+      (field $bad (mut i32))
+      (field $profile (ref null $profile-state))))
   (func $put
     (param $s (ref $Writer))
     (param $b i32)
     (@effect reads writes allocates)
-    (if
-      (< (call $bytes-builder.len (struct.get $Writer $out $s)) 1048576)
-      (then (call $bytes-builder.byte (struct.get $Writer $out $s) $b))
-      (else (struct.set $Writer $bad $s 1))))
+    (block
+      (if (struct.get $Writer $bad $s) (then (return)) (else (nop)))
+      (if
+        (< (call $bytes-builder.len (struct.get $Writer $out $s)) 1048576)
+        (then (call $bytes-builder.byte (struct.get $Writer $out $s) $b))
+        (else
+          (block
+            (struct.set $Writer $bad $s 1)
+            (call $profile.limit (struct.get $Writer $profile $s) 7))))
+    ))
 
   (func $write
     (param $s (ref $Writer))
@@ -255,8 +267,21 @@
     (param $depth i32)
     (@effect reads writes allocates)
     (if
+      (struct.get $Writer $bad $s)
+      (then (nop))
+      (else (call $write-body $s $n $depth))))
+
+  (func $write-body
+    (param $s (ref $Writer))
+    (param $n (ref $tree))
+    (param $depth i32)
+    (@effect reads writes allocates)
+    (if
       (> $depth 128)
-      (then (struct.set $Writer $bad $s 1))
+      (then
+        (block
+          (struct.set $Writer $bad $s 1)
+          (call $profile.limit (struct.get $Writer $profile $s) 3)))
       (else
         (@let $start (call $bytes-builder.len (struct.get $Writer $out $s))
           (block
@@ -310,11 +335,20 @@
     (param $n (ref $tree))
     (result $result<(ref $rendered), (ref $project-error)>)
     (@effect reads writes allocates)
+    (call $tree.render-profile $n (ref.null $profile-state)))
+
+  (func $tree.render-profile
+    (param $n (ref $tree))
+    (param $profile (ref null $profile-state))
+    (result $result<(ref $rendered), (ref $project-error)>)
+    (@effect reads writes allocates)
     (@let $s
-      (struct.new $Writer (call $bytes-builder.new 1048576) (call $list-builder.new<(ref $span)>) 0)
+      (struct.new $Writer (call $bytes-builder.new 1048576) (call $list-builder.new<(ref $span)>) 0 $profile)
       (block
         (result $result<(ref $rendered), (ref $project-error)>)
         (call $write $s $n 0)
+        (call $profile.rendered $profile
+          (call $bytes-builder.len (struct.get $Writer $out $s)))
         (if
           (result $result<(ref $rendered), (ref $project-error)>)
           (struct.get $Writer $bad $s)

@@ -161,4 +161,13 @@
     (param $source $bytes)
     (result $result<$list<(ref $source-file)>, (ref $project-error)>)
     (@effect reads writes allocates)
-    (call $modules.imports $source)))
+    (call $modules.imports $source))
+  (@use "../../walz/frontend/frontend.walz"
+    (type $profile-report)
+    (func $frontend.profile-project))
+  (func $profile-project
+    (export "profile-project")
+    (param $files $list<(ref $source-file)>)
+    (result (ref $profile-report))
+    (@effect reads writes allocates)
+    (call $frontend.profile-project $files)))

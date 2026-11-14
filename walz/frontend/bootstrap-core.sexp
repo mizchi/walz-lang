@@ -205,6 +205,36 @@
           ))))
   )
 
+  ;; Wider integer storage must be checked before publishing byte values.
+  ;; Only the selected range is visited; packed i8 keeps the existing fast path.
+  (func $ByteList.from-array
+    (@type.params $S)
+    (param $a (ref $S))
+    (param $offset i32)
+    (param $length i32)
+    (result (ref (@inst $List i32)))
+    (@effect reads)
+    (if
+      (result (ref (@inst $List i32)))
+      (i32.eqz $length)
+      (then (call (@inst $List.empty i32)))
+      (else
+        (if
+          (result (ref (@inst $List i32)))
+          (= $length 1)
+          (then
+            (struct.new (@inst $Leaf i32)
+              1
+              (ref.null (@inst $Marker i32))
+              (call $bytes.check (@storage.get $S $a $offset))))
+          (else
+            (@let $half (i32.shr_u $length 1)
+              (call
+                (@inst $List.join i32)
+                (call (@inst $ByteList.from-array $S) $a $offset $half)
+                (call (@inst $ByteList.from-array $S)
+                  $a (+ $offset $half) (- $length $half)))))))))
+
   (func $bytes.len
     (param $b $bytes)
     (result i32)

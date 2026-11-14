@@ -85,7 +85,7 @@
     (func $node.kind)
     (func $node.is)
     (func $node.children))
-  (@use "../checker/syntax.walz" (func $sx.head))
+  (@use "../checker/syntax.walz" (func $sx.head) (func $sx.child))
   (func $required
     (param $syntax (ref $syntax))
     (result i32)
@@ -104,6 +104,22 @@
             (else (nop))))
         (@for-each $n $nodes
           (block
+            ;; A bare variable condition is Walz shorthand, not a folded WAT
+            ;; label. Single-file entry points need the same lowering as projects.
+            (if
+              (&& (call $sx.head $nodes $n "if")
+                (>= (@list.len i32 (call $node.children $n)) 3))
+              (then
+                (@let (($condition (call $sx.child $nodes $n 1))
+                       ($name (call $node.value $condition)))
+                  (if
+                    (&& (= (call $node.kind $condition) 0)
+                      (&& (> (@bytes.len $name) 1)
+                        (&& (= (@bytes.get $name 0) 36)
+                          (call $sx.head $nodes (call $sx.child $nodes $n 2) "then"))))
+                    (then (return 1)) (else (nop)))))
+              (else (nop)))
+            (if (= (call $node.kind $n) 6) (then (return 1)) (else (nop)))
             (if
               (= (call $node.kind $n) 0)
               (then

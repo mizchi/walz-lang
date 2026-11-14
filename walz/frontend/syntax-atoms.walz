@@ -1,0 +1,189 @@
+(module
+  (@use "./tree.walz" (type $tree) (func $tree.eq))
+  (@use "../parser/parser.walz" (func $syntax.node-limit))
+  (@export
+    (opaque $atom-table)
+    (func $atom-table.new)
+    (func $atom-table.find)
+    (func $atom-table.insert))
+  (type $Keys (array (mut (ref null $tree))))
+  (type $Ints (array (mut i32)))
+  (type $atom-table
+    (struct
+      (field $keys (mut (ref $Keys)))
+      (field $values (mut (ref $Ints)))
+      (field $length (mut i32))))
+  ;; Equality includes the complete source identity and byte spelling. This is
+  ;; leaf sharing, not type/layout equivalence or executable-expression CSE.
+  (func $same
+    (param $a (ref $tree))
+    (param $b (ref $tree))
+    (result i32)
+    (@effect allocates)
+    (||
+      (ref.eq $a $b)
+      (&&
+        (= (struct.get $tree $file $a) (struct.get $tree $file $b))
+        (&&
+          (= (struct.get $tree $start $a) (struct.get $tree $start $b))
+          (&&
+            (= (struct.get $tree $end $a) (struct.get $tree $end $b))
+            (call $tree.eq $a $b))))
+    ))
+
+  (func $hash
+    (param $n (ref $tree))
+    (result i32)
+    (@effect pure)
+    (@let
+      (($bytes (struct.get $tree $value $n))
+       ($hash
+         (*
+           (^
+             (*
+               (^
+                 (* (^ 2166136261 (struct.get $tree $file $n)) 16777619)
+                 (struct.get $tree $start $n))
+               16777619)
+             (struct.get $tree $end $n))
+           16777619)))
+      (@loop $bytes
+        (bind $i i32 0)
+        (bind $hash i32 $hash)
+        (result i32)
+        (if
+          (result i32)
+          (< $i (@bytes.len $bytes))
+          (then (@recur $bytes (+ $i 1) (* (^ $hash (@bytes.get $bytes $i)) 16777619)))
+          (else $hash))))
+  )
+
+  (func $atom-table.new
+    (result (ref $atom-table))
+    (@effect allocates)
+    (struct.new $atom-table
+      (array.new $Keys (ref.null $tree) 64)
+      (array.new $Ints -1 64)
+      0))
+
+  (func $atom-table.find
+    (param $t (ref $atom-table))
+    (param $key (ref $tree))
+    (result i32)
+    (@effect reads allocates)
+    (if
+      (result i32)
+      (!= (struct.get $tree $kind $key) 0)
+      (then -1)
+      (else
+        (@let
+          (($keys (struct.get $atom-table $keys $t))
+           ($mask (- (array.len $keys) 1)))
+          (@loop $probe
+            (bind $i i32 (& (call $hash $key) $mask))
+            (bind $steps i32 0)
+            (result i32)
+            (if
+              (result i32)
+              (= $steps (array.len $keys))
+              (then -1)
+              (else
+                (@let $found (array.get $Keys $keys $i)
+                  (if
+                    (result i32)
+                    (ref.is_null $found)
+                    (then -1)
+                    (else
+                      (if
+                        (result i32)
+                        (call $same $key (ref.as_non_null $found))
+                        (then (array.get $Ints (struct.get $atom-table $values $t) $i))
+                        (else (@recur $probe (& (+ $i 1) $mask) (+ $steps 1))))
+                    ))))
+            ))))
+    ))
+
+  (func $place
+    (param $keys (ref $Keys))
+    (param $values (ref $Ints))
+    (param $key (ref $tree))
+    (param $value i32)
+    (result i32)
+    (@effect reads writes)
+    (@let $mask (- (array.len $keys) 1)
+      (@loop $probe
+        (bind $i i32 (& (call $hash $key) $mask))
+        (bind $steps i32 0)
+        (result i32)
+        (if
+          (result i32)
+          (= $steps (array.len $keys))
+          (then 0)
+          (else
+            (if
+              (result i32)
+              (ref.is_null (array.get $Keys $keys $i))
+              (then
+                (block
+                  (result i32)
+                  (array.set $Keys $keys $i $key)
+                  (array.set $Ints $values $i $value)
+                  1))
+              (else (@recur $probe (& (+ $i 1) $mask) (+ $steps 1))))
+          ))))
+  )
+
+  (func $atom-table.insert
+    (param $t (ref $atom-table))
+    (param $key (ref $tree))
+    (param $value i32)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (if
+        (||
+          (!= (struct.get $tree $kind $key) 0)
+          (>= (struct.get $atom-table $length $t) (call $syntax.node-limit)))
+        (then (return 0))
+        (else (nop)))
+      (if
+        (>=
+          (* 2 (struct.get $atom-table $length $t))
+          (array.len (struct.get $atom-table $keys $t)))
+        (then
+          (@let
+            (($old (struct.get $atom-table $keys $t))
+             ($values (struct.get $atom-table $values $t))
+             ($keys (array.new $Keys (ref.null $tree) (* 2 (array.len $old))))
+             ($new (array.new $Ints -1 (* 2 (array.len $old))))
+            )
+            (block
+              (@for $i
+                (bind $i i32 0)
+                (while (< $i (array.len $old)))
+                (step (+ $i 1))
+                (@let $key (array.get $Keys $old $i)
+                  (if
+                    (ref.is_null $key)
+                    (then (nop))
+                    (else
+                      (drop
+                        (call $place $keys $new
+                          (ref.as_non_null $key)
+                          (array.get $Ints $values $i))))
+                  )))
+              (struct.set $atom-table $keys $t $keys)
+              (struct.set $atom-table $values $t $new))))
+        (else (nop)))
+      (@let $inserted
+        (call $place (struct.get $atom-table $keys $t) (struct.get $atom-table $values $t) $key $value)
+        (block
+          (result i32)
+          (if $inserted
+            (then
+              (struct.set $atom-table $length $t
+                (+ (struct.get $atom-table $length $t) 1)))
+            (else (nop)))
+          $inserted))))
+)

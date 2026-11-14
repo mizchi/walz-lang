@@ -1,0 +1,20 @@
+(module
+  (@use "walz:core" (type $list) (type $result))
+  (@use "../../walz/frontend/tree.walz" (type $source-file) (type $project-error))
+  (@use "../../walz/frontend/modules.walz" (func $modules.link))
+  (@use "../../walz/frontend/abi.walz"
+    (type $abi-view)
+    (func $abi.validate)
+    (func $abi.views))
+  (func $inspect
+    (export "inspect")
+    (param $files $list<(ref $source-file)>)
+    (result $result<$list<(ref $abi-view)>, (ref $project-error)>)
+    (@effect reads writes allocates)
+    (@match (call $modules.link $files)
+      (@case err ($e) (@result.err $e))
+      (@case ok ($linked)
+        (@match (call $abi.validate $linked)
+          (@case err ($e) (@result.err $e))
+          (@case ok ($checked) (@result.ok (call $abi.views $checked))))
+      ))))

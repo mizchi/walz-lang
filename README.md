@@ -12,7 +12,7 @@ Its data abstractions are designed around `result`, `option`, `stream`, and `fut
 
 `walz:core` provides built-in data types and portable data operations. OS services and other I/O capabilities are supplied through explicit host imports.
 
-Experimental [compiler parts written in Walz](docs/selfhost.md) include a parser, independent type/stack/effect validation and an integer/GC backend. A [bounded frontend](docs/selfhost-frontend.md) adds static modules and `@lib` libraries, fixed high-level forms, minimal core, monomorphization and hygienic expression macros. Full self-hosting remains future work; the Rust compiler is the main implementation. [Subset benchmark captures](docs/selfhost-benchmark.md) require canonical output parity with Rust and predate GC and the modular frontend.
+Experimental [compiler parts written in Walz](docs/selfhost.md) include a parser, independent type/stack/effect validation and an integer/GC backend. A [bounded frontend](docs/selfhost-frontend.md) adds static modules and `@lib` libraries, fixed high-level forms, minimal core, monomorphization and hygienic expression macros. This subset [compiles itself into matching Core Wasm stages](docs/selfhost-stages.md); the Rust compiler remains the main implementation with broader feature coverage. [Subset benchmark captures](docs/selfhost-benchmark.md) require canonical output parity with Rust and predate GC and the modular frontend.
 
 - `@`-prefixed extensions for immutable bindings, loops, enums and pattern matching, named struct construction, and explicit closure captures.
 - Monomorphized generics with constraints, explicit type arguments, and unambiguous call-site inference.

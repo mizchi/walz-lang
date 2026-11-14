@@ -7,6 +7,7 @@ fn compiler_parts_are_checked_gc_without_host_dependencies() {
         "walz/codegen/compiler.walz",
         "walz/checker/checker.walz",
         "walz/checker/stack.walz",
+        "walz/frontend/abi.walz",
     ] {
         let loaded = walz::source::load(input).unwrap();
         walz::check(loaded.text()).unwrap();
@@ -52,6 +53,11 @@ fn opaque_ir_and_effect_contracts_cannot_be_forged() {
         (
             r#"(@use "../walz/parser/parser.walz" (type $syntax))"#,
             "(func $bad (param $m (ref $syntax)) (drop (struct.get $syntax 0 $m)))",
+            "opaque",
+        ),
+        (
+            r#"(@use "../walz/frontend/abi.walz" (type $abi-checked))"#,
+            "(func $bad (param $c (ref $abi-checked)) (drop (struct.get $abi-checked 0 $c)))",
             "opaque",
         ),
         (

@@ -20,6 +20,7 @@
     (func $tree.at)
     (func $tree.len)
     (func $tree.is)
+    (func $tree.is-name)
     (func $tree.head)
     (func $tree.atom)
     (func $tree.form)
@@ -242,8 +243,22 @@
                 (call $list-builder.push<(ref $tree)> $names $slot)
                 (call $list-builder.push<(ref $tree)> $types $type)
                 (call $list-builder.push<(ref $tree)> $init
-                  (call $t2 $n "local.set" $slot
-                    (call $expr $s (call $tree.at $b 3) $env (ref.null $Loop) 0)))
+                  (if
+                    (result (ref $tree))
+                    (&& (call $tree.head $type "ref") (= (call $tree.len $type) 2))
+                    (then
+                      ;; Keep the declared type for independent validation before
+                      ;; assigning to the nullable physical slot. No control frame
+                      ;; is introduced, so native numeric branches keep their depth.
+                      (@let $temp (call $fresh $s $b)
+                        (call $t4 $b "@let" $temp
+                          (call $t1 $b "type" $type)
+                          (call $expr $s (call $tree.at $b 3) $env (ref.null $Loop) 0)
+                          (call $t2 $b "local.set" $slot $temp))))
+                    (else
+                      (call $t2 $n "local.set" $slot
+                        (call $expr $s (call $tree.at $b 3) $env (ref.null $Loop) 0))))
+                )
                 (@recur $binds
                   (+ $i 1)
                   (struct.new $Var (call $tree.at $b 1) $type $value $scope))))
@@ -362,6 +377,20 @@
           ))))
   )
 
+  ;; In folded if syntax a bare name followed by `then` is the condition,
+  ;; while a label precedes a result clause or an explicit condition operand.
+  (func $control-label
+    (param $n (ref $tree))
+    (param $i i32)
+    (result i32)
+    (@effect allocates)
+    (&& (= $i 1)
+      (&& (call $tree.is-name (call $tree.at $n 1))
+        (|| (call $tree.head $n "block")
+          (|| (call $tree.head $n "loop")
+            (&& (call $tree.head $n "if")
+              (i32.eqz (call $tree.head (call $tree.at $n 2) "then"))))))))
+
   (func $expr-body
     (param $s (ref $State))
     (param $n (ref $tree))
@@ -380,6 +409,26 @@
           (if
             (i32.eqz (ref.is_null (struct.get $State $error $s)))
             (then (return $n))
+            (else (nop)))
+          ;; Only this operand is ambiguous with a WAT label. Keep other
+          ;; shorthand locals compact instead of adding local.get nodes to all
+          ;; operands (the independent checker already resolves those).
+          (if
+            (&& (call $tree.head $n "if")
+              (&& (call $tree.is-name (call $tree.at $n 1))
+                (&& (call $tree.head (call $tree.at $n 2) "then")
+                  (|| (= (call $tree.len $n) 3) (= (call $tree.len $n) 4)))))
+            (then
+              (return
+                (call $expr-body $s
+                  (if (result (ref $tree)) (= (call $tree.len $n) 3)
+                    (then (call $t2 $n "if"
+                      (call $t1 (call $tree.at $n 1) "local.get" (call $tree.at $n 1))
+                      (call $tree.at $n 2)))
+                    (else (call $t3 $n "if"
+                      (call $t1 (call $tree.at $n 1) "local.get" (call $tree.at $n 1))
+                      (call $tree.at $n 2) (call $tree.at $n 3))))
+                  $env $loop $tail)))
             (else (nop)))
           (if
             (||
@@ -647,19 +696,7 @@
                                                         (call $tree.is $h "struct.set"))
                                                       (call $tree.is $h "array.copy"))))
                                                 (||
-                                                  (&&
-                                                    (= $i 1)
-                                                    (&&
-                                                      (=
-                                                        (struct.get $tree $kind
-                                                          (call $tree.at $n $i))
-                                                        0)
-                                                      (||
-                                                        (call $tree.is $h "block")
-                                                        (||
-                                                          (call $tree.is $h "loop")
-                                                          (call $tree.is $h "if"))))
-                                                  )
+                                                  (call $control-label $n $i)
                                                   (call $tree.head
                                                     (call $tree.at $n $i)
                                                     "result")))
@@ -816,19 +853,7 @@
                                                   (call $tree.is $h "struct.set"))
                                                 (call $tree.is $h "array.copy"))))
                                           (||
-                                            (&&
-                                              (= $i 1)
-                                              (&&
-                                                (=
-                                                  (struct.get $tree $kind
-                                                    (call $tree.at $n $i))
-                                                  0)
-                                                (||
-                                                  (call $tree.is $h "block")
-                                                  (||
-                                                    (call $tree.is $h "loop")
-                                                    (call $tree.is $h "if"))))
-                                            )
+                                            (call $control-label $n $i)
                                             (call $tree.head
                                               (call $tree.at $n $i)
                                               "result")))

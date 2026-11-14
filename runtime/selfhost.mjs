@@ -1,7 +1,8 @@
 // File I/O and bootstrap module loading only. Parsing/checking/encoding run in Walz.
 import { readFile, writeFile } from "node:fs/promises";
-import { resolve, join, dirname } from "node:path";
+import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { readProject } from "./selfhost/files.mjs";
 
 const args = process.argv.slice(2);
 const checkOnly = args[0] === "--check";
@@ -17,43 +18,15 @@ const { instantiate } = await import(
   pathToFileURL(join(resolve(directory), "index.js"))
 );
 const { api } = await instantiate();
-const source = await readFile(input);
 let sourceFiles;
 let result;
 if (
   typeof api.imports === "function" &&
   typeof api.compileProject === "function"
 ) {
-  const seen = new Map();
-  sourceFiles = [];
-  let inputError;
-  async function visit(path, existing) {
-    if (seen.has(path) || inputError) return;
-    if (sourceFiles.length >= 64) {
-      inputError = {
-        tag: "err",
-        val: { file: 0, code: 150, start: 0, end: 0 },
-      };
-      return;
-    }
-    const bytes = existing ?? (await readFile(path));
-    const index = sourceFiles.length;
-    seen.set(path, index);
-    sourceFiles.push({ path, source: bytes });
-    const imported = api.imports(bytes);
-    if (imported.tag === "err") {
-      inputError = { tag: "err", val: { ...imported.val, file: index } };
-      return;
-    }
-    for (const { path: specifier } of imported.val) {
-      if (specifier === "walz:core") continue;
-      // Invalid specifiers are diagnosed by the guest loader; never treat them
-      // as filesystem paths or perform name resolution in the host.
-      if (!specifier.startsWith("./") && !specifier.startsWith("../")) continue;
-      await visit(resolve(dirname(path), specifier));
-    }
-  }
-  await visit(resolve(input), source);
+  const { files, error: inputError } = await readProject(api, input);
+  sourceFiles = files;
+  const source = files[0].source;
   result =
     inputError ??
     (sourceFiles.length > 1
@@ -65,6 +38,7 @@ if (
         : api.compile(source));
 } else {
   // Frozen compiler captures retain their original single-file API.
+  const source = await readFile(input);
   result = checkOnly ? api.check(source) : api.compile(source);
 }
 if (result.tag === "err") {
@@ -96,7 +70,7 @@ if (result.tag === "err") {
     115: "invalid control structure",
     116: "ambiguous scalar type; add an annotation",
     117: "invalid source range",
-    118: "invalid GC type declaration or subtype",
+    118: "invalid or unsupported value/GC type, declaration or subtype",
     119: "unknown or incompatible GC type/field",
     120: "cannot write an immutable GC field",
     121: "GC constructor requires defaultable fields",
@@ -125,6 +99,9 @@ if (result.tag === "err") {
     220: "binary @use requires (component $Constructor) and explicit instantiate; use the main compiler for Component output",
     221: "Component composition requires the main compiler; the bootstrap backend emits Core Wasm",
     222: "@lib has no executable entry; select its API from a module entry",
+    224: "invalid named struct fields: duplicate, missing, unnamed or unknown field",
+    225: "invalid, unsupported, recursive or non-portable @abi.type view",
+    226: "ABI view exceeds implementation limits (flat slots, layout, shape or depth)",
     223: "@lib cannot declare Core exports, start, global or data initialization; publish source names with @export",
   };
   console.error(

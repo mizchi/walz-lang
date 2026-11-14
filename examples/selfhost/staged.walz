@@ -1,0 +1,190 @@
+(module
+  ;; A Core-only test bridge. JS holds opaque GC values; all construction,
+  ;; dependency discovery, compilation and byte access stay inside Wasm.
+  ;; This is not a Canonical ABI / Component adapter.
+  (@use "walz:core"
+    (type $bytes)
+    (type $list)
+    (type $result)
+    (type $bytes-builder)
+    (type $list-builder)
+    (func $bytes-builder.new)
+    (func $bytes-builder.byte)
+    (func $bytes-builder.finish)
+    (func $list-builder.new)
+    (func $list-builder.push)
+    (func $list-builder.finish))
+  (@use "../../walz/frontend/tree.walz" (type $source-file) (type $project-error))
+  (@use "../../walz/codegen/compiler.walz" (func $compiler.compile-project))
+  (@use "../../walz/frontend/modules.walz" (func $modules.imports))
+  (@type.alias $Output $result<$bytes, (ref $project-error)>)
+  (@type.alias $Dependencies $result<$list<(ref $source-file)>, (ref $project-error)>)
+  (func $buffer-new
+    (export "buffer-new")
+    (param $size i32)
+    (result (ref $bytes-builder))
+    (@effect allocates)
+    (call $bytes-builder.new $size))
+
+  (func $buffer-push
+    (export "buffer-push")
+    (param $buffer (ref $bytes-builder))
+    (param $byte i32)
+    (@effect reads writes allocates)
+    (call $bytes-builder.byte $buffer $byte))
+
+  (func $buffer-finish
+    (export "buffer-finish")
+    (param $buffer (ref $bytes-builder))
+    (result $bytes)
+    (@effect reads allocates)
+    (call $bytes-builder.finish $buffer))
+
+  (func $bytes-length
+    (export "bytes-length")
+    (param $value $bytes)
+    (result i32)
+    (@effect pure)
+    (@bytes.len $value))
+
+  (func $bytes-at
+    (export "bytes-at")
+    (param $value $bytes)
+    (param $index i32)
+    (result i32)
+    (@effect pure)
+    (@bytes.get $value $index))
+
+  (func $files-new
+    (export "files-new")
+    (result (ref $list-builder<(ref $source-file)>))
+    (@effect allocates)
+    (call $list-builder.new<(ref $source-file)>))
+
+  (func $files-push
+    (export "files-push")
+    (param $files (ref $list-builder<(ref $source-file)>))
+    (param $path $bytes)
+    (param $source $bytes)
+    (result i32)
+    (@effect reads writes allocates)
+    (block
+      (result i32)
+      (@match (@string.from-bytes $path)
+        (@case none () (return 0))
+        (@case some ($name)
+          (call $list-builder.push<(ref $source-file)> $files
+            (struct.new $source-file $name $source))))
+      1))
+
+  (func $compile
+    (export "compile")
+    (param $files (ref $list-builder<(ref $source-file)>))
+    (result $Output)
+    (@effect reads writes allocates)
+    (call $compiler.compile-project
+      (call $list-builder.finish<(ref $source-file)> $files)))
+
+  (func $output-ok
+    (export "output-ok")
+    (param $output $Output)
+    (result i32)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) 1)
+      (@case err ($error) 0)))
+
+  (func $output-value
+    (export "output-value")
+    (param $output $Output)
+    (result $bytes)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) $value)
+      (@case err ($error) (unreachable))))
+
+  (func $diagnostic
+    (param $error (ref $project-error))
+    (param $field i32)
+    (result i32)
+    (@effect pure)
+    (if
+      (result i32)
+      (= $field 0)
+      (then (struct.get $project-error $code $error))
+      (else
+        (if
+          (result i32)
+          (= $field 1)
+          (then (struct.get $project-error $file $error))
+          (else
+            (if
+              (result i32)
+              (= $field 2)
+              (then (struct.get $project-error $start $error))
+              (else
+                (if
+                  (result i32)
+                  (= $field 3)
+                  (then (struct.get $project-error $end $error))
+                  (else (unreachable))))
+            ))))
+    ))
+
+  (func $output-error
+    (export "output-error")
+    (param $output $Output)
+    (param $field i32)
+    (result i32)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) (unreachable))
+      (@case err ($error) (call $diagnostic $error $field))))
+
+  (func $imports
+    (export "imports")
+    (param $source $bytes)
+    (result $Dependencies)
+    (@effect reads writes allocates)
+    (call $modules.imports $source))
+
+  (func $imports-ok
+    (export "imports-ok")
+    (param $output $Dependencies)
+    (result i32)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) 1)
+      (@case err ($error) 0)))
+
+  (func $imports-length
+    (export "imports-length")
+    (param $output $Dependencies)
+    (result i32)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) (@list.len (ref $source-file) $value))
+      (@case err ($error) (unreachable))))
+
+  (func $imports-path
+    (export "imports-path")
+    (param $output $Dependencies)
+    (param $index i32)
+    (result $bytes)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value)
+        (@string.bytes
+          (struct.get $source-file $path (@list.get (ref $source-file) $value $index))))
+      (@case err ($error) (unreachable))))
+
+  (func $imports-error
+    (export "imports-error")
+    (param $output $Dependencies)
+    (param $field i32)
+    (result i32)
+    (@effect pure)
+    (@match $output
+      (@case ok ($value) (unreachable))
+      (@case err ($error) (call $diagnostic $error $field))))
+)

@@ -32,6 +32,14 @@ await copyFile(
   new URL("../selfhost-front/connections.mjs", import.meta.url),
   join(root, "connections.mjs"),
 );
+await copyFile(new URL("../selfhost-front/parity.mjs", import.meta.url), join(root, "parity.mjs"));
+await copyFile(new URL("../selfhost-front/budgets.mjs", import.meta.url), join(root, "budgets.mjs"));
+await copyFile(new URL("../selfhost-front/bytes.mjs", import.meta.url), join(root, "bytes.mjs"));
+await copyFile(new URL("../selfhost-front/scaling.mjs", import.meta.url), join(root, "scaling.mjs"));
+await copyFile(new URL("../selfhost-front/serialization.mjs", import.meta.url), join(root, "serialization.mjs"));
+await copyFile(new URL("../selfhost-front/tuning.mjs", import.meta.url), join(root, "tuning.mjs"));
+await copyFile(new URL("../selfhost-front/abi.mjs", import.meta.url), join(root, "abi.mjs"));
+await copyFile(new URL("../selfhost-front/control.mjs", import.meta.url), join(root, "control.mjs"));
 createServer(async (request, response) => {
   try {
     const path = resolve(
