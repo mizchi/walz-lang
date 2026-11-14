@@ -1,5 +1,8 @@
 (module
   (@use "walz:core" (type $bytes))
+  (@use "../../walz/parser/ascii.walz" (func $ascii.hex))
+  (func $hex (export "hex") (param $c i32) (result i32)
+    (@effect pure) (call $ascii.hex $c))
   (@use "../../walz/checker/operators.walz" (func $operator.alias) (func $operator.comparison))
   (func $alias (export "alias") (param $name $bytes) (param $type i32)
     (result i32) (@effect pure) (call $operator.alias $name $type))

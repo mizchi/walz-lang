@@ -38,6 +38,10 @@ path = "tools/selfhost-reference.rs"
 name = "selfhost-bench"
 path = "tools/selfhost-bench.rs"
 
+[[example]]
+name = "code-inventory"
+path = "tools/code-inventory.rs"
+
 [dependencies]
 wat = "=1.262.0"
 wast = "=262.0.0"

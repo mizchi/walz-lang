@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-15 JST",
+  "baseCommit": "e436377572f908b7a83ff05d9be2142c910a6898",
+  "dirty": true,
+  "captures": {
+    "node": "target/selfhost-memory/node-4",
+    "chromium": "target/selfhost-memory/browser-7"
+  },
+  "privatePlayground": "target/playground-selfhost-memory",
+  "playgroundPreparation": "Copy target/playground-selfhost, then replace only selfhost/bridge.mjs with runtime/selfhost/staged.mjs. Existing previews and prior captures were not modified.",
+  "sources": {
+    "runtime/selfhost-memory.test.mjs": "edd7b626abb87389a2703d6477a599285ad200fdc6cef6f55c6eed6de54d1b0a",
+    "justfile": "81c38711807f4f35672ae0f5438e970b7ae68df17185e7cf35b1a69d2c470a62",
+    "playground/tests/selfhost.spec.mjs": "7d8c645c6b5ab5e9b63a6996f03657c68ec5c658f867b4afa98950abcb07bccb",
+    "playwright.playground.config.mjs": "1b4a204d346f194a59a0addd81b9fcf7e242a0f7c1e33bee9e8494525065c305"
+  }
+}

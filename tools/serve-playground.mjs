@@ -2,8 +2,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 
-const root = resolve(process.argv[2] ?? 'target/playground');
-const port = Number(process.argv[3] ?? 41740);
+const root = resolve(process.argv[2] ?? process.env.WALZ_PLAYGROUND_TEST_ROOT ?? 'target/playground');
+const port = Number(process.argv[3] ?? process.env.WALZ_PLAYGROUND_TEST_PORT ?? 41740);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('port must be 1..65535');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.wasm': 'application/wasm', '.json': 'application/json' };
 createServer(async (request, response) => {

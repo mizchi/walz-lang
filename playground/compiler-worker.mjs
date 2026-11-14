@@ -1,12 +1,24 @@
-import init, { compile_source, prepare_execution } from './pkg/walz_web.js';
-
 // Lazy initialization also makes a failed load report through the request.
-let ready;
-self.onmessage = async ({ data: { id, source, optimize } }) => {
+let rustReady;
+async function backend(engine){
+  if(engine==='selfhost'){
+    const compiler=await import('./selfhost-compiler.mjs');
+    await compiler.prepareSelfhost();
+    return {compile:compiler.compileSelfhost};
+  }
+  if(engine!=='rust')throw new Error('Unknown compiler: '+engine);
+  const compiler=await(rustReady??=import('./pkg/walz_web.js').then(async compiler=>{
+    await compiler.default();return compiler;
+  }).catch(error=>{rustReady=undefined;throw error;}));
+  return {compile:(source,optimize)=>JSON.parse(compiler.compile_source(source,optimize)),
+    prepare:(source,optimize)=>JSON.parse(compiler.prepare_execution(source,optimize))};
+}
+self.onmessage = async ({ data: { id, source, optimize,engine='rust' } }) => {
   try {
-    await (ready ??= init());
+    const compiler=await backend(engine);
     const start = performance.now();
-    const result = JSON.parse(compile_source(source, optimize));
+    const result = await compiler.compile(source, optimize);
+    result.engine=engine;
     result.durationMs = performance.now() - start;
     if (result.schema !== 'walz-playground-v1') throw new Error('Unexpected compiler response format');
     if (result.status === 'success') {
@@ -16,8 +28,8 @@ self.onmessage = async ({ data: { id, source, optimize } }) => {
         const module = await WebAssembly.compile(result.wasm);
         result.exports = WebAssembly.Module.exports(module).filter(item => item.kind === 'function').map(item => item.name);
         const imports = WebAssembly.Module.imports(module);
-        if (!result.execution && imports.length && imports.every(item => item.module === 'walz:host/event-loop@0.1.0')) {
-          const execution = JSON.parse(prepare_execution(source, optimize));
+        if (compiler.prepare && !result.execution && imports.length && imports.every(item => item.module === 'walz:host/event-loop@0.1.0')) {
+          const execution = compiler.prepare(source, optimize);
           if (execution.schema !== 'walz-playground-execution-v1') throw new Error('Unexpected execution response format');
           if (execution.status === 'success') {
             result.execution = execution.program;

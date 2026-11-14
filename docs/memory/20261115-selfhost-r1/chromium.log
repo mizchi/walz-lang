@@ -1,0 +1,30 @@
+node runtime/selfhost-browser-memory.mjs 'target/playground-selfhost-memory' 'target/selfhost-memory/browser-7'
+browser batch 1: heap=728400, live=0
+browser batch 2: heap=731440, live=0
+browser batch 3: heap=745116, live=0
+browser batch 4: heap=740892, live=0
+browser batch 5: heap=748716, live=0
+browser batch 6: heap=755140, live=0
+browser batch 7: heap=755760, live=0
+browser batch 8: heap=759412, live=0
+browser batch 9: heap=764604, live=0
+browser batch 10: heap=764636, live=0
+{
+  "status": "passed",
+  "assessment": {
+    "ok": true,
+    "growth": {
+      "heapUsed": 21616,
+      "arrayBuffers": 0,
+      "embedder": 0
+    },
+    "failures": []
+  },
+  "busyCancellation": {
+    "entered": true,
+    "returnedBeforeStop": false,
+    "stopDelayMs": 20,
+    "workers": 0,
+    "buffers": 0
+  }
+}

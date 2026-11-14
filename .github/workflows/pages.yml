@@ -53,7 +53,7 @@ jobs:
       - name: Build and check the browser compiler
         run: |
           pnpm playground:build
-          node --test playground/samples.test.mjs
+          node --test playground/samples.test.mjs playground/selfhost-compiler.test.mjs playground/worker-client.test.mjs
           cargo test --locked -p walz-web
       - name: Browser tests
         run: |

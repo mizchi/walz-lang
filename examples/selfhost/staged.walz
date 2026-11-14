@@ -1,5 +1,5 @@
 (module
-  ;; A Core-only test bridge. JS holds opaque GC values; all construction,
+  ;; A Core-only bridge. JS holds opaque GC values; all construction,
   ;; dependency discovery, compilation and byte access stay inside Wasm.
   ;; This is not a Canonical ABI / Component adapter.
   (@use "walz:core"
@@ -17,6 +17,8 @@
   (@use "../../walz/frontend/tree.walz" (type $source-file) (type $project-error))
   (@use "../../walz/codegen/compiler.walz" (func $compiler.compile-project))
   (@use "../../walz/frontend/modules.walz" (func $modules.imports))
+  (@use "../../walz/frontend/frontend.walz" (func $frontend.expand))
+  (@use "../../walz/frontend/tree.walz" (type $rendered))
   (@type.alias $Output $result<$bytes, (ref $project-error)>)
   (@type.alias $Dependencies $result<$list<(ref $source-file)>, (ref $project-error)>)
   (func $buffer-new
@@ -84,6 +86,17 @@
     (@effect reads writes allocates)
     (call $compiler.compile-project
       (call $list-builder.finish<(ref $source-file)> $files)))
+
+  ;; Display only: request expanded Walz after compiling/checking the source.
+  ;; Expansion does not certify executable bytes or replace independent checking.
+  (func $expand
+    (export "expand")
+    (param $files (ref $list-builder<(ref $source-file)>))
+    (result $Output)
+    (@effect reads writes allocates)
+    (@match (call $frontend.expand (call $list-builder.finish<(ref $source-file)> $files))
+      (@case err ($error) (@result.err $error))
+      (@case ok ($rendered) (@result.ok (struct.get $rendered $bytes $rendered)))))
 
   (func $output-ok
     (export "output-ok")

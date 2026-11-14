@@ -34,9 +34,23 @@ playground: playground-build
     node tools/serve-playground.mjs
 
 test-playground: playground-build
-    node --test playground/samples.test.mjs
+    node --test playground/samples.test.mjs playground/selfhost-compiler.test.mjs playground/worker-client.test.mjs
     cargo test --locked -p walz-web
     pnpm exec playwright test --config playwright.playground.config.mjs
+
+build-playground-selfhost output="target/playground/selfhost":
+    node tools/build-playground-selfhost.mjs {{quote(output)}}
+
+# Capture directories must be new. The optional capture supplies frozen inputs
+# from build-playground-selfhost for five byte-identical self-builds.
+memory-selfhost output compiler="target/playground/selfhost/compiler.wasm" capture="":
+    node --expose-gc runtime/selfhost-memory.mjs {{quote(compiler)}} {{quote(output)}} {{quote(capture)}}
+
+memory-selfhost-browser output playground="target/playground":
+    node runtime/selfhost-browser-memory.mjs {{quote(playground)}} {{quote(output)}}
+
+test-selfhost-memory compiler="target/playground/selfhost/compiler.wasm":
+    WALZ_SELFHOST_MEMORY_COMPILER={{quote(compiler)}} node --expose-gc --test runtime/selfhost-memory.test.mjs
 
 run file="examples/closure.walz":
     cargo run --locked --quiet -- run {{quote(file)}}
@@ -138,7 +152,7 @@ selfhost-check input compiler="target/selfhost":
 
 test-selfhost:
     cargo test --locked --test selfhost --test selfhost_gc_parity
-    node --expose-gc --test runtime/selfhost.test.mjs runtime/selfhost-checker.test.mjs runtime/selfhost-gc.test.mjs runtime/selfhost-front.test.mjs runtime/selfhost-parity.test.mjs runtime/selfhost-profile.test.mjs runtime/selfhost-order.test.mjs runtime/selfhost-syntax.test.mjs runtime/selfhost-tuning.test.mjs runtime/selfhost-abi.test.mjs runtime/selfhost-control.test.mjs runtime/selfhost-operators.test.mjs
+    node --expose-gc --test runtime/selfhost.test.mjs runtime/selfhost-checker.test.mjs runtime/selfhost-gc.test.mjs runtime/selfhost-front.test.mjs runtime/selfhost-parity.test.mjs runtime/selfhost-profile.test.mjs runtime/selfhost-order.test.mjs runtime/selfhost-syntax.test.mjs runtime/selfhost-tuning.test.mjs runtime/selfhost-abi.test.mjs runtime/selfhost-control.test.mjs runtime/selfhost-operators.test.mjs runtime/selfhost-sharing.test.mjs
 
 build-selfhost-profile output="target/selfhost-profile/compiler":
     node runtime/build-core.mjs examples/selfhost/profile.walz {{quote(output)}}
@@ -172,6 +186,22 @@ test-selfhost-control:
 
 test-selfhost-operators:
     node --expose-gc --test runtime/selfhost-operators.test.mjs
+
+build-selfhost-inventory output="target/selfhost-inventory/compiler":
+    node runtime/build-core.mjs examples/selfhost/inventory.walz {{quote(output)}}
+
+inventory-selfhost input output compiler="target/selfhost-inventory/compiler":
+    node runtime/selfhost-inventory.mjs {{quote(input)}} {{quote(output)}} {{quote(compiler)}}
+
+share-wasm input output:
+    cargo run --locked --quiet --example code-inventory -- {{quote(input)}} {{quote(output)}}
+
+test-selfhost-sharing:
+    cargo test --locked --test code_sharing
+    node --expose-gc --test runtime/selfhost-sharing.test.mjs
+
+probe-selfhost-sharing input output optimizer:
+    node runtime/selfhost-sharing-probe.mjs {{quote(input)}} {{quote(output)}} {{quote(optimizer)}}
 
 # Fixed-point gate kept separate from the shorter frontend regression suite.
 test-selfhost-stage:

@@ -58,7 +58,7 @@ walz bench --samples 10
 
 From a checkout, install with `cargo install --path . --locked --bin walz`. The generator works offline and includes source, tests, a benchmark, bilingual references, and a portable [Walz skill](docs/agent-skills.md). Tests require Wasmtime with Wasm GC support; benchmarks require Node.js 24 or later. Laws, race-free contracts, and verified execution also use Lean. See the [CLI guide](docs/cli.md) for defaults and options, and [Getting started](docs/getting-started.md) for your first project.
 
-Try the [hosted playground](https://mizchi.github.io/walz-lang/) for an interactive language tour, or run `just playground` locally (requires wasm-pack). The [browser playground](docs/playground.md) compiles Walz locally using the Rust compiler built to Wasm.
+Try the [hosted playground](https://mizchi.github.io/walz-lang/) for an interactive language tour, or run `just playground` locally (requires wasm-pack). The [browser playground](docs/playground.md) offers the full Rust/Wasm compiler and a smaller self-hosted subset; only the selected compiler loads. The self-hosted compiler is built in Walz with verified identical stages and supports Core Wasm execution/downloads and an expanded Walz view.
 
 ## Documentation
 

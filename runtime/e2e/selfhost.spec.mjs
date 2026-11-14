@@ -5,6 +5,23 @@ import {
   projects as frontProjects,
   badProjects as frontBadProjects,
 } from "../selfhost-front/corpus.mjs";
+for(const backend of ['core','component'])test(`${backend}: specialization origins are available in Chromium`,async({page})=>{
+  await page.goto(`/${backend}/`);
+  const result=await page.evaluate(async()=>{
+    const {instantiate}=await import(new URL('selfhost/index.js',location.href));
+    let arena;const {api}=await instantiate({instantiateCore:async(m,imports)=>{
+      const instance=await WebAssembly.instantiate(m,imports);if(instance.exports.live)arena=instance.exports;return instance;
+    }});
+    const source=`(module (@use "walz:core" (type $option)) ;; 日本語
+      (func $answer (@type.params $T) (result i32) 42)
+      (func $entry (export "f") (result i32) (+ (call $answer<i32>) (call $answer<i64>))))`;
+    const bytes=new TextEncoder().encode(source),decoder=new TextDecoder();
+    const report=api.inventoryProject([{path:'main.walz',source:bytes}]);
+    const answers=report.functions.filter(f=>f.file===0&&decoder.decode(bytes.subarray(f.start,f.end)).startsWith('(func $answer'));
+    return {tag:report.result.tag,args:answers.map(f=>f.arguments.map(a=>decoder.decode(a).trim())).sort(),live:arena.live()};
+  });
+  expect(result).toEqual({tag:'ok',args:[['i32'],['i64']],live:0});
+});
 for (const backend of ["core", "component"])
   test(`${backend}: Walz compiler emits and executes Wasm in Chromium`, async ({
     page,

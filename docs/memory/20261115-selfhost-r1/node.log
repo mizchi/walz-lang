@@ -1,0 +1,78 @@
+core batch 1/10: heap=7782104, live=0
+core batch 2/10: heap=7805368, live=0
+core batch 3/10: heap=7845248, live=0
+core batch 4/10: heap=7849160, live=0
+core batch 5/10: heap=7853120, live=0
+core batch 6/10: heap=7856600, live=0
+core batch 7/10: heap=7858208, live=0
+core batch 8/10: heap=7860616, live=0
+core batch 9/10: heap=7860944, live=0
+core batch 10/10: heap=7861592, live=0
+playground-response batch 1/10: heap=7882056, live=0
+playground-response batch 2/10: heap=7884072, live=0
+playground-response batch 3/10: heap=7886664, live=0
+playground-response batch 4/10: heap=7886896, live=0
+playground-response batch 5/10: heap=7908184, live=0
+playground-response batch 6/10: heap=7915232, live=0
+playground-response batch 7/10: heap=7915560, live=0
+playground-response batch 8/10: heap=7917152, live=0
+playground-response batch 9/10: heap=7917480, live=0
+playground-response batch 10/10: heap=7917808, live=0
+self-build 1/5: compiling 838608 source bytes
+self-build 1: heap=7997712, live=0
+self-build 2/5: compiling 838608 source bytes
+self-build 2: heap=8019552, live=0
+self-build 3/5: compiling 838608 source bytes
+self-build 3: heap=8015064, live=0
+self-build 4/5: compiling 838608 source bytes
+self-build 4: heap=8031976, live=0
+self-build 5/5: compiling 838608 source bytes
+self-build 5: heap=8069040, live=0
+{
+  "status": "passed",
+  "compiler": {
+    "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/playground-selfhost-memory/selfhost/compiler.wasm",
+    "bytes": 489204,
+    "sha256": "a84ee551f5722be9aa7e33b0f865ec5b3b61cd995ee00058749e76b78f9a7f93",
+    "roots": {
+      "tables": 0,
+      "memories": 0,
+      "globals": 0
+    }
+  },
+  "phases": [
+    {
+      "mode": "core",
+      "ok": true,
+      "growth": {
+        "heapUsed": 14064,
+        "arrayBuffers": 0,
+        "external": 0,
+        "rss": 7790592
+      },
+      "failures": []
+    },
+    {
+      "mode": "playground-response",
+      "ok": true,
+      "growth": {
+        "heapUsed": 30864,
+        "arrayBuffers": 0,
+        "external": 0,
+        "rss": 122880
+      },
+      "failures": []
+    },
+    {
+      "mode": "self-build",
+      "ok": true,
+      "growth": {
+        "heapUsed": 33200,
+        "arrayBuffers": 0,
+        "external": 0,
+        "rss": -58867712
+      },
+      "failures": []
+    }
+  ]
+}

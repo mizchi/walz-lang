@@ -49,6 +49,8 @@
     (func $tree.name)
     (func $tree.error)
     (func $tree.read)
+    (type $rendered)
+    (func $tree.render)
     (func $tree.slice)
     (func $tree.eq)
     (func $work.snapshot)
@@ -80,6 +82,10 @@
     (func $profile.phase)
     (func $profile.limit)
     (func $profile.instance))
+  (@use "./profile.walz"
+    (type $profile-function)
+    (func $profile.recording)
+    (func $profile.function))
   (@export (func $generics.run) (func $generics.run-profile))
   (type $Env
     (struct
@@ -4352,6 +4358,28 @@
           (call $tree.copy $d 2
             (@bytes.new)
             (call $list-builder.finish< (ref $tree) > (struct.get $Scope $parts $scope))))
+        (if
+          (call $profile.recording (struct.get $State $profile $s))
+          (then
+            (@let $arguments (call $list-builder.new<$bytes>)
+              (block
+                (@for-each $arg (struct.get $Instance $args $x)
+                  (@match (call $tree.render $arg)
+                    (@case err ($error)
+                      (call $fail $s $arg (struct.get $project-error $code $error)))
+                    (@case ok ($rendered)
+                      (call $list-builder.push<$bytes> $arguments
+                        (struct.get $rendered $bytes $rendered)))))
+                (call $profile.function
+                  (ref.as_non_null (struct.get $State $profile $s))
+                  (struct.new $profile-function
+                    (struct.get $tree $value (call $tree.at $d 1))
+                    (struct.get $tree $value (struct.get $Instance $name $x))
+                    (struct.get $tree $file $d)
+                    (struct.get $tree $start $d)
+                    (struct.get $tree $end $d)
+                    (call $list-builder.finish<$bytes> $arguments))))))
+          (else (nop)))
         (struct.set $Instance $state $x 2))))
 
   (func $audit

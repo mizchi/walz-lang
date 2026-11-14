@@ -8,6 +8,27 @@ let compiled;
 let revision = 0;
 let compiling = false;
 let running = false;
+let activeCompile;
+let compilerInfo;
+let rustOptimize=$('optimize').checked;
+$('compiler-engine').value=new URL(location.href).searchParams.get('compiler')==='selfhost'?'selfhost':'rust';
+function describeCompiler(){
+  const engine=$('compiler-engine').value,selfhost=engine==='selfhost';
+  $('optimize').disabled=selfhost;
+  $('optimize').checked=selfhost?false:rustOptimize;
+  $('optimize').title=selfhost?'Optimization controls are available with the Rust compiler.':'';
+  $('tab-wat').textContent=selfhost?'Expanded Walz':'WAT';
+  const bytes=compilerInfo?.[engine]?.wasmBytes;
+  const unit=bytes>=1024*1024?'MiB':'KiB';
+  const size=bytes?` · ${(bytes/(unit==='MiB'?1024*1024:1024)).toLocaleString('en-US',{maximumFractionDigits:1})} ${unit} Wasm`:'';
+  $('compiler-description').textContent=selfhost
+    ? `Self-hosted subset${size}: i32/i64, Wasm GC, core collections, generics and expression macros. Shows expanded Walz. Floats, SIMD, closures and async are not yet supported. Native WAT, detailed analysis and optimization controls are available with Rust.`
+    : `Rust compiler${size}: full language support, detailed analysis and optimization controls. Event-loop examples use WebAssembly JSPI.`;
+}
+describeCompiler();
+fetch(new URL('./compiler-info.json',import.meta.url)).then(response=>response.ok?response.json():null).then(info=>{
+  if(info?.schema==='walz-playground-compilers-v1'){compilerInfo=info;describeCompiler();}
+}).catch(()=>{});
 
 function buttons() {
   $('compile').disabled = compiling;
@@ -56,10 +77,11 @@ async function compile() {
   invalidate();
   const current = revision;
   compiling = true;
+  const operation={};activeCompile=operation;
   $('compile-status').textContent = 'Compiling…';
   buttons();
   try {
-    const result = await compiler.run({ source: $('source').value, optimize: $('optimize').checked });
+    const result = await compiler.run({ source: $('source').value, optimize: $('optimize').checked,engine:$('compiler-engine').value });
     if (current !== revision) return;
     if (result.status === 'error') {
       $('diagnostics').textContent = diagnosticText(result.diagnostic);
@@ -68,7 +90,7 @@ async function compile() {
       return;
     }
     compiled = result;
-    $('wat').textContent = result.wat;
+    $('wat').textContent = result.sourceView?.text ?? result.wat;
     $('analysis').textContent = JSON.stringify(result.analysis, null, 2);
     $('diagnostics').textContent = result.runtimeUnavailable ?? 'No errors';
     for (const name of result.exports) $('exports').add(new Option(name, name));
@@ -84,8 +106,7 @@ async function compile() {
     // A panic invalidates the Wasm instance; the next request loads it afresh.
     compiler.cancel();
   } finally {
-    compiling = false;
-    buttons();
+    if(activeCompile===operation){activeCompile=undefined;compiling=false;buttons();}
   }
 }
 
@@ -143,7 +164,15 @@ $('source').addEventListener('input', () => {
   $('sample-outcome').textContent = '';
   invalidate();
 });
-$('optimize').onchange = invalidate;
+$('optimize').onchange = ()=>{rustOptimize=$('optimize').checked;invalidate();};
+$('compiler-engine').onchange=()=>{
+  compiler.cancel();activeCompile=undefined;compiling=false;
+  const url=new URL(location.href);
+  if($('compiler-engine').value==='selfhost')url.searchParams.set('compiler','selfhost');
+  else url.searchParams.delete('compiler');
+  history.replaceState(null,'',url);
+  describeCompiler();invalidate();compile();
+};
 $('exports').onchange = buttons;
 $('compile').onclick = compile;
 $('run').onclick = run;

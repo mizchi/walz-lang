@@ -17,12 +17,17 @@
   </header>
   <main>
     <div class="toolbar">
+      <label>Compiler <select id="compiler-engine" aria-label="Compiler" aria-describedby="compiler-description">
+        <option value="rust">Rust · Full compiler</option>
+        <option value="selfhost">Self-hosted · Subset</option>
+      </select></label>
       <label>Example <select id="samples" aria-label="Example"></select></label>
       <label class="toggle"><input id="optimize" type="checkbox" checked> Optimize</label>
       <button id="compile" type="button">Compile</button>
       <button id="stop" type="button" disabled>Stop</button>
       <span id="compile-status" data-testid="compile-status" role="status">Loading compiler…</span>
     </div>
+    <p id="compiler-description" class="hint" data-testid="compiler-description" aria-live="polite"></p>
     <aside class="sample-guide" aria-label="Language tour">
       <strong id="sample-title"></strong>
       <p id="sample-description" data-testid="sample-description"></p>
@@ -53,7 +58,7 @@
       </div>
       <pre id="run-output" data-testid="run-output" role="status">Run output appears here</pre>
     </section>
-    <p id="source-help" class="hint">Your source stays in this browser and is compiled by the Rust compiler running in WebAssembly. Supports single files, walz:core, hygienic macros, generic call inference and event-loop imports through WebAssembly JSPI. Use the CLI for relative .walz/.wasm imports, Component output, other host imports or Lean verification.</p>
+    <p id="source-help" class="hint">Your source stays in this browser. Choose the Rust compiler for full language support or the smaller self-hosted subset. Both compile in a worker; unsupported self-hosted features produce a diagnostic. Use the CLI for relative .walz/.wasm imports, Component output, other host imports or Lean verification.</p>
   </main>
   <footer>Walz / WebAssembly compiler playground</footer>
   <script type="module" src="./main.mjs"></script>

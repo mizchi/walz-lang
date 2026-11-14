@@ -27,6 +27,7 @@
     (func $list-builder.push)
     (func $list-builder.finish)
     (func $list-builder.extend))
+  (@use "./syntax.walz" (func $sx.len) (func $sx.name))
   (@use "./ir.walz"
     (type $function-ir)
     (type $instruction-ir)
@@ -176,12 +177,6 @@
     (@effect pure)
     (@list.get (ref $node) (struct.get $State $nodes $s) $id))
 
-  (func $len
-    (param $n (ref $node))
-    (result i32)
-    (@effect pure)
-    (@list.len i32 (call $node.children $n)))
-
   (func $child
     (param $s (ref $State))
     (param $n (ref $node))
@@ -198,54 +193,7 @@
     (@effect pure)
     (&&
       (= (call $node.kind $n) 2)
-      (&& (> (call $len $n) 0) (call $node.is (call $child $s $n 0) $word))))
-
-  (func $name
-    (param $n (ref $node))
-    (result i32)
-    (@effect pure)
-    (@let $b (call $node.value $n)
-      (block
-        (result i32)
-        (if
-          (i32.eqz
-            (&&
-              (= (call $node.kind $n) 0)
-              (&& (> (@bytes.len $b) 1) (= (@bytes.get $b 0) 36))))
-          (then (return 0))
-          (else (nop)))
-        (@loop $identifier
-          (bind $i i32 1)
-          (result i32)
-          (if
-            (result i32)
-            (= $i (@bytes.len $b))
-            (then 1)
-            (else
-              (@let $c (@bytes.get $b $i)
-                (if
-                  (result i32)
-                  (||
-                    (< $c 33)
-                    (||
-                      (> $c 126)
-                      (||
-                        (= $c 34)
-                        (||
-                          (= $c 40)
-                          (||
-                            (= $c 41)
-                            (||
-                              (= $c 44)
-                              (||
-                                (= $c 59)
-                                (|| (= $c 91) (|| (= $c 93) (|| (= $c 123) (= $c 125))))
-                              ))))
-                      )))
-                  (then 0)
-                  (else (@recur $identifier (+ $i 1))))
-              ))))
-      )))
+      (&& (> (call $sx.len $n) 0) (call $node.is (call $child $s $n 0) $word))))
 
   (func $same
     (param $a (ref $node))
@@ -272,7 +220,7 @@
       (if
         (||
           (struct.get $Signature $started $sig)
-          (|| (< (call $len $n) 2) (> (call $len $n) 3)))
+          (|| (< (call $sx.len $n) 2) (> (call $sx.len $n) 3)))
         (then (block (call $bad $s $n 104) (return)))
         (else (nop)))
       (if
@@ -287,9 +235,9 @@
         (then (block (call $bad $s $n 104) (return)))
         (else (nop)))
       (@let
-        (($named (= (call $len $n) 3))
+        (($named (= (call $sx.len $n) 3))
          ($value (call $child $s $n 1))
-         ($t (call $type $s (call $child $s $n (- (call $len $n) 1))))
+         ($t (call $type $s (call $child $s $n (- (call $sx.len $n) 1))))
          ($out
            (if
              (result (ref $list-builder<(ref $Variable)>))
@@ -299,7 +247,7 @@
         )
         (block
           (if
-            (|| (= $t 0) (&& $named (i32.eqz (call $name $value))))
+            (|| (= $t 0) (&& $named (i32.eqz (call $sx.name $value))))
             (then (block (call $bad $s $n 104) (return)))
             (else (nop)))
           (if
@@ -324,7 +272,7 @@
     (result (ref null $Decl))
     (@effect reads writes allocates)
     (@let
-      (($has-name (&& (> (call $len $n) 1) (call $name (call $child $s $n 1))))
+      (($has-name (&& (> (call $sx.len $n) 1) (call $sx.name (call $child $s $n 1))))
        ($sig
          (struct.new $Signature
            (call $list-builder.new<(ref $Variable)>)
@@ -338,7 +286,7 @@
         (result (ref null $Decl))
         (@for $fields
           (bind $i i32 (+ 1 $has-name))
-          (while (&& (< $i (call $len $n)) (call $ok $s)))
+          (while (&& (< $i (call $sx.len $n)) (call $ok $s)))
           (step (+ $i 1))
           (@let $field (call $child $s $n $i)
             (if
@@ -362,12 +310,12 @@
                                   (call $list-builder.len<(ref $Variable)>
                                     (struct.get $Signature $locals $sig))
                                   0)
-                                (|| (< (call $len $field) 1) (> (call $len $field) 2))))
+                                (|| (< (call $sx.len $field) 1) (> (call $sx.len $field) 2))))
                           )
                           (then (call $bad $s $field 104))
                           (else
                             (@let $t
-                              (if (result i32) (= (call $len $field) 1) (then 64) (else (call $type $s (call $child $s $field 1))))
+                              (if (result i32) (= (call $sx.len $field) 1) (then 64) (else (call $type $s (call $child $s $field 1))))
                               (if
                                 (= $t 0)
                                 (then (call $bad $s $field 104))
@@ -392,7 +340,7 @@
                                   (&&
                                     (= (struct.get $Signature $started $sig) 0)
                                     (&&
-                                      (> (call $len $field) 1)
+                                      (> (call $sx.len $field) 1)
                                       (= (struct.get $Signature $effect $sig) 0)))
                                   (then
                                     (@let $bits (call $effect-bits $s $field)
@@ -475,7 +423,7 @@
       (@let $decls (struct.get $State $decls $s)
         (if
           (result i32)
-          (call $name $n)
+          (call $sx.name $n)
           (then
             (@loop $search
               (bind $i i32 0)
@@ -551,7 +499,7 @@
       (block
         (result $tuple<i32, i32>)
         (if
-          (call $name $n)
+          (call $sx.name $n)
           (then
             (block
               (@loop $lets
@@ -617,7 +565,7 @@
     (block
       (result $tuple<i32, i32>)
       (if
-        (call $name $n)
+        (call $sx.name $n)
         (then
           (@loop $names
             (bind $p (ref null $Label) $labels)
@@ -699,12 +647,12 @@
     (@effect reads writes allocates)
     (if
       (result i32)
-      (= (call $len $n) 1)
+      (= (call $sx.len $n) 1)
       (then 64)
       (else
         (if
           (result i32)
-          (= (call $len $n) 2)
+          (= (call $sx.len $n) 2)
           (then
             (@let $t (call $type $s (call $child $s $n 1))
               (block
@@ -721,10 +669,10 @@
     (result (ref $Control))
     (@effect reads writes allocates)
     (@let
-      (($named (&& (> (call $len $n) 1) (call $name (call $child $s $n 1))))
+      (($named (&& (> (call $sx.len $n) 1) (call $sx.name (call $child $s $n 1))))
        ($at (+ 1 $named))
        ($has-type
-         (&& (< $at (call $len $n)) (call $head $s (call $child $s $n $at) "result"))))
+         (&& (< $at (call $sx.len $n)) (call $head $s (call $child $s $n $at) "result"))))
       (struct.new $Control
         (if
           (result (ref null $node))
@@ -748,13 +696,13 @@
       (block
         (result i32)
         (if
-          (call $name $n)
+          (call $sx.name $n)
           (then
             (@let ($i $t) (call $lookup $c $n $env 0)
               (return $t)))
           (else (nop)))
         (if
-          (|| (!= (call $node.kind $n) 2) (= (call $len $n) 0))
+          (|| (!= (call $node.kind $n) 2) (= (call $sx.len $n) 0))
           (then (return 0))
           (else (nop)))
         (@let $info (call $gc-info $s $n)
@@ -775,7 +723,7 @@
               (|| (call $node.is $head "local.get") (call $node.is $head "local.tee"))
               (then
                 (if
-                  (>= (call $len $n) 2)
+                  (>= (call $sx.len $n) 2)
                   (then
                     (@let ($i $t) (call $lookup $c (call $child $s $n 1) $env 0)
                       (return $t)))
@@ -785,7 +733,7 @@
               (call $node.is $head "call")
               (then
                 (if
-                  (>= (call $len $n) 2)
+                  (>= (call $sx.len $n) 2)
                   (then
                     (@let $id (call $find $s (call $child $s $n 1))
                       (if
@@ -806,7 +754,7 @@
               (else (nop)))
             (if
               (&&
-                (= (call $len $n) 3)
+                (= (call $sx.len $n) 3)
                 (!= (call $operator.alias (call $node.value $head) 127) 0))
               (then
                 (block
@@ -879,7 +827,7 @@
           (= (call $node.kind $n) 0)
           (then
             (if
-              (call $name $n)
+              (call $sx.name $n)
               (then
                 (@let ($i $t) (call $lookup $c $n $env 0)
                   (block (call $get-local $c $n $i $t) (return $t))))
@@ -887,12 +835,12 @@
           )
           (else (nop)))
         (if
-          (|| (!= (call $node.kind $n) 2) (= (call $len $n) 0))
+          (|| (!= (call $node.kind $n) 2) (= (call $sx.len $n) 0))
           (then (block (call $bad $s $n 101) (return 0)))
           (else (nop)))
         (@let
           (($head (call $child $s $n 0))
-           ($arity (call $len $n)))
+           ($arity (call $sx.len $n)))
           (block
             (result i32)
             (if
@@ -1183,7 +1131,7 @@
                      ($at (+ 2 $annotated)))
                     (block
                       (if
-                        (i32.eqz (call $name $name))
+                        (i32.eqz (call $sx.name $name))
                         (then (block (call $bad $s $name 104) (return 0)))
                         (else (nop)))
                       (@let $t
@@ -1194,7 +1142,7 @@
                             (@let $ann (call $child $s $n 2)
                               (if
                                 (result i32)
-                                (&& (call $head $s $ann "type") (= (call $len $ann) 2))
+                                (&& (call $head $s $ann "type") (= (call $sx.len $ann) 2))
                                 (then (call $type $s (call $child $s $ann 1)))
                                 (else 0))))
                           (else (call $hint $c (call $child $s $n $at) $env)))
@@ -1414,13 +1362,13 @@
                ($functions (call $list-builder.new<(ref $function-ir)>))
                ($start
                  (+ 1
-                   (&& (> (call $len $root) 1) (call $name (call $child $s $root 1))))
+                   (&& (> (call $sx.len $root) 1) (call $sx.name (call $child $s $root 1))))
                ))
               (block
                 (result $result<(ref $module-ir), (ref $diagnostic)>)
                 (@for $declarations
                   (bind $i i32 $start)
-                  (while (&& (< $i (call $len $root)) (call $ok $s)))
+                  (while (&& (< $i (call $sx.len $root)) (call $ok $s)))
                   (step (+ $i 1))
                   (@let $n (call $child $s $root $i)
                     (if
@@ -1515,14 +1463,14 @@
                               (call $node.end $source)))
                           (@for $inline
                             (bind $j i32 1)
-                            (while (< $j (call $len $source)))
+                            (while (< $j (call $sx.len $source)))
                             (step (+ $j 1))
                             (@let $e (call $child $s $source $j)
                               (if
                                 (call $head $s $e "export")
                                 (then
                                   (if
-                                    (= (call $len $e) 2)
+                                    (= (call $sx.len $e) 2)
                                     (then
                                       (call $export $s
                                         (call $child $s $e 1)
@@ -1533,7 +1481,7 @@
                           ))))
                     (@for $external
                       (bind $i i32 $start)
-                      (while (&& (< $i (call $len $root)) (call $ok $s)))
+                      (while (&& (< $i (call $sx.len $root)) (call $ok $s)))
                       (step (+ $i 1))
                       (@let $e (call $child $s $root $i)
                         (if
@@ -1541,7 +1489,7 @@
                           (then
                             (block
                               (if
-                                (!= (call $len $e) 3)
+                                (!= (call $sx.len $e) 3)
                                 (then
                                   (block
                                     (call $bad $s $e 101)
@@ -1554,7 +1502,7 @@
                                 (if
                                   (&&
                                     (call $head $s $target "func")
-                                    (= (call $len $target) 2))
+                                    (= (call $sx.len $target) 2))
                                   (then
                                     (@let $index
                                       (call $find $s (call $child $s $target 1))
@@ -1644,7 +1592,7 @@
     (block
       (result (ref null $GcOp))
       (if
-        (|| (!= (call $node.kind $n) 2) (< (call $len $n) 1))
+        (|| (!= (call $node.kind $n) 2) (< (call $sx.len $n) 1))
         (then (block (return (ref.null $GcOp))))
         (else (nop)))
       (@let
@@ -1661,11 +1609,11 @@
           (if
             (&&
               (call $node.is $head "select")
-              (&& (> (call $len $n) 1) (call $head $s (call $child $s $n 1) "result")))
+              (&& (> (call $sx.len $n) 1) (call $head $s (call $child $s $n 1) "result")))
             (then
               (block
                 (if
-                  (!= (call $len $n) 5)
+                  (!= (call $sx.len $n) 5)
                   (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                   (else (nop)))
                 (@let
@@ -1685,7 +1633,7 @@
             (then
               (block
                 (if
-                  (!= (call $len $n) (if (result i32) (= $op 208) (then 2) (else 3)))
+                  (!= (call $sx.len $n) (if (result i32) (= $op 208) (then 2) (else 3)))
                   (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                   (else (nop)))
                 (@let
@@ -1759,14 +1707,14 @@
                    ))
                   (block
                     (if
-                      (!= (call $len $n) (+ 1 (@list.len i32 $args)))
+                      (!= (call $sx.len $n) (+ 1 (@list.len i32 $args)))
                       (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                       (else (nop)))
                     (return (struct.new $GcOp $op (i64.const 0) 1 $args $output))))
               ))
             (else (nop)))
           (if
-            (< (call $len $n) 2)
+            (< (call $sx.len $n) 2)
             (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
             (else (nop)))
           (@let
@@ -1794,7 +1742,7 @@
                             ))
                           (else (nop)))
                         (if
-                          (!= (call $len $n) (+ 2 (call $list-builder.len<i32> $args)))
+                          (!= (call $sx.len $n) (+ 2 (call $list-builder.len<i32> $args)))
                           (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                           (else (nop)))
                         (return
@@ -1811,7 +1759,7 @@
                     (then
                       (block
                         (if
-                          (< (call $len $n) 3)
+                          (< (call $sx.len $n) 3)
                           (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                           (else (nop)))
                         (@let
@@ -1837,7 +1785,7 @@
                                   (else (nop)))
                                 (if
                                   (!=
-                                    (call $len $n)
+                                    (call $sx.len $n)
                                     (+ 3 (call $list-builder.len<i32> $args)))
                                   (then
                                     (block
@@ -1869,7 +1817,7 @@
                         (then
                           (block
                             (if
-                              (!= (call $len $n) 6)
+                              (!= (call $sx.len $n) 6)
                               (then
                                 (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                               (else (nop)))
@@ -1886,7 +1834,7 @@
                         (then
                           (block
                             (if
-                              (!= (call $len $n) 8)
+                              (!= (call $sx.len $n) 8)
                               (then
                                 (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                               (else (nop)))
@@ -1926,7 +1874,7 @@
                               (then
                                 (block
                                   (if
-                                    (< (call $len $n) 3)
+                                    (< (call $sx.len $n) 3)
                                     (then
                                       (block
                                         (call $bad $s $n 106)
@@ -1940,7 +1888,7 @@
                                         (if
                                           (||
                                             (i32.gt_u $count 65536)
-                                            (!= (call $len $n) (+ 3 $count)))
+                                            (!= (call $sx.len $n) (+ 3 $count)))
                                           (then
                                             (block
                                               (call $bad $s $n 106)
@@ -1968,7 +1916,7 @@
                             (call $list-builder.push<i32> $args 127)
                             (if
                               (!=
-                                (call $len $n)
+                                (call $sx.len $n)
                                 (+ 2 (call $list-builder.len<i32> $args)))
                               (then
                                 (block (call $bad $s $n 106) (return (ref.null $GcOp))))
@@ -1989,7 +1937,7 @@
                         (then (block (call $list-builder.push<i32> $args $t)))
                         (else (nop)))
                       (if
-                        (!= (call $len $n) (+ 2 (call $list-builder.len<i32> $args)))
+                        (!= (call $sx.len $n) (+ 2 (call $list-builder.len<i32> $args)))
                         (then (block (call $bad $s $n 106) (return (ref.null $GcOp))))
                         (else (nop)))
                       (struct.new $GcOp
@@ -2074,7 +2022,7 @@
       (result i32)
       (if
         (result i32)
-        (= $i (call $len $n))
+        (= $i (call $sx.len $n))
         (then $bits)
         (else
           (@let $word (call $child $s $n $i)
@@ -2096,7 +2044,7 @@
                         (else
                           (if
                             (result i32)
-                            (&& (= (call $len $n) 2) (call $node.is $word "pure"))
+                            (&& (= (call $sx.len $n) 2) (call $node.is $word "pure"))
                             (then 0)
                             (else -1))))
                     ))))

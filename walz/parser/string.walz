@@ -7,23 +7,8 @@
     (func $bytes-builder.byte)
     (func $bytes-builder.finish))
   (@export (func $string.read))
+  (@use "./ascii.walz" (func $ascii.hex))
   (@type.alias $Read $result<$tuple<$bytes, i32>, (ref $diagnostic)>)
-  (func $hex
-    (param $c i32)
-    (result i32)
-    (@effect pure)
-    (if
-      (result i32)
-      (&& (>= $c 48) (<= $c 57))
-      (then (- $c 48))
-      (else
-        (if
-          (result i32)
-          (&& (>= (| $c 32) 97) (<= (| $c 32) 102))
-          (then (- (| $c 32) 87))
-          (else -1))))
-  )
-
   (func $peek
     (param $b $bytes)
     (param $i i32)
@@ -76,12 +61,12 @@
     (@effect reads writes allocates)
     (@let
       (($e (call $peek $b (+ $i 1)))
-       ($h (call $hex $e)))
+       ($h (call $ascii.hex $e)))
       (if
         (result $Offset)
         (>= $h 0)
         (then
-          (@let $low (call $hex (call $peek $b (+ $i 2)))
+          (@let $low (call $ascii.hex (call $peek $b (+ $i 2)))
             (if
               (result $Offset)
               (< $low 0)
@@ -113,7 +98,7 @@
                     (result $tuple<i32, i32>)
                     (@let
                       (($v (call $peek $b $p))
-                       ($d (call $hex $v)))
+                       ($d (call $ascii.hex $v)))
                       (if
                         (result $tuple<i32, i32>)
                         (&& (>= $d 0) (<= $n 69631))
@@ -125,7 +110,7 @@
                               (= $v 95)
                               (&&
                                 (> $count 0)
-                                (>= (call $hex (call $peek $b (+ $p 1))) 0)))
+                                (>= (call $ascii.hex (call $peek $b (+ $p 1))) 0)))
                             (then (@recur $digits (+ $p 1) $n $count))
                             (else
                               (@tuple.new

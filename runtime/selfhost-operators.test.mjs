@@ -26,6 +26,10 @@ for(const backend of ['core','component'])test(`${backend}: scalar alias lookup 
       for(const width of [127,126,64,-1])assert.equal(value.api.alias(spelling,width),codes?.[+(width===126)]??0,key+' '+width);
       assert.equal(value.api.comparison(spelling),+(codes!==undefined&&codes[0]<100),key+' comparison');
     }
+    for(const c of [-1,...Array.from({length:256},(_,i)=>i),256,2147483647,-2147483648]){
+      const expected=c>=48&&c<=57?c-48:(c|32)>=97&&(c|32)<=102?(c|32)-87:-1;
+      assert.equal(value.api.hex(c),expected,'hex digit '+c);
+    }
     await collect();assert.equal(arena.live(),0);assert.ok(Object.values(value.__memory()).every(n=>n===0));
   }finally{await rm(directory,{recursive:true,force:true});}
 });

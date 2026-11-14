@@ -1,0 +1,231 @@
+{
+  "sources": [
+    {
+      "path": "examples/selfhost/staged.walz",
+      "sha256": "96eea316e634fbd310819ecf7079117b90e254cf7cdcd2ee8e0f7b0a15cb83a1"
+    },
+    {
+      "path": "walz/frontend/tree.walz",
+      "sha256": "45a02fb7efae08fff3ac044ed06303650cd6f66f9703ea6878fa6705e4c4c824"
+    },
+    {
+      "path": "walz/parser/parser.walz",
+      "sha256": "93841516486c09f930185510f30b9c3d79210c861250ab2eb1346201b9a5b178"
+    },
+    {
+      "path": "walz/core/bytes.walz",
+      "sha256": "4e0e33355f98f0ae527b726b16dd5da5f87c42e8ae7b4621af2f1ec82ada3cb5"
+    },
+    {
+      "path": "walz/core/list-builder.walz",
+      "sha256": "211f302b7c91c2624c12ef40785e54213ce013c6929d166a0750daedaf83e888"
+    },
+    {
+      "path": "walz/parser/diagnostic.walz",
+      "sha256": "48e9ca994a1b3b7358999940353f31595f68d98e168e92a9c453f825b8dcf642"
+    },
+    {
+      "path": "walz/parser/string.walz",
+      "sha256": "180696fbbd5f54e0897c4912577d92d98a57efd2e88dbddc180f0ea2646af15e"
+    },
+    {
+      "path": "walz/parser/ascii.walz",
+      "sha256": "4f6952051a64fd98ebad27eba8124c498f7ccc1f1135e38574e3958c728838d0"
+    },
+    {
+      "path": "walz/core/text.walz",
+      "sha256": "1795a92d0abbd1ea63578f94c83702b4858de2357be0015196e54731d88ad61c"
+    },
+    {
+      "path": "walz/frontend/profile.walz",
+      "sha256": "5292b783859768bbfe7995dd20e91f0705725d9caf574baefc69f91dd8a7449c"
+    },
+    {
+      "path": "walz/codegen/compiler.walz",
+      "sha256": "fd5c9b13c37bde24fe2b6fe83c7fc1d4cf376adfc45668446192cb414d25b60c"
+    },
+    {
+      "path": "walz/checker/checker.walz",
+      "sha256": "1b21edf5af4b3f8dcf2ad03dcda49b0a22350e8802754a524fab785430905935"
+    },
+    {
+      "path": "walz/parser/number.walz",
+      "sha256": "7dc0c5db9752926d45850cd55c52a356cc8e4416d27349c5f0cce656e2d0ff47"
+    },
+    {
+      "path": "walz/checker/syntax.walz",
+      "sha256": "c5b95f4ee0e294b71ea7c89f54a9a6e46b7c6c00349367d79122d135c4067aed"
+    },
+    {
+      "path": "walz/checker/ir.walz",
+      "sha256": "c7f99a54c5daaba3f970dd0985b37ee717dcde5866875d538a3548775a6c82a6"
+    },
+    {
+      "path": "walz/checker/stack.walz",
+      "sha256": "b510fe9cc6446db06148f4de79c24018d682e1dc709a4147a3e190b4b572c61b"
+    },
+    {
+      "path": "walz/checker/operators.walz",
+      "sha256": "5ff9bf82e8b3db3b3729b0f879a6b3f0f9b76cb47b3ca2311448700fc555205b"
+    },
+    {
+      "path": "walz/checker/gc-types.walz",
+      "sha256": "7eeaf26f7c33c7b1a8aa9ab37cbccff4d4dfd7dd8b9fc3dd5751103241d519b5"
+    },
+    {
+      "path": "walz/checker/type-env.walz",
+      "sha256": "261bc4ccf9a9d3d5b64b2bcb49eadcb696807992eb9b305bd043f1cd046bbe56"
+    },
+    {
+      "path": "walz/checker/gc-operators.walz",
+      "sha256": "a6f0b2d37d8ede5e3c4369100ff79bb14766bf77a651e8ddaaacdaf9dd3b2b46"
+    },
+    {
+      "path": "walz/checker/gc-effects.walz",
+      "sha256": "e1bf68e0536840f101ff460d93d6f9eab5f1916d7834d664848ea4f06a088a94"
+    },
+    {
+      "path": "walz/codegen/emit.walz",
+      "sha256": "4345a6ea9f7a372526f905006212c333ada40329625d0713044b7c7f28bef68e"
+    },
+    {
+      "path": "walz/codegen/encoding.walz",
+      "sha256": "1de92b1c162a518305cccbefba81f9fc18346d9588a7ac0fdc36f4de8bc74c19"
+    },
+    {
+      "path": "walz/codegen/types.walz",
+      "sha256": "ca6574e81779cdc718d5fb2b2ada8d3b21afb23fb1507fad82ccd0f0c47b7849"
+    },
+    {
+      "path": "walz/frontend/frontend.walz",
+      "sha256": "2d15c645438044f3170301c7cd6357cb91ed0b60e70e4532d58fd68a0bdd44e0"
+    },
+    {
+      "path": "walz/frontend/modules.walz",
+      "sha256": "622d2abc83389ebeded41e37a16e59c8aa09d82f8f9f342b73dfd63a73d45798"
+    },
+    {
+      "path": "walz/frontend/macro-context.walz",
+      "sha256": "e237375dd314ef8ed6ec2b2b2df12cf87f0cc60dfe6faeaceb09d2ff462bd7d7"
+    },
+    {
+      "path": "walz/frontend/macro-patterns.walz",
+      "sha256": "8c52d01269a5e168ca58832052bbcc1ef137d1652cc4a30c2923339b5e72a322"
+    },
+    {
+      "path": "walz/frontend/normalize.walz",
+      "sha256": "be8c4f5267b9f220f61db2da388dda4b4ae5fd4fe221866adfa9a30c3abc1a40"
+    },
+    {
+      "path": "walz/frontend/surface.walz",
+      "sha256": "c86c1c7c989502b8d9109ac5179827121d9811b5e8c55646d0c94fab447c6fdd"
+    },
+    {
+      "path": "walz/frontend/source-contracts.walz",
+      "sha256": "90d370b3bfa9f2b467f26b04903be98f5d746078c5eeaaa1e10f372c9c0ae169"
+    },
+    {
+      "path": "walz/frontend/core-source.walz",
+      "sha256": "1a0241d2f5642ec033eb3639d76597591e03cd9dd085a8e00c4ccc54aeffdced"
+    },
+    {
+      "path": "walz/frontend/path.walz",
+      "sha256": "5448757f96d2d0a8577962bdd86a0a8e800452dde4f6ba4b39de0eb8a356c85b"
+    },
+    {
+      "path": "walz/frontend/generics.walz",
+      "sha256": "54854676d91d10eb3c77d405586f83daecd3cfc99f49e5990face1ae6d8e131e"
+    },
+    {
+      "path": "walz/frontend/abi.walz",
+      "sha256": "1029e8e79438a8a8fc63c5583d21ff3c41a934cdf749d51513afe7bc199e6ff7"
+    },
+    {
+      "path": "walz/frontend/type-map.walz",
+      "sha256": "7eb2b973df8f152a5dc7b87cbd9a507674fad9b66d142d45054ee624f260db35"
+    },
+    {
+      "path": "walz/frontend/limits.walz",
+      "sha256": "e4922c5d37999e10ffcda9f45c979a93929b462f8affeddeceea828cffca2e6c"
+    },
+    {
+      "path": "walz/frontend/macro-validation.walz",
+      "sha256": "299a6c1a6c36bbbdb50af17d44e2e0425ebd8bcc7e1b37f95f87718270e7d8e9"
+    },
+    {
+      "path": "walz/frontend/lower.walz",
+      "sha256": "7cf10bde06b1e01fa0be8adde309a4fda7eadf82f8195966c59637a918d1cf91"
+    },
+    {
+      "path": "walz/frontend/syntax.walz",
+      "sha256": "a27c9477e692595720dddb9f46529f0c41f7236da00ceed99ad6fe998547907c"
+    },
+    {
+      "path": "walz/frontend/syntax-atoms.walz",
+      "sha256": "86fccfa9c03442a9383bd9b113742480c1a03cf9a097d6decb39f3cdd89f006d"
+    },
+    {
+      "path": "walz/frontend/macros.walz",
+      "sha256": "5ce8ffbc8732e9ee8fc5f578773678e1b7201ae5e5db82da049449a32292a59e"
+    },
+    {
+      "path": "walz/frontend/structs.walz",
+      "sha256": "70e7e19c60d9a5588e9031d3c5dc8cf96155531e63078d2f9fa44ea075497d0a"
+    },
+    {
+      "path": "walz/frontend/type-order.walz",
+      "sha256": "d549bcfddc1299bc24f1f0ead45b8af97e0bc92af8d40dd01d685f878b6a8122"
+    },
+    {
+      "path": "walz/frontend/graph.walz",
+      "sha256": "e2dfdb15e7ce836928c87aebc65a36832dff13c11a07e68f38cf6e7c56ef8212"
+    }
+  ],
+  "labels": [
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/examples/selfhost/staged.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/tree.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/parser/parser.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/core/bytes.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/core/list-builder.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/parser/diagnostic.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/parser/string.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/parser/ascii.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/core/text.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/profile.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/codegen/compiler.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/checker.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/parser/number.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/syntax.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/ir.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/stack.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/operators.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/gc-types.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/type-env.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/gc-operators.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/checker/gc-effects.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/codegen/emit.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/codegen/encoding.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/codegen/types.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/frontend.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/modules.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/macro-context.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/macro-patterns.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/normalize.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/surface.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/source-contracts.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/core-source.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/path.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/generics.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/abi.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/type-map.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/limits.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/macro-validation.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/lower.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/syntax.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/syntax-atoms.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/macros.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/structs.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/type-order.walz",
+    "/Users/mz/ghq/github.com/mizchi/wlt-lang/walz/frontend/graph.walz"
+  ]
+}

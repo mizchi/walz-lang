@@ -2,7 +2,10 @@
 
 # Browser playground
 
-Builds the Rust Walz compiler to Wasm with wasm-pack for editing, compilation, and execution in the browser.
+Offers the full Rust/Wasm compiler and a smaller compiler self-built in Walz for
+editing, compilation and execution in the browser. The Compiler menu selects
+one engine; only the selected compiler's resources load. Use `?compiler=selfhost`
+to open directly in the self-hosted mode without downloading Rust/Wasm.
 Sources are not sent to a server for compilation. No JavaScript bundler or server-side Rust execution is needed.
 
 [Open the published version](https://mizchi.github.io/walz-lang/). Documentation on the page links to the README and language-feature guides.
@@ -22,7 +25,8 @@ just playground
 ```
 
 For a build only, use `just playground-build` (or `pnpm playground:build`).
-This generates HTML, CSS, ES modules, and `pkg/walz_web_bg.wasm` under `target/playground/`.
+This generates HTML, CSS, ES modules, `pkg/walz_web_bg.wasm`,
+`selfhost/compiler.wasm` and build/size metadata under `target/playground/`.
 The entire directory can be deployed to any static HTTP server; relative URLs support subdirectory hosting.
 Serve `.wasm` as `application/wasm`, and `.mjs`/`.js` with a JavaScript MIME type. Open over HTTP rather than `file://`.
 Serve local built artifacts with `pnpm playground`.
@@ -31,6 +35,40 @@ wasm-pack uses `--target web --release`. The first run may take longer because i
 wasm-opt is disabled for this crate to avoid an additional Binaryen dependency. Rust release optimizations remain enabled.
 Serve generated JS and Wasm from the same build together.
 For option details, see the [wasm-pack build documentation](https://rustwasm.github.io/docs/wasm-pack/commands/build.html).
+
+The self-hosted build first creates a Rust-built seed, then compiles the Core GC
+bridge as stage 1 and again with stage 1 as stage 2. Publication requires
+byte-identical, independently validated stages with no host imports. Stage 2 is
+the deployed compiler. Fresh build captures retain seed hashes, source snapshots
+and both stages under `target/playground-selfhost-build-*`. Build only this
+artifact with `just build-playground-selfhost`.
+
+## Choosing a compiler
+
+| Feature | Rust | Self-hosted subset |
+| --- | --- | --- |
+| Language | Full browser compiler | Bounded i32/i64, GC, selected core collections, generics and expression macros |
+| Source view | Generated native WAT | Expanded Walz; some high-level forms remain |
+| Analysis | Detailed source analysis | Supported-subset validation status |
+| Optimization control | On/off | Unavailable |
+| Async event-loop execution | Core/JSPI | Unsupported |
+| Execution/download | Core Wasm | Core Wasm |
+
+Switching compilers preserves editor text, cancels the current compiler worker
+and clears executable results. Unsupported self-hosted forms produce
+`E_SELFHOST_<number>` with original UTF-8 ranges and line/Unicode-column locations.
+No automatic Rust fallback occurs on unsupported syntax or load failures.
+Normal source errors keep the selected compiler usable; failed loads can be retried.
+The self-hosted compiler itself needs browser Wasm GC support, but not JSPI.
+Rust remains the default and the language-tour expectations describe that mode.
+
+The current Playground self-hosted Wasm is 489,204 bytes (about 478 KiB), or
+77,975 bytes with gzip level 9 and 59,514 bytes with Brotli quality 11. These
+figures cover the Wasm body, excluding JS, build metadata and the shared UI.
+The same build's Rust/Wasm body is 8,840,457 bytes. Compressed figures are local
+estimates, not a measurement of server encoding or HTTP overhead. Features differ;
+the size difference is not a full-feature equivalence or speed comparison.
+Each build writes its current figures to `compiler-info.json`.
 
 <a id="github-pagesへの公開"></a>
 
@@ -42,7 +80,7 @@ Set the publishing source to GitHub Actions under the repository's Settings → 
 
 <a id="対応範囲"></a>
 
-## Supported scope
+## Rust compiler scope
 
 - Compilation of single-file Walz, standard WAT, and bundled `walz:core`.
 - Type-argument inference for ordinary generic calls, hygienic user macros, public type-information queries, and explicit binding scopes.
@@ -100,6 +138,14 @@ Selecting another sample restores its description, expected result, and source t
 `compile_source(source, optimize)` returns a JSON string in `walz-playground-v1` format.
 Success returns `status: "success"`, `wat`, `wasm` (a byte array), and `analysis`; failure returns `status: "error"` and the existing `diagnostic`.
 
+The self-hosted adapter uses the same browser envelope with `sourceView:
+{format: "walz", text}` instead of a native `wat` string, and explicitly marks
+analysis as `validation-only`. The Core GC bridge constructs/accesses opaque
+guest values; JavaScript transfers files and bytes and formats diagnostics.
+It does not parse, resolve, type-check or generate executable source on behalf
+of the self-hosted compiler. Its hash is checked against the fixed-point build
+metadata before loading. This bridge is not a generated Canonical ABI adapter.
+
 For event-loop imports, `prepare_execution(source, optimize)` generates the existing Core＋JSPI adapter in memory.
 Its response uses `walz-playground-execution-v1`; on success, `program` contains Core Wasm, ABI-memory Wasm, generated bindings, the manifest, and export names and argument counts.
 The execution Worker uses the existing `runtime/core.mjs`, `host.mjs`, `tasks.mjs`, and `resources.mjs` to connect Promises and AsyncIterables.
@@ -110,7 +156,8 @@ The browser adapter checks Rust type, effect, and ownership rules, trusted impor
 It does not claim independent verification by an external Lean kernel and rejects inputs containing laws. CLI verified compilation continues to invoke Lean.
 
 Interface and runtime messages are in English.
-The compiler lives in a reused Web Worker, sharing the standard library syntax cache.
+The selected compiler lives in a reused Web Worker. Switching destroys the old
+worker and compiler instance; the Rust engine also reuses its standard-library syntax cache.
 Generated Wasm execution gets a fresh Worker and instance each time. Infinite loops, including start functions, do not block the main interface.
 Workers terminate after 30 seconds for compilation and 2 seconds for execution. Stop also terminates them, and the next operation recreates them.
 This stops CPU processing; it does not guarantee a memory-usage limit for the whole browser process.
@@ -131,9 +178,14 @@ Comparisons with native Core＋JSPI generation run the ownership kernel, so the 
 Playwright checks Wasm compiler loading, GC samples, execution/saving, diagnostics and recovery,
 infinite-loop timeout/stop, Lean rejection, traps, missing host imports, and narrow screens.
 It also checks event-loop Future/Stream, optimization off, Result failures, export-name conversion, argument counts, and rerunning after stopping a wait.
+Self-hosted checks cover lazy loading without Rust, GC/generic execution,
+expanded-source labeling, errors/recovery, download, cancellation during engine
+loading, load failure/retry and narrow layout. Pure response-adapter tests also
+check Unicode locations and absence of executable bytes on errors.
 For seven fixed inputs, it additionally checks that the Wasm compiler's WAT matches the recorded pre-change native output.
 After building, `pnpm test:playground` runs browser checks alone.
 If another local server uses the default port, change the test port with `WALZ_PLAYGROUND_TEST_PORT=41741 pnpm test:playground`.
+Set `WALZ_PLAYGROUND_TEST_ROOT` to test an isolated build directory.
 
 Sample definitions are split by feature under `playground/samples/` and collected in `samples.mjs`.
 Add samples with `category`, `label`, `description`, `features`, `expectation`, and a self-contained `source`.

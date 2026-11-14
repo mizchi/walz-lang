@@ -11,9 +11,9 @@ export class WorkerClient {
   run(payload, transfer = []) {
     if (this.pending) throw new Error('Wait for the current operation to finish');
     if (!this.worker) {
-      this.worker = new Worker(this.url, { type: 'module' });
-      this.worker.onmessage = ({ data }) => {
-        if (data.id !== this.pending?.id) return;
+      const worker=this.worker = new Worker(this.url, { type: 'module' });
+      worker.onmessage = ({ data }) => {
+        if (this.worker!==worker || data.id !== this.pending?.id) return;
         const pending = this.pending;
         this.pending = undefined;
         clearTimeout(pending.timer);
@@ -21,11 +21,14 @@ export class WorkerClient {
         if (data.error) pending.reject(new Error(data.error));
         else pending.resolve(data.result);
       };
-      this.worker.onerror = event => {
+      worker.onerror = event => {
         event.preventDefault();
+        if(this.worker!==worker)return;
         this.cancel(new Error(event.message || 'Could not start the worker'));
       };
-      this.worker.onmessageerror = () => this.cancel(new Error('Could not read the worker response'));
+      worker.onmessageerror = () => {
+        if(this.worker===worker)this.cancel(new Error('Could not read the worker response'));
+      };
     }
     return new Promise((resolve, reject) => {
       const id = ++this.nextId;

@@ -1,5 +1,6 @@
 (module
   (@use "walz:core"
+    (type $bytes)
     (type $list)
     (type $list-builder)
     (func $list-builder.new)
@@ -18,12 +19,28 @@
     (func $profile.limit)
     (func $profile.instance)
     (func $profile.rendered)
-    (func $profile.syntax))
+    (func $profile.syntax)
+    (type $profile-function)
+    (func $profile.enable-inventory)
+    (func $profile.recording)
+    (func $profile.function)
+    (func $profile.functions))
   ;; Optional request-local instrumentation. Neither counters nor caches escape
   ;; into another compile request; only immutable snapshots cross the ABI.
   (type $Counters (array (mut i32)))
   (type $profile-state
-    (struct (field $counts (ref $Counters)) (field $files (ref $Counters))))
+    (struct (field $counts (ref $Counters)) (field $files (ref $Counters))
+      (field $functions (mut (ref null $list-builder<(ref $profile-function)>)))))
+  (type $profile-function
+    (struct
+      (field $declaration $bytes)
+      (field $generated $bytes)
+      (field $file i32)
+      (field $start i32)
+      (field $end i32)
+      (field $arguments $list<$bytes>)))
+  (@abi.type $profile-function
+    (record "declaration" "generated" "file" "start" "end" "arguments"))
   (type $profile-file
     (struct
       (field $file i32)
@@ -83,7 +100,40 @@
   (func $profile.new
     (result (ref $profile-state))
     (@effect allocates)
-    (struct.new $profile-state (array.new $Counters 0 34) (array.new $Counters 0 260)))
+    (struct.new $profile-state (array.new $Counters 0 34) (array.new $Counters 0 260)
+      (ref.null $list-builder<(ref $profile-function)>)))
+
+  ;; Separate opt-in inventory: the existing v4 counter snapshot is unchanged.
+  (func $profile.enable-inventory
+    (param $p (ref $profile-state))
+    (@effect writes allocates)
+    (struct.set $profile-state $functions $p
+      (call $list-builder.new<(ref $profile-function)>)))
+
+  (func $profile.recording
+    (param $p (ref null $profile-state))
+    (result i32)
+    (@effect reads)
+    (if (result i32) (ref.is_null $p) (then 0)
+      (else (i32.eqz (ref.is_null
+        (struct.get $profile-state $functions (ref.as_non_null $p)))))))
+
+  (func $profile.function
+    (param $p (ref $profile-state))
+    (param $function (ref $profile-function))
+    (@effect reads writes allocates)
+    (call $list-builder.push<(ref $profile-function)>
+      (ref.as_non_null (struct.get $profile-state $functions $p)) $function))
+
+  (func $profile.functions
+    (param $p (ref $profile-state))
+    (result $list<(ref $profile-function)>)
+    (@effect reads writes allocates)
+    (if (result $list<(ref $profile-function)>)
+      (ref.is_null (struct.get $profile-state $functions $p))
+      (then (@list.new (ref $profile-function)))
+      (else (call $list-builder.finish<(ref $profile-function)>
+        (ref.as_non_null (struct.get $profile-state $functions $p))))))
 
   (func $add
     (param $p (ref $profile-state))

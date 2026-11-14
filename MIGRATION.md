@@ -280,3 +280,36 @@ The new `walz-selfhost-stages-v1` capture retains source bytes/labels, probes,
 artifact hashes and diagnostics. Profiler v4 and earlier benchmark/evaluation
 captures remain unchanged; successful full-compiler timings use a fresh input
 snapshot. See [stage verification](docs/selfhost-stages.md).
+
+## Specialization inventory and opt-in code sharing
+
+`inventoryProject` is a separate checked entry; existing profile v4 counters and
+the portable five-operation ABI retain their contracts. Inventory captures v1
+join guest declaration/argument origins to independently validated function bytes.
+The code-sharing probe v2 adds a Binaryen 133 roundtrip baseline and snapshots
+its recorder sources; the earlier v1 probe remains unchanged.
+
+Measured ordinary helper duplication is factored in the parser/checker. Exact
+postprocessing is opt-in, retains public/reference identity and GC types, and
+rejects unknown custom index metadata when rewriting. Source validation and
+default compiler output policy are unchanged. See [the contracts and captured
+sizes](docs/selfhost-sharing.md); these results do not establish a speedup or
+justify a default dictionary runtime.
+
+## Selectable self-built Playground compiler
+
+The browser compiler worker lazily selects Rust or a self-built Core GC stage.
+The ordinary Playground build now produces both artifacts and requires identical
+stage 1/2 output for the self-built image. Fresh seed/source/stage evidence stays
+under `target/playground-selfhost-build-*`; browser metadata verifies the deployed
+image hash. This does not change the portable five-operation ABI or add generated
+Canonical ABI adapters.
+
+The Core stage bridge is browser-compatible and adds optional expanded-source
+inspection. Existing stage artifacts retain compile/import compatibility. The
+self-hosted response labels this view as expanded Walz and analysis as validation
+only, without Rust fallback. Compiler changes cancel pending workers/results and
+preserve source. Shared diagnostic text retains the existing CLI messages.
+
+The current [Wasm-body size figures](docs/playground-size.md#current-selectable-compiler)
+are a fresh build, not a replacement for the earlier browser-size capture.

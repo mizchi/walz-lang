@@ -8,6 +8,9 @@ This establishes self-compilation of the current subset. The Rust compiler
 remains the main implementation, with broader language, runtime and tooling
 coverage. See [remaining parity work](selfhost-parity.md).
 
+For repeated self-build retention, exception cleanup and Playground worker
+lifetime checks, see [the memory audit](selfhost-memory.md).
+
 ## Run the fixed-point gate
 
 ```sh
@@ -57,6 +60,12 @@ host imports or cross-instance GC transfers.
 This bridge is not a Canonical ABI or Component adapter. Generating WIT and host
 adapters with the self-compiled compiler remains future work. Existing Core+JSPI
 and Component adapters for the seed still come from Rust.
+
+The same bridge now also runs in the [Playground](playground.md#choosing-a-compiler).
+Its optional `expand` export returns expanded Walz for inspection after successful
+compilation; higher-level forms can remain, so this is not a native WAT printer
+or a substitute for validation. The browser transfers only bytes and opaque GC
+values and never loads a Rust compiler as a fallback for this mode.
 
 ## Captures and interpretation
 

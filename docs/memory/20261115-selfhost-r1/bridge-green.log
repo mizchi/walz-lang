@@ -1,0 +1,13 @@
+WALZ_SELFHOST_MEMORY_COMPILER='target/playground-selfhost-memory/selfhost/compiler.wasm' node --expose-gc --test runtime/selfhost-memory.test.mjs
+✔ retained-heap detector rejects growing heaps and backing stores (0.396875ms)
+✔ RSS high-water capacity is reported separately from retained live memory (0.194875ms)
+✔ missing or invalid heap measurements cannot pass the audit (0.072458ms)
+✔ held public bridge errors release their compiler instance (28.001208ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69.047667

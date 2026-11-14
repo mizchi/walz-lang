@@ -1,5 +1,9 @@
 # Bootstrap frontend profiling
 
+For declaration/argument attribution and actual Wasm body sizes, use the separate
+[specialization inventory](selfhost-sharing.md). Counter totals alone do not
+measure redundant generated code.
+
 The Walz compiler can report expansion work and cache reuse for one project,
 including a rejected project. The guest performs linking, normalization and
 independent validation. JavaScript supplies files and records the returned data;

@@ -57,7 +57,7 @@ walz bench --samples 10
 
 checkoutからは`cargo install --path . --locked --bin walz`でインストールします。`walz new`はオフラインでソース・テスト・ベンチ・英日資料と[Walz skill](docs/agent-skills.md)を生成します。テストには Wasm GC 対応の Wasmtime、ベンチには Node.js 24以降、law・race-free契約・検証付き実行にはLeanが必要です。既定値とオプションは[CLIガイド](docs/cli.md)、最初のプロジェクトの作り方は[導入手順](docs/getting-started.md)にまとめています。
 
-[公開プレイグラウンド](https://mizchi.github.io/walz-lang/) で言語機能を試せます。手元では `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) は、WasmにビルドしたRustコンパイラでローカルにコンパイルします。
+[公開プレイグラウンド](https://mizchi.github.io/walz-lang/) で言語機能を試せます。手元では `just playground` を実行します（wasm-pack が必要）。[プレイグラウンド](docs/playground.md) ではRust/Wasm版と、小さいセルフビルド版のサブセットを選択でき、選んだ版だけを読み込みます。セルフ版はWalzでビルドして連続stageの一致を検証し、Core Wasmの実行・保存と展開後Walzの表示に対応します。
 
 静的な `@lib` と、genericなソースコンストラクター・`@expose` / `@connect` による明示的なComponentの構成にも対応します。`walz build --wit` は公開インターフェースから `world.wit` を生成します。[Component構成ガイド](docs/component-composition.md)と[サンプル](examples/components/main.walz)を参照してください。
 

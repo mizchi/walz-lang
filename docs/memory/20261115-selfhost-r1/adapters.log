@@ -1,0 +1,12 @@
+✔ core: checked GC types and codegen (48610.823875ms)
+✔ component: checked GC types and codegen (40133.976ms)
+✔ core: Walz parser and codegen compile and execute checked modules (16432.165334ms)
+✔ component: Walz parser and codegen compile and execute checked modules (7602.7235ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88803.8095

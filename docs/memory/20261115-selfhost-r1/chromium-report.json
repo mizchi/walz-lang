@@ -1,0 +1,361 @@
+{
+  "suite": "selfhost-browser-memory-v3",
+  "status": "passed",
+  "created": "2026-11-14T18:36:58.562Z",
+  "node": "v24.22.2",
+  "compiler": {
+    "bytes": 489204,
+    "sha256": "a84ee551f5722be9aa7e33b0f865ec5b3b61cd995ee00058749e76b78f9a7f93"
+  },
+  "settings": {
+    "warmupBatches": 2,
+    "measuredBatches": 8,
+    "callsPerBatch": 128,
+    "switches": 12,
+    "loadCancellations": 6
+  },
+  "limits": {
+    "heapUsed": 2097152,
+    "arrayBuffers": 1048576,
+    "external": 2097152,
+    "embedder": 2097152
+  },
+  "samples": [
+    {
+      "heapUsed": 745116,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 740892,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 748716,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 755140,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 755760,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 759412,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 764604,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    },
+    {
+      "heapUsed": 764636,
+      "arrayBuffers": 16058,
+      "embedder": 33216,
+      "objects": {
+        "observed": 1280,
+        "live": {}
+      },
+      "main": {
+        "workers": 1,
+        "buffers": 0
+      },
+      "compilerFunctionsAlive": 1,
+      "counts": {
+        "scalar": 16,
+        "generic-gc": 16,
+        "distinct-gc-shape": 16,
+        "parse-error": 16,
+        "type-error": 16,
+        "unsupported": 16,
+        "depth-limit": 16,
+        "large-source": 16
+      }
+    }
+  ],
+  "sources": {
+    "runtime/selfhost-browser-memory.mjs": "3b47907887e5d1504705f47543a84f2da6539329f688f3a32f349451de3c2032",
+    "runtime/selfhost-memory/cdp.mjs": "c0841042663d8cb9ae249c86a5a9f46b855921b62856123bf08a7fc8cb2a3294",
+    "runtime/selfhost-memory/observer.mjs": "91f0232b45e17336cf61917b2876958f6bc88eb7d1393832cec6a6e815511310",
+    "runtime/selfhost-memory/model.mjs": "da107e0d486cb06711cfc618453b7d0a4c5a367970dd6eefc49bfe4f0c4112ff",
+    "runtime/selfhost-memory/workloads.mjs": "82601aeb739de99bef97c2cfea2fbc582fb4001b588838ba3a780d5de121a917",
+    "runtime/selfhost-front/scaling.mjs": "7a222dd239d4360bde14f40d2ed7d90e3e6288de99a8fdf2387eb9b2c228722c",
+    "deployed/compiler-worker.mjs": "2a60ec76e56afaea3ae7abdae0d3ca44f25312436a51540e740ebc23c784d887",
+    "deployed/worker-client.mjs": "5ec530382efa6bc13c82b8fa3bfca29570fd340dfa10a179fdcbb202524c58a5",
+    "deployed/selfhost-compiler.mjs": "2e932a11b98adc96fbb6ce0a0f7cc133ba5999c3ea31a9ea9d99723dee9228b6",
+    "deployed/main.mjs": "f584518dd0172f389b466c6d8f839c1f3736fb6ddd7c2f7999d7f3d3a5fa76d9",
+    "deployed/selfhost/bridge.mjs": "1c725a061997e1ba497087fa1f8af4d9a2ed2c84d2235d256f5108943a58a632",
+    "deployed/selfhost/browser.mjs": "ba16c07e2c1ab804eed78d2c1b8bba64831c5f096b5f9cd6aaca608c34098c8a",
+    "deployed/selfhost/diagnostics.mjs": "04c22184b7b5cf88451cb319e97ed79f7b73269b30d51faf2e818c61a8d9e7e0",
+    "deployed/selfhost/build.json": "f0f059b51d6ede4b517f588ca4508fed9921bdec9c4374b08666a3f08ab317a7"
+  },
+  "browser": "156.0.8078.4",
+  "control": {
+    "baseline": {
+      "heapUsed": 661260,
+      "arrayBuffers": 16047,
+      "embedder": 33216
+    },
+    "pinned": {
+      "heapUsed": 2113404,
+      "arrayBuffers": 16058,
+      "embedder": 33216
+    },
+    "released": {
+      "heapUsed": 671516,
+      "arrayBuffers": 16058,
+      "embedder": 33216
+    },
+    "aliveWhilePinned": 2,
+    "aliveAfterRelease": 0
+  },
+  "assessment": {
+    "ok": true,
+    "growth": {
+      "heapUsed": 21616,
+      "arrayBuffers": 0,
+      "embedder": 0
+    },
+    "failures": []
+  },
+  "retired": {
+    "workers": 0,
+    "buffers": 0
+  },
+  "loadingCancellation": [
+    {
+      "workers": 0,
+      "buffers": 0
+    },
+    {
+      "workers": 0,
+      "buffers": 0
+    },
+    {
+      "workers": 0,
+      "buffers": 0
+    },
+    {
+      "workers": 0,
+      "buffers": 0
+    },
+    {
+      "workers": 0,
+      "buffers": 0
+    },
+    {
+      "workers": 0,
+      "buffers": 0
+    }
+  ],
+  "switches": [
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "rust",
+      "workers": 1,
+      "buffers": 1
+    },
+    {
+      "engine": "selfhost",
+      "workers": 1,
+      "buffers": 1
+    }
+  ],
+  "busyCancellation": {
+    "entered": true,
+    "returnedBeforeStop": false,
+    "stopDelayMs": 20,
+    "workers": 0,
+    "buffers": 0
+  }
+}

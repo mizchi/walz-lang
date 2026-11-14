@@ -1,0 +1,31 @@
+✔ retained-heap detector rejects growing heaps and backing stores (0.494416ms)
+✔ RSS high-water capacity is reported separately from retained live memory (0.20925ms)
+✔ missing or invalid heap measurements cannot pass the audit (0.082333ms)
+✖ held public bridge errors release their compiler instance (12.624334ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.614083
+
+✖ failing tests:
+
+test at runtime/selfhost-memory.test.mjs:23:1
+✖ held public bridge errors release their compiler instance (12.624334ms)
+  AssertionError [ERR_ASSERTION]: host-argument error must not retain the compiler
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/mz/ghq/github.com/mizchi/wlt-lang/runtime/selfhost-memory.test.mjs:40:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

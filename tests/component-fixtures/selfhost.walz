@@ -164,10 +164,18 @@
     (call $modules.imports $source))
   (@use "../../walz/frontend/frontend.walz"
     (type $profile-report)
-    (func $frontend.profile-project))
+    (func $frontend.profile-project)
+    (type $inventory-report)
+    (func $frontend.inventory-project))
   (func $profile-project
     (export "profile-project")
     (param $files $list<(ref $source-file)>)
     (result (ref $profile-report))
     (@effect reads writes allocates)
-    (call $frontend.profile-project $files)))
+    (call $frontend.profile-project $files))
+  (func $inventory-project
+    (export "inventory-project")
+    (param $files $list<(ref $source-file)>)
+    (result (ref $inventory-report))
+    (@effect reads writes allocates)
+    (call $frontend.inventory-project $files)))

@@ -1,2 +1,4 @@
 # Frozen frontend inputs retain whitespace included in their recorded hashes.
 benches/fixtures/frontend-v*/** whitespace=-blank-at-eol
+# Captured test output is verbatim evidence, including whitespace from runners.
+docs/memory/**/*.log whitespace=-blank-at-eol,-blank-at-eof

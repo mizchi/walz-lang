@@ -1,0 +1,418 @@
+{
+  "suite": "selfhost-memory-v3",
+  "status": "passed",
+  "created": "2026-11-14T18:34:34.466Z",
+  "environment": {
+    "node": "v24.22.2",
+    "v8": "13.6.233.17-node.63",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "compiler": {
+    "path": "/Users/mz/ghq/github.com/mizchi/wlt-lang/target/playground-selfhost-memory/selfhost/compiler.wasm",
+    "bytes": 489204,
+    "sha256": "a84ee551f5722be9aa7e33b0f865ec5b3b61cd995ee00058749e76b78f9a7f93",
+    "roots": {
+      "tables": 0,
+      "memories": 0,
+      "globals": 0
+    }
+  },
+  "settings": {
+    "warmupBatches": 2,
+    "measuredBatches": 8,
+    "callsPerBatch": 128
+  },
+  "limits": {
+    "heapUsed": 2097152,
+    "arrayBuffers": 1048576,
+    "external": 2097152,
+    "embedder": 2097152
+  },
+  "phases": [
+    {
+      "mode": "core",
+      "samples": [
+        {
+          "heapUsed": 7845248,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1003929600,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 243247
+        },
+        {
+          "heapUsed": 7849160,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018462208,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 245834
+        },
+        {
+          "heapUsed": 7853120,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018544128,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 248503
+        },
+        {
+          "heapUsed": 7856600,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018576896,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 250711
+        },
+        {
+          "heapUsed": 7858208,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018609664,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 251581
+        },
+        {
+          "heapUsed": 7860616,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018855424,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 253019
+        },
+        {
+          "heapUsed": 7860944,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018986496,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 253019
+        },
+        {
+          "heapUsed": 7861592,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1018986496,
+          "objects": {
+            "observed": 1680,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 253019
+        }
+      ],
+      "kinds": {
+        "scalar": 160,
+        "generic-gc": 160,
+        "distinct-gc-shape": 160,
+        "parse-error": 160,
+        "type-error": 160,
+        "unsupported": 160,
+        "depth-limit": 160,
+        "large-source": 160
+      },
+      "assessment": {
+        "ok": true,
+        "growth": {
+          "heapUsed": 14064,
+          "arrayBuffers": 0,
+          "external": 0,
+          "rss": 7790592
+        },
+        "failures": []
+      }
+    },
+    {
+      "mode": "playground-response",
+      "samples": [
+        {
+          "heapUsed": 7886664,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019084800,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 262536
+        },
+        {
+          "heapUsed": 7886896,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019101184,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 262536
+        },
+        {
+          "heapUsed": 7908184,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019117568,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 277952
+        },
+        {
+          "heapUsed": 7915232,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019133952,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 282883
+        },
+        {
+          "heapUsed": 7915560,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019133952,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 282883
+        },
+        {
+          "heapUsed": 7917152,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019183104,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 283781
+        },
+        {
+          "heapUsed": 7917480,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019183104,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 283781
+        },
+        {
+          "heapUsed": 7917808,
+          "external": 2859443,
+          "arrayBuffers": 636961,
+          "rss": 1019248640,
+          "objects": {
+            "observed": 1280,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 283781
+        }
+      ],
+      "kinds": {
+        "scalar": 160,
+        "generic-gc": 160,
+        "distinct-gc-shape": 160,
+        "parse-error": 160,
+        "type-error": 160,
+        "unsupported": 160,
+        "depth-limit": 160,
+        "large-source": 160
+      },
+      "assessment": {
+        "ok": true,
+        "growth": {
+          "heapUsed": 30864,
+          "arrayBuffers": 0,
+          "external": 0,
+          "rss": 122880
+        },
+        "failures": []
+      }
+    },
+    {
+      "mode": "self-build",
+      "files": 45,
+      "sourceBytes": 838608,
+      "warmupCalls": 1,
+      "measuredCalls": 4,
+      "samples": [
+        {
+          "heapUsed": 8019552,
+          "external": 3698051,
+          "arrayBuffers": 1475569,
+          "rss": 879132672,
+          "objects": {
+            "observed": 183,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 293643
+        },
+        {
+          "heapUsed": 8015064,
+          "external": 3698051,
+          "arrayBuffers": 1475569,
+          "rss": 753664000,
+          "objects": {
+            "observed": 183,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 293643
+        },
+        {
+          "heapUsed": 8031976,
+          "external": 3698051,
+          "arrayBuffers": 1475569,
+          "rss": 757202944,
+          "objects": {
+            "observed": 183,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 305567
+        },
+        {
+          "heapUsed": 8069040,
+          "external": 3698051,
+          "arrayBuffers": 1475569,
+          "rss": 757858304,
+          "objects": {
+            "observed": 183,
+            "live": {}
+          },
+          "nativeContexts": 1,
+          "detachedContexts": 0,
+          "codeAndMetadata": 330363
+        }
+      ],
+      "outputSha256": "a84ee551f5722be9aa7e33b0f865ec5b3b61cd995ee00058749e76b78f9a7f93",
+      "assessment": {
+        "ok": true,
+        "growth": {
+          "heapUsed": 33200,
+          "arrayBuffers": 0,
+          "external": 0,
+          "rss": -58867712
+        },
+        "failures": []
+      }
+    }
+  ],
+  "sources": {
+    "runtime/selfhost-memory.mjs": "c2945864606ee8bb1c9bf406cd7e8f446ac198cdb2125bd7f826bf061ae5d879",
+    "runtime/selfhost-memory/model.mjs": "da107e0d486cb06711cfc618453b7d0a4c5a367970dd6eefc49bfe4f0c4112ff",
+    "runtime/selfhost-memory/workloads.mjs": "82601aeb739de99bef97c2cfea2fbc582fb4001b588838ba3a780d5de121a917",
+    "runtime/selfhost-memory/observer.mjs": "91f0232b45e17336cf61917b2876958f6bc88eb7d1393832cec6a6e815511310",
+    "runtime/selfhost/staged.mjs": "1c725a061997e1ba497087fa1f8af4d9a2ed2c84d2235d256f5108943a58a632",
+    "runtime/selfhost/browser.mjs": "ba16c07e2c1ab804eed78d2c1b8bba64831c5f096b5f9cd6aaca608c34098c8a",
+    "runtime/selfhost/diagnostics.mjs": "04c22184b7b5cf88451cb319e97ed79f7b73269b30d51faf2e818c61a8d9e7e0",
+    "runtime/testing/memory.mjs": "cb83eb47e674617253cdb31a842be6c5cf32ddea53a4c0910a2207c2b6507b97"
+  },
+  "control": {
+    "logicalBytes": 32768,
+    "baseline": {
+      "heapUsed": 8147792,
+      "external": 2829294,
+      "arrayBuffers": 636961,
+      "rss": 69058560
+    },
+    "pinned": {
+      "heapUsed": 10795632,
+      "external": 2829334,
+      "arrayBuffers": 636961,
+      "rss": 78004224
+    },
+    "released": {
+      "heapUsed": 8174976,
+      "external": 2829334,
+      "arrayBuffers": 636961,
+      "rss": 78020608
+    },
+    "aliveWhilePinned": 2,
+    "aliveAfterRelease": 0
+  },
+  "heldErrors": {
+    "count": 2,
+    "compilerFunctionsAlive": 0,
+    "objects": {
+      "observed": 9,
+      "live": {}
+    }
+  },
+  "teardown": {
+    "compilerFunctionsAlive": 0,
+    "objects": {
+      "observed": 0,
+      "live": {}
+    },
+    "memory": {
+      "heapUsed": 7355464,
+      "external": 3698051,
+      "arrayBuffers": 1475569,
+      "rss": 751255552
+    }
+  }
+}

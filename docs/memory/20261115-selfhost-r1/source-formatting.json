@@ -1,0 +1,6 @@
+{
+  "path": "runtime/selfhost/browser.mjs",
+  "change": "Removed one trailing blank line after measurement; executable code is identical. Archived recorder copies and measured source hashes are preserved.",
+  "measuredSha256": "ba16c07e2c1ab804eed78d2c1b8bba64831c5f096b5f9cd6aaca608c34098c8a",
+  "committedSha256": "ec5f0dd39606592bd617c639d5c316bbcb24795b72e5610370dc1f85486c5f7a"
+}

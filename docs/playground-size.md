@@ -43,9 +43,31 @@ Feature scope matters: the Rust playground compiler includes standard-library
 sources, macros, generics, analyses, WAT/diagnostic output and execution preparation.
 The Rust fixture provides WAT assembly and validation without Walz extensions;
 it still accepts broader WAT than the integer selfhost. The selfhost supports
-only the documented subset and does not yet implement the existing playground's
-WAT/analysis display protocol. The size comparison does not imply that a full
-selfhost playground replacement is implemented.
+only the documented subset. At that recorded revision it did not implement the
+playground's display protocol; that capture does not describe the current
+selectable self-hosted engine.
+
+## Current selectable compiler
+
+The current [Playground](playground.md#choosing-a-compiler) can load either the
+Rust compiler or a verified self-built Core GC stage. Only the chosen engine
+loads; the self-hosted mode provides expanded Walz and validation status rather
+than native WAT and detailed source analysis. It remains a language subset.
+
+The fresh `target/playground-selfhost/compiler-info.json` build records these
+Wasm-body sizes, separately from the historical browser-request comparison:
+
+| Compiler | Raw bytes | gzip level 9 | Brotli quality 11 |
+| --- | ---: | ---: | ---: |
+| Rust/Wasm | 8,840,457 | 2,111,760 | 1,347,821 |
+| Self-built stage 2 | 489,204 | 77,975 | 59,514 |
+
+These figures exclude JS glue, build metadata, the UI and HTTP overhead. The
+compressed values are estimates; static hosting determines actual transfer
+encoding. They are not speed measurements or full-feature parity claims.
+The self-built artifact's source/seed hashes and stage equality are retained in
+`selfhost/build.json` and its fresh build capture. Normal builds regenerate the
+figures and both compiler artifacts; old benchmark captures are untouched.
 
 Detailed per-file bytes, compression sizes, request lists, source/artifact hashes,
 versions and parity results are saved with generated output modules. The complete

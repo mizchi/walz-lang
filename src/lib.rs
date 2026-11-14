@@ -10,6 +10,7 @@ pub mod bindings;
 mod bounds;
 mod buffers;
 mod byte_access;
+pub mod code_sharing;
 pub mod component;
 pub mod composition;
 mod construction;

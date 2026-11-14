@@ -1,0 +1,17 @@
+(module
+  (@export (func $ascii.hex))
+  (func $ascii.hex
+    (param $c i32)
+    (result i32)
+    (@effect pure)
+    (if
+      (result i32)
+      (&& (>= $c 48) (<= $c 57))
+      (then (- $c 48))
+      (else
+        (if
+          (result i32)
+          (&& (>= (| $c 32) 97) (<= (| $c 32) 102))
+          (then (- (| $c 32) 87))
+          (else -1))))
+  ))

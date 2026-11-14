@@ -1,21 +1,7 @@
 (module
   (@use "walz:core" (type $bytes) (type $option))
+  (@use "./ascii.walz" (func $ascii.hex))
   (@export (func $number.i32) (func $number.i64))
-  (func $digit
-    (param $c i32)
-    (result i32)
-    (@effect pure)
-    (if
-      (result i32)
-      (&& (>= $c 48) (<= $c 57))
-      (then (- $c 48))
-      (else
-        (if
-          (result i32)
-          (&& (>= (| $c 32) 97) (<= (| $c 32) 102))
-          (then (- (| $c 32) 87))
-          (else -1))))
-  )
   ;; Checked unsigned accumulation, then apply the spelling's sign.
   (func $parse
     (param $b $bytes)
@@ -55,7 +41,7 @@
             (else
               (@let
                 (($c (@bytes.get $b $i))
-                 ($d (call $digit $c)))
+                 ($d (call $ascii.hex $c)))
                 (if
                   (result $option<i64>)
                   (= $c 95)

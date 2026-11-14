@@ -29,7 +29,18 @@
     (func $frontend.project)
     (func $frontend.expand)
     (func $frontend.profile-project)
-    (type $profile-report))
+    (type $profile-report)
+    (func $frontend.inventory-project)
+    (type $inventory-report))
+  (@use "./profile.walz"
+    (type $profile-function)
+    (func $profile.enable-inventory)
+    (func $profile.functions))
+  (type $inventory-report
+    (struct
+      (field $result $result<i32, (ref $project-error)>)
+      (field $functions $list<(ref $profile-function)>)))
+  (@abi.type $inventory-report (record "result" "functions"))
   (type $profile-report
     (struct
       (field $result $result<i32, (ref $project-error)>)
@@ -125,4 +136,18 @@
                (@list.len (ref $function-ir) (call $module-ir.functions $checked))))
          )))
       (struct.new $profile-report $result (call $profile.snapshot $profile))))
+
+  (func $frontend.inventory-project
+    (param $files $list<(ref $source-file)>)
+    (result (ref $inventory-report))
+    (@effect reads writes allocates)
+    (@let $profile (call $profile.new)
+      (block (result (ref $inventory-report))
+        (call $profile.enable-inventory $profile)
+        (@let $result (type $result<i32, (ref $project-error)>)
+          (@match (call $project $files $profile)
+            (@case err ($e) (@result.err $e))
+            (@case ok ($checked)
+              (@result.ok (@list.len (ref $function-ir) (call $module-ir.functions $checked)))))
+          (struct.new $inventory-report $result (call $profile.functions $profile))))))
 )

@@ -1,0 +1,31 @@
+cargo run --locked --quiet --example stdlib-docs -- --check
+cargo fmt --all -- --check
+cargo clippy --locked --workspace --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized] target(s) in 0.21s
+cargo test --locked --test documentation --test cheatsheet
+    Finished `test` profile [unoptimized] target(s) in 0.09s
+     Running tests/cheatsheet.rs (target/debug/deps/cheatsheet-70fa61e858fbdbe6)
+
+running 1 test
+test cheatsheet_complete_modules_compile_and_their_tests_execute ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+     Running tests/documentation.rs (target/debug/deps/documentation-eda470e206439c55)
+
+running 3 tests
+test english_and_japanese_references_keep_the_same_walz_examples ... ok
+test entry_guides_link_to_existing_local_documents_and_examples ... ok
+test introductory_guides_compile_run_and_support_the_documented_project_workflow ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.43s
+
+cargo test --locked --test skill
+    Finished `test` profile [unoptimized] target(s) in 0.05s
+     Running tests/skill.rs (target/debug/deps/skill-49f952cae0eac77f)
+
+running 1 test
+test portable_skill_examples_are_checked_walz_programs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

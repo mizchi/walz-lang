@@ -40,6 +40,14 @@ See [Component composition](docs/component-composition.md) for contracts and cur
 - [x] Verify byte-identical self-compiled Core stages and portable outputs;
   compare the maintained corpus against the seed and both stages. See
   [the fixed-point gate](docs/selfhost-stages.md).
+- [x] Offer a selectable self-built Playground compiler with lazy loading,
+  checked stage hashes, expanded Walz, subset diagnostics and worker cancellation.
+- [x] Audit self-built compiler retention in Node/Chromium, repeated self-builds,
+  exceptional cleanup and worker cancellation. Release compiler closures from
+  saved lazy error stacks. See [the memory audit](docs/selfhost-memory.md).
+- [ ] Profile and reduce bootstrap byte/tree and temporary IR allocation;
+  evaluate packed GC byte storage while preserving immutable snapshots and bounds.
+  Retained heap is stable in the audit, but resident capacity remains large.
 - [ ] Reduce short-project overhead from syntax interning; the local tuning
   controls still show about 0.2 ms overhead. See [measurements](docs/selfhost-tuning.md).
 
@@ -99,6 +107,42 @@ Track the remaining gaps and their validation gates in [Rust / bootstrap parity]
 
 See [the compiler parts guide](docs/selfhost.md) and [frontend scope/limits](docs/selfhost-frontend.md). The current backend
 self-compiles within its supported subset; it does not replace the full Rust CLI.
+
+## Self-hosting follow-up, in implementation order
+
+Keep source types and every type/effect/ownership/ABI check independent from
+implementation sharing. Preserve frozen captures and measure new candidates
+before changing defaults.
+
+1. [x] Inventory concrete functions by source declaration and normalized arguments;
+   report physical signatures, code/type-section bytes, call dependencies,
+   reference/export identity boundaries and exact compatible-body groups.
+2. [x] Factor measured duplicate work into shared helpers;
+   preserve typed wrappers, evaluation order and traps.
+3. [x] Add opt-in sharing of checked identical private, non-address-taken functions with matching
+   physical types and dependencies. Remap indices and preserve observable identity;
+   independently validate output and probe pinned Binaryen separately.
+4. [ ] Analyze codegen-irrelevant type arguments, including transitive calls,
+   constraints, typed macro queries and GC/ABI operations. Share expansion work
+   only after source validation; retain unknown dependencies conservatively.
+5. [ ] Evaluate shape/dictionary sharing only for substantial remaining measured
+   duplication. Include metadata/wrapper/indirection costs and backend callable
+   requirements; retain primitive/SIMD specialization unless measurements favor sharing.
+6. [ ] Resolve WAT-label/value shorthand ambiguity with native WAT taking
+   precedence; require explicit syntax in ambiguous positions in both frontends.
+7. [ ] Specify common expected-type/control-flow rules, including unit statement
+   context, result vectors and unreachable-stack polymorphism; share positive
+   and negative conformance cases between Rust and bootstrap.
+8. [ ] Add optional bounded diagnostic origin chains across generic requests,
+   macros and validation; distinguish unsupported features, invalid source and
+   compiler invariant failures while retaining original UTF-8 ranges.
+
+See [the design comparison](<reports/Walz 単相化 共有方式 比較.md>).
+The [inventory and sharing implementation](docs/selfhost-sharing.md) finds 323
+generic functions with 16,521 body bytes, about 3.5% of this compiler's code
+payload, with no exact cross-type duplicates. Conditional items 4/5 remain open;
+their complexity is not justified by function counts alone. Embedded core-source
+literal construction is a separate measured size target.
 
 ## SIMD library roadmap
 
